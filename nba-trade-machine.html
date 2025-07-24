@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>NBA Trade Machine</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap">
-  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
       font-family: 'Inter', Arial, sans-serif;
@@ -13,7 +12,6 @@
       margin: 0;
       color: #23272F;
     }
-    /* Navbar (same as your site) ... */
     .navbar {
       position: fixed;
       top: 0;
@@ -160,18 +158,31 @@
       .dropdown-link { color: #fff; padding: 0.8rem 1.6rem;}
       .dropdown-link:hover { background: #0057e7; color: #fff;}
     }
-    /* --- End Navbar --- */
-
     h1 {
       background: linear-gradient(90deg,#0a174e 60%,#0057e7 100%);
       color: #fff;
       padding: 2.5rem 0 1.2rem 0;
-      margin: 0 0 1.3rem 0;
+      margin: 0 0 1.1rem 0;
       text-align: center;
       font-weight: 800;
       font-size: 2.2rem;
       letter-spacing: 1.2px;
       box-shadow: 0 2px 12px rgba(10,23,78,0.08);
+    }
+    .description-block {
+      max-width: 850px;
+      margin: 1.3rem auto 2.3rem auto;
+      background: #fff;
+      border-radius: 18px;
+      padding: 1.6rem 2.1rem 1.2rem 2.1rem;
+      box-shadow: 0 2px 16px rgba(10,23,78,0.10);
+      font-size: 1.1rem;
+      color: #234;
+      line-height: 1.72;
+      border-left: 7px solid #0057e7;
+    }
+    .description-block strong {
+      color: #0057e7;
     }
     .trade-controls {
       text-align: center;
@@ -204,7 +215,7 @@
       background: #fff;
       border-radius: 22px;
       box-shadow: 0 6px 40px rgba(10,23,78,0.13);
-      padding: 2.2rem 1.7rem 1.8rem 1.7rem;
+      padding: 1.7rem 1.4rem 1.4rem 1.4rem;
       min-width: 350px;
       max-width: 410px;
       flex: 1 1 350px;
@@ -219,40 +230,50 @@
       box-shadow: 0 10px 48px rgba(0,87,231,0.18);
       transform: translateY(-2px) scale(1.01);
     }
-    .team-block .remove-team-btn {
-      position: absolute;
-      top: 14px;
-      right: 18px;
+    .team-header {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      background: linear-gradient(90deg, #0057e7 60%, #2688ff 100%);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,87,231,0.09);
+      padding: 0.75rem 1.1rem;
+      margin-bottom: 1.15rem;
+      min-height: 55px;
+    }
+    .team-label {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.18rem;
+      margin-right: 0.8rem;
+      letter-spacing: 0.02em;
+    }
+    .team-header select {
+      font-size: 1.1rem;
+      border-radius: 8px;
+      border: none;
+      padding: 0.45rem 1.2rem;
+      font-weight: 600;
+      background: #ecf3fb;
+      color: #0a174e;
+      box-shadow: 0 2px 9px rgba(10,23,78,0.06);
+      transition: background 0.14s;
+    }
+    .remove-team-btn {
       background: none;
-      color: #c20000;
+      color: #fff;
       border: none;
       font-size: 1.25rem;
       font-weight: bold;
       cursor: pointer;
-      z-index: 2;
-      padding: 0 0.2rem;
+      margin-left: auto;
+      margin-right: -0.4rem;
       transition: color 0.18s;
+      box-shadow: none;
+      padding: 0;
+      opacity: 0.85;
     }
-    .team-block .remove-team-btn:hover {
-      color: #e74c3c;
-    }
-    .team-select label {
-      font-weight: 600;
-      color: #0057e7;
-      margin-right: 0.7rem;
-      font-size: 1.08rem;
-    }
-    .team-select select {
-      font-size: 1.08rem;
-      padding: 0.33rem 1rem;
-      border-radius: 7px;
-      border: 1px solid #bbb;
-      margin-bottom: 1.3rem;
-      margin-top: 0.2rem;
-      background: #f6f8fa;
-      font-weight: 500;
-    }
-    /* --- Modern Players List --- */
+    .remove-team-btn:hover { color: #ffc2c2; }
     .players-list {
       list-style: none;
       padding: 0;
@@ -349,9 +370,7 @@
       color: #0a174e;
       box-shadow: 0 2px 10px rgba(0,87,231,0.05);
     }
-    .payroll-box .line {
-      margin-bottom: 0.47rem;
-    }
+    .payroll-box .line { margin-bottom: 0.47rem; }
     .payroll-box .level {
       font-weight: 700;
       min-width: 130px;
@@ -463,8 +482,25 @@
       <a href="nba-trade-machine.html" class="nav-link active" style="margin-left: 2rem;">Trade Machine</a>
     </div>
   </nav>
-  <div style="height:72px"></div> <!-- offset for fixed nav -->
+  <div style="height:72px"></div>
   <h1>NBA Trade Machine</h1>
+  <div class="description-block">
+    <strong>About the Trade Machine:</strong> This NBA Trade Machine lets you simulate up to 5-team trades under the 2025 CBA rules.<br>
+    <strong>Note:</strong> This tool doesn't include salary bonuses or incentives, so numbers may be slightly off from actual cap sheets.<br><br>
+    <strong>What Are the Aprons?</strong> The aprons are salary thresholds above the cap that trigger additional restrictions:
+    <ul>
+      <li><b>Salary Cap</b>: The base team spending limit ($154.647M).</li>
+      <li><b>Luxury Tax</b>: Teams above this pay tax ($187.895M).</li>
+      <li><b>First Apron</b>: Extra restrictions start ($195.945M).</li>
+      <li><b>Second Apron</b>: The toughest rules apply ($207.824M).</li>
+    </ul>
+    <strong>Trade Rules Based on Apron Status:</strong>
+    <ul>
+      <li><b>First Apron:</b> Team can only take back the greater of 100% + $5M or 125% + $100K of what it sends out.</li>
+      <li><b>Second Apron:</b> Team cannot take back more salary than it sends out—strict dollar-for-dollar matching. No aggregation allowed.</li>
+    </ul>
+    <span style="color:#b91c1c"><b>Tip:</b> If your trade fails, check if a team is above an apron and the new stricter rules apply!</span>
+  </div>
   <div class="trade-controls">
     <button id="addTeamBtn">+ Add Team</button>
     <button id="removeTeamBtn">− Remove Team</button>
@@ -597,12 +633,12 @@
           removeBtn = `<button class="remove-team-btn" title="Remove team" data-remove="${idx}">&times;</button>`;
         ctr.innerHTML += `
           <div class="team-block" data-teamidx="${idx}">
-            ${removeBtn}
-            <div class="team-select">
-              <label>Team ${idx+1}:</label>
+            <div class="team-header">
+              <span class="team-label">Team ${idx+1}:</span>
               <select class="teamSel" data-teamidx="${idx}">
                 ${teamOpts}
               </select>
+              ${removeBtn}
             </div>
             <ul class="players-list">
               ${plist}
@@ -657,6 +693,7 @@
         renderTeams();
       }
     };
+    // --- NBA apron-aware trade logic
     document.getElementById('tryTrade').onclick = function() {
       let tradeMap = teamBlocks.map(tb => ({
         team: tb.team,
@@ -671,6 +708,7 @@
       let allSend = teamBlocks.map((tb, i) => tb.outgoing.map(idx => ({...teams[tb.team][idx], from: tb.team, idx})));
       let allPlayers = teamBlocks.map((tb, i) => teams[tb.team]);
       let allTeams = teamBlocks.map(tb => tb.team);
+      let payrolls = teamBlocks.map(tb => teams[tb.team].reduce((a, p) => a + p.salary, 0));
       let incoming = [];
       for (let i=0; i<teamCount; ++i) {
         let incArr = [];
@@ -684,23 +722,57 @@
       for (let i=0; i<teamCount; ++i) {
         let outgoingSalary = tradeMap[i].outgoing.reduce((a, b) => a + b.salary, 0);
         let incomingSalary = incoming[i].reduce((a, b) => a + b.salary, 0);
-        let maxIncoming = outgoingSalary * 1.25 + 250000;
+        let preTradePayroll = payrolls[i];
+        let postTradePayroll = preTradePayroll - outgoingSalary + incomingSalary;
+
         let stdPlayersOrig = teams[allTeams[i]].length;
         let stdOutgoing = tradeMap[i].outgoing.length;
         let stdIncoming = incoming[i].length;
         let stdAfter = stdPlayersOrig - stdOutgoing + stdIncoming;
+
+        let overFirstApron = preTradePayroll > FIRST_APRON;
+        let overSecondApron = preTradePayroll > SECOND_APRON;
         let reasons = [];
+        // Minimum roster
         if (stdAfter < 13) {
           tradeOK = false;
           reasons.push('Would leave fewer than 13 standard contracts.');
         }
-        if (incomingSalary > maxIncoming) {
-          tradeOK = false;
-          reasons.push(`Incoming salary (${salaryFmt(incomingSalary)}) exceeds CBA limit (${salaryFmt(maxIncoming)}).`);
+
+        // Salary matching: enforce stricter rules if above aprons
+        if (overSecondApron) {
+          // No aggregation, dollar for dollar: each incoming player's salary can't exceed the salary of any outgoing player
+          // and total incoming can't exceed total outgoing
+          if (incomingSalary > outgoingSalary) {
+            tradeOK = false;
+            reasons.push(`Above 2nd apron: cannot take back more salary than sent out (incoming: ${salaryFmt(incomingSalary)}, outgoing: ${salaryFmt(outgoingSalary)}).`);
+          }
+          // Aggregation not allowed (for simplicity: block if more than one outgoing and incoming player)
+          if (tradeMap[i].outgoing.length > 1 && incoming[i].length > 1) {
+            tradeOK = false;
+            reasons.push('Above 2nd apron: cannot aggregate salaries from multiple players.');
+          }
+        } else if (overFirstApron) {
+          // Can take back the greater of 100% + $5M OR 125% + $100k
+          let max1 = outgoingSalary * 1.25 + 100000;
+          let max2 = outgoingSalary + 5000000;
+          let maxIncoming = Math.max(max1, max2);
+          if (incomingSalary > maxIncoming) {
+            tradeOK = false;
+            reasons.push(`Above 1st apron: cannot take back more than the greater of 125% + $100k (${salaryFmt(max1)}) or 100% + $5M (${salaryFmt(max2)}).`);
+          }
+        } else {
+          // Standard rules: can take back up to 125% + $250k
+          let maxIncoming = outgoingSalary * 1.25 + 250000;
+          if (incomingSalary > maxIncoming) {
+            tradeOK = false;
+            reasons.push(`Cannot take back more than 125% + $250k of outgoing salary (${salaryFmt(maxIncoming)}).`);
+          }
         }
+
         tradeDetails.push({
           team: allTeams[i],
-          outgoingSalary, incomingSalary, maxIncoming, stdAfter, reasons
+          outgoingSalary, incomingSalary, stdAfter, reasons
         });
       }
       if (!tradeOK) {
