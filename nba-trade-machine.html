@@ -5,27 +5,207 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>NBA Trade Machine</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap">
+  <link rel="stylesheet" href="styles.css" />
   <style>
+    /* --- Modernized Trade Machine Styles --- */
     body {
       font-family: 'Inter', Arial, sans-serif;
       background: #f6f8fa;
       margin: 0;
       color: #23272F;
     }
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100vw;
+      background: #0a174e;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
+      padding: 0.5rem 2rem;
+      z-index: 1001;
+    }
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .nav-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+    .site-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .nav-link {
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .nav-link.active,
+    .nav-link:hover {
+      background: #0057e7;
+      color: #fff;
+    }
+    .nav-dropdown {
+      position: relative;
+      display: inline-block;
+      margin-left: 2rem;
+    }
+    .dropdown-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.2s;
+      font-size: 1rem;
+      outline: none;
+    }
+    .dropdown-btn:hover,
+    .nav-dropdown:hover .dropdown-btn {
+      background: #0057e7;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 110%;
+      left: 0;
+      min-width: 220px;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(10,23,78,0.13);
+      border-radius: 8px;
+      z-index: 1000;
+      flex-direction: column;
+      padding: 0.5rem 0;
+    }
+    .nav-dropdown:hover .dropdown-content,
+    .nav-dropdown:focus-within .dropdown-content {
+      display: flex;
+    }
+    .dropdown-link {
+      color: #0a174e;
+      text-decoration: none;
+      padding: 0.7rem 1.2rem;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 500;
+      font-size: 1rem;
+      border-radius: 4px;
+      margin: 0 0.3rem;
+      outline: none;
+    }
+    .dropdown-link:hover {
+      background: #e6f0ff;
+      color: #0057e7;
+    }
+    /* Hamburger for mobile */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      z-index: 101;
+    }
+    .hamburger span {
+      width: 32px;
+      height: 4px;
+      background: #fff;
+      border-radius: 2px;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
+    }
+    @media (max-width: 950px) {
+      .navbar {
+        padding: 0.5rem 1rem;
+      }
+      .nav-right {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100vw;
+        background: #0a174e;
+        flex-direction: column;
+        box-shadow: 0 8px 24px rgba(10,23,78,0.17);
+        padding-bottom: 1rem;
+        z-index: 99;
+        max-height: 0;
+        overflow: hidden;
+        border-radius: 0 0 16px 16px;
+        border-top: 1px solid #0057e7;
+        align-items: flex-start;
+      }
+      .nav-right.open {
+        display: flex;
+        max-height: 1000px;
+        overflow: visible;
+        animation: navShow 0.25s;
+      }
+      @keyframes navShow {
+        from { opacity: 0; transform: translateY(-10px);}
+        to { opacity: 1; transform: translateY(0);}
+      }
+      .hamburger {
+        display: flex;
+        position: fixed;
+        top: 18px;
+        right: 32px;
+        margin-left: 0;
+        background: none;
+        border: none;
+      }
+      .dropdown-content {
+        position: static;
+        min-width: unset;
+        box-shadow: none;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
+      }
+      .dropdown-link {
+        color: #fff;
+        padding: 0.8rem 1.6rem;
+      }
+      .dropdown-link:hover {
+        background: #0057e7;
+        color: #fff;
+      }
+    }
+    /* --- End Navbar --- */
+
     h1 {
       background: linear-gradient(90deg,#0a174e 60%,#0057e7 100%);
       color: #fff;
-      padding: 2rem 0 1.3rem 0;
-      margin: 0 0 1.5rem 0;
+      padding: 2.7rem 0 1.2rem 0;
+      margin: 0 0 1.3rem 0;
       text-align: center;
       font-weight: 800;
-      font-size: 2.5rem;
+      font-size: 2.4rem;
       letter-spacing: 1.2px;
       box-shadow: 0 2px 12px rgba(10,23,78,0.08);
     }
     .trade-controls {
       text-align: center;
-      margin: 0 0 2.2rem 0;
+      margin: 1.3rem 0 2.2rem 0;
     }
     .trade-controls button {
       background: #0057e7;
@@ -52,27 +232,31 @@
     }
     .team-block {
       background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 4px 24px rgba(10,23,78,0.14);
-      padding: 2rem 1.5rem 1.5rem 1.5rem;
-      min-width: 320px;
-      max-width: 370px;
-      flex: 1 1 320px;
+      border-radius: 22px;
+      box-shadow: 0 6px 40px rgba(10,23,78,0.13);
+      padding: 2.2rem 1.7rem 1.8rem 1.7rem;
+      min-width: 350px;
+      max-width: 410px;
+      flex: 1 1 350px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
       margin-bottom: 1rem;
       position: relative;
-      transition: box-shadow 0.17s;
+      transition: box-shadow 0.17s, transform 0.12s;
+    }
+    .team-block:hover {
+      box-shadow: 0 10px 48px rgba(0,87,231,0.18);
+      transform: translateY(-2px) scale(1.01);
     }
     .team-block .remove-team-btn {
       position: absolute;
       top: 14px;
-      right: 14px;
+      right: 18px;
       background: none;
       color: #c20000;
       border: none;
-      font-size: 1.35rem;
+      font-size: 1.25rem;
       font-weight: bold;
       cursor: pointer;
       z-index: 2;
@@ -90,62 +274,72 @@
     }
     .team-select select {
       font-size: 1.08rem;
-      padding: 0.35rem 1rem;
+      padding: 0.33rem 1rem;
       border-radius: 7px;
       border: 1px solid #bbb;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.3rem;
       margin-top: 0.2rem;
       background: #f6f8fa;
       font-weight: 500;
     }
+    /* --- Modern Players List --- */
     .players-list {
       list-style: none;
       padding: 0;
       margin: 0;
-      max-height: 300px;
+      max-height: 320px;
       overflow-y: auto;
-      border-radius: 6px;
-      background: #f8fafc;
-      border: 1px solid #f1f1f1;
-      box-shadow: 0 2px 6px rgba(10,23,78,0.04);
+      border-radius: 10px;
+      background: #f4f7fb;
+      border: 1.5px solid #e4eaf2;
+      box-shadow: 0 2px 10px rgba(10,23,78,0.05);
+      margin-bottom: 1.4rem;
     }
     .players-list li {
-      padding: 0.55rem 0.7rem;
+      padding: 0.68rem 1.1rem;
       display: flex;
       align-items: center;
-      border-bottom: 1px solid #eee;
-      font-size: 1.01rem;
+      border-bottom: 1px solid #e4eaf2;
+      font-size: 1.07rem;
       cursor: pointer;
-      transition: background 0.14s;
+      transition: background 0.15s, box-shadow 0.12s;
+      border-radius: 7px;
+      position: relative;
     }
     .players-list li:last-child { border-bottom: none;}
+    .players-list li:hover,
+    .players-list li.selected {
+      background: #e6f0ff;
+      box-shadow: 0 2px 10px rgba(0,87,231,0.13);
+    }
     .players-list input[type=checkbox] {
-      margin-right: 0.7em;
+      margin-right: 0.95em;
       accent-color: #0057e7;
       cursor: pointer;
+      width: 1.25em; height: 1.25em;
+      border-radius: 5px;
+      border: 1.5px solid #0057e7;
+      box-shadow: 0 0.5px 2px rgba(0,87,231,0.06);
+      transition: box-shadow 0.11s;
     }
     .players-list label {
       flex: 1;
       cursor: pointer;
       font-weight: 500;
+      letter-spacing: 0.01em;
     }
     .players-list .salary-cell {
       color: #0057e7;
-      min-width: 108px;
+      min-width: 124px;
       text-align: right;
-      font-weight: 600;
-      font-size: 1.01rem;
-    }
-    .players-list .two-way-label {
-      color: #c20000;
-      font-size: 0.97em;
-      font-weight: 600;
-      margin-left: 4px;
+      font-weight: 700;
+      font-size: 1.06rem;
+      letter-spacing: 0.01em;
     }
     .totals {
-      margin: 1.1rem 0 0.3rem 0;
+      margin: 1.1rem 0 0 0;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.18rem;
       color: #333;
       text-align: right;
     }
@@ -154,59 +348,104 @@
       display: block;
       background: #0057e7;
       color: #fff;
-      font-size: 1.25rem;
+      font-size: 1.27rem;
       font-weight: bold;
       border-radius: 13px;
-      padding: 1rem 3.2rem;
+      padding: 1.1rem 3.2rem;
       border: none;
       cursor: pointer;
       transition: background 0.2s, box-shadow 0.18s;
-      box-shadow: 0 4px 14px rgba(0,87,231,0.12);
+      box-shadow: 0 4px 16px rgba(0,87,231,0.13);
+      letter-spacing: 0.03em;
     }
     .trade-btn:hover {
       background: #0a174e;
-      box-shadow: 0 8px 28px rgba(0,87,231,0.18);
+      box-shadow: 0 8px 28px rgba(0,87,231,0.17);
     }
     .result-block {
       background: #fff;
-      border-radius: 12px;
+      border-radius: 14px;
       max-width: 700px;
       margin: 2rem auto;
       box-shadow: 0 4px 16px rgba(10,23,78,0.13);
-      padding: 1.5rem 2.5rem;
-      font-size: 1.15rem;
+      padding: 1.7rem 2.5rem;
+      font-size: 1.16rem;
       font-weight: 500;
-      border-left: 7px solid #eee;
+      border-left: 8px solid #eee;
       text-align: left;
     }
     .result-block.success {
-      border-left: 7px solid #13a813;
+      border-left: 8px solid #13a813;
       color: #13a813;
       background: #f3fff4;
     }
     .result-block.fail {
-      border-left: 7px solid #c20000;
+      border-left: 8px solid #c20000;
       color: #c20000;
       background: #fff7f7;
     }
     .result-title {
-      font-size: 1.25rem;
+      font-size: 1.27rem;
       font-weight: 700;
       margin-bottom: 0.6rem;
       letter-spacing: 0.5px;
     }
+    .back-home-btn {
+      display: inline-block;
+      background: #0a174e;
+      color: #fff;
+      padding: 0.7rem 2.2rem;
+      border-radius: 8px;
+      font-size: 1.12rem;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.12);
+      transition: background 0.2s;
+      margin: 2rem 0 0 2rem;
+    }
+    .back-home-btn:hover {
+      background: #0057e7;
+      color: #fff;
+    }
     @media (max-width: 1200px) {
       .trade-container { flex-direction: column; align-items: center;}
-      .team-block { width: 97vw; max-width: 420px;}
+      .team-block { width: 99vw; max-width: 480px;}
     }
     @media (max-width: 600px) {
       .team-block { padding: 1.1rem 0.6rem; min-width: 0; }
       .result-block { padding: 1.1rem 0.7rem; }
-      .trade-btn { padding: 0.7rem 1.2rem; font-size: 1.05rem;}
+      .trade-btn { padding: 0.7rem 1.2rem; font-size: 1.07rem;}
+      .back-home-btn { margin: 1.5rem 0 0 0.7rem;}
     }
   </style>
 </head>
 <body>
+  <!-- Modern Navbar (with Home and Trade Machine navs) -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <img src="sixershoopslogo.png" alt="SixersHoops Logo" class="nav-logo" />
+      <span class="site-title">SixersHoops</span>
+    </div>
+    <button class="hamburger" aria-label="Menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-right">
+      <a href="index.html" class="nav-link">Home</a>
+      <div style="margin-left: 2rem;" class="nav-dropdown">
+        <button class="dropdown-btn" aria-haspopup="true" aria-expanded="false">Cap &amp; Draft Management</button>
+        <div class="dropdown-content">
+          <a href="salary.html" class="dropdown-link">Salary Breakdown</a>
+          <a href="draft.html" class="dropdown-link">Future Draft Capital</a>
+          <a href="depth.html" class="dropdown-link">Depth Chart</a>
+        </div>
+      </div>
+      <a href="nba-trade-machine.html" class="nav-link active" style="margin-left: 2rem;">Trade Machine</a>
+    </div>
+  </nav>
+  <div style="height:72px"></div> <!-- offset for fixed nav -->
+  <a href="index.html" class="back-home-btn">← Back to Home</a>
   <h1>NBA Trade Machine</h1>
   <div class="trade-controls">
     <button id="addTeamBtn">+ Add Team</button>
@@ -220,8 +459,6 @@
   <script>
     // --- Modern NBA Trade Machine JS ---
     const maxTeams = 5, minTeams = 2;
-
-    // --- Rosters/Salaries (expand with more teams as needed) ---
     const teams = {
       "Atlanta Hawks": [
         { name: "Trae Young", salary: 45999660 },
@@ -234,9 +471,9 @@
         { name: "Dyson Daniels", salary: 7707709 },
         { name: "Kobe Bufkin", salary: 4503720 },
         { name: "Asa Newell", salary: 3237480 },
-        { name: "Vít Krejčí", salary: 2349578, twoWay: true },
+        { name: "Vít Krejčí", salary: 2349578 },
         { name: "Caleb Houstan", salary: 2296274 },
-        { name: "Mouhamed Gueye", salary: 2221677, twoWay: true },
+        { name: "Mouhamed Gueye", salary: 2221677 },
         { name: "Nikola Đurišić", salary: 1272870 }
       ],
       "Boston Celtics": [
@@ -252,9 +489,9 @@
         { name: "Xavier Tillman", salary: 2546674 },
         { name: "Luka Garza", salary: 2461463 },
         { name: "Josh Minott", salary: 2378870 },
-        { name: "Neemias Queta", salary: 2349578, twoWay: true },
-        { name: "JD Davison", salary: 2270735, twoWay: true },
-        { name: "Jordan Walsh", salary: 2221677, twoWay: true }
+        { name: "Neemias Queta", salary: 2349578 },
+        { name: "JD Davison", salary: 2270735 },
+        { name: "Jordan Walsh", salary: 2221677 }
       ],
       "Brooklyn Nets": [
         { name: "Michael Porter Jr.", salary: 38333050 },
@@ -269,25 +506,19 @@
         { name: "Drake Powell", salary: 3372240 },
         { name: "Ben Saraf", salary: 2884560 },
         { name: "Danny Wolf", salary: 2801280 },
-        { name: "Keon Johnson", salary: 2349578, twoWay: true },
-        { name: "Jalen Wilson", salary: 2221677, twoWay: true },
-        { name: "Tyrese Martin", salary: 2191897, twoWay: true },
+        { name: "Keon Johnson", salary: 2349578 },
+        { name: "Jalen Wilson", salary: 2221677 },
+        { name: "Tyrese Martin", salary: 2191897 },
         { name: "Drew Timme", salary: 1955378 }
       ]
     };
-
-    // --- Team management state ---
     let teamBlocks = [
       { team: "Atlanta Hawks", outgoing: [], incoming: [] },
       { team: "Boston Celtics", outgoing: [], incoming: [] }
     ];
-
-    // --- Helper: salary formatting ---
     function salaryFmt(val) {
       return val.toLocaleString('en-US', {style:'decimal', maximumFractionDigits:0});
     }
-
-    // --- Rerender all team blocks ---
     function renderTeams() {
       const ctr = document.getElementById('tradeContainer');
       ctr.innerHTML = '';
@@ -297,22 +528,18 @@
         for (let t of Object.keys(teams)) {
           teamOpts += `<option value="${t}" ${block.team === t ? 'selected' : (usedTeams.includes(t) ? 'disabled' : '')}>${t}</option>`;
         }
-        // Outgoing selected IDs for this team
         const sel = block.outgoing || [];
-        // Build players list
         let plist = '';
         teams[block.team].forEach((p, pidx) => {
           plist += `
-            <li>
-              <input type="checkbox" id="cb${idx}_${pidx}" data-teamidx="${idx}" data-pidx="${pidx}" ${p.twoWay ? 'disabled' : ''} ${sel.includes(pidx) ? 'checked' : ''}/>
-              <label for="cb${idx}_${pidx}">${p.name}${p.twoWay ? '<span class="two-way-label">[Two-Way]</span>' : ''}</label>
+            <li${sel.includes(pidx) ? ' class="selected"' : ''}>
+              <input type="checkbox" id="cb${idx}_${pidx}" data-teamidx="${idx}" data-pidx="${pidx}" ${sel.includes(pidx) ? 'checked' : ''}/>
+              <label for="cb${idx}_${pidx}">${p.name}</label>
               <span class="salary-cell">$${salaryFmt(p.salary)}</span>
             </li>
           `;
         });
-        // Salary total
         let total = sel.map(pidx => teams[block.team][pidx].salary).reduce((a,b) => a+b, 0);
-        // Remove team button if allowed
         let removeBtn = '';
         if (teamBlocks.length > minTeams)
           removeBtn = `<button class="remove-team-btn" title="Remove team" data-remove="${idx}">&times;</button>`;
@@ -332,11 +559,9 @@
           </div>
         `;
       });
-      // Add listeners for team selection and checkboxes
       document.querySelectorAll('.teamSel').forEach(sel => {
         sel.onchange = function() {
           const idx = +this.dataset.teamidx;
-          // Don't allow duplicate teams
           if (teamBlocks.map(tb => tb.team).includes(this.value))
             return;
           teamBlocks[idx].team = this.value;
@@ -357,7 +582,6 @@
           renderTeams();
         }
       });
-      // Remove team
       document.querySelectorAll('.remove-team-btn').forEach(btn => {
         btn.onclick = function() {
           const idx = +this.dataset.remove;
@@ -365,15 +589,11 @@
           renderTeams();
         }
       });
-      // Update remove/add team buttons
       document.getElementById('removeTeamBtn').disabled = (teamBlocks.length <= minTeams);
       document.getElementById('addTeamBtn').disabled = (teamBlocks.length >= maxTeams);
     }
     renderTeams();
-
-    // Add/Remove Team buttons
     document.getElementById('addTeamBtn').onclick = function() {
-      // Find first unused team
       const used = teamBlocks.map(tb => tb.team);
       const avail = Object.keys(teams).find(t => !used.includes(t));
       if (avail) teamBlocks.push({team: avail, outgoing: [], incoming: []});
@@ -385,51 +605,38 @@
         renderTeams();
       }
     };
-
-    // --- Trade logic ---
     document.getElementById('tryTrade').onclick = function() {
-      // Outgoing/incoming
       let tradeMap = teamBlocks.map(tb => ({
         team: tb.team,
         outgoingIdx: tb.outgoing,
         outgoing: tb.outgoing.map(idx => teams[tb.team][idx]),
       }));
-      // Validate minimum: must pick at least one outgoing for each team
       if (tradeMap.some(tm => tm.outgoing.length === 0)) {
         showResult('Trade Failed', 'Each team must trade at least one player.', false);
         return;
       }
-      // Calculate incoming for each team
       let success = true, failMsg = '';
       let teamCount = teamBlocks.length;
-      // Build a matrix: for each team, their incoming is every other team's outgoing
       let allSend = teamBlocks.map((tb, i) => tb.outgoing.map(idx => ({...teams[tb.team][idx], from: tb.team, idx})));
       let allPlayers = teamBlocks.map((tb, i) => teams[tb.team]);
       let allTeams = teamBlocks.map(tb => tb.team);
-
-      // Calculate incoming for each team (players received from all other teams)
       let incoming = [];
       for (let i=0; i<teamCount; ++i) {
         let incArr = [];
         for (let j=0; j<teamCount; ++j) {
           if (i === j) continue;
-          // All players outgoing from team j
           incArr.push(...allSend[j]);
         }
         incoming[i] = incArr;
       }
-
-      // CBA SALARY CHECK: (assume all over cap but below apron for simplicity)
       let tradeOK = true, tradeDetails = [];
       for (let i=0; i<teamCount; ++i) {
         let outgoingSalary = tradeMap[i].outgoing.reduce((a, b) => a + b.salary, 0);
         let incomingSalary = incoming[i].reduce((a, b) => a + b.salary, 0);
-        // Outgoing salary rule: incoming <= outgoing * 1.25 + 250,000
         let maxIncoming = outgoingSalary * 1.25 + 250000;
-        // Roster limit check: team must have at least 13 players after trade (ignore two-way)
-        let stdPlayersOrig = teams[allTeams[i]].filter(p => !p.twoWay).length;
-        let stdOutgoing = tradeMap[i].outgoing.filter(p => !p.twoWay).length;
-        let stdIncoming = incoming[i].filter(p => !p.twoWay).length;
+        let stdPlayersOrig = teams[allTeams[i]].length;
+        let stdOutgoing = tradeMap[i].outgoing.length;
+        let stdIncoming = incoming[i].length;
         let stdAfter = stdPlayersOrig - stdOutgoing + stdIncoming;
         let reasons = [];
         if (stdAfter < 13) {
@@ -440,17 +647,11 @@
           tradeOK = false;
           reasons.push(`Incoming salary ($${salaryFmt(incomingSalary)}) exceeds CBA limit ($${salaryFmt(maxIncoming)}).`);
         }
-        // No two-way player can be traded
-        if (tradeMap[i].outgoing.some(p => p.twoWay)) {
-          tradeOK = false;
-          reasons.push('Cannot trade two-way players.');
-        }
         tradeDetails.push({
           team: allTeams[i],
           outgoingSalary, incomingSalary, maxIncoming, stdAfter, reasons
         });
       }
-      // If any reasons, fail message
       if (!tradeOK) {
         let msg = '';
         tradeDetails.forEach(td => {
@@ -460,7 +661,6 @@
         showResult('Trade Failed', msg, false);
         return;
       }
-      // If all good, show trade result
       let msg = `<div class="result-title">Trade Successful!</div>`;
       teamBlocks.forEach((tb, i) => {
         msg += `<b>${tb.team} trades:</b> ${tradeMap[i].outgoing.map(p => p.name).join(', ')}<br>`;
@@ -469,7 +669,6 @@
       });
       showResult('Trade Successful!', msg, true);
     };
-
     function showResult(title, msg, ok) {
       document.getElementById('tradeResult').innerHTML = `
         <div class="result-block ${ok ? 'success' : 'fail'}">
@@ -478,6 +677,38 @@
         </div>
       `;
     }
+    // Navbar hamburger JS for mobile
+    document.addEventListener("DOMContentLoaded", function() {
+      const hamburger = document.querySelector(".hamburger");
+      const navRight = document.querySelector(".nav-right");
+      const dropdownBtn = document.querySelector(".dropdown-btn");
+      const dropdownContent = document.querySelector(".dropdown-content");
+      if (hamburger) hamburger.addEventListener("click", function() {
+        navRight.classList.toggle("open");
+        hamburger.setAttribute("aria-expanded", navRight.classList.contains("open"));
+      });
+      if (dropdownBtn) dropdownBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        dropdownContent.classList.toggle("show");
+        dropdownBtn.setAttribute("aria-expanded", dropdownContent.classList.contains("show"));
+      });
+      document.addEventListener("click", function(e) {
+        if (dropdownBtn && dropdownContent && !dropdownBtn.contains(e.target) && !dropdownContent.contains(e.target)) {
+          dropdownContent.classList.remove("show");
+          dropdownBtn.setAttribute("aria-expanded", "false");
+        }
+      });
+      document.querySelectorAll(".nav-link, .dropdown-link").forEach(link => {
+        link.addEventListener("click", () => {
+          navRight.classList.remove("open");
+          if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+          if (dropdownContent && dropdownBtn) {
+            dropdownContent.classList.remove("show");
+            dropdownBtn.setAttribute("aria-expanded", "false");
+          }
+        });
+      });
+    });
   </script>
 </body>
 </html>
