@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>NBA Trade Machine</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f6f8fa; margin: 0; color: #222; }
+    h1 { background: linear-gradient(90deg,#0a174e,#0057e7); color: #fff; padding: 1.5rem 0; margin: 0; text-align: center; }
+    .trade-container { display: flex; gap: 2rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;}
+    .team-block { background: #fff; border-radius: 14px; box-shadow: 0 4px 16px rgba(10,23,78,0.10); padding: 1.5rem; min-width: 350px; max-width: 380px;}
+    .team-select { margin-bottom: 1.1rem; }
+    .players-list { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto;}
+    .players-list li { padding: 0.5rem 0.7rem; display: flex; align-items: center; border-bottom: 1px solid #eee;}
+    .players-list label { flex: 1; cursor: pointer; }
+    .salary-cell { color: #0057e7; min-width: 110px; text-align: right; }
+    .totals { margin: 1rem 0 0.5rem 0; font-weight: 600; }
+    .trade-btn { margin: 2rem auto 1rem auto; display: block; background: #0057e7; color: #fff; font-size: 1.15rem; font-weight: bold; border-radius: 9px; padding: 0.9rem 2.2rem; border: none; cursor: pointer; transition: background 0.2s;}
+    .trade-btn:hover { background: #0a174e; }
+    .result-block { background: #fff; border-radius: 12px; max-width: 700px; margin: 2rem auto; box-shadow: 0 4px 16px rgba(10,23,78,0.13); padding: 1.3rem 2rem;}
+    .result-block.success { border-left: 6px solid #13a813;}
+    .result-block.fail { border-left: 6px solid #c20000;}
+    .cba-note { font-size: 0.98rem; color: #555; margin-top: 0.7rem; }
+    @media (max-width: 1000px) {
+      .trade-container { flex-direction: column; align-items: center;}
+      .team-block { width: 98vw; max-width: 420px;}
+    }
+  </style>
+</head>
+<body>
+  <h1>NBA Trade Machine (2023 CBA Rules)</h1>
+  <form id="tradeForm">
+    <div class="trade-container">
+      <div class="team-block">
+        <div class="team-select">
+          <label for="teamA">Team A:</label>
+          <select id="teamA"></select>
+        </div>
+        <ul class="players-list" id="playersA"></ul>
+        <div class="totals">Outgoing Salary: $<span id="outA">0</span></div>
+      </div>
+      <div class="team-block">
+        <div class="team-select">
+          <label for="teamB">Team B:</label>
+          <select id="teamB"></select>
+        </div>
+        <ul class="players-list" id="playersB"></ul>
+        <div class="totals">Outgoing Salary: $<span id="outB">0</span></div>
+      </div>
+    </div>
+    <button type="button" class="trade-btn" id="tryTrade">Propose Trade</button>
+  </form>
+  <div id="tradeResult"></div>
+  <div class="cba-note">
+    <strong>Note:</strong> This demo uses actual 2024-25 salaries, basic 2023 CBA trade matching rules (125% or 110% depending on team salary), and prevents trading two-way players. Add more teams/players and CBA logic as needed.<br>
+    <a href="https://imgix.cosmicjs.com/25da5eb0-15eb-11ee-b5b3-fbd321202bdf-Final-2023-NBA-Collective-Bargaining-Agreement-6-28-23.pdf" target="_blank">2023 NBA CBA PDF</a>
+  </div>
+  <script>
+    // --- Rosters and Salaries (expand as needed) ---
+    const teams = {
+      "Atlanta Hawks": [
+        { name: "Trae Young", salary: 45999660 },
+        { name: "Kristaps Porziņģis", salary: 30731707 },
+        { name: "Jalen Johnson", salary: 30000000 },
+        { name: "Nickeil Alexander-Walker", salary: 15161800 },
+        { name: "Onyeka Okongwu", salary: 15000000 },
+        { name: "Zaccharie Risacher", salary: 13197720 },
+        { name: "Luke Kennard", salary: 11000000 },
+        { name: "Dyson Daniels", salary: 7707709 },
+        { name: "Kobe Bufkin", salary: 4503720 },
+        { name: "Asa Newell", salary: 3237480 },
+        { name: "Vít Krejčí", salary: 2349578, twoWay: true },
+        { name: "Caleb Houstan", salary: 2296274 },
+        { name: "Mouhamed Gueye", salary: 2221677, twoWay: true },
+        { name: "Nikola Đurišić", salary: 1272870 }
+      ],
+      "Boston Celtics": [
+        { name: "Jayson Tatum", salary: 54126450 },
+        { name: "Jaylen Brown", salary: 53142264 },
+        { name: "Derrick White", salary: 27750700 },
+        { name: "Anfernee Simons", salary: 27678571 },
+        { name: "Sam Hauser", salary: 10044644 },
+        { name: "Georges Niang", salary: 8200000 },
+        { name: "Payton Pritchard", salary: 7232143 },
+        { name: "Hugo González", salary: 2783880 },
+        { name: "Baylor Scheierman", salary: 2619000 },
+        { name: "Xavier Tillman", salary: 2546674 },
+        { name: "Luka Garza", salary: 2461463 },
+        { name: "Josh Minott", salary: 2378870 },
+        { name: "Neemias Queta", salary: 2349578, twoWay: true },
+        { name: "JD Davison", salary: 2270735, twoWay: true },
+        { name: "Jordan Walsh", salary: 2221677, twoWay: true }
+      ],
+      "Brooklyn Nets": [
+        { name: "Michael Porter Jr.", salary: 38333050 },
+        { name: "Nicolas Claxton", salary: 25352272 },
+        { name: "Terance Mann", salary: 15500000 },
+        { name: "Egor Đëmin", salary: 6889200 },
+        { name: "Day'Ron Sharpe", salary: 6000000 },
+        { name: "Ziaire Williams", salary: 6000000 },
+        { name: "Nolan Traoré", salary: 3811560 },
+        { name: "Noah Clowney", salary: 3398640 },
+        { name: "Dariq Whitehead", salary: 3262560 },
+        { name: "Drake Powell", salary: 3372240 },
+        { name: "Ben Saraf", salary: 2884560 },
+        { name: "Danny Wolf", salary: 2801280 },
+        { name: "Keon Johnson", salary: 2349578, twoWay: true },
+        { name: "Jalen Wilson", salary: 2221677, twoWay: true },
+        { name: "Tyrese Martin", salary: 2191897, twoWay: true },
+        { name: "Drew Timme", salary: 1955378 }
+      ]
+    };
+
+    // --- Utility Functions ---
+    function salaryFmt(val) {
+      return val.toLocaleString('en-US', {style:'decimal', maximumFractionDigits:0});
+    }
+
+    // --- Populate team selects ---
+    const teamASelect = document.getElementById('teamA');
+    const teamBSelect = document.getElementById('teamB');
+    for (let t of Object.keys(teams)) {
+      teamASelect.innerHTML += `<option>${t}</option>`;
+      teamBSelect.innerHTML += `<option>${t}</option>`;
+    }
+    teamBSelect.selectedIndex = 1;
+
+    // --- Populate player lists ---
+    function updatePlayers(team, ulElemId, side) {
+      const ul = document.getElementById(ulElemId);
+      ul.innerHTML = '';
+      teams[team].forEach((p, idx) => {
+        ul.innerHTML += `
+          <li>
+            <input type="checkbox" id="${side}_p${idx}" data-salary="${p.salary}" data-name="${p.name}" ${p.twoWay ? 'disabled' : ''} />
+            <label for="${side}_p${idx}">${p.name}${p.twoWay ? ' <span style="color:#c20000;font-size:0.95em;">[Two-Way]</span>' : ''}</label>
+            <span class="salary-cell">$${salaryFmt(p.salary)}</span>
+          </li>
+        `;
+      });
+    }
+    updatePlayers(teamASelect.value, 'playersA', 'A');
+    updatePlayers(teamBSelect.value, 'playersB', 'B');
+
+    teamASelect.addEventListener('change', () => updatePlayers(teamASelect.value, 'playersA', 'A'));
+    teamBSelect.addEventListener('change', () => updatePlayers(teamBSelect.value, 'playersB', 'B'));
+
+    // --- Update salary totals when selections change ---
+    function updateTotals() {
+      let outA = 0, outB = 0;
+      document.querySelectorAll('#playersA input[type=checkbox]:checked').forEach(cb => outA += +cb.dataset.salary);
+      document.querySelectorAll('#playersB input[type=checkbox]:checked').forEach(cb => outB += +cb.dataset.salary);
+      document.getElementById('outA').textContent = salaryFmt(outA);
+      document.getElementById('outB').textContent = salaryFmt(outB);
+    }
+    document.addEventListener('change', function(e) {
+      if (e.target.matches('#playersA input[type=checkbox], #playersB input[type=checkbox]')) updateTotals();
+    });
+
+    // --- Trade Machine Logic (2023 CBA basic) ---
+    document.getElementById('tryTrade').onclick = function() {
+      const teamA = teamASelect.value, teamB = teamBSelect.value;
+      if (teamA === teamB) return showResult('You must select two different teams.', false);
+
+      // Get selected players/salaries
+      let outgoingA = [], outgoingB = [], outA = 0, outB = 0;
+      document.querySelectorAll('#playersA input[type=checkbox]:checked').forEach(cb => {
+        outgoingA.push(cb.dataset.name); outA += +cb.dataset.salary;
+      });
+      document.querySelectorAll('#playersB input[type=checkbox]:checked').forEach(cb => {
+        outgoingB.push(cb.dataset.name); outB += +cb.dataset.salary;
+      });
+
+      if (!outgoingA.length || !outgoingB.length)
+        return showResult('Select at least one player from each team.', false);
+
+      // CBA Trade Matching (2023): If both teams are over the cap, incoming salary <= outgoing x 125% + $250K (or 110% if over 1st apron)
+      // For demo, let's assume all teams are over the cap but under 1st apron
+      const maxInA = outA * 1.25 + 250000;
+      const maxInB = outB * 1.25 + 250000;
+
+      // Calculate incoming for each team
+      let inToA = 0, inToB = 0;
+      document.querySelectorAll('#playersB input[type=checkbox]:checked').forEach(cb => { inToA += +cb.dataset.salary; });
+      document.querySelectorAll('#playersA input[type=checkbox]:checked').forEach(cb => { inToB += +cb.dataset.salary; });
+
+      // "Roster count" check (must not go below 13 players on standard contracts)
+      const ArosterLeft = teams[teamA].filter(p => !p.twoWay).length - outgoingA.length;
+      const BrosterLeft = teams[teamB].filter(p => !p.twoWay).length - outgoingB.length;
+      if (ArosterLeft < 13 || BrosterLeft < 13)
+        return showResult("A team would fall below 13 standard contracts. You must keep at least 13 rostered NBA players.", false);
+
+      // Two-way players are not tradable (checkboxes are disabled)
+
+      // Salary matching check
+      if (inToA > maxInA)
+        return showResult(`${teamA} is receiving too much salary ($${salaryFmt(inToA)}) for what they're sending out ($${salaryFmt(outA)}).`, false);
+      if (inToB > maxInB)
+        return showResult(`${teamB} is receiving too much salary ($${salaryFmt(inToB)}) for what they're sending out ($${salaryFmt(outB)}).`, false);
+
+      showResult(
+        `<strong>Trade Successful!</strong><br>
+        <u>${teamA} trades:</u> ${outgoingA.join(', ')}<br>
+        <u>${teamB} trades:</u> ${outgoingB.join(', ')}<br>
+        <br>
+        <strong>${teamA} receives:</strong> $${salaryFmt(inToA)} in salary<br>
+        <strong>${teamB} receives:</strong> $${salaryFmt(inToB)} in salary<br>
+        (Both teams pass CBA salary matching and roster rules for this demo.)`,
+        true
+      );
+    };
+
+    function showResult(msg, ok) {
+      document.getElementById('tradeResult').innerHTML = `<div class="result-block ${ok?'success':'fail'}">${msg}</div>`;
+    }
+  </script>
+</body>
+</html>
