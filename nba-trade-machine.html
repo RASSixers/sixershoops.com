@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>NBA Trade Machine</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap">
+  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
       font-family: 'Inter', Arial, sans-serif;
@@ -12,234 +13,119 @@
       margin: 0;
       color: #23272F;
     }
-    .navbar {
+    .modal-overlay {
       position: fixed;
-      top: 0;
-      width: 100vw;
-      background: #0a174e;
-      color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
-      padding: 0.5rem 2rem;
-      z-index: 1001;
-    }
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .nav-logo {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
-    }
-    .site-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: #fff;
-    }
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-    .nav-link {
-      text-decoration: none;
-      color: #fff;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      transition: background 0.2s;
-      position: relative;
-    }
-    .nav-link.active, .nav-link:hover {
-      background: #0057e7;
-      color: #fff;
-    }
-    .nav-dropdown {
-      position: relative;
-      display: inline-block;
-      margin-left: 2rem;
-    }
-    .dropdown-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.2s;
-      font-size: 1rem;
-      outline: none;
-    }
-    .dropdown-btn:hover,
-    .nav-dropdown:hover .dropdown-btn {
-      background: #0057e7;
-    }
-    .dropdown-content {
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(22,30,45,0.33);
+      z-index: 2222;
       display: none;
-      position: absolute;
-      top: 110%;
-      left: 0;
-      min-width: 220px;
-      background: #fff;
-      box-shadow: 0 4px 20px rgba(10,23,78,0.13);
-      border-radius: 8px;
-      z-index: 1000;
-      flex-direction: column;
-      padding: 0.5rem 0;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s;
     }
-    .nav-dropdown:hover .dropdown-content,
-    .nav-dropdown:focus-within .dropdown-content {
-      display: flex;
-    }
-    .dropdown-link {
-      color: #0a174e;
-      text-decoration: none;
-      padding: 0.7rem 1.2rem;
-      transition: background 0.2s, color 0.2s;
-      font-weight: 500;
-      font-size: 1rem;
-      border-radius: 4px;
-      margin: 0 0.3rem;
-      outline: none;
-    }
-    .dropdown-link:hover {
-      background: #e6f0ff;
-      color: #0057e7;
-    }
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      z-index: 101;
-    }
-    .hamburger span {
-      width: 32px;
-      height: 4px;
-      background: #fff;
-      border-radius: 2px;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
-    }
-    @media (max-width: 950px) {
-      .navbar { padding: 0.5rem 1rem; }
-      .nav-right {
-        display: none;
-        position: absolute;
-        top: 60px;
-        left: 0;
-        width: 100vw;
-        background: #0a174e;
-        flex-direction: column;
-        box-shadow: 0 8px 24px rgba(10,23,78,0.17);
-        padding-bottom: 1rem;
-        z-index: 99;
-        max-height: 0;
-        overflow: hidden;
-        border-radius: 0 0 16px 16px;
-        border-top: 1px solid #0057e7;
-        align-items: flex-start;
-      }
-      .nav-right.open { display: flex; max-height: 1000px; overflow: visible; animation: navShow 0.25s;}
-      @keyframes navShow {
-        from { opacity: 0; transform: translateY(-10px);}
-        to { opacity: 1; transform: translateY(0);}
-      }
-      .hamburger { display: flex; position: fixed; top: 18px; right: 32px; margin-left: 0; background: none; border: none;}
-      .dropdown-content { position: static; min-width: unset; box-shadow: none; background: transparent; border-radius: 0; padding: 0;}
-      .dropdown-link { color: #fff; padding: 0.8rem 1.6rem;}
-      .dropdown-link:hover { background: #0057e7; color: #fff;}
-    }
-    h1 {
-      background: linear-gradient(90deg,#0a174e 60%,#0057e7 100%);
-      color: #fff;
-      padding: 2.5rem 0 1.2rem 0;
-      margin: 0 0 1.1rem 0;
-      text-align: center;
-      font-weight: 800;
-      font-size: 2.2rem;
-      letter-spacing: 1.2px;
-      box-shadow: 0 2px 12px rgba(10,23,78,0.08);
-    }
-    .description-block {
-      max-width: 850px;
-      margin: 1.3rem auto 2.3rem auto;
+    .modal-overlay.active { display: flex; }
+    .trade-modal {
       background: #fff;
       border-radius: 18px;
-      padding: 1.6rem 2.1rem 1.2rem 2.1rem;
-      box-shadow: 0 2px 16px rgba(10,23,78,0.10);
-      font-size: 1.1rem;
-      color: #234;
-      line-height: 1.72;
-      border-left: 7px solid #0057e7;
-    }
-    .description-block strong {
-      color: #0057e7;
-    }
-    .trade-controls {
+      padding: 2.5rem 2.2rem;
+      max-width: 460px;
+      box-shadow: 0 8px 48px rgba(10,23,78,0.23);
       text-align: center;
-      margin: 1.3rem 0 2.2rem 0;
-    }
-    .trade-controls button {
-      background: #0057e7;
-      color: #fff;
-      font-weight: 600;
-      font-size: 1.08rem;
-      padding: 0.7rem 1.8rem;
-      border-radius: 8px;
-      border: none;
-      margin: 0 0.7rem;
-      cursor: pointer;
-      transition: background 0.18s;
-    }
-    .trade-controls button:disabled {
-      background: #bbb;
-      cursor: not-allowed;
-    }
-    .trade-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2.5rem;
-      justify-content: center;
-      margin: 2.5rem 0;
-    }
-    .team-block {
-      background: #fff;
-      border-radius: 22px;
-      box-shadow: 0 6px 40px rgba(10,23,78,0.13);
-      padding: 1.7rem 1.4rem 1.4rem 1.4rem;
-      min-width: 350px;
-      max-width: 410px;
-      flex: 1 1 350px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      margin-bottom: 1rem;
       position: relative;
-      transition: box-shadow 0.17s, transform 0.12s;
+      animation: scaleIn 0.22s;
+      min-width: 310px;
     }
-    .team-block:hover {
-      box-shadow: 0 10px 48px rgba(0,87,231,0.18);
-      transform: translateY(-2px) scale(1.01);
+    @keyframes scaleIn {
+      from { transform: scale(0.86); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
     }
+    @keyframes fadeIn {
+      from { opacity: 0;}
+      to   { opacity: 1;}
+    }
+    .modal-close-btn {
+      position: absolute; top: 1.1rem; right: 1.5rem;
+      font-size: 2rem;
+      color: #0057e7;
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+    .modal-close-btn:hover { opacity: 1; }
+    .modal-title-success {
+      color: #22a96e;
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1.6rem;
+    }
+    .modal-title-fail {
+      color: #d42c2c;
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1.6rem;
+    }
+    .modal-section {
+      text-align: left;
+      padding: 1rem 0 0.3rem 0;
+      margin-bottom: 0.8rem;
+    }
+    .modal-section label {
+      font-weight: bold;
+      color: #0057e7;
+      margin-bottom: 0.2rem;
+      display: block;
+    }
+    .modal-player-group {
+      margin-bottom: 0.7rem;
+    }
+    .modal-player-list {
+      margin: 0 0 0.6rem 0; padding: 0; list-style: none;
+      display: flex; flex-wrap: wrap; gap: 0.6rem;
+    }
+    .modal-player-list li {
+      background: #f0f5fd;
+      border-radius: 6px;
+      padding: 0.4em 0.85em;
+      font-weight: 600;
+      color: #23272f;
+      font-size: 1.1rem;
+      box-shadow: 0 1px 5px rgba(10,23,78,0.06);
+      display: flex; align-items: center;
+      gap: 0.6em;
+    }
+    .modal-team-label {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #0057e7;
+      margin-bottom: 0.3em;
+      margin-top: 0.7em;
+      display: block;
+    }
+    .modal-fail-reason {
+      color: #d42c2c;
+      font-weight: 600;
+      font-size: 1.13rem;
+      padding: 1rem 0 0.5rem 0;
+      line-height: 1.5;
+    }
+
+    /* --- Modernized Team Header --- */
     .team-header {
       display: flex;
       align-items: center;
       gap: 1.2rem;
       background: linear-gradient(90deg, #0057e7 60%, #2688ff 100%);
-      border-radius: 16px;
-      box-shadow: 0 2px 12px rgba(0,87,231,0.09);
-      padding: 0.75rem 1.1rem;
-      margin-bottom: 1.15rem;
+      border-radius: 100px;
+      box-shadow: 0 2px 15px rgba(0,87,231,0.12);
+      padding: 0.85rem 1.4rem;
+      margin-bottom: 1.1rem;
       min-height: 55px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
     }
     .team-label {
       color: #fff;
@@ -247,23 +133,25 @@
       font-size: 1.18rem;
       margin-right: 0.8rem;
       letter-spacing: 0.02em;
+      text-shadow: 0 2px 6px rgba(10,23,78,0.09);
     }
     .team-header select {
-      font-size: 1.1rem;
-      border-radius: 8px;
+      font-size: 1.13rem;
+      border-radius: 9px;
       border: none;
-      padding: 0.45rem 1.2rem;
+      padding: 0.45rem 1.5rem;
       font-weight: 600;
       background: #ecf3fb;
       color: #0a174e;
       box-shadow: 0 2px 9px rgba(10,23,78,0.06);
       transition: background 0.14s;
+      outline: none;
     }
     .remove-team-btn {
       background: none;
       color: #fff;
       border: none;
-      font-size: 1.25rem;
+      font-size: 1.55rem;
       font-weight: bold;
       cursor: pointer;
       margin-left: auto;
@@ -272,193 +160,72 @@
       box-shadow: none;
       padding: 0;
       opacity: 0.85;
+      position: absolute;
+      right: 16px;
+      top: 10px;
     }
     .remove-team-btn:hover { color: #ffc2c2; }
+
+    /* --- All Players visible --- */
     .players-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      max-height: 320px;
-      overflow-y: auto;
-      border-radius: 14px;
-      background: #f9fbfc;
-      border: 1.5px solid #e4eaf2;
-      box-shadow: 0 2px 10px rgba(10,23,78,0.05);
-      margin-bottom: 1.3rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
+      max-height: unset !important; /* show all players */
+      overflow-y: visible !important;
+      gap: 0.65rem !important;
     }
-    .players-list li {
-      display: flex;
-      align-items: center;
-      gap: 1.1rem;
-      padding: 0.82rem 1.1rem;
-      background: #fff;
-      border-radius: 10px;
+
+    /* --- NavBar Modernization for Desktop --- */
+    .navbar {
+      border-bottom: 2px solid #18307c;
+      padding: 0.5rem 3.5vw !important;
+      min-height: 64px;
+      box-shadow: 0 2px 18px rgba(10,23,78,0.09);
       font-size: 1.12rem;
-      box-shadow: 0 1.5px 6px rgba(0,87,231,0.04);
-      position: relative;
-      transition: background 0.15s, box-shadow 0.12s, transform 0.11s;
-      cursor: pointer;
-      border: 1px solid #e9eef3;
     }
-    .players-list li.selected,
-    .players-list li:hover {
-      background: #e6f0ff;
-      box-shadow: 0 2px 10px rgba(0,87,231,0.13);
-      transform: scale(1.02);
-      border: 1.5px solid #0057e7;
+    .nav-left { gap: 1.22rem; }
+    .nav-right {
+      gap: 2.5rem;
+      margin-right: 1vw;
+      font-size: 1.13em;
     }
-    .player-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(120deg,#dbeafe 70%,#e0e7ef 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.21em;
-      font-weight: bold;
-      color: #0a174e;
-      flex-shrink: 0;
-      margin-right: 6px;
-      box-shadow: 0 2px 8px rgba(10,23,78,0.07);
-      border: 2px solid #fff;
-      letter-spacing: 0.01em;
-      text-transform: uppercase;
-    }
-    .players-list input[type=checkbox] {
-      margin-right: 0.1em;
-      accent-color: #0057e7;
-      cursor: pointer;
-      width: 1.27em; height: 1.27em;
-      border-radius: 5px;
-      border: 1.5px solid #0057e7;
-      box-shadow: 0 0.5px 2px rgba(0,87,231,0.06);
-      transition: box-shadow 0.11s;
-      flex-shrink: 0;
-    }
-    .players-list label {
-      flex: 1;
-      cursor: pointer;
+    .nav-link, .dropdown-btn {
+      font-size: 1.08em;
+      padding: 0.67em 1.4em;
+      border-radius: 7px;
+      margin: 0 0.2em;
       font-weight: 600;
-      letter-spacing: 0.01em;
-      color: #273a58;
-    }
-    .players-list .salary-cell {
-      color: #0057e7;
-      min-width: 124px;
-      text-align: right;
-      font-weight: 700;
-      font-size: 1.09rem;
-      letter-spacing: 0.01em;
-    }
-    .totals {
-      margin: 1.1rem 0 0 0;
-      font-weight: 700;
-      font-size: 1.18rem;
-      color: #333;
-      text-align: right;
-    }
-    .payroll-box {
-      margin-top: 1.1rem;
-      background: #f3f7fb;
-      border-radius: 9px;
-      padding: 1.1rem 1.2rem 0.7rem 1.2rem;
-      font-size: 1.07rem;
-      color: #0a174e;
-      box-shadow: 0 2px 10px rgba(0,87,231,0.05);
-    }
-    .payroll-box .line { margin-bottom: 0.47rem; }
-    .payroll-box .level {
-      font-weight: 700;
-      min-width: 130px;
-      display: inline-block;
-    }
-    .payroll-box .over { color: #b91c1c; font-weight: 700;}
-    .payroll-box .under { color: #15803d; font-weight: 700;}
-    .trade-btn {
-      margin: 2.4rem auto 1.6rem auto;
-      display: block;
-      background: #0057e7;
-      color: #fff;
-      font-size: 1.27rem;
-      font-weight: bold;
-      border-radius: 13px;
-      padding: 1.1rem 3.2rem;
+      background: transparent;
       border: none;
-      cursor: pointer;
-      transition: background 0.2s, box-shadow 0.18s;
-      box-shadow: 0 4px 16px rgba(0,87,231,0.13);
-      letter-spacing: 0.03em;
+      outline: none;
+      transition: background 0.18s, color 0.18s, box-shadow 0.13s;
     }
-    .trade-btn:hover {
-      background: #0a174e;
-      box-shadow: 0 8px 28px rgba(0,87,231,0.17);
+    .nav-link:hover, .dropdown-btn:hover, .nav-link.active {
+      background: linear-gradient(90deg,#0057e7 60%,#2688ff 100%);
+      color: #fff !important;
+      box-shadow: 0 3px 12px rgba(0,87,231,0.10);
     }
-    .result-block {
-      background: #fff;
-      border-radius: 14px;
-      max-width: 700px;
-      margin: 2rem auto;
-      box-shadow: 0 4px 16px rgba(10,23,78,0.13);
-      padding: 1.7rem 2.5rem;
-      font-size: 1.16rem;
-      font-weight: 500;
-      border-left: 8px solid #eee;
-      text-align: left;
+    .dropdown-content {
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 235px;
+      font-size: 1.07em;
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(10,23,78,0.13);
     }
-    .result-block.success {
-      border-left: 8px solid #13a813;
-      color: #13a813;
-      background: #f3fff4;
+    @media (min-width: 1400px) {
+      .navbar { padding-left: 7vw!important; padding-right: 7vw!important;}
+      .nav-right { margin-right: 4vw;}
     }
-    .result-block.fail {
-      border-left: 8px solid #c20000;
-      color: #c20000;
-      background: #fff7f7;
-    }
-    .result-title {
-      font-size: 1.27rem;
-      font-weight: 700;
-      margin-bottom: 0.6rem;
-      letter-spacing: 0.5px;
-    }
-    .back-home-btn {
-      display: inline-block;
-      background: #0a174e;
-      color: #fff;
-      padding: 0.7rem 2.2rem;
-      border-radius: 8px;
-      font-size: 1.12rem;
-      font-weight: 700;
-      text-decoration: none;
-      box-shadow: 0 2px 8px rgba(10,23,78,0.12);
-      transition: background 0.2s;
-      margin: 2.7rem auto 2.5rem auto;
-      text-align: center;
-      display: block;
-      width: fit-content;
-    }
-    .back-home-btn:hover {
-      background: #0057e7;
-      color: #fff;
-    }
-    @media (max-width: 1200px) {
-      .trade-container { flex-direction: column; align-items: center;}
-      .team-block { width: 99vw; max-width: 480px;}
+    @media (max-width: 900px) {
+      .navbar { padding-left: 0.9rem!important; padding-right: 0.9rem!important;}
+      .nav-right { gap: 1.1rem;}
     }
     @media (max-width: 600px) {
-      .team-block { padding: 1.1rem 0.6rem; min-width: 0; }
-      .result-block { padding: 1.1rem 0.7rem; }
-      .trade-btn { padding: 0.7rem 1.2rem; font-size: 1.07rem;}
-      .back-home-btn { margin: 1.5rem auto 1.5rem auto;}
+      .navbar { font-size: 1em;}
+      .nav-right { gap: 0.5rem;}
     }
   </style>
 </head>
 <body>
-  <!-- Modern Navbar (with Home and Trade Machine navs) -->
   <nav class="navbar">
     <div class="nav-left">
       <img src="sixershoopslogo.png" alt="SixersHoops Logo" class="nav-logo" />
@@ -471,7 +238,7 @@
     </button>
     <div class="nav-right">
       <a href="index.html" class="nav-link">Home</a>
-      <div style="margin-left: 2rem;" class="nav-dropdown">
+      <div class="nav-dropdown">
         <button class="dropdown-btn" aria-haspopup="true" aria-expanded="false">Cap &amp; Draft Management</button>
         <div class="dropdown-content">
           <a href="salary.html" class="dropdown-link">Salary Breakdown</a>
@@ -479,25 +246,20 @@
           <a href="depth.html" class="dropdown-link">Depth Chart</a>
         </div>
       </div>
-      <a href="nba-trade-machine.html" class="nav-link active" style="margin-left: 2rem;">Trade Machine</a>
+      <a href="nba-trade-machine.html" class="nav-link active">Trade Machine</a>
     </div>
   </nav>
-  <div style="height:72px"></div>
+  <div style="height:70px"></div>
   <h1>NBA Trade Machine</h1>
   <div class="description-block">
     <strong>About the Trade Machine:</strong> This NBA Trade Machine lets you simulate up to 5-team trades under the 2025 CBA rules.<br>
     <strong>Note:</strong> This tool doesn't include salary bonuses or incentives, so numbers may be slightly off from actual cap sheets.<br><br>
-    <strong>What Are the Aprons?</strong> The aprons are salary thresholds above the cap that trigger additional restrictions:
+    <b>Aprons?</b> Salary thresholds above the cap that trigger extra restrictions:<br>
+    <span style="color:#0057e7;font-weight:600;">Salary Cap:</span> $154.647M &nbsp; <span style="color:#b91c1c;font-weight:600;">Luxury Tax:</span> $187.895M &nbsp;
+    <span style="color:#15803d;font-weight:600;">First Apron:</span> $195.945M &nbsp; <span style="color:#2c2c2c;font-weight:600;">Second Apron:</span> $207.824M
     <ul>
-      <li><b>Salary Cap</b>: The base team spending limit ($154.647M).</li>
-      <li><b>Luxury Tax</b>: Teams above this pay tax ($187.895M).</li>
-      <li><b>First Apron</b>: Extra restrictions start ($195.945M).</li>
-      <li><b>Second Apron</b>: The toughest rules apply ($207.824M).</li>
-    </ul>
-    <strong>Trade Rules Based on Apron Status:</strong>
-    <ul>
-      <li><b>First Apron:</b> Team can only take back the greater of 100% + $5M or 125% + $100K of what it sends out.</li>
-      <li><b>Second Apron:</b> Team cannot take back more salary than it sends out—strict dollar-for-dollar matching. No aggregation allowed.</li>
+      <li><b>1st Apron:</b> Can only take back the greater of 100% + $5M or 125% + $100k of outgoing salary.</li>
+      <li><b>2nd Apron:</b> Can take back no more than sent out, and can't aggregate salaries for matching.</li>
     </ul>
     <span style="color:#b91c1c"><b>Tip:</b> If your trade fails, check if a team is above an apron and the new stricter rules apply!</span>
   </div>
@@ -511,14 +273,22 @@
   </form>
   <div id="tradeResult"></div>
   <a href="index.html" class="back-home-btn">← Back to Home</a>
+  <!-- Trade Result Modal -->
+  <div class="modal-overlay" id="tradeModal">
+    <div class="trade-modal" role="dialog" aria-modal="true" tabindex="-1">
+      <button class="modal-close-btn" id="closeModalBtn" aria-label="Close Modal">&times;</button>
+      <div id="modalTitle"></div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
   <script>
     // NBA thresholds
     const SALARY_CAP = 154647000;
     const LUXURY_TAX = 187895000;
     const FIRST_APRON = 195945000;
     const SECOND_APRON = 207824000;
-
     const maxTeams = 5, minTeams = 2;
+    // All rosters, parsed from your images
     const teams = {
       "Atlanta Hawks": [
         { name: "Trae Young", salary: 45999660 },
@@ -570,6 +340,75 @@
         { name: "Jalen Wilson", salary: 2221677 },
         { name: "Tyrese Martin", salary: 2191897 },
         { name: "Drew Timme", salary: 1955378 }
+      ],
+      "Charlotte Hornets": [
+        { name: "LaMelo Ball", salary: 37958760 },
+        { name: "Miles Bridges", salary: 25000000 },
+        { name: "Collin Sexton", salary: 18975000 },
+        { name: "Josh Green", salary: 13666666 },
+        { name: "Grant Williams", salary: 13645500 },
+        { name: "Brandon Miller", salary: 11968800 },
+        { name: "Kon Kneuppel", salary: 10015680 },
+        { name: "Pat Connaughton", salary: 9423868 },
+        { name: "Tre Mann", salary: 8000000 },
+        { name: "Tidjane Salaün", salary: 7863240 },
+        { name: "Liam McNeeley", salary: 2763960 },
+        { name: "DaQuan Jeffries", salary: 2743777 },
+        { name: "Nick Smith Jr.", salary: 2710668 },
+        { name: "Spencer Dinwiddie", salary: 2296274 },
+        { name: "Sion James", salary: 2296274 },
+        { name: "Ryan Kalkbrenner", salary: 2296274 },
+        { name: "Mason Plumlee", salary: 2296274 },
+        { name: "Mousa Diabate", salary: 2270735 }
+      ],
+      "Chicago Bulls": [
+        { name: "Nikola Vučević", salary: 21481481 },
+        { name: "Zach Collins", salary: 18080496 },
+        { name: "Patrick Williams", salary: 18000000 },
+        { name: "Kevin Huerter", salary: 17991071 },
+        { name: "Coby White", salary: 12888889 },
+        { name: "Isaac Okoro", salary: 11000000 },
+        { name: "Jalen Smith", salary: 9000000 },
+        { name: "Tre Jones", salary: 8000000 },
+        { name: "Ayo Dosunmu", salary: 7518518 },
+        { name: "Jevon Carter", salary: 6809524 },
+        { name: "Matas Buzelis", salary: 5455560 },
+        { name: "Noa Essengue", salary: 5429620 },
+        { name: "Dalen Terry", salary: 5399188 },
+        { name: "Julian Phillips", salary: 2221677 }
+      ],
+      "Cleveland Cavaliers": [
+        { name: "Donovan Mitchell", salary: 46394100 },
+        { name: "Evan Mobley", salary: 46394100 },
+        { name: "Darius Garland", salary: 39446090 },
+        { name: "DeAndre Hunter", salary: 23303571 },
+        { name: "Jarrett Allen", salary: 20000000 },
+        { name: "Max Strus", salary: 15936452 },
+        { name: "Lonzo Ball", salary: 10000000 },
+        { name: "Sam Merrill", salary: 8482144 },
+        { name: "Dean Wade", salary: 6623456 },
+        { name: "Jaylon Tyson", salary: 3492480 },
+        { name: "Larry Nance Jr.", salary: 2296274 },
+        { name: "Craig Porter Jr.", salary: 2221677 },
+        { name: "Tyrese Proctor", salary: 1272870 }
+      ],
+      "Dallas Mavericks": [
+        { name: "Anthony Davis", salary: 54126450 },
+        { name: "Kyrie Irving", salary: 36566002 },
+        { name: "Klay Thompson", salary: 16666667 },
+        { name: "Daniel Gafford", salary: 14386320 },
+        { name: "P.J. Washington", salary: 14152174 },
+        { name: "Cooper Flagg", salary: 13825920 },
+        { name: "Caleb Martin", salary: 9594044 },
+        { name: "Naji Marshall", salary: 9000000 },
+        { name: "Max Christie", salary: 7714286 },
+        { name: "Jaden Hardy", salary: 6000000 },
+        { name: "D'Angelo Russell", salary: 5685000 },
+        { name: "Dereck Lively II", salary: 5253360 },
+        { name: "Dwight Powell", salary: 4000000 },
+        { name: "Olivier-Maxence Prosper", salary: 3007080 },
+        { name: "Dante Exum", salary: 2296274 },
+        { name: "Brandon Williams", salary: 2270735 }
       ]
     };
     let teamBlocks = [
@@ -577,7 +416,7 @@
       { team: "Boston Celtics", outgoing: [], incoming: [] }
     ];
     function salaryFmt(val) {
-      return "$" + val.toLocaleString('en-US', {maximumFractionDigits: 0});
+      return "$" + Number(val).toLocaleString('en-US', {maximumFractionDigits: 0});
     }
     function initials(name) {
       return name
@@ -693,6 +532,7 @@
         renderTeams();
       }
     };
+
     // --- NBA apron-aware trade logic
     document.getElementById('tryTrade').onclick = function() {
       let tradeMap = teamBlocks.map(tb => ({
@@ -701,7 +541,7 @@
         outgoing: tb.outgoing.map(idx => teams[tb.team][idx]),
       }));
       if (tradeMap.some(tm => tm.outgoing.length === 0)) {
-        showResult('Trade Failed', 'Each team must trade at least one player.', false);
+        showModal('fail', null, 'Each team must trade at least one player.');
         return;
       }
       let teamCount = teamBlocks.length;
@@ -738,22 +578,17 @@
           tradeOK = false;
           reasons.push('Would leave fewer than 13 standard contracts.');
         }
-
         // Salary matching: enforce stricter rules if above aprons
         if (overSecondApron) {
-          // No aggregation, dollar for dollar: each incoming player's salary can't exceed the salary of any outgoing player
-          // and total incoming can't exceed total outgoing
           if (incomingSalary > outgoingSalary) {
             tradeOK = false;
             reasons.push(`Above 2nd apron: cannot take back more salary than sent out (incoming: ${salaryFmt(incomingSalary)}, outgoing: ${salaryFmt(outgoingSalary)}).`);
           }
-          // Aggregation not allowed (for simplicity: block if more than one outgoing and incoming player)
           if (tradeMap[i].outgoing.length > 1 && incoming[i].length > 1) {
             tradeOK = false;
             reasons.push('Above 2nd apron: cannot aggregate salaries from multiple players.');
           }
         } else if (overFirstApron) {
-          // Can take back the greater of 100% + $5M OR 125% + $100k
           let max1 = outgoingSalary * 1.25 + 100000;
           let max2 = outgoingSalary + 5000000;
           let maxIncoming = Math.max(max1, max2);
@@ -762,44 +597,71 @@
             reasons.push(`Above 1st apron: cannot take back more than the greater of 125% + $100k (${salaryFmt(max1)}) or 100% + $5M (${salaryFmt(max2)}).`);
           }
         } else {
-          // Standard rules: can take back up to 125% + $250k
           let maxIncoming = outgoingSalary * 1.25 + 250000;
           if (incomingSalary > maxIncoming) {
             tradeOK = false;
             reasons.push(`Cannot take back more than 125% + $250k of outgoing salary (${salaryFmt(maxIncoming)}).`);
           }
         }
-
         tradeDetails.push({
           team: allTeams[i],
           outgoingSalary, incomingSalary, stdAfter, reasons
         });
       }
       if (!tradeOK) {
-        let msg = '';
+        let failMsg = '';
         tradeDetails.forEach(td => {
           if (td.reasons.length)
-            msg += `<div><b>${td.team}:</b> ${td.reasons.join(' ')}</div>`;
+            failMsg += `<div class="modal-fail-reason"><b>${td.team}:</b> ${td.reasons.join(' ')}</div>`;
         });
-        showResult('Trade Failed', msg, false);
+        showModal('fail', null, failMsg);
         return;
       }
-      let msg = `<div class="result-title">Trade Successful!</div>`;
+      // --- Modal: show only trade player movement ---
+      let modalContent = '';
       teamBlocks.forEach((tb, i) => {
-        msg += `<b>${tb.team} trades:</b> ${tradeMap[i].outgoing.map(p => p.name).join(', ')}<br>`;
-        msg += `<b>${tb.team} receives:</b> ${incoming[i].map(p => p.name + (p.from ? ` (from ${p.from})` : '')).join(', ') || "(none)"}<br>`;
-        msg += `<span style="font-size:0.97em;color:#444;">Incoming salary: ${salaryFmt(incoming[i].reduce((a, b) => a + b.salary, 0))}, Outgoing: ${salaryFmt(tradeMap[i].outgoing.reduce((a, b) => a + b.salary, 0))}</span><br><br>`;
+        if (tradeMap[i].outgoing.length) {
+          modalContent += `<div class="modal-team-label">${tb.team} sends:</div><ul class="modal-player-list">`;
+          modalContent += tradeMap[i].outgoing.map(p => `<li>${p.name}</li>`).join('');
+          modalContent += `</ul>`;
+        }
       });
-      showResult('Trade Successful!', msg, true);
+      teamBlocks.forEach((tb, i) => {
+        if (incoming[i].length) {
+          modalContent += `<div class="modal-team-label">${tb.team} receives:</div><ul class="modal-player-list">`;
+          modalContent += incoming[i].map(p => `<li>${p.name} <span style="color:#666;font-size:0.98em;font-weight:400;">(${p.from})</span></li>`).join('');
+          modalContent += `</ul>`;
+        }
+      });
+      showModal('success', "Trade Successful!", modalContent);
     };
-    function showResult(title, msg, ok) {
-      document.getElementById('tradeResult').innerHTML = `
-        <div class="result-block ${ok ? 'success' : 'fail'}">
-          <div class="result-title">${title}</div>
-          ${msg}
-        </div>
-      `;
+    function showModal(type, title, content) {
+      const modal = document.getElementById('tradeModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalContent = document.getElementById('modalContent');
+      modalTitle.innerHTML = type === 'success'
+        ? `<div class="modal-title-success">${title || 'Trade Successful!'}</div>`
+        : `<div class="modal-title-fail">Trade Failed</div>`;
+      modalContent.innerHTML = content;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
+    document.getElementById('closeModalBtn').onclick = function() {
+      document.getElementById('tradeModal').classList.remove('active');
+      document.body.style.overflow = '';
+    };
+    document.getElementById('tradeModal').onclick = function(e) {
+      if (e.target === this) {
+        this.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    };
+    document.addEventListener('keydown', function(e) {
+      if (e.key === "Escape") {
+        document.getElementById('tradeModal').classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
     // Navbar hamburger JS for mobile
     document.addEventListener("DOMContentLoaded", function() {
       const hamburger = document.querySelector(".hamburger");
