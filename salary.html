@@ -6,77 +6,163 @@
   <title>Sixers Salary Breakdown | SixersHoops</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- Google Analytics 4 (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T1V9Q0MNEM');
+  </script>
   <style>
-    /* ...keep all your existing styles here... */
-
-    /* Additions for interactive table/modal */
-    .salary-table tbody tr.selected, .salary-table tbody tr:focus {
-      outline: 2px solid #0057e7;
-      background: #eaf2fb !important;
+    .salary-hero {
+      background: linear-gradient(120deg, #0a174e 60%, #0057e7 100%);
+      color: #fff;
+      padding: 4rem 0 2rem 0;
+      text-align: center;
+      margin-top: 60px;
+      box-shadow: 0 4px 24px rgba(10,23,78,0.12);
     }
-    .player-details-modal {
-      display: none;
-      position: fixed;
-      z-index: 9999;
-      left: 0;
-      top: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(10,23,78,0.52);
+    .salary-hero-content {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
     }
-    .modal-content {
+    .salary-logo {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      margin-bottom: 1.5rem;
       background: #fff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      border: 2px solid #fff;
+    }
+    .salary-title {
+      font-size: 2.7rem;
+      font-weight: bold;
+      font-family: 'Georgia', serif;
+      letter-spacing: 2px;
+      margin-bottom: 0.5rem;
+    }
+    .salary-subtitle {
+      font-size: 1.2rem;
+      font-weight: 400;
+      opacity: 0.85;
+      margin-bottom: 1.5rem;
+    }
+    .salary-main-content {
+      max-width: 900px;
+      margin: 2rem auto 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(10,23,78,0.09);
+      padding: 2rem 2.5rem;
+    }
+    .salary-section-title {
+      font-size: 1.6rem;
       color: #222;
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 8px 32px rgba(10,23,78,0.18);
-      max-width: 90vw;
-      max-height: 80vh;
-      overflow-y: auto;
-      min-width: 300px;
-      position: relative;
-      animation: modalShow 0.25s;
+      font-weight: 700;
+      margin-bottom: 1.1rem;
+      font-family: 'Georgia', serif;
     }
-    @keyframes modalShow {
-      from { opacity: 0; transform: translateY(-50px);}
-      to { opacity: 1; transform: translateY(0);}
-    }
-    .close-modal-btn {
-      position: absolute;
-      top: 10px;
-      right: 18px;
-      font-size: 1.5rem;
+    .salary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+      font-size: 1.08rem;
       color: #222;
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: color 0.2s;
+      background: #fff;
     }
-    .close-modal-btn:hover {
+    .salary-table th, .salary-table td {
+      padding: 0.7rem 0.7rem;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    .salary-table th {
+      background: #f6f8fa;
+      font-weight: 700;
+    }
+    .highlight-green {
+      background: #d4f8d4 !important;
+      font-weight: bold;
+    }
+    .highlight-yellow {
+      background: #fff7cc !important;
+      font-weight: bold;
+    }
+    .twoway-row {
+      color: #c20000;
+      font-weight: bold;
+    }
+    .salary-summary {
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      color: #222;
+    }
+    .notes-block {
+      font-size: 1.08rem;
+      color: #222;
+      margin-bottom: 2rem;
+    }
+    .notes-block ul {
+      margin-bottom: 0;
+    }
+    .notes-block li {
+      margin-bottom: 0.7rem;
+    }
+    .notes-key {
+      margin-top: 1.5rem;
+      margin-bottom: 0.7rem;
+      font-weight: 700;
+    }
+    .key-green {
+      color: #13a813;
+      font-weight: bold;
+    }
+    .key-red {
+      color: #c20000;
+      font-weight: bold;
+    }
+    .key-blue {
       color: #0057e7;
+      font-weight: bold;
     }
-    .filter-section {
-      margin: 0 0 1.2rem 0;
-      text-align: right;
+    .key-yellow {
+      color: #bca200;
+      font-weight: bold;
     }
-    .filter-input {
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      border: 1px solid #bbb;
-      font-size: 1rem;
-      margin-left: 0.7rem;
-      width: 220px;
-      max-width: 70vw;
-      box-sizing: border-box;
+    .back-home {
+      margin: 2.5rem 0 0 0;
+      text-align: center;
+    }
+    .back-home-btn {
+      display: inline-block;
+      background: #0a174e;
+      color: #fff;
+      padding: 0.7rem 2.2rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.12);
+      transition: background 0.2s;
+    }
+    .back-home-btn:hover {
+      background: #0057e7;
     }
     @media (max-width: 900px) {
-      .modal-content {
-        padding: 1rem;
+      .salary-main-content {
+        padding: 1.2rem 0.6rem;
       }
-      .filter-input { width: 100%; margin-top: 0.5rem;}
-      .filter-section { text-align: left;}
+      .salary-logo {
+        width: 120px;
+        height: 120px;
+      }
+      .salary-table th, .salary-table td {
+        padding: 0.4rem 0.2rem;
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
@@ -108,11 +194,7 @@
   <main class="salary-main-content">
     <section>
       <h2 class="salary-section-title">Payroll</h2>
-      <div class="filter-section">
-        <label for="playerFilter">Filter by name:</label>
-        <input type="text" id="playerFilter" class="filter-input" placeholder="Start typing a player name..." />
-      </div>
-      <table class="salary-table" id="salaryTable">
+      <table class="salary-table">
         <thead>
           <tr>
             <th>#</th>
@@ -121,22 +203,23 @@
           </tr>
         </thead>
         <tbody>
-          <tr data-player="Joel Embiid"><td>1</td><td>Joel Embiid</td><td>$55,224,526</td></tr>
-          <tr data-player="Paul George"><td>2</td><td>Paul George</td><td>$51,666,090</td></tr>
-          <tr data-player="Tyrese Maxey"><td>3</td><td>Tyrese Maxey</td><td>$37,958,760</td></tr>
-          <tr data-player="VJ Edgecombe"><td>4</td><td>VJ Edgecombe</td><td>$11,108,880</td></tr>
-          <tr data-player="Kelly Oubre Jr."><td>5</td><td>Kelly Oubre Jr.</td><td>$8,382,150</td></tr>
-          <tr data-player="Andre Drummond"><td>6</td><td>Andre Drummond</td><td>$5,000,000</td></tr>
-          <tr data-player="Jared McCain"><td>7</td><td>Jared McCain</td><td>$4,221,360</td></tr>
-          <tr data-player="Trendon Watford"><td>8</td><td>Trendon Watford</td><td>$2,461,463</td></tr>
-          <tr data-player="Eric Gordon"><td>9</td><td>Eric Gordon</td><td>$2,296,274</td></tr>
-          <tr data-player="Justin Edwards"><td>11</td><td>Justin Edwards</td><td>$2,048,494</td></tr>
-          <tr class="highlight-green" data-player="Adem Bona"><td>12</td><td>Adem Bona</td><td>$1,955,378</td></tr>
-          <tr class="highlight-yellow" data-player="Johnni Broome"><td>13</td><td>Johnni Broome</td><td>$1,272,870</td></tr>
-          <tr data-player="Kyle Lowry"><td>14</td><td>Kyle Lowry</td><td>$2,296,274</td></tr>
+          <tr><td>1</td><td>Joel Embiid</td><td>$55,224,526</td></tr>
+          <tr><td>2</td><td>Paul George</td><td>$51,666,090</td></tr>
+          <tr><td>3</td><td>Tyrese Maxey</td><td>$37,958,760</td></tr>
+          <tr><td>4</td><td>VJ Edgecombe</td><td>$11,108,880</td></tr>
+          <tr><td>5</td><td>Kelly Oubre Jr.</td><td>$8,382,150</td></tr>
+          <tr><td>6</td><td>Andre Drummond</td><td>$5,000,000</td></tr>
+          <tr><td>7</td><td>Jared McCain</td><td>$4,221,360</td></tr>
+          <tr><td>8</td><td>Trendon Watford</td><td>$2,461,463</td></tr>
+          <tr><td>9</td><td>Eric Gordon</td><td>$2,296,274</td></tr>
+          <tr class="highlight-green"><td>10</td><td>Ricky Council IV</td><td>$2,221,677</td></tr>
+          <tr><td>11</td><td>Justin Edwards</td><td>$2,048,494</td></tr>
+          <tr class="highlight-green"><td>12</td><td>Adem Bona</td><td>$1,955,378</td></tr>
+          <tr class="highlight-yellow"><td>13</td><td>Johnni Broome</td><td>$1,272,870</td></tr>
+          <tr><td>14</td><td>Kyle Lowry</td><td>$2,296,274</td></tr>
         </tbody>
       </table>
-      <table class="salary-table" id="twowayTable">
+      <table class="salary-table">
         <thead>
           <tr>
             <th>#</th>
@@ -145,9 +228,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr class="twoway-row" data-player="Hunter Sallis"><td>1</td><td>Hunter Sallis</td><td>$0</td></tr>
-          <tr class="twoway-row" data-player="Dominick Barlow"><td>2</td><td>Dominick Barlow</td><td>$0</td></tr>
-          <tr class="twoway-row" data-player="Jabari Walker"><td>3</td><td>Jabari Walker</td><td>$0</td></tr>
+          <tr class="twoway-row"><td>1</td><td>Hunter Sallis</td><td>$0</td></tr>
+          <tr class="twoway-row"><td>2</td><td>Dominick Barlow</td><td>$0</td></tr>
+          <tr class="twoway-row"><td>3</td><td>Jabari Walker</td><td>$0</td></tr>
         </tbody>
       </table>
       <div class="salary-summary">
@@ -161,8 +244,9 @@
       <h2 class="salary-section-title">Notes</h2>
       <div class="notes-block">
         <ul>
-          <li data-player="Johnni Broome"><strong>Johnni Broome</strong> was signed using the 2nd round pick exception to a 4 year deal with the first two years guaranteed. His salary for the 2025-26 season could be as low as $1,272,870 and as high as $2,296,274. Broome's contract will not count against the cap until 7/31/25.</li>
-          <li data-player="Adem Bona"><strong>Adem Bona’s</strong> salary is $1,955,377, with $977,689 guaranteed as of July 9, 2025. The full amount is guaranteed if he’s not waived before NBA opening night.</li>
+          <li>Johnni Broome was signed using the 2nd round pick exception to a 4 year deal with the first two years guaranteed. His salary for the 2025-26 season could be as low as $1,272,870 and as high as $2,296,274. Broome's contract will not count against the cap until 7/31/25.</li>
+          <li>Council's salary of $2,221,677 will be guaranteed if he is not waived before January 10, 2026.</li>
+          <li>Adem Bona’s salary is $1,955,377, with $977,689 guaranteed as of July 9, 2025. The full amount is guaranteed if he’s not waived before NBA opening night.</li>
         </ul>
       </div>
       <div class="notes-key">
@@ -177,74 +261,6 @@
       <a href="index.html" class="back-home-btn">← Back to Home</a>
     </div>
   </main>
-
-  <!-- Modal for player details -->
-  <div class="player-details-modal" id="playerModal">
-    <div class="modal-content" tabindex="-1">
-      <button class="close-modal-btn" aria-label="Close">&times;</button>
-      <div id="modalPlayerName" style="font-size:1.4rem;font-weight:700;margin-bottom:0.7rem;"></div>
-      <div id="modalPlayerNote" style="margin-bottom:0.7rem;"></div>
-    </div>
-  </div>
-
-  <script>
-    // Player notes for modal
-    const playerNotes = {
-      "Johnni Broome": "Signed using the 2nd round pick exception to a 4 year deal with the first two years guaranteed. His salary for the 2025-26 season could be as low as $1,272,870 and as high as $2,296,274. Broome's contract will not count against the cap until 7/31/25."
-      "Adem Bona": "Adem Bona’s salary is $1,955,377, with $977,689 guaranteed as of July 9, 2025. The full amount is guaranteed if he’s not waived before NBA opening night.",
-      "Hunter Sallis": "Two-way contract. Salary does not count against the team's salary cap.",
-      "Dominick Barlow": "Two-way contract. Salary does not count against the team's salary cap.",
-      "Jabari Walker": "Two-way contract. Salary does not count against the team's salary cap."
-    };
-
-    // Filter feature
-    document.getElementById('playerFilter').addEventListener('input', function() {
-      const val = this.value.toLowerCase();
-      document.querySelectorAll('#salaryTable tbody tr, #twowayTable tbody tr').forEach(row => {
-        const player = row.getAttribute('data-player') || '';
-        if (player.toLowerCase().indexOf(val) !== -1) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
-      });
-    });
-
-    // Table row click for modal
-    document.querySelectorAll('#salaryTable tbody tr, #twowayTable tbody tr').forEach(row => {
-      row.addEventListener('click', function(e) {
-        // Remove selection from all
-        document.querySelectorAll('#salaryTable tbody tr, #twowayTable tbody tr').forEach(r => r.classList.remove('selected'));
-        this.classList.add('selected');
-        const player = this.getAttribute('data-player');
-        if (playerNotes[player]) {
-          document.getElementById('modalPlayerName').textContent = player;
-          document.getElementById('modalPlayerNote').textContent = playerNotes[player];
-          document.getElementById('playerModal').style.display = 'flex';
-          document.querySelector('.modal-content').focus();
-        }
-      });
-    });
-
-    // Modal close
-    document.querySelector('.close-modal-btn').addEventListener('click', function() {
-      document.getElementById('playerModal').style.display = 'none';
-      document.querySelectorAll('#salaryTable tbody tr, #twowayTable tbody tr').forEach(r => r.classList.remove('selected'));
-    });
-    // Close on background click
-    document.getElementById('playerModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        this.style.display = 'none';
-        document.querySelectorAll('#salaryTable tbody tr, #twowayTable tbody tr').forEach(r => r.classList.remove('selected'));
-      }
-    });
-    // Close on ESC key
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        document.getElementById('playerModal').style.display = 'none';
-        document.querySelectorAll('#salaryTable tbody tr, #twowayTable tbody tr').forEach(r => r.classList.remove('selected'));
-      }
-    });
-  </script>
 </body>
 </html>
+
