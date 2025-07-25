@@ -1636,26 +1636,37 @@ function executeTrade() {
   
   // Check each team's restrictions
   for (let i = 0; i < teamTotals.length; i++) {
-    const team = teamTotals[i];
-    
-    // Calculate incoming salary for this team
-    let incoming = 0;
-    for (let j = 0; j < teamTotals.length; j++) {
-      if (i !== j) {
-        incoming += teamTotals[j].outgoing;
-      }
-    }
-    
-    const newTotal = team.currentTotal - team.outgoing + incoming;
-    
-    // Check second apron restrictions
-    if (team.currentTotal > salaryCapInfo.secondApron || newTotal > salaryCapInfo.secondApron) {
-      // Cannot aggregate multiple players (only 1-for-1 trades)
-      if (team.players.length > 1) {
-        tradeValid = false;
-        errorMessages.push(`${team.teamName} is in second apron and cannot trade multiple players together.`);
-      }
-      
+        // Check apron restrictions for each team
+      teamTotals.forEach(team => {
+        // Calculate incoming salary for this team
+        let incoming = 0;
+        teamTotals.forEach(otherTeam => {
+          if (otherTeam.teamId !== team.teamId) {
+            incoming += otherTeam.outgoing;
+          }
+        });
+        
+        const newTotal = (teamRosterTotals[team.teamId] || 0) - team.outgoing + incoming;
+        
+        if (team.postTradeTotal > salaryCapInfo.secondApron || newTotal > salaryCapInfo.secondApron) {
+          // Second apron: cannot aggregate players, 100% matching only
+          if (team.players.length > 1) {
+            tradeValid = false;
+            errorMessages.push(`${team.teamName} is in second apron and cannot trade multiple players together.`);
+          }
+          if (incoming > team.outgoing) {
+            tradeValid = false;
+            errorMessages.push(`${team.teamName} is in second apron and cannot take back more salary than sent out.`);
+          }
+        } else if (team.postTradeTotal > salaryCapInfo.firstApron || newTotal > salaryCapInfo.firstApron) {
+          // First apron: 110% matching rule
+          if (incoming > team.outgoing * 1.10) {
+            tradeValid = false;
+            errorMessages.push(`${team.teamName} is in first apron and can only take back 110% of outgoing salary.`);
+          }
+        }
+      });
+ 
       // Cannot take back more than sent out (100% matching)
       if (incoming > team.outgoing) {
         tradeValid = false;
