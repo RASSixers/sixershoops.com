@@ -1608,136 +1608,84 @@
         restrictionsDiv.innerHTML = '';
       }
     }
-function executeTrade() {
-  const teams = Object.keys(selectedPlayers).filter(teamId => selectedPlayers[teamId].length > 0);
-  
-  if (teams.length < 2) {
-    showTradeResult(false, 'You need at least 2 teams with selected players to execute a trade.', {});
-    return;
-  }
-  
-  // Calculate trade validity with proper apron rules
-  const teamTotals = teams.map(teamId => {
-    const outgoing = selectedPlayers[teamId].reduce((sum, player) => sum + player.salary, 0);
-    const rosterTotal = teamRosterTotals[teamId] || 0;
-    const currentTotal = rosterTotal;
-    
-    return {
-      teamId,
-      outgoing,
-      currentTotal,
-      players: selectedPlayers[teamId],
-      teamName: document.querySelector(`#team-${teamId} select`).value
-    };
-  });
-  
-  let tradeValid = true;
-  let errorMessages = [];
-  
-  // Check each team's restrictions
-  for (let i = 0; i < teamTotals.length; i++) {
-        // Check apron restrictions for each team
+
+    function executeTrade() {
+      const teams = Object.keys(selectedPlayers).filter(teamId => selectedPlayers[teamId].length > 0);
+      
+      if (teams.length < 2) {
+        showTradeResult(false, 'You need at least 2 teams with selected players to execute a trade.', {});
+        return;
+      }
+      
+      // Calculate trade validity with apron rules
+      const teamTotals = teams.map(teamId => {
+        const outgoing = selectedPlayers[teamId].reduce((sum, player) => sum + player.salary, 0);
+        const rosterTotal = teamRosterTotals[teamId] || 0;
+        const postTradeTotal = rosterTotal - outgoing;
+        
+        return {
+          teamId,
+          outgoing,
+          postTradeTotal,
+          players: selectedPlayers[teamId],
+          teamName: document.querySelector(`#team-${teamId} select`).value
+        };
+      });
+      
+      let tradeValid = true;
+      let errorMessages = [];
+      
+      // Check apron restrictions for each team
       teamTotals.forEach(team => {
-        // Calculate incoming salary for this team
-        let incoming = 0;
-        teamTotals.forEach(otherTeam => {
-          if (otherTeam.teamId !== team.teamId) {
-            incoming += otherTeam.outgoing;
-          }
-        });
-        
-        const newTotal = (teamRosterTotals[team.teamId] || 0) - team.outgoing + incoming;
-        
-        if (team.postTradeTotal > salaryCapInfo.secondApron || newTotal > salaryCapInfo.secondApron) {
-          // Second apron: cannot aggregate players, 100% matching only
-          if (team.players.length > 1) {
-            tradeValid = false;
-            errorMessages.push(`${team.teamName} is in second apron and cannot trade multiple players together.`);
-          }
+        if (team.postTradeTotal > salaryCapInfo.secondApron) {
+          // Second apron teams cannot take back more than they send out
+          const incoming = teamTotals.filter(t => t.teamId !== team.teamId)
+            .reduce((sum, t) => sum + t.outgoing, 0) / (teamTotals.length - 1);
+          
           if (incoming > team.outgoing) {
             tradeValid = false;
             errorMessages.push(`${team.teamName} is in second apron and cannot take back more salary than sent out.`);
           }
-        } else if (team.postTradeTotal > salaryCapInfo.firstApron || newTotal > salaryCapInfo.firstApron) {
-          // First apron: 110% matching rule
-          if (incoming > team.outgoing * 1.10) {
+        } else if (team.postTradeTotal > salaryCapInfo.firstApron) {
+          // First apron teams cannot take back more than they send out
+          const incoming = teamTotals.filter(t => t.teamId !== team.teamId)
+            .reduce((sum, t) => sum + t.outgoing, 0) / (teamTotals.length - 1);
+          
+          if (incoming > team.outgoing) {
             tradeValid = false;
-            errorMessages.push(`${team.teamName} is in first apron and can only take back 110% of outgoing salary.`);
+            errorMessages.push(`${team.teamName} is in first apron and cannot take back more salary than sent out.`);
           }
         }
       });
- 
-      // Cannot take back more than sent out (100% matching)
-      if (incoming > team.outgoing) {
-        tradeValid = false;
-        errorMessages.push(`${team.teamName} is in second apron and cannot take back more salary than sent out ($${formatSalary(incoming)} vs $${formatSalary(team.outgoing)}).`);
-      }
-    }
-    // Check first apron restrictions  
-    else if (team.currentTotal > salaryCapInfo.firstApron || newTotal > salaryCapInfo.firstApron) {
-      // Must match within 110% (vs 125% for non-apron teams)
-      const maxIncoming = team.outgoing * 1.10;
-      if (incoming > maxIncoming) {
-        tradeValid = false;
-        errorMessages.push(`${team.teamName} is in first apron and can only take back 110% of outgoing salary ($${formatSalary(maxIncoming)} max vs $${formatSalary(incoming)}).`);
-      }
-    }
-  }
-  
-  // Standard salary matching for non-apron teams (2-team trades only)
-  if (teams.length === 2 && tradeValid) {
-    const [team1, team2] = teamTotals;
-    
-    // Check if both teams are under first apron
-    const team1UnderApron = team1.currentTotal <= salaryCapInfo.firstApron;
-    const team2UnderApron = team2.currentTotal <= salaryCapInfo.firstApron;
-    
-    if (team1UnderApron && team2UnderApron) {
-      // Standard NBA salary matching rules
-      const outgoing1 = team1.outgoing;
-      const outgoing2 = team2.outgoing;
       
-      let matchingValid = false;
-      
-      if (outgoing1 <= 6500000) {
-        // Can take back up to $6.5M or outgoing + $5M
-        matchingValid = outgoing2 <= Math.max(6500000, outgoing1 + 5000000);
-      } else if (outgoing1 <= 19600000) {
-        // Can take back up to 125% of outgoing
-        matchingValid = outgoing2 <= outgoing1 * 1.25;
-      } else {
-        // Can take back up to 125% + $5M
-        matchingValid = outgoing2 <= (outgoing1 * 1.25) + 5000000;
-      }
-      
-      // Check reverse direction
-      if (matchingValid) {
-        if (outgoing2 <= 6500000) {
-          matchingValid = outgoing1 <= Math.max(6500000, outgoing2 + 5000000);
-        } else if (outgoing2 <= 19600000) {
-          matchingValid = outgoing1 <= outgoing2 * 1.25;
-        } else {
-          matchingValid = outgoing1 <= (outgoing2 * 1.25) + 5000000;
+      // Standard salary matching rules for non-apron teams
+      if (teams.length === 2 && tradeValid) {
+        const [team1, team2] = teamTotals;
+        const difference = Math.abs(team1.outgoing - team2.outgoing);
+        const higherSalary = Math.max(team1.outgoing, team2.outgoing);
+        
+        // Check if either team has apron restrictions
+        const team1HasApronRestrictions = team1.postTradeTotal > salaryCapInfo.firstApron;
+        const team2HasApronRestrictions = team2.postTradeTotal > salaryCapInfo.firstApron;
+        
+        if (!team1HasApronRestrictions && !team2HasApronRestrictions) {
+          // Standard 125% + $100k rule
+          const allowedDifference = higherSalary * 0.25 + 100000;
+          
+          if (difference > allowedDifference) {
+            tradeValid = false;
+            errorMessages.push(`Trade salaries don't match. Difference of $${formatSalary(difference)} exceeds the allowed $${formatSalary(allowedDifference)}.`);
+          }
         }
       }
       
-      if (!matchingValid) {
-        tradeValid = false;
-        const difference = Math.abs(outgoing1 - outgoing2);
-        errorMessages.push(`Trade salaries don't match NBA rules. Difference: $${formatSalary(difference)}.`);
-      }
-    }
-  }
-  
-  const tradeData = {};
-  teamTotals.forEach(team => {
-    tradeData[team.teamName] = team.players;
-  });
-  
-  const errorMessage = errorMessages.join(' ');
-  showTradeResult(tradeValid, errorMessage, tradeData);
-}
-
+      const tradeData = {};
+      teamTotals.forEach(team => {
+        tradeData[team.teamName] = team.players;
+      });
+      
+      const errorMessage = errorMessages.join(' ');
+      showTradeResult(tradeValid, errorMessage, tradeData);
     }
 
     function showTradeResult(success, message, tradeData) {
