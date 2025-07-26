@@ -542,15 +542,15 @@
       display: none;
       position: absolute;
       top: 100%;
-      left: 0;
-      min-width: 300px;
-      max-width: 400px;
+      right: -50px;
+      min-width: 320px;
+      max-width: 450px;
       background: #fff;
       border: 2px solid #0057e7;
       border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      z-index: 1000;
-      padding: 1rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      z-index: 10000;
+      padding: 1.2rem;
       margin-top: 0.5rem;
     }
     
@@ -562,7 +562,7 @@
       content: '';
       position: absolute;
       top: -8px;
-      left: 20px;
+      right: 70px;
       width: 0;
       height: 0;
       border-left: 8px solid transparent;
@@ -920,10 +920,19 @@
         align-items: center;
       }
       
-      .tooltip .tooltiptext {
-        width: 250px;
-        max-width: 80vw;
-        font-size: 0.8rem;
+      .details-content {
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin-top: 0.5rem;
+        min-width: auto;
+        max-width: none;
+        width: 100%;
+      }
+      
+      .details-content::before {
+        display: none;
       }
     }
   </style>
@@ -1693,9 +1702,38 @@
         scrollTimeout = setTimeout(updateTimelineOnScroll, 100);
       });
 
-      // 11. Simple Dropdown Details System
+      // 11. Simple Dropdown Details System with Smart Positioning
       const detailsButtons = document.querySelectorAll('.details-btn');
       let activeDropdown = null;
+      
+      function positionDropdown(content, button) {
+        // Reset positioning
+        content.style.left = 'auto';
+        content.style.right = '-50px';
+        
+        // Check if dropdown goes off screen
+        setTimeout(() => {
+          const rect = content.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          
+          // If dropdown goes off the right edge, position it to the left
+          if (rect.right > viewportWidth - 20) {
+            content.style.right = 'auto';
+            content.style.left = '-200px';
+            
+            // Update arrow position for left-positioned dropdown
+            const arrow = content.querySelector('::before') || content;
+            content.style.setProperty('--arrow-position', 'right: 220px');
+          }
+          
+          // If still goes off left edge, center it
+          const newRect = content.getBoundingClientRect();
+          if (newRect.left < 20) {
+            content.style.left = '-100px';
+            content.style.right = 'auto';
+          }
+        }, 10);
+      }
       
       detailsButtons.forEach(button => {
         button.addEventListener('click', (e) => {
@@ -1712,9 +1750,10 @@
           // Toggle current dropdown
           content.classList.toggle('show');
           
-          // Update active dropdown
+          // Update active dropdown and position
           if (content.classList.contains('show')) {
             activeDropdown = content;
+            positionDropdown(content, button);
           } else {
             activeDropdown = null;
           }
