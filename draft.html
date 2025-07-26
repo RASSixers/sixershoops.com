@@ -516,72 +516,51 @@
       border-color: #0a174e;
     }
     
-    /* Simple Dropdown Details - Fixed Positioning */
-    .details-dropdown {
-      position: relative;
-      display: inline-block;
-      margin-left: 0.5rem;
-    }
-    
+    /* Super Simple Details System */
     .details-btn {
       background: #0057e7;
       color: #fff;
       border: none;
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
       cursor: pointer;
+      margin-left: 0.5rem;
       transition: all 0.2s ease;
     }
     
     .details-btn:hover {
       background: #0a174e;
+      transform: translateY(-1px);
     }
     
-    .details-content {
+    .details-box {
       display: none;
-      position: fixed;
-      min-width: 350px;
-      max-width: 400px;
-      background: #fff;
+      background: #f8f9fa;
       border: 2px solid #0057e7;
-      border-radius: 12px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-      z-index: 10000;
-      padding: 1.5rem;
-    }
-    
-    .details-content.show {
-      display: block;
-    }
-    
-    .details-content::before {
-      content: '';
-      position: absolute;
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-      border-bottom: 10px solid #0057e7;
-    }
-    
-    .details-text {
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
       color: #333;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      margin: 0;
     }
     
-    .details-title {
+    .details-box.visible {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .details-box strong {
       color: #0a174e;
-      font-weight: 700;
-      margin-bottom: 0.8rem;
-      font-size: 1.1rem;
-      border-bottom: 2px solid #e9ecef;
-      padding-bottom: 0.5rem;
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
     }
     
     /* Export Button */
@@ -1090,18 +1069,14 @@
                 <strong>1st Round Pick</strong> 
                 <span class="pick-status status-traded">Traded to OKC</span>
                 <span class="pick-status status-protected">Top-4 Protected</span>
-                <div class="details-dropdown">
-                  <button class="details-btn">ℹ️ Details</button>
-                  <div class="details-content">
-                    <div class="details-title">Protection Details</div>
-                    <p class="details-text">
-                      If the 76ers' pick lands between 1-4, Philadelphia keeps it. 
-                      If it lands 5-30, it goes to Oklahoma City Thunder. 
-                      If not conveyed in 2026, same protection applies in 2027. 
-                      If still not conveyed by 2027, converts to 2027 2nd-round pick for OKC.
-                    </p>
-                  </div>
-                </div>
+                <button class="details-btn" onclick="toggleDetails(this)">ℹ️ Details</button>
+              </div>
+              <div class="details-box">
+                <strong>Protection Details:</strong>
+                If the 76ers' pick lands between 1-4, Philadelphia keeps it. 
+                If it lands 5-30, it goes to Oklahoma City Thunder. 
+                If not conveyed in 2026, same protection applies in 2027. 
+                If still not conveyed by 2027, converts to 2027 2nd-round pick for OKC.
               </div>
               <div class="likelihood-bar">
                 <div class="likelihood-fill likelihood-medium" style="width: 60%"></div>
@@ -1129,17 +1104,13 @@
                 <strong>1st Round Pick</strong> 
                 <span class="pick-status status-traded">Traded to BKN</span>
                 <span class="pick-status status-protected">Top-8 Protected</span>
-                <div class="details-dropdown">
-                  <button class="details-btn">ℹ️ Details</button>
-                  <div class="details-content">
-                    <div class="details-title">Protection Details</div>
-                    <p class="details-text">
-                      Only conveys if 2026 pick to OKC has been sent. 
-                      If pick lands 1-8, Philadelphia keeps it. If 9-30, goes to Brooklyn Nets. 
-                      If not conveyed in 2027, same protection in 2028. If not conveyed by 2028, becomes 2028 2nd-round pick.
-                    </p>
-                  </div>
-                </div>
+                <button class="details-btn" onclick="toggleDetails(this)">ℹ️ Details</button>
+              </div>
+              <div class="details-box">
+                <strong>Protection Details:</strong>
+                Only conveys if 2026 pick to OKC has been sent. 
+                If pick lands 1-8, Philadelphia keeps it. If 9-30, goes to Brooklyn Nets. 
+                If not conveyed in 2027, same protection in 2028. If not conveyed by 2028, becomes 2028 2nd-round pick.
               </div>
               <div class="likelihood-bar">
                 <div class="likelihood-fill likelihood-high" style="width: 75%"></div>
@@ -1218,17 +1189,13 @@
                 <strong>2nd Round Pick</strong> 
                 <span class="pick-status status-own">Via DET</span>
                 <span class="pick-status status-protected">Top 55 Protected</span>
-                <div class="details-dropdown">
-                  <button class="details-btn">ℹ️ Details</button>
-                  <div class="details-content">
-                    <div class="details-title">Protection Details</div>
-                    <p class="details-text">
-                      Sixers only get this pick if it lands between 56-60. 
-                      Detroit must be a top-5 team for this pick to convey. 
-                      If Detroit is not top-5, pick does not convey and expires.
-                    </p>
-                  </div>
-                </div>
+                <button class="details-btn" onclick="toggleDetails(this)">ℹ️ Details</button>
+              </div>
+              <div class="details-box">
+                <strong>Protection Details:</strong>
+                Sixers only get this pick if it lands between 56-60. 
+                Detroit must be a top-5 team for this pick to convey. 
+                If Detroit is not top-5, pick does not convey and expires.
               </div>
               <div class="likelihood-bar">
                 <div class="likelihood-fill likelihood-low" style="width: 15%"></div>
@@ -1252,17 +1219,13 @@
                 <strong>1st Round Pick</strong> 
                 <span class="pick-status status-own">Own Pick</span>
                 <span class="pick-status status-protected">Swap Rights w/ LAC</span>
-                <div class="details-dropdown">
-                  <button class="details-btn">ℹ️ Details</button>
-                  <div class="details-content">
-                    <div class="details-title">Swap Rights Details</div>
-                    <p class="details-text">
-                      Sixers can swap their 2029 1st-round pick with Clippers, 
-                      unless Clippers pick is top-3 protected. 
-                      This gives Sixers the better of the two picks.
-                    </p>
-                  </div>
-                </div>
+                <button class="details-btn" onclick="toggleDetails(this)">ℹ️ Details</button>
+              </div>
+              <div class="details-box">
+                <strong>Swap Rights Details:</strong>
+                Sixers can swap their 2029 1st-round pick with Clippers, 
+                unless Clippers pick is top-3 protected. 
+                This gives Sixers the better of the two picks.
               </div>
               <div class="likelihood-bar">
                 <div class="likelihood-fill likelihood-high" style="width: 85%"></div>
@@ -1702,79 +1665,32 @@
         scrollTimeout = setTimeout(updateTimelineOnScroll, 100);
       });
 
-      // 11. Fixed Dropdown Details System
-      const detailsButtons = document.querySelectorAll('.details-btn');
-      let activeDropdown = null;
-      
-      function positionDropdown(content, button) {
-        const buttonRect = button.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+      // 11. Super Simple Details Toggle Function
+      window.toggleDetails = function(button) {
+        // Find the details box (next sibling after the parent div)
+        const pickItem = button.closest('.pick-item');
+        const detailsBox = pickItem.querySelector('.details-box');
         
-        // Calculate initial position (below button, centered)
-        let left = buttonRect.left + (buttonRect.width / 2) - 175; // Center the 350px dropdown
-        let top = buttonRect.bottom + 10;
-        
-        // Adjust if dropdown goes off right edge
-        if (left + 350 > viewportWidth - 20) {
-          left = viewportWidth - 370;
-        }
-        
-        // Adjust if dropdown goes off left edge
-        if (left < 20) {
-          left = 20;
-        }
-        
-        // Adjust if dropdown goes off bottom edge
-        if (top + 200 > viewportHeight) {
-          top = buttonRect.top - 210; // Show above button
-        }
-        
-        // Apply positioning
-        content.style.left = left + 'px';
-        content.style.top = top + 'px';
-      }
-      
-      detailsButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-          e.stopPropagation();
-          
-          const dropdown = button.parentElement;
-          const content = dropdown.querySelector('.details-content');
-          
-          // Close any other open dropdown
-          if (activeDropdown && activeDropdown !== content) {
-            activeDropdown.classList.remove('show');
-          }
-          
-          // Toggle current dropdown
-          content.classList.toggle('show');
-          
-          // Update active dropdown and position
-          if (content.classList.contains('show')) {
-            activeDropdown = content;
-            positionDropdown(content, button);
-          } else {
-            activeDropdown = null;
+        // Close all other details boxes first
+        const allDetailsBoxes = document.querySelectorAll('.details-box');
+        allDetailsBoxes.forEach(box => {
+          if (box !== detailsBox) {
+            box.classList.remove('visible');
           }
         });
-      });
-      
-      // Close dropdown when clicking outside
-      document.addEventListener('click', (e) => {
-        if (activeDropdown && !e.target.closest('.details-dropdown')) {
-          activeDropdown.classList.remove('show');
-          activeDropdown = null;
+        
+        // Toggle current details box
+        detailsBox.classList.toggle('visible');
+        
+        // Update button text
+        if (detailsBox.classList.contains('visible')) {
+          button.textContent = '✕ Close';
+          button.style.background = '#dc3545';
+        } else {
+          button.textContent = 'ℹ️ Details';
+          button.style.background = '#0057e7';
         }
-      });
-      
-      // Close dropdown on scroll
-      window.addEventListener('scroll', () => {
-        if (activeDropdown) {
-          activeDropdown.classList.remove('show');
-          activeDropdown = null;
-        }
-      });
+      };
 
       // 12. Export to Image Functionality
       const exportBtn = document.getElementById('exportBtn');
