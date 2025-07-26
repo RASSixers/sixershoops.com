@@ -516,7 +516,7 @@
       border-color: #0a174e;
     }
     
-    /* Simple Dropdown Details */
+    /* Simple Dropdown Details - Fixed Positioning */
     .details-dropdown {
       position: relative;
       display: inline-block;
@@ -540,18 +540,15 @@
     
     .details-content {
       display: none;
-      position: absolute;
-      top: 100%;
-      right: -50px;
-      min-width: 320px;
-      max-width: 450px;
+      position: fixed;
+      min-width: 350px;
+      max-width: 400px;
       background: #fff;
       border: 2px solid #0057e7;
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
       z-index: 10000;
-      padding: 1.2rem;
-      margin-top: 0.5rem;
+      padding: 1.5rem;
     }
     
     .details-content.show {
@@ -561,27 +558,30 @@
     .details-content::before {
       content: '';
       position: absolute;
-      top: -8px;
-      right: 70px;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-bottom: 8px solid #0057e7;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid #0057e7;
     }
     
     .details-text {
       color: #333;
-      font-size: 0.9rem;
-      line-height: 1.5;
+      font-size: 0.95rem;
+      line-height: 1.6;
       margin: 0;
     }
     
     .details-title {
       color: #0a174e;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 0.5rem;
     }
     
     /* Export Button */
@@ -1702,37 +1702,37 @@
         scrollTimeout = setTimeout(updateTimelineOnScroll, 100);
       });
 
-      // 11. Simple Dropdown Details System with Smart Positioning
+      // 11. Fixed Dropdown Details System
       const detailsButtons = document.querySelectorAll('.details-btn');
       let activeDropdown = null;
       
       function positionDropdown(content, button) {
-        // Reset positioning
-        content.style.left = 'auto';
-        content.style.right = '-50px';
+        const buttonRect = button.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
         
-        // Check if dropdown goes off screen
-        setTimeout(() => {
-          const rect = content.getBoundingClientRect();
-          const viewportWidth = window.innerWidth;
-          
-          // If dropdown goes off the right edge, position it to the left
-          if (rect.right > viewportWidth - 20) {
-            content.style.right = 'auto';
-            content.style.left = '-200px';
-            
-            // Update arrow position for left-positioned dropdown
-            const arrow = content.querySelector('::before') || content;
-            content.style.setProperty('--arrow-position', 'right: 220px');
-          }
-          
-          // If still goes off left edge, center it
-          const newRect = content.getBoundingClientRect();
-          if (newRect.left < 20) {
-            content.style.left = '-100px';
-            content.style.right = 'auto';
-          }
-        }, 10);
+        // Calculate initial position (below button, centered)
+        let left = buttonRect.left + (buttonRect.width / 2) - 175; // Center the 350px dropdown
+        let top = buttonRect.bottom + 10;
+        
+        // Adjust if dropdown goes off right edge
+        if (left + 350 > viewportWidth - 20) {
+          left = viewportWidth - 370;
+        }
+        
+        // Adjust if dropdown goes off left edge
+        if (left < 20) {
+          left = 20;
+        }
+        
+        // Adjust if dropdown goes off bottom edge
+        if (top + 200 > viewportHeight) {
+          top = buttonRect.top - 210; // Show above button
+        }
+        
+        // Apply positioning
+        content.style.left = left + 'px';
+        content.style.top = top + 'px';
       }
       
       detailsButtons.forEach(button => {
@@ -1914,11 +1914,12 @@
         // Add header
         const header = document.createElement('div');
         header.innerHTML = `
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #0a174e; font-size: 2rem; margin-bottom: 0.5rem; font-family: Georgia, serif;">
+          <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #0a174e 0%, #0057e7 100%); color: #fff; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+            <h1 style="color: #fff; font-size: 2.2rem; margin-bottom: 0.5rem; font-family: Georgia, serif; font-weight: bold;">
               Sixers Future Draft Capital
             </h1>
-            <p style="color: #6c757d; font-size: 1.1rem;">Philadelphia 76ers Draft Picks Overview</p>
+            <p style="color: rgba(255,255,255,0.9); font-size: 1.2rem; margin-bottom: 0.5rem;">Philadelphia 76ers Draft Picks Overview</p>
+            <p style="color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: 600;">SixersHoops.com</p>
           </div>
         `;
         exportContainer.appendChild(header);
@@ -2007,9 +2008,10 @@
         // Add footer
         const footer = document.createElement('div');
         footer.innerHTML = `
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef;">
-            <p style="color: #0a174e; font-weight: 600; font-size: 1.1rem;">SixersHoops.com</p>
-            <p style="color: #6c757d; font-size: 0.9rem;">Your source for Philadelphia 76ers analysis</p>
+          <div style="text-align: center; margin-top: 30px; padding: 1.5rem; background: #f8f9fa; border-radius: 12px; border: 2px solid #0057e7;">
+            <p style="color: #0a174e; font-weight: 700; font-size: 1.3rem; margin-bottom: 0.5rem;">📊 SixersHoops.com</p>
+            <p style="color: #6c757d; font-size: 1rem; font-weight: 500;">Your trusted source for Philadelphia 76ers analysis & insights</p>
+            <p style="color: #0057e7; font-size: 0.9rem; margin-top: 0.5rem;">Follow us for the latest Sixers news and breakdowns</p>
           </div>
         `;
         exportContainer.appendChild(footer);
