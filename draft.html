@@ -170,6 +170,75 @@
       transition: all 0.3s;
       box-shadow: 0 2px 8px rgba(10,23,78,0.08);
     }
+    
+    /* Dark Mode Toggle */
+    .dark-mode-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 0.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.2rem;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .dark-mode-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+    
+    /* Dark Mode Styles */
+    body.dark-mode {
+      background: #1a1a1a;
+      color: #e9ecef;
+    }
+    
+    .dark-mode .navbar {
+      background: #2d3748;
+    }
+    
+    .dark-mode .draft-hero {
+      background: linear-gradient(120deg, #2d3748 60%, #4a5568 100%);
+    }
+    
+    .dark-mode .draft-main-content,
+    .dark-mode .stat-card,
+    .dark-mode .draft-year-card {
+      background: #2d3748;
+      color: #e9ecef;
+      border-color: #4a5568;
+    }
+    
+    .dark-mode .draft-year-header {
+      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    }
+    
+    .dark-mode .pick-item {
+      background: #374151;
+      border-left-color: #6b7280;
+    }
+    
+    .dark-mode .pick-item:hover {
+      background: #4b5563;
+    }
+    
+    .dark-mode .details-box {
+      background: #374151;
+      border-color: #4a5568;
+      color: #e9ecef;
+    }
+    
+    .dark-mode .timeline-year {
+      background: #374151;
+      border-color: #4a5568;
+      color: #e9ecef;
+    }
 
     /* CONTENT WRAPPER WITH ADS POSITIONED AROUND */
     .content-wrapper {
@@ -249,9 +318,55 @@
       opacity: 0.85;
       margin-bottom: 1.5rem;
     }
+    /* Summary Stats Section */
+    .draft-summary-stats {
+      max-width: 900px;
+      margin: 1.5rem auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      padding: 0 1rem;
+    }
+    
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(10,23,78,0.08);
+      border: 2px solid #e9ecef;
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(10,23,78,0.12);
+      border-color: #0057e7;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #0a174e;
+      margin-bottom: 0.5rem;
+      font-family: 'Georgia', serif;
+    }
+    
+    .stat-label {
+      font-size: 1rem;
+      color: #6c757d;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-card.picks-owned .stat-number { color: #28a745; }
+    .stat-card.picks-protected .stat-number { color: #ffc107; }
+    .stat-card.picks-total .stat-number { color: #0057e7; }
+
     .draft-main-content {
       max-width: 900px;
-      margin: 2rem auto 0 auto;
+      margin: 1rem auto 0 auto;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(10,23,78,0.09);
@@ -326,7 +441,7 @@
 
     /* INTERACTIVE ENHANCEMENTS */
     
-    /* Timeline Navigation */
+    /* Enhanced Color-Coded Timeline */
     .draft-timeline {
       display: flex;
       justify-content: center;
@@ -346,6 +461,46 @@
       font-weight: 600;
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 80px;
+    }
+    
+    .timeline-year-label {
+      font-size: 1rem;
+      margin-bottom: 0.2rem;
+    }
+    
+    .timeline-pick-count {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      font-weight: 500;
+    }
+    
+    /* Color coding based on pick density */
+    .timeline-year.density-high {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      border-color: #28a745;
+      color: #155724;
+    }
+    
+    .timeline-year.density-medium {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      border-color: #ffc107;
+      color: #856404;
+    }
+    
+    .timeline-year.density-low {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      border-color: #dc3545;
+      color: #721c24;
+    }
+    
+    .timeline-year.density-none {
+      background: #e9ecef;
+      border-color: #adb5bd;
+      color: #6c757d;
     }
     
     .timeline-year::before {
@@ -940,6 +1095,7 @@
       </div>
       <a href="nba-trade-machine.html" class="nav-link">Trade Machine</a>
       <a href="contact.html" class="nav-link">Contact Us</a>
+      <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
     </div>
   </nav>
 
@@ -1017,6 +1173,22 @@
       </div>
     </header>
     
+    <!-- Summary Stats Section -->
+    <div class="draft-summary-stats">
+      <div class="stat-card picks-total">
+        <div class="stat-number" id="totalPicks">0</div>
+        <div class="stat-label">Total Picks</div>
+      </div>
+      <div class="stat-card picks-owned">
+        <div class="stat-number" id="ownedPicks">0</div>
+        <div class="stat-label">Picks Owned</div>
+      </div>
+      <div class="stat-card picks-protected">
+        <div class="stat-number" id="protectedPicks">0</div>
+        <div class="stat-label">Protected Picks</div>
+      </div>
+    </div>
+    
     <main class="draft-main-content">
       <!-- Search and Filter Controls -->
       <div class="search-container">
@@ -1040,15 +1212,36 @@
         </button>
       </div>
       
-      <!-- Interactive Timeline -->
+      <!-- Enhanced Color-Coded Timeline -->
       <div class="draft-timeline">
-        <div class="timeline-year active" data-year="2026">2026</div>
-        <div class="timeline-year" data-year="2027">2027</div>
-        <div class="timeline-year" data-year="2028">2028</div>
-        <div class="timeline-year" data-year="2029">2029</div>
-        <div class="timeline-year" data-year="2030">2030</div>
-        <div class="timeline-year" data-year="2031">2031</div>
-        <div class="timeline-year" data-year="2032">2032</div>
+        <div class="timeline-year active density-low" data-year="2026">
+          <span class="timeline-year-label">2026</span>
+          <span class="timeline-pick-count">1 pick</span>
+        </div>
+        <div class="timeline-year density-high" data-year="2027">
+          <span class="timeline-year-label">2027</span>
+          <span class="timeline-pick-count">4 picks</span>
+        </div>
+        <div class="timeline-year density-medium" data-year="2028">
+          <span class="timeline-year-label">2028</span>
+          <span class="timeline-pick-count">2 picks</span>
+        </div>
+        <div class="timeline-year density-medium" data-year="2029">
+          <span class="timeline-year-label">2029</span>
+          <span class="timeline-pick-count">2 picks</span>
+        </div>
+        <div class="timeline-year density-medium" data-year="2030">
+          <span class="timeline-year-label">2030</span>
+          <span class="timeline-pick-count">2 picks</span>
+        </div>
+        <div class="timeline-year density-none" data-year="2031">
+          <span class="timeline-year-label">2031</span>
+          <span class="timeline-pick-count">0 picks</span>
+        </div>
+        <div class="timeline-year density-none" data-year="2032">
+          <span class="timeline-year-label">2032</span>
+          <span class="timeline-pick-count">0 picks</span>
+        </div>
       </div>
       
       <section>
@@ -1691,6 +1884,49 @@
           button.style.background = '#0057e7';
         }
       };
+      
+      // 12. Dark Mode Toggle Function
+      window.toggleDarkMode = function() {
+        const body = document.body;
+        const toggle = document.querySelector('.dark-mode-toggle');
+        
+        body.classList.toggle('dark-mode');
+        
+        // Update toggle icon and save preference
+        if (body.classList.contains('dark-mode')) {
+          toggle.textContent = '☀️';
+          localStorage.setItem('darkMode', 'enabled');
+        } else {
+          toggle.textContent = '🌙';
+          localStorage.setItem('darkMode', 'disabled');
+        }
+      };
+      
+      // 13. Initialize Dark Mode from localStorage
+      function initializeDarkMode() {
+        const darkMode = localStorage.getItem('darkMode');
+        const toggle = document.querySelector('.dark-mode-toggle');
+        
+        if (darkMode === 'enabled') {
+          document.body.classList.add('dark-mode');
+          toggle.textContent = '☀️';
+        }
+      }
+      
+      // 14. Calculate and Display Summary Stats
+      function updateSummaryStats() {
+        const allPicks = document.querySelectorAll('.pick-item');
+        const ownedPicks = document.querySelectorAll('.pick-item[data-status="own"]');
+        const protectedPicks = document.querySelectorAll('.pick-item.protected');
+        
+        document.getElementById('totalPicks').textContent = allPicks.length;
+        document.getElementById('ownedPicks').textContent = ownedPicks.length;
+        document.getElementById('protectedPicks').textContent = protectedPicks.length;
+      }
+      
+      // Initialize everything
+      initializeDarkMode();
+      updateSummaryStats();
 
       // 12. Export to Image Functionality
       const exportBtn = document.getElementById('exportBtn');
