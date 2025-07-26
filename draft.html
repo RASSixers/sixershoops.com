@@ -545,9 +545,12 @@
     .tooltip .tooltiptext::after {
       content: "";
       position: absolute;
+      top: var(--arrow-top, 100%);
+      left: var(--arrow-left, 50%);
+      margin-left: -8px;
       border-width: 8px;
       border-style: solid;
-      border-color: #333 transparent transparent transparent;
+      border-color: var(--arrow-border, transparent transparent #333 transparent);
     }
     
     .tooltip:hover .tooltiptext {
@@ -638,13 +641,28 @@
       margin-top: 1.5rem;
     }
     
-    .download-btn, .close-btn {
+    .copy-btn, .download-btn, .close-btn {
       padding: 0.7rem 1.5rem;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
       border: none;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .copy-btn {
+      background: #28a745;
+      color: #fff;
+    }
+    
+    .copy-btn:hover {
+      background: #218838;
+    }
+    
+    .copy-btn.copied {
+      background: #20c997;
     }
     
     .download-btn {
@@ -1333,6 +1351,7 @@
       <canvas id="exportCanvas" style="display: none;"></canvas>
       <img id="exportPreview" class="export-preview" alt="Draft picks export preview">
       <div class="export-actions">
+        <button id="copyBtn" class="copy-btn">📋 Copy to Clipboard</button>
         <button id="downloadBtn" class="download-btn">📥 Download Image</button>
         <button id="closeModal" class="close-btn">✕ Close</button>
       </div>
@@ -1642,32 +1661,56 @@
         const tooltipText = tooltip.querySelector('.tooltiptext');
         
         tooltip.addEventListener('mouseenter', (e) => {
+          // Force visibility to get dimensions
+          tooltipText.style.visibility = 'visible';
+          tooltipText.style.opacity = '0';
+          
           const rect = tooltip.getBoundingClientRect();
           const tooltipRect = tooltipText.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
           
-          // Position tooltip relative to viewport
-          let top = rect.top - tooltipRect.height - 10;
+          // Calculate initial position (centered above the element)
+          let top = rect.top - tooltipRect.height - 15;
           let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
           
-          // Adjust if tooltip goes off screen
-          if (left < 10) left = 10;
-          if (left + tooltipRect.width > window.innerWidth - 10) {
-            left = window.innerWidth - tooltipRect.width - 10;
+          // Adjust horizontal position if tooltip goes off screen
+          if (left < 10) {
+            left = 10;
+          } else if (left + tooltipRect.width > viewportWidth - 10) {
+            left = viewportWidth - tooltipRect.width - 10;
           }
+          
+          // Adjust vertical position if tooltip goes off screen
+          let showBelow = false;
           if (top < 10) {
-            top = rect.bottom + 10; // Show below if no room above
-            tooltipText.style.borderColor = 'transparent transparent #333 transparent';
-          } else {
-            tooltipText.style.borderColor = '#333 transparent transparent transparent';
+            top = rect.bottom + 15;
+            showBelow = true;
           }
           
-          tooltipText.style.top = top + 'px';
-          tooltipText.style.left = left + 'px';
+          // Set final position
+          tooltipText.style.top = (top + window.scrollY) + 'px';
+          tooltipText.style.left = (left + window.scrollX) + 'px';
           
-          // Position arrow
-          const arrow = tooltipText.querySelector('::after');
-          const arrowLeft = rect.left + (rect.width / 2) - left - 8;
+          // Position the arrow
+          const arrowLeft = Math.max(8, Math.min(tooltipRect.width - 16, rect.left + (rect.width / 2) - left));
+          
+          if (showBelow) {
+            tooltipText.style.setProperty('--arrow-top', '-8px');
+            tooltipText.style.setProperty('--arrow-border', '#333 transparent transparent transparent');
+          } else {
+            tooltipText.style.setProperty('--arrow-top', '100%');
+            tooltipText.style.setProperty('--arrow-border', 'transparent transparent #333 transparent');
+          }
           tooltipText.style.setProperty('--arrow-left', arrowLeft + 'px');
+          
+          // Show tooltip with animation
+          tooltipText.style.opacity = '1';
+        });
+        
+        tooltip.addEventListener('mouseleave', () => {
+          tooltipText.style.visibility = 'hidden';
+          tooltipText.style.opacity = '0';
         });
       });
 
@@ -1676,10 +1719,12 @@
       const exportModal = document.getElementById('exportModal');
       const exportCanvas = document.getElementById('exportCanvas');
       const exportPreview = document.getElementById('exportPreview');
+      const copyBtn = document.getElementById('copyBtn');
       const downloadBtn = document.getElementById('downloadBtn');
       const closeModal = document.getElementById('closeModal');
       
       let currentImageData = null;
+      let currentCanvas = null;
       
       exportBtn.addEventListener('click', async () => {
         exportBtn.disabled = true;
@@ -1687,10 +1732,11 @@
         
         try {
           // Create a clean version of the content for export
-          const exportContent = await createExportImage();
-          currentImageData = exportContent;
+          const { imageData, canvas } = await createExportImage();
+          currentImageData = imageData;
+          currentCanvas = canvas;
           
-          exportPreview.src = exportContent;
+          exportPreview.src = imageData;
           exportModal.style.display = 'block';
           document.body.style.overflow = 'hidden';
           
@@ -1700,6 +1746,50 @@
         } finally {
           exportBtn.disabled = false;
           exportBtn.textContent = '📸 Export for Social Media';
+        }
+      });
+      
+      // Copy to clipboard functionality
+      copyBtn.addEventListener('click', async () => {
+        if (!currentCanvas) return;
+        
+        const originalText = copyBtn.textContent;
+        copyBtn.disabled = true;
+        copyBtn.textContent = '📋 Copying...';
+        
+        try {
+          // Convert canvas to blob
+          const blob = await new Promise(resolve => {
+            currentCanvas.toBlob(resolve, 'image/png', 0.9);
+          });
+          
+          // Copy to clipboard using the Clipboard API
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                'image/png': blob
+              })
+            ]);
+            
+            copyBtn.textContent = '✅ Copied!';
+            copyBtn.classList.add('copied');
+            
+            setTimeout(() => {
+              copyBtn.textContent = originalText;
+              copyBtn.classList.remove('copied');
+              copyBtn.disabled = false;
+            }, 2000);
+          } else {
+            // Fallback for browsers that don't support clipboard API
+            throw new Error('Clipboard API not supported');
+          }
+        } catch (error) {
+          console.error('Copy failed:', error);
+          
+          // Fallback: show instructions
+          copyBtn.textContent = '📋 Copy Image';
+          alert('Copy to clipboard not supported in this browser. Please right-click the image and select "Copy image" or use the download button.');
+          copyBtn.disabled = false;
         }
       });
       
@@ -1876,7 +1966,10 @@
         
         document.body.removeChild(exportContainer);
         
-        return canvas.toDataURL('image/png', 0.9);
+        return {
+          imageData: canvas.toDataURL('image/png', 0.9),
+          canvas: canvas
+        };
       }
     });
   </script>
