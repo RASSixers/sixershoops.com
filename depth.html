@@ -15,6 +15,7 @@
     gtag('config', 'G-T1V9Q0MNEM');
   </script>
   <style>
+    /* MODERN DEPTH CHART STYLES */
     .depth-hero {
       background: linear-gradient(120deg, #0a174e 60%, #0057e7 100%);
       color: #fff;
@@ -51,6 +52,43 @@
       opacity: 0.85;
       margin-bottom: 1.5rem;
     }
+
+    /* CONTENT WRAPPER WITH ADS POSITIONED AROUND */
+    .content-wrapper {
+      position: relative;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* AD PLACEMENTS */
+    .ad-left, .ad-right {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 160px;
+      height: 600px;
+      z-index: 100;
+    }
+    
+    .ad-left {
+      left: 20px;
+    }
+    
+    .ad-right {
+      right: 20px;
+    }
+    
+    .ad-top, .ad-bottom {
+      width: 100%;
+      max-width: 728px;
+      height: 90px;
+      margin: 1rem auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
     .depth-main-content {
       max-width: 900px;
       margin: 2rem auto 0 auto;
@@ -59,46 +97,276 @@
       box-shadow: 0 4px 20px rgba(10,23,78,0.09);
       padding: 2rem 2.5rem;
     }
-    .depth-section-title {
-      font-size: 1.6rem;
-      color: #222;
+
+    /* INTERACTIVE DEPTH CHART */
+    .depth-controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      color: #0a174e;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .control-btn:hover, .control-btn.active {
+      background: #0a174e;
+      color: #fff;
+      border-color: #0a174e;
+    }
+
+    .basketball-court {
+      background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
+      border-radius: 20px;
+      padding: 2rem;
+      margin: 2rem 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(10,23,78,0.15);
+    }
+
+    .basketball-court::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 50% 10%, rgba(255,255,255,0.1) 0%, transparent 20%),
+        radial-gradient(circle at 50% 90%, rgba(255,255,255,0.1) 0%, transparent 20%);
+      pointer-events: none;
+    }
+
+    .position-group {
+      background: rgba(255,255,255,0.95);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .position-group:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .position-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .position-title {
+      font-size: 1.4rem;
       font-weight: 700;
-      margin-bottom: 1.1rem;
+      color: #0a174e;
+      font-family: 'Georgia', serif;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .position-icon {
+      width: 30px;
+      height: 30px;
+      background: #0a174e;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .depth-count {
+      background: #e9ecef;
+      color: #6c757d;
+      padding: 0.25rem 0.75rem;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .players-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .player-card {
+      background: linear-gradient(135deg, #0a174e 0%, #0057e7 100%);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.2);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .player-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .player-card:hover::before {
+      left: 100%;
+    }
+
+    .player-card:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 4px 16px rgba(10,23,78,0.3);
+    }
+
+    .player-card.starter {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      border: 2px solid #fff;
+      font-size: 1.1rem;
+      padding: 1rem 1.25rem;
+    }
+
+    .player-card.twoway {
+      background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+      position: relative;
+    }
+
+    .player-card.twoway::after {
+      content: '2-WAY';
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #fff;
+      color: #dc3545;
+      font-size: 0.6rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    .depth-separator {
+      color: #6c757d;
+      font-size: 1.2rem;
+      font-weight: 300;
+      margin: 0 0.5rem;
+    }
+
+    /* PLAYER STATS MODAL */
+    .player-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6c757d;
+    }
+
+    /* NOTES SECTION */
+    .notes-section {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .notes-title {
+      font-size: 1.4rem;
+      color: #0a174e;
+      font-weight: 700;
+      margin-bottom: 1rem;
       font-family: 'Georgia', serif;
     }
-    .depth-chart-list h3 {
-      color: #222;
-      margin-top: 1.2rem;
-      margin-bottom: 0.3rem;
-      font-size: 1.1rem;
+
+    .notes-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .notes-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .notes-list li:last-child {
+      border-bottom: none;
+    }
+
+    .note-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
       font-weight: 600;
+      color: #fff;
     }
-    .depth-chart-list {
-      font-size: 1.1rem;
-      color: #222;
-      margin-bottom: 2rem;
-      line-height: 1.7;
-    }
-    .twoway {
-      color: #c20000;
-      font-weight: bold;
-    }
-    .notes-block {
-      font-size: 1.08rem;
-      color: #222;
-      margin-bottom: 2rem;
-    }
-    .notes-block h3 {
-      color: #222;
-      margin-top: 1.2rem;
-      margin-bottom: 0.3rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
+
+    .note-icon.roster { background: #28a745; }
+    .note-icon.twoway { background: #dc3545; }
+    .note-icon.info { background: #17a2b8; }
+
     .back-home {
       margin: 2.5rem 0 0 0;
       text-align: center;
     }
+    
     .back-home-btn {
       display: inline-block;
       background: #0a174e;
@@ -111,75 +379,439 @@
       box-shadow: 0 2px 8px rgba(10,23,78,0.12);
       transition: background 0.2s;
     }
+    
     .back-home-btn:hover {
       background: #0057e7;
     }
+
+    /* RESPONSIVE DESIGN */
+    @media (max-width: 1200px) {
+      .ad-left, .ad-right {
+        display: none;
+      }
+    }
+
     @media (max-width: 900px) {
       .depth-main-content {
         padding: 1.2rem 0.6rem;
+        margin: 1rem;
       }
       .depth-logo {
         width: 120px;
         height: 120px;
       }
+      .basketball-court {
+        padding: 1rem;
+      }
+      .players-container {
+        justify-content: center;
+      }
+      .player-card {
+        font-size: 0.9rem;
+        padding: 0.6rem 0.8rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .depth-controls {
+        gap: 0.5rem;
+      }
+      .control-btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Updated Navigation Bar -->
   <nav class="navbar">
-    <div class="nav-left">
-      <img src="sixershoopslogo.png" alt="SixersHoops Logo" class="nav-logo" />
-      <span class="site-title">SixersHoops</span>
-    </div>
+    <button class="hamburger" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
     <div class="nav-right">
       <a href="index.html" class="nav-link">Home</a>
       <div class="nav-dropdown">
-        <button class="nav-link dropdown-btn">Cap and Draft Management ▾</button>
+        <button class="nav-action dropdown-btn" aria-haspopup="true" aria-expanded="false">Cap &amp; Draft Management</button>
         <div class="dropdown-content">
           <a href="salary.html" class="dropdown-link">Salary Breakdown</a>
           <a href="draft.html" class="dropdown-link">Future Draft Capital</a>
-          <a href="depth.html" class="dropdown-link">Depth Chart</a>
+          <a href="depth.html" class="dropdown-link active">Depth Chart</a>
         </div>
       </div>
+      <a href="nba-trade-machine.html" class="nav-link">Trade Machine</a>
+      <a href="contact.html" class="nav-link">Contact Us</a>
     </div>
   </nav>
-  <header class="depth-hero">
-    <div class="depth-hero-content">
-      <img src="joelembiiddepth.png" alt="Sixers Depth Chart" class="depth-logo" />
-      <h1 class="depth-title">Sixers Depth Chart</h1>
-      <p class="depth-subtitle">Current player depth by position for the Philadelphia 76ers.</p>
+
+  <div class="content-wrapper">
+    <!-- Ad Placements -->
+    <div class="ad-left">
+      <script>
+      (function(bzdd){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.scripts[d.scripts.length - 1];
+      s.settings = bzdd || {};
+      s.src = "\/\/grimy-bicycle.com\/b_X.Vfs\/djGGlR0\/YwWYcf\/HetmT9\/u\/ZQUklUkaPGTQYp1LMAzgYSwsNoTqMzt\/NEj\/UZzxNJj\/Au1INUAJ";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
     </div>
-  </header>
-  <main class="depth-main-content">
-    <section>
-      <h2 class="depth-section-title">Depth Chart</h2>
-      <div class="depth-chart-list">
-        <h3>PG:</h3>
-        Maxey&nbsp;|&nbsp;McCain&nbsp;|&nbsp;Lowry&nbsp;|&nbsp;<span class="twoway">Sallis</span>&nbsp;|
-        <h3>SG:</h3>
-        Grimes&nbsp;|&nbsp;Edgecombe&nbsp;|&nbsp;Gordon
-        <h3>SF:</h3>
-        George&nbsp;|&nbsp;Oubre&nbsp;|&nbsp;Edwards
-        <h3>PF:</h3>
-        Watford&nbsp;|&nbsp;Broome&nbsp;|&nbsp;<span class="twoway">Walker</span>&nbsp;|&nbsp;<span class="twoway">Barlow</span>
-        <h3>C:</h3>
-        Embiid&nbsp;|&nbsp;Bona&nbsp;|&nbsp;Drummond
+
+    <div class="ad-right">
+      <script>
+      (function(nyp){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.scripts[d.scripts.length - 1];
+      s.settings = nyp || {};
+      s.src = "\/\/grimy-bicycle.com\/b.XcVTs\/d\/G\/l\/0kYeWDcP\/-e\/md9TuBZwUtlOkpPJTbYV1\/MxzsY\/w\/NOjsMjtONejHUgzsN\/jXA-2SNtA_";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+
+    <!-- DEPTH PAGE CONTENT -->
+    <header class="depth-hero">
+      <div class="depth-hero-content">
+        <img src="joelembiiddepth.png" alt="Sixers Depth Chart" class="depth-logo" />
+        <h1 class="depth-title">Sixers Depth Chart</h1>
+        <p class="depth-subtitle">Interactive depth chart showing current player positions for the Philadelphia 76ers.</p>
       </div>
-    </section>
-    <section>
-      <h2 class="depth-section-title">Notes / Key</h2>
-      <div class="notes-block">
-        <ul>
-          <li>Black - On Roster</li>
-          <li style="color:#c20000;font-weight:bold;">Red - Two-Way Contract</li>
-          <li>Depth chart subject to change.</li>
-          <li>The on-court defensive chemistry between Maxey and McCain will be a key factor to watch.</li>
+    </header>
+
+    <!-- Top Ad -->
+    <div class="ad-top">
+      <script>
+      (function(nptkc){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.scripts[d.scripts.length - 1];
+      s.settings = nptkc || {};
+      s.src = "\/\/grimy-bicycle.com\/bOX_VNs\/d.Gxlc0zYBWhcY\/veMmu9MuOZqUhlkkYPhTeYB1rM\/zcYcwANJz_MXthNPjLUazYNBjaAq3\/NzAz";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+    
+    <main class="depth-main-content">
+      <!-- Interactive Controls -->
+      <div class="depth-controls">
+        <button class="control-btn active" data-view="all">All Players</button>
+        <button class="control-btn" data-view="starters">Starters Only</button>
+        <button class="control-btn" data-view="bench">Bench Players</button>
+        <button class="control-btn" data-view="twoway">Two-Way Contracts</button>
+      </div>
+
+      <!-- Interactive Basketball Court Depth Chart -->
+      <div class="basketball-court">
+        <!-- Point Guard -->
+        <div class="position-group" data-position="pg">
+          <div class="position-header">
+            <div class="position-title">
+              <div class="position-icon">PG</div>
+              Point Guard
+            </div>
+            <div class="depth-count">4 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="maxey" data-type="starter">Maxey</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="mccain" data-type="bench">McCain</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="lowry" data-type="bench">Lowry</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card twoway" data-player="sallis" data-type="twoway">Sallis</div>
+          </div>
+        </div>
+
+        <!-- Shooting Guard -->
+        <div class="position-group" data-position="sg">
+          <div class="position-header">
+            <div class="position-title">
+              <div class="position-icon">SG</div>
+              Shooting Guard
+            </div>
+            <div class="depth-count">3 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="grimes" data-type="starter">Grimes</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="edgecombe" data-type="bench">Edgecombe</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="gordon" data-type="bench">Gordon</div>
+          </div>
+        </div>
+
+        <!-- Small Forward -->
+        <div class="position-group" data-position="sf">
+          <div class="position-header">
+            <div class="position-title">
+              <div class="position-icon">SF</div>
+              Small Forward
+            </div>
+            <div class="depth-count">3 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="george" data-type="starter">George</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="oubre" data-type="bench">Oubre</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="edwards" data-type="bench">Edwards</div>
+          </div>
+        </div>
+
+        <!-- Power Forward -->
+        <div class="position-group" data-position="pf">
+          <div class="position-header">
+            <div class="position-title">
+              <div class="position-icon">PF</div>
+              Power Forward
+            </div>
+            <div class="depth-count">4 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="watford" data-type="starter">Watford</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="broome" data-type="bench">Broome</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card twoway" data-player="walker" data-type="twoway">Walker</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card twoway" data-player="barlow" data-type="twoway">Barlow</div>
+          </div>
+        </div>
+
+        <!-- Center -->
+        <div class="position-group" data-position="c">
+          <div class="position-header">
+            <div class="position-title">
+              <div class="position-icon">C</div>
+              Center
+            </div>
+            <div class="depth-count">3 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="embiid" data-type="starter">Embiid</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="bona" data-type="bench">Bona</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="drummond" data-type="bench">Drummond</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Notes Section -->
+      <div class="notes-section">
+        <h3 class="notes-title">Depth Chart Key & Notes</h3>
+        <ul class="notes-list">
+          <li>
+            <div class="note-icon roster">✓</div>
+            <span><strong>Green Cards:</strong> Starting lineup players</span>
+          </li>
+          <li>
+            <div class="note-icon">🔵</div>
+            <span><strong>Blue Cards:</strong> Regular roster players</span>
+          </li>
+          <li>
+            <div class="note-icon twoway">2</div>
+            <span><strong>Red Cards:</strong> Two-Way contract players</span>
+          </li>
+          <li>
+            <div class="note-icon info">ℹ</div>
+            <span>Depth chart reflects current roster and is subject to change based on performance, injuries, and coaching decisions.</span>
+          </li>
+          <li>
+            <div class="note-icon info">⚡</div>
+            <span>The backcourt chemistry between Maxey and McCain will be crucial for the team's defensive success.</span>
+          </li>
         </ul>
       </div>
-    </section>
-    <div class="back-home">
-      <a href="index.html" class="back-home-btn">← Back to Home</a>
+
+      <div class="back-home">
+        <a href="index.html" class="back-home-btn">← Back to Home</a>
+      </div>
+    </main>
+
+    <!-- Bottom Ad -->
+    <div class="ad-bottom">
+      <script>
+      (function(nptkc){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.scripts[d.scripts.length - 1];
+      s.settings = nptkc || {};
+      s.src = "\/\/grimy-bicycle.com\/bOX_VNs\/d.Gxlc0zYBWhcY\/veMmu9MuOZqUhlkkYPhTeYB1rM\/zcYcwANJz_MXthNPjLUazYNBjaAq3\/NzAz";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
     </div>
-  </main>
+  </div>
+
+  <!-- Player Modal (for future expansion) -->
+  <div class="player-modal" id="playerModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closePlayerModal()">&times;</button>
+      <div id="modalContent">
+        <!-- Player details will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Interactive Depth Chart Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Control buttons functionality
+      const controlBtns = document.querySelectorAll('.control-btn');
+      const playerCards = document.querySelectorAll('.player-card');
+      const positionGroups = document.querySelectorAll('.position-group');
+
+      controlBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Remove active class from all buttons
+          controlBtns.forEach(b => b.classList.remove('active'));
+          // Add active class to clicked button
+          this.classList.add('active');
+
+          const view = this.dataset.view;
+          filterPlayers(view);
+        });
+      });
+
+      function filterPlayers(view) {
+        playerCards.forEach(card => {
+          const playerType = card.dataset.type;
+          let shouldShow = false;
+
+          switch(view) {
+            case 'all':
+              shouldShow = true;
+              break;
+            case 'starters':
+              shouldShow = playerType === 'starter';
+              break;
+            case 'bench':
+              shouldShow = playerType === 'bench';
+              break;
+            case 'twoway':
+              shouldShow = playerType === 'twoway';
+              break;
+          }
+
+          if (shouldShow) {
+            card.style.display = 'block';
+            card.style.opacity = '1';
+          } else {
+            card.style.opacity = '0.3';
+          }
+        });
+
+        // Update depth counts
+        updateDepthCounts(view);
+      }
+
+      function updateDepthCounts(view) {
+        positionGroups.forEach(group => {
+          const cards = group.querySelectorAll('.player-card');
+          let visibleCount = 0;
+
+          cards.forEach(card => {
+            const playerType = card.dataset.type;
+            let shouldCount = false;
+
+            switch(view) {
+              case 'all':
+                shouldCount = true;
+                break;
+              case 'starters':
+                shouldCount = playerType === 'starter';
+                break;
+              case 'bench':
+                shouldCount = playerType === 'bench';
+                break;
+              case 'twoway':
+                shouldCount = playerType === 'twoway';
+                break;
+            }
+
+            if (shouldCount) visibleCount++;
+          });
+
+          const countElement = group.querySelector('.depth-count');
+          countElement.textContent = `${visibleCount} player${visibleCount !== 1 ? 's' : ''}`;
+        });
+      }
+
+      // Player card click functionality (for future expansion)
+      playerCards.forEach(card => {
+        card.addEventListener('click', function() {
+          const playerName = this.dataset.player;
+          // Could open modal with player stats, etc.
+          console.log(`Clicked on ${playerName}`);
+        });
+      });
+
+      // Navbar functionality
+      const hamburger = document.querySelector('.hamburger');
+      const navRight = document.querySelector('.nav-right');
+
+      if (hamburger) {
+        hamburger.addEventListener('click', function() {
+          navRight.classList.toggle('open');
+          this.classList.toggle('active');
+        });
+      }
+
+      // Dropdown functionality
+      const dropdownBtns = document.querySelectorAll('.dropdown-btn');
+      dropdownBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const dropdown = this.nextElementSibling;
+          const isOpen = dropdown.classList.contains('show');
+          
+          // Close all dropdowns
+          document.querySelectorAll('.dropdown-content').forEach(d => {
+            d.classList.remove('show');
+          });
+          
+          // Toggle current dropdown
+          if (!isOpen) {
+            dropdown.classList.add('show');
+          }
+        });
+      });
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function() {
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+          dropdown.classList.remove('show');
+        });
+      });
+    });
+
+    // Modal functions (for future use)
+    function closePlayerModal() {
+      document.getElementById('playerModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+      const modal = document.getElementById('playerModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>
