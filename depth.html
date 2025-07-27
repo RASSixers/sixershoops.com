@@ -61,22 +61,32 @@
       padding: 0 1rem;
     }
 
-    /* AD PLACEMENTS */
-    .ad-left, .ad-right {
+    /* AD PLACEMENTS - 2 ON EACH SIDE */
+    .ad-left-top, .ad-left-bottom, .ad-right-top, .ad-right-bottom {
       position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
       width: 160px;
-      height: 600px;
+      height: 300px;
       z-index: 100;
     }
     
-    .ad-left {
+    .ad-left-top {
       left: 20px;
+      top: 20%;
     }
     
-    .ad-right {
+    .ad-left-bottom {
+      left: 20px;
+      bottom: 20%;
+    }
+    
+    .ad-right-top {
       right: 20px;
+      top: 20%;
+    }
+    
+    .ad-right-bottom {
+      right: 20px;
+      bottom: 20%;
     }
     
     .ad-top, .ad-bottom {
@@ -485,7 +495,7 @@
 
     /* RESPONSIVE DESIGN */
     @media (max-width: 1200px) {
-      .ad-left, .ad-right {
+      .ad-left-top, .ad-left-bottom, .ad-right-top, .ad-right-bottom {
         display: none;
       }
     }
@@ -550,8 +560,8 @@
   </nav>
 
   <div class="content-wrapper">
-    <!-- Ad Placements -->
-    <div class="ad-left">
+    <!-- Left Side Ads -->
+    <div class="ad-left-top">
       <script>
       (function(bzdd){
       var d = document,
@@ -566,7 +576,7 @@
       </script>
     </div>
 
-    <div class="ad-right">
+    <div class="ad-left-bottom">
       <script>
       (function(nyp){
       var d = document,
@@ -574,6 +584,37 @@
           l = d.scripts[d.scripts.length - 1];
       s.settings = nyp || {};
       s.src = "\/\/grimy-bicycle.com\/b.XcVTs\/d\/G\/l\/0kYeWDcP\/-e\/md9TuBZwUtlOkpPJTbYV1\/MxzsY\/w\/NOjsMjtONejHUgzsN\/jXA-2SNtA_";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+
+    <!-- Right Side Ads -->
+    <div class="ad-right-top">
+      <script>
+      (function(nptkc){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.scripts[d.scripts.length - 1];
+      s.settings = nptkc || {};
+      s.src = "\/\/grimy-bicycle.com\/bOX_VNs\/d.Gxlc0zYBWhcY\/veMmu9MuOZqUhlkkYPhTeYB1rM\/zcYcwANJz_MXthNPjLUazYNBjaAq3\/NzAz";
+      s.async = true;
+      s.referrerPolicy = 'no-referrer-when-downgrade';
+      l.parentNode.insertBefore(s, l);
+      })({})
+      </script>
+    </div>
+
+    <div class="ad-right-bottom">
+      <script>
+      (function(nptkc){
+      var d = document,
+          s = d.createElement('script'),
+          l = d.scripts[d.scripts.length - 1];
+      s.settings = nptkc || {};
+      s.src = "\/\/grimy-bicycle.com\/bOX_VNs\/d.Gxlc0zYBWhcY\/veMmu9MuOZqUhlkkYPhTeYB1rM\/zcYcwANJz_MXthNPjLUazYNBjaAq3\/NzAz";
       s.async = true;
       s.referrerPolicy = 'no-referrer-when-downgrade';
       l.parentNode.insertBefore(s, l);
@@ -940,15 +981,45 @@
             allowTaint: true
           });
 
+          // Create a new canvas with branding
+          const brandedCanvas = document.createElement('canvas');
+          const padding = 40;
+          const brandHeight = 60;
+          brandedCanvas.width = canvas.width + (padding * 2);
+          brandedCanvas.height = canvas.height + (padding * 2) + brandHeight;
+          
+          const ctx = brandedCanvas.getContext('2d');
+          
+          // White background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, brandedCanvas.width, brandedCanvas.height);
+          
+          // Draw the depth chart
+          ctx.drawImage(canvas, padding, padding);
+          
+          // Add SixersHoops.com branding at bottom
+          ctx.fillStyle = '#0a174e';
+          ctx.font = 'bold 24px Georgia, serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('SixersHoops.com', brandedCanvas.width / 2, brandedCanvas.height - 20);
+          
+          // Add subtitle
+          ctx.fillStyle = '#6c757d';
+          ctx.font = '16px Arial, sans-serif';
+          ctx.fillText('Philadelphia 76ers Depth Chart', brandedCanvas.width / 2, brandedCanvas.height - 45);
+
+          // Use the branded canvas instead
+          const finalCanvas = brandedCanvas;
+
           // Show modal with preview
           exportModal.style.display = 'flex';
-          exportPreview.src = canvas.toDataURL('image/png');
+          exportPreview.src = finalCanvas.toDataURL('image/png');
           
-          // Store canvas for download/copy
-          exportCanvas.width = canvas.width;
-          exportCanvas.height = canvas.height;
-          const ctx = exportCanvas.getContext('2d');
-          ctx.drawImage(canvas, 0, 0);
+          // Store branded canvas for download/copy
+          exportCanvas.width = finalCanvas.width;
+          exportCanvas.height = finalCanvas.height;
+          const exportCtx = exportCanvas.getContext('2d');
+          exportCtx.drawImage(finalCanvas, 0, 0);
 
         } catch (error) {
           console.error('Export failed:', error);
