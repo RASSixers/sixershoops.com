@@ -362,6 +362,105 @@
     .note-icon.twoway { background: #dc3545; }
     .note-icon.info { background: #17a2b8; }
 
+    /* EXPORT FUNCTIONALITY */
+    .export-container {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .export-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+
+    .export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+
+    .export-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .export-modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      text-align: center;
+      position: relative;
+    }
+
+    .export-preview {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .export-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .copy-btn, .download-btn, .close-btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn {
+      background: #007bff;
+      color: #fff;
+    }
+
+    .download-btn {
+      background: #28a745;
+      color: #fff;
+    }
+
+    .close-btn {
+      background: #6c757d;
+      color: #fff;
+    }
+
+    .copy-btn:hover, .download-btn:hover, .close-btn:hover {
+      transform: translateY(-2px);
+      opacity: 0.9;
+    }
+
     .back-home {
       margin: 2.5rem 0 0 0;
       text-align: center;
@@ -424,9 +523,13 @@
   </style>
 </head>
 <body>
-  <!-- Updated Navigation Bar -->
+  <!-- NAVIGATION BAR - SAME AS DRAFT PAGE -->
   <nav class="navbar">
-    <button class="hamburger" aria-label="Toggle navigation">
+    <div class="nav-left">
+      <img src="sixershoopslogo.png" alt="SixersHoops Logo" class="nav-logo" />
+      <span class="site-title">SixersHoops</span>
+    </div>
+    <button class="hamburger" aria-label="Menu" aria-expanded="false">
       <span></span>
       <span></span>
       <span></span>
@@ -504,6 +607,13 @@
     </div>
     
     <main class="depth-main-content">
+      <!-- Export Button -->
+      <div class="export-container">
+        <button class="export-btn" id="exportBtn">
+          📸 Export for Social Media
+        </button>
+      </div>
+      
       <!-- Interactive Controls -->
       <div class="depth-controls">
         <button class="control-btn active" data-view="all">All Players</button>
@@ -658,6 +768,21 @@
     </div>
   </div>
 
+  <!-- Export Modal -->
+  <div id="exportModal" class="export-modal">
+    <div class="export-modal-content">
+      <h2 style="color: #0a174e; margin-bottom: 1rem;">Export Depth Chart</h2>
+      <p style="color: #6c757d; margin-bottom: 1.5rem;">Your depth chart is ready for social media sharing!</p>
+      <canvas id="exportCanvas" style="display: none;"></canvas>
+      <img id="exportPreview" class="export-preview" alt="Depth chart export preview">
+      <div class="export-actions">
+        <button id="copyBtn" class="copy-btn">📋 Copy to Clipboard</button>
+        <button id="downloadBtn" class="download-btn">📥 Download Image</button>
+        <button id="closeModal" class="close-btn">✕ Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Player Modal (for future expansion) -->
   <div class="player-modal" id="playerModal">
     <div class="modal-content">
@@ -761,42 +886,122 @@
         });
       });
 
-      // Navbar functionality
-      const hamburger = document.querySelector('.hamburger');
-      const navRight = document.querySelector('.nav-right');
-
-      if (hamburger) {
-        hamburger.addEventListener('click', function() {
-          navRight.classList.toggle('open');
-          this.classList.toggle('active');
+      // Navigation functionality - SAME AS DRAFT PAGE
+      const hamburger = document.querySelector(".hamburger");
+      const navRight = document.querySelector(".nav-right");
+      const dropdownBtn = document.querySelector(".dropdown-btn");
+      const dropdownContent = document.querySelector(".dropdown-content");
+      
+      if (hamburger && navRight) {
+        hamburger.addEventListener("click", function() {
+          navRight.classList.toggle("open");
+          hamburger.setAttribute("aria-expanded", navRight.classList.contains("open"));
         });
       }
 
-      // Dropdown functionality
-      const dropdownBtns = document.querySelectorAll('.dropdown-btn');
-      dropdownBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
+      if (dropdownBtn && dropdownContent) {
+        dropdownBtn.addEventListener("click", function(e) {
           e.stopPropagation();
-          const dropdown = this.nextElementSibling;
-          const isOpen = dropdown.classList.contains('show');
-          
-          // Close all dropdowns
-          document.querySelectorAll('.dropdown-content').forEach(d => {
-            d.classList.remove('show');
-          });
-          
-          // Toggle current dropdown
-          if (!isOpen) {
-            dropdown.classList.add('show');
+          dropdownContent.classList.toggle("show");
+          dropdownBtn.setAttribute("aria-expanded", dropdownContent.classList.contains("show"));
+        });
+
+        document.addEventListener("click", function(e) {
+          if (!dropdownBtn.contains(e.target) && !dropdownContent.contains(e.target)) {
+            dropdownContent.classList.remove("show");
+            dropdownBtn.setAttribute("aria-expanded", "false");
           }
         });
+      }
+
+      // Export functionality - SAME AS DRAFT PAGE
+      const exportBtn = document.getElementById('exportBtn');
+      const exportModal = document.getElementById('exportModal');
+      const exportCanvas = document.getElementById('exportCanvas');
+      const exportPreview = document.getElementById('exportPreview');
+      const copyBtn = document.getElementById('copyBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const closeModal = document.getElementById('closeModal');
+
+      exportBtn.addEventListener('click', async () => {
+        exportBtn.disabled = true;
+        exportBtn.textContent = '📸 Generating...';
+
+        try {
+          // Import html2canvas dynamically
+          const html2canvas = await import('https://cdn.skypack.dev/html2canvas');
+          
+          // Capture the depth chart
+          const depthChart = document.querySelector('.basketball-court');
+          const canvas = await html2canvas.default(depthChart, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            useCORS: true,
+            allowTaint: true
+          });
+
+          // Show modal with preview
+          exportModal.style.display = 'flex';
+          exportPreview.src = canvas.toDataURL('image/png');
+          
+          // Store canvas for download/copy
+          exportCanvas.width = canvas.width;
+          exportCanvas.height = canvas.height;
+          const ctx = exportCanvas.getContext('2d');
+          ctx.drawImage(canvas, 0, 0);
+
+        } catch (error) {
+          console.error('Export failed:', error);
+          alert('Export failed. Please try again.');
+        } finally {
+          exportBtn.disabled = false;
+          exportBtn.textContent = '📸 Export for Social Media';
+        }
       });
 
-      // Close dropdowns when clicking outside
-      document.addEventListener('click', function() {
-        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-          dropdown.classList.remove('show');
-        });
+      // Copy to clipboard
+      copyBtn.addEventListener('click', async () => {
+        try {
+          const canvas = exportCanvas;
+          canvas.toBlob(async (blob) => {
+            const item = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([item]);
+            copyBtn.textContent = '✅ Copied!';
+            setTimeout(() => {
+              copyBtn.textContent = '📋 Copy to Clipboard';
+            }, 2000);
+          });
+        } catch (error) {
+          console.error('Copy failed:', error);
+          alert('Copy failed. Please try again.');
+        }
+      });
+
+      // Download image
+      downloadBtn.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'sixers-depth-chart.png';
+        link.href = exportCanvas.toDataURL('image/png');
+        link.click();
+      });
+
+      // Close modal
+      closeModal.addEventListener('click', () => {
+        exportModal.style.display = 'none';
+      });
+
+      // Close modal on outside click
+      exportModal.addEventListener('click', (e) => {
+        if (e.target === exportModal) {
+          exportModal.style.display = 'none';
+        }
+      });
+
+      // Close modal on escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && exportModal.style.display === 'flex') {
+          exportModal.style.display = 'none';
+        }
       });
     });
 
