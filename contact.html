@@ -331,6 +331,38 @@
       box-shadow: 0 4px 16px rgba(10,23,78,0.3);
     }
 
+    /* SUCCESS MESSAGE STYLES */
+    .success-message {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 2rem;
+      display: none;
+      box-shadow: 0 4px 16px rgba(40, 167, 69, 0.2);
+    }
+
+    .success-message.show {
+      display: block;
+      animation: slideIn 0.5s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .success-message h3 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-message p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
     /* CONTACT INFO CARDS - NOW ONLY 2 CARDS */
     .contact-info {
       display: grid;
@@ -676,16 +708,22 @@
           <p class="contact-card-text">
             Stay updated with the latest Sixers news and analysis
             <br><br>
-            <a href="https://twitter.com/sixershoops" class="contact-link" target="_blank">@SixersHoops</a>
+            <a href="https://twitter.com/Sixers_Hoops" class="contact-link" target="_blank">@Sixers_Hoops</a>
           </p>
         </div>
       </div>
 
-      <!-- Contact Form - NOW FULLY FUNCTIONAL WITH FORMSPREE -->
+      <!-- Contact Form - NOW WITH SUCCESS MESSAGE ON SITE -->
       <section>
         <h2 class="contact-section-title">Send Us a Message</h2>
         
-        <form action="https://formspree.io/f/xyzpjnze" method="POST" class="contact-form">
+        <!-- SUCCESS MESSAGE - SHOWS AFTER FORM SUBMISSION -->
+        <div class="success-message" id="successMessage">
+          <h3>✅ Message Sent Successfully!</h3>
+          <p>Thank you for reaching out! We'll get back to you within 24-48 hours.</p>
+        </div>
+        
+        <form action="https://formspree.io/f/xyzpjnze" method="POST" class="contact-form" id="contactForm">
           <div class="form-group">
             <label for="name" class="form-label">Name *</label>
             <input type="text" id="name" name="name" class="form-input" required>
@@ -713,8 +751,9 @@
             <textarea id="message" name="message" class="form-textarea" placeholder="Tell us what's on your mind..." required></textarea>
           </div>
 
-          <!-- Hidden field to help with spam -->
+          <!-- Hidden fields for Formspree -->
           <input type="hidden" name="_subject" value="New contact form submission from SixersHoops">
+          <input type="hidden" name="_next" value="javascript:void(0)">
 
           <button type="submit" class="form-submit">Send Message</button>
         </form>
@@ -821,6 +860,36 @@
       }
     }
 
+    // Contact form submission with success message
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Get form data
+      const formData = new FormData(this);
+      
+      // Submit to Formspree
+      fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      }).then(response => {
+        if (response.ok) {
+          // Show success message
+          document.getElementById('successMessage').classList.add('show');
+          // Reset form
+          this.reset();
+          // Scroll to success message
+          document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
+        } else {
+          alert('There was a problem sending your message. Please try again.');
+        }
+      }).catch(error => {
+        alert('There was a problem sending your message. Please try again.');
+      });
+    });
+
     // Close mobile menu when clicking on a link
     document.querySelectorAll('.nav-link, .dropdown-link').forEach(link => {
       link.addEventListener('click', () => {
@@ -831,4 +900,3 @@
   </script>
 </body>
 </html>
-
