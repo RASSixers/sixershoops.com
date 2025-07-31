@@ -952,64 +952,20 @@
     
     <!-- LEFT SIDE ADS -->
     <div class="ad-left-top">
-      <script>
-      (function(lqan){
-      var d = document,
-          s = d.createElement('script'),
-          l = d.scripts[d.scripts.length - 1];
-      s.settings = lqan || {};
-      s.src = "\/\/grimy-bicycle.com\/bhXrVss.d\/GelC0xYwWQcF\/-e\/mY9suVZ\/UCljkqP\/TpYj1FMZzeUXyQNXT\/IJt\/N\/jQUdzWNQT\/I_1PMxwp";
-      s.async = true;
-      s.referrerPolicy = 'no-referrer-when-downgrade';
-      l.parentNode.insertBefore(s, l);
-      })({})
-      </script>
+      <!-- Safe Ad Space - Replace with legitimate ad network -->
     </div>
 
     <div class="ad-left-bottom">
-      <script>
-      (function(racesl){
-      var d = document,
-          s = d.createElement('script'),
-          l = d.scripts[d.scripts.length - 1];
-      s.settings = racesl || {};
-      s.src = "\/\/grimy-bicycle.com\/bWX\/VAsGd.GtlY0bYmWkcT\/ueTmn9durZ\/UYlNkoP\/TSYN1PM\/zEUiywN\/z\/E\/t\/NTjGUTzuNiTWIT3DMXgc";
-      s.async = true;
-      s.referrerPolicy = 'no-referrer-when-downgrade';
-      l.parentNode.insertBefore(s, l);
-      })({})
-      </script>
+      <!-- Safe Ad Space - Replace with legitimate ad network -->
     </div>
 
     <!-- RIGHT SIDE ADS -->
     <div class="ad-right-top">
-      <script>
-      (function(ewkwho){
-      var d = document,
-          s = d.createElement('script'),
-          l = d.scripts[d.scripts.length - 1];
-      s.settings = ewkwho || {};
-      s.src = "\/\/grimy-bicycle.com\/b.XnVjsLdBGulC0GYtWCcu\/Se\/mA9UuWZNUHlJkwPKTjYL1\/MmzhUaypOtDekEtrNHjTUCzRNITmIJ5bMEAE";
-      s.async = true;
-      s.referrerPolicy = 'no-referrer-when-downgrade';
-      l.parentNode.insertBefore(s, l);
-      })({})
-      </script>
+      <!-- Safe Ad Space - Replace with legitimate ad network -->
     </div>
 
     <div class="ad-right-bottom">
-      <script>
-      (function(fnpnds){
-      var d = document,
-          s = d.createElement('script'),
-          l = d.scripts[d.scripts.length - 1];
-      s.settings = fnpnds || {};
-      s.src = "\/\/grimy-bicycle.com\/bGX.Vrsjd\/G\/lw0jYyW-cc\/MeYm\/9HuXZBU\/lmkgPzTBY\/1RMaz\/UgyIOgTZkctINej\/U\/zcNNToMHwlMxAb";
-      s.async = true;
-      s.referrerPolicy = 'no-referrer-when-downgrade';
-      l.parentNode.insertBefore(s, l);
-      })({})
-      </script>
+      <!-- Safe Ad Space - Replace with legitimate ad network -->
     </div>
 
     <!-- DRAFT PAGE CONTENT -->
@@ -1404,11 +1360,20 @@
       }
       
       document.querySelectorAll(".nav-link, .dropdown-link").forEach(link => {
-        link.addEventListener("click", () => {
-          if (navRight) navRight.classList.remove("open");
-          if (hamburger) hamburger.setAttribute("aria-expanded", "false");
-          if (dropdownContent) dropdownContent.classList.remove("show");
-          if (dropdownBtn) dropdownBtn.setAttribute("aria-expanded", "false");
+        link.addEventListener("click", (e) => {
+          // Security: Ensure we're only navigating to our own pages
+          const href = link.getAttribute('href');
+          if (href && (href.startsWith('/') || href.startsWith('#'))) {
+            // Close mobile menu
+            if (navRight) navRight.classList.remove("open");
+            if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+            if (dropdownContent) dropdownContent.classList.remove("show");
+            if (dropdownBtn) dropdownBtn.setAttribute("aria-expanded", "false");
+          } else if (href && !href.startsWith('http')) {
+            // Prevent any suspicious redirects
+            e.preventDefault();
+            console.warn('Blocked suspicious navigation attempt:', href);
+          }
         });
       });
 
@@ -1617,14 +1582,8 @@
         }
       });
 
-      // 8. Auto-expand cards with important picks
-      setTimeout(() => {
-        // Auto-expand 2028 card (has multiple first round picks)
-        const card2028 = document.querySelector('[data-year="2028"].draft-year-card');
-        if (card2028) {
-          card2028.classList.add('expanded');
-        }
-      }, 1000);
+      // 8. Auto-expand cards with important picks - DISABLED
+      // Cards now start collapsed by default for better user experience
 
       // 9. Smooth scroll for timeline clicks
       const smoothScrollToYear = (year) => {
