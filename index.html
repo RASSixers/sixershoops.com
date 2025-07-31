@@ -1,1 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>SixersHoops</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <meta name="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" content="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" />
+  <!-- Google Analytics 4 (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T1V9Q0MNEM');
+  </script>
+  <style>
+    /* Reset to eliminate white gaps */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f6f8fa;
+      color: #23272F;
+      padding-top: 60px; /* Match navbar height */
+    }
+    
+    /* Navigation Bar - Logo LEFT, Tabs RIGHT */
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: #0a174e;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
+      padding: 0.5rem 2rem;
+      z-index: 1001;
+      height: 60px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .site-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-link.active, .nav-link:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-weight: 500;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .dropdown-btn:hover,
+    .nav-dropdown:hover .dropdown-btn {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 110%;
+      left: 0;
+      min-width: 220px;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(10,23,78,0.13);
+      border-radius: 8px;
+      z-index: 1000;
+      flex-direction: column;
+      padding: 0.5rem 0;
+    }
+
+    .nav-dropdown:hover .dropdown-content,
+    .nav-dropdown:focus-within .dropdown-content {
+      display: flex;
+    }
+
+    .dropdown-link {
+      color: #0a174e;
+      text-decoration: none;
+      padding: 0.7rem 1.2rem;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 500;
+      font-size: 1rem;
+      border-radius: 4px;
+      margin: 0 0.3rem;
+      outline: none;
+    }
+
+    .dropdown-link:hover {
+      background: #e6f0ff;
+      color: #0057e7;
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      z-index: 101;
+    }
+
+    .hamburger span {
+      width: 32px;
+      height: 4px;
+      background: #fff;
+      border-radius: 2px;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
+    }
+
+    /* Hero Section - SMALLER BANNER LIKE BEFORE */
+    .hero {
+      background: linear-gradient(135deg, #0a174e 0%, #1e3a8a 50%, #3b82f6 100%);
+      color: #ffffff;
+      padding: 3rem 0; /* SMALLER padding - not full height */
+      margin: 0;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1rem 2rem; /* Reduced padding */
+    }
+
+    .hero-logo {
+      width: 120px; /* Smaller logo */
+      height: 120px;
+      border-radius: 15px;
+      object-fit: cover;
+      margin-bottom: 1.5rem; /* Less margin */
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero h1 {
+      font-size: 2.8rem; /* Smaller title */
+      font-weight: 800;
+      margin-bottom: 0.8rem; /* Less margin */
+      font-family: 'Georgia', serif;
+      letter-spacing: -1px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem; /* Smaller subtitle */
+      margin-bottom: 2rem; /* Less margin */
+      opacity: 0.9;
+      font-weight: 400;
+    }
+
+    .cta-btn {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 0.8rem 2rem; /* Smaller button */
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem; /* Smaller text */
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .cta-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Featured Posts */
+    .featured-posts {
+      padding: 80px 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+
+    .featured-posts h2 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 3rem;
+      color: #0a174e;
+      font-family: 'Georgia', serif;
+    }
+
+    .posts-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .post-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .post-card {
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .post-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .post-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .post-title {
+      padding: 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #0a174e;
+      text-align: center;
+    }
+
+    /* Footer */
+    .site-footer {
+      background: #f8fafc;
+      padding: 3rem 2rem 2rem 2rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      margin: 0;
+    }
+
+    .footer-ads {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .ad-slot-300x250 {
+      width: 300px;
+      height: 250px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .footer-copyright {
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 950px) {
+      .navbar { 
+        padding: 0.5rem 1rem; 
+      }
+      
+      .nav-right {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100vw;
+        background: #0a174e;
+        flex-direction: column;
+        box-shadow: 0 8px 24px rgba(10,23,78,0.17);
+        padding-bottom: 1rem;
+        z-index: 99;
+        max-height: 0;
+        overflow: hidden;
+        border-radius: 0 0 16px 16px;
+        border-top: 1px solid #0057e7;
+        align-items: flex-start;
+      }
+      
+      .nav-right.open { 
+        display: flex; 
+        max-height: 1000px; 
+        overflow: visible; 
+        animation: navShow 0.25s;
+      }
+      
+      @keyframes navShow {
+        from { opacity: 0; transform: translateY(-10px);}
+        to { opacity: 1; transform: translateY(0);}
+      }
+      
+      .hamburger { 
+        display: flex; 
+        position: fixed; 
+        top: 18px; 
+        right: 32px; 
+        margin-left: 0; 
+        background: none; 
+        border: none;
+      }
+      
+      .dropdown-content { 
+        position: static; 
+        min-width: unset; 
+        box-shadow: none; 
+        background: transparent; 
+        border-radius: 0; 
+        padding: 0;
+      }
+      
+      .dropdown-link { 
+        color: #fff; 
+        padding: 0.8rem 1.6rem;
+      }
+      
+      .dropdown-link:hover { 
+        background: #0057e7; 
+        color: #fff;
+      }
+
+      .hero h1 {
+        font-size: 2.2rem; /* Smaller on mobile */
+      }
+
+      .hero-logo {
+        width: 100px; /* Smaller on mobile */
+        height: 100px;
+      }
+
+      .site-title {
+        font-size: 1.2rem;
+      }
+
+      .featured-posts {
+        padding: 40px 1rem;
+      }
+
+      .featured-posts h2 {
+        font-size: 2rem;
+      }
+
+      .posts-row {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .footer-ads {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1rem;
+      }
+
+      .cta-btn {
+        padding: 0.7rem 1.5rem;
+        font-size: 0.9rem;
+      }
+
+      .featured-posts h2 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <img src="logo.png" alt="SixersHoops Logo" class="nav-logo" />
+      <span class="site-title">SixersHoops</span>
+    </div>
+    <div class="nav-right" id="navMenu">
+      <a href="/home/" class="nav-link">Home</a>
+      <a href="/news/" class="nav-link">News</a>
+      <a href="/analysis/" class="nav-link">Analysis</a>
+      <a href="/players/" class="nav-link">Players</a>
+      <div class="nav-dropdown">
+        <button class="dropdown-btn">More ▼</button>
+        <div class="dropdown-content">
+          <a href="/schedule/" class="dropdown-link">Schedule</a>
+          <a href="/stats/" class="dropdown-link">Stats</a>
+          <a href="/history/" class="dropdown-link">History</a>
+          <a href="/about/" class="dropdown-link">About</a>
+        </div>
+      </div>
+    </div>
+    <button class="hamburger" onclick="toggleNav()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <img src="logo.png" alt="SixersHoops Logo" class="hero-logo" />
+      <h1>SixersHoops</h1>
+      <p class="hero-subtitle">Your ultimate destination for Philadelphia 76ers news, analysis, and insights</p>
+      <a href="/news/" class="cta-btn">Latest News</a>
+    </div>
+  </section>
+
+  <!-- Featured Posts -->
+  <section class="featured-posts">
+    <h2>Featured Stories</h2>
+    <div class="posts-row">
+      <a href="/news/embiid-injury-update/" class="post-link">
+        <div class="post-card">
+          <img src="embiid-featured.jpg" alt="Joel Embiid" />
+          <div class="post-title">Embiid's Road to Recovery: Latest Injury Update</div>
+        </div>
+      </a>
+      <a href="/analysis/maxey-breakout-season/" class="post-link">
+        <div class="post-card">
+          <img src="maxey-featured.jpg" alt="Tyrese Maxey" />
+          <div class="post-title">Tyrese Maxey's Breakout Season Analysis</div>
+        </div>
+      </a>
+      <a href="/news/trade-deadline-rumors/" class="post-link">
+        <div class="post-card">
+          <img src="trade-featured.jpg" alt="Trade Deadline" />
+          <div class="post-title">Trade Deadline Rumors and Predictions</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-ads">
+      <div class="ad-slot-300x250">
+        <!-- Ad Space 1 -->
+        <p>Advertisement</p>
+      </div>
+      <div class="ad-slot-300x250">
+        <!-- Ad Space 2 -->
+        <p>Advertisement</p>
+      </div>
+    </div>
+    <div class="footer-copyright">
+      <p>&copy; 2024 SixersHoops. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    function toggleNav() {
+      const navMenu = document.getElementById('navMenu');
+      navMenu.classList.toggle('open');
+    }
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const navMenu = document.getElementById('navMenu');
+      const hamburger = document.querySelector('.hamburger');
+      
+      if (!navMenu.contains(event.target) && !hamburger.contains(event.target)) {
+        navMenu.classList.remove('open');
+      }
+    });
+
+    // Handle dropdown accessibility
+    document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+      const btn = dropdown.querySelector('.dropdown-btn');
+      const content = dropdown.querySelector('.dropdown-content');
+      
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        content.style.display = content.style.display === 'flex' ? 'none' : 'flex';
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(event) {
+        if (!dropdown.contains(event.target)) {
+          content.style.display = 'none';
+        }
+      });
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Add loading animation for images
+    document.querySelectorAll('img').forEach(img => {
+      img.addEventListener('load', function() {
+        this.style.opacity = '1';
+      });
+      
+      img.addEventListener('error', function() {
+        this.style.opacity = '0.5';
+        this.alt = 'Image not available';
+      });
+    });
+
+    // Intersection Observer for fade-in animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    // Observe elements for animation
+    document.querySelectorAll('.post-card, .hero-content').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(el);
+    });
+
+    // Add search functionality (placeholder)
+    function initSearch() {
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+          const query = e.target.value.toLowerCase();
+          // Search functionality would go here
+          console.log('Searching for:', query);
+        });
+      }
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      initSearch();
+      
+      // Add keyboard navigation support
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          // Close mobile menu
+          const navMenu = document.getElementById('navMenu');
+          navMenu.classList.remove('open');
+          
+          // Close dropdowns
+          document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+            dropdown.style.display = 'none';
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
