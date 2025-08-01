@@ -803,18 +803,7 @@
     <div class="bottom-ad-container">
       <div class="ad-label">Advertisement</div>
       <div class="bottom-ad">
-        <script>
-        (function(lzicc){
-        var d = document,
-            s = d.createElement('script'),
-            l = d.scripts[d.scripts.length - 1];
-        s.settings = lzicc || {};
-        s.src = "\/\/grimy-bicycle.com\/bsX.VWssd\/GTlF0GYEWqcj\/Gemm\/9YuQZQUzlbk\/P-TZYV1xNbD\/ET5uNOzvM\/tiNSjQUi0yMxT\/kf3TNwAG";
-        s.async = true;
-        s.referrerPolicy = 'no-referrer-when-downgrade';
-        l.parentNode.insertBefore(s, l);
-        })({})
-        </script>
+        <!-- Safe Ad Space - Replace with legitimate ad network -->
       </div>
     </div>
   </div>
@@ -880,13 +869,56 @@
       });
     });
 
-    // Close mobile menu when clicking on a link
+    // SECURITY: Navigation link protection against suspicious redirects
     document.querySelectorAll('.nav-link, .dropdown-link').forEach(link => {
-      link.addEventListener('click', () => {
-        document.querySelector('.nav-right').classList.remove('open');
-        document.querySelector('.hamburger').setAttribute('aria-expanded', 'false');
+      link.addEventListener('click', (e) => {
+        // Security: Ensure we're only navigating to our own pages
+        const href = link.getAttribute('href');
+        if (href && (href.startsWith('/') || href.startsWith('#'))) {
+          // Close mobile menu on legitimate navigation
+          document.querySelector('.nav-right').classList.remove('open');
+          document.querySelector('.hamburger').setAttribute('aria-expanded', 'false');
+        } else if (href && !href.startsWith('http')) {
+          // Prevent any suspicious redirects
+          e.preventDefault();
+          console.warn('Blocked suspicious navigation attempt:', href);
+          alert('Navigation blocked for security reasons.');
+        }
       });
     });
+
+    // ADDITIONAL SECURITY: Global redirect protection
+    // Override potentially dangerous methods
+    const originalWindowOpen = window.open;
+    window.open = function(url, target, features) {
+      // Only allow opening external links (http/https) in new tabs
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        return originalWindowOpen.call(this, url, target || '_blank', features);
+      } else {
+        console.warn('Blocked suspicious window.open attempt:', url);
+        return null;
+      }
+    };
+
+    // Prevent location manipulation from ads
+    const originalLocationAssign = location.assign;
+    const originalLocationReplace = location.replace;
+    
+    location.assign = function(url) {
+      if (url && (url.startsWith('/') || url.startsWith('#') || url.startsWith('http'))) {
+        return originalLocationAssign.call(this, url);
+      } else {
+        console.warn('Blocked suspicious location.assign attempt:', url);
+      }
+    };
+    
+    location.replace = function(url) {
+      if (url && (url.startsWith('/') || url.startsWith('#') || url.startsWith('http'))) {
+        return originalLocationReplace.call(this, url);
+      } else {
+        console.warn('Blocked suspicious location.replace attempt:', url);
+      }
+    };
   </script>
 </body>
 </html>
