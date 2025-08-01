@@ -1258,6 +1258,59 @@
         }
       });
 
+      // SECURITY: Navigation link protection against suspicious redirects
+      document.querySelectorAll(".nav-link, .dropdown-link").forEach(link => {
+        link.addEventListener("click", (e) => {
+          // Security: Ensure we're only navigating to our own pages
+          const href = link.getAttribute('href');
+          if (href && (href.startsWith('/') || href.startsWith('#'))) {
+            // Close mobile menu on legitimate navigation
+            if (navRight) navRight.classList.remove("open");
+            if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+            if (dropdownContent) dropdownContent.classList.remove("show");
+            if (dropdownBtn) dropdownBtn.setAttribute("aria-expanded", "false");
+          } else if (href && !href.startsWith('http')) {
+            // Prevent any suspicious redirects
+            e.preventDefault();
+            console.warn('Blocked suspicious navigation attempt:', href);
+            alert('Navigation blocked for security reasons.');
+          }
+        });
+      });
+
+      // ADDITIONAL SECURITY: Global redirect protection
+      // Override potentially dangerous methods
+      const originalWindowOpen = window.open;
+      window.open = function(url, target, features) {
+        // Only allow opening external links (http/https) in new tabs
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+          return originalWindowOpen.call(this, url, target || '_blank', features);
+        } else {
+          console.warn('Blocked suspicious window.open attempt:', url);
+          return null;
+        }
+      };
+
+      // Prevent location manipulation from ads
+      const originalLocationAssign = location.assign;
+      const originalLocationReplace = location.replace;
+      
+      location.assign = function(url) {
+        if (url && (url.startsWith('/') || url.startsWith('#') || url.startsWith('http'))) {
+          return originalLocationAssign.call(this, url);
+        } else {
+          console.warn('Blocked suspicious location.assign attempt:', url);
+        }
+      };
+      
+      location.replace = function(url) {
+        if (url && (url.startsWith('/') || url.startsWith('#') || url.startsWith('http'))) {
+          return originalLocationReplace.call(this, url);
+        } else {
+          console.warn('Blocked suspicious location.replace attempt:', url);
+        }
+      };
+
       // Export functionality - SAME AS DRAFT PAGE
       const exportBtn = document.getElementById('exportBtn');
       const exportModal = document.getElementById('exportModal');
