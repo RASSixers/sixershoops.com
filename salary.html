@@ -7,6 +7,20 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="styles.css" />
   <meta name="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" content="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" />
+  
+  <!-- Social Media Meta Tags -->
+  <meta name="description" content="Complete Philadelphia 76ers salary breakdown and roster analysis for the current NBA season." />
+  <meta property="og:title" content="Philadelphia 76ers Salary Breakdown" />
+  <meta property="og:description" content="Complete salary cap analysis and roster breakdown for the Philadelphia 76ers" />
+  <meta property="og:image" content="" id="og-image" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://sixershoops.com/salary" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Philadelphia 76ers Salary Breakdown" />
+  <meta name="twitter:description" content="Complete salary cap analysis and roster breakdown for the Philadelphia 76ers" />
+  <meta name="twitter:image" content="" id="twitter-image" />
   <!-- Google Analytics 4 (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
   <script>
@@ -15,6 +29,9 @@
     gtag('js', new Date());
     gtag('config', 'G-T1V9Q0MNEM');
   </script>
+  
+  <!-- html2canvas for image generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     /* Reset to eliminate white gaps */
     * {
@@ -394,29 +411,7 @@
       box-shadow: 0 0 0 3px rgba(0, 87, 231, 0.1);
     }
 
-    .filter-buttons {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .filter-btn {
-      padding: 0.5rem 1rem;
-      border: 2px solid #e9ecef;
-      background: #fff;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .filter-btn:hover, .filter-btn.active {
-      background: #0a174e;
-      color: #fff;
-      border-color: #0a174e;
-      transform: translateY(-1px);
-    }
+    /* Filter buttons removed - replaced with salary cap tables */
 
     .view-controls {
       display: flex;
@@ -621,6 +616,16 @@
       color: #0c5460;
     }
 
+    .status-badge.player-option {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-badge.team-option {
+      background: #cce7ff;
+      color: #0057e7;
+    }
+
     /* Two-Way Section */
     .twoway-section {
       margin-top: 2rem;
@@ -634,15 +639,72 @@
       font-size: 1.3rem;
     }
 
-    /* Card View */
-    .card-view {
-      display: none;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
+    /* Season Tabs */
+    .future-seasons-section {
+      margin-top: 3rem;
     }
 
-    .card-view.active {
-      display: grid;
+    .season-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .season-tab {
+      padding: 0.75rem 1.5rem;
+      border: 2px solid #e9ecef;
+      background: #fff;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #0a174e;
+      outline: none;
+    }
+
+    .season-tab:hover {
+      background: #f8f9fa;
+      border-color: #0057e7;
+      transform: translateY(-1px);
+    }
+
+    .season-tab.active {
+      background: #0a174e;
+      color: #fff;
+      border-color: #0a174e;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(10,23,78,0.2);
+    }
+
+    .season-content {
+      display: none;
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(10,23,78,0.09);
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    /* Make sure only the active season is visible */
+    .season-content {
+      display: none;
+    }
+    
+    .season-content.active {
+      display: block;
+      border-color: #0057e7;
+    }
+
+    .season-content .table-view {
+      display: block;
+    }
+
+    .season-content .salary-table {
+      margin-bottom: 0;
     }
 
     .table-view.active {
@@ -651,188 +713,6 @@
 
     .table-view {
       display: none;
-    }
-
-    .player-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 20px rgba(10,23,78,0.09);
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
-    }
-
-    .player-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 32px rgba(10,23,78,0.15);
-      border-color: #0057e7;
-    }
-
-    .player-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .player-card-name {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #0a174e;
-    }
-
-    .player-card-salary {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #0057e7;
-    }
-
-    .player-card-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .player-card-detail {
-      font-size: 0.9rem;
-      color: #6c757d;
-    }
-
-    /* Player Notes Dropdown */
-    .notes-toggle {
-      background: none;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      margin-left: 8px;
-      padding: 4px;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-      opacity: 0.6;
-    }
-    
-    .notes-toggle:hover {
-      background: rgba(10, 23, 78, 0.1);
-      opacity: 1;
-      transform: scale(1.1);
-    }
-    
-    .notes-toggle.active {
-      background: #0a174e;
-      color: white;
-      opacity: 1;
-    }
-    
-    .player-notes {
-      margin-top: 8px;
-      padding: 0;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    
-    .player-notes.show {
-      display: block !important;
-      animation: slideDown 0.3s ease;
-    }
-    
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        max-height: 0;
-      }
-      to {
-        opacity: 1;
-        max-height: 200px;
-      }
-    }
-    
-    .note-content {
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      border: 1px solid #dee2e6;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 0.9rem;
-      color: #495057;
-      line-height: 1.4;
-      box-shadow: 0 2px 8px rgba(10, 23, 78, 0.08);
-      position: relative;
-    }
-    
-    .note-content::before {
-      content: '';
-      position: absolute;
-      top: -8px;
-      left: 20px;
-      width: 0;
-      height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-bottom: 8px solid #dee2e6;
-    }
-    
-    .note-content::after {
-      content: '';
-      position: absolute;
-      top: -7px;
-      left: 20px;
-      width: 0;
-      height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-bottom: 8px solid #f8f9fa;
-    }
-    
-    .note-content strong {
-      color: #0a174e;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    /* Card View Notes */
-    .player-card-notes {
-      margin-top: 12px;
-      border-top: 1px solid #e9ecef;
-      padding-top: 12px;
-    }
-    
-    .card-notes-toggle {
-      background: linear-gradient(135deg, #0a174e 0%, #0057e7 100%);
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      width: 100%;
-      text-align: left;
-    }
-    
-    .card-notes-toggle:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(10, 23, 78, 0.2);
-    }
-    
-    .card-notes-toggle.active {
-      background: linear-gradient(135deg, #0057e7 0%, #0a174e 100%);
-    }
-    
-    .card-notes-content {
-      margin-top: 8px;
-      padding: 12px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      line-height: 1.4;
-      color: #495057;
-      border: 1px solid #e9ecef;
-    }
-    
-    .card-notes-content strong {
-      color: #0a174e;
-      display: block;
-      margin-bottom: 4px;
     }
 
     /* Enhanced Summary */
@@ -906,21 +786,26 @@
     .export-modal-content {
       background: #fff;
       border-radius: 16px;
-      padding: 2rem;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
+      padding: 1rem;
+      max-width: 70vw;
+      width: auto;
+      max-height: none;
       overflow-y: auto;
       text-align: center;
       position: relative;
+      display: flex;
+      flex-direction: column;
     }
 
     .export-preview {
-      max-width: 100%;
+      width: 100%;
+      max-width: none;
       height: auto;
+      max-height: 85vh;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
+      object-fit: cover;
     }
 
     .export-actions {
@@ -957,6 +842,84 @@
     .copy-btn:hover, .download-btn:hover, .close-btn:hover {
       transform: translateY(-2px);
       opacity: 0.9;
+    }
+
+
+
+
+
+    /* Export Button and Modal Styles */
+    .export-container {
+      margin: 1rem 0;
+    }
+
+    .export-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+
+    .export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+
+    .export-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .export-modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1rem;
+      max-width: 70vw;
+      width: auto;
+      max-height: 98vh;
+      overflow-y: auto;
+      text-align: center;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .export-preview {
+      width: 100%;
+      max-width: none;
+      height: auto;
+      max-height: 85vh;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+      object-fit: contain;
+    }
+
+    .export-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
     /* Mobile Responsive - Hide ads and adjust layout */
@@ -1176,23 +1139,15 @@
           <div class="search-box">
             <input type="text" id="playerSearch" placeholder="🔍 Search players..." />
           </div>
-          <div class="filter-buttons">
-            <button class="filter-btn active" data-filter="all">All Players</button>
-            <button class="filter-btn" data-filter="guaranteed">Guaranteed</button>
-            <button class="filter-btn" data-filter="non-guaranteed">Non-Guaranteed</button>
-            <button class="filter-btn" data-filter="twoway">Two-Way</button>
-          </div>
         </div>
         <div class="view-controls">
           <button class="view-btn active" data-view="table">📊 Table View</button>
-          <button class="view-btn" data-view="cards">🃏 Card View</button>
-          <button class="export-btn" id="exportSalaryBtn">📱 Share to Social Media</button>
         </div>
       </div>
 
       <!-- CAP SPACE CALCULATOR -->
       <div class="cap-calculator">
-        <h3>💰 Cap Numbers for the NBA 2024-25 Season</h3>
+        <h3 id="capCalculatorTitle">💰 Cap Numbers for the NBA 2025-26 Season</h3>
         <div class="cap-metrics">
           <div class="cap-metric">
             <span class="metric-label">Current Payroll</span>
@@ -1223,9 +1178,29 @@
           <span class="total-players">13 Players</span>
         </h2>
         
-        <!-- TABLE VIEW -->
-        <div class="table-view active">
-          <table class="salary-table interactive-table" id="salaryTable">
+        <!-- SEASON TABS ABOVE CAP CALCULATOR -->
+        <div class="season-tabs-section" style="margin-bottom: 2rem;">
+          <!-- Season Tabs -->
+          <div class="season-tabs">
+            <button class="season-tab active" data-season="2025-26">2025-26</button>
+            <button class="season-tab" data-season="2026-27">2026-27</button>
+            <button class="season-tab" data-season="2027-28">2027-28</button>
+            <button class="season-tab" data-season="2028-29">2028-29</button>
+          </div>
+          
+          <!-- Social Media Export Button -->
+          <div class="export-container" style="text-align: center; margin-top: 1rem;">
+            <button class="export-btn" id="exportBtn">
+              📸 Export for Social Media
+            </button>
+          </div>
+
+        </div>
+        
+        <!-- 2025-26 Season Content (Current Table) -->
+        <div class="season-content active" id="season-2025-26">
+          <div class="table-view active">
+            <table class="salary-table interactive-table" id="salaryTable">
             <thead>
               <tr>
                 <th class="sortable" data-sort="rank"># <span class="sort-arrow">↕️</span></th>
@@ -1284,29 +1259,45 @@
                 <td class="cap-percentage">7.2%</td>
                 <td><span class="status-badge guaranteed">Guaranteed</span></td>
               </tr>
-              <tr data-salary="8382150" data-status="guaranteed">
+              <tr data-salary="8382150" data-status="player-option">
                 <td>5</td>
                 <td class="player-name">
                   <div class="player-info">
                     <strong>Kelly Oubre Jr.</strong>
                     <span class="player-position">SF</span>
+                    <button class="notes-toggle" onclick="togglePlayerNotes(this)" title="View player notes">
+                      📝
+                    </button>
+                  </div>
+                  <div class="player-notes" style="display: none;">
+                    <div class="note-content">
+                      <strong>Player Option:</strong> Kelly Oubre Jr. opted in to his $8,382,150 player option for the 2025-26 season.
+                    </div>
                   </div>
                 </td>
                 <td class="salary-amount">$8,382,150</td>
                 <td class="cap-percentage">5.4%</td>
-                <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                <td><span class="status-badge player-option">Player Option ✓</span></td>
               </tr>
-              <tr data-salary="5000000" data-status="guaranteed">
+              <tr data-salary="5000000" data-status="player-option">
                 <td>6</td>
                 <td class="player-name">
                   <div class="player-info">
                     <strong>Andre Drummond</strong>
                     <span class="player-position">C</span>
+                    <button class="notes-toggle" onclick="togglePlayerNotes(this)" title="View player notes">
+                      📝
+                    </button>
+                  </div>
+                  <div class="player-notes" style="display: none;">
+                    <div class="note-content">
+                      <strong>Player Option:</strong> Andre Drummond opted in to his $5,000,000 player option for the 2025-26 season.
+                    </div>
                   </div>
                 </td>
                 <td class="salary-amount">$5,000,000</td>
                 <td class="cap-percentage">3.2%</td>
-                <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                <td><span class="status-badge player-option">Player Option ✓</span></td>
               </tr>
               <tr data-salary="4221360" data-status="guaranteed">
                 <td>7</td>
@@ -1376,25 +1367,17 @@
                 <td class="cap-percentage">1.3%</td>
                 <td><span class="status-badge non-guaranteed">Non-Guaranteed</span></td>
               </tr>
-              <tr data-salary="1272870" data-status="other" class="highlight-yellow">
+              <tr data-salary="2296274" data-status="guaranteed">
                 <td>12</td>
                 <td class="player-name">
                   <div class="player-info">
                     <strong>Johnni Broome</strong>
                     <span class="player-position">C</span>
-                    <button class="notes-toggle" onclick="togglePlayerNotes(this)" title="View player notes">
-                      📝
-                    </button>
-                  </div>
-                  <div class="player-notes" style="display: none;">
-                    <div class="note-content">
-                      <strong>2nd Round Exception:</strong> Signed using the 2nd round pick exception to a 4 year deal with the first two years guaranteed. His salary for the 2025-26 season could be as low as $1,272,870 and as high as $2,296,274. Contract will not count against the cap until 7/31/25.
-                    </div>
                   </div>
                 </td>
-                <td class="salary-amount">$1,272,870</td>
-                <td class="cap-percentage">0.8%</td>
-                <td><span class="status-badge other">Special</span></td>
+                <td class="salary-amount">$2,296,274</td>
+                <td class="cap-percentage">1.5%</td>
+                <td><span class="status-badge guaranteed">Guaranteed</span></td>
               </tr>
               <tr data-salary="2296274" data-status="guaranteed">
                 <td>13</td>
@@ -1460,12 +1443,322 @@
               </tbody>
             </table>
           </div>
+          </div>
         </div>
 
-        <!-- CARD VIEW -->
-        <div class="card-view" id="cardView">
-          <!-- Cards will be generated by JavaScript -->
+        <!-- 2026-27 Season Table -->
+        <div class="season-content" id="season-2026-27">
+          <div class="table-view active">
+                <table class="salary-table interactive-table">
+                  <thead>
+                    <tr>
+                      <th class="sortable" data-sort="rank">#</th>
+                      <th class="sortable" data-sort="name">Player</th>
+                      <th class="sortable" data-sort="salary">Salary</th>
+                      <th class="sortable" data-sort="percentage">Cap %</th>
+                      <th class="sortable" data-sort="status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="season2026TableBody">
+                    <tr data-salary="57915200" data-status="guaranteed">
+                      <td>1</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Joel Embiid</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$57,915,200</td>
+                      <td class="cap-percentage">35.0%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="54126380" data-status="guaranteed">
+                      <td>2</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Paul George</strong>
+                          <span class="player-position">SG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$54,126,380</td>
+                      <td class="cap-percentage">32.7%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="40770520" data-status="guaranteed">
+                      <td>3</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Tyrese Maxey</strong>
+                          <span class="player-position">PG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$40,770,520</td>
+                      <td class="cap-percentage">24.6%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="11663880" data-status="guaranteed">
+                      <td>4</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>VJ Edgecombe</strong>
+                          <span class="player-position">SG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$11,663,880</td>
+                      <td class="cap-percentage">7.0%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="4422600" data-status="team-option">
+                      <td>5</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Jared McCain</strong>
+                          <span class="player-position">PG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$4,422,600</td>
+                      <td class="cap-percentage">2.7%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                    <tr data-salary="2801346" data-status="team-option">
+                      <td>6</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Trendon Watford</strong>
+                          <span class="player-position">PF</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,801,346</td>
+                      <td class="cap-percentage">1.7%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                    <tr data-salary="2411090" data-status="guaranteed">
+                      <td>7</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Justin Edwards</strong>
+                          <span class="player-position">SG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,411,090</td>
+                      <td class="cap-percentage">1.5%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="2296271" data-status="non-guaranteed">
+                      <td>8</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Adem Bona</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,296,271</td>
+                      <td class="cap-percentage">1.4%</td>
+                      <td><span class="status-badge non-guaranteed">Non-Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="2150917" data-status="guaranteed">
+                      <td>9</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Johnni Broome</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,150,917</td>
+                      <td class="cap-percentage">1.3%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+          </div>
         </div>
+
+        <!-- 2027-28 Season Table -->
+        <div class="season-content" id="season-2027-28">
+          <div class="table-view active">
+                <table class="salary-table interactive-table">
+                  <thead>
+                    <tr>
+                      <th class="sortable" data-sort="rank">#</th>
+                      <th class="sortable" data-sort="name">Player</th>
+                      <th class="sortable" data-sort="salary">Salary</th>
+                      <th class="sortable" data-sort="percentage">Cap %</th>
+                      <th class="sortable" data-sort="status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="season2027TableBody">
+                    <tr data-salary="62548416" data-status="guaranteed">
+                      <td>1</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Joel Embiid</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$62,548,416</td>
+                      <td class="cap-percentage">34.4%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="56586670" data-status="player-option">
+                      <td>2</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Paul George</strong>
+                          <span class="player-position">SG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$56,586,670</td>
+                      <td class="cap-percentage">31.1%</td>
+                      <td><span class="status-badge player-option">Player Option</span></td>
+                    </tr>
+                    <tr data-salary="43582280" data-status="guaranteed">
+                      <td>3</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Tyrese Maxey</strong>
+                          <span class="player-position">PG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$43,582,280</td>
+                      <td class="cap-percentage">23.9%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="12219840" data-status="team-option">
+                      <td>4</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>VJ Edgecombe</strong>
+                          <span class="player-position">SG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$12,219,840</td>
+                      <td class="cap-percentage">6.7%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                    <tr data-salary="6784268" data-status="team-option">
+                      <td>5</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Jared McCain</strong>
+                          <span class="player-position">PG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$6,784,268</td>
+                      <td class="cap-percentage">3.7%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                    <tr data-salary="2616754" data-status="team-option">
+                      <td>6</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Justin Edwards</strong>
+                          <span class="player-position">SG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,616,754</td>
+                      <td class="cap-percentage">1.4%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                    <tr data-salary="2525901" data-status="team-option">
+                      <td>7</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Johnni Broome</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,525,901</td>
+                      <td class="cap-percentage">1.4%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                    <tr data-salary="2486995" data-status="team-option">
+                      <td>8</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Adem Bona</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,486,995</td>
+                      <td class="cap-percentage">1.4%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+          </div>
+        </div>
+
+        <!-- 2028-29 Season Table -->
+        <div class="season-content" id="season-2028-29">
+          <div class="table-view active">
+                <table class="salary-table interactive-table">
+                  <thead>
+                    <tr>
+                      <th class="sortable" data-sort="rank">#</th>
+                      <th class="sortable" data-sort="name">Player</th>
+                      <th class="sortable" data-sort="salary">Salary</th>
+                      <th class="sortable" data-sort="percentage">Cap %</th>
+                      <th class="sortable" data-sort="status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="season2028TableBody">
+                    <tr data-salary="67181632" data-status="guaranteed">
+                      <td>1</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Joel Embiid</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$67,181,632</td>
+                      <td class="cap-percentage">38.0%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="46394040" data-status="guaranteed">
+                      <td>2</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Tyrese Maxey</strong>
+                          <span class="player-position">PG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$46,394,040</td>
+                      <td class="cap-percentage">26.2%</td>
+                      <td><span class="status-badge guaranteed">Guaranteed</span></td>
+                    </tr>
+                    <tr data-salary="15445878" data-status="team-option">
+                      <td>3</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>VJ Edgecombe</strong>
+                          <span class="player-position">SG</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$15,445,878</td>
+                      <td class="cap-percentage">8.7%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                    <tr data-salary="2735698" data-status="team-option">
+                      <td>4</td>
+                      <td class="player-name">
+                        <div class="player-info">
+                          <strong>Johnni Broome</strong>
+                          <span class="player-position">C</span>
+                        </div>
+                      </td>
+                      <td class="salary-amount">$2,735,698</td>
+                      <td class="cap-percentage">1.5%</td>
+                      <td><span class="status-badge team-option">Team Option</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+          </div>
+        </div>
+
+
+      </section>
+
+
 
         <!-- ENHANCED SALARY SUMMARY -->
         <div class="salary-summary enhanced-summary">
@@ -1497,31 +1790,32 @@
           </div>
         </div>
       </section>
-      <section>
-        <h2 class="salary-section-title">Notes</h2>
-        <div class="notes-block">
-          <ul>
-            <li>Johnni Broome was signed using the 2nd round pick exception to a 4 year deal with the first two years guaranteed. His salary for the 2025-26 season could be as low as $1,272,870 and as high as $2,296,274. Broome's contract will not count against the cap until 7/31/25.</li>
-            <li>Adem Bona's salary is $1,955,377, with $977,689 guaranteed as of July 9, 2025. The full amount is guaranteed if he's not waived before NBA opening night.</li>
-          </ul>
-        </div>
-        <div class="notes-key">
-          Key:
-          <span class="key-green">Green = non guaranteed</span> &nbsp;|&nbsp;
-          <span class="key-red">Red = player option</span> &nbsp;|&nbsp;
-          <span class="key-blue">Blue = team option</span> &nbsp;|&nbsp;
-          <span class="key-yellow">Yellow = other note</span>
-        </div>
-      </section>
       
       <div class="back-home">
         <a href="/home" class="back-home-btn">← Back to Home</a>
       </div>
     </main>
 
+
+
     <!-- BOTTOM CENTER AD -->
     <div class="ad-bottom-center">
       <!-- Safe Ad Space - Replace with legitimate ad network -->
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="exportModal" class="export-modal">
+    <div class="export-modal-content">
+      <h2 style="color: #0a174e; margin-bottom: 1rem;">Export Salary Breakdown</h2>
+      <p style="color: #6c757d; margin-bottom: 1.5rem;">Your salary breakdown is ready for social media sharing!</p>
+      <canvas id="exportCanvas" style="display: none;"></canvas>
+      <img id="exportPreview" class="export-preview" alt="Salary breakdown export preview">
+      <div class="export-actions">
+        <button id="copyBtn" class="copy-btn">📋 Copy to Clipboard</button>
+        <button id="downloadBtn" class="download-btn">📥 Download Image</button>
+        <button id="closeModal" class="close-btn">✕ Close</button>
+      </div>
     </div>
   </div>
 
@@ -1603,103 +1897,158 @@
         });
       }
 
-      // Filter functionality
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-          // Remove active class from all buttons
-          filterBtns.forEach(b => b.classList.remove('active'));
-          // Add active class to clicked button
-          this.classList.add('active');
-          
-          const filter = this.dataset.filter;
-          allRows.forEach(row => {
-            const status = row.dataset.status;
-            if (filter === 'all' || status === filter) {
-              row.style.display = '';
-            } else {
-              row.style.display = 'none';
-            }
-          });
-        });
-      });
+      // Season data with cap information
+      const seasonData = {
+        '2025-26': {
+          salaryCap: 154647000,
+          luxuryTax: 187895000,
+          firstApron: 195945000,
+          secondApron: 207824000,
+          totalPayroll: 185892519,
+          capSpace: -31245519,
+          taxSpace: 2002481,
+          firstApronSpace: 10052481,
+          secondApronSpace: 21931481,
+          rosterCount: '13/15'
+        },
+        '2026-27': {
+          salaryCap: 165472000,
+          luxuryTax: 201048000,
+          firstApron: 209661000,
+          secondApron: 222372000,
+          totalPayroll: 0, // Will be calculated
+          capSpace: 0, // Will be calculated
+          taxSpace: 0, // Will be calculated
+          firstApronSpace: 0, // Will be calculated
+          secondApronSpace: 0, // Will be calculated
+          rosterCount: '9/15'
+        },
+        '2027-28': {
+          salaryCap: 182019000,
+          luxuryTax: 221153000,
+          firstApron: 230627000,
+          secondApron: 244609000,
+          totalPayroll: 0, // Will be calculated
+          capSpace: 0, // Will be calculated
+          taxSpace: 0, // Will be calculated
+          firstApronSpace: 0, // Will be calculated
+          secondApronSpace: 0, // Will be calculated
+          rosterCount: '8/15'
+        },
+        '2028-29': {
+          salaryCap: 200221000,
+          luxuryTax: 243268000,
+          firstApron: 253690000,
+          secondApron: 269070000,
+          totalPayroll: 0, // Will be calculated
+          capSpace: 0, // Will be calculated
+          taxSpace: 0, // Will be calculated
+          firstApronSpace: 0, // Will be calculated
+          secondApronSpace: 0, // Will be calculated
+          rosterCount: '4/15'
+        }
+      };
 
-      // View toggle functionality
-      const viewBtns = document.querySelectorAll('.view-btn');
-      const tableView = document.querySelector('.table-view');
-      const cardView = document.querySelector('.card-view');
-      
-      viewBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-          viewBtns.forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          
-          const view = this.dataset.view;
-          if (view === 'table') {
-            tableView.classList.add('active');
-            cardView.classList.remove('active');
-          } else {
-            tableView.classList.remove('active');
-            cardView.classList.add('active');
-            generateCardView();
-          }
+      // Calculate payrolls for future seasons
+      function calculateSeasonPayrolls() {
+        // 2026-27 season
+        const season2026Rows = document.querySelectorAll('#season2026TableBody tr[data-salary]');
+        let total2026 = 0;
+        season2026Rows.forEach(row => {
+          total2026 += parseInt(row.dataset.salary);
         });
-      });
+        seasonData['2026-27'].totalPayroll = total2026;
+        seasonData['2026-27'].capSpace = seasonData['2026-27'].salaryCap - total2026;
+        seasonData['2026-27'].taxSpace = seasonData['2026-27'].luxuryTax - total2026;
+        seasonData['2026-27'].firstApronSpace = seasonData['2026-27'].firstApron - total2026;
+        seasonData['2026-27'].secondApronSpace = seasonData['2026-27'].secondApron - total2026;
 
-      // Generate card view
-      function generateCardView() {
-        const visibleRows = allRows.filter(row => row.style.display !== 'none');
-        cardView.innerHTML = '';
-        
-        visibleRows.forEach(row => {
-          const playerName = row.querySelector('.player-info strong').textContent;
-          const position = row.querySelector('.player-position').textContent;
-          const salary = row.querySelector('.salary-amount').textContent;
-          const percentage = row.querySelector('.cap-percentage').textContent;
-          const status = row.querySelector('.status-badge').textContent;
-          const statusClass = row.querySelector('.status-badge').className.split(' ')[1];
-          const notesDiv = row.querySelector('.player-notes');
-          const hasNotes = notesDiv && notesDiv.querySelector('.note-content');
-          
-          const card = document.createElement('div');
-          card.className = 'player-card';
-          
-          let notesHTML = '';
-          if (hasNotes) {
-            const noteContent = notesDiv.querySelector('.note-content').innerHTML;
-            notesHTML = `
-              <div class="player-card-notes">
-                <button class="card-notes-toggle" onclick="toggleCardNotes(this)">
-                  📝 Contract Details
-                </button>
-                <div class="card-notes-content" style="display: none;">
-                  ${noteContent}
-                </div>
-              </div>
-            `;
-          }
-          
-          card.innerHTML = `
-            <div class="player-card-header">
-              <div>
-                <div class="player-card-name">${playerName}</div>
-                <span class="player-position">${position}</span>
-              </div>
-              <div class="player-card-salary">${salary}</div>
-            </div>
-            <div class="player-card-details">
-              <div class="player-card-detail">
-                <strong>Cap %:</strong> ${percentage}
-              </div>
-              <div class="player-card-detail">
-                <span class="status-badge ${statusClass}">${status}</span>
-              </div>
-            </div>
-            ${notesHTML}
-          `;
-          cardView.appendChild(card);
+        // 2027-28 season
+        const season2027Rows = document.querySelectorAll('#season2027TableBody tr[data-salary]');
+        let total2027 = 0;
+        season2027Rows.forEach(row => {
+          total2027 += parseInt(row.dataset.salary);
         });
+        seasonData['2027-28'].totalPayroll = total2027;
+        seasonData['2027-28'].capSpace = seasonData['2027-28'].salaryCap - total2027;
+        seasonData['2027-28'].taxSpace = seasonData['2027-28'].luxuryTax - total2027;
+        seasonData['2027-28'].firstApronSpace = seasonData['2027-28'].firstApron - total2027;
+        seasonData['2027-28'].secondApronSpace = seasonData['2027-28'].secondApron - total2027;
+
+        // 2028-29 season
+        const season2028Rows = document.querySelectorAll('#season2028TableBody tr[data-salary]');
+        let total2028 = 0;
+        season2028Rows.forEach(row => {
+          total2028 += parseInt(row.dataset.salary);
+        });
+        seasonData['2028-29'].totalPayroll = total2028;
+        seasonData['2028-29'].capSpace = seasonData['2028-29'].salaryCap - total2028;
+        seasonData['2028-29'].taxSpace = seasonData['2028-29'].luxuryTax - total2028;
+        seasonData['2028-29'].firstApronSpace = seasonData['2028-29'].firstApron - total2028;
+        seasonData['2028-29'].secondApronSpace = seasonData['2028-29'].secondApron - total2028;
       }
+
+      // Update cap calculator display
+      function updateCapCalculator(season) {
+        const data = seasonData[season];
+        if (!data) return;
+
+        // Update title
+        const titleText = season === '2025-26' 
+          ? `💰 Cap Numbers for the NBA ${season} Season`
+          : `💰 Cap Projections for the NBA ${season} Season`;
+        document.getElementById('capCalculatorTitle').textContent = titleText;
+
+        // Update cap metrics
+        document.querySelector('.cap-metric:nth-child(1) .metric-value').textContent = '$' + data.totalPayroll.toLocaleString();
+        document.querySelector('.cap-metric:nth-child(2) .metric-value').textContent = '$' + data.salaryCap.toLocaleString();
+        document.querySelector('.cap-metric:nth-child(3) .metric-value').textContent = '$' + data.luxuryTax.toLocaleString();
+        document.querySelector('.cap-metric:nth-child(4) .metric-value').textContent = '$' + data.firstApron.toLocaleString();
+        document.querySelector('.cap-metric:nth-child(5) .metric-value').textContent = '$' + data.secondApron.toLocaleString();
+
+        // Update summary values
+        const summaryItems = document.querySelectorAll('.summary-item .summary-value');
+        summaryItems[0].textContent = '$' + data.totalPayroll.toLocaleString(); // Total Payroll
+        summaryItems[1].textContent = (data.capSpace < 0 ? '-$' : '$') + Math.abs(data.capSpace).toLocaleString(); // Cap Space
+        summaryItems[1].className = 'summary-value ' + (data.capSpace < 0 ? 'negative' : 'positive');
+        summaryItems[2].textContent = (data.taxSpace < 0 ? '-$' : '$') + Math.abs(data.taxSpace).toLocaleString(); // Tax Space
+        summaryItems[2].className = 'summary-value ' + (data.taxSpace < 0 ? 'negative' : 'positive');
+        summaryItems[3].textContent = (data.firstApronSpace < 0 ? '-$' : '$') + Math.abs(data.firstApronSpace).toLocaleString(); // First Apron Space
+        summaryItems[3].className = 'summary-value ' + (data.firstApronSpace < 0 ? 'negative' : 'positive');
+        summaryItems[4].textContent = (data.secondApronSpace < 0 ? '-$' : '$') + Math.abs(data.secondApronSpace).toLocaleString(); // Second Apron Space
+        summaryItems[4].className = 'summary-value ' + (data.secondApronSpace < 0 ? 'negative' : 'positive');
+        summaryItems[5].textContent = data.rosterCount; // Roster Count
+      }
+
+      // Calculate payrolls on page load
+      calculateSeasonPayrolls();
+
+      // Season tabs functionality
+      const seasonTabs = document.querySelectorAll('.season-tab');
+      const seasonContents = document.querySelectorAll('.season-content');
+
+      seasonTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          // Remove active class from all tabs and contents
+          seasonTabs.forEach(t => t.classList.remove('active'));
+          seasonContents.forEach(c => c.classList.remove('active'));
+          
+          // Add active class to clicked tab
+          this.classList.add('active');
+          
+          // Show corresponding content
+          const season = this.dataset.season;
+          const content = document.getElementById(`season-${season}`);
+          if (content) {
+            content.classList.add('active');
+          }
+
+          // Update cap calculator for the selected season
+          updateCapCalculator(season);
+        });
+      });
+
+
 
       // Table sorting functionality
       const sortableHeaders = document.querySelectorAll('.sortable');
@@ -1761,28 +2110,190 @@
       });
 
       // Export functionality
-      const exportBtn = document.getElementById('exportSalaryBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const exportModal = document.getElementById('exportModal');
+      const exportCanvas = document.getElementById('exportCanvas');
+      const exportPreview = document.getElementById('exportPreview');
+      const copyBtn = document.getElementById('copyBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const closeModal = document.getElementById('closeModal');
+
       if (exportBtn) {
-        exportBtn.addEventListener('click', function() {
-          // Create export modal
-          const modal = document.createElement('div');
-          modal.className = 'export-modal active';
-          modal.innerHTML = `
-            <div class="export-modal-content">
-              <h3>📱 Share Salary Breakdown</h3>
-              <p>Creating your professional social media post...</p>
-              <canvas id="exportCanvas" style="display: none;"></canvas>
-              <div class="export-actions">
-                <button class="close-btn" onclick="this.closest('.export-modal').remove()">Close</button>
+        exportBtn.addEventListener('click', async () => {
+          exportBtn.disabled = true;
+          exportBtn.textContent = '📸 Generating...';
+
+          try {
+            // Get the current active season content
+            const activeSeasonContent = document.querySelector('.season-content.active');
+            const salaryTable = activeSeasonContent.querySelector('.salary-table');
+            
+            // Create a temporary container for export
+            const exportContainer = document.createElement('div');
+            exportContainer.style.cssText = `
+              position: absolute;
+              top: -9999px;
+              left: -9999px;
+              width: 800px;
+              background: white;
+              padding: 30px 40px 20px 40px;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            `;
+            
+            // Clone and style the table for export
+            const tableClone = salaryTable.cloneNode(true);
+            tableClone.style.cssText = `
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+              font-size: 16px;
+            `;
+            
+            // Style table cells for better export
+            const cells = tableClone.querySelectorAll('th, td');
+            cells.forEach(cell => {
+              cell.style.cssText += `
+                padding: 10px 15px;
+                border: 1px solid #e9ecef;
+                text-align: left;
+              `;
+            });
+            
+            // Style table headers
+            const headers = tableClone.querySelectorAll('th');
+            headers.forEach(header => {
+              header.style.cssText += `
+                background: #f8f9fa;
+                font-weight: bold;
+                color: #0a174e;
+              `;
+            });
+            
+            // Add header
+            const header = document.createElement('div');
+            header.innerHTML = `
+              <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="color: #0a174e; font-size: 32px; margin: 0; font-family: Georgia, serif;">SixersHoops</h1>
+                <h2 style="color: #0057e7; font-size: 24px; margin: 5px 0; font-family: Georgia, serif;">Sixers Salary Breakdown</h2>
+                <p style="color: #6c757d; font-size: 16px; margin: 0;">2024-25 NBA Season</p>
               </div>
-            </div>
-          `;
-          document.body.appendChild(modal);
-          
-          // Generate export image
-          setTimeout(() => {
-            generateSalaryExport(modal);
-          }, 500);
+            `;
+            
+            exportContainer.appendChild(header);
+            
+            // Add cap space information
+            const capInfo = document.createElement('div');
+            capInfo.innerHTML = `
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <div style="text-align: center; padding: 10px; background: white; border-radius: 6px; border-left: 4px solid #dc3545;">
+                  <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Cap Space</div>
+                  <div style="font-size: 18px; font-weight: bold; color: #dc3545;">-$31,245,519</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: white; border-radius: 6px; border-left: 4px solid #28a745;">
+                  <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Tax Space</div>
+                  <div style="font-size: 18px; font-weight: bold; color: #28a745;">$2,002,481</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: white; border-radius: 6px; border-left: 4px solid #ffc107;">
+                  <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">1st Apron Space</div>
+                  <div style="font-size: 18px; font-weight: bold; color: #856404;">$10,052,481</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: white; border-radius: 6px; border-left: 4px solid #17a2b8;">
+                  <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">2nd Apron Space</div>
+                  <div style="font-size: 18px; font-weight: bold; color: #0c5460;">$21,931,481</div>
+                </div>
+              </div>
+            `;
+            
+            exportContainer.appendChild(capInfo);
+            exportContainer.appendChild(tableClone);
+            
+            // Add footer
+            const footer = document.createElement('div');
+            footer.innerHTML = `
+              <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef;">
+                <h3 style="color: #0a174e; font-size: 24px; margin: 0; font-family: Georgia, serif;">SixersHoops.com</h3>
+                <p style="color: #0057e7; font-size: 14px; margin: 5px 0 0 0;">Your #1 Source for Philadelphia 76ers Analysis</p>
+              </div>
+            `;
+            
+            exportContainer.appendChild(footer);
+            document.body.appendChild(exportContainer);
+
+            // Use html2canvas to capture the content
+            const canvas = await html2canvas(exportContainer, {
+              backgroundColor: '#ffffff',
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              width: 800
+            });
+
+            // Clean up
+            document.body.removeChild(exportContainer);
+
+            // Store canvas for download/copy
+            exportCanvas.width = canvas.width;
+            exportCanvas.height = canvas.height;
+            const exportCtx = exportCanvas.getContext('2d');
+            exportCtx.drawImage(canvas, 0, 0);
+
+            // Show modal with preview
+            exportModal.style.display = 'flex';
+            exportPreview.src = canvas.toDataURL('image/png');
+
+          } catch (error) {
+            console.error('Export failed:', error);
+            alert('Export failed. Please try again.');
+          } finally {
+            exportBtn.disabled = false;
+            exportBtn.textContent = '📸 Export for Social Media';
+          }
+        });
+      }
+
+      // Copy to clipboard
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          try {
+            const canvas = exportCanvas;
+            canvas.toBlob(async (blob) => {
+              const item = new ClipboardItem({ 'image/png': blob });
+              await navigator.clipboard.write([item]);
+              copyBtn.textContent = '✅ Copied!';
+              setTimeout(() => {
+                copyBtn.textContent = '📋 Copy to Clipboard';
+              }, 2000);
+            });
+          } catch (error) {
+            console.error('Copy failed:', error);
+            alert('Copy failed. Please try again.');
+          }
+        });
+      }
+
+      // Download image
+      if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+          const link = document.createElement('a');
+          link.download = 'sixers-salary-breakdown.png';
+          link.href = exportCanvas.toDataURL('image/png');
+          link.click();
+        });
+      }
+
+      // Close modal
+      if (closeModal) {
+        closeModal.addEventListener('click', () => {
+          exportModal.style.display = 'none';
+        });
+      }
+
+      // Close modal on outside click
+      if (exportModal) {
+        exportModal.addEventListener('click', (e) => {
+          if (e.target === exportModal) {
+            exportModal.style.display = 'none';
+          }
         });
       }
 
@@ -2041,29 +2552,10 @@
         }
       };
 
-      // Card notes toggle function
-      window.toggleCardNotes = function(btn) {
-        const notesContent = btn.nextElementSibling;
-        
-        // Close all other open card notes first
-        document.querySelectorAll('.card-notes-toggle.active').forEach(activeBtn => {
-          if (activeBtn !== btn) {
-            activeBtn.classList.remove('active');
-            activeBtn.nextElementSibling.style.display = 'none';
-          }
-        });
-        
-        // Toggle current card notes
-        if (btn.classList.contains('active')) {
-          btn.classList.remove('active');
-          notesContent.style.display = 'none';
-        } else {
-          btn.classList.add('active');
-          notesContent.style.display = 'block';
-        }
-      };
+
+
+
     });
   </script>
 </body>
 </html>
-
