@@ -1,28 +1,67 @@
 const navbarHTML = `
-<nav class="navbar">
-  <div class="nav-left">
-    <img src="sixershoopslogo.png" alt="SixersHoops Logo" class="nav-logo" />
-    <span class="site-title">SixersHoops</span>
-  </div>
-  <button class="hamburger" aria-label="Menu" aria-expanded="false" onclick="toggleMobileMenu()">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
-  <div class="nav-right" id="navRight">
-    <a href="home" class="nav-link">Home</a>
-    <div class="nav-dropdown">
-      <button class="dropdown-btn" aria-haspopup="true" aria-expanded="false">Draft & Cap Management</button>
-      <div class="dropdown-content">
-        <a href="https://sixershoops.com/salary" class="dropdown-link">Salary Breakdown</a>
-        <a href="https://sixershoops.com/draft" class="dropdown-link">Future Draft Capital</a>
-        <a href="https://sixershoops.com/depth" class="dropdown-link">Depth Chart</a>
-      </div>
+<nav class="navbar" id="navbar">
+  <!-- Dynamic Brand Section -->
+  <a href="/" class="nav-brand">
+    <div class="nav-logo">🏀</div>
+    <div class="brand-text">
+      <div class="brand-name">SixersHoops</div>
+      <div class="brand-tagline">Ultimate Sixers Resource</div>
     </div>
-    <a href="https://sixershoops.com/nba-trade-machine" class="nav-link">Trade Machine</a>
-    <a href="contact.html" class="nav-link">Contact Us</a>
+  </a>
+
+  <!-- Elegant Navigation Menu -->
+  <ul class="nav-menu" id="navMenu">
+    <li class="nav-item">
+      <a href="/" class="nav-link active">🏠 Home</a>
+    </li>
+    <li class="nav-item dropdown">
+      <a href="#" class="dropdown-toggle">📊 Analysis</a>
+      <div class="dropdown-menu">
+        <a href="https://sixershoops.com/salary" class="dropdown-item">💰 Salary Breakdown</a>
+        <a href="https://sixershoops.com/draft" class="dropdown-item">🏀 Draft Capital</a>
+        <a href="https://sixershoops.com/depth" class="dropdown-item">📈 Depth Chart</a>
+      </div>
+    </li>
+    <li class="nav-item">
+      <a href="https://sixershoops.com/nba-trade-machine" class="nav-link">🔄 Trade Machine</a>
+    </li>
+    <li class="nav-item">
+      <a href="contact.html" class="nav-link">📞 Contact</a>
+    </li>
+  </ul>
+
+  <!-- Premium CTA Button -->
+  <a href="https://sixershoops.com/salary" class="nav-cta">Explore Now</a>
+
+  <!-- Futuristic Mobile Menu Button -->
+  <div class="mobile-menu-btn" id="mobileMenuBtn" aria-expanded="false" aria-label="Toggle mobile menu">
+    <span></span>
+    <span></span>
+    <span></span>
   </div>
-</nav>`;
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-nav-item">
+    <a href="/" class="mobile-nav-link active">🏠 Home</a>
+  </div>
+  <div class="mobile-nav-item">
+    <a href="https://sixershoops.com/salary" class="mobile-nav-link">💰 Salary Breakdown</a>
+  </div>
+  <div class="mobile-nav-item">
+    <a href="https://sixershoops.com/draft" class="mobile-nav-link">🏀 Draft Capital</a>
+  </div>
+  <div class="mobile-nav-item">
+    <a href="https://sixershoops.com/depth" class="mobile-nav-link">📈 Depth Chart</a>
+  </div>
+  <div class="mobile-nav-item">
+    <a href="https://sixershoops.com/nba-trade-machine" class="mobile-nav-link">🔄 Trade Machine</a>
+  </div>
+  <div class="mobile-nav-item">
+    <a href="contact.html" class="mobile-nav-link">📞 Contact Us</a>
+  </div>
+</div>`;
 
 // Initialize navbar when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -33,35 +72,55 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeNavbar();
 });
 
-// Mobile menu toggle function
-function toggleMobileMenu() {
-  const navRight = document.getElementById('navRight');
-  const hamburger = document.querySelector('.hamburger');
-  
-  if (navRight && hamburger) {
-    navRight.classList.toggle('open');
-    const isOpen = navRight.classList.contains('open');
-    hamburger.setAttribute('aria-expanded', isOpen);
-  }
-}
-
 function initializeNavbar() {
-  // Dropdown functionality for desktop
-  const dropdownBtns = document.querySelectorAll('.dropdown-btn');
-  dropdownBtns.forEach(btn => {
-    btn.addEventListener('click', function(e) {
+  const navbar = document.getElementById('navbar');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  // Mobile menu toggle
+  if (mobileMenuBtn && mobileMenu) {
+    mobileMenuBtn.addEventListener('click', function() {
+      mobileMenuBtn.classList.toggle('active');
+      mobileMenu.classList.toggle('active');
+      
+      // Update aria attributes
+      const isExpanded = mobileMenu.classList.contains('active');
+      mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!navbar.contains(event.target) && !mobileMenu.contains(event.target)) {
+        mobileMenuBtn.classList.remove('active');
+        mobileMenu.classList.remove('active');
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // Navbar scroll effect
+  if (navbar) {
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+  }
+
+  // Dropdown functionality
+  const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+  dropdownToggles.forEach(toggle => {
+    toggle.addEventListener('click', function(e) {
       e.preventDefault();
       const dropdown = this.parentElement;
-      const content = dropdown.querySelector('.dropdown-content');
-      
-      // Toggle dropdown
-      const isExpanded = this.getAttribute('aria-expanded') === 'true';
-      this.setAttribute('aria-expanded', !isExpanded);
+      dropdown.classList.toggle('active');
       
       // Close other dropdowns
-      dropdownBtns.forEach(otherBtn => {
-        if (otherBtn !== this) {
-          otherBtn.setAttribute('aria-expanded', 'false');
+      dropdownToggles.forEach(otherToggle => {
+        if (otherToggle !== toggle) {
+          otherToggle.parentElement.classList.remove('active');
         }
       });
     });
@@ -69,21 +128,24 @@ function initializeNavbar() {
 
   // Close dropdowns when clicking outside
   document.addEventListener('click', function(event) {
-    if (!event.target.closest('.nav-dropdown')) {
-      dropdownBtns.forEach(btn => {
-        btn.setAttribute('aria-expanded', 'false');
+    if (!event.target.closest('.dropdown')) {
+      document.querySelectorAll('.dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
       });
     }
   });
 
-  // Close mobile menu when clicking outside
-  document.addEventListener('click', function(event) {
-    const navRight = document.getElementById('navRight');
-    const hamburger = document.querySelector('.hamburger');
-    
-    if (navRight && hamburger && !event.target.closest('.navbar')) {
-      navRight.classList.remove('open');
-      hamburger.setAttribute('aria-expanded', 'false');
-    }
+  // Smooth scrolling for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
   });
 }
