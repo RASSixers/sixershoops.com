@@ -29,13 +29,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="salary.html" class="dropdown-item">Salary Breakdown</a>
             <a href="depth.html" class="dropdown-item">Depth Chart</a>
             <a href="future-draft-picks.html" class="dropdown-item">Future Draft Picks</a>
-
           </div>
         </li>
         <li class="nav-item dropdown">
           <button class="dropdown-toggle">Trade Machine</button>
           <div class="dropdown-menu">
-            <a href="trade-machine.html" class="dropdown-item">Trade Machine</a>
+            <a href="nba-trade-machine.html" class="dropdown-item">Trade Machine</a>
             <a href="mockdrafts.html" class="dropdown-item">Mock Drafts</a>
           </div>
         </li>
@@ -45,45 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
         <li class="nav-item">
           <a href="contact.html" class="nav-link">Contact Us</a>
         </li>
-        // ...
-
-// Elegant Navigation Menu
-<ul class="nav-menu">
-  <li class="nav-item">
-    <a href="index.html" class="nav-link">Home</a>
-  </li>
-  <li class="nav-item">
-    <a href="news.html" class="nav-link">Latest News</a>
-  </li>
-  <li class="nav-item dropdown">
-    <button class="dropdown-toggle">Team Hub</button>
-    <div class="dropdown-menu">
-      <a href="roster.html" class="dropdown-item">Roster</a>
-      <a href="stats.html" class="dropdown-item">Stats</a>
-      <a href="salary.html" class="dropdown-item">Salary Breakdown</a>
-      <a href="depth.html" class="dropdown-item">Depth Chart</a>
-      <a href="future-draft-picks.html" class="dropdown-item">Future Draft Picks</a>
-    </div>
-  </li>
-  <li class="nav-item dropdown">
-    <button class="dropdown-toggle">Trade Machine</button>
-    <div class="dropdown-menu">
-      <a href="trade-machine.html" class="dropdown-item">Trade Machine</a>
-      <a href="mockdrafts.html" class="dropdown-item">Mock Drafts</a>
-    </div>
-  </li>
-  <li class="nav-item">
-    <a href="schedule.html" class="nav-link">Schedule</a>
-  </li>
-  <li class="nav-item">
-    <a href="contact.html" class="nav-link">Contact Us</a>
-  </li>
-  <li class="nav-item">
-    <a href="/draft" class="nav-link">Draft</a>
-  </li>
-</ul>
-
-// ...
       </ul>
 
       <!-- Mobile Menu Button -->
@@ -106,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <a href="roster.html" class="mobile-nav-link">Team Hub</a>
       </div>
       <div class="mobile-nav-item">
-        <a href="trade-machine.html" class="mobile-nav-link">Trade Machine</a>
+        <a href="nba-trade-machine.html" class="mobile-nav-link">Trade Machine</a>
       </div>
       <div class="mobile-nav-item">
         <a href="schedule.html" class="mobile-nav-link">Schedule</a>
@@ -208,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function setActiveLink() {
     const currentPath = window.location.pathname;
     const currentFile = currentPath.split('/').pop() || 'index.html';
-    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link, .dropdown-item');
     
     navLinks.forEach(link => {
       link.classList.remove('active');
@@ -217,7 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (linkFile === currentFile || 
           (currentFile === '' && linkFile === 'index.html') ||
-          (currentPath === '/' && linkFile === 'index.html')) {
+          (currentPath === '/' && linkFile === 'index.html') ||
+          (currentFile === 'draft.html' && linkFile === 'nba-trade-machine.html')) {
         link.classList.add('active');
       }
     });
