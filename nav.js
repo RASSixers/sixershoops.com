@@ -19,30 +19,30 @@ document.addEventListener('DOMContentLoaded', function() {
           <a href="index.html" class="nav-link">Home</a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">Latest News</a>
+          <a href="/news" class="nav-link">Latest News</a>
         </li>
         <li class="nav-item dropdown">
           <button class="dropdown-toggle">Team Hub</button>
           <div class="dropdown-menu">
-            <a href="#" class="dropdown-item">Roster</a>
-            <a href="#" class="dropdown-item">Stats</a>
-            <a href="#" class="dropdown-item">Salary Breakdown</a>
-            <a href="#" class="dropdown-item">Depth Chart</a>
-            <a href="#" class="dropdown-item">Future Draft Picks</a>
+            <a href="/roster" class="dropdown-item">Roster</a>
+            <a href="/stats" class="dropdown-item">Stats</a>
+            <a href="/salary" class="dropdown-item">Salary Breakdown</a>
+            <a href="/depth" class="dropdown-item">Depth Chart</a>
+            <a href="/draft" class="dropdown-item">Future Draft Picks</a>
           </div>
         </li>
         <li class="nav-item dropdown">
           <button class="dropdown-toggle">Trade Machine</button>
           <div class="dropdown-menu">
-            <a href="#" class="dropdown-item">Trade Machine</a>
-            <a href="#" class="dropdown-item">Mock Drafts</a>
+            <a href="/trade-machine" class="dropdown-item">Trade Machine</a>
+            <a href="/mockdrafts" class="dropdown-item">Mock Drafts</a>
           </div>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">Schedule</a>
+          <a href="/schedule" class="nav-link">Schedule</a>
         </li>
         <li class="nav-item">
-          <a href="contact.html" class="nav-link">Contact Us</a>
+          <a href="/contact" class="nav-link">Contact Us</a>
         </li>
       </ul>
 
@@ -60,19 +60,19 @@ document.addEventListener('DOMContentLoaded', function() {
         <a href="index.html" class="mobile-nav-link">Home</a>
       </div>
       <div class="mobile-nav-item">
-        <a href="#" class="mobile-nav-link">Latest News</a>
+        <a href="/news" class="mobile-nav-link">Latest News</a>
       </div>
       <div class="mobile-nav-item">
-        <a href="#" class="mobile-nav-link">Team Hub</a>
+        <a href="/roster" class="mobile-nav-link">Team Hub</a>
       </div>
       <div class="mobile-nav-item">
-        <a href="#" class="mobile-nav-link">Trade Machine</a>
+        <a href="/trade-machine" class="mobile-nav-link">Trade Machine</a>
       </div>
       <div class="mobile-nav-item">
-        <a href="#" class="mobile-nav-link">Schedule</a>
+        <a href="/schedule" class="mobile-nav-link">Schedule</a>
       </div>
       <div class="mobile-nav-item">
-        <a href="contact.html" class="mobile-nav-link">Contact Us</a>
+        <a href="/contact" class="mobile-nav-link">Contact Us</a>
       </div>
     </div>
   `;
