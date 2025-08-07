@@ -28,7 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="stats.html" class="dropdown-item">Stats</a>
             <a href="salary.html" class="dropdown-item">Salary Breakdown</a>
             <a href="depth.html" class="dropdown-item">Depth Chart</a>
-            <a href="draft.html" class="dropdown-item">Future Draft Picks</a>
+            <a href="future-draft-picks.html" class="dropdown-item">Future Draft Picks</a>
+
           </div>
         </li>
         <li class="nav-item dropdown">
