@@ -10,10 +10,6 @@
   <meta name="keywords" content="Philadelphia 76ers, Sixers, NBA, salary cap, draft picks, depth chart, basketball analysis" />
   <meta name="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" content="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" />
 
-  <!-- Universal nav & styles -->
-  <link rel="stylesheet" href="nav-styles.css">
-  <script src="nav.js"></script>
-
   <!-- GA4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
   <script>
@@ -23,10 +19,110 @@
     gtag('config', 'G-T1V9Q0MNEM');
   </script>
 
-  <!-- html2canvas for export -->
+  <!-- html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-  <!-- Custom page styles -->
+  <!-- INLINE NAV STYLES -->
+  <style>
+    /* ---------- Universal Navbar ---------- */
+    :root{
+      --nav-bg:#0a174e;
+      --nav-link:#fff;
+      --nav-hover:#0057e7;
+      --nav-accent:#f59e0b;
+    }
+    #nav-mount{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      z-index:999;
+      background:var(--nav-bg);
+      color:var(--nav-link);
+      font-family:Inter,system-ui,sans-serif;
+      box-shadow:0 2px 8px rgba(0,0,0,.15);
+    }
+    .nav-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      max-width:1400px;
+      margin:0 auto;
+      padding:0 1rem;
+      height:60px;
+    }
+    .nav-logo{
+      font-size:1.35rem;
+      font-weight:700;
+      letter-spacing:.5px;
+      color:var(--nav-link);
+      text-decoration:none;
+    }
+    .nav-links{
+      display:flex;
+      gap:1.5rem;
+      list-style:none;
+    }
+    .nav-links a{
+      color:var(--nav-link);
+      text-decoration:none;
+      font-weight:500;
+      transition:color .2s;
+    }
+    .nav-links a:hover{color:var(--nav-hover);}
+    .nav-toggle{
+      display:none;
+      background:none;
+      border:none;
+      color:var(--nav-link);
+      font-size:1.5rem;
+      cursor:pointer;
+    }
+    @media(max-width:768px){
+      .nav-toggle{display:block;}
+      .nav-links{
+        position:absolute;
+        top:60px;
+        right:0;
+        flex-direction:column;
+        background:var(--nav-bg);
+        width:200px;
+        padding:1rem;
+        transform:translateX(100%);
+        transition:transform .3s;
+      }
+      .nav-links.open{transform:translateX(0);}
+    }
+  </style>
+
+  <!-- INLINE NAV SCRIPT -->
+  <script>
+    (() => {
+      const navHTML = `
+        <div class="nav-inner">
+          <a class="nav-logo" href="/">SixersHoops</a>
+          <button class="nav-toggle" aria-label="Toggle menu">☰</button>
+          <ul class="nav-links">
+            <li><a href="/home">Home</a></li>
+            <li><a href="/salary">Salary</a></li>
+            <li><a href="/depth-chart">Depth Chart</a></li>
+            <li><a href="/draft">Draft Picks</a></li>
+            <li><a href="/contact">Contact</a></li>
+          </ul>
+        </div>`;
+      const navMount = document.getElementById('nav-mount');
+      if (navMount) navMount.innerHTML = navHTML;
+
+      // Mobile toggle
+      const toggle = document.querySelector('.nav-toggle');
+      const links  = document.querySelector('.nav-links');
+      if (toggle && links) {
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+      }
+    })();
+  </script>
+
+  <!-- PAGE-SPECIFIC STYLES -->
   <style>
     :root{
       --primary:#0a174e;
@@ -39,7 +135,6 @@
       --text:#23272F;
       --muted:#6b7280;
     }
-
     *{margin:0;padding:0;box-sizing:border-box}
     body{
       font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -48,12 +143,9 @@
       line-height:1.6;
       padding-top:80px;
     }
-
-    /* ---------- CONTENT WRAPPER ---------- */
     .content-wrapper{position:relative;max-width:1400px;margin:0 auto;padding:0 200px}
     @media(max-width:1400px){.content-wrapper{padding:0 20px}}
 
-    /* ---------- ADS ---------- */
     .ad-left-top,.ad-left-bottom{position:absolute;left:-140px;width:160px;height:250px}
     .ad-left-top{top:450px}.ad-left-bottom{top:750px}
     .ad-right-top,.ad-right-bottom{position:absolute;right:20px;width:160px;height:250px}
@@ -61,7 +153,6 @@
     .ad-bottom-center{width:300px;height:250px;margin:2rem auto}
     @media(max-width:950px){.ad-left-top,.ad-left-bottom,.ad-right-top,.ad-right-bottom,.ad-bottom-center{display:none}}
 
-    /* ---------- HERO ---------- */
     .salary-hero{
       background:linear-gradient(120deg,var(--primary) 60%,var(--secondary) 100%);
       color:#fff;
@@ -74,26 +165,26 @@
     .salary-title{font-size:2.7rem;font-weight:bold;font-family:Georgia,serif;letter-spacing:2px;margin-bottom:.5rem}
     .salary-subtitle{font-size:1.2rem;opacity:.85;margin-bottom:1.5rem}
 
-    /* ---------- MAIN ---------- */
     .salary-main-content{max-width:900px;margin:2rem auto 0;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(10,23,78,.09);padding:2rem 2.5rem}
-
-    /* ---------- CONTROLS ---------- */
     .salary-controls{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:2rem}
     .search-box input{padding:.75rem 1rem;border:2px solid #e9ecef;border-radius:25px;width:250px}
     .view-controls{display:flex;gap:.5rem}
     .view-btn,.export-btn{padding:.75rem 1.25rem;border:2px solid #e9ecef;border-radius:8px;background:#fff;font-weight:600;cursor:pointer}
     .view-btn.active{background:var(--secondary);color:#fff;border-color:var(--secondary)}
     .export-btn{background:var(--success);color:#fff;border-color:var(--success)}
-
-    /* ---------- CAP CALCULATOR ---------- */
+    .projection-disclaimer{display:none;background:#fff3cd;color:#856404;padding:1rem;border-radius:8px;border-left:4px solid var(--accent);margin-bottom:1.5rem}
+    .projection-disclaimer.show{display:block}
     .cap-calculator{background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);color:#fff;border-radius:16px;padding:2rem;margin-bottom:2rem}
     .cap-calculator h3{margin-bottom:1.5rem;text-align:center}
     .cap-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
     .cap-metric{background:rgba(255,255,255,.1);padding:1rem;border-radius:12px;text-align:center}
     .metric-label{display:block;font-size:.9rem;opacity:.9;margin-bottom:.5rem}
     .metric-value{display:block;font-size:1.3rem;font-weight:700}
-
-    /* ---------- TABLES ---------- */
+    .season-tabs{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem}
+    .season-tab{padding:.75rem 1.5rem;border:2px solid #e9ecef;border-radius:25px;background:#fff;font-weight:600;color:var(--primary);cursor:pointer}
+    .season-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .season-content{display:none;background:#fff;border-radius:16px;padding:1.5rem;box-shadow:0 4px 20px rgba(10,23,78,.09)}
+    .season-content.active{display:block}
     .salary-table{width:100%;border-collapse:collapse;margin-bottom:2rem;font-size:1.08rem}
     .salary-table th,.salary-table td{padding:.7rem;text-align:left;border-bottom:1px solid #eee}
     .salary-table th{background:#f6f8fa;font-weight:700}
@@ -110,15 +201,6 @@
     .status-badge.player-option{background:#f8d7da;color:#721c24}
     .status-badge.team-option{background:#cce7ff;color:var(--secondary)}
     .twoway-row{color:#c20000;font-weight:bold}
-
-    /* ---------- SEASON TABS ---------- */
-    .season-tabs{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem}
-    .season-tab{padding:.75rem 1.5rem;border:2px solid #e9ecef;border-radius:25px;background:#fff;font-weight:600;color:var(--primary);cursor:pointer}
-    .season-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .season-content{display:none;background:#fff;border-radius:16px;padding:1.5rem;box-shadow:0 4px 20px rgba(10,23,78,.09)}
-    .season-content.active{display:block}
-
-    /* ---------- SUMMARY ---------- */
     .enhanced-summary{background:#fff;border-radius:16px;padding:2rem;margin-top:2rem}
     .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem}
     .summary-item{text-align:center;padding:1rem;border-radius:12px;background:#f8f9fa}
@@ -126,14 +208,14 @@
     .summary-value{display:block;font-size:1.3rem;font-weight:700}
     .summary-value.negative{color:var(--danger)}
     .summary-value.positive{color:var(--success)}
-
-    /* ---------- MODAL ---------- */
     .export-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);justify-content:center;align-items:center;z-index:2000}
     .export-modal.active{display:flex}
     .export-modal-content{background:#fff;border-radius:16px;padding:1rem;max-width:70vw;max-height:98vh;overflow-y:auto;text-align:center}
     .export-preview{max-width:100%;max-height:85vh;border-radius:12px;margin-bottom:1rem}
-
-    /* ---------- RESPONSIVE ---------- */
+    .copy-btn,.download-btn,.close-btn{margin:.25rem;padding:.5rem 1rem;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+    .copy-btn{background:#007bff;color:#fff}
+    .download-btn{background:#28a745;color:#fff}
+    .close-btn{background:#6c757d;color:#fff}
     @media(max-width:950px){
       .salary-main-content{padding:1.2rem .6rem}
       .salary-logo{width:120px;height:120px}
@@ -142,9 +224,8 @@
   </style>
 </head>
 <body>
-  <!-- Universal navbar injection point -->
+  <!-- Universal navbar -->
   <div id="nav-mount"></div>
-  <script src="nav.js"></script>
 
   <!-- ADS -->
   <div class="content-wrapper">
@@ -176,12 +257,10 @@
         </div>
       </div>
 
-      <!-- DISCLAIMER BANNER -->
+      <!-- DISCLAIMER -->
       <div class="projection-disclaimer" id="projectionDisclaimer">
         <div class="disclaimer-title"><i class="fas fa-chart-line"></i> Salary Projections Notice</div>
-        <div class="disclaimer-text">
-          The salary cap numbers and projections for 2026-27, 2027-28 and 2028-29 are estimates based on current NBA salary cap growth projections and are subject to change.
-        </div>
+        <div class="disclaimer-text">The salary cap numbers and projections for 2026-27, 2027-28 and 2028-29 are estimates based on current NBA salary cap growth projections and are subject to change.</div>
       </div>
 
       <!-- CAP CALCULATOR -->
@@ -204,7 +283,6 @@
         <button class="season-tab" data-season="2028-29">2028-29</button>
       </div>
 
-      <!-- SEASON CONTENTS -->
       <!-- 2025-26 -->
       <div class="season-content active" id="season-2025-26">
         <table class="salary-table interactive-table" id="salaryTable">
@@ -235,13 +313,13 @@
         </table>
 
         <div class="twoway-section">
-          <h3 class="twoway-title">🔄 Two-Way Contracts</h3>
+          <h3>🔄 Two-Way Contracts</h3>
           <table class="salary-table twoway-table">
             <thead><tr><th>#</th><th>Player</th><th>Salary</th><th>Status</th></tr></thead>
             <tbody>
-              <tr><td>1</td><td><div class="player-info"><strong>Hunter Sallis</strong><span class="player-position">SG</span></div></td><td>$0</td><td><span class="status-badge twoway">Two-Way</span></td></tr>
-              <tr><td>2</td><td><div class="player-info"><strong>Dominick Barlow</strong><span class="player-position">PF</span></div></td><td>$0</td><td><span class="status-badge twoway">Two-Way</span></td></tr>
-              <tr><td>3</td><td><div class="player-info"><strong>Jabari Walker</strong><span class="player-position">SF</span></div></td><td>$0</td><td><span class="status-badge twoway">Two-Way</span></td></tr>
+              <tr><td>1</td><td><strong>Hunter Sallis</strong><span class="player-position">SG</span></td><td>$0</td><td><span class="status-badge twoway">Two-Way</span></td></tr>
+              <tr><td>2</td><td><strong>Dominick Barlow</strong><span class="player-position">PF</span></td><td>$0</td><td><span class="status-badge twoway">Two-Way</span></td></tr>
+              <tr><td>3</td><td><strong>Jabari Walker</strong><span class="player-position">SF</span></td><td>$0</td><td><span class="status-badge twoway">Two-Way</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -321,7 +399,7 @@
     </div>
   </div>
 
-  <!-- SALARY-PAGE SCRIPT -->
+  <!-- INLINE PAGE SCRIPT -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
 
