@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <a href="/roster" class="dropdown-item">Roster</a>
             <a href="/stats" class="dropdown-item">Stats</a>
             <a href="/salary" class="dropdown-item">Salary Breakdown</a>
-            <a href="/depth" class="dropdown-item">Depth Chart</a>
+            <a href="/sixers-depth-chart" class="dropdown-item">Depth Chart</a>
             <a href="/future-draft-picks" class="dropdown-item">Future Draft Picks</a>
           </div>
         </li>
