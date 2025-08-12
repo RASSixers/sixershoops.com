@@ -3,61 +3,645 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Stats | SixersHoops – Coming Soon</title>
+  <title>Philadelphia 76ers Stats - SixersHoops</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/favicon.ico" />
-  <link rel="stylesheet" href="navbar-styles.css" />
+  <meta name="description" content="Comprehensive Philadelphia 76ers statistics, player performance metrics, team analytics, and interactive data visualizations." />
+  <meta name="keywords" content="Philadelphia 76ers stats, Sixers statistics, NBA analytics, player performance, team metrics" />
+  
+  <!-- Include the navbar CSS -->
+  <link rel="stylesheet" href="navbar-styles.css">
+  
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  
+  <!-- Google Analytics 4 (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T1V9Q0MNEM');
+  </script>
+  
   <style>
-    /* ===  SHARED RESET & HOMEPAGE COLOR SCHEME  === */
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-      background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);
-      color:#1e293b;
-      padding-top:80px;      /* space for fixed nav */
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
+    /* Reset and Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    /* ===  COMING-SOON STYLES  === */
-    .coming-soon{
-      max-width:600px;
-      padding:2rem;
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      color: #1e293b;
+      line-height: 1.6;
+      padding-top: 80px;
+      margin: 0;
     }
-    .coming-soon-icon{
-      font-size:4rem;
-      margin-bottom:1rem;
-      animation:bounce 2s infinite;
+
+    /* Main Container */
+    .stats-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
     }
-    @keyframes bounce{
-      0%,100%{transform:translateY(0);}
-      50%{transform:translateY(-20px);}
+
+    /* Header Section */
+    .stats-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      border-radius: 20px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(30, 41, 59, 0.3);
     }
-    .coming-soon h1{
-      font-size:3rem;
-      font-weight:900;
-      margin:0 0 .5rem;
-      letter-spacing:-1px;
+
+    .stats-title {
+      font-size: 3rem;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 0%, #3b82f6 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .coming-soon p{
-      font-size:1.25rem;
-      color:#475569;
-      margin:0;
+
+    .stats-subtitle {
+      font-size: 1.2rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+    }
+
+    /* Control Panel */
+    .control-panel {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .control-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .control-select, .control-input {
+      padding: 0.75rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      background: white;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      min-width: 150px;
+    }
+
+    .control-select:focus, .control-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    /* Stat Cards */
+    .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 1px solid #e2e8f0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .stat-card-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 1rem;
+    }
+
+    .chart-container canvas {
+      border-radius: 10px;
+    }
+
+    /* Player Stats Table */
+    .player-stats-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 30px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 2px;
+    }
+
+    /* Table Styles */
+    .stats-table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    .stats-table th {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stats-table th:first-child {
+      border-top-left-radius: 12px;
+    }
+
+    .stats-table th:last-child {
+      border-top-right-radius: 12px;
+    }
+
+    .stats-table td {
+      padding: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      transition: all 0.3s ease;
+    }
+
+    .stats-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .stats-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .player-name {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: #3b82f6;
+    }
+
+    /* Loading States */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+      color: #64748b;
+    }
+
+    .loading::after {
+      content: '';
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Update Indicator */
+    .update-indicator {
+      position: fixed;
+      top: 100px;
+      right: 2rem;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+      transform: translateX(300px);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .update-indicator.show {
+      transform: translateX(0);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .stats-container {
+        padding: 1rem;
+      }
+
+      .stats-title {
+        font-size: 2rem;
+      }
+
+      .control-panel {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        height: 250px;
+      }
+
+      .stats-table {
+        font-size: 0.9rem;
+      }
+
+      .stats-table th,
+      .stats-table td {
+        padding: 0.75rem 0.5rem;
+      }
+    }
+
+    /* Advanced Features */
+    .comparison-mode {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: white;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .filter-chip {
+      background: #3b82f6;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-chip:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+
+    .filter-chip.active {
+      background: #1d4ed8;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Performance Indicators */
+    .performance-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .performance-indicator.excellent {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .performance-indicator.good {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .performance-indicator.average {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* Trend Arrows */
+    .trend-arrow {
+      display: inline-block;
+      margin-left: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .trend-up {
+      color: #10b981;
+    }
+
+    .trend-down {
+      color: #ef4444;
+    }
+
+    .trend-neutral {
+      color: #64748b;
     }
   </style>
 </head>
 <body>
-  <!-- Navbar will be automatically inserted here by nav.js -->
-  <script src="nav.js"></script>
-
-  <!-- Coming-Soon Content -->
-  <div class="coming-soon">
-    <div class="coming-soon-icon">📊</div>
-    <h1>Coming Soon</h1>
-    <p>Comprehensive Sixers stats and advanced analytics are on the way.</p>
+  <!-- Navigation will be injected by nav.js -->
+  
+  <!-- Update Indicator -->
+  <div class="update-indicator" id="updateIndicator">
+    📊 Stats Updated!
   </div>
+
+  <div class="stats-container">
+    <!-- Header Section -->
+    <div class="stats-header">
+      <h1 class="stats-title">Philadelphia 76ers Statistics</h1>
+      <p class="stats-subtitle">Real-time analytics, player performance, and team insights</p>
+      
+      <!-- Control Panel -->
+      <div class="control-panel">
+        <div class="control-group">
+          <label class="control-label">Season</label>
+          <select class="control-select" id="seasonSelect">
+            <option value="2023-24">2023-24</option>
+            <option value="2022-23">2022-23</option>
+            <option value="2021-22">2021-22</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label class="control-label">Game Type</label>
+          <select class="control-select" id="gameTypeSelect">
+            <option value="regular">Regular Season</option>
+            <option value="playoffs">Playoffs</option>
+            <option value="all">All Games</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label class="control-label">Date Range</label>
+          <select class="control-select" id="dateRangeSelect">
+            <option value="last10">Last 10 Games</option>
+            <option value="last30">Last 30 Days</option>
+            <option value="season">Full Season</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Chips -->
+    <div class="filter-chips">
+      <div class="filter-chip active" data-filter="all">All Stats</div>
+      <div class="filter-chip" data-filter="offense">Offense</div>
+      <div class="filter-chip" data-filter="defense">Defense</div>
+      <div class="filter-chip" data-filter="advanced">Advanced</div>
+      <div class="filter-chip" data-filter="clutch">Clutch Time</div>
+    </div>
+
+    <!-- Team Overview Cards -->
+    <div class="stats-grid">
+      <!-- Team Record Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Team Record</h3>
+          <div class="stat-card-icon">🏆</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="recordChart"></canvas>
+        </div>
+        <div id="recordStats"></div>
+      </div>
+
+      <!-- Scoring Stats Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Scoring Average</h3>
+          <div class="stat-card-icon">🏀</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="scoringChart"></canvas>
+        </div>
+        <div id="scoringStats"></div>
+      </div>
+
+      <!-- Defensive Stats Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Defensive Rating</h3>
+          <div class="stat-card-icon">🛡️</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="defenseChart"></canvas>
+        </div>
+        <div id="defenseStats"></div>
+      </div>
+
+      <!-- Efficiency Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Team Efficiency</h3>
+          <div class="stat-card-icon">⚡</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="efficiencyChart"></canvas>
+        </div>
+        <div id="efficiencyStats"></div>
+      </div>
+    </div>
+
+    <!-- Player Statistics Section -->
+    <div class="player-stats-section">
+      <h2 class="section-title">Player Statistics</h2>
+      
+      <div class="control-panel">
+        <div class="control-group">
+          <label class="control-label">Sort By</label>
+          <select class="control-select" id="sortSelect">
+            <option value="points">Points</option>
+            <option value="rebounds">Rebounds</option>
+            <option value="assists">Assists</option>
+            <option value="efficiency">Efficiency</option>
+            <option value="minutes">Minutes</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label class="control-label">Min Games</label>
+          <input type="number" class="control-input" id="minGamesInput" value="10" min="1" max="82">
+        </div>
+      </div>
+
+      <div class="stats-table-container">
+        <table class="stats-table" id="playerStatsTable">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>GP</th>
+              <th>MIN</th>
+              <th>PTS</th>
+              <th>REB</th>
+              <th>AST</th>
+              <th>FG%</th>
+              <th>3P%</th>
+              <th>FT%</th>
+              <th>EFF</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody id="playerStatsBody">
+            <tr>
+              <td colspan="11" class="loading">Loading player statistics...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Advanced Analytics Section -->
+    <div class="player-stats-section">
+      <h2 class="section-title">Advanced Analytics</h2>
+      
+      <div class="stats-grid">
+        <!-- Shot Chart -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Shot Chart</h3>
+            <div class="stat-card-icon">🎯</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="shotChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Performance by Quarter -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Performance by Quarter</h3>
+            <div class="stat-card-icon">⏱️</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="quarterChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Home vs Away -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Home vs Away</h3>
+            <div class="stat-card-icon">🏠</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="homeAwayChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Clutch Performance -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Clutch Performance</h3>
+            <div class="stat-card-icon">🔥</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="clutchChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include navigation JavaScript -->
+  <script src="nav.js"></script>
+  
+  <!-- NBA API Integration -->
+  <script src="nba-api.js"></script>
+  
+  <!-- Stats JavaScript -->
+  <script src="stats.js"></script>
 </body>
 </html>
