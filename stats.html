@@ -6,23 +6,36 @@
   <title>Philadelphia 76ers Stats - SixersHoops</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="apple-touch-icon" href="favicon.ico" />
-  <meta name="description" content="Comprehensive Philadelphia 76ers statistics, player performance metrics, team analytics, and interactive data visualizations." />
-  <meta name="keywords" content="Philadelphia 76ers stats, Sixers statistics, NBA analytics, player performance, team metrics" />
+  <meta name="description" content="Interactive Philadelphia 76ers statistics with 5-season data, player analytics, and advanced visualizations." />
   
-  <!-- Chart.js for data visualization -->
+  <!-- Include your navbar CSS -->
+  <link rel="stylesheet" href="navbar-styles.css">
+  
+  <!-- Chart.js and plugins -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   
-  <!-- Google Analytics 4 (GA4) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-T1V9Q0MNEM');
-  </script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Reset and Base Styles */
+    :root {
+      --primary-blue: #006bb6;
+      --primary-red: #ed174c;
+      --primary-white: #ffffff;
+      --dark-bg: #0a0e1a;
+      --card-bg: #1a1f2e;
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+      --accent-gold: #ffd700;
+      --success-green: #10b981;
+      --warning-orange: #f59e0b;
+      --error-red: #ef4444;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -30,222 +43,161 @@
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      color: #1e293b;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--dark-bg) 0%, #1e293b 50%, var(--dark-bg) 100%);
+      color: var(--text-primary);
       line-height: 1.6;
-      padding-top: 80px;
-      margin: 0;
+      overflow-x: hidden;
     }
 
-    /* Navigation Styles */
-    .navbar {
+    /* Animated Background */
+    body::before {
+      content: '';
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid #e2e8f0;
-      z-index: 1000;
-      transition: all 0.3s ease;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 107, 182, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(237, 23, 76, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+      z-index: -1;
+      animation: backgroundShift 20s ease-in-out infinite;
     }
 
-    .navbar.scrolled {
-      background: rgba(255, 255, 255, 0.98);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .nav-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 70px;
-    }
-
-    .nav-brand {
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: #1e293b;
-    }
-
-    .brand-link {
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .brand-text {
-      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .nav-menu {
-      display: flex;
-      gap: 2rem;
-      align-items: center;
-    }
-
-    .nav-link {
-      text-decoration: none;
-      color: #64748b;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-    }
-
-    .nav-link:hover,
-    .nav-link.active {
-      color: #3b82f6;
-      background: rgba(59, 130, 246, 0.1);
-    }
-
-    .nav-toggle {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-      gap: 4px;
-    }
-
-    .bar {
-      width: 25px;
-      height: 3px;
-      background: #64748b;
-      transition: 0.3s;
-      border-radius: 2px;
-    }
-
-    /* Mobile Navigation */
-    @media (max-width: 768px) {
-      .nav-menu {
-        position: fixed;
-        left: -100%;
-        top: 70px;
-        flex-direction: column;
-        background: white;
-        width: 100%;
-        text-align: center;
-        transition: 0.3s;
-        box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
-        padding: 2rem 0;
-        gap: 1rem;
-      }
-
-      .nav-menu.active {
-        left: 0;
-      }
-
-      .nav-toggle {
-        display: flex;
-      }
-
-      .nav-toggle.active .bar:nth-child(2) {
-        opacity: 0;
-      }
-
-      .nav-toggle.active .bar:nth-child(1) {
-        transform: translateY(7px) rotate(45deg);
-      }
-
-      .nav-toggle.active .bar:nth-child(3) {
-        transform: translateY(-7px) rotate(-45deg);
-      }
+    @keyframes backgroundShift {
+      0%, 100% { transform: translateX(0) translateY(0); }
+      33% { transform: translateX(-20px) translateY(-10px); }
+      66% { transform: translateX(20px) translateY(10px); }
     }
 
     /* Main Container */
     .stats-container {
-      max-width: 1400px;
+      max-width: 1600px;
       margin: 0 auto;
       padding: 2rem;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Header Section */
-    .stats-header {
+    /* Hero Section */
+    .hero-section {
       text-align: center;
+      padding: 4rem 2rem;
       margin-bottom: 3rem;
-      padding: 2rem;
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      border-radius: 20px;
-      color: white;
-      box-shadow: 0 10px 30px rgba(30, 41, 59, 0.3);
+      background: linear-gradient(135deg, var(--card-bg) 0%, rgba(0, 107, 182, 0.1) 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
     }
 
-    .stats-title {
-      font-size: 3rem;
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-blue), var(--primary-red), var(--accent-gold));
+      animation: gradientShift 3s ease-in-out infinite;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 5vw, 4rem);
       font-weight: 900;
       margin-bottom: 1rem;
-      background: linear-gradient(135deg, #ffffff 0%, #3b82f6 50%, #06b6d4 100%);
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-red) 50%, var(--accent-gold) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      animation: titleGlow 2s ease-in-out infinite alternate;
     }
 
-    .stats-subtitle {
-      font-size: 1.2rem;
-      color: #94a3b8;
+    @keyframes titleGlow {
+      from { filter: drop-shadow(0 0 20px rgba(0, 107, 182, 0.5)); }
+      to { filter: drop-shadow(0 0 30px rgba(237, 23, 76, 0.5)); }
+    }
+
+    .hero-subtitle {
+      font-size: 1.3rem;
+      color: var(--text-secondary);
       margin-bottom: 2rem;
+      font-weight: 500;
     }
 
-    /* Control Panel */
-    .control-panel {
+    /* Season Selector */
+    .season-selector {
       display: flex;
-      gap: 1rem;
       justify-content: center;
-      flex-wrap: wrap;
+      gap: 1rem;
       margin-bottom: 2rem;
+      flex-wrap: wrap;
     }
 
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .control-label {
-      font-size: 0.9rem;
+    .season-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      color: var(--text-primary);
+      padding: 0.8rem 1.5rem;
+      border-radius: 50px;
       font-weight: 600;
-      color: #64748b;
-    }
-
-    .control-select, .control-input {
-      padding: 0.75rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      background: white;
-      font-size: 1rem;
+      cursor: pointer;
       transition: all 0.3s ease;
-      min-width: 150px;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
     }
 
-    .control-select:focus, .control-input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    .season-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .season-btn:hover::before {
+      left: 100%;
+    }
+
+    .season-btn:hover,
+    .season-btn.active {
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+      border-color: var(--accent-gold);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 107, 182, 0.3);
     }
 
     /* Stats Grid */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
       gap: 2rem;
       margin-bottom: 3rem;
     }
 
     /* Stat Cards */
     .stat-card {
-      background: white;
-      border-radius: 16px;
+      background: var(--card-bg);
+      border-radius: 20px;
       padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      transition: all 0.4s ease;
       position: relative;
       overflow: hidden;
+      cursor: pointer;
     }
 
     .stat-card::before {
@@ -254,38 +206,51 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-blue), var(--primary-red));
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
     }
 
     .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 60px rgba(0, 107, 182, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
     }
 
-    .stat-card-header {
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
     }
 
-    .stat-card-title {
-      font-size: 1.2rem;
+    .card-title {
+      font-size: 1.3rem;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-primary);
     }
 
-    .stat-card-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-radius: 10px;
+    .card-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+      border-radius: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 1.5rem;
       color: white;
-      font-size: 1.2rem;
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
     }
 
     /* Chart Container */
@@ -296,210 +261,248 @@
     }
 
     .chart-container canvas {
-      border-radius: 10px;
+      border-radius: 15px;
     }
 
-    /* Player Stats Table */
-    .player-stats-section {
-      background: white;
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      margin-bottom: 2rem;
+    /* Player Cards Section */
+    .players-section {
+      margin-bottom: 3rem;
     }
 
     .section-title {
-      font-size: 1.8rem;
+      font-size: 2.5rem;
       font-weight: 800;
-      color: #1e293b;
-      margin-bottom: 1.5rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .player-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .player-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 107, 182, 0.1), rgba(237, 23, 76, 0.1));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .player-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0, 107, 182, 0.3);
+    }
+
+    .player-card:hover::after {
+      opacity: 1;
+    }
+
+    .player-header {
       display: flex;
       align-items: center;
       gap: 1rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      z-index: 2;
     }
 
-    .section-title::before {
-      content: '';
-      width: 4px;
-      height: 30px;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-radius: 2px;
-    }
-
-    /* Table Styles */
-    .stats-table-container {
-      overflow-x: auto;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .stats-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-    }
-
-    .stats-table th {
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    .player-avatar {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
       color: white;
+      border: 3px solid var(--accent-gold);
+    }
+
+    .player-info h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .player-position {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .player-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat-item {
+      text-align: center;
       padding: 1rem;
-      text-align: left;
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .stats-table th:first-child {
-      border-top-left-radius: 12px;
-    }
-
-    .stats-table th:last-child {
-      border-top-right-radius: 12px;
-    }
-
-    .stats-table td {
-      padding: 1rem;
-      border-bottom: 1px solid #f1f5f9;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
       transition: all 0.3s ease;
     }
 
-    .stats-table tr:hover td {
-      background: #f8fafc;
-    }
-
-    .stats-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .player-name {
-      font-weight: 600;
-      color: #1e293b;
+    .stat-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.05);
     }
 
     .stat-value {
-      font-weight: 600;
-      color: #3b82f6;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent-gold);
+      margin-bottom: 0.5rem;
     }
 
-    /* Loading States */
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Advanced Analytics Section */
+    .analytics-section {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 3rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 3rem;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 3rem;
+    }
+
+    /* Interactive Timeline */
+    .timeline-container {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 3rem;
+    }
+
+    .timeline {
+      position: relative;
+      padding: 2rem 0;
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateX(-50px);
+      animation: slideInLeft 0.6s ease forwards;
+    }
+
+    .timeline-item:nth-child(even) {
+      flex-direction: row-reverse;
+      transform: translateX(50px);
+      animation: slideInRight 0.6s ease forwards;
+    }
+
+    @keyframes slideInLeft {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInRight {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .timeline-marker {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+      border-radius: 50%;
+      border: 4px solid var(--accent-gold);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .timeline-content {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5rem;
+      border-radius: 15px;
+      flex: 1;
+      backdrop-filter: blur(10px);
+    }
+
+    .timeline-year {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent-gold);
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-record {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-highlight {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Loading Animation */
     .loading {
       display: flex;
       justify-content: center;
       align-items: center;
       height: 200px;
-      color: #64748b;
+      flex-direction: column;
+      gap: 1rem;
     }
 
-    .loading::after {
-      content: '';
-      width: 40px;
-      height: 40px;
-      border: 4px solid #e2e8f0;
-      border-top: 4px solid #3b82f6;
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid var(--primary-blue);
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin-left: 1rem;
     }
 
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
-    }
-
-    /* Update Indicator */
-    .update-indicator {
-      position: fixed;
-      top: 100px;
-      right: 2rem;
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 50px;
-      font-weight: 600;
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
-      transform: translateX(300px);
-      transition: transform 0.3s ease;
-      z-index: 1000;
-    }
-
-    .update-indicator.show {
-      transform: translateX(0);
-    }
-
-    /* Filter Chips */
-    .filter-chips {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-      justify-content: center;
-    }
-
-    .filter-chip {
-      background: #3b82f6;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border: none;
-    }
-
-    .filter-chip:hover {
-      background: #2563eb;
-      transform: scale(1.05);
-    }
-
-    .filter-chip.active {
-      background: #1d4ed8;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-    }
-
-    /* Performance Indicators */
-    .performance-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .performance-indicator.excellent {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .performance-indicator.good {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .performance-indicator.average {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    /* Trend Arrows */
-    .trend-arrow {
-      display: inline-block;
-      margin-left: 0.5rem;
-      font-size: 0.8rem;
-    }
-
-    .trend-up {
-      color: #10b981;
-    }
-
-    .trend-down {
-      color: #ef4444;
-    }
-
-    .trend-neutral {
-      color: #64748b;
     }
 
     /* Responsive Design */
@@ -508,373 +511,304 @@
         padding: 1rem;
       }
 
-      .stats-title {
-        font-size: 2rem;
+      .hero-section {
+        padding: 2rem 1rem;
       }
 
-      .control-panel {
-        flex-direction: column;
-        align-items: center;
+      .season-selector {
+        gap: 0.5rem;
       }
 
-      .stats-grid {
+      .season-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .stats-grid,
+      .players-grid {
         grid-template-columns: 1fr;
+      }
+
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-item {
+        flex-direction: column !important;
+        text-align: center;
       }
 
       .chart-container {
         height: 250px;
       }
+    }
 
-      .stats-table {
-        font-size: 0.9rem;
-      }
+    /* Scroll animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease;
+    }
 
-      .stats-table th,
-      .stats-table td {
-        padding: 0.75rem 0.5rem;
-      }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--dark-bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, var(--primary-red), var(--accent-gold));
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <div class="nav-brand">
-        <a href="index.html" class="brand-link">
-          <span class="brand-text">SixersHoops</span>
-        </a>
-      </div>
-      
-      <div class="nav-menu" id="navMenu">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="news.html" class="nav-link">News</a>
-        <a href="roster.html" class="nav-link">Roster</a>
-        <a href="depth.html" class="nav-link">Depth Chart</a>
-        <a href="salary.html" class="nav-link">Salary</a>
-        <a href="schedule.html" class="nav-link">Schedule</a>
-        <a href="stats-fixed.html" class="nav-link active">Stats</a>
-      </div>
-      
-      <div class="nav-toggle" id="navToggle">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-      </div>
-    </div>
-  </nav>
+  <!-- Navigation will be injected by nav.js -->
   
-  <!-- Update Indicator -->
-  <div class="update-indicator" id="updateIndicator">
-    📊 Stats Updated!
-  </div>
-
   <div class="stats-container">
-    <!-- Header Section -->
-    <div class="stats-header">
-      <h1 class="stats-title">Philadelphia 76ers Statistics</h1>
-      <p class="stats-subtitle">Real-time analytics, player performance, and team insights</p>
+    <!-- Hero Section -->
+    <div class="hero-section fade-in">
+      <h1 class="hero-title">Philadelphia 76ers Analytics</h1>
+      <p class="hero-subtitle">Interactive statistics and performance insights across 5 seasons</p>
       
-      <!-- Control Panel -->
-      <div class="control-panel">
-        <div class="control-group">
-          <label class="control-label">Season</label>
-          <select class="control-select" id="seasonSelect">
-            <option value="2023-24">2023-24</option>
-            <option value="2022-23">2022-23</option>
-            <option value="2021-22">2021-22</option>
-          </select>
-        </div>
-        
-        <div class="control-group">
-          <label class="control-label">Game Type</label>
-          <select class="control-select" id="gameTypeSelect">
-            <option value="regular">Regular Season</option>
-            <option value="playoffs">Playoffs</option>
-            <option value="all">All Games</option>
-          </select>
-        </div>
-        
-        <div class="control-group">
-          <label class="control-label">Date Range</label>
-          <select class="control-select" id="dateRangeSelect">
-            <option value="last10">Last 10 Games</option>
-            <option value="last30">Last 30 Days</option>
-            <option value="season">Full Season</option>
-          </select>
-        </div>
+      <!-- Season Selector -->
+      <div class="season-selector">
+        <button class="season-btn active" data-season="2023-24">2023-24</button>
+        <button class="season-btn" data-season="2022-23">2022-23</button>
+        <button class="season-btn" data-season="2021-22">2021-22</button>
+        <button class="season-btn" data-season="2020-21">2020-21</button>
+        <button class="season-btn" data-season="2019-20">2019-20</button>
       </div>
     </div>
 
-    <!-- Filter Chips -->
-    <div class="filter-chips">
-      <button class="filter-chip active" data-filter="all">All Stats</button>
-      <button class="filter-chip" data-filter="offense">Offense</button>
-      <button class="filter-chip" data-filter="defense">Defense</button>
-      <button class="filter-chip" data-filter="advanced">Advanced</button>
-    </div>
-
-    <!-- Team Overview Cards -->
-    <div class="stats-grid">
-      <!-- Team Record Card -->
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <h3 class="stat-card-title">Team Record</h3>
-          <div class="stat-card-icon">🏆</div>
+    <!-- Team Stats Grid -->
+    <div class="stats-grid fade-in">
+      <!-- Win-Loss Record -->
+      <div class="stat-card" data-category="record">
+        <div class="card-header">
+          <h3 class="card-title">Season Record</h3>
+          <div class="card-icon">
+            <i class="fas fa-trophy"></i>
+          </div>
         </div>
         <div class="chart-container">
           <canvas id="recordChart"></canvas>
         </div>
-        <div id="recordStats"></div>
+        <div id="recordDetails"></div>
       </div>
 
-      <!-- Scoring Stats Card -->
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <h3 class="stat-card-title">Scoring Average</h3>
-          <div class="stat-card-icon">🏀</div>
+      <!-- Scoring Stats -->
+      <div class="stat-card" data-category="scoring">
+        <div class="card-header">
+          <h3 class="card-title">Scoring Trends</h3>
+          <div class="card-icon">
+            <i class="fas fa-basketball-ball"></i>
+          </div>
         </div>
         <div class="chart-container">
           <canvas id="scoringChart"></canvas>
         </div>
-        <div id="scoringStats"></div>
+        <div id="scoringDetails"></div>
       </div>
 
-      <!-- Defensive Stats Card -->
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <h3 class="stat-card-title">Defensive Rating</h3>
-          <div class="stat-card-icon">🛡️</div>
+      <!-- Shooting Efficiency -->
+      <div class="stat-card" data-category="shooting">
+        <div class="card-header">
+          <h3 class="card-title">Shooting Efficiency</h3>
+          <div class="card-icon">
+            <i class="fas fa-bullseye"></i>
+          </div>
         </div>
         <div class="chart-container">
-          <canvas id="defenseChart"></canvas>
+          <canvas id="shootingChart"></canvas>
         </div>
-        <div id="defenseStats"></div>
+        <div id="shootingDetails"></div>
       </div>
 
-      <!-- Efficiency Card -->
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <h3 class="stat-card-title">Team Efficiency</h3>
-          <div class="stat-card-icon">⚡</div>
+      <!-- Team Performance -->
+      <div class="stat-card" data-category="performance">
+        <div class="card-header">
+          <h3 class="card-title">Team Performance</h3>
+          <div class="card-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
         </div>
         <div class="chart-container">
-          <canvas id="efficiencyChart"></canvas>
+          <canvas id="performanceChart"></canvas>
         </div>
-        <div id="efficiencyStats"></div>
+        <div id="performanceDetails"></div>
       </div>
     </div>
 
-    <!-- Player Statistics Section -->
-    <div class="player-stats-section">
-      <h2 class="section-title">Player Statistics</h2>
-      
-      <div class="control-panel">
-        <div class="control-group">
-          <label class="control-label">Sort By</label>
-          <select class="control-select" id="sortSelect">
-            <option value="points">Points</option>
-            <option value="rebounds">Rebounds</option>
-            <option value="assists">Assists</option>
-            <option value="efficiency">Efficiency</option>
-          </select>
-        </div>
+    <!-- Players Section -->
+    <div class="players-section fade-in">
+      <h2 class="section-title">Star Players</h2>
+      <div class="players-grid" id="playersGrid">
+        <!-- Players will be dynamically loaded -->
       </div>
+    </div>
 
-      <div class="stats-table-container">
-        <table class="stats-table" id="playerStatsTable">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>GP</th>
-              <th>MIN</th>
-              <th>PTS</th>
-              <th>REB</th>
-              <th>AST</th>
-              <th>FG%</th>
-              <th>3P%</th>
-              <th>FT%</th>
-              <th>Performance</th>
-            </tr>
-          </thead>
-          <tbody id="playerStatsBody">
-            <!-- Data will be populated by JavaScript -->
-          </tbody>
-        </table>
+    <!-- 5-Season Timeline -->
+    <div class="timeline-container fade-in">
+      <h2 class="section-title">5-Season Journey</h2>
+      <div class="timeline" id="seasonTimeline">
+        <!-- Timeline will be dynamically loaded -->
+      </div>
+    </div>
+
+    <!-- Advanced Analytics -->
+    <div class="analytics-section fade-in">
+      <h2 class="section-title">Advanced Analytics</h2>
+      <div class="analytics-grid">
+        <div class="chart-container">
+          <canvas id="advancedChart1"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="advancedChart2"></canvas>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Include your navigation JavaScript -->
+  <script src="nav.js"></script>
+
   <script>
-    // Philadelphia 76ers Stats Dashboard - Self-contained version
-    class SixersStatsManager {
+    // Philadelphia 76ers Interactive Stats Dashboard
+    class SixersInteractiveStats {
       constructor() {
+        this.currentSeason = '2023-24';
         this.charts = {};
-        this.currentData = this.getSampleData();
+        this.seasonData = this.getSeasonData();
         this.init();
       }
 
       init() {
         this.setupEventListeners();
         this.initializeCharts();
-        this.updatePlayerStatsTable();
-        this.setupNavigation();
+        this.loadPlayers();
+        this.createTimeline();
+        this.setupScrollAnimations();
       }
 
-      setupNavigation() {
-        // Mobile menu toggle
-        const navToggle = document.getElementById('navToggle');
-        const navMenu = document.getElementById('navMenu');
-        
-        if (navToggle && navMenu) {
-          navToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
-            navToggle.classList.toggle('active');
-          });
-        }
-
-        // Navbar scroll effect
-        let lastScrollTop = 0;
-        const navbar = document.querySelector('.navbar');
-        
-        window.addEventListener('scroll', function() {
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-          
-          if (scrollTop > 50) {
-            navbar.classList.add('scrolled');
-          } else {
-            navbar.classList.remove('scrolled');
+      getSeasonData() {
+        return {
+          '2023-24': {
+            record: { wins: 47, losses: 35, playoffs: true },
+            scoring: { ppg: 114.8, oppPpg: 112.3, pace: 99.2 },
+            shooting: { fg: 0.467, threePt: 0.368, ft: 0.821 },
+            performance: { offRating: 115.2, defRating: 112.8, netRating: 2.4 },
+            players: [
+              { name: 'Joel Embiid', position: 'C', pts: 35.3, reb: 11.3, ast: 5.7, avatar: 'JE' },
+              { name: 'Tyrese Maxey', position: 'PG', pts: 25.9, reb: 3.7, ast: 6.2, avatar: 'TM' },
+              { name: 'Tobias Harris', position: 'PF', pts: 17.2, reb: 6.5, ast: 3.1, avatar: 'TH' }
+            ],
+            highlight: 'Joel Embiid MVP candidate season'
+          },
+          '2022-23': {
+            record: { wins: 54, losses: 28, playoffs: true },
+            scoring: { ppg: 114.2, oppPpg: 109.8, pace: 98.8 },
+            shooting: { fg: 0.473, threePt: 0.354, ft: 0.803 },
+            performance: { offRating: 117.1, defRating: 112.8, netRating: 4.3 },
+            players: [
+              { name: 'Joel Embiid', position: 'C', pts: 33.1, reb: 10.2, ast: 4.2, avatar: 'JE' },
+              { name: 'James Harden', position: 'PG', pts: 21.0, reb: 6.1, ast: 10.7, avatar: 'JH' },
+              { name: 'Tyrese Maxey', position: 'SG', pts: 20.3, reb: 3.2, ast: 3.5, avatar: 'TM' }
+            ],
+            highlight: 'Joel Embiid MVP season'
+          },
+          '2021-22': {
+            record: { wins: 51, losses: 31, playoffs: true },
+            scoring: { ppg: 109.9, oppPpg: 106.5, pace: 95.7 },
+            shooting: { fg: 0.460, threePt: 0.347, ft: 0.827 },
+            performance: { offRating: 112.3, defRating: 108.8, netRating: 3.5 },
+            players: [
+              { name: 'Joel Embiid', position: 'C', pts: 30.6, reb: 11.7, ast: 4.2, avatar: 'JE' },
+              { name: 'James Harden', position: 'PG', pts: 21.0, reb: 7.1, ast: 10.5, avatar: 'JH' },
+              { name: 'Tyrese Maxey', position: 'SG', pts: 17.5, reb: 3.2, ast: 4.3, avatar: 'TM' }
+            ],
+            highlight: 'James Harden trade impact'
+          },
+          '2020-21': {
+            record: { wins: 49, losses: 23, playoffs: true },
+            scoring: { ppg: 113.6, oppPpg: 107.9, pace: 102.3 },
+            shooting: { fg: 0.473, threePt: 0.366, ft: 0.811 },
+            performance: { offRating: 115.4, defRating: 109.7, netRating: 5.7 },
+            players: [
+              { name: 'Joel Embiid', position: 'C', pts: 28.5, reb: 10.6, ast: 2.8, avatar: 'JE' },
+              { name: 'Ben Simmons', position: 'PG', pts: 14.3, reb: 7.2, ast: 6.9, avatar: 'BS' },
+              { name: 'Tobias Harris', position: 'PF', pts: 19.5, reb: 6.8, ast: 3.5, avatar: 'TH' }
+            ],
+            highlight: 'Top seed in Eastern Conference'
+          },
+          '2019-20': {
+            record: { wins: 43, losses: 30, playoffs: true },
+            scoring: { ppg: 112.2, oppPpg: 107.7, pace: 100.2 },
+            shooting: { fg: 0.460, threePt: 0.353, ft: 0.796 },
+            performance: { offRating: 111.8, defRating: 107.3, netRating: 4.5 },
+            players: [
+              { name: 'Joel Embiid', position: 'C', pts: 23.0, reb: 11.6, ast: 3.0, avatar: 'JE' },
+              { name: 'Ben Simmons', position: 'PG', pts: 16.4, reb: 7.8, ast: 8.0, avatar: 'BS' },
+              { name: 'Tobias Harris', position: 'PF', pts: 19.6, reb: 6.9, ast: 3.2, avatar: 'TH' }
+            ],
+            highlight: 'COVID-shortened season'
           }
-          
-          lastScrollTop = scrollTop;
-        });
+        };
       }
 
       setupEventListeners() {
-        // Filter controls
-        document.getElementById('seasonSelect')?.addEventListener('change', () => {
-          this.showUpdateIndicator();
-        });
-
-        document.getElementById('gameTypeSelect')?.addEventListener('change', () => {
-          this.showUpdateIndicator();
-        });
-
-        document.getElementById('dateRangeSelect')?.addEventListener('change', () => {
-          this.showUpdateIndicator();
-        });
-
-        document.getElementById('sortSelect')?.addEventListener('change', (e) => {
-          this.sortPlayerStats(e.target.value);
-        });
-
-        // Filter chips
-        document.querySelectorAll('.filter-chip').forEach(chip => {
-          chip.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        // Season selector buttons
+        document.querySelectorAll('.season-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
-            this.filterStats(e.target.dataset.filter);
+            this.currentSeason = e.target.dataset.season;
+            this.updateAllData();
           });
         });
-      }
 
-      getSampleData() {
-        return {
-          teamStats: {
-            record: { wins: 47, losses: 35, winPct: 0.573 },
-            scoring: { ppg: 114.8, oppPpg: 112.3 }
-          },
-          playerStats: [
-            {
-              name: "Joel Embiid",
-              gp: 39,
-              min: 34.6,
-              pts: 35.3,
-              reb: 11.3,
-              ast: 5.7,
-              fgPct: 0.529,
-              threePct: 0.385,
-              ftPct: 0.884,
-              performance: "excellent"
-            },
-            {
-              name: "Tyrese Maxey",
-              gp: 70,
-              min: 37.8,
-              pts: 25.9,
-              reb: 3.7,
-              ast: 6.2,
-              fgPct: 0.448,
-              threePct: 0.373,
-              ftPct: 0.867,
-              performance: "excellent"
-            },
-            {
-              name: "Tobias Harris",
-              gp: 70,
-              min: 32.8,
-              pts: 17.2,
-              reb: 6.5,
-              ast: 3.1,
-              fgPct: 0.489,
-              threePct: 0.351,
-              ftPct: 0.880,
-              performance: "good"
-            },
-            {
-              name: "Kelly Oubre Jr.",
-              gp: 68,
-              min: 30.4,
-              pts: 15.4,
-              reb: 5.0,
-              ast: 1.5,
-              fgPct: 0.532,
-              threePct: 0.373,
-              ftPct: 0.714,
-              performance: "good"
-            },
-            {
-              name: "Nicolas Batum",
-              gp: 57,
-              min: 22.1,
-              pts: 5.5,
-              reb: 4.2,
-              ast: 2.5,
-              fgPct: 0.446,
-              threePct: 0.357,
-              ftPct: 0.750,
-              performance: "good"
-            }
-          ],
-          gameLog: [
-            { date: '2024-03-15', opponent: 'BOS', result: 'W', score: 118, oppScore: 114 },
-            { date: '2024-03-13', opponent: 'MIA', result: 'L', score: 109, oppScore: 115 },
-            { date: '2024-03-11', opponent: 'NYK', result: 'W', score: 125, oppScore: 109 },
-            { date: '2024-03-09', opponent: 'BRK', result: 'W', score: 137, oppScore: 123 },
-            { date: '2024-03-07', opponent: 'TOR', result: 'W', score: 121, oppScore: 111 }
-          ]
-        };
+        // Card hover effects
+        document.querySelectorAll('.stat-card').forEach(card => {
+          card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-10px) scale(1.02)';
+          });
+          
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0) scale(1)';
+          });
+        });
       }
 
       initializeCharts() {
         this.createRecordChart();
         this.createScoringChart();
-        this.createDefenseChart();
-        this.createEfficiencyChart();
+        this.createShootingChart();
+        this.createPerformanceChart();
+        this.createAdvancedCharts();
       }
 
       createRecordChart() {
         const ctx = document.getElementById('recordChart');
-        if (!ctx) return;
-
-        const data = this.currentData.teamStats.record;
+        const data = this.seasonData[this.currentSeason];
         
         this.charts.record = new Chart(ctx, {
           type: 'doughnut',
           data: {
             labels: ['Wins', 'Losses'],
             datasets: [{
-              data: [data.wins, data.losses],
+              data: [data.record.wins, data.record.losses],
               backgroundColor: ['#10b981', '#ef4444'],
               borderWidth: 0,
               cutout: '70%'
@@ -887,219 +821,372 @@
               legend: {
                 position: 'bottom',
                 labels: {
-                  padding: 20,
-                  usePointStyle: true,
-                  font: { weight: 'bold' }
+                  color: '#ffffff',
+                  font: { size: 14, weight: 'bold' },
+                  padding: 20
                 }
               }
+            },
+            animation: {
+              animateRotate: true,
+              duration: 2000
             }
           }
         });
 
-        document.getElementById('recordStats').innerHTML = `
+        document.getElementById('recordDetails').innerHTML = `
           <div style="text-align: center; margin-top: 1rem;">
-            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">${data.wins}-${data.losses}</div>
-            <div style="color: #64748b;">Win Percentage: ${(data.winPct * 100).toFixed(1)}%</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #ffd700;">
+              ${data.record.wins}-${data.record.losses}
+            </div>
+            <div style="color: #94a3b8; margin-top: 0.5rem;">
+              ${data.record.playoffs ? '🏀 Made Playoffs' : '❌ Missed Playoffs'}
+            </div>
           </div>
         `;
       }
 
       createScoringChart() {
         const ctx = document.getElementById('scoringChart');
-        if (!ctx) return;
-
-        const gameLog = this.currentData.gameLog;
+        const seasons = Object.keys(this.seasonData).reverse();
+        const scoringData = seasons.map(season => this.seasonData[season].scoring.ppg);
+        const oppScoringData = seasons.map(season => this.seasonData[season].scoring.oppPpg);
         
         this.charts.scoring = new Chart(ctx, {
           type: 'line',
           data: {
-            labels: gameLog.map(game => game.date.split('-').slice(1).join('/')),
-            datasets: [{
-              label: 'Points Scored',
-              data: gameLog.map(game => game.score),
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              fill: true,
-              tension: 0.4
-            }]
+            labels: seasons,
+            datasets: [
+              {
+                label: 'Points For',
+                data: scoringData,
+                borderColor: '#006bb6',
+                backgroundColor: 'rgba(0, 107, 182, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#006bb6',
+                pointBorderColor: '#ffd700',
+                pointBorderWidth: 3,
+                pointRadius: 6
+              },
+              {
+                label: 'Points Against',
+                data: oppScoringData,
+                borderColor: '#ed174c',
+                backgroundColor: 'rgba(237, 23, 76, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ed174c',
+                pointBorderColor: '#ffd700',
+                pointBorderWidth: 3,
+                pointRadius: 6
+              }
+            ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
               legend: {
-                position: 'top'
+                labels: { color: '#ffffff', font: { weight: 'bold' } }
               }
             },
             scales: {
-              y: {
-                beginAtZero: false,
-                min: 90
-              }
-            }
-          }
-        });
-
-        const avgScore = gameLog.reduce((sum, game) => sum + game.score, 0) / gameLog.length;
-        document.getElementById('scoringStats').innerHTML = `
-          <div style="text-align: center; margin-top: 1rem;">
-            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">${avgScore.toFixed(1)}</div>
-            <div style="color: #64748b;">Points Per Game (Last 5)</div>
-          </div>
-        `;
-      }
-
-      createDefenseChart() {
-        const ctx = document.getElementById('defenseChart');
-        if (!ctx) return;
-
-        const gameLog = this.currentData.gameLog;
-        
-        this.charts.defense = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: gameLog.map(game => `vs ${game.opponent}`),
-            datasets: [{
-              label: 'Points Allowed',
-              data: gameLog.map(game => game.oppScore),
-              backgroundColor: gameLog.map(game => 
-                game.oppScore < 110 ? '#10b981' : game.oppScore < 120 ? '#f59e0b' : '#ef4444'
-              ),
-              borderRadius: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
+              x: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              y: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
               }
             },
-            scales: {
-              y: {
-                beginAtZero: false,
-                min: 90
-              }
+            animation: {
+              duration: 2000,
+              easing: 'easeInOutQuart'
             }
           }
         });
-
-        const avgDefense = gameLog.reduce((sum, game) => sum + game.oppScore, 0) / gameLog.length;
-        document.getElementById('defenseStats').innerHTML = `
-          <div style="text-align: center; margin-top: 1rem;">
-            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">${avgDefense.toFixed(1)}</div>
-            <div style="color: #64748b;">Opp Points Per Game</div>
-          </div>
-        `;
       }
 
-      createEfficiencyChart() {
-        const ctx = document.getElementById('efficiencyChart');
-        if (!ctx) return;
+      createShootingChart() {
+        const ctx = document.getElementById('shootingChart');
+        const data = this.seasonData[this.currentSeason];
         
-        this.charts.efficiency = new Chart(ctx, {
+        this.charts.shooting = new Chart(ctx, {
           type: 'radar',
           data: {
-            labels: ['Scoring', 'Rebounding', 'Assists', 'Defense', 'Shooting', 'Clutch'],
+            labels: ['Field Goal %', '3-Point %', 'Free Throw %', 'Offensive Rating', 'Pace'],
             datasets: [{
               label: 'Team Performance',
-              data: [85, 78, 82, 75, 88, 72],
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.2)',
-              pointBackgroundColor: '#3b82f6'
+              data: [
+                data.shooting.fg * 100,
+                data.shooting.threePt * 100,
+                data.shooting.ft * 100,
+                data.performance.offRating,
+                data.scoring.pace
+              ],
+              borderColor: '#ffd700',
+              backgroundColor: 'rgba(255, 215, 0, 0.2)',
+              pointBackgroundColor: '#ffd700',
+              pointBorderColor: '#006bb6',
+              pointBorderWidth: 3,
+              pointRadius: 6
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: '#ffffff', font: { weight: 'bold' } }
+              }
+            },
             scales: {
               r: {
                 beginAtZero: true,
-                max: 100
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                pointLabels: { color: '#ffffff', font: { weight: 'bold' } }
+              }
+            },
+            animation: {
+              duration: 2000,
+              easing: 'easeInOutQuart'
+            }
+          }
+        });
+      }
+
+      createPerformanceChart() {
+        const ctx = document.getElementById('performanceChart');
+        const seasons = Object.keys(this.seasonData).reverse();
+        const netRatings = seasons.map(season => this.seasonData[season].performance.netRating);
+        
+        this.charts.performance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: seasons,
+            datasets: [{
+              label: 'Net Rating',
+              data: netRatings,
+              backgroundColor: netRatings.map(rating => 
+                rating > 4 ? '#10b981' : rating > 0 ? '#f59e0b' : '#ef4444'
+              ),
+              borderColor: '#ffd700',
+              borderWidth: 2,
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: '#ffffff', font: { weight: 'bold' } }
+              }
+            },
+            scales: {
+              x: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              y: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              }
+            },
+            animation: {
+              duration: 2000,
+              easing: 'easeInOutBounce'
+            }
+          }
+        });
+      }
+
+      createAdvancedCharts() {
+        // Advanced Chart 1 - 5 Season Comparison
+        const ctx1 = document.getElementById('advancedChart1');
+        const seasons = Object.keys(this.seasonData).reverse();
+        const wins = seasons.map(season => this.seasonData[season].record.wins);
+        
+        new Chart(ctx1, {
+          type: 'line',
+          data: {
+            labels: seasons,
+            datasets: [{
+              label: 'Wins per Season',
+              data: wins,
+              borderColor: '#006bb6',
+              backgroundColor: 'rgba(0, 107, 182, 0.2)',
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: '#ffd700',
+              pointBorderColor: '#006bb6',
+              pointBorderWidth: 3,
+              pointRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: '#ffffff', font: { weight: 'bold' } }
+              }
+            },
+            scales: {
+              x: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              y: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
               }
             }
           }
         });
 
-        document.getElementById('efficiencyStats').innerHTML = `
-          <div style="text-align: center; margin-top: 1rem;">
-            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">115.2</div>
-            <div style="color: #64748b;">Offensive Rating</div>
-          </div>
-        `;
+        // Advanced Chart 2 - Efficiency Comparison
+        const ctx2 = document.getElementById('advancedChart2');
+        const offRatings = seasons.map(season => this.seasonData[season].performance.offRating);
+        const defRatings = seasons.map(season => this.seasonData[season].performance.defRating);
+        
+        new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels: seasons,
+            datasets: [
+              {
+                label: 'Offensive Rating',
+                data: offRatings,
+                backgroundColor: '#10b981',
+                borderColor: '#ffd700',
+                borderWidth: 2
+              },
+              {
+                label: 'Defensive Rating',
+                data: defRatings,
+                backgroundColor: '#ef4444',
+                borderColor: '#ffd700',
+                borderWidth: 2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: '#ffffff', font: { weight: 'bold' } }
+              }
+            },
+            scales: {
+              x: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              y: { 
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              }
+            }
+          }
+        });
       }
 
-      updatePlayerStatsTable() {
-        const tbody = document.getElementById('playerStatsBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = this.currentData.playerStats.map(player => `
-          <tr>
-            <td class="player-name">${player.name}</td>
-            <td>${player.gp}</td>
-            <td>${player.min.toFixed(1)}</td>
-            <td class="stat-value">${player.pts.toFixed(1)}</td>
-            <td class="stat-value">${player.reb.toFixed(1)}</td>
-            <td class="stat-value">${player.ast.toFixed(1)}</td>
-            <td>${(player.fgPct * 100).toFixed(1)}%</td>
-            <td>${(player.threePct * 100).toFixed(1)}%</td>
-            <td>${(player.ftPct * 100).toFixed(1)}%</td>
-            <td>
-              <span class="performance-indicator ${player.performance}">${player.performance}</span>
-            </td>
-          </tr>
+      loadPlayers() {
+        const playersGrid = document.getElementById('playersGrid');
+        const players = this.seasonData[this.currentSeason].players;
+        
+        playersGrid.innerHTML = players.map(player => `
+          <div class="player-card">
+            <div class="player-header">
+              <div class="player-avatar">${player.avatar}</div>
+              <div class="player-info">
+                <h3>${player.name}</h3>
+                <div class="player-position">${player.position}</div>
+              </div>
+            </div>
+            <div class="player-stats">
+              <div class="stat-item">
+                <div class="stat-value">${player.pts}</div>
+                <div class="stat-label">PPG</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${player.reb}</div>
+                <div class="stat-label">RPG</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${player.ast}</div>
+                <div class="stat-label">APG</div>
+              </div>
+            </div>
+          </div>
         `).join('');
       }
 
-      sortPlayerStats(sortBy) {
-        this.currentData.playerStats.sort((a, b) => {
-          switch (sortBy) {
-            case 'points': return b.pts - a.pts;
-            case 'rebounds': return b.reb - a.reb;
-            case 'assists': return b.ast - a.ast;
-            case 'efficiency': return b.pts + b.reb + b.ast - (a.pts + a.reb + a.ast);
-            default: return b.pts - a.pts;
-          }
-        });
-        this.updatePlayerStatsTable();
+      createTimeline() {
+        const timeline = document.getElementById('seasonTimeline');
+        const seasons = Object.keys(this.seasonData).reverse();
+        
+        timeline.innerHTML = seasons.map((season, index) => {
+          const data = this.seasonData[season];
+          return `
+            <div class="timeline-item" style="animation-delay: ${index * 0.2}s">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <div class="timeline-year">${season}</div>
+                <div class="timeline-record">${data.record.wins}-${data.record.losses} Record</div>
+                <div class="timeline-highlight">${data.highlight}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
 
-      filterStats(filter) {
-        const cards = document.querySelectorAll('.stat-card');
-        cards.forEach(card => {
-          const title = card.querySelector('.stat-card-title').textContent.toLowerCase();
+      updateAllData() {
+        // Update charts with new season data
+        this.createRecordChart();
+        this.loadPlayers();
+        
+        // Add smooth transition effect
+        document.querySelectorAll('.stat-card').forEach((card, index) => {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(20px)';
           
-          switch (filter) {
-            case 'offense':
-              card.style.display = title.includes('scoring') || title.includes('efficiency') ? 'block' : 'none';
-              break;
-            case 'defense':
-              card.style.display = title.includes('defensive') ? 'block' : 'none';
-              break;
-            case 'advanced':
-              card.style.display = title.includes('efficiency') ? 'block' : 'none';
-              break;
-            default:
-              card.style.display = 'block';
-          }
+          setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, index * 100);
         });
       }
 
-      showUpdateIndicator() {
-        const indicator = document.getElementById('updateIndicator');
-        if (indicator) {
-          indicator.classList.add('show');
-          setTimeout(() => {
-            indicator.classList.remove('show');
-          }, 3000);
-        }
+      setupScrollAnimations() {
+        const observerOptions = {
+          threshold: 0.1,
+          rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+          observer.observe(el);
+        });
       }
     }
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {
-      window.sixersStats = new SixersStatsManager();
+      window.sixersStats = new SixersInteractiveStats();
     });
   </script>
 </body>
