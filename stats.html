@@ -4,17 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Philadelphia 76ers Stats - SixersHoops</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="favicon.ico" />
   <meta name="description" content="Comprehensive Philadelphia 76ers statistics, player performance metrics, team analytics, and interactive data visualizations." />
   <meta name="keywords" content="Philadelphia 76ers stats, Sixers statistics, NBA analytics, player performance, team metrics" />
   
-  <!-- Include the navbar CSS -->
-  <link rel="stylesheet" href="navbar-styles.css">
-  
   <!-- Chart.js for data visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   
   <!-- Google Analytics 4 (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
@@ -40,6 +36,125 @@
       line-height: 1.6;
       padding-top: 80px;
       margin: 0;
+    }
+
+    /* Navigation Styles */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e2e8f0;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .navbar.scrolled {
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 70px;
+    }
+
+    .nav-brand {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #1e293b;
+    }
+
+    .brand-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-text {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-menu {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: #64748b;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      gap: 4px;
+    }
+
+    .bar {
+      width: 25px;
+      height: 3px;
+      background: #64748b;
+      transition: 0.3s;
+      border-radius: 2px;
+    }
+
+    /* Mobile Navigation */
+    @media (max-width: 768px) {
+      .nav-menu {
+        position: fixed;
+        left: -100%;
+        top: 70px;
+        flex-direction: column;
+        background: white;
+        width: 100%;
+        text-align: center;
+        transition: 0.3s;
+        box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
+        padding: 2rem 0;
+        gap: 1rem;
+      }
+
+      .nav-menu.active {
+        left: 0;
+      }
+
+      .nav-toggle {
+        display: flex;
+      }
+
+      .nav-toggle.active .bar:nth-child(2) {
+        opacity: 0;
+      }
+
+      .nav-toggle.active .bar:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+
+      .nav-toggle.active .bar:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+      }
     }
 
     /* Main Container */
@@ -312,55 +427,13 @@
       transform: translateX(0);
     }
 
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .stats-container {
-        padding: 1rem;
-      }
-
-      .stats-title {
-        font-size: 2rem;
-      }
-
-      .control-panel {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .chart-container {
-        height: 250px;
-      }
-
-      .stats-table {
-        font-size: 0.9rem;
-      }
-
-      .stats-table th,
-      .stats-table td {
-        padding: 0.75rem 0.5rem;
-      }
-    }
-
-    /* Advanced Features */
-    .comparison-mode {
-      background: linear-gradient(135deg, #fbbf24, #f59e0b);
-      color: white;
-      padding: 1rem;
-      border-radius: 12px;
-      margin-bottom: 2rem;
-      text-align: center;
-      font-weight: 600;
-    }
-
+    /* Filter Chips */
     .filter-chips {
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
       margin-bottom: 1rem;
+      justify-content: center;
     }
 
     .filter-chip {
@@ -371,6 +444,7 @@
       font-size: 0.9rem;
       cursor: pointer;
       transition: all 0.3s ease;
+      border: none;
     }
 
     .filter-chip:hover {
@@ -427,10 +501,68 @@
     .trend-neutral {
       color: #64748b;
     }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .stats-container {
+        padding: 1rem;
+      }
+
+      .stats-title {
+        font-size: 2rem;
+      }
+
+      .control-panel {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        height: 250px;
+      }
+
+      .stats-table {
+        font-size: 0.9rem;
+      }
+
+      .stats-table th,
+      .stats-table td {
+        padding: 0.75rem 0.5rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Navigation will be injected by nav.js -->
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <a href="index.html" class="brand-link">
+          <span class="brand-text">SixersHoops</span>
+        </a>
+      </div>
+      
+      <div class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="news.html" class="nav-link">News</a>
+        <a href="roster.html" class="nav-link">Roster</a>
+        <a href="depth.html" class="nav-link">Depth Chart</a>
+        <a href="salary.html" class="nav-link">Salary</a>
+        <a href="schedule.html" class="nav-link">Schedule</a>
+        <a href="stats-fixed.html" class="nav-link active">Stats</a>
+      </div>
+      
+      <div class="nav-toggle" id="navToggle">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+    </div>
+  </nav>
   
   <!-- Update Indicator -->
   <div class="update-indicator" id="updateIndicator">
@@ -469,7 +601,6 @@
             <option value="last10">Last 10 Games</option>
             <option value="last30">Last 30 Days</option>
             <option value="season">Full Season</option>
-            <option value="custom">Custom Range</option>
           </select>
         </div>
       </div>
@@ -477,11 +608,10 @@
 
     <!-- Filter Chips -->
     <div class="filter-chips">
-      <div class="filter-chip active" data-filter="all">All Stats</div>
-      <div class="filter-chip" data-filter="offense">Offense</div>
-      <div class="filter-chip" data-filter="defense">Defense</div>
-      <div class="filter-chip" data-filter="advanced">Advanced</div>
-      <div class="filter-chip" data-filter="clutch">Clutch Time</div>
+      <button class="filter-chip active" data-filter="all">All Stats</button>
+      <button class="filter-chip" data-filter="offense">Offense</button>
+      <button class="filter-chip" data-filter="defense">Defense</button>
+      <button class="filter-chip" data-filter="advanced">Advanced</button>
     </div>
 
     <!-- Team Overview Cards -->
@@ -547,13 +677,7 @@
             <option value="rebounds">Rebounds</option>
             <option value="assists">Assists</option>
             <option value="efficiency">Efficiency</option>
-            <option value="minutes">Minutes</option>
           </select>
-        </div>
-        
-        <div class="control-group">
-          <label class="control-label">Min Games</label>
-          <input type="number" class="control-input" id="minGamesInput" value="10" min="1" max="82">
         </div>
       </div>
 
@@ -570,78 +694,413 @@
               <th>FG%</th>
               <th>3P%</th>
               <th>FT%</th>
-              <th>EFF</th>
-              <th>Trend</th>
+              <th>Performance</th>
             </tr>
           </thead>
           <tbody id="playerStatsBody">
-            <tr>
-              <td colspan="11" class="loading">Loading player statistics...</td>
-            </tr>
+            <!-- Data will be populated by JavaScript -->
           </tbody>
         </table>
       </div>
     </div>
-
-    <!-- Advanced Analytics Section -->
-    <div class="player-stats-section">
-      <h2 class="section-title">Advanced Analytics</h2>
-      
-      <div class="stats-grid">
-        <!-- Shot Chart -->
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <h3 class="stat-card-title">Shot Chart</h3>
-            <div class="stat-card-icon">🎯</div>
-          </div>
-          <div class="chart-container">
-            <canvas id="shotChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Performance by Quarter -->
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <h3 class="stat-card-title">Performance by Quarter</h3>
-            <div class="stat-card-icon">⏱️</div>
-          </div>
-          <div class="chart-container">
-            <canvas id="quarterChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Home vs Away -->
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <h3 class="stat-card-title">Home vs Away</h3>
-            <div class="stat-card-icon">🏠</div>
-          </div>
-          <div class="chart-container">
-            <canvas id="homeAwayChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Clutch Performance -->
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <h3 class="stat-card-title">Clutch Performance</h3>
-            <div class="stat-card-icon">🔥</div>
-          </div>
-          <div class="chart-container">
-            <canvas id="clutchChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <!-- Include navigation JavaScript -->
-  <script src="nav.js"></script>
-  
-  <!-- NBA API Integration -->
-  <script src="nba-api.js"></script>
-  
-  <!-- Stats JavaScript -->
-  <script src="stats.js"></script>
+  <script>
+    // Philadelphia 76ers Stats Dashboard - Self-contained version
+    class SixersStatsManager {
+      constructor() {
+        this.charts = {};
+        this.currentData = this.getSampleData();
+        this.init();
+      }
+
+      init() {
+        this.setupEventListeners();
+        this.initializeCharts();
+        this.updatePlayerStatsTable();
+        this.setupNavigation();
+      }
+
+      setupNavigation() {
+        // Mobile menu toggle
+        const navToggle = document.getElementById('navToggle');
+        const navMenu = document.getElementById('navMenu');
+        
+        if (navToggle && navMenu) {
+          navToggle.addEventListener('click', function() {
+            navMenu.classList.toggle('active');
+            navToggle.classList.toggle('active');
+          });
+        }
+
+        // Navbar scroll effect
+        let lastScrollTop = 0;
+        const navbar = document.querySelector('.navbar');
+        
+        window.addEventListener('scroll', function() {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          
+          if (scrollTop > 50) {
+            navbar.classList.add('scrolled');
+          } else {
+            navbar.classList.remove('scrolled');
+          }
+          
+          lastScrollTop = scrollTop;
+        });
+      }
+
+      setupEventListeners() {
+        // Filter controls
+        document.getElementById('seasonSelect')?.addEventListener('change', () => {
+          this.showUpdateIndicator();
+        });
+
+        document.getElementById('gameTypeSelect')?.addEventListener('change', () => {
+          this.showUpdateIndicator();
+        });
+
+        document.getElementById('dateRangeSelect')?.addEventListener('change', () => {
+          this.showUpdateIndicator();
+        });
+
+        document.getElementById('sortSelect')?.addEventListener('change', (e) => {
+          this.sortPlayerStats(e.target.value);
+        });
+
+        // Filter chips
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+          chip.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            this.filterStats(e.target.dataset.filter);
+          });
+        });
+      }
+
+      getSampleData() {
+        return {
+          teamStats: {
+            record: { wins: 47, losses: 35, winPct: 0.573 },
+            scoring: { ppg: 114.8, oppPpg: 112.3 }
+          },
+          playerStats: [
+            {
+              name: "Joel Embiid",
+              gp: 39,
+              min: 34.6,
+              pts: 35.3,
+              reb: 11.3,
+              ast: 5.7,
+              fgPct: 0.529,
+              threePct: 0.385,
+              ftPct: 0.884,
+              performance: "excellent"
+            },
+            {
+              name: "Tyrese Maxey",
+              gp: 70,
+              min: 37.8,
+              pts: 25.9,
+              reb: 3.7,
+              ast: 6.2,
+              fgPct: 0.448,
+              threePct: 0.373,
+              ftPct: 0.867,
+              performance: "excellent"
+            },
+            {
+              name: "Tobias Harris",
+              gp: 70,
+              min: 32.8,
+              pts: 17.2,
+              reb: 6.5,
+              ast: 3.1,
+              fgPct: 0.489,
+              threePct: 0.351,
+              ftPct: 0.880,
+              performance: "good"
+            },
+            {
+              name: "Kelly Oubre Jr.",
+              gp: 68,
+              min: 30.4,
+              pts: 15.4,
+              reb: 5.0,
+              ast: 1.5,
+              fgPct: 0.532,
+              threePct: 0.373,
+              ftPct: 0.714,
+              performance: "good"
+            },
+            {
+              name: "Nicolas Batum",
+              gp: 57,
+              min: 22.1,
+              pts: 5.5,
+              reb: 4.2,
+              ast: 2.5,
+              fgPct: 0.446,
+              threePct: 0.357,
+              ftPct: 0.750,
+              performance: "good"
+            }
+          ],
+          gameLog: [
+            { date: '2024-03-15', opponent: 'BOS', result: 'W', score: 118, oppScore: 114 },
+            { date: '2024-03-13', opponent: 'MIA', result: 'L', score: 109, oppScore: 115 },
+            { date: '2024-03-11', opponent: 'NYK', result: 'W', score: 125, oppScore: 109 },
+            { date: '2024-03-09', opponent: 'BRK', result: 'W', score: 137, oppScore: 123 },
+            { date: '2024-03-07', opponent: 'TOR', result: 'W', score: 121, oppScore: 111 }
+          ]
+        };
+      }
+
+      initializeCharts() {
+        this.createRecordChart();
+        this.createScoringChart();
+        this.createDefenseChart();
+        this.createEfficiencyChart();
+      }
+
+      createRecordChart() {
+        const ctx = document.getElementById('recordChart');
+        if (!ctx) return;
+
+        const data = this.currentData.teamStats.record;
+        
+        this.charts.record = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Wins', 'Losses'],
+            datasets: [{
+              data: [data.wins, data.losses],
+              backgroundColor: ['#10b981', '#ef4444'],
+              borderWidth: 0,
+              cutout: '70%'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 20,
+                  usePointStyle: true,
+                  font: { weight: 'bold' }
+                }
+              }
+            }
+          }
+        });
+
+        document.getElementById('recordStats').innerHTML = `
+          <div style="text-align: center; margin-top: 1rem;">
+            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">${data.wins}-${data.losses}</div>
+            <div style="color: #64748b;">Win Percentage: ${(data.winPct * 100).toFixed(1)}%</div>
+          </div>
+        `;
+      }
+
+      createScoringChart() {
+        const ctx = document.getElementById('scoringChart');
+        if (!ctx) return;
+
+        const gameLog = this.currentData.gameLog;
+        
+        this.charts.scoring = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: gameLog.map(game => game.date.split('-').slice(1).join('/')),
+            datasets: [{
+              label: 'Points Scored',
+              data: gameLog.map(game => game.score),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top'
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: false,
+                min: 90
+              }
+            }
+          }
+        });
+
+        const avgScore = gameLog.reduce((sum, game) => sum + game.score, 0) / gameLog.length;
+        document.getElementById('scoringStats').innerHTML = `
+          <div style="text-align: center; margin-top: 1rem;">
+            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">${avgScore.toFixed(1)}</div>
+            <div style="color: #64748b;">Points Per Game (Last 5)</div>
+          </div>
+        `;
+      }
+
+      createDefenseChart() {
+        const ctx = document.getElementById('defenseChart');
+        if (!ctx) return;
+
+        const gameLog = this.currentData.gameLog;
+        
+        this.charts.defense = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: gameLog.map(game => `vs ${game.opponent}`),
+            datasets: [{
+              label: 'Points Allowed',
+              data: gameLog.map(game => game.oppScore),
+              backgroundColor: gameLog.map(game => 
+                game.oppScore < 110 ? '#10b981' : game.oppScore < 120 ? '#f59e0b' : '#ef4444'
+              ),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: false,
+                min: 90
+              }
+            }
+          }
+        });
+
+        const avgDefense = gameLog.reduce((sum, game) => sum + game.oppScore, 0) / gameLog.length;
+        document.getElementById('defenseStats').innerHTML = `
+          <div style="text-align: center; margin-top: 1rem;">
+            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">${avgDefense.toFixed(1)}</div>
+            <div style="color: #64748b;">Opp Points Per Game</div>
+          </div>
+        `;
+      }
+
+      createEfficiencyChart() {
+        const ctx = document.getElementById('efficiencyChart');
+        if (!ctx) return;
+        
+        this.charts.efficiency = new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: ['Scoring', 'Rebounding', 'Assists', 'Defense', 'Shooting', 'Clutch'],
+            datasets: [{
+              label: 'Team Performance',
+              data: [85, 78, 82, 75, 88, 72],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              pointBackgroundColor: '#3b82f6'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: 100
+              }
+            }
+          }
+        });
+
+        document.getElementById('efficiencyStats').innerHTML = `
+          <div style="text-align: center; margin-top: 1rem;">
+            <div style="font-size: 2rem; font-weight: bold; color: #1e293b;">115.2</div>
+            <div style="color: #64748b;">Offensive Rating</div>
+          </div>
+        `;
+      }
+
+      updatePlayerStatsTable() {
+        const tbody = document.getElementById('playerStatsBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = this.currentData.playerStats.map(player => `
+          <tr>
+            <td class="player-name">${player.name}</td>
+            <td>${player.gp}</td>
+            <td>${player.min.toFixed(1)}</td>
+            <td class="stat-value">${player.pts.toFixed(1)}</td>
+            <td class="stat-value">${player.reb.toFixed(1)}</td>
+            <td class="stat-value">${player.ast.toFixed(1)}</td>
+            <td>${(player.fgPct * 100).toFixed(1)}%</td>
+            <td>${(player.threePct * 100).toFixed(1)}%</td>
+            <td>${(player.ftPct * 100).toFixed(1)}%</td>
+            <td>
+              <span class="performance-indicator ${player.performance}">${player.performance}</span>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      sortPlayerStats(sortBy) {
+        this.currentData.playerStats.sort((a, b) => {
+          switch (sortBy) {
+            case 'points': return b.pts - a.pts;
+            case 'rebounds': return b.reb - a.reb;
+            case 'assists': return b.ast - a.ast;
+            case 'efficiency': return b.pts + b.reb + b.ast - (a.pts + a.reb + a.ast);
+            default: return b.pts - a.pts;
+          }
+        });
+        this.updatePlayerStatsTable();
+      }
+
+      filterStats(filter) {
+        const cards = document.querySelectorAll('.stat-card');
+        cards.forEach(card => {
+          const title = card.querySelector('.stat-card-title').textContent.toLowerCase();
+          
+          switch (filter) {
+            case 'offense':
+              card.style.display = title.includes('scoring') || title.includes('efficiency') ? 'block' : 'none';
+              break;
+            case 'defense':
+              card.style.display = title.includes('defensive') ? 'block' : 'none';
+              break;
+            case 'advanced':
+              card.style.display = title.includes('efficiency') ? 'block' : 'none';
+              break;
+            default:
+              card.style.display = 'block';
+          }
+        });
+      }
+
+      showUpdateIndicator() {
+        const indicator = document.getElementById('updateIndicator');
+        if (indicator) {
+          indicator.classList.add('show');
+          setTimeout(() => {
+            indicator.classList.remove('show');
+          }, 3000);
+        }
+      }
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      window.sixersStats = new SixersStatsManager();
+    });
+  </script>
 </body>
 </html>
