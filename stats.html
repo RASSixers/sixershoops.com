@@ -651,6 +651,112 @@
       }
     }
 
+    /* Construction Popup */
+    .construction-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      z-index: 10000;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+      transition: all 0.4s ease;
+    }
+
+    .construction-popup.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .construction-popup::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f59e0b, #ef4444, #f59e0b);
+      border-radius: 20px 20px 0 0;
+    }
+
+    .construction-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .construction-overlay.show {
+      opacity: 1;
+    }
+
+    .construction-icon {
+      font-size: 3rem;
+      color: #f59e0b;
+      margin-bottom: 1rem;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-10px);
+      }
+      60% {
+        transform: translateY(-5px);
+      }
+    }
+
+    .construction-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .construction-message {
+      font-size: 1.1rem;
+      color: #cbd5e1;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .construction-close {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      color: white;
+      border: none;
+      padding: 0.8rem 2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+
+    .construction-close:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+    }
+
     /* Animation Classes */
     .fade-in {
       opacity: 0;
@@ -689,6 +795,21 @@
 </head>
 <body>
   <!-- Navigation will be injected by nav.js -->
+  
+  <!-- Construction Popup -->
+  <div class="construction-overlay" id="constructionOverlay"></div>
+  <div class="construction-popup" id="constructionPopup">
+    <div class="construction-icon">
+      <i class="fas fa-hard-hat"></i>
+    </div>
+    <h3 class="construction-title">Under Construction</h3>
+    <p class="construction-message">
+      This section of the site is currently under development. Player statistics and data may be inaccurate or incomplete. We're working hard to provide you with the most up-to-date information!
+    </p>
+    <button class="construction-close" id="constructionClose">
+      Got it, thanks!
+    </button>
+  </div>
   
   <div class="container">
     <!-- Hero Section -->
@@ -1291,8 +1412,59 @@
       }
     }
 
+    // Construction Popup Handler
+    class ConstructionPopup {
+      constructor() {
+        this.overlay = document.getElementById('constructionOverlay');
+        this.popup = document.getElementById('constructionPopup');
+        this.closeBtn = document.getElementById('constructionClose');
+        this.init();
+      }
+
+      init() {
+        // Show popup after a short delay
+        setTimeout(() => {
+          this.show();
+        }, 500);
+
+        // Close popup handlers
+        this.closeBtn.addEventListener('click', () => {
+          this.hide();
+        });
+
+        this.overlay.addEventListener('click', () => {
+          this.hide();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            this.hide();
+          }
+        });
+      }
+
+      show() {
+        this.overlay.classList.add('show');
+        setTimeout(() => {
+          this.popup.classList.add('show');
+        }, 100);
+      }
+
+      hide() {
+        this.popup.classList.remove('show');
+        setTimeout(() => {
+          this.overlay.classList.remove('show');
+        }, 300);
+      }
+    }
+
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {
+      // Show construction popup first
+      new ConstructionPopup();
+      
+      // Initialize stats dashboard
       window.interactiveSixersStats = new InteractiveSixersStats();
     });
   </script>
