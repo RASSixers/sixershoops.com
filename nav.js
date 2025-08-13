@@ -1,21 +1,18 @@
 /* -------------------------------------------------------
-   nav.js – “Elite Navigation JavaScript” – upgraded
+   nav.js – (updated, no syntax errors)
    -------------------------------------------------------
-   1.  Builds the navigation UI and injects it into the page.
-   2.  Provides the same mobile‑menu, scroll‑shadow, active‑link,
-       and dropdown behaviour that you had before.
-   3.  Every `document.querySelector / getElementById` is wrapped
-       in a check so that a missing element does not throw.
-   4.  No function will run on a `null` reference – the entire
-       block is executed inside a “try…catch”.
+   • Builds the navigation UI and inserts it into the page.
+   • Provides mobile‑menu logic, scroll shadow, active‑link
+     highlighting, dropdown support, etc.
+   • Every DOM query is guarded – nothing crashes the rest of the page.
    ------------------------------------------------------- */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
   try {
-    /* ------------------------------------------------------------------
-     *  1. INJECT THE NAVBAR (and the mobile menu) into the document.
-     * ------------------------------------------------------------------ */
-    const navbarHTML = \`
+    /* =======================================================
+       1.  Create the navigation markup
+       ======================================================= */
+    const navbarHTML = `
       <!-- PREMIUM SPORTS NAVIGATION -->
       <nav class="navbar" id="navbar">
         <!-- Dynamic Brand Section -->
@@ -67,98 +64,94 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="mobile-nav-item"><a href="/schedule" class="mobile-nav-link">Schedule</a></div>
         <div class="mobile-nav-item"><a href="/contact" class="mobile-nav-link">Contact Us</a></div>
       </div>
-    \`;
+    `;
 
-    /* Insert or replace the placeholder that user left in the html */
+    /* ----------------------------------------------------
+       2.  Insert the navigation into <body>
+       ---------------------------------------------------- */
     const body = document.body;
-    const placeholder = body.innerHTML.includes('<!-- Navbar will be automatically inserted here by nav.js -->');
-    if (placeholder) {
+    // Look for the placeholder comment you already have
+    const placeholderOK = body.innerHTML.includes('<!-- Navbar will be automatically inserted here by nav.js -->');
+    if (placeholderOK) {
       body.innerHTML = body.innerHTML.replace(
         '<!-- Navbar will be automatically inserted here by nav.js -->',
         navbarHTML
       );
     } else {
-      // If the placeholder is not present, just add at the top of the body.
+      // If for some reason the placeholder is missing, just prepend the markup.
       body.insertAdjacentHTML('afterbegin', navbarHTML);
     }
 
-    /* ------------------------------------------------------------------
-     *  2. SELECT DOM ELEMENTS FOR INTERACTIONS
-     * ------------------------------------------------------------------ */
-    const navbar   = document.getElementById('navbar');
-    const menuBtn  = document.getElementById('mobileMenuBtn');
-    const mobile   = document.getElementById('mobileMenu');
+    /* ----------------------------------------------------
+       3.  Grab the newly‑inserted elements
+       ---------------------------------------------------- */
+    const navbar = document.getElementById('navbar');
+    const menuBtn = document.getElementById('mobileMenuBtn');
+    const mobile = document.getElementById('mobileMenu');
 
-    if (!navbar) {          // If for some reason the nav wasn't inserted
+    if (!navbar) {
+      // Something went wrong – bail out gracefully
       console.warn('nav.js – navbar element not found. Navigation disabled.');
-      return;              // stop further logic
+      return;
     }
 
-    /* ------------------------------------------------------------------
-     *  3. MOBILE MENU TOGGLE
-     * ------------------------------------------------------------------ */
+    /* ----------------------------------------------------
+       4.  Mobile menu toggle
+       ---------------------------------------------------- */
     menuBtn?.addEventListener('click', () => {
       menuBtn.classList.toggle('active');
       mobile?.classList.toggle('active');
+      // Reflect the state in the aria‑expanded attribute
       menuBtn.setAttribute(
         'aria-expanded',
         mobile?.classList.contains('active') ?? false
       );
     });
 
-    /* ------------------------------------------------------------------
-     *  4. CLOSE MOBILE MENU ON OUTSIDE CLICK
-     * ------------------------------------------------------------------ */
+    /* ----------------------------------------------------
+       5.  Close mobile menu when clicking outside
+       ---------------------------------------------------- */
     document.addEventListener('click', e => {
-      // Use optional chaining – if any of these is null, the condition is true
-      if (
-        !navbar?.contains(e.target) &&
-        !mobile?.contains(e.target)
-      ) {
+      if (!navbar?.contains(e.target) && !mobile?.contains(e.target)) {
         menuBtn?.classList.remove('active');
         mobile?.classList.remove('active');
         menuBtn?.setAttribute('aria-expanded', 'false');
       }
     });
 
-    /* ------------------------------------------------------------------
-     *  5. SCROLL‑EFFECT ON NAV BAR
-     * ------------------------------------------------------------------ */
+    /* ----------------------------------------------------
+       6.  Scroll shadow
+       ---------------------------------------------------- */
     window.addEventListener('scroll', () => {
-      navbar.classList.toggle('scrolled', window.scrollY > 20);
+      navbar.classList.toggle('scrolled', window.scrollY > );
     });
 
-    /* ------------------------------------------------------------------
-     *  6. ACTIVE LINK HIGHLIGHTING
-     * ------------------------------------------------------------------ */
+    /* ----------------------------------------------------
+       7.  Active link highlighting
+       ---------------------------------------------------- */
     const setActiveLink = () => {
       const currentPath = window.location.pathname.split('/').pop() || 'index';
-      // Query all link types that may exist – the selector will simply return nothing if an element is absent
       const links = document.querySelectorAll('.nav-link, .mobile-nav-link, .dropdown-item');
       links.forEach(link => {
         link.classList.remove('active');
         const href = link.getAttribute('href')?.replace(/^\\//, '').replace(/\\.html$/i, '') ?? '';
-        if (
-          href === currentPath ||
-          (currentPath === '' && href === 'index')
-        ) {
+        if (href === currentPath || (currentPath === '' && href === 'index')) {
           link.classList.add('active');
         }
       });
     };
-
     setActiveLink();
     window.addEventListener('popstate', setActiveLink);
 
-    /* ------------------------------------------------------------------
-     *  7. DROPDOWN ACCESSIBILITY
-     * ------------------------------------------------------------------ */
+    /* ----------------------------------------------------
+       8.  Dropdown accessibility (keyboard + click outside)
+       ---------------------------------------------------- */
     const dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(dropdown => {
       const toggle = dropdown.querySelector('.dropdown-toggle');
-      if (!toggle) return;  // skip if the toggle button is missing
+      if (!toggle) return;  // skip if the button is missing
 
-      // Keyboard support (Enter or Space toggles)
+      // Toggle with Enter or Space
       toggle.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -166,15 +159,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Close when clicking outside
+      // Close the dropdown when clicking anywhere else
       document.addEventListener('click', e => {
         if (!dropdown.contains(e.target)) {
-          dropdown.classList.remove('active');
+ dropdown.classList.remove('active');
         }
       });
     });
-  } catch ( {
-    // If *any* line throws, log the error and continue.
+
+  } catch (err) {
+    // If anything in the block above throws, log it but let the rest of the page keep running
     console.error('nav.js crashed – navigation might be incomplete', err);
   }
 });
