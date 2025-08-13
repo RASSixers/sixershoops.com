@@ -6,8 +6,8 @@
   <title>Philadelphia 76ers Player Stats - SixersHoops</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/favicon.ico" />
-  <meta name="description" content="Professional Philadelphia 76ers player statistics and performance analytics." />
-  <meta name="keywords" content="Philadelphia 76ers, Sixers, NBA, player stats, Joel Embiid, Tyrese Maxey, basketball statistics" />
+  <meta name="description" content="Interactive Philadelphia 76ers player statistics and performance analytics." />
+  <meta name="keywords" content="Philadelphia 76ers, Sixers, NBA, player stats, Joel Embiid, Tyrese Maxey, Paul George, basketball statistics" />
   <meta name="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" content="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" />
  
   <!-- Include the navbar CSS -->
@@ -22,7 +22,7 @@
     gtag('config', 'G-T1V9Q0MNEM');
   </script>
 
-  <!-- Chart.js for data visualization -->
+  <!-- Chart.js for interactive charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <!-- Google Fonts -->
@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
  
   <style>
-    /* Reset and Base Styles */
+    /* Reset and Base Styles - EXACT MATCH TO INDEX.HTML */
     * {
       margin: 0;
       padding: 0;
@@ -50,102 +50,23 @@
 
     /* Main Container */
     .container {
-      max-width: 1600px;
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 3rem 2rem;
+      padding: 2rem;
     }
 
-    /* Header Section */
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 3rem;
-      background: white;
-      padding: 2.5rem 3rem;
+    /* Hero Section */
+    .hero-section {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       border-radius: 24px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e2e8f0;
-    }
-
-    .header-content h1 {
-      font-size: 3rem;
-      font-weight: 900;
-      color: #1e293b;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .header-content p {
-      font-size: 1.2rem;
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    /* Season Dropdown */
-    .season-dropdown {
-      position: relative;
-    }
-
-    .dropdown-select {
-      appearance: none;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      color: white;
-      border: none;
-      padding: 1rem 3rem 1rem 1.5rem;
-      border-radius: 16px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
-      transition: all 0.3s ease;
-      min-width: 180px;
-    }
-
-    .dropdown-select:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
-    }
-
-    .dropdown-select:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    }
-
-    .dropdown-icon {
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: white;
-      pointer-events: none;
-      font-size: 1.2rem;
-    }
-
-    /* Stats Overview Cards */
-    .stats-overview {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-bottom: 4rem;
-    }
-
-    .overview-card {
-      background: white;
-      padding: 2.5rem;
-      border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e2e8f0;
-      text-align: center;
-      transition: all 0.3s ease;
+      padding: 4rem 3rem;
+      margin-bottom: 3rem;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 20px 60px rgba(30, 41, 59, 0.3);
     }
 
-    .overview-card::before {
+    .hero-section::before {
       content: '';
       position: absolute;
       top: 0;
@@ -155,120 +76,242 @@
       background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
     }
 
-    .overview-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
-    }
-
-    .overview-icon {
-      width: 70px;
-      height: 70px;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.5rem;
-      font-size: 2rem;
-      color: white;
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
-    }
-
-    .overview-value {
-      font-size: 2.5rem;
-      font-weight: 900;
-      color: #1e293b;
-      margin-bottom: 0.5rem;
-    }
-
-    .overview-label {
-      font-size: 1.1rem;
-      color: #64748b;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* Players Section */
-    .players-section {
-      margin-bottom: 4rem;
-    }
-
-    .section-header {
+    .hero-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2.5rem;
+      position: relative;
+      z-index: 2;
     }
 
-    .section-title {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: #1e293b;
+    .hero-text h1 {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 1rem;
+      line-height: 1.1;
     }
 
-    .view-toggle {
+    .hero-text p {
+      font-size: 1.3rem;
+      color: #94a3b8;
+      font-weight: 500;
+      max-width: 500px;
+    }
+
+    .hero-controls {
       display: flex;
-      background: #f1f5f9;
+      flex-direction: column;
+      gap: 1.5rem;
+      align-items: flex-end;
+    }
+
+    /* Interactive Season Selector */
+    .season-selector {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 1rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .season-btn {
+      padding: 0.8rem 1.5rem;
+      background: transparent;
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+
+    .season-btn:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .season-btn.active {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
       padding: 0.5rem;
+      display: flex;
       gap: 0.5rem;
     }
 
     .toggle-btn {
-      padding: 0.8rem 1.5rem;
-      border: none;
+      padding: 0.8rem 1.2rem;
       background: transparent;
-      color: #64748b;
+      color: #cbd5e1;
+      border: none;
+      border-radius: 12px;
       font-weight: 600;
-      border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
     }
 
     .toggle-btn.active {
-      background: white;
-      color: #3b82f6;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
 
-    /* Table View */
-    .players-table-container {
+    /* Interactive Filters */
+    .filters-section {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      align-items: end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-select {
+      padding: 0.8rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      background: white;
+      font-weight: 600;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .search-input {
+      padding: 0.8rem 1rem 0.8rem 3rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      background: white;
+      font-weight: 600;
+      color: #1e293b;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .search-container {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+
+    /* Stats Table */
+    .stats-table-container {
       background: white;
       border-radius: 20px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       border: 1px solid #e2e8f0;
       overflow: hidden;
-      display: none;
+      margin-bottom: 2rem;
     }
 
-    .players-table-container.active {
-      display: block;
-    }
-
-    .players-table {
+    .stats-table {
       width: 100%;
       border-collapse: collapse;
     }
 
-    .players-table th {
+    .stats-table th {
       background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       color: white;
       padding: 1.5rem 1rem;
       text-align: left;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       position: sticky;
       top: 0;
       z-index: 10;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    .players-table td {
+    .stats-table th:hover {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    }
+
+    .stats-table th.sortable::after {
+      content: '↕';
+      margin-left: 0.5rem;
+      opacity: 0.5;
+    }
+
+    .stats-table th.sort-asc::after {
+      content: '↑';
+      opacity: 1;
+      color: #3b82f6;
+    }
+
+    .stats-table th.sort-desc::after {
+      content: '↓';
+      opacity: 1;
+      color: #3b82f6;
+    }
+
+    .stats-table td {
       padding: 1.5rem 1rem;
       border-bottom: 1px solid #f1f5f9;
       transition: all 0.3s ease;
@@ -276,21 +319,24 @@
       vertical-align: middle;
     }
 
-    .players-table tr:hover td {
+    .stats-table tr:hover td {
       background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      transform: scale(1.01);
     }
 
-    .players-table tr:last-child td {
+    .stats-table tr:last-child td {
       border-bottom: none;
     }
 
+    /* Player Name Cell */
     .player-name-cell {
       display: flex;
       align-items: center;
       gap: 1rem;
+      min-width: 200px;
     }
 
-    .table-player-avatar {
+    .player-avatar {
       width: 50px;
       height: 50px;
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
@@ -302,26 +348,34 @@
       font-weight: 900;
       color: white;
       box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s ease;
     }
 
-    .table-player-info h4 {
-      font-size: 1.2rem;
+    .player-avatar:hover {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+    }
+
+    .player-info h4 {
+      font-size: 1.1rem;
       font-weight: 800;
       color: #1e293b;
       margin-bottom: 0.2rem;
     }
 
-    .table-player-position {
-      font-size: 0.9rem;
+    .player-position {
+      font-size: 0.85rem;
       color: #64748b;
       font-weight: 600;
     }
 
+    /* Stat Cells */
     .stat-cell {
       text-align: center;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #1e293b;
+      position: relative;
     }
 
     .stat-highlight {
@@ -330,45 +384,61 @@
       padding: 0.4rem 0.8rem;
       border-radius: 8px;
       font-weight: 800;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
     }
 
-    /* Cards View */
+    .stat-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .trend-up {
+      color: #10b981;
+    }
+
+    .trend-down {
+      color: #ef4444;
+    }
+
+    .trend-neutral {
+      color: #64748b;
+    }
+
+    /* Player Cards View */
     .players-grid {
       display: none;
-      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-      gap: 2.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 2rem;
     }
 
     .players-grid.active {
       display: grid;
     }
 
-    /* Player Card */
     .player-card {
       background: white;
-      border-radius: 24px;
-      padding: 0;
+      border-radius: 20px;
+      overflow: hidden;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       border: 1px solid #e2e8f0;
       transition: all 0.4s ease;
-      overflow: hidden;
-      position: relative;
+      cursor: pointer;
     }
 
     .player-card:hover {
-      transform: translateY(-12px);
+      transform: translateY(-12px) scale(1.02);
       box-shadow: 0 20px 60px rgba(59, 130, 246, 0.15);
     }
 
-    .player-header {
+    .player-card-header {
       background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       color: white;
-      padding: 2.5rem;
+      padding: 2rem;
       position: relative;
-      overflow: hidden;
     }
 
-    .player-header::before {
+    .player-card-header::before {
       content: '';
       position: absolute;
       top: 0;
@@ -378,110 +448,80 @@
       background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
     }
 
-    .player-info {
+    .player-card-info {
       display: flex;
       align-items: center;
-      gap: 2rem;
+      gap: 1.5rem;
     }
 
-    .player-avatar {
-      width: 90px;
-      height: 90px;
+    .card-player-avatar {
+      width: 80px;
+      height: 80px;
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-radius: 22px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.2rem;
+      font-size: 2rem;
       font-weight: 900;
       color: white;
       box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-      border: 4px solid rgba(255, 255, 255, 0.2);
+      border: 3px solid rgba(255, 255, 255, 0.2);
     }
 
-    .player-details h3 {
-      font-size: 2rem;
+    .card-player-details h3 {
+      font-size: 1.8rem;
       font-weight: 900;
       margin-bottom: 0.5rem;
     }
 
-    .player-position {
-      font-size: 1.1rem;
+    .card-player-position {
+      font-size: 1rem;
       color: #94a3b8;
       font-weight: 600;
-      margin-bottom: 0.5rem;
     }
 
-    .player-number {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 0.4rem 1rem;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      display: inline-block;
+    .player-card-stats {
+      padding: 2rem;
     }
 
-    /* Player Stats */
-    .player-stats {
-      padding: 2.5rem;
-    }
-
-    .stats-grid {
+    .card-stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
 
-    .stat-item {
+    .card-stat-item {
       text-align: center;
-      padding: 1.8rem 1rem;
+      padding: 1.5rem 1rem;
       background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 16px;
+      border-radius: 12px;
       transition: all 0.3s ease;
       border: 1px solid #e2e8f0;
-      position: relative;
-      overflow: hidden;
     }
 
-    .stat-item::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6, #06b6d4);
-      transform: scaleX(0);
-      transition: transform 0.3s ease;
-    }
-
-    .stat-item:hover {
+    .card-stat-item:hover {
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
       color: white;
       transform: translateY(-5px);
       box-shadow: 0 12px 30px rgba(59, 130, 246, 0.3);
     }
 
-    .stat-item:hover::before {
-      transform: scaleX(1);
-    }
-
-    .stat-value {
-      font-size: 2.2rem;
+    .card-stat-value {
+      font-size: 1.8rem;
       font-weight: 900;
       color: #1e293b;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.3rem;
       transition: color 0.3s ease;
     }
 
-    .stat-item:hover .stat-value {
+    .card-stat-item:hover .card-stat-value {
       color: white;
     }
 
-    .stat-label {
-      font-size: 0.95rem;
+    .card-stat-label {
+      font-size: 0.8rem;
       color: #64748b;
       font-weight: 600;
       text-transform: uppercase;
@@ -489,196 +529,20 @@
       transition: color 0.3s ease;
     }
 
-    .stat-item:hover .stat-label {
+    .card-stat-item:hover .card-stat-label {
       color: rgba(255, 255, 255, 0.9);
     }
 
-    /* Performance Chart */
-    .performance-section {
-      border-top: 2px solid #f1f5f9;
-      padding-top: 2rem;
-    }
-
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .chart-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .chart-period {
-      background: #f1f5f9;
-      color: #64748b;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
+    /* Interactive Chart */
     .chart-container {
-      position: relative;
       height: 200px;
       background: #f8fafc;
       border-radius: 12px;
       padding: 1rem;
-    }
-
-    /* Team Leaders Section */
-    .leaders-section {
-      background: white;
-      border-radius: 24px;
-      padding: 3rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e2e8f0;
       position: relative;
-      overflow: hidden;
     }
 
-    .leaders-section::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
-    }
-
-    .leaders-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2.5rem;
-      margin-top: 2rem;
-    }
-
-    .leader-card {
-      text-align: center;
-      padding: 2rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 20px;
-      border: 1px solid #e2e8f0;
-      transition: all 0.3s ease;
-    }
-
-    .leader-card:hover {
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      color: white;
-      transform: translateY(-8px);
-      box-shadow: 0 15px 40px rgba(59, 130, 246, 0.3);
-    }
-
-    .leader-stat {
-      font-size: 3rem;
-      font-weight: 900;
-      color: #3b82f6;
-      margin-bottom: 0.5rem;
-      transition: color 0.3s ease;
-    }
-
-    .leader-card:hover .leader-stat {
-      color: white;
-    }
-
-    .leader-category {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 0.5rem;
-      transition: color 0.3s ease;
-    }
-
-    .leader-card:hover .leader-category {
-      color: white;
-    }
-
-    .leader-player {
-      font-size: 1rem;
-      color: #64748b;
-      font-weight: 600;
-      transition: color 0.3s ease;
-    }
-
-    .leader-card:hover .leader-player {
-      color: rgba(255, 255, 255, 0.9);
-    }
-
-    /* Responsive Design */
-    @media (max-width: 1024px) {
-      .players-grid {
-        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-      }
-    }
-
-    @media (max-width: 768px) {
-      .container {
-        padding: 2rem 1rem;
-      }
-
-      .header-section {
-        flex-direction: column;
-        gap: 2rem;
-        text-align: center;
-        padding: 2rem;
-      }
-
-      .header-content h1 {
-        font-size: 2.2rem;
-      }
-
-      .players-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .stats-overview {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .leaders-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .section-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .stats-overview {
-        grid-template-columns: 1fr;
-      }
-
-      .overview-card {
-        padding: 2rem;
-      }
-
-      .player-header {
-        padding: 2rem;
-      }
-
-      .player-info {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-      }
-
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Loading States */
+    /* Loading Animation */
     .loading {
       display: flex;
       justify-content: center;
@@ -702,7 +566,92 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Smooth Animations */
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .hero-content {
+        flex-direction: column;
+        gap: 2rem;
+        text-align: center;
+      }
+
+      .hero-controls {
+        align-items: center;
+      }
+
+      .season-selector {
+        flex-wrap: wrap;
+      }
+
+      .players-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .hero-section {
+        padding: 2.5rem 2rem;
+      }
+
+      .hero-text h1 {
+        font-size: 2.5rem;
+      }
+
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .season-selector {
+        justify-content: center;
+      }
+
+      .season-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+      }
+
+      .stats-table {
+        font-size: 0.9rem;
+      }
+
+      .stats-table th,
+      .stats-table td {
+        padding: 1rem 0.5rem;
+      }
+
+      .players-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero-text h1 {
+        font-size: 2rem;
+      }
+
+      .player-name-cell {
+        min-width: 150px;
+      }
+
+      .player-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      .card-stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Animation Classes */
     .fade-in {
       opacity: 0;
       transform: translateY(20px);
@@ -716,6 +665,20 @@
       }
     }
 
+    .slide-in {
+      opacity: 0;
+      transform: translateX(-20px);
+      animation: slideInRight 0.5s ease forwards;
+    }
+
+    @keyframes slideInRight {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Staggered animations */
     .player-card:nth-child(1) { animation-delay: 0.1s; }
     .player-card:nth-child(2) { animation-delay: 0.2s; }
     .player-card:nth-child(3) { animation-delay: 0.3s; }
@@ -728,108 +691,107 @@
   <!-- Navigation will be injected by nav.js -->
   
   <div class="container">
-    <!-- Header Section -->
-    <div class="header-section">
-      <div class="header-content">
-        <h1>Player Statistics</h1>
-        <p>Philadelphia 76ers performance analytics and insights</p>
-      </div>
-      
-      <div class="season-dropdown">
-        <select class="dropdown-select" id="seasonSelect">
-          <option value="2024-25">2024-25 Season</option>
-          <option value="2023-24">2023-24 Season</option>
-          <option value="2022-23">2022-23 Season</option>
-          <option value="2021-22">2021-22 Season</option>
-        </select>
-        <i class="fas fa-chevron-down dropdown-icon"></i>
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1>Player Statistics</h1>
+          <p>Interactive Philadelphia 76ers player performance analytics and comprehensive statistics dashboard</p>
+        </div>
+        
+        <div class="hero-controls">
+          <div class="season-selector">
+            <button class="season-btn active" data-season="2024-25">2024-25</button>
+            <button class="season-btn" data-season="2023-24">2023-24</button>
+            <button class="season-btn" data-season="2022-23">2022-23</button>
+            <button class="season-btn" data-season="2021-22">2021-22</button>
+          </div>
+          
+          <div class="view-toggle">
+            <button class="toggle-btn active" data-view="table">
+              <i class="fas fa-table"></i> Table
+            </button>
+            <button class="toggle-btn" data-view="cards">
+              <i class="fas fa-th-large"></i> Cards
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Stats Overview -->
-    <div class="stats-overview">
-      <div class="overview-card">
-        <div class="overview-icon">
-          <i class="fas fa-users"></i>
+    <!-- Interactive Filters -->
+    <div class="filters-section">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label class="filter-label">Position</label>
+          <select class="filter-select" id="positionFilter">
+            <option value="">All Positions</option>
+            <option value="PG">Point Guard</option>
+            <option value="SG">Shooting Guard</option>
+            <option value="SF">Small Forward</option>
+            <option value="PF">Power Forward</option>
+            <option value="C">Center</option>
+          </select>
         </div>
-        <div class="overview-value" id="totalPlayers">12</div>
-        <div class="overview-label">Active Players</div>
-      </div>
-      
-      <div class="overview-card">
-        <div class="overview-icon">
-          <i class="fas fa-basketball-ball"></i>
+        
+        <div class="filter-group">
+          <label class="filter-label">Sort By</label>
+          <select class="filter-select" id="sortFilter">
+            <option value="pts">Points Per Game</option>
+            <option value="reb">Rebounds Per Game</option>
+            <option value="ast">Assists Per Game</option>
+            <option value="fg">Field Goal %</option>
+            <option value="min">Minutes Per Game</option>
+          </select>
         </div>
-        <div class="overview-value" id="avgPoints">114.2</div>
-        <div class="overview-label">Team PPG</div>
-      </div>
-      
-      <div class="overview-card">
-        <div class="overview-icon">
-          <i class="fas fa-chart-line"></i>
+        
+        <div class="filter-group">
+          <label class="filter-label">Min PPG</label>
+          <select class="filter-select" id="ppgFilter">
+            <option value="0">All Players</option>
+            <option value="5">5+ PPG</option>
+            <option value="10">10+ PPG</option>
+            <option value="15">15+ PPG</option>
+            <option value="20">20+ PPG</option>
+          </select>
         </div>
-        <div class="overview-value" id="teamRecord">47-35</div>
-        <div class="overview-label">Season Record</div>
-      </div>
-      
-      <div class="overview-card">
-        <div class="overview-icon">
-          <i class="fas fa-trophy"></i>
+        
+        <div class="filter-group">
+          <label class="filter-label">Search Player</label>
+          <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="playerSearch" placeholder="Search by name...">
+          </div>
         </div>
-        <div class="overview-value" id="playoffSeed">#7</div>
-        <div class="overview-label">Playoff Seed</div>
       </div>
     </div>
 
-    <!-- Players Section -->
-    <div class="players-section">
-      <div class="section-header">
-        <h2 class="section-title">Player Roster</h2>
-        <div class="view-toggle">
-          <button class="toggle-btn active" data-view="table">
-            <i class="fas fa-table"></i> Table
-          </button>
-          <button class="toggle-btn" data-view="cards">
-            <i class="fas fa-th-large"></i> Cards
-          </button>
-        </div>
-      </div>
-      
-      <!-- Table View (Default) -->
-      <div class="players-table-container active" id="playersTable">
-        <table class="players-table">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Position</th>
-              <th>GP</th>
-              <th>PPG</th>
-              <th>RPG</th>
-              <th>APG</th>
-              <th>FG%</th>
-              <th>3P%</th>
-              <th>FT%</th>
-              <th>MPG</th>
-            </tr>
-          </thead>
-          <tbody id="playersTableBody">
-            <!-- Table data will be populated by JavaScript -->
-          </tbody>
-        </table>
-      </div>
-      
-      <!-- Cards View -->
-      <div class="players-grid fade-in" id="playersGrid">
-        <!-- Players cards will be dynamically loaded -->
-      </div>
+    <!-- Stats Table View -->
+    <div class="stats-table-container" id="tableView">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="name">Player</th>
+            <th class="sortable" data-sort="position">Pos</th>
+            <th class="sortable" data-sort="gp">GP</th>
+            <th class="sortable" data-sort="pts">PPG</th>
+            <th class="sortable" data-sort="reb">RPG</th>
+            <th class="sortable" data-sort="ast">APG</th>
+            <th class="sortable" data-sort="fg">FG%</th>
+            <th class="sortable" data-sort="threePt">3P%</th>
+            <th class="sortable" data-sort="ft">FT%</th>
+            <th class="sortable" data-sort="min">MPG</th>
+          </tr>
+        </thead>
+        <tbody id="statsTableBody">
+          <!-- Table data will be populated by JavaScript -->
+        </tbody>
+      </table>
     </div>
 
-    <!-- Team Leaders -->
-    <div class="leaders-section">
-      <h2 class="section-title">Team Leaders</h2>
-      <div class="leaders-grid" id="leadersGrid">
-        <!-- Leaders will be dynamically loaded -->
-      </div>
+    <!-- Player Cards View -->
+    <div class="players-grid" id="cardsView">
+      <!-- Cards will be populated by JavaScript -->
     </div>
   </div>
 
@@ -837,11 +799,17 @@
   <script src="nav.js"></script>
 
   <script>
-    // Professional 76ers Player Stats Dashboard
-    class ProfessionalSixersStats {
+    // Interactive 76ers Stats Dashboard
+    class InteractiveSixersStats {
       constructor() {
         this.currentSeason = '2024-25';
         this.currentView = 'table';
+        this.currentSort = { field: 'pts', direction: 'desc' };
+        this.filters = {
+          position: '',
+          ppg: 0,
+          search: ''
+        };
         this.playerData = this.getPlayerData();
         this.init();
       }
@@ -849,8 +817,7 @@
       init() {
         this.setupEventListeners();
         this.loadPlayers();
-        this.loadTeamLeaders();
-        this.updateOverviewStats();
+        this.setupTableSorting();
       }
 
       getPlayerData() {
@@ -858,114 +825,128 @@
           '2024-25': [
             {
               name: 'Joel Embiid',
-              position: 'Center',
+              position: 'C',
               number: '#21',
               avatar: 'JE',
               stats: { gp: 39, pts: 23.8, reb: 8.2, ast: 4.5, fg: 47.3, threePt: 33.1, ft: 82.4, min: 30.8 }
             },
             {
               name: 'Tyrese Maxey',
-              position: 'Point Guard',
+              position: 'PG',
               number: '#0',
               avatar: 'TM',
               stats: { gp: 57, pts: 26.3, reb: 3.3, ast: 6.1, fg: 45.8, threePt: 37.9, ft: 86.8, min: 35.2 }
             },
             {
               name: 'Paul George',
-              position: 'Small Forward',
+              position: 'SF',
               number: '#8',
               avatar: 'PG',
               stats: { gp: 54, pts: 16.2, reb: 5.3, ast: 4.3, fg: 42.6, threePt: 33.8, ft: 87.1, min: 32.8 }
             },
             {
               name: 'Kelly Oubre Jr.',
-              position: 'Small Forward',
+              position: 'SF',
               number: '#9',
               avatar: 'KO',
               stats: { gp: 65, pts: 12.4, reb: 4.8, ast: 1.5, fg: 45.2, threePt: 31.6, ft: 78.9, min: 28.1 }
             },
             {
               name: 'Andre Drummond',
-              position: 'Center',
+              position: 'C',
               number: '#5',
               avatar: 'AD',
               stats: { gp: 79, pts: 8.4, reb: 9.0, ast: 1.4, fg: 56.3, threePt: 0.0, ft: 71.2, min: 19.8 }
             },
             {
               name: 'Kyle Lowry',
-              position: 'Point Guard',
+              position: 'PG',
               number: '#7',
               avatar: 'KL',
               stats: { gp: 60, pts: 7.8, reb: 3.2, ast: 4.6, fg: 40.1, threePt: 32.8, ft: 85.7, min: 24.5 }
             },
             {
               name: 'Caleb Martin',
-              position: 'Power Forward',
+              position: 'PF',
               number: '#16',
               avatar: 'CM',
               stats: { gp: 71, pts: 8.2, reb: 4.1, ast: 1.9, fg: 44.8, threePt: 35.4, ft: 81.3, min: 22.7 }
             },
             {
               name: 'Ricky Council IV',
-              position: 'Shooting Guard',
+              position: 'SG',
               number: '#12',
               avatar: 'RC',
               stats: { gp: 68, pts: 7.3, reb: 2.8, ast: 1.2, fg: 43.2, threePt: 29.8, ft: 76.5, min: 18.9 }
             },
             {
-              name: 'KJ Martin',
-              position: 'Power Forward',
-              number: '#6',
-              avatar: 'KM',
-              stats: { gp: 45, pts: 5.4, reb: 3.1, ast: 0.8, fg: 48.9, threePt: 28.6, ft: 72.4, min: 15.2 }
-            },
-            {
               name: 'Guerschon Yabusele',
-              position: 'Power Forward',
+              position: 'PF',
               number: '#28',
               avatar: 'GY',
               stats: { gp: 74, pts: 6.1, reb: 3.4, ast: 1.1, fg: 45.7, threePt: 33.9, ft: 78.8, min: 17.3 }
+            },
+            {
+              name: 'Eric Gordon',
+              position: 'SG',
+              number: '#10',
+              avatar: 'EG',
+              stats: { gp: 68, pts: 11.2, reb: 2.1, ast: 2.0, fg: 44.3, threePt: 37.8, ft: 83.3, min: 24.8 }
+            },
+            {
+              name: 'Jared McCain',
+              position: 'PG',
+              number: '#20',
+              avatar: 'JM',
+              stats: { gp: 23, pts: 15.3, reb: 2.4, ast: 2.6, fg: 38.3, threePt: 32.7, ft: 88.9, min: 25.1 }
+            },
+            {
+              name: 'Adem Bona',
+              position: 'C',
+              number: '#25',
+              avatar: 'AB',
+              stats: { gp: 15, pts: 3.2, reb: 2.8, ast: 0.3, fg: 58.3, threePt: 0.0, ft: 66.7, min: 8.4 }
             }
           ],
           '2023-24': [
             {
               name: 'Joel Embiid',
-              position: 'Center',
+              position: 'C',
               number: '#21',
               avatar: 'JE',
               stats: { gp: 39, pts: 35.3, reb: 11.3, ast: 5.7, fg: 52.9, threePt: 38.5, ft: 88.4, min: 34.7 }
             },
             {
               name: 'Tyrese Maxey',
-              position: 'Point Guard',
+              position: 'PG',
               number: '#0',
               avatar: 'TM',
               stats: { gp: 70, pts: 25.9, reb: 3.7, ast: 6.2, fg: 44.8, threePt: 37.3, ft: 86.7, min: 37.1 }
             },
             {
               name: 'Tobias Harris',
-              position: 'Power Forward',
+              position: 'PF',
               number: '#12',
               avatar: 'TH',
               stats: { gp: 70, pts: 17.2, reb: 6.5, ast: 3.1, fg: 48.9, threePt: 35.1, ft: 88.0, min: 32.8 }
             },
             {
               name: 'Kelly Oubre Jr.',
-              position: 'Small Forward',
+              position: 'SF',
               number: '#9',
               avatar: 'KO',
               stats: { gp: 68, pts: 15.4, reb: 5.0, ast: 1.5, fg: 53.2, threePt: 37.3, ft: 71.4, min: 30.1 }
             },
             {
               name: 'Nicolas Batum',
-              position: 'Small Forward',
+              position: 'SF',
               number: '#33',
               avatar: 'NB',
               stats: { gp: 57, pts: 5.5, reb: 4.0, ast: 2.4, fg: 44.8, threePt: 39.7, ft: 81.8, min: 22.7 }
             },
             {
               name: 'Buddy Hield',
-              position: 'Shooting Guard',
+              position: 'SG',
               number: '#24',
               avatar: 'BH',
               stats: { gp: 84, pts: 12.1, reb: 3.2, ast: 2.8, fg: 43.6, threePt: 38.6, ft: 87.3, min: 25.9 }
@@ -974,28 +955,28 @@
           '2022-23': [
             {
               name: 'Joel Embiid',
-              position: 'Center',
+              position: 'C',
               number: '#21',
               avatar: 'JE',
               stats: { gp: 66, pts: 33.1, reb: 10.2, ast: 4.2, fg: 54.8, threePt: 33.0, ft: 85.6, min: 34.6 }
             },
             {
               name: 'James Harden',
-              position: 'Point Guard',
+              position: 'PG',
               number: '#1',
               avatar: 'JH',
               stats: { gp: 58, pts: 21.0, reb: 6.1, ast: 10.7, fg: 44.1, threePt: 38.6, ft: 87.3, min: 36.8 }
             },
             {
               name: 'Tyrese Maxey',
-              position: 'Shooting Guard',
+              position: 'SG',
               number: '#0',
               avatar: 'TM',
               stats: { gp: 60, pts: 20.3, reb: 3.2, ast: 3.5, fg: 48.1, threePt: 43.4, ft: 84.7, min: 35.3 }
             },
             {
               name: 'Tobias Harris',
-              position: 'Power Forward',
+              position: 'PF',
               number: '#12',
               avatar: 'TH',
               stats: { gp: 74, pts: 14.7, reb: 5.7, ast: 2.9, fg: 38.7, threePt: 32.7, ft: 84.0, min: 32.1 }
@@ -1004,28 +985,28 @@
           '2021-22': [
             {
               name: 'Joel Embiid',
-              position: 'Center',
+              position: 'C',
               number: '#21',
               avatar: 'JE',
               stats: { gp: 68, pts: 30.6, reb: 11.7, ast: 4.2, fg: 49.9, threePt: 37.1, ft: 81.4, min: 33.8 }
             },
             {
               name: 'Tyrese Maxey',
-              position: 'Shooting Guard',
+              position: 'SG',
               number: '#0',
               avatar: 'TM',
               stats: { gp: 76, pts: 17.5, reb: 3.2, ast: 4.3, fg: 48.5, threePt: 42.4, ft: 86.3, min: 35.3 }
             },
             {
               name: 'Tobias Harris',
-              position: 'Power Forward',
+              position: 'PF',
               number: '#12',
               avatar: 'TH',
               stats: { gp: 73, pts: 17.2, reb: 6.8, ast: 3.5, fg: 47.6, threePt: 36.3, ft: 84.8, min: 34.3 }
             },
             {
               name: 'James Harden',
-              position: 'Point Guard',
+              position: 'PG',
               number: '#1',
               avatar: 'JH',
               stats: { gp: 21, pts: 21.0, reb: 7.1, ast: 10.5, fg: 40.7, threePt: 32.7, ft: 85.2, min: 37.0 }
@@ -1035,12 +1016,14 @@
       }
 
       setupEventListeners() {
-        // Season dropdown
-        document.getElementById('seasonSelect').addEventListener('change', (e) => {
-          this.currentSeason = e.target.value;
-          this.loadPlayers();
-          this.loadTeamLeaders();
-          this.updateOverviewStats();
+        // Season buttons
+        document.querySelectorAll('.season-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            this.currentSeason = e.target.dataset.season;
+            this.loadPlayers();
+          });
         });
 
         // View toggle
@@ -1052,41 +1035,127 @@
             this.switchView();
           });
         });
+
+        // Filters
+        document.getElementById('positionFilter').addEventListener('change', (e) => {
+          this.filters.position = e.target.value;
+          this.loadPlayers();
+        });
+
+        document.getElementById('sortFilter').addEventListener('change', (e) => {
+          this.currentSort.field = e.target.value;
+          this.loadPlayers();
+        });
+
+        document.getElementById('ppgFilter').addEventListener('change', (e) => {
+          this.filters.ppg = parseFloat(e.target.value);
+          this.loadPlayers();
+        });
+
+        document.getElementById('playerSearch').addEventListener('input', (e) => {
+          this.filters.search = e.target.value.toLowerCase();
+          this.loadPlayers();
+        });
+      }
+
+      setupTableSorting() {
+        document.querySelectorAll('.sortable').forEach(header => {
+          header.addEventListener('click', (e) => {
+            const field = e.target.dataset.sort;
+            if (this.currentSort.field === field) {
+              this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+              this.currentSort.field = field;
+              this.currentSort.direction = 'desc';
+            }
+            
+            // Update header classes
+            document.querySelectorAll('.sortable').forEach(h => {
+              h.classList.remove('sort-asc', 'sort-desc');
+            });
+            e.target.classList.add(this.currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            
+            this.loadPlayers();
+          });
+        });
       }
 
       switchView() {
-        const tableContainer = document.getElementById('playersTable');
-        const cardsContainer = document.getElementById('playersGrid');
+        const tableView = document.getElementById('tableView');
+        const cardsView = document.getElementById('cardsView');
         
         if (this.currentView === 'table') {
-          tableContainer.classList.add('active');
-          cardsContainer.classList.remove('active');
+          tableView.style.display = 'block';
+          cardsView.classList.remove('active');
         } else {
-          tableContainer.classList.remove('active');
-          cardsContainer.classList.add('active');
+          tableView.style.display = 'none';
+          cardsView.classList.add('active');
         }
+      }
+
+      filterPlayers(players) {
+        return players.filter(player => {
+          // Position filter
+          if (this.filters.position && player.position !== this.filters.position) {
+            return false;
+          }
+          
+          // PPG filter
+          if (player.stats.pts < this.filters.ppg) {
+            return false;
+          }
+          
+          // Search filter
+          if (this.filters.search && !player.name.toLowerCase().includes(this.filters.search)) {
+            return false;
+          }
+          
+          return true;
+        });
+      }
+
+      sortPlayers(players) {
+        return players.sort((a, b) => {
+          let aVal, bVal;
+          
+          if (this.currentSort.field === 'name') {
+            aVal = a.name;
+            bVal = b.name;
+          } else if (this.currentSort.field === 'position') {
+            aVal = a.position;
+            bVal = b.position;
+          } else {
+            aVal = a.stats[this.currentSort.field];
+            bVal = b.stats[this.currentSort.field];
+          }
+          
+          if (this.currentSort.direction === 'asc') {
+            return aVal > bVal ? 1 : -1;
+          } else {
+            return aVal < bVal ? 1 : -1;
+          }
+        });
       }
 
       loadPlayers() {
         const players = this.playerData[this.currentSeason] || [];
+        const filteredPlayers = this.filterPlayers(players);
+        const sortedPlayers = this.sortPlayers(filteredPlayers);
         
-        // Load table view
-        this.loadPlayersTable(players);
-        
-        // Load cards view
-        this.loadPlayersCards(players);
+        this.loadPlayersTable(sortedPlayers);
+        this.loadPlayersCards(sortedPlayers);
       }
 
       loadPlayersTable(players) {
-        const tableBody = document.getElementById('playersTableBody');
+        const tableBody = document.getElementById('statsTableBody');
         
         tableBody.innerHTML = players.map(player => `
-          <tr>
+          <tr class="slide-in">
             <td class="player-name-cell">
-              <div class="table-player-avatar">${player.avatar}</div>
-              <div class="table-player-info">
+              <div class="player-avatar">${player.avatar}</div>
+              <div class="player-info">
                 <h4>${player.name}</h4>
-                <div class="table-player-position">${player.position} • ${player.number}</div>
+                <div class="player-position">${this.getFullPosition(player.position)} • ${player.number}</div>
               </div>
             </td>
             <td class="stat-cell">${player.position}</td>
@@ -1103,80 +1172,73 @@
       }
 
       loadPlayersCards(players) {
-        const playersGrid = document.getElementById('playersGrid');
+        const cardsView = document.getElementById('cardsView');
         
-        playersGrid.innerHTML = players.map((player, index) => `
+        cardsView.innerHTML = players.map((player, index) => `
           <div class="player-card fade-in" style="animation-delay: ${index * 0.1}s">
-            <div class="player-header">
-              <div class="player-info">
-                <div class="player-avatar">${player.avatar}</div>
-                <div class="player-details">
+            <div class="player-card-header">
+              <div class="player-card-info">
+                <div class="card-player-avatar">${player.avatar}</div>
+                <div class="card-player-details">
                   <h3>${player.name}</h3>
-                  <div class="player-position">${player.position}</div>
-                  <div class="player-number">${player.number}</div>
+                  <div class="card-player-position">${this.getFullPosition(player.position)} • ${player.number}</div>
                 </div>
               </div>
             </div>
             
-            <div class="player-stats">
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <div class="stat-value">${player.stats.pts}</div>
-                  <div class="stat-label">PPG</div>
+            <div class="player-card-stats">
+              <div class="card-stats-grid">
+                <div class="card-stat-item">
+                  <div class="card-stat-value">${player.stats.pts}</div>
+                  <div class="card-stat-label">PPG</div>
                 </div>
-                <div class="stat-item">
-                  <div class="stat-value">${player.stats.reb}</div>
-                  <div class="stat-label">RPG</div>
+                <div class="card-stat-item">
+                  <div class="card-stat-value">${player.stats.reb}</div>
+                  <div class="card-stat-label">RPG</div>
                 </div>
-                <div class="stat-item">
-                  <div class="stat-value">${player.stats.ast}</div>
-                  <div class="stat-label">APG</div>
+                <div class="card-stat-item">
+                  <div class="card-stat-value">${player.stats.ast}</div>
+                  <div class="card-stat-label">APG</div>
                 </div>
-                <div class="stat-item">
-                  <div class="stat-value">${player.stats.fg}%</div>
-                  <div class="stat-label">FG%</div>
+                <div class="card-stat-item">
+                  <div class="card-stat-value">${player.stats.fg}%</div>
+                  <div class="card-stat-label">FG%</div>
                 </div>
-                <div class="stat-item">
-                  <div class="stat-value">${player.stats.threePt}%</div>
-                  <div class="stat-label">3P%</div>
+                <div class="card-stat-item">
+                  <div class="card-stat-value">${player.stats.threePt}%</div>
+                  <div class="card-stat-label">3P%</div>
                 </div>
-                <div class="stat-item">
-                  <div class="stat-value">${player.stats.min}</div>
-                  <div class="stat-label">MPG</div>
+                <div class="card-stat-item">
+                  <div class="card-stat-value">${player.stats.min}</div>
+                  <div class="card-stat-label">MPG</div>
                 </div>
               </div>
               
-              <div class="performance-section">
-                <div class="chart-header">
-                  <div class="chart-title">Season Performance</div>
-                  <div class="chart-period">Last 10 Games</div>
-                </div>
-                <div class="chart-container">
-                  <canvas id="chart-${player.avatar}"></canvas>
-                </div>
+              <div class="chart-container">
+                <canvas id="chart-${player.avatar}-${index}"></canvas>
               </div>
             </div>
           </div>
         `).join('');
 
-        // Create charts for each player (only when cards view is active)
+        // Create charts for cards view
         if (this.currentView === 'cards') {
           setTimeout(() => {
-            players.forEach(player => {
-              this.createPlayerChart(player);
+            players.forEach((player, index) => {
+              this.createPlayerChart(player, index);
             });
           }, 100);
         }
       }
 
-      createPlayerChart(player) {
-        const ctx = document.getElementById(`chart-${player.avatar}`);
+      createPlayerChart(player, index) {
+        const ctx = document.getElementById(`chart-${player.avatar}-${index}`);
         if (!ctx) return;
 
-        const games = Array.from({length: 10}, (_, i) => `Game ${i + 1}`);
+        const games = Array.from({length: 10}, (_, i) => `G${i + 1}`);
         const basePoints = player.stats.pts;
         const data = games.map(() => {
-          const variation = (Math.random() - 0.5) * 12;
+          const variation = (Math.random() - 0.5) * 8;
           return Math.max(0, basePoints + variation);
         });
 
@@ -1217,59 +1279,21 @@
         });
       }
 
-      loadTeamLeaders() {
-        const leadersGrid = document.getElementById('leadersGrid');
-        const players = this.playerData[this.currentSeason] || [];
-        
-        const pointsLeader = players.reduce((max, player) => player.stats.pts > max.stats.pts ? player : max);
-        const reboundsLeader = players.reduce((max, player) => player.stats.reb > max.stats.reb ? player : max);
-        const assistsLeader = players.reduce((max, player) => player.stats.ast > max.stats.ast ? player : max);
-
-        leadersGrid.innerHTML = `
-          <div class="leader-card">
-            <div class="leader-stat">${pointsLeader.stats.pts}</div>
-            <div class="leader-category">Points Per Game</div>
-            <div class="leader-player">${pointsLeader.name}</div>
-          </div>
-          <div class="leader-card">
-            <div class="leader-stat">${reboundsLeader.stats.reb}</div>
-            <div class="leader-category">Rebounds Per Game</div>
-            <div class="leader-player">${reboundsLeader.name}</div>
-          </div>
-          <div class="leader-card">
-            <div class="leader-stat">${assistsLeader.stats.ast}</div>
-            <div class="leader-category">Assists Per Game</div>
-            <div class="leader-player">${assistsLeader.name}</div>
-          </div>
-        `;
-      }
-
-      updateOverviewStats() {
-        const players = this.playerData[this.currentSeason] || [];
-        const totalPoints = players.reduce((sum, player) => sum + player.stats.pts, 0);
-        const teamPPG = (totalPoints).toFixed(1);
-        
-        document.getElementById('totalPlayers').textContent = players.length;
-        document.getElementById('avgPoints').textContent = teamPPG;
-        
-        // Update based on season - using accurate 2024-25 data
-        const seasonData = {
-          '2024-25': { record: '24-58', seed: 'Lottery', ppg: '107.3' },
-          '2023-24': { record: '47-35', seed: '#7', ppg: '114.8' },
-          '2022-23': { record: '54-28', seed: '#3', ppg: '114.2' },
-          '2021-22': { record: '51-31', seed: '#4', ppg: '109.9' }
+      getFullPosition(pos) {
+        const positions = {
+          'PG': 'Point Guard',
+          'SG': 'Shooting Guard',
+          'SF': 'Small Forward',
+          'PF': 'Power Forward',
+          'C': 'Center'
         };
-        
-        const data = seasonData[this.currentSeason];
-        document.getElementById('teamRecord').textContent = data.record;
-        document.getElementById('playoffSeed').textContent = data.seed;
-        document.getElementById('avgPoints').textContent = data.ppg;
+        return positions[pos] || pos;
       }
     }
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {
-      window.professionalSixersStats = new ProfessionalSixersStats();
+      window.interactiveSixersStats = new InteractiveSixersStats();
     });
   </script>
 </body>
