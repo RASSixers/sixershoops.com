@@ -1,1751 +1,623 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF‑8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NBA Trade Machine - Professional Edition</title>
-  <link rel="icon" type="image/x‑icon" href="/favicon.ico" />
-  <link rel="apple‑touch‑icon" href="/favicon.ico" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-  <!-- Simple Social Media Meta Tags -->
-  <meta property="og:title" content="NBA Trade Machine | SixersHoops" />
-  <meta property="og:description" content="Create and analyze NBA trades with our professional trade machine." />
-  <meta property="og:image" content="trade-machine-social.png" />
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>NBA Trade Machine</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap">
+  
+  <!-- Navbar Styles - Auto-updates when you modify navbar-styles.css -->
+  <link rel="stylesheet" href="navbar-styles.css">
   <style>
-    :root {
-      --primary-color: #0a174e;
-      --secondary-color: #0057e7;
-      --accent-color: #2688ff;
-      --success-color: #22c55e;
-      --warning-color: #f59e0b;
-      --error-color: #ef4444;
-      --text-primary: #1e293b;
-      --text-secondary: #64748b;
-      --text-muted: #94a3b8;
-      --background-primary: #ffffff;
-      --background-secondary: #f8fafc;
-      --background-tertiary: #f1f5f9;
-      --border-color: #e2e8f0;
-      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-     -sm: 6px;
-      --radius-md: 8px;
-      --radius-lg: 12px;
-      --radius-xl: 16px;
-      --radius-2xl: 20px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-     : 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      font-family: 'Inter', Arial, sans-serif;
+      background: #f6f8fa;
       margin: 0;
-      color: var(--text-primary);
-      padding: 60px;
-      line-height: 1.6;
-      font-weight: 400;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      color: #23272F;
+      padding-top: 80px; /* Space for fixed navbar */
     }
-
-    /* NAVIGATION BAR - SAME AS CONTACT PAGE */
-    .navbar {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      background: #0a174e;
+    h1 {
+      background: linear-gradient(90deg,#0a174e 60%,#0057e7 100%);
       color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
-      padding: 0.5rem 2rem;
-      z-index: 1001;
-      height: 60px;
+      padding: 2.5rem 0 1.2rem 0;
+      margin: 0 0 1.1rem 0;
+      text-align: center;
+      font-weight: 800;
+      font-size: 2.2rem;
+      letter-spacing: 1.2px;
+      box-shadow: 0 2px 12px rgba(10,23,78,0.08);
     }
-
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .nav-logo {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
-      border-radius: 6px;
-    }
-
-    .site-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: #fff;
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
-    .nav-link {
-      text-decoration: none;
-      color: #fff;
-      font-weight: 500;
-      padding: 0.6rem 1.2rem;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-      position: relative;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .nav-link.active,
-    .nav-link:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-      transform: translateY(-1px);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .nav-dropdown {
-      position: relative;
-      display: inline-block;
-    }
-
-    .dropdown-btn,
-    .nav-action {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #fff;
-      font-weight: 500;
-      padding: 0.6rem 1.2rem;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-      font-size: 1rem;
-      outline: none;
-    }
-
-    .dropdown-btn:hover,
-    .nav-action:hover,
-    .nav-dropdown:hover .dropdown-btn,
-    .nav-dropdown:hover .nav-action {
-      background: rgba(255, 255, 255, 0.15);
-      transform: translateY(-1px);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      top: 110%;
-      left: 0;
-      min-width: 220px;
+    .description-block {
+      max-width: 850px;
+      margin: 1.3rem auto 2.3rem auto;
       background: #fff;
-      box-shadow: 0 4px 20px rgba(10,23,78,0.13);
-      border-radius: 8px;
-      z-index: 1000;
-      flex-direction: column;
-      padding: 0.5rem 0;
+      border-radius: 18px;
+      padding: 1.6rem 2.1rem 1.2rem 2.1rem;
+      box-shadow: 0 2px 16px rgba(10,23,78,0.10);
+      font-size: 1.1rem;
+      color: #234;
+      line-height: 1.72;
+      border-left: 7px solid #0057e7;
     }
-
-    .nav-dropdown:hover .dropdown-content,
-    .nav-dropdown:focus-within .dropdown-content {
-      display: flex;
-    }
-
-    .dropdown-link {
-      color: #0a174e;
-      text-decoration: none;
-      padding: 0.7rem 1.2rem;
-      transition: background 0.2s, color 0.2s;
-      font-weight: 500;
-      font-size: 1rem;
-      border-radius: 4px;
-      margin: 0 0.3rem;
-      outline: none;
-    }
-
-    .dropdown-link:hover {
-      background: #e6f0ff;
+    .description-block strong {
       color: #0057e7;
     }
-
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      z-index: 101;
-    }
-
-    .hamburger span {
-      width: 32px;
-      height: 4px;
-      background: #fff;
-      border-radius: 2px;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px rgba(10,23,78,0.08);
-    }
-
-    @media (max-width: 768px) {
-      .navbar {
-        padding: 0.5rem 1rem;
-      }
-
-      .nav-right {
-        position: fixed;
-        top: 60px;
-        right: 0;
-        background: #0a174e;
-        flex-direction: column;
-        width: 100%;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease;
-        box-shadow: 0 4px 8px rgba(10,23,78,0.1);
-        gap: 0;
-        align-items: stretch;
-        padding: 0;
-      }
-
-      .nav-right.open {
-        display: flex;
-        max-height: 1000px;
-        overflow: visible;
-        animation: navShow 0.25s;
-      }
-
-      @keyframes navShow {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      .hamburger {
-        display: flex;
-        position: fixed;
-        top: 18px;
-        right: 32px;
-        margin-left: 0;
-        background: none;
-        border: none;
-      }
-
-      .dropdown-content {
-        position: static;
-        min-width: unset;
-        box-shadow: none;
-        background: transparent;
-        border-radius: 0;
-        padding: 0;
-      }
-
-      .dropdown-link {
-        color: #fff;
-        padding: 0.8rem 1.6rem;
-      }
-
-      .dropdown-link:hover {
-        background: #0057e7;
-        color: #fff;
-      }
-    }
-
-    /* HERO SECTION */
-    .hero-section {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-      color: #fff;
-      padding: 4rem 0 3rem 0;
-      margin: 0;
-      text-align: center;
-      position:      overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-      opacity: 0.3;
-    }
-
-    h1 {
-      font-size: 3.5rem;
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      margin: 0 0 1rem 0;
-      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero-subtitle {
-      font-size: 1.25rem;
-      font-weight: 400;
-      opacity: 0.9;
-      margin: 0;
-      position: relative;
-      z-index: 1;
-    }
-
-    .description-block {
-      max-width: 900px;
-      margin: 2rem auto;
-      background: var(--background-primary);
-      border-radius: var(--radius-2xl);
-      padding: 2rem 2.5rem;
-      box-shadow: var(--shadow-xl);
-      font-size: 1.125rem;
-      color: var(--text-primary);
-      line-height: 1.7;
-      border: 1px solid var(--border-color);
-      position: relative;
-    }
-
-    .description-block::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
-      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    }
-
-    .description-block strong {
-      color: var(--secondary-color font-weight: 600;
-    }
-
-    /* TESTING DISCLAIMER BANNER */
-    .testing-disclaimer {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      color: #ffffff;
-      padding: 1rem 2rem;
-      text-align: center;
-      margin: 1rem auto 2rem auto;
-      max-width: 1200px;
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-lg);
-      border: 2px solid rgba(245, 158, 11, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .testing-disclaimer::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-      0% { left: -100%; }
-      100% { left: 100%; }
-    }
-
-    .disclaimer-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .disclaimer-text {
-      font-size: 1rem;
-      font-weight: 500;
-      opacity: 0.95;
-      line-height: 1.5;
-      position: relative;
-      z-index: 1;
-    }
-
-    .feature-highlight {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: var(--radius-md);
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin: 0 0.25rem;
-    }
-
     .trade-controls {
       text-align: center;
-      margin: 2rem 0 3rem 0;
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
+      margin: 1.3rem 0 2.2rem 0;
     }
-
     .trade-controls button {
-      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+      background: #0057e7;
       color: #fff;
       font-weight: 600;
-      font-size: 1rem;
-      padding: 1rem 2rem;
-      border-radius: var(--radius-xl);
-      border: none;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: var(--shadow-lg);
-      letter-spacing: -0.025em;
-      position: relative;
-      overflow: hidden;
-      min-width: 140px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .trade-controls button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s ease;
-    }
-
-    .trade-controls button:hover::before {
-      left: 100%;
-    }
-
-    .trade-controls button:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-xl);
-    }
-
-    .trade-controls button:active {
-      transform: translateY(-1px);
-    }
-
-    .trade-controls button:disabled {
-      background: var(--text-muted);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .trade-controls button:disabled::before {
-      display: none;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, var(--success-color) 0%, #16a34a 100%);
-    }
-
-    .btn-secondary {
-      background: linear-gradient(135deg, var(--text-secondary) 0%, var(--text-muted) 100%);
-    }
-
-    /* EXPORT MODAL STYLES - SAME AS DEPTH.HTML */
-    .export-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 2000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .export-modal-content {
-      background: #fff;
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      text-align: center;
-      position: relative;
-    }
-
-    .export-preview {
-      max-width: 100%;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1.5rem;
-    }
-
-    .export-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .copy-btn,
-    .download-btn,
-    .close-btn {
-      padding: 0.75rem 1.5rem;
-      border: none;
+      font-size: 1.08rem;
+      padding: 0.7rem 1.8rem;
       border-radius: 8px;
-      font-weight: 600;
+      border: none;
+      margin: 0 0.7rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background 0.18s;
     }
-
-    .copy-btn {
-      background: #007bff;
-      color: #fff;
+    .trade-controls button:disabled {
+      background: #bbb;
+      cursor: not-allowed;
     }
-
-    .download-btn {
-      background: #28a745;
-      color: #fff;
-    }
-
-    .close-btn {
-      background: #6c757d;
-      color: #fff;
-    }
-
-    .copy-btn:hover,
-    .download-btn:hover,
-    .close-btn:hover {
-      transform: translateY(-2px);
-      opacity: 0.9;
-    }
-
-    /* BOTTOM ADVERTISEMENT ROW - 5 IN A ROW FLAT (SAME AS INDEX.HTML) */
-    .bottom-ads {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      margin: 3rem 0 2rem 0;
-      flex-wrap: nowrap;
-      padding: 0 1rem;
-      width: 100%;
-      max-width: 1600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .ad-space {
-      width: 300px;
-      height: 250px;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      border: 2px dashed #cbd5e0;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      color: #64748b;
-      font-weight: 600;
-      text-align: center;
-      transition: all 0.3s ease;
-      flex: 0 0 300px;
-    }
-
-    .ad-space:hover {
-      border-color: #94a3b8;
-      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    }
-
     .trade-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-      gap: 2rem;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      justify-content: center;
+      margin: 2.5rem 0;
     }
-
     .team-block {
-      background: var(--background-primary);
-      border-radius: var(--radius-2xl);
-      box-shadow: var(--shadow-lg);
-      padding: 0;
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 6px 40px rgba(10,23,78,0.13);
+      padding: 1.7rem 1.4rem 1.4rem 1.4rem;
+      min-width: 350px;
+      max-width: 410px;
+      flex: 1 1 350px;
       display: flex;
       flex-direction: column;
+      align-items: stretch;
+      margin-bottom: 1rem;
       position: relative;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
-      border: 1px solid var(--border-color);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      transition: box-shadow 0.17s, transform 0.12s;
     }
-
     .team-block:hover {
-      box-shadow: var(--shadow-xl);
-      transform: translateY(-8px) scale(1.02);
-      border-color: var(--secondary-color);
+      box-shadow: 0 10px 48px rgba(0,87,231,0.18);
+      transform: translateY(-2px) scale(1.01);
     }
-
-    .team-block::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--secondary-color) 0%, var(--accent-color) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .team-block:hover::before {
-      opacity: 1;
-    }
-
     .team-header {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      background: linear-gradient(135deg, #0057e7 0%, #2688ff 100%);
-      padding: 1.2rem 1.5rem;
-      margin: 0;
-      min-height: 60px;
-      position: relative;
+      gap: 1.2rem;
+      background: linear-gradient(90deg, #0057e7 60%, #2688ff 100%);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,87,231,0.09);
+      padding: 0.75rem 1.1rem;
+      margin-bottom: 1.15rem;
+      min-height: 55px;
     }
-
-    .team-header::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
-    }
-
     .team-label {
       color: #fff;
       font-weight: 700;
-      font-size: 1.3rem;
-      letter-spacing: 0.5px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-      flex-shrink: 0;
+      font-size: 1.18rem;
+      margin-right: 0.8rem;
+      letter-spacing: 0.02em;
     }
-
     .team-header select {
       font-size: 1.1rem;
-      border-radius: 10px;
+      border-radius: 8px;
       border: none;
-      padding: 0.6rem 1.3rem;
+      padding: 0.45rem 1.2rem;
       font-weight: 600;
-      background: rgba(255,255,255,0.95);
+      background: #ecf3fb;
       color: #0a174e;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.15);
-      transition: all 0.3s ease;
-      flex: 1;
-      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 9px rgba(10,23,78,0.06);
+      transition: background 0.14s;
     }
-
-    .team-header select:hover {
-      background: #fff;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-      transform: translateY(-1px);
-    }
-
     .remove-team-btn {
-      background: rgba(255,255,255,0.15);
+      background: none;
       color: #fff;
       border: none;
-      font-size: 1.4rem;
+      font-size: 1.25rem;
       font-weight: bold;
       cursor: pointer;
-      transition: all 0.3s ease;
-      padding: 0.5rem;
-      border-radius: 8px;
-      opacity: 0.8;
-      backdrop-filter: blur(10px);
+      margin-left: auto;
+      margin-right: -0.4rem;
+      transition: color 0.18s;
+      box-shadow: none;
+      padding: 0;
+      opacity: 0.85;
     }
-
-    .remove-team-btn:hover {
-      background: rgba(255,107,107,0.9);
-      opacity: 1;
-      transform: scale(1.1);
-    }
-
-    /* MODERN PLAYERS LIST */
+    .remove-team-btn:hover { color: #ffc2c2; }
     .players-list {
       list-style: none;
-      padding: 1.5rem;
+      padding: 0;
       margin: 0;
+      max-height: 320px;
+      overflow-y: auto;
+      border-radius: 14px;
+      background: #f9fbfc;
+      border: 1.5px solid #e4eaf2;
+      box-shadow: 0 2px 10px rgba(10,23,78,0.05);
+      margin-bottom: 1.3rem;
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      min-height: 200px;
+      gap: 0.6rem;
     }
-
     .players-list li {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 1rem 1.2rem;
+      gap: 1.1rem;
+      padding: 0.82rem 1.1rem;
       background: #fff;
-      border-radius: 16px;
-      font-size: 1.05rem;
-      box-shadow: 0 2px 12px rgba(0,87,231,0.08);
+      border-radius: 10px;
+      font-size: 1.12rem;
+      box-shadow: 0 1.5px 6px rgba(0,87,231,0.04);
       position: relative;
-      transition: all 0.3s ease;
+      transition: background 0.15s, box-shadow 0.12s, transform 0.11s;
       cursor: pointer;
-      border: 2px solid transparent;
-      overflow: hidden;
+      border: 1px solid #e9eef3;
     }
-
-    .players-list li::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #0057e7 0%, #2688ff 100%);
-      transform: scaleX(0);
-      transition: transform 0.3s ease;
-    }
-
-    .players-list li.selected::before,
-    .players-list li:hover::before {
-      transform: scaleX(1);
-    }
-
     .players-list li.selected,
     .players-list li:hover {
-      background: linear-gradient(135deg, #e6f0ff 0%, #f0f7ff 100%);
-      box-shadow: 0 6px 24px rgba(0,87,231,0.2);
-      transform: translateY(-2px);
-      border-color: rgba(0,87,231,0.3);
+      background: #e6f0ff;
+      box-shadow: 0 2px 10px rgba(0,87,231,0.13);
+      transform: scale(1.02);
+      border: 1.5px solid #0057e7;
     }
-
     .player-avatar {
-      width: 44px;
-      height: 44px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #0057e7 0%, #2688ff 100%);
+      background: linear-gradient(120deg,#dbeafe 70%,#e0e7ef 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1em;
-      font-weight: 700;
-      color: #fff;
+      font-size: 1.21em;
+      font-weight: bold;
+      color: #0a174e;
       flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(0,87,231,0.3);
-      border: 3px solid #fff;
-      letter-spacing: 0.5px;
+      margin-right: 6px;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.07);
+      border: 2px solid #fff;
+      letter-spacing: 0.01em;
       text-transform: uppercase;
-      position: relative;
-      overflow: hidden;
     }
-
-    .player-avatar::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
-      transform: rotate(45deg);
-      transition: all 0.6s ease;
-      opacity: 0;
-    }
-
-    .players-list li:hover .player-avatar::after {
-      opacity: 1;
-      animation: shimmer 1.5s ease-in-out;
-    }
-
-    @keyframes shimmer {
-      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-    }
-
     .players-list input[type=checkbox] {
-      margin-right: 0.3em;
+      margin-right: 0.1em;
       accent-color: #0057e7;
       cursor: pointer;
-      width: 1.3em;
-      height: 1.3em;
-      border-radius: 6px;
-      border: 2px solid #0057e7;
-      box-shadow: 0 2px 8px rgba(0,87,231,0.2);
-      transition: all 0.3s ease;
+      width: 1.27em; height: 1.27em;
+      border-radius: 5px;
+      border: 1.5px solid #0057e7;
+      box-shadow: 0 0.5px 2px rgba(0,87,231,0.06);
+      transition: box-shadow 0.11s;
       flex-shrink: 0;
     }
-
-    .players-list input[type=checkbox]:checked {
-      transform: scale(1.1);
-      box-shadow: 0 4px 16px rgba(0,87,231,0.4);
-    }
-
     .players-list label {
       flex: 1;
       cursor: pointer;
       font-weight: 600;
-      letter-spacing: 0.3px;
-      color: #1e293b;
-      transition: color 0.3s ease;
-      min-width: 0; /* Allow text to shrink */
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      letter-spacing: 0.01em;
+      color: #273a58;
     }
-
-    .players-list li:hover label {
-      color: #0057e7;
-    }
-
     .players-list .salary-cell {
       color: #0057e7;
-      min-width: 85px;
-      width: 85px;
+      min-width: 124px;
       text-align: right;
       font-weight: 700;
-      font-size: 0.95rem;
-      letter-spacing: 0.3px;
-      padding: 0.4rem 0.6rem;
-      background: rgba(0,87,231,0.1);
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      flex-shrink: 0;
-      font-family: 'Courier New', monospace;
+      font-size: 1.09rem;
+      letter-spacing: 0.01em;
     }
-
-    .players-list li:hover .salary-cell {
-      background: rgba(0,87,231,0.2);
-      transform: scale(1.05);
-    }
-
     .totals {
-      margin: 0;
+      margin: 1.1rem 0 0 0;
       font-weight: 700;
-      font-size: 1.2rem;
-      color: #1e293b;
-      text-align: center;
-      padding: 1rem 1.5rem;
-      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-      border-top: 1px solid rgba(0,87,231,0.1);
+      font-size: 1.18rem;
+      color: #333;
+      text-align: right;
     }
-
-    /* MODERN PAYROLL BOX WITH SPACE CALCULATIONS */
     .payroll-box {
-      margin: 0;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      padding: 1.5rem;
-      font-size: 0.95rem;
-      color: #fff;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .payroll-box::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #0057e7 0%, #2688ff 50%, #0057e7 100%);
-    }
-
-    .payroll-line {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.7rem;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      transition: all 0.3s ease;
-    }
-
-    .payroll-line:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      font-weight: 700;
-      font-size: 1.05rem;
-      background: rgba(255,255,255,0.05);
-      border-radius: 8px;
-      padding: 0.8rem;
-    }
-
-    .payroll-line:hover {
-      background: rgba(255,255,255,0.05);
-      border-radius: 8px;
-      padding-left: 0.8rem;
-      padding-right: 0.8rem;
-    }
-
-    .payroll-label {
-      font-weight: 600;
-      color: rgba(255,255,255,0.9);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .payroll-value {
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.5px;
-      font-size: 0.9rem;
-    }
-
-    .payroll-value.over {
-      color: #ef4444;
-      text-shadow: 0 0 8px rgba(239,68,68,0.5);
-    }
-
-    .payroll-value.under {
-      color: #22c55e;
-      text-shadow: 0 0 8px rgba(34,197,94,0.5);
-    }
-
-    .payroll-value.close {
-      color: #f59e0b;
-      text-shadow: 0 0 8px rgba(245,158,11,0.5);
-    }
-
-    /* STATUS INDICATORS */
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 0.5rem;
-    }
-
-    .status-indicator.over {
-      background: #ef4444;
-      box-shadow: 0 0 8px rgba(239,68,68,0.6);
-    }
-
-    .status-indicator.under {
-      background: #22c55e;
-      box-shadow: 0 0 8px rgba(34,197,94,0.6);
-    }
-
-    .status-indicator.close {
-      background: #f59e0b;
-      box-shadow: 0 0 8px rgba(245,158,11,0.6);
-    }
-
-    /* TRADE RESTRICTIONS ALERT */
-    .trade-restrictions {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      border: 2px solid #f59e0b;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem 0;
-      color: #92400e;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .trade-restrictions.severe {
-      background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-      border-color: #ef4444;
-      color: #991b1b;
-    }
-
-    .trade-restrictions h4 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .trade-restrictions ul {
-      margin: 0.5rem 0 0 0;
-      padding-left: 1.2rem;
-    }
-
-    .trade-restrictions li {
-      margin-bottom: 0.3rem;
-    }
-
-    /* TRADE RESULT MODAL */
-    .trade-modal {
-      display: none;
-      position: fixed;
-      z-index: 2000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(5px);
-      animation: modalFadeIn 0.3s ease;
-    }
-
-    @keyframes modalFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .modal-content {
-      background: #fff;
-      margin: 2% auto;
-      padding: 0;
-      border-radius: 20px;
-      width: 96%;
-      max-width: 1200px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      animation: modalSlideIn 0.4s ease;
-      overflow: hidden;
-      max-height: 96vh;
-      overflow-y: auto;
-    }
-
-    @keyframes modalSlideIn {
-      from { transform: translateY(-50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .modal-header {
-      padding: 1.5rem 2rem;
-      background: linear-gradient(135deg, #0057e7 0%, #2688ff 100%);
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-header.success {
-      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-    }
-
-    .modal-header.failed {
-      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-    }
-
-    .modal-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.8rem;
-      cursor: pointer;
-      padding: 0.2rem;
-      border-radius: 4px;
-      transition: background 0.2s ease;
-    }
-
-    .close-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .modal-body {
-      padding: 2rem;
-    }
-
-    .trade-summary {
-      display: flex;
-      justify-content: space-between;
-      gap: 2rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .team-summary {
-      flex: 1;
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 1.2rem;
-      border: 2px solid #e4eaf2;
-    }
-
-    .team-summary h4 {
-      margin: 0 0 1rem 0;
+      margin-top: 1.1rem;
+      background: #f3f7fb;
+      border-radius: 9px;
+      padding: 1.1rem 1.2rem 0.7rem 1.2rem;
+      font-size: 1.07rem;
       color: #0a174e;
-      font-size: 1.2rem;
+      box-shadow: 0 2px 10px rgba(0,87,231,0.05);
+    }
+    .payroll-box .line { margin-bottom: 0.47rem; }
+    .payroll-box .level {
       font-weight: 700;
+      min-width: 130px;
+      display: inline-block;
     }
-
-    .player-item {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      margin-bottom: 0.8rem;
-      padding: 0.6rem;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    }
-
-    .player-item:last-child { margin-bottom: 0; }
-
-    .player-item .player-avatar {
-      width: 32px;
-      height: 32px;
-      font-size: 0.9rem;
-    }
-
-    .player-name { flex: 1; font-weight: 600; color: #273a58; }
-
-    .player-salary { color: #0057e7; font-weight: 700; font-size: 0.95rem; }
-
-    .error-message {
-      background: #fef2f2;
-      border: 2px solid #fecaca;
-      border-radius: 12px;
-      padding: 1.2rem;
-      color: #dc2626;
-      font-weight: 600;
-      text-align: center;
-      margin-top: 1rem;
-    }
-
-    .success-message {
-      background: #f0fdf4;
-      border: 2px solid #bbf7d0;
-      border-radius: 12px;
-      padding: 1.2rem;
-      color: #16a34a;
-      font-weight: 600;
-      text-align: center;
-      margin-top: 1rem;
-    }
-
-    /* SOCIAL MEDIA SHARING STYLES */
-    .social-sharing {
-      margin-top: 2rem;
-      padding: 1.5rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-    }
-
-    .social-sharing h4 {
-      margin: 0 0 1rem 0;
-      color: var(--text-primary);
-      font-size: 1.1rem;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .social-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .social-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.25rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
+    .payroll-box .over { color: #b91c1c; font-weight: 700;}
+    .payroll-box .under { color: #15803d; font-weight: 700;}
+    .trade-btn {
+      margin: 2.4rem auto 1.6rem auto;
+      display: block;
+      background: #0057e7;
+      color: #fff;
+      font-size: 1.27rem;
+      font-weight: bold;
+      border-radius: 13px;
+      padding: 1.1rem 3.2rem;
       border: none;
       cursor: pointer;
-      min-width: 120px;
-      justify-content: center;
+      transition: background 0.2s, box-shadow 0.18s;
+      box-shadow: 0 4px 16px rgba(0,87,231,0.13);
+      letter-spacing: 0.03em;
     }
-
-    .social-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    .trade-btn:hover {
+      background: #0a174e;
+      box-shadow: 0 8px 28px rgba(0,87,231,0.17);
     }
-
-    .social-btn.twitter { background: #1da1f2; color: white; }
-    .social-btn.twitter:hover { background: #1a91da; }
-    .social-btn.facebook { background: #4267b2; color: white; }
-    .social-btn.facebook:hover { background: #365899; }
-    .social-btn.reddit { background: #ff4500; color: white; }
-    .social-btn.reddit:hover { background: #e03d00; }
-    .social-btn.copy {
-      background: var(--secondary-color);
-      color: white;
+    .result-block {
+      background: #fff;
+      border-radius: 14px;
+      max-width: 700px;
+      margin: 2rem auto;
+      box-shadow: 0 4px 16px rgba(10,23,78,0.13);
+      padding: 1.7rem 2.5rem;
+      font-size: 1.16rem;
+      font-weight: 500;
+      border-left: 8px solid #eee;
+      text-align: left;
     }
-    .social-btn.copy:hover { background: var(--primary-color); }
-    .social-btn.copy.copied { background: var(--success-color); }
-    .social-btn.image { background: #6f42c1; color: white; }
-    .social-btn.image:hover { background: #5a2d91; }
-    .social-btn.image.generating {
-      background: var(--warning-color);
-      cursor: wait;
+    .result-block.success {
+      border-left: 8px solid #13a813;
+      color: #13a813;
+      background: #f3fff4;
     }
-    .social-btn i { font-size: 1.1rem; }
-
-    /* RESPONSIVE IMPROVEMENTS */
-    @media (max-width: 768px) {
-      body { padding-top: 70px; }
-      h1 { font 2.5rem; }
-      .hero-subtitle { font-size: 1rem; }
-      .description-block { margin: 1.5rem; padding: 1.5rem; font-size: 1rem; }
-      .trade-controls { margin: 1.5rem 0 2rem 0; gap: 0.75rem; }
-      .trade-controls button { padding: 0.875rem 1.5rem; font-size: 0.9rem; min-width: 120px; }
-      .trade-container { grid-template-columns: 1fr; gap: 1.5rem; padding: 0 1rem; }
-      .modal-content { width: 95%; margin: 5% auto; }
-      .trade-summary { flex-direction: column; gap: 1rem; }
-      .players-list li { padding: 0.8rem 1rem; gap: 0.8rem; }
-      .player-avatar { width: 36px; height: 36px; }
-      .salary-cell { min-width: 75px; width: 75px; font-size: 0.85rem; }
-      .payroll-line { font-size: 0.85rem; }
+    .result-block.fail {
+      border-left: 8px solid #c20000;
+      color: #c20000;
+      background: #fff7f7;
+    }
+    .result-title {
+      font-size: 1.27rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.5px;
+    }
+    .back-home-btn {
+      display: inline-block;
+      background: #0a174e;
+      color: #fff;
+      padding: 0.7rem 2.2rem;
+      border-radius: 8px;
+      font-size: 1.12rem;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(10,23,78,0.12);
+      transition: background 0.2s;
+      margin: 2.7rem auto 2.5rem auto;
+      text-align: center;
+      display: block;
+      width: fit-content;
+    }
+    .back-home-btn:hover {
+      background: #0057e7;
+      color: #fff;
+    }
+    @media (max-width: 1200px) {
+      .trade-container { flex-direction: column; align-items: center;}
+      .team-block { width: 99vw; max-width: 480px;}
+    }
+    @media (max-width: 600px) {
+      .team-block { padding: 1.1rem 0.6rem; min-width: 0; }
+      .result-block { padding: 1.1rem 0.7rem; }
+      .trade-btn { padding: 0.7rem 1.2rem; font-size: 1.07rem;}
+      .back-home-btn { margin: 1.5rem auto 1.5rem auto;}
     }
   </style>
 </head>
 <body>
-  <!-- NAVIGATION BAR – rendered by nav.js -->
-  <script src="nav.js"></script>
+  <!-- Navigation will be automatically injected here by nav.js -->
 
-  <!-- HERO SECTION -->
-  <div class="hero-section">
-    <h1>NBA Trade Machine</h1>
-    <p class="hero-subtitle">Professional Edition - Build Perfect Trades with Advanced Analytics</p>
-  </div>
+  <h1>🔄 NBA Trade Machine</h1>
 
-  <!-- DESCRIPTION BLOCK -->
   <div class="description-block">
-    <strong>Build your perfect trade!</strong> Select players from different teams and see if your trade works under NBA salary cap rules. The machine will automatically calculate 
-    <span class="feature-highlight"><i class="fas fa-chart-line"></i> salary matching</span>, 
-    <span class="feature-highlight"><i class="fas fa-shield-alt"></i> apron restrictions</span>, and 
-    <span class="feature-highlight"><i class="fas fa-coins"></i> available cap space</span>.
+    <strong>Welcome to the NBA Trade Machine!</strong> This interactive tool allows you to simulate trades between NBA teams, analyze salary cap implications, and explore potential trade scenarios. Select players from different teams, analyze the financial impact, and see if your proposed trades would work under NBA salary cap rules.
   </div>
 
-  <!-- Testing Disclaimer Banner -->
-  <div class="testing-disclaimer">
-    <div class="disclaimer-title"><i class="fas fa-flask"></i> Beta Testing Phase</div>
-    <div class="disclaimer-text">
-      This trade machine is currently in testing phases. Player rosters are close to accurate but may not be fully up-to-date. Additional features, roster updates, and enhanced trade validation will be added in future updates. Thank you for your patience as we perfect this tool!
-    </div>
-  </div>
-
-  <!-- TRADE CONTROLS -->
   <div class="trade-controls">
-    <button class="btn-primary" onclick="addTeam()"><i class="fas fa-plus"></i> Add Team</button>
-    <button class="btn-success" onclick="executeTrade()"><i class="fas fa-exchange-alt"></i> Execute Trade</button>
-    <button class="btn-secondary" onclick="clearTrade()"><i class="fas fa-trash-alt"></i> Clear All</button>
+    <button onclick="addTeam()">+ Add Team</button>
+    <button onclick="clearAllTrades()">Clear All</button>
+    <button onclick="randomTrade()">Random Trade</button>
   </div>
 
-  <!-- TRADE CONTAINER -->
-  <div class="trade-container" id="tradeContainer"></div>
-
-  <!-- TRADE RESULT MODAL -->
-  <div id="tradeModal" class="trade-modal">
-    <div class="modal-content">
-      <div class="modal-header" id="modalHeader">
-        <h2 class="modal-title" id="modalTitle">Trade Result</h2>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="trade-summary" id="tradeSummary"></div>
-        <div id="tradeMessage"></div>
-        <div id="socialSharing" class="social-sharing" style="display:none; text-align:center; margin-top:1rem;">
-          <button class="export-btn" id="tradeExportBtn" onclick="generateTradeImage()">📸 Export for Social Media</button>
-          <canvas id="tradeCanvas" style="display:none;" width="1200" height="800"></canvas>
-        </div>
-      </div>
-    </div>
+  <div class="trade-container" id="tradeContainer">
+    <!-- Teams will be dynamically added here -->
   </div>
 
-  <!-- EXPORT MODAL -->
-  <div id="tradeExportModal" class="export-modal">
-    <div class="export-modal-content">
-      <h2 style="color:#0a174e;margin-bottom:1rem;">Export Trade Result</h2>
-      <p style="color:#6c757d;margin-bottom:1.5rem;">Your trade analysis is ready for social media sharing!</p>
-      <canvas id="tradeExportCanvas" style="display:none;"></canvas>
-      <img id="tradeExportPreview" class="export-preview" alt="Trade export preview">
-      <div class="export-actions">
-        <button id="tradeCopyBtn" class="copy-btn">📋 Copy to Clipboard</button>
-        <button id="tradeDownloadBtn" class="download-btn">📥 Download Image</button>
-        <button id="tradeCloseModal" class="close-btn">✕ Close</button>
-      </div>
-    </div>
+  <button class="trade-btn" onclick="analyzeTrade()">📊 Analyze Trade</button>
+
+  <div id="tradeResult" class="result-block" style="display: none;">
+    <div class="result-title">Trade Analysis</div>
+    <div id="resultContent"></div>
   </div>
 
-  <!-- Bottom Advertisement Row – 5 in a row flat (same as index.html) -->
-  <div class="bottom-ads">
-    <div class="ad-space">
-      <script>
-        (function(tnro){
-          var d = document,
-              s = d.createElement('script'),
-              l = d.scripts[d.scripts.length - 1];
-          s.settings = tnro || {};
-          s.src = "//grimy-bicycle.com/bLXgVos/d.Gglg0SYlWdcT/Kevmz9IuPZCUWl/kCPWTqYV1JNrT/YKxSOVDOcWtXNdjxU/1dNIjlE/4EOhA_";
-          s.async = true;
-          s.referrerPolicy = 'no-referrer-when-downgrade';
-          l.parentNode.insertBefore(s, l);
-        })({})
-      </script>
-    </div>
-    <div class="ad-space">
-      <script>
-        (function(yfxbc){
-          var d = document,
-              s = d.createElement('script'),
-              l = d.scripts[d.scripts.length - 1];
-          s.settings = yfxbc || {};
-          s.src = "//grimy-bicycle.com/bOXqVvsSd.GFl/0TYsWEcZ/Levmd9/uLZHUGlpkiPJTPYp1/NeT/Y-xZOOTGcgtINljhUo1IN/j/Ez5NOeAW";
-          s.async = true;
-          s.referrerPolicy = 'no-referrer-when-downgrade';
-          l.parentNode.insertBefore(s, l);
-        })({})
-      </script>
-    </div>
-    <div class="ad-space">
-      <script>
-        (function(lsadao){
-          var d = document,
-              s = d.createElement('script'),
-              l = d.scripts[d.scripts.length - 1];
-          s.settings = lsadao || {};
-          s.src = "//grimy-bicycle.com/bUXHV.sFduG/lp0yYCWvcl/ceQmU9/urZYUTlTkWPWTYY_1fNeTNYayPMcDLcdtJNSj/Uz1pNzj-IKwGOyAw";
-          s.async = true;
-          s.referrerPolicy = 'no-referrer-when-downgrade';
-          l.parentNode.insertBefore(s, l);
-        })({})
-      </script>
-   div>
-    <div class="ad-space">
-      <script>
-        (function(ugfujh){
-          var d = document,
-              s = d.createElement('script'),
-              l = d.scripts[d.scripts.length - 1];
-          s.settings = ugfujh || {};
-          s.src = "//grimy-bicycle.com/byXwV.sFdnGNlh0QYDWdcW/SeQm-9KuaZ/UFlkkmPcTiYK1/NLTFYByyMuT_cQtDNKjMUc1yNgj-IHxSOXAU";
-          s.async = true;
-          s.referrerPolicy = 'no-referrer-when-downgrade';
-          l.parentNode.insertBefore(s, l);
-        })({})
-      </script>
-    </div>
-    <div class="ad-space">
-      <script>
-        (function(hno){
-          var d = document,
-              s = d.createElement('script'),
-              l = d.scripts[d.scripts.length - 1];
-          s.settings = hno || {};
-          s.src = "//grimy-bicycle.com/byXpVisxd.G/lh0ZYkWocm/NeLm_9buNZ/UOlwkbP-T/Yi1UN/TIYIyiMljscjt/NyjCU/1hNtj/Iay/O/AZ";
-          s.async = true;
-          s.referrerPolicy = 'no-referrer-when-downgrade';
-          l.parentNode.insertBefore(s, l);
-        })({})
-      </script>
-    </div>
-  </div>
+  <a href="index.html" class="back-home-btn">← Back to Home</a>
 
+  <!-- Navigation JavaScript - Auto-updates when you modify nav.js -->
+  <script src="nav.js"></script>
+  
   <script>
-    /* Updated NBA teams and players data for 2024‑25 season */
+    // NBA Teams data
     const nbaTeams = {
-      /* (paste the entire nbaTeams object from your original script here) */
+      'PHI': { name: 'Philadelphia 76ers', color: '#0057e7' },
+      'LAL': { name: 'Los Angeles Lakers', color: '#552583' },
+      'GSW': { name: 'Golden State Warriors', color: '#1D428A' },
+      'BOS': { name: 'Boston Celtics', color: '#007A33' },
+      'MIA': { name: 'Miami Heat', color: '#98002E' },
+      'BRK': { name: 'Brooklyn Nets', color: '#000000' },
+      'MIL': { name: 'Milwaukee Bucks', color: '#00471B' },
+      'DAL': { name: 'Dallas Mavericks', color: '#00538C' },
+      'DEN': { name: 'Denver Nuggets', color: '#0E2240' },
+      'PHX': { name: 'Phoenix Suns', color: '#1D1160' }
     };
 
-    /* Updated salary cap thresholds for 2024‑25 season */
-    const salaryCapInfo = {
-      salaryCap: 154647000,
-      luxuryTax: 187895000,
-      firstApron: 195945000,
-      secondApron: 207824000
+    // Sample player data (you can expand this with real NBA data)
+    const playersData = {
+      'PHI': [
+        { name: "Joel Embiid", salary: 51415938, position: "C" },
+        { name: "Tyrese Maxey", salary: 35000000, position: "PG" },
+        { name: "Paul George", salary: 49176471, position: "SF" },
+        { name: "Caleb Martin", salary: 8000000, position: "SF" },
+        { name: "Kelly Oubre Jr.", salary: 8018519, position: "SF" },
+        { name: "Kyle Lowry", salary: 2087519, position: "PG" },
+        { name: "Andre Drummond", salary: 5000000, position: "C" },
+        { name: "Eric Gordon", salary: 3303771, position: "SG" },
+        { name: "Reggie Jackson", salary: 2087519, position: "PG" },
+        { name: "Guerschon Yabusele", salary: 2087519, position: "PF" }
+      ],
+      'LAL': [
+        { name: "LeBron James", salary: 48728845, position: "SF" },
+        { name: "Anthony Davis", salary: 43219440, position: "PF" },
+        { name: "Russell Westbrook", salary: 47063478, position: "PG" },
+        { name: "Austin Reaves", salary: 12000000, position: "SG" }
+      ],
+      'GSW': [
+        { name: "Stephen Curry", salary: 55761217, position: "PG" },
+        { name: "Klay Thompson", salary: 43219440, position: "SG" },
+        { name: "Draymond Green", salary: 27586224, position: "PF" },
+        { name: "Andrew Wiggins", salary: 26271818, position: "SF" }
+      ]
     };
 
-    let teamCount   = 0;
-    let selectedPlayers = {};
-    let teamRosterTotals = {};
+    let teams = [];
+    let tradeId = 0;
 
     function addTeam() {
-      teamCount++;
-      const container = document.getElementById('tradeContainer');
+      const teamId = `team-${++tradeId}`;
+      const teamBlock = createTeamBlock(teamId);
+      document.getElementById('tradeContainer').appendChild(teamBlock);
+    }
 
-      const teamBlock = document.createElement('div');
-      teamBlock.className = 'team-block';
-      teamBlock.id = `team-${teamCount}`;
-
-      teamBlock.innerHTML = `
+    function createTeamBlock(teamId) {
+      const div = document.createElement('div');
+      div.className = 'team-block';
+      div.id = teamId;
+      
+      div.innerHTML = `
         <div class="team-header">
-          <span class="team-label">Team ${teamCount}</span>
-          <select onchange="loadPlayers(${teamCount}, this.value)">
+          <span class="team-label">Team</span>
+          <select onchange="loadTeamPlayers('${teamId}', this.value)">
             <option value="">Select Team</option>
-            ${Object.keys(nbaTeams).map(team => `<option value="${team}">${team}</option>`).join('')}
+            ${Object.entries(nbaTeams).map(([code, team]) => 
+              `<option value="${code}">${team.name}</option>`
+            ).join('')}
           </select>
-          <button class="remove-team-btn" onclick="removeTeam(${teamCount})">×</button>
+          <button class="remove-team-btn" onclick="removeTeam('${teamId}')" title="Remove Team">×</button>
         </div>
-        <ul class="players-list" id="players-${teamCount}">
-          <li style="text-align: center; color: #666; font-style: italic; padding: 2rem;">Select a team to view players</li>
+        <ul class="players-list" id="${teamId}-players">
+          <li style="text-align: center; color: #666; font-style: italic; padding: 2rem;">
+            Select a team to view players
+          </li>
         </ul>
-        <div class="totals" id="totals-${teamCount}">Selected Players: $0</div>
-        <div class="payroll-box" id="payroll-${teamCount}">
-          <div class="payroll-line">
-            <span class="payroll-label"><span class="status-indicator under"></span> Cap Space</span>
-            <span class="payroll-value under" id="cap-space-${teamCount}">$0</span>
-          </div>
-          <div class="payroll-line">
-            <span class="payroll-label"><span class="status-indicator under"></span> Tax Space</span>
-            <span class="payroll-value under" id="tax-space-${teamCount}">$0</span>
-          </div>
-          <div class="payroll-line">
-            <span class="payroll-label"><span class="status-indicator under"></span> 1st Apron Space</span>
-            <span class="payroll-value under" id="first-apron-space-${teamCount}">$0</span>
-          </div>
-          <div class="payroll-line">
-            <span class="payroll-label"><span class="status-indicator under"></span> 2nd Apron Space</span>
-            <span class="payroll-value under" id="second-apron-space-${teamCount}">$0</span>
-          </div>
-          <div class="payroll-line">
-            <span class="payroll-label">Team Total</span>
-            <span class="payroll-value under" id="team-total-${teamCount}">$0</span>
-          </div>
+        <div class="totals">
+          <div>Selected: <span id="${teamId}-total">$0</span></div>
         </div>
-        <div id="trade-restrictions-${teamCount}"></div>
+        <div class="payroll-box">
+          <div class="line"><span class="level">Team Salary:</span> <span id="${teamId}-team-salary">$0</span></div>
+          <div class="line"><span class="level">Luxury Tax:</span> <span id="${teamId}-luxury-tax">$0</span></div>
+        </div>
       `;
-      container.appendChild(teamBlock);
-      selectedPlayers[teamCount] = [];
+      
+      return div;
+    }
+
+    function loadTeamPlayers(teamId, teamCode) {
+      if (!teamCode) return;
+      
+      const players = playersData[teamCode] || [];
+      const playersList = document.getElementById(`${teamId}-players`);
+      
+      if (players.length === 0) {
+        playersList.innerHTML = '<li style="text-align: center; color: #666; font-style: italic; padding: 2rem;">No players available</li>';
+        return;
+      }
+      
+      playersList.innerHTML = players.map(player => `
+        <li>
+          <input type="checkbox" id="${teamId}-${player.name}" onchange="updateTotals('${teamId}')">
+          <div class="player-avatar">${player.name.split(' ').map(n => n[0]).join('')}</div>
+          <label for="${teamId}-${player.name}">${player.name}</label>
+          <span class="salary-cell">$${player.salary.toLocaleString()}</span>
+        </li>
+      `).join('');
+      
+      updateTotals(teamId);
+    }
+
+    function updateTotals(teamId) {
+      const checkboxes = document.querySelectorAll(`#${teamId}-players input[type="checkbox"]:checked`);
+      let total = 0;
+      
+      checkboxes.forEach(checkbox => {
+        const salaryText = checkbox.closest('li').querySelector('.salary-cell').textContent;
+        const salary = parseInt(salaryText.replace(/[$,]/g, ''));
+        total += salary;
+      });
+      
+      document.getElementById(`${teamId}-total`).textContent = `$${total.toLocaleString()}`;
+      
+      // Update team salary and luxury tax (simplified calculation)
+      const teamSalary = total;
+      const luxuryTaxThreshold = 165000000; // Approximate 2024-25 luxury tax threshold
+      const luxuryTax = teamSalary > luxuryTaxThreshold ? (teamSalary - luxuryTaxThreshold) * 1.5 : 0;
+      
+      document.getElementById(`${teamId}-team-salary`).textContent = `$${teamSalary.toLocaleString()}`;
+      document.getElementById(`${teamId}-luxury-tax`).textContent = luxuryTax > 0 ? 
+        `$${luxuryTax.toLocaleString()}` : '$0';
+      
+      // Color coding
+      const luxuryElement = document.getElementById(`${teamId}-luxury-tax`);
+      luxuryElement.className = luxuryTax > 0 ? 'over' : 'under';
     }
 
     function removeTeam(teamId) {
-      const teamBlock = document.getElementById(`team-${teamId}`);
-      if (teamBlock) {
-        teamBlock.remove();
-        delete selectedPlayers[teamId];
-        delete teamRosterTotals[teamId];
+      document.getElementById(teamId).remove();
+    }
+
+    function clearAllTrades() {
+      document.getElementById('tradeContainer').innerHTML = '';
+      document.getElementById('tradeResult').style.display = 'none';
+      tradeId = 0;
+    }
+
+    function randomTrade() {
+      clearAllTrades();
+      
+      // Add two random teams
+      addTeam();
+      addTeam();
+      
+      const teamCodes = Object.keys(nbaTeams);
+      const team1Code = teamCodes[Math.floor(Math.random() * teamCodes.length)];
+      let team2Code = teamCodes[Math.floor(Math.random() * teamCodes.length)];
+      while (team2Code === team1Code) {
+        team2Code = teamCodes[Math.floor(Math.random() * teamCodes.length)];
       }
+      
+      // Load teams
+      const selects = document.querySelectorAll('.team-block select');
+      selects[0].value = team1Code;
+      selects[1].value = team2Code;
+      
+      loadTeamPlayers('team-1', team1Code);
+      loadTeamPlayers('team-2', team2Code);
+      
+      // Select random players
+      setTimeout(() => {
+        const checkboxes1 = document.querySelectorAll('#team-1-players input[type="checkbox"]');
+        const checkboxes2 = document.querySelectorAll('#team-2-players input[type="checkbox"]');
+        
+        if (checkboxes1.length > 0) {
+          checkboxes1[Math.floor(Math.random() * checkboxes1.length)].checked = true;
+          updateTotals('team-1');
+        }
+        
+        if (checkboxes2.length > 0) {
+          checkboxes2[Math.floor(Math.random() * checkboxes2.length)].checked = true;
+          updateTotals('team-2');
+        }
+      }, 100);
     }
 
-    function loadPlayers(teamId, teamName) {
-      if (!teamName) return;
-      const playersList = document.getElementById(`players-${teamId}`);
-      const players = nbaTeams[teamName];
-      if (!players) return;
-
-      const teamTotal = players.reduce((sum, p) => sum + p.salary, 0);
-      teamRosterTotals[teamId] = teamTotal;
-
-      playersList.innerHTML = players
-        .map(
-          (p, i) => `
-          <li>
-            <input type="checkbox" id="player-${teamId}-${i}"
-              onchange="togglePlayer(${teamId}, ${i}, '${p.name.replace(/'/g, "\\'")}', ${p.salary})">
-            <div class="player-avatar">${
-              p.name.split(' ').map(n => n[0]).join('')
-            }</div>
-            <label for="player-${teamId}-${i}">${p.name}</label>
-            <span class="salary-cell">$${formatSalary(p.salary)}</span>
-          </li>
-        `
-        )
-        .join('');
-      selectedPlayers[teamId] = [];
-      updateAllTeamsPayrollInfo();
-    }
-
-    function formatSalary(val) {
-      if (val >= 1e6) return (val / 1e6).toFixed(1) + 'M';
-      if (val >= 1e3) return (val / 1e3).toFixed(0) + 'K';
-      return val.toString();
-    }
-
-    function togglePlayer(teamId, idx, name, salary) {
-      const cb = document.getElementById(`player-${teamId}-${idx}`);
-      const data = {name, salary};
-      if (cb.checked) {
-        selectedPlayers[teamId].push(data);
-        cb.parentElement.classList.add('selected');
-      } else {
-        selectedPlayers[teamId] = selectedPlayers[teamId].filter(p => p.name !== name);
-        cb.parentElement.classList.remove('selected');
-      }
-      updateAllTeamsPayrollInfo();
-    }
-
-    function updateAllTeamsPayrollInfo() {
-      Object.keys(selectedPlayers).forEach(id => {
-        if (document.getElementById(`team-${id}`)) updatePayrollInfo(id);
-      });
-    }
-
-    function updatePayrollInfo(teamId) {
-      const selectedTotal = selectedPlayers[teamId].reduce((s, p) => s + p.salary, 0);
-      const rosterTotal = teamRosterTotals[teamId] || 0;
-      const incoming = calculateIncomingSalary(teamId);
-      const postTrade = rosterTotal - selectedTotal + incoming;
-
-      document.getElementById(`totals-${teamId}`).textContent = `Selected Players: $${formatSalary(selectedTotal)}`;
-      const totalEl = document.getElementById(`team-total-${teamId}`);
-      if (totalEl) {
-        totalEl.textContent = `$${formatSalary(postTrade)}`;
-        updateStatusClass(totalEl, postTrade);
-      }
-
-      updateSpaceCalculationId, 'cap-space', salaryCapInfo.salaryCap, postTrade);
-      updateSpaceCalculation(teamId, 'tax-space', salaryCapInfo.luxuryTax, postTrade);
-      updateSpaceCalculation(teamId, 'first-apron-space', salaryCapInfo.firstApron, postTrade);
-      updateSpaceCalculation(teamId, 'second-apron-space', salaryCapInfo.secondApron, postTrade);
-      updateTradeRestrictions(teamId, postTrade);
-    }
-
-    function calculateIncomingSalary(teamId) {
-      const totalOutgoing = Object.keys(selectedPlayers)
-        .filter(id => id !== teamId && selectedPlayers[id].length > 0)
-        .reduce((sum, id) => sum + selectedPlayers[id].reduce((s, p) => s + p.salary, 0), 0);
-      const activeTeams = Object.keys(selectedPlayers).filter(id => selectedPlayers[id].length > 0).length - 1;
-      return activeTeams > 0 ? totalOutgoing / activeTeams : 0;
-    }
-
-    function updateSpaceCalculation(teamId, id, limit, cur) {
-      const el = document.getElementById(`${id}-${teamId}`);
-      const ind = el.parentElement.querySelector('.status-indicator');
-      if (!el) return;
-      const space = limit - cur;
-      if (space >= 0) {
-        el.textContent = `$${formatSalary(space)}`;
-        el.className = 'payroll-value under';
-        ind.className = 'status-indicator under';
-      } else {
-        el.textContent = `-$${formatSalary(Math.abs(space))}`;
-        el.className = 'payroll-value over';
-        ind.className = 'status-indicator over';
-StatusClass(el, total) {
-      el.className = 'payroll-value';
-      if (total > salaryCapInfo.secondApron) el.classList.add('over');
-      else if (total > salaryCapInfo.firstApron) el.classList.add('close');
-      else el.classList.add('under');
-    }
-
-    function updateTradeRestrictions(teamId, post) {
-      const div = document.getElementById(`trade-restrictions-${teamId}`);
-      if (post > salaryCapInfo.secondApron) {
-        div.innerHTML = `
-          <div class="trade-restrictions severe">
-            <h4>⚠️ Second Apron Restrictions</h4>
-            <ul>
-              <li>Cannot use mid-level exception</li>
-              <li>Cannot aggregate salaries in trades</li>
-              <li>Cannot use trade exceptions</li>
-              <li>Cannot include cash in trades</li>
-              <li>Cannot take back more salary than sent out</li>
-            </ul>
-          </div>`;
-      } else if (post > salaryCapInfo.firstApron) {
-        div.innerHTML = `
-          <div class="trade-restrictions">
-            <h4>⚠️ First Apron Restrictions</h4>
-            <ul>
-              <li>Cannot acquire players via sign-and-trade</li>
-              <li>Cannot sign waived players over $12.9M</li>
-              <li>Cannot take back more salary than sent out</li>
-            </ul>
-          </div>`;
-      } else {
-        div.innerHTML = '';
-      }
-    }
-
-    function executeTrade() {
-      const teams = Object.keys(selectedPlayers).filter(id => selectedPlayers[id].length > 0);
+    function analyzeTrade() {
+      const teams = document.querySelectorAll('.team-block');
       if (teams.length < 2) {
-        showTradeResult(false, 'You need at least 2 teams with selected players to execute a trade.', {});
+        alert('Please add at least 2 teams to analyze a trade.');
         return;
       }
-      const info = teams.map(id => {
-        const out = selectedPlayers[id].reduce((s, p) => s + p.salary, 0);
-        const roster = teamRosterTotals[id] || 0;
-        const inp = calculateIncomingSalary(id);
-        const post = roster - out + inp;
-        return {id, out, inp, post, players: selectedPlayers[id], name: document.querySelector(`#team-${id} select`).value};
-      });
-
-      let valid = true;
-      const err = [];
-      info.forEach(t => {
-        if (t.post > salaryCapInfo.secondApron && t.inp > t.out) {
-          valid = false;
-          err.push(`${t.name} is in second apron and cannot take back more salary than sent out.`);
-        } else if (t.post > salaryCapInfo.firstApron && t.inp > t.out) {
-          valid = false;
-          err.push(`${t.name} is in first apron and cannot take back more salary than sent out.`);
+      
+      let analysis = '<h3>Trade Analysis Results</h3>';
+      let totalSalaryOut = 0;
+      let totalSalaryIn = 0;
+      let isValid = true;
+      let reasons = [];
+      
+      teams.forEach((team, index) => {
+        const teamId = team.id;
+        const selectedPlayers = team.querySelectorAll('input[type="checkbox"]:checked');
+        const teamSelect = team.querySelector('select');
+        const teamName = teamSelect.options[teamSelect.selectedIndex]?.text || 'Unknown Team';
+        
+        if (selectedPlayers.length === 0) {
+          reasons.push(`${teamName} has no players selected`);
+          isValid = false;
+          return;
         }
-      });
-
-      if (teams.length === 2 && valid) {
-        const [a, b] = info;
-        const diff = Math.abs(a.out - b.out);
-        const high = Math.max(a.out, b.out);
-        const aApron = a.post > salaryCapInfo.firstApron;
-        const bApron = b.post > salaryCapInfo.firstApron;
-        if (!aApron && !bApron) {
-          const diffAllowed = high * 0.25 + 100000;
-          if (diff > diffAllowed) {
-            valid = false;
-            err.push(`Trade salaries don't match. Difference of $${formatSalary(diff)} exceeds the allowed $${formatSalary(diffAllowed)}.`);
-          }
-        }
-      }
-
-      const data = {};
-      info.forEach(t => { data[t.name] = t.players; });
-
-      showTradeResult(valid, err.join(' '), data);
-    }
-
-    function showTradeResult(success, msg, data) {
-      const modal = document.getElementById('tradeModal');
-      const header = document.getElementById('modalHeader');
-      const title = document.getElementById('modalTitle');
-      const summary = document.getElementById('tradeSummary');
-      const msgDiv = document.getElementById('tradeMessage');
-
-      header.className = `modal-header ${success ? 'success' : 'failed'}`;
-      title.textContent = success ? 'Trade Successful!' : 'Trade Failed';
-
-      summary.innerHTML = '';
-      msgDiv.innerHTML = '';
-
-      Object.keys(data).forEach(team => {
-        const div = document.createElement('div');
-        div.className = 'team-summary';
-        const total = data[team].reduce((s, p) => s + p.salary, 0);
-        const items = data[team]
-          .map(
-            p =>
-              `<div class="player-item"><div class="player-avatar">${
-                p.name.split(' ').map(n => n[0]).join('')
-              }</div><span class="player-name">${p.name}</span><span class="player-salary">$${formatSalary(p.salary)}</span></div>`
-          )
-          .join('');
-        div.innerHTML = `<h4>${team} (Total: $${formatSalary(total)})</h4>${items}`;
-        summary.appendChild(div);
-      });
-
-      if (success) {
-        msgDiv.innerHTML = `<div class="success-message">🎉 Trade completed successfully! All salary cap and apron requirements have been met.</div>`;
-        document.getElementById('socialSharing').style.display = 'block';
-      } else {
-        msgDiv.innerHTML = `<div class="error-message">❌ ${msg}</div>`;
-        document.getElementById('socialSharing').style.display = 'none';
-      }
-
-      modal.style.display = 'block';
-    }
-
-    function closeModal() {
-      document.getElementById('tradeModal').style.display = 'none';
-    }
-
-    /* Social media sharing helpers – you can keep them as is from the original snippet */
-    function generateTradeText() { /* ... */ }
-    function generateTradeImage() { /* ... */ }
-    function generateTradeImageForSharing(cb) { /* ... */ }
-    function downloadImage(blob, name) { /* ... */ }
-    function showShareMessage(msg) { /* ... */ }
-    function clearTrade() { /* ... */ }
-    function toggleMobileMenu() { /* ... */ }
-
-    /* Security wrapper for navigation links – copy from your original script */
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.nav-link, .dropdown-link').forEach(l => {
-        l.addEventListener('click', e => {
-          const href = l.getAttribute('href');
-          if (href && (href.startsWith('/') || href.startsWith('#'))) {
-            const navRight = document.querySelector('.nav-right');
-            const hamb = document.querySelector('.hamburger');
-            if (navRight) navRight.classList.remove('open');
-            if (hamb) hamb.setAttribute('aria-expanded', 'false');
-          } else if (href && !href.startsWith('http')) {
-            e.preventDefault();
-            alert('Navigation blocked for security reasons.');
-          }
+        
+        let teamSalary = 0;
+        selectedPlayers.forEach(player => {
+          const salaryText = player.closest('li').querySelector('.salary-cell').textContent;
+          const salary = parseInt(salaryText.replace(/[$,]/g, ''));
+          teamSalary += salary;
         });
+        
+        if (index === 0) {
+          totalSalaryOut = teamSalary;
+        } else {
+          totalSalaryIn += teamSalary;
+        }
+        
+        analysis += `<p><strong>${teamName}:</strong> ${selectedPlayers.length} player(s), $${teamSalary.toLocaleString()}</p>`;
       });
+      
+      // Simple trade validity check (NBA salary matching rules are complex)
+      const salaryDifference = Math.abs(totalSalaryIn - totalSalaryOut);
+      const allowedDifference = Math.max(totalSalaryOut * 0.25 + 100000, 5000000);
+      
+      if (salaryDifference > allowedDifference) {
+        isValid = false;
+        reasons.push(`Salary difference too large: $${salaryDifference.toLocaleString()} (max allowed: $${allowedDifference.toLocaleString()})`);
+      }
+      
+      analysis += `<hr>`;
+      analysis += `<p><strong>Salary Impact:</strong> ${totalSalaryIn > totalSalaryOut ? '+' : ''}$${(totalSalaryIn - totalSalaryOut).toLocaleString()}</p>`;
+      analysis += `<p><strong>Trade Status:</strong> <span class="${isValid ? 'under' : 'over'}">${isValid ? 'VALID' : 'INVALID'}</span></p>`;
+      
+      if (!isValid) {
+        analysis += `<p><strong>Issues:</strong></p><ul>`;
+        reasons.forEach(reason => {
+          analysis += `<li>${reason}</li>`;
+        });
+        analysis += `</ul>`;
+      }
+      
+      const resultBlock = document.getElementById('tradeResult');
+      resultBlock.className = `result-block ${isValid ? 'success' : 'fail'}`;
+      resultBlock.style.display = 'block';
+      document.getElementById('resultContent').innerHTML = analysis;
+      
+      resultBlock.scrollIntoView({ behavior: 'smooth' });
+    }
 
-      /* Override window.open, location.assign/replace etc. – keep same as original script */
-      const origWinOpen = window.open;
-      window.open = (url, target, features) => {
-        return url && (url.startsWith('http://') || url.startsWith('https://')) ? origWinOpen.call(this, url, target || '_blank', features) : null;
-      };
+    // Initialize with one team
+    document.addEventListener('DOMContentLoaded', function() {
+      addTeam();
     });
 
-    window.onclick = e => {
-      const modal = document.getElementById('tradeModal');
-      if (e.target === modal) closeModal();
-    };
-
-    /* Export modal handlers */
-    document.addEventListener('DOMContentLoaded', () => {
-      const exportModal = document.getElementById('tradeExportModal');
-      const exportCanvas = document.getElementById('tradeExportCanvas');
-      const copyBtn = document.getElementById('tradeCopyBtn');
-      const downloadBtn = document.getElementById('tradeDownloadBtn');
-      const close = document.getElementById('tradeCloseModal');
-
-      copyBtn.addEventListener('click', async () => {
-        try {
-          exportCanvas.toBlob(async blob => {
-            const dit = new ClipboardItem({ 'image/png': blob });
-            await navigator.clipboard.write([dit]);
-            copyBtn.textContent = '✅ Copied!';
-            setTimeout(() => copyBtn.textContent = '📋 Copy to Clipboard', 2000);
-          });
-        } catch (e) { alert('Copy failed'); }
-      });
-
-      downloadBtn.addEventListener('click', () => {
-        const a = document.createElement('a');
-        a.download = 'trade-machine-social.png';
-        a.href = exportCanvas.toDataURL('image/png');
-        a.click();
-      });
-
-      close.addEventListener('click', () => exportModal.style.display = 'none');
-      exportModal.addEventListener('click', e => e.target === exportModal && (exportModal.style.display = 'none'));
-
-      document.addEventListener('keydown', e => e.key === 'Escape' && exportModal.style.display === 'flex' && (exportModal.style.display = 'none'));
+    // Mobile hamburger menu functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const hamburger = document.querySelector('.hamburger');
+      const navRight = document.querySelector('.nav-right');
+      
+      if (hamburger && navRight) {
+        hamburger.addEventListener('click', function() {
+          navRight.classList.toggle('open');
+          hamburger.setAttribute('aria-expanded', 
+            hamburger.getAttribute('aria-expanded') === 'true' ? 'false' : 'true'
+          );
+        });
+      }
     });
-
-    /* Start with two teams */
-    addTeam();
-    addTeam();
   </script>
 </body>
 </html>
