@@ -2058,6 +2058,14 @@
       SECOND_APRON: 207824000          // $207.824 million
     };
 
+    // Destructure constants for use throughout the code
+    const {
+      SALARY_CAP,
+      LUXURY_TAX_THRESHOLD: LUXURY_TAX, // alias for legacy code
+      FIRST_APRON,
+      SECOND_APRON
+    } = NBA_SALARY_CONSTANTS;
+
     // NBA Player Rosters Data
     const playersData = {
       'ATL': [
@@ -2560,102 +2568,49 @@
     let teams = [];
     let tradeId = 0;
 
-    function addTeam() {
-      const teamId = `team-${++tradeId}`;
-      const teamBlock = createTeamBlock(teamId);
-      document.getElementById('tradeContainer').appendChild(teamBlock);
-    }
 
-    function createTeamBlock(teamId) {
-      const div = document.createElement('div');
-      div.className = 'team-block';
-      div.id = teamId;
-      
-      div.innerHTML = `
-        <div class="team-header">
-          <span class="team-label">Team</span>
-          <select onchange="loadTeamPlayers('${teamId}', this.value)">
-            <option value="">Select Team</option>
-            ${Object.entries(nbaTeams).map(([code, team]) => 
-              `<option value="${code}">${team.name}</option>`
-            ).join('')}
-          </select>
-          <button class="remove-team-btn" onclick="removeTeam('${teamId}')" title="Remove Team">×</button>
-        </div>
-        <ul class="players-list" id="${teamId}-players">
-          <li style="text-align: center; color: #666; font-style: italic; padding: 2rem;">
-            Select a team to view players
-          </li>
-        </ul>
-        <div class="totals">
-          <div>Selected: <span id="${teamId}-total">$0</span></div>
-        </div>
-        <div class="payroll-box">
-          <div class="line"><span class="level">Team Salary:</span> <span id="${teamId}-team-salary">$0</span></div>
-          <div class="line"><span class="level">Luxury Tax:</span> <span id="${teamId}-luxury-tax">$0</span></div>
-        </div>
-      `;
-      
-      return div;
-    }
 
-    function loadTeamPlayers(teamId, teamCode) {
-      if (!teamCode) return;
-      
-      const players = playersData[teamCode] || [];
-      const playersList = document.getElementById(`${teamId}-players`);
-      
-      if (players.length === 0) {
-        playersList.innerHTML = '<li style="text-align: center; color: #666; font-style: italic; padding: 2rem;">No players available</li>';
-        return;
+    function calculateLuxuryTax(teamSalary, luxuryTaxThreshold) {
+      if (teamSalary <= luxuryTaxThreshold) {
+        return 0;
       }
       
-      playersList.innerHTML = players.map(player => `
-        <li>
-          <input type="checkbox" id="${teamId}-${player.name}" onchange="updateTotals('${teamId}')">
-          <div class="player-avatar">${player.name.split(' ').map(n => n[0]).join('')}</div>
-          <label for="${teamId}-${player.name}">${player.name}</label>
-          <span class="salary-cell">$${player.salary.toLocaleString()}</span>
-        </li>
-      `).join('');
+      const overage = teamSalary - luxuryTaxThreshold;
+      let tax = 0;
       
-      updateTotals(teamId);
+      // Progressive luxury tax brackets (2024-25 season)
+      // $0-$5M over: $1.50 per dollar
+      // $5M-$10M over: $1.75 per dollar  
+      // $10M-$15M over: $2.50 per dollar
+      // $15M-$20M over: $3.25 per dollar
+      // $20M+ over: $3.75 per dollar (continuing the progression)
+      
+      if (overage <= 5000000) {
+        tax = overage * 1.50;
+      } else if (overage <= 10000000) {
+        tax = (5000000 * 1.50) + ((overage - 5000000) * 1.75);
+      } else if (overage <= 15000000) {
+        tax = (5000000 * 1.50) + (5000000 * 1.75) + ((overage - 10000000) * 2.50);
+      } else if (overage <= 20000000) {
+        tax = (5000000 * 1.50) + (5000000 * 1.75) + (5000000 * 2.50) + ((overage - 15000000) * 3.25);
+      } else {
+        tax = (5000000 * 1.50) + (5000000 * 1.75) + (5000000 * 2.50) + (5000000 * 3.25) + ((overage - 20000000) * 3.75);
+      }
+      
+      return Math.round(tax);
     }
 
-    function updateTotals(teamId) {
-      const checkboxes = document.querySelectorAll(`#${teamId}-players input[type="checkbox"]:checked`);
-      let total = 0;
-      
-      checkboxes.forEach(checkbox => {
-        const salaryText = checkbox.closest('li').querySelector('.salary-cell').textContent;
-        const salary = parseInt(salaryText.replace(/[$,]/g, ''));
-        total += salary;
-      });
-      
-      document.getElementById(`${teamId}-total`).textContent = `$${total.toLocaleString()}`;
-      
-      // Update team salary and luxury tax (simplified calculation)
-      const teamSalary = total;
-      const luxuryTaxThreshold = 165000000; // Approximate 2024-25 luxury tax threshold
-      const luxuryTax = teamSalary > luxuryTaxThreshold ? (teamSalary - luxuryTaxThreshold) * 1.5 : 0;
-      
-      document.getElementById(`${teamId}-team-salary`).textContent = `$${teamSalary.toLocaleString()}`;
-      document.getElementById(`${teamId}-luxury-tax`).textContent = luxuryTax > 0 ? 
-        `$${luxuryTax.toLocaleString()}` : '$0';
-      
-      // Color coding
-      const luxuryElement = document.getElementById(`${teamId}-luxury-tax`);
-      luxuryElement.className = luxuryTax > 0 ? 'over' : 'under';
-    }
+
 
     function removeTeam(teamId) {
       document.getElementById(teamId).remove();
     }
 
     function clearAllTrades() {
-      document.getElementById('tradeContainer').innerHTML = '';
-      closeTradeModal();
-      tradeId = 0;
+      const container = document.getElementById('tradeContainer');
+      container.innerHTML = '';
+      teamCounter = 0;
+      addTeam();
     }
 
     function randomTrade() {
@@ -2672,27 +2627,16 @@
         team2Code = teamCodes[Math.floor(Math.random() * teamCodes.length)];
       }
       
-      // Load teams
-      const selects = document.querySelectorAll('.team-block select');
-      selects[0].value = team1Code;
-      selects[1].value = team2Code;
-      
-      loadTeamPlayers('team-1', team1Code);
-      loadTeamPlayers('team-2', team2Code);
-      
-      // Select random players
+      // Load teams using the new system
       setTimeout(() => {
-        const checkboxes1 = document.querySelectorAll('#team-1-players input[type="checkbox"]');
-        const checkboxes2 = document.querySelectorAll('#team-2-players input[type="checkbox"]');
-        
-        if (checkboxes1.length > 0) {
-          checkboxes1[Math.floor(Math.random() * checkboxes1.length)].checked = true;
-          updateTotals('team-1');
+        const selects = document.querySelectorAll('.team-block select');
+        if (selects[0]) {
+          selects[0].value = team1Code;
+          loadTeamRoster(selects[0], 'team-1');
         }
-        
-        if (checkboxes2.length > 0) {
-          checkboxes2[Math.floor(Math.random() * checkboxes2.length)].checked = true;
-          updateTotals('team-2');
+        if (selects[1]) {
+          selects[1].value = team2Code;
+          loadTeamRoster(selects[1], 'team-2');
         }
       }, 100);
     }
@@ -2704,11 +2648,7 @@
         return;
       }
       
-      // NBA CBA Thresholds (2024-25 season)
-      const SALARY_CAP = 140588000;
-      const LUXURY_TAX = 170814000;
-      const FIRST_APRON = 178655000;
-      const SECOND_APRON = 189489000;
+
       
       let analysis = '';
       let apronAnalysis = '';
@@ -2751,24 +2691,27 @@
           totalSalaryIn += tradedSalary;
         }
         
-        // Calculate post-trade salary
-        let postTradeSalary = currentTeamSalary - tradedSalary;
-        if (index === 0) {
-          postTradeSalary += totalSalaryIn;
-        } else {
-          postTradeSalary += totalSalaryOut;
-        }
-        
         teamAnalysis.push({
           name: teamName,
           code: teamCode,
           players: playerNames,
           tradedSalary: tradedSalary,
           currentSalary: currentTeamSalary,
-          postTradeSalary: postTradeSalary,
+          postTradeSalary: 0, // Will calculate after we have all totals
           count: selectedPlayers.length,
           isReceiving: index > 0
         });
+      });
+      
+      // Calculate post-trade salaries now that we have all totals
+      teamAnalysis.forEach((team, index) => {
+        if (index === 0) {
+          // First team gives out totalSalaryOut and receives totalSalaryIn
+          team.postTradeSalary = team.currentSalary - team.tradedSalary + totalSalaryIn;
+        } else {
+          // Other teams give out their tradedSalary and receive totalSalaryOut
+          team.postTradeSalary = team.currentSalary - team.tradedSalary + totalSalaryOut;
+        }
       });
       
       // NBA salary matching rules
@@ -2970,7 +2913,7 @@
       } else {
         distances.push({
           label: 'Luxury Tax Bill',
-          value: `$${((salary - LUXURY_TAX) * 1.5).toLocaleString()}`,
+          value: `$${calculateLuxuryTax(salary, LUXURY_TAX).toLocaleString()}`,
           class: 'warning'
         });
       }
@@ -3067,11 +3010,7 @@
       }
     });
 
-    // NBA CBA Thresholds (2024-25 season)
-    const SALARY_CAP = 140588000;
-    const LUXURY_TAX = 170814000;
-    const FIRST_APRON = 178655000;
-    const SECOND_APRON = 189489000;
+
 
     let teamCounter = 0;
 
