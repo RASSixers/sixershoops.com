@@ -608,9 +608,11 @@
       font-size: 1.25rem;
       line-height: 1.7;
       color: #475569;
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
       font-weight: 500;
     }
+
+
 
     .hero-buttons {
       display: flex;
@@ -1018,6 +1020,10 @@
         font-size: 2.8rem;
       }
       
+      .rotating-title {
+        font-size: 2rem;
+      }
+      
       .hero-buttons {
         flex-direction: column;
         align-items: center;
@@ -1056,43 +1062,7 @@
     }
 
 
-    /* Bottom Advertisement Row - 5 in a row flat */
-    .bottom-ads {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      margin: 3rem 0 2rem 0;
-      flex-wrap: nowrap;
-      padding: 0 1rem;
-      width: 100%;
-      max-width: 1600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
 
-
-    .ad-space {
-      width: 300px;
-      height: 250px;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      border: 2px dashed #cbd5e0;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      color: #64748b;
-      font-weight: 600;
-      text-align: center;
-      transition: all 0.3s ease;
-      flex: 0 0 300px;
-    }
-
-
-    .ad-space:hover {
-      border-color: #94a3b8;
-      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    }
 
 
     /* PREMIUM TWO COLUMN LAYOUT */
@@ -1794,9 +1764,9 @@
         </p>
         
         <div class="hero-buttons">
-          <a href="https://x.com/Sixers_Hoops" target="_blank" class="btn-primary">
-            <span class="btn-icon">💰</span>
-            <span>Explore Salary Breakdown</span>
+          <a href="schedule.html" class="btn-primary">
+            <span class="btn-icon">📅</span>
+            <span>Explore Schedule</span>
             <span class="btn-arrow">→</span>
           </a>
           <a href="#" class="btn-secondary">
@@ -2075,42 +2045,47 @@
     </section>
 
 
- 
+
+  </main>
+
 
   <script>
     // Elite Navigation JavaScript
     document.addEventListener('DOMContentLoaded', function() {
+      // Guard navigation code - only run if elements exist
       const navbar = document.getElementById('navbar');
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
       const mobileMenu = document.getElementById('mobileMenu');
 
-      // Mobile menu toggle
-      mobileMenuBtn.addEventListener('click', function() {
-        mobileMenuBtn.classList.toggle('active');
-        mobileMenu.classList.toggle('active');
-        
-        // Update aria attributes
-        const isExpanded = mobileMenu.classList.contains('active');
-        mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
-      });
+      if (navbar && mobileMenuBtn && mobileMenu) {
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', function() {
+          mobileMenuBtn.classList.toggle('active');
+          mobileMenu.classList.toggle('active');
+          
+          // Update aria attributes
+          const isExpanded = mobileMenu.classList.contains('active');
+          mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
+        });
 
-      // Close mobile menu when clicking outside
-      document.addEventListener('click', function(event) {
-        if (!navbar.contains(event.target) && !mobileMenu.contains(event.target)) {
-          mobileMenuBtn.classList.remove('active');
-          mobileMenu.classList.remove('active');
-          mobileMenuBtn.setAttribute('aria-expanded', 'false');
-        }
-      });
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+          if (!navbar.contains(event.target) && !mobileMenu.contains(event.target)) {
+            mobileMenuBtn.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
 
-      // Navbar scroll effect
-      window.addEventListener('scroll', function() {
-        if (window.scrollY > 20) {
-          navbar.classList.add('scrolled');
-        } else {
-          navbar.classList.remove('scrolled');
-        }
-      });
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+          if (window.scrollY > 20) {
+            navbar.classList.add('scrolled');
+          } else {
+            navbar.classList.remove('scrolled');
+          }
+        });
+      }
 
       // Smooth scrolling for anchor links
       document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -2131,19 +2106,21 @@
       dropdowns.forEach(dropdown => {
         const toggle = dropdown.querySelector('.dropdown-toggle');
         
-        toggle.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            dropdown.classList.toggle('active');
-          }
-        });
+        if (toggle) {
+          toggle.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              dropdown.classList.toggle('active');
+            }
+          });
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-          if (!dropdown.contains(e.target)) {
-            dropdown.classList.remove('active');
-          }
-        });
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+            if (!dropdown.contains(e.target)) {
+              dropdown.classList.remove('active');
+            }
+          });
+        }
       });
 
       // CARD SLIDER FUNCTIONALITY
@@ -2199,6 +2176,8 @@
           cardSlider.addEventListener('mouseleave', startAutoSlide);
         }
       }
+
+
     });
   </script>
 
