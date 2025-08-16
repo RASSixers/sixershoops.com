@@ -1014,7 +1014,21 @@
           const gameTime = element.getAttribute('data-game-time');
           
           if (gameDate && gameTime) {
-            const gameDateTime = new Date(`${gameDate} ${gameTime}`);
+            // Parse the date and time more reliably
+            // Convert "7:30 PM ET" to "19:30" format
+            let timeString = gameTime.replace(' ET', '').trim();
+            const [time, period] = timeString.split(' ');
+            const [hours, minutes] = time.split(':');
+            let hour24 = parseInt(hours);
+            
+            if (period === 'PM' && hour24 !== 12) {
+              hour24 += 12;
+            } else if (period === 'AM' && hour24 === 12) {
+              hour24 = 0;
+            }
+            
+            // Create date object with proper timezone handling
+            const gameDateTime = new Date(`${gameDate}T${hour24.toString().padStart(2, '0')}:${minutes}:00-05:00`); // ET timezone
             const now = new Date();
             const timeDiff = gameDateTime - now;
             
@@ -1031,7 +1045,13 @@
                 element.textContent = `${minutes}m`;
               }
             } else {
-              element.textContent = 'Game Started';
+              // Check if the game is more than 3 hours past start time
+              const hoursAfterStart = Math.abs(timeDiff) / (1000 * 60 * 60);
+              if (hoursAfterStart > 3) {
+                element.textContent = 'Final';
+              } else {
+                element.textContent = 'Game Started';
+              }
             }
           }
         });
