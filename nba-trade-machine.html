@@ -1943,12 +1943,12 @@
       align-items: center;
       opacity: 0;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      animation: modalFadeIn 0.5s ease-out forwards;
     }
 
     .modal-overlay.show {
-      display: flex;
+      display: flex !important;
       opacity: 1;
+      animation: modalFadeIn 0.5s ease-out forwards;
     }
 
     @keyframes modalFadeIn {
@@ -2606,7 +2606,6 @@
       <div class="control-buttons">
         <button class="control-btn" onclick="addTeam()"><span>+ Add Team</span></button>
         <button class="control-btn" onclick="clearAllTrades()"><span>Clear All</span></button>
-        <button class="control-btn" onclick="randomTrade()"><span>Random Trade</span></button>
       </div>
     </section>
 
@@ -2633,10 +2632,10 @@
             <button id="exportTradeBtn" class="export-btn-action copy-btn" title="Share this trade analysis">
               📸 Share Analysis
             </button>
-            <button onclick="analyzeTrade()" class="export-btn-action" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);" title="Re-analyze this trade">
+            <button id="reAnalyzeBtn" class="export-btn-action" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);" title="Re-analyze this trade">
               🔄 Re-analyze
             </button>
-            <button onclick="clearAllTrades()" class="export-btn-action" style="background: linear-gradient(135deg, #f59e0b, #d97706);" title="Start a new trade">
+            <button id="newTradeBtn" class="export-btn-action" style="background: linear-gradient(135deg, #f59e0b, #d97706);" title="Start a new trade">
               🆕 New Trade
             </button>
           </div>
@@ -3684,6 +3683,15 @@
       const detailsEl = document.getElementById('tradeDetails');
       const apronEl = document.getElementById('apronTracking');
       
+      // Ensure modal exists
+      if (!modal || !status || !messageEl || !subtitleEl || !detailsEl || !apronEl) {
+        console.error('Modal elements not found');
+        return;
+      }
+      
+      // Reset modal state first
+      resetModalState();
+      
       // Enhanced status display with better emojis and animations
       if (isSuccess) {
         status.textContent = '🎉';
@@ -3707,23 +3715,29 @@
       detailsEl.innerHTML = '<div class="modal-loading"><div class="loading-spinner"></div></div>';
       apronEl.innerHTML = '';
       
-      // Show modal first
+      // Show modal with proper display
+      modal.style.display = 'flex';
       modal.classList.add('show');
       document.body.style.overflow = 'hidden';
       
       // Add content with staggered animation
       setTimeout(() => {
-        detailsEl.innerHTML = details;
-        apronEl.innerHTML = apronAnalysis || '';
-        
-        // Update quick stats
-        updateQuickStats();
-        
-        // Generate executive summary
-        generateExecutiveSummary(isSuccess, title, message);
-        
-        // Animate content sections
-        animateModalContent();
+        try {
+          detailsEl.innerHTML = details;
+          apronEl.innerHTML = apronAnalysis || '';
+          
+          // Update quick stats
+          updateQuickStats();
+          
+          // Generate executive summary
+          generateExecutiveSummary(isSuccess, title, message);
+          
+          // Animate content sections
+          animateModalContent();
+        } catch (error) {
+          console.error('Error updating modal content:', error);
+          detailsEl.innerHTML = '<p>Error loading trade details. Please try again.</p>';
+        }
       }, 800);
       
       // Add sound effect (optional)
@@ -3831,43 +3845,96 @@
 
     function closeTradeModal() {
       const modal = document.getElementById('tradeModal');
-      modal.classList.remove('show');
-      document.body.style.overflow = 'auto';
+      if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        // Reset modal state
+        resetModalState();
+      }
+    }
+
+    function resetModalState() {
+      // Reset to first tab
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+      
+      const firstTab = document.querySelector('[data-tab="details"]');
+      const firstPanel = document.getElementById('tab-details');
+      
+      if (firstTab && firstPanel) {
+        firstTab.classList.add('active');
+        firstPanel.classList.add('active');
+      }
+      
+      // Clear any temporary styles or states
+      const quickStats = document.querySelectorAll('.quick-stat-value');
+      quickStats.forEach(stat => stat.textContent = '-');
     }
 
     // Tab switching functionality
     function switchTab(tabName) {
-      // Remove active class from all tabs and panels
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-      
-      // Add active class to selected tab and panel
-      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-      document.getElementById(`tab-${tabName}`).classList.add('active');
+      try {
+        // Remove active class from all tabs and panels
+        document.querySelectorAll('.tab-button').forEach(btn => {
+          if (btn) btn.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+          if (panel) panel.classList.remove('active');
+        });
+        
+        // Add active class to selected tab and panel
+        const selectedTab = document.querySelector(`[data-tab="${tabName}"]`);
+        const selectedPanel = document.getElementById(`tab-${tabName}`);
+        
+        if (selectedTab && selectedPanel) {
+          selectedTab.classList.add('active');
+          selectedPanel.classList.add('active');
+        }
+      } catch (error) {
+        console.error('Error switching tabs:', error);
+      }
     }
 
     // Update quick stats in modal
     function updateQuickStats() {
-      const teams = document.querySelectorAll('.team-block');
-      let totalPlayers = 0;
-      let totalSalary = 0;
-      
-      teams.forEach(team => {
-        const selectedPlayers = team.querySelectorAll('input[type="checkbox"]:checked');
-        totalPlayers += selectedPlayers.length;
+      try {
+        const teams = document.querySelectorAll('.team-block');
+        let totalPlayers = 0;
+        let totalSalary = 0;
         
-        selectedPlayers.forEach(player => {
-          const salaryText = player.closest('li').querySelector('.salary-cell').textContent;
-          const salary = parseInt(salaryText.replace(/[$,]/g, ''));
-          totalSalary += salary;
+        teams.forEach(team => {
+          const selectedPlayers = team.querySelectorAll('input[type="checkbox"]:checked');
+          totalPlayers += selectedPlayers.length;
+          
+          selectedPlayers.forEach(player => {
+            try {
+              const salaryCell = player.closest('li')?.querySelector('.salary-cell');
+              if (salaryCell) {
+                const salaryText = salaryCell.textContent || '0';
+                const salary = parseInt(salaryText.replace(/[$,]/g, '')) || 0;
+                totalSalary += salary;
+              }
+            } catch (e) {
+              console.warn('Error parsing salary for player:', e);
+            }
+          });
         });
-      });
-      
-      // Update quick stats display
-      document.getElementById('quickStatTeams').querySelector('.quick-stat-value').textContent = teams.length;
-      document.getElementById('quickStatPlayers').querySelector('.quick-stat-value').textContent = totalPlayers;
-      document.getElementById('quickStatSalary').querySelector('.quick-stat-value').textContent = 
-        '$' + (totalSalary / 1000000).toFixed(1) + 'M';
+        
+        // Update quick stats display safely
+        const teamsStatEl = document.getElementById('quickStatTeams')?.querySelector('.quick-stat-value');
+        const playersStatEl = document.getElementById('quickStatPlayers')?.querySelector('.quick-stat-value');
+        const salaryStatEl = document.getElementById('quickStatSalary')?.querySelector('.quick-stat-value');
+        
+        if (teamsStatEl) teamsStatEl.textContent = teams.length;
+        if (playersStatEl) playersStatEl.textContent = totalPlayers;
+        if (salaryStatEl) {
+          salaryStatEl.textContent = '$' + (totalSalary / 1000000).toFixed(1) + 'M';
+        }
+      } catch (error) {
+        console.error('Error updating quick stats:', error);
+      }
     }
 
     // Generate executive summary
@@ -3957,6 +4024,64 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         closeTradeModal();
+      }
+    });
+
+    // Debounce utility to prevent rapid clicks
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Initialize modal button event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // Re-analyze button with debounce
+      const reAnalyzeBtn = document.getElementById('reAnalyzeBtn');
+      if (reAnalyzeBtn) {
+        const debouncedReAnalyze = debounce(function() {
+          closeTradeModal();
+          setTimeout(() => {
+            analyzeTrade();
+          }, 300);
+        }, 500);
+
+        reAnalyzeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.disabled = true;
+          debouncedReAnalyze();
+          setTimeout(() => {
+            this.disabled = false;
+          }, 1000);
+        });
+      }
+
+      // New trade button with debounce
+      const newTradeBtn = document.getElementById('newTradeBtn');
+      if (newTradeBtn) {
+        const debouncedNewTrade = debounce(function() {
+          closeTradeModal();
+          setTimeout(() => {
+            clearAllTrades();
+          }, 300);
+        }, 500);
+
+        newTradeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.disabled = true;
+          debouncedNewTrade();
+          setTimeout(() => {
+            this.disabled = false;
+          }, 1000);
+        });
       }
     });
 
