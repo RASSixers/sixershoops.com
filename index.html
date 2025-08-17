@@ -2055,6 +2055,7 @@
   <script>
     // Elite Navigation JavaScript
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('Main DOMContentLoaded fired');
       // Guard navigation code - only run if elements exist
       const navbar = document.getElementById('navbar');
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -2159,18 +2160,56 @@
 
       // Initialize slider
       if (cards.length > 0) {
+        console.log('Initializing slider with', cards.length, 'cards');
+        console.log('Initializing slider with', cards.length, 'cards');
         showCard(0);
         startAutoSlide();
 
         // Add click handlers to indicators
         indicators.forEach((indicator, index) => {
           indicator.addEventListener('click', () => {
+            console.log('Indicator clicked:', index);
+            console.log('Indicator clicked:', index);
             stopAutoSlide();
             showCard(index);
             // Restart auto-slide after manual interaction
             setTimeout(startAutoSlide, 8000);
           });
+        } else {
+        console.log('No cards found for slider');
+      }
+
+      // Add click handlers for card buttons
+      const cardButtons = document.querySelectorAll('.card-btn');
+      cardButtons.forEach((button, index) => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          let targetPage = '';
+          
+          switch(index) {
+            case 0: // Current Roster
+              targetPage = 'roster.html';
+              break;
+            case 1: // Salary Breakdown
+              targetPage = 'salary.html';
+              break;
+            case 2: // Future Draft Picks
+              targetPage = 'draft.html';
+              break;
+            case 3: // Depth Chart
+              targetPage = 'depth.html';
+              break;
+            case 4: // Trade Machine
+              targetPage = 'nba-trade-machine.html';
+              break;
+            default:
+              targetPage = 'index.html';
+          }
+          
+          console.log('Navigating to:', targetPage);
+          window.location.href = targetPage;
         });
+      }););
 
         // Pause auto-slide on hover
         const cardSlider = document.querySelector('.card-slider');
@@ -2178,7 +2217,41 @@
           cardSlider.addEventListener('mouseenter', stopAutoSlide);
           cardSlider.addEventListener('mouseleave', startAutoSlide);
         }
+      } else {
+        console.log('No cards found for slider');
       }
+
+      // Add click handlers for card buttons
+      const cardButtons = document.querySelectorAll('.card-btn');
+      cardButtons.forEach((button, index) => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          let targetPage = '';
+          
+          switch(index) {
+            case 0: // Current Roster
+              targetPage = 'roster.html';
+              break;
+            case 1: // Salary Breakdown
+              targetPage = 'salary.html';
+              break;
+            case 2: // Future Draft Picks
+              targetPage = 'draft.html';
+              break;
+            case 3: // Depth Chart
+              targetPage = 'depth.html';
+              break;
+            case 4: // Trade Machine
+              targetPage = 'nba-trade-machine.html';
+              break;
+            default:
+              targetPage = 'index.html';
+          }
+          
+          console.log('Navigating to:', targetPage);
+          window.location.href = targetPage;
+        });
+      });
 
 
     });
@@ -2626,6 +2699,7 @@
     }
 
     .notification {
+      console.log('Enhanced functionality DOMContentLoaded fired');
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
       border-radius: 12px;
       padding: 1rem 1.5rem;
