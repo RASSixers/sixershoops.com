@@ -2055,7 +2055,6 @@
   <script>
     // Elite Navigation JavaScript
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Main DOMContentLoaded fired');
       // Guard navigation code - only run if elements exist
       const navbar = document.getElementById('navbar');
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -2127,137 +2126,112 @@
         }
       });
 
-      // CARD SLIDER FUNCTIONALITY
-      const cards = document.querySelectorAll('.stats-card');
-      const indicators = document.querySelectorAll('.indicator');
-      let currentCard = 0;
-      let autoSlideInterval;
-
-      function showCard(index) {
-        // Remove active class from all cards and indicators
-        cards.forEach(card => card.classList.remove('active'));
-        indicators.forEach(indicator => indicator.classList.remove('active'));
-        
-        // Add active class to current card and indicator
-        cards[index].classList.add('active');
-        indicators[index].classList.add('active');
-        
-        currentCard = index;
-      }
-
-      function nextCard() {
-        const next = (currentCard + 1) % cards.length;
-        showCard(next);
-      }
-
-      function startAutoSlide() {
-        autoSlideInterval = setInterval(nextCard, 4000); // Change every 4 seconds
-      }
-
-      function stopAutoSlide() {
-        clearInterval(autoSlideInterval);
-      }
-
-      // Initialize slider
-      if (cards.length > 0) {
-        console.log('Initializing slider with', cards.length, 'cards');
-        console.log('Initializing slider with', cards.length, 'cards');
-        showCard(0);
-        startAutoSlide();
-
-        // Add click handlers to indicators
-        indicators.forEach((indicator, index) => {
-          indicator.addEventListener('click', () => {
-            console.log('Indicator clicked:', index);
-            console.log('Indicator clicked:', index);
-            stopAutoSlide();
-            showCard(index);
-            // Restart auto-slide after manual interaction
-            setTimeout(startAutoSlide, 8000);
-          });
-        } else {
-        console.log('No cards found for slider');
-      }
-
-      // Add click handlers for card buttons
-      const cardButtons = document.querySelectorAll('.card-btn');
-      cardButtons.forEach((button, index) => {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          let targetPage = '';
-          
-          switch(index) {
-            case 0: // Current Roster
-              targetPage = 'roster.html';
-              break;
-            case 1: // Salary Breakdown
-              targetPage = 'salary.html';
-              break;
-            case 2: // Future Draft Picks
-              targetPage = 'draft.html';
-              break;
-            case 3: // Depth Chart
-              targetPage = 'depth.html';
-              break;
-            case 4: // Trade Machine
-              targetPage = 'nba-trade-machine.html';
-              break;
-            default:
-              targetPage = 'index.html';
-          }
-          
-          console.log('Navigating to:', targetPage);
-          window.location.href = targetPage;
-        });
-      }););
-
-        // Pause auto-slide on hover
-        const cardSlider = document.querySelector('.card-slider');
-        if (cardSlider) {
-          cardSlider.addEventListener('mouseenter', stopAutoSlide);
-          cardSlider.addEventListener('mouseleave', startAutoSlide);
-        }
-      } else {
-        console.log('No cards found for slider');
-      }
-
-      // Add click handlers for card buttons
-      const cardButtons = document.querySelectorAll('.card-btn');
-      cardButtons.forEach((button, index) => {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          let targetPage = '';
-          
-          switch(index) {
-            case 0: // Current Roster
-              targetPage = 'roster.html';
-              break;
-            case 1: // Salary Breakdown
-              targetPage = 'salary.html';
-              break;
-            case 2: // Future Draft Picks
-              targetPage = 'draft.html';
-              break;
-            case 3: // Depth Chart
-              targetPage = 'depth.html';
-              break;
-            case 4: // Trade Machine
-              targetPage = 'nba-trade-machine.html';
-              break;
-            default:
-              targetPage = 'index.html';
-          }
-          
-          console.log('Navigating to:', targetPage);
-          window.location.href = targetPage;
-        });
-      });
-
-
     });
   </script>
 
-
+  <!-- SIMPLE CARD SLIDER -->
+  <script>
+    // Wait for everything to load
+    window.addEventListener('load', function() {
+      console.log('Window loaded, initializing slider...');
+      
+      // Simple Card Slider
+      let currentSlide = 0;
+      const slides = document.querySelectorAll('.stats-card');
+      const indicators = document.querySelectorAll('.indicator');
+      let slideInterval;
+      
+      console.log('Found', slides.length, 'slides and', indicators.length, 'indicators');
+      
+      function showSlide(n) {
+        console.log('Showing slide:', n);
+        
+        // Hide all slides
+        slides.forEach(slide => {
+          slide.classList.remove('active');
+        });
+        
+        // Remove active from all indicators
+        indicators.forEach(indicator => {
+          indicator.classList.remove('active');
+        });
+        
+        // Show current slide
+        if (slides[n]) {
+          slides[n].classList.add('active');
+        }
+        
+        // Activate current indicator
+        if (indicators[n]) {
+          indicators[n].classList.add('active');
+        }
+        
+        currentSlide = n;
+      }
+      
+      function nextSlide() {
+        const next = (currentSlide + 1) % slides.length;
+        showSlide(next);
+      }
+      
+      function startSlider() {
+        slideInterval = setInterval(nextSlide, 4000);
+        console.log('Slider started');
+      }
+      
+      function stopSlider() {
+        clearInterval(slideInterval);
+        console.log('Slider stopped');
+      }
+      
+      // Initialize if we have slides
+      if (slides.length > 0) {
+        showSlide(0);
+        startSlider();
+        
+        // Add click handlers to indicators
+        indicators.forEach((indicator, index) => {
+          indicator.addEventListener('click', function() {
+            console.log('Indicator clicked:', index);
+            stopSlider();
+            showSlide(index);
+            setTimeout(startSlider, 6000); // Restart after 6 seconds
+          });
+        });
+        
+        // Pause on hover
+        const slider = document.querySelector('.card-slider');
+        if (slider) {
+          slider.addEventListener('mouseenter', stopSlider);
+          slider.addEventListener('mouseleave', startSlider);
+        }
+        
+        // Add button click handlers
+        const buttons = document.querySelectorAll('.card-btn');
+        buttons.forEach((button, index) => {
+          button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const pages = [
+              'roster.html',      // Current Roster
+              'salary.html',      // Salary Breakdown  
+              'draft.html',       // Future Draft Picks
+              'depth.html',       // Depth Chart
+              'nba-trade-machine.html' // Trade Machine
+            ];
+            
+            if (pages[index]) {
+              console.log('Navigating to:', pages[index]);
+              window.location.href = pages[index];
+            }
+          });
+        });
+        
+      } else {
+        console.log('No slides found!');
+      }
+    });
+  </script>
 
   <!-- PREMIUM FOOTER -->
   <footer class="premium-footer">
@@ -2699,7 +2673,6 @@
     }
 
     .notification {
-      console.log('Enhanced functionality DOMContentLoaded fired');
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
       border-radius: 12px;
       padding: 1rem 1.5rem;
