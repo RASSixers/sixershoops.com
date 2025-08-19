@@ -3333,10 +3333,17 @@
         flex-direction: column;
         padding: 1rem 0;
         z-index: 999;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        border-top: 1px solid rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       }
       
       .mobile-menu.active {
         display: flex;
+        opacity: 1;
+        transform: translateY(0);
       }
       
       .mobile-nav-link {
@@ -3444,6 +3451,71 @@
         cookieConsent.classList.remove('show');
         showNotification('Cookie preferences saved.', 'info');
       });
+
+      // MOBILE NAVBAR FUNCTIONALITY - Added directly to ensure it works
+      function initMobileNavbar() {
+        // Wait a bit for nav.js to inject the navbar
+        setTimeout(() => {
+          const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+          const mobileMenu = document.getElementById('mobileMenu');
+          const navbar = document.getElementById('navbar');
+          
+          console.log('Mobile navbar elements:', { mobileMenuBtn, mobileMenu, navbar });
+          
+          if (mobileMenuBtn && mobileMenu) {
+            console.log('Mobile navbar initialized successfully');
+            
+            // Mobile menu toggle
+            mobileMenuBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              console.log('Mobile menu button clicked');
+              
+              // Toggle active classes
+              mobileMenuBtn.classList.toggle('active');
+              mobileMenu.classList.toggle('active');
+              
+              // Update aria-expanded
+              const isExpanded = mobileMenu.classList.contains('active');
+              mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
+              
+              console.log('Mobile menu is now:', isExpanded ? 'open' : 'closed');
+            });
+            
+            // Close mobile menu when clicking on a link
+            const mobileNavLinks = mobileMenu.querySelectorAll('.mobile-nav-link');
+            mobileNavLinks.forEach(link => {
+              link.addEventListener('click', function() {
+                console.log('Mobile nav link clicked, closing menu');
+                mobileMenuBtn.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+              });
+            });
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+              if (!navbar.contains(event.target) && !mobileMenu.contains(event.target)) {
+                if (mobileMenu.classList.contains('active')) {
+                  console.log('Clicked outside, closing mobile menu');
+                  mobileMenuBtn.classList.remove('active');
+                  mobileMenu.classList.remove('active');
+                  mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                }
+              }
+            });
+            
+          } else {
+            console.log('Mobile navbar elements not found, retrying...');
+            // Retry after another delay
+            setTimeout(initMobileNavbar, 500);
+          }
+        }, 200);
+      }
+      
+      // Initialize mobile navbar
+      initMobileNavbar();
 
 
 
