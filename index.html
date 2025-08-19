@@ -1893,7 +1893,7 @@
 
       .navbar {
         height: 80px;
-        padding: 0.5rem 1rem;
+        padding: 0 1rem;
       }
       
       .hero {
@@ -3239,14 +3239,15 @@
         max-width: none;
       }
       
-      /* Global mobile improvements */
+      /* Global mobile improvements - Safe version */
       * {
-        -webkit-tap-highlight-color: transparent;
+        -webkit-tap-highlight-color: rgba(59, 130, 246, 0.2);
       }
       
       button, a, .indicator {
         min-height: 44px;
         min-width: 44px;
+        cursor: pointer;
       }
       
       .main-container {
@@ -3264,37 +3265,53 @@
         -webkit-overflow-scrolling: touch;
       }
       
-      /* Mobile Navbar Fixes - Works with existing nav.js structure */
-      .navbar {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 1000 !important;
-        height: 70px !important;
-        background: rgba(30, 41, 59, 0.95) !important;
-        backdrop-filter: blur(10px) !important;
-        border-bottom: 1px solid rgba(59, 130, 246, 0.2) !important;
-        background: rgba(30, 41, 59, 0.95) !important;
-        backdrop-filter: blur(10px) !important;
-        border-bottom: 1px solid rgba(59, 130, 246, 0.2) !important;
+      /* Ensure all interactive elements work */
+      .btn-primary, .btn-secondary, .indicator, .mobile-nav-link, .mobile-menu-btn {
+        pointer-events: auto;
+        touch-action: manipulation;
       }
       
-      /* Mobile menu button (3 lines) */
-      .mobile-menu-btn, .nav-toggle, .hamburger {
-        display: flex !important;
+      /* Simple Mobile Navbar Fix - No aggressive overrides */
+      body {
+        padding-top: 80px;
+      }
+      
+      /* Ensure navbar is visible and clickable */
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        height: 80px;
+        background: rgba(30, 41, 59, 0.95);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1rem;
+      }
+      
+      /* Hide desktop menu on mobile */
+      .nav-menu {
+        display: none;
+      }
+      
+      /* Show mobile menu button */
+      .mobile-menu-btn {
+        display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         width: 44px;
         height: 44px;
-        cursor: pointer;
         background: transparent;
         border: none;
+        cursor: pointer;
         padding: 8px;
       }
       
-      .mobile-menu-btn span, .nav-toggle span, .hamburger span, .bar {
+      .mobile-menu-btn span {
         display: block;
         width: 25px;
         height: 3px;
@@ -3304,223 +3321,82 @@
         border-radius: 2px;
       }
       
-      /* Hide desktop menu on mobile */
-      .nav-menu, .nav-right {
-        display: none !important;
-      }
-      
       /* Mobile menu dropdown */
-      .mobile-menu, .nav-menu.active, .nav-right.active {
-        display: flex !important;
-        position: fixed !important;
-        top: 70px !important;
-        left: 0 !important;
-        right: 0 !important;
-        background: rgba(30, 41, 59, 0.98) !important;
-        backdrop-filter: blur(20px) !important;
-        flex-direction: column !important;
-        padding: 1rem 0 !important;
-        max-height: calc(100vh - 70px) !important;
-        overflow-y: auto !important;
-        border-top: 1px solid rgba(59, 130, 246, 0.2) !important;
-      }
-      
-      /* Mobile menu links */
-      .mobile-nav-link, .mobile-menu .nav-link, .nav-right.active .nav-link {
-        display: block !important;
-        padding: 1rem 1.5rem !important;
-        color: #e2e8f0 !important;
-        text-decoration: none !important;
-        font-size: 1.1rem !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        transition: all 0.3s ease !important;
-      }
-      
-      .mobile-nav-link:hover, .mobile-menu .nav-link:hover, .nav-right.active .nav-link:hover {
-        background: rgba(59, 130, 246, 0.1) !important;
-        color: #3b82f6 !important;
-      }
-      
-      /* Brand/Logo positioning */
-      .nav-brand, .brand-link, .site-title {
-        display: flex !important;
-        align-items: center !important;
-        color: #ffffff !important;
-        text-decoration: none !important;
-        font-size: 1.3rem !important;
-        font-weight: 700 !important;
-      }
-      
-      /* Navbar container layout */
-      .nav-container, .navbar > div {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 0 1rem !important;
-        height: 100% !important;
-        max-width: 100% !important;
-      }
-      
-      /* Fix body padding to match navbar height */
-      body {
-        padding-top: 70px !important;
-      }
-      
-      /* Ensure mobile menu appears correctly */
-      .mobile-menu.active {
-        display: flex !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        transform: translateY(0) !important;
-      }
-      
-      /* Brand logo styling */
-      .nav-logo {
-        width: 40px !important;
-        height: 40px !important;
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-        border-radius: 8px !important}
-      
-      /* Mobile menu button (3 lines) */
-      .mobile-menu-btn, .nav-toggle, .hamburger {
-        display: flex !important;
+      .mobile-menu {
+        display: none;
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        background: rgba(30, 41, 59, 0.98);
+        backdrop-filter: blur(20px);
         flex-direction: column;
-        justify-content: center !important;
-        color: white !important;
-        font-weight: 900 !important;
-        font-size: 1.2rem !important;
-        margin-right: 0.5rem !important;
+        padding: 1rem 0;
+        z-index: 999;
+      }
+      
+      .mobile-menu.active {
+        display: flex;
+      }
+      
+      .mobile-nav-link {
+        display: block;
+        padding: 1rem 1.5rem;
+        color: #e2e8f0;
+        text-decoration: none;
+        font-size: 1.1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+      }
+      
+      .mobile-nav-link:hover {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      
+      /* Brand styling */
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        color: #ffffff;
+        text-decoration: none;
+      }
+      
+      .nav-logo {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 900;
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
       }
       
       .brand-name {
-        font-size: 1.2rem !important;
-        font-weight: 700 !important;
-        color: #ffffff !important;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #ffffff;
       }
       
       .brand-tagline {
-        font-size: 0.7rem !important;
-        color: #94a3b8 !important;
-        display: none !important; /* Hide tagline on mobile to save space */
+        display: none; /* Hide on mobile */
       }
       
-      /* Animated hamburger menu */
-      .mobile-menu-btn.active span:nth-child(1),
-      .nav-toggle.active .bar:nth-child(1),
-      .hamburger.active span:nth-child(1) {
+      /* Animated hamburger */
+      .mobile-menu-btn.active span:nth-child(1) {
         transform: rotate(-45deg) translate(-5px, 6px);
         background: #3b82f6;
       }
       
-      .mobile-menu-btn.active span:nth-child(2),
-      .nav-toggle.active .bar:nth-child(2),
-      .hamburger.active span:nth-child(2) {
+      .mobile-menu-btn.active span:nth-child(2) {
         opacity: 0;
       }
       
-      .mobile-menu-btn.active span:nth-child(3),
-      .nav-toggle.active .bar:nth-child(3),
-      .hamburger.active span:nth-child(3) {
-        transform: rotate(45deg) translate(-5px, -6px);
-        background: #3b82f6;
-        align-items: center !important;
-        width: 44px;
-        height: 44px;
-        cursor: pointer;
-        background: transparent;
-        border: none;
-        padding: 8px;
-      }
-      
-      .mobile-menu-btn span, .nav-toggle span, .hamburger span, .bar {
-        display: block;
-        width: 25px;
-        height: 3px;
-        background: #e2e8f0;
-        margin: 3px 0;
-        transition: all 0.3s ease;
-        border-radius: 2px;
-      }
-      
-      /* Hide desktop menu on mobile */
-      .nav-menu, .nav-right {
-        display: none !important;
-      }
-      
-      /* Mobile menu dropdown */
-      .mobile-menu, .nav-menu.active, .nav-right.active {
-        display: flex !important;
-        position: fixed !important;
-        top: 70px !important;
-        left: 0 !important;
-        right: 0 !important;
-        background: rgba(30, 41, 59, 0.98) !important;
-        backdrop-filter: blur(20px) !important;
-        flex-direction: column !important;
-        padding: 1rem 0 !important;
-        max-height: calc(100vh - 70px) !important;
-        overflow-y: auto !important;
-        border-top: 1px solid rgba(59, 130, 246, 0.2) !important;
-      }
-      
-      /* Mobile menu links */
-      .mobile-nav-link, .mobile-menu .nav-link, .nav-right.active .nav-link {
-        display: block !important;
-        padding: 1rem 1.5rem !important;
-        color: #e2e8f0 !important;
-        text-decoration: none !important;
-        font-size: 1.1rem !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        transition: all 0.3s ease !important;
-      }
-      
-      .mobile-nav-link:hover, .mobile-menu .nav-link:hover, .nav-right.active .nav-link:hover {
-        background: rgba(59, 130, 246, 0.1) !important;
-        color: #3b82f6 !important;
-      }
-      
-      /* Brand/Logo positioning */
-      .nav-brand, .brand-link, .site-title {
-        display: flex !important;
-        align-items: center !important;
-        color: #ffffff !important;
-        text-decoration: none !important;
-        font-size: 1.3rem !important;
-        font-weight: 700 !important;
-      }
-      
-      /* Navbar container layout */
-      .nav-container, .navbar > div {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 0 1rem !important;
-        height: 100% !important;
-        max-width: 100% !important;
-      }
-      
-      /* Fix body padding */
-      body {
-        padding-top: 70px !important;
-      }
-      
-      /* Animated hamburger menu */
-      .mobile-menu-btn.active span:nth-child(1),
-      .nav-toggle.active .bar:nth-child(1),
-      .hamburger.active span:nth-child(1) {
-        transform: rotate(-45deg) translate(-5px, 6px);
-        background: #3b82f6;
-      }
-      
-      .mobile-menu-btn.active span:nth-child(2),
-      .nav-toggle.active .bar:nth-child(2),
-      .hamburger.active span:nth-child(2) {
-        opacity: 0;
-      }
-      
-      .mobile-menu-btn.active span:nth-child(3),
-      .nav-toggle.active .bar:nth-child(3),
-      .hamburger.active span:nth-child(3) {
+      .mobile-menu-btn.active span:nth-child(3) {
         transform: rotate(45deg) translate(-5px, -6px);
         background: #3b82f6;
       }
