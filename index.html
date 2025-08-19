@@ -3271,142 +3271,7 @@
         touch-action: manipulation;
       }
       
-      /* Simple Mobile Navbar Fix - No aggressive overrides */
-      body {
-        padding-top: 80px;
-      }
-      
-      /* Ensure navbar is visible and clickable */
-      .navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        height: 80px;
-        background: rgba(30, 41, 59, 0.95);
-        backdrop-filter: blur(10px);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 1rem;
-      }
-      
-      /* Hide desktop menu on mobile */
-      .nav-menu {
-        display: none;
-      }
-      
-      /* Show mobile menu button */
-      .mobile-menu-btn {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 44px;
-        height: 44px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        padding: 8px;
-      }
-      
-      .mobile-menu-btn span {
-        display: block;
-        width: 25px;
-        height: 3px;
-        background: #e2e8f0;
-        margin: 3px 0;
-        transition: all 0.3s ease;
-        border-radius: 2px;
-      }
-      
-      /* Mobile menu dropdown */
-      .mobile-menu {
-        display: none;
-        position: fixed;
-        top: 80px;
-        left: 0;
-        right: 0;
-        background: rgba(30, 41, 59, 0.98);
-        backdrop-filter: blur(20px);
-        flex-direction: column;
-        padding: 1rem 0;
-        z-index: 999;
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: all 0.3s ease;
-        border-top: 1px solid rgba(59, 130, 246, 0.2);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      }
-      
-      .mobile-menu.active {
-        display: flex;
-        opacity: 1;
-        transform: translateY(0);
-      }
-      
-      .mobile-nav-link {
-        display: block;
-        padding: 1rem 1.5rem;
-        color: #e2e8f0;
-        text-decoration: none;
-        font-size: 1.1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-      }
-      
-      .mobile-nav-link:hover {
-        background: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
-      }
-      
-      /* Brand styling */
-      .nav-brand {
-        display: flex;
-        align-items: center;
-        color: #ffffff;
-        text-decoration: none;
-      }
-      
-      .nav-logo {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 900;
-        font-size: 1.2rem;
-        margin-right: 0.5rem;
-      }
-      
-      .brand-name {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #ffffff;
-      }
-      
-      .brand-tagline {
-        display: none; /* Hide on mobile */
-      }
-      
-      /* Animated hamburger */
-      .mobile-menu-btn.active span:nth-child(1) {
-        transform: rotate(-45deg) translate(-5px, 6px);
-        background: #3b82f6;
-      }
-      
-      .mobile-menu-btn.active span:nth-child(2) {
-        opacity: 0;
-      }
-      
-      .mobile-menu-btn.active span:nth-child(3) {
-        transform: rotate(45deg) translate(-5px, -6px);
-        background: #3b82f6;
-      }
+      /* Mobile navbar should now work with navbar-styles.css */
     }
   </style>
 
@@ -3452,70 +3317,22 @@
         showNotification('Cookie preferences saved.', 'info');
       });
 
-      // MOBILE NAVBAR FUNCTIONALITY - Added directly to ensure it works
-      function initMobileNavbar() {
-        // Wait a bit for nav.js to inject the navbar
-        setTimeout(() => {
-          const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-          const mobileMenu = document.getElementById('mobileMenu');
-          const navbar = document.getElementById('navbar');
-          
-          console.log('Mobile navbar elements:', { mobileMenuBtn, mobileMenu, navbar });
-          
-          if (mobileMenuBtn && mobileMenu) {
-            console.log('Mobile navbar initialized successfully');
-            
-            // Mobile menu toggle
-            mobileMenuBtn.addEventListener('click', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              
-              console.log('Mobile menu button clicked');
-              
-              // Toggle active classes
-              mobileMenuBtn.classList.toggle('active');
-              mobileMenu.classList.toggle('active');
-              
-              // Update aria-expanded
-              const isExpanded = mobileMenu.classList.contains('active');
-              mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
-              
-              console.log('Mobile menu is now:', isExpanded ? 'open' : 'closed');
-            });
-            
-            // Close mobile menu when clicking on a link
-            const mobileNavLinks = mobileMenu.querySelectorAll('.mobile-nav-link');
-            mobileNavLinks.forEach(link => {
-              link.addEventListener('click', function() {
-                console.log('Mobile nav link clicked, closing menu');
-                mobileMenuBtn.classList.remove('active');
-                mobileMenu.classList.remove('active');
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-              });
-            });
-            
-            // Close mobile menu when clicking outside
-            document.addEventListener('click', function(event) {
-              if (!navbar.contains(event.target) && !mobileMenu.contains(event.target)) {
-                if (mobileMenu.classList.contains('active')) {
-                  console.log('Clicked outside, closing mobile menu');
-                  mobileMenuBtn.classList.remove('active');
-                  mobileMenu.classList.remove('active');
-                  mobileMenuBtn.setAttribute('aria-expanded', 'false');
-                }
-              }
-            });
-            
-          } else {
-            console.log('Mobile navbar elements not found, retrying...');
-            // Retry after another delay
-            setTimeout(initMobileNavbar, 500);
-          }
-        }, 200);
-      }
-      
-      // Initialize mobile navbar
-      initMobileNavbar();
+      // Simple debug to see if navbar loads
+      setTimeout(() => {
+        const navbar = document.getElementById('navbar');
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        console.log('Navbar check:', {
+          navbar: navbar ? 'Found' : 'Not found',
+          mobileBtn: mobileBtn ? 'Found' : 'Not found', 
+          mobileMenu: mobileMenu ? 'Found' : 'Not found'
+        });
+        
+        if (navbar) {
+          console.log('Navbar HTML:', navbar.outerHTML.substring(0, 200) + '...');
+        }
+      }, 1000);
 
 
 
