@@ -2282,23 +2282,29 @@
         
         // Add button click handlers - only for slider buttons
         const sliderButtons = document.querySelectorAll('.card-slider .card-btn');
-        sliderButtons.forEach((button, index) => {
+        sliderButtons.forEach((button) => {
           button.addEventListener('click', function(e) {
             e.preventDefault();
             
-            const pages = [
-              'roster.html',                    // Card 1: Current Roster
-              'salary.html',                    // Card 2: Salary Breakdown  
-              'future-draft-picks.html',        // Card 3: Future Draft Picks
-              'sixers-depth-chart.html',        // Card 4: Depth Chart
-              'nba-trade-machine.html',         // Card 5: Trade Machine
-              'stats.html',                     // Card 6: Player Stats
-              'schedule.html'                   // Card 7: Schedule
-            ];
+            // Find the parent card and get its data-card attribute
+            const parentCard = button.closest('.stats-card');
+            const cardNumber = parentCard ? parseInt(parentCard.getAttribute('data-card')) : null;
             
-            if (pages[index]) {
-              console.log('Navigating to:', pages[index]);
-              window.location.href = pages[index];
+            const pages = {
+              1: 'roster.html',                    // Card 1: Current Roster
+              2: 'salary.html',                    // Card 2: Salary Breakdown  
+              3: 'future-draft-picks.html',        // Card 3: Future Draft Picks
+              4: 'sixers-depth-chart.html',        // Card 4: Depth Chart
+              5: 'nba-trade-machine.html',         // Card 5: Trade Machine
+              6: 'stats.html',                     // Card 6: Player Stats
+              7: 'schedule.html'                   // Card 7: Schedule
+            };
+            
+            if (cardNumber && pages[cardNumber]) {
+              console.log('Card number:', cardNumber, 'Navigating to:', pages[cardNumber]);
+              window.location.href = pages[cardNumber];
+            } else {
+              console.log('Could not determine card number or page');
             }
           });
         });
