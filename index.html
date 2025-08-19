@@ -1824,7 +1824,7 @@
             </div>
             
             <div class="card-action">
-              <a href="roster.html" class="card-btn">View Full Roster →</a>
+              <a href="roster.html" class="card-btn" id="roster-btn">View Full Roster →</a>
             </div>
           </div>
 
@@ -1854,7 +1854,7 @@
             </div>
             
             <div class="card-action">
-              <a href="salary.html" class="card-btn">View Salary Details →</a>
+              <a href="salary.html" class="card-btn" id="salary-btn">View Salary Details →</a>
             </div>
           </div>
 
@@ -1884,7 +1884,7 @@
             </div>
             
             <div class="card-action">
-              <a href="future-draft-picks.html" class="card-btn">View All Picks →</a>
+              <a href="future-draft-picks.html" class="card-btn" id="picks-btn">View All Picks →</a>
             </div>
           </div>
 
@@ -1914,7 +1914,7 @@
             </div>
             
             <div class="card-action">
-              <a href="sixers-depth-chart.html" class="card-btn">View Depth Chart →</a>
+              <a href="sixers-depth-chart.html" class="card-btn" id="depth-btn">View Depth Chart →</a>
             </div>
           </div>
 
@@ -1944,7 +1944,7 @@
             </div>
             
             <div class="card-action">
-              <a href="nba-trade-machine.html" class="card-btn">Start Trading →</a>
+              <a href="nba-trade-machine.html" class="card-btn" id="trade-btn">Start Trading →</a>
             </div>
           </div>
 
@@ -1974,7 +1974,7 @@
             </div>
             
             <div class="card-action">
-              <a href="stats.html" class="card-btn">View Stats →</a>
+              <a href="stats.html" class="card-btn" id="stats-btn">View Stats →</a>
             </div>
           </div>
 
@@ -2004,7 +2004,7 @@
             </div>
             
             <div class="card-action">
-              <a href="schedule.html" class="card-btn">View Schedule →</a>
+              <a href="schedule.html" class="card-btn" id="schedule-btn">View Schedule →</a>
             </div>
           </div>
 
@@ -2207,9 +2207,9 @@
 
   <!-- SIMPLE CARD SLIDER -->
   <script>
-    // FIXED CARD SLIDER WITH WORKING NAVIGATION
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loaded, initializing card slider...');
+    // WORKING CARD SLIDER WITH AUTO-ROTATION AND CORRECT NAVIGATION
+    window.addEventListener('load', function() {
+      console.log('Window loaded, initializing card slider...');
       
       // Slider variables
       let currentSlide = 0;
@@ -2252,18 +2252,25 @@
       
       function startSlider() {
         slideInterval = setInterval(nextSlide, 4000); // 4 seconds per slide
-        console.log('Slider started');
+        console.log('Slider started with interval:', slideInterval);
       }
       
       function stopSlider() {
-        clearInterval(slideInterval);
-        console.log('Slider stopped');
+        if (slideInterval) {
+          clearInterval(slideInterval);
+          console.log('Slider stopped');
+        }
       }
       
       // Initialize if we have slides
       if (slides.length > 0) {
+        console.log('Initializing slider with', slides.length, 'slides');
         showSlide(0);
-        startSlider();
+        
+        // Start the auto-rotation
+        setTimeout(() => {
+          startSlider();
+        }, 1000); // Start after 1 second to ensure everything is loaded
         
         // Add click handlers to indicators
         indicators.forEach((indicator, index) => {
@@ -2282,13 +2289,23 @@
           slider.addEventListener('mouseleave', startSlider);
         }
         
-        // FIXED: Handle button clicks properly - no interference
+        // Debug button clicks to see what's happening
         const cardButtons = document.querySelectorAll('.card-btn');
-        cardButtons.forEach(button => {
+        console.log('Found card buttons:', cardButtons.length);
+        
+        cardButtons.forEach((button, index) => {
+          console.log(`Button ${index}: href="${button.href}", id="${button.id}"`);
+          
           button.addEventListener('click', function(e) {
-            console.log('Button clicked:', button.href);
-            // Don't prevent default - let the link work naturally
-            // Just log for debugging
+            console.log(`CLICKED: Button ${index} (${button.id}) -> ${button.href}`);
+            console.log('Event target:', e.target);
+            console.log('Current target:', e.currentTarget);
+            
+            // Force navigation if needed
+            if (button.href && button.href !== window.location.href) {
+              console.log('Forcing navigation to:', button.href);
+              window.location.href = button.href;
+            }
           });
         });
         
