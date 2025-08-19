@@ -41,6 +41,11 @@
       line-height: 1.6;
       padding-top: 80px;
       margin: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      overflow-x: hidden;
     }
 
     /* PREMIUM SPORTS NAVIGATION */
@@ -1007,35 +1012,104 @@
 
     @media (max-width: 768px) {
       .hero {
-        padding: 3rem 0;
-        min-height: auto;
+        padding: 2rem 0;
+        min-height: 100vh;
       }
       
       .hero-container {
         grid-template-columns: 1fr;
-        gap: 3rem;
-        text-align: center;
+        gap: 2rem;
+        text-align: left;
+        padding: 0 1rem;
+      }
+      
+      .hero-main {
+        order: 1;
+      }
+      
+      .hero-visual {
+        order: 2;
+        margin-top: 1rem;
       }
       
       .hero-title {
-        font-size: 2.8rem;
+        font-size: 2.5rem;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+      }
+      
+      .hero-description {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
       }
       
       .rotating-title {
-        font-size: 2rem;
+        font-size: 1.8rem;
       }
       
       .hero-buttons {
-        flex-direction: column;
-        align-items: center;
+        flex-direction: row;
+        gap: 1rem;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+      
+      .btn-primary, .btn-secondary {
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+        min-width: auto;
       }
       
       .hero-metrics {
-        justify-content: center;
+        justify-content: flex-start;
+        gap: 1.5rem;
+        margin-top: 2rem;
+      }
+      
+      .metric-item {
+        text-align: left;
+      }
+      
+      .card-slider {
+        height: 350px;
+        margin: 0;
       }
       
       .stats-card {
-        min-width: 300px;
+        min-width: 280px;
+        max-width: 320px;
+        padding: 1.5rem;
+        margin: 0 auto;
+      }
+      
+      .card-header h3 {
+        font-size: 1.3rem;
+      }
+      
+      .card-stats {
+        gap: 1rem;
+      }
+      
+      .stat-item {
+        padding: 0.8rem;
+      }
+      
+      .stat-label {
+        font-size: 0.8rem;
+      }
+      
+      .stat-value {
+        font-size: 1.1rem;
+      }
+      
+      .card-indicators {
+        bottom: -40px;
+        gap: 0.5rem;
+      }
+      
+      .indicator {
+        width: 8px;
+        height: 8px;
       }
     }
 
@@ -1696,10 +1770,126 @@
         padding-top: 60px;
       }
 
-
       .navbar {
         height: 60px;
         padding: 0.5rem;
+      }
+      
+      .hero {
+        padding: 1.5rem 0;
+        min-height: 100vh;
+      }
+      
+      .hero-container {
+        padding: 0 0.75rem;
+        gap: 1.5rem;
+      }
+      
+      .hero-title {
+        font-size: 2rem;
+        line-height: 1.1;
+      }
+      
+      .title-highlight {
+        font-size: 2.2rem;
+      }
+      
+      .hero-description {
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+      
+      .hero-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+      }
+      
+      .btn-primary, .btn-secondary {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.85rem;
+        text-align: center;
+        justify-content: center;
+      }
+      
+      .hero-metrics {
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      
+      .metric-item {
+        text-align: center;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+      }
+      
+      .card-slider {
+        height: 320px;
+      }
+      
+      .stats-card {
+        min-width: 260px;
+        max-width: 280px;
+        padding: 1.25rem;
+      }
+      
+      .card-header {
+        margin-bottom: 1rem;
+      }
+      
+      .card-header h3 {
+        font-size: 1.1rem;
+      }
+      
+      .card-stats {
+        gap: 0.75rem;
+      }
+      
+      .stat-item {
+        padding: 0.6rem;
+      }
+      
+      .stat-label {
+        font-size: 0.7rem;
+      }
+      
+      .stat-value {
+        font-size: 1rem;
+      }
+      
+      .card-indicators {
+        bottom: -35px;
+      }
+      
+      .indicator {
+        width: 6px;
+        height: 6px;
+      }
+      
+      /* Make indicators more touch-friendly on mobile */
+      .indicator {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .indicator::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: currentColor;
+        border-radius: 50%;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+      }
+      
+      .indicator.active::before {
+        opacity: 1;
+        transform: scale(1.5);
       }
 
 
@@ -2254,6 +2444,44 @@
         
         // Card buttons are now pure HTML links - no JavaScript needed
         console.log('Card slider initialized with', slides.length, 'slides');
+        
+        // Add touch support for mobile devices
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        slider.addEventListener('touchstart', function(e) {
+          touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        slider.addEventListener('touchend', function(e) {
+          touchEndX = e.changedTouches[0].screenX;
+          handleSwipe();
+        });
+        
+        function handleSwipe() {
+          const swipeThreshold = 50;
+          const diff = touchStartX - touchEndX;
+          
+          if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+              // Swipe left - next slide
+              nextSlide();
+            } else {
+              // Swipe right - previous slide  
+              prevSlide();
+            }
+          }
+        }
+        
+        function nextSlide() {
+          currentSlide = (currentSlide % slides.length) + 1;
+          showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+          currentSlide = currentSlide === 1 ? slides.length : currentSlide - 1;
+          showSlide(currentSlide);
+        }
         
       } else {
         console.log('No slides found!');
