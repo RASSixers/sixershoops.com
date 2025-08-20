@@ -1135,12 +1135,14 @@
 
     // Initialize the schedule
     function initializeSchedule() {
+      console.log('🚀 Initializing schedule page...');
+      console.log('📊 Schedule data loaded:', scheduleData.length, 'games');
+      
       updateStats();
       renderSchedule();
       setupFilters();
-      setupMobileMenu();
-      setupScrollEffects();
-      startCountdownTimers();
+      
+      console.log('✅ Schedule initialization complete');
     }
 
     // Update statistics
@@ -1173,7 +1175,14 @@
 
     // Render schedule
     function renderSchedule() {
+      console.log('🏀 Rendering schedule with', scheduleData.length, 'games');
       const container = document.getElementById('schedule-container');
+      
+      if (!container) {
+        console.error('❌ Schedule container not found!');
+        return;
+      }
+      
       container.innerHTML = '';
 
       // Group games by month
@@ -1188,11 +1197,15 @@
         gamesByMonth[monthYear].push(game);
       });
 
+      console.log('📅 Games grouped by month:', Object.keys(gamesByMonth));
+
       // Render each month
       Object.keys(gamesByMonth).forEach(monthYear => {
         const monthSection = createMonthSection(monthYear, gamesByMonth[monthYear]);
         container.appendChild(monthSection);
       });
+      
+      console.log('✅ Schedule rendered successfully');
     }
 
     // Create month section
