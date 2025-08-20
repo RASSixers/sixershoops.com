@@ -1026,6 +1026,11 @@
   </div>
 
   <script>
+    // Global variables for live game functionality
+    let currentGameId = null;
+    let refreshInterval = null;
+    let refreshCountdown = 10;
+    
     // NBA Schedule Data (from official NBA website - 2025-26 Season)
     const scheduleData = [
       // October 2025 - Regular Season Start
@@ -1790,8 +1795,56 @@
       }
     }
 
+    // Open live game modal
+    async function openLiveGame(gameId, initialTab = 'play-by-play') {
+      console.log('Opening live game:', gameId, 'tab:', initialTab);
+      
+      // Store current game ID for auto-refresh
+      currentGameId = gameId;
+      
+      // Show modal
+      const modal = document.getElementById('liveGameModal');
+      modal.style.display = 'flex';
+      
+      // Set initial tab
+      switchTab(initialTab);
+      
+      // Load game data from your API
+      try {
+        await loadGameData(gameId);
+      } catch (error) {
+        console.error('Failed to load game data:', error);
+        showErrorMessage('Failed to load game data. Please try again.');
+      }
+    }
+    
+    // Close live game modal
+    function closeLiveGame() {
+      const modal = document.getElementById('liveGameModal');
+      modal.style.display = 'none';
+      
+      // Stop auto-refresh
+      stopAutoRefresh();
+      currentGameId = null;
+    }
+    
+    // Switch between tabs
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
     // Update live score header
-    function updateLiveScoreHeader(gameData) {
+    function updateGameModal(gameData) {
       const parts = currentGameId.split('_');
       const opponentAbbr = parts[1];
       const isHome = parts[2] === 'home';
@@ -1954,6 +2007,55 @@
       `;
       
       container.innerHTML = statsHtml;
+    }
+
+    // Load real game data from your API
+    async function loadGameData(gameId) {
+      try {
+        // Extract game info from gameId (format: "2025-12-21_BOS_home")
+        const parts = gameId.split('_');
+        const date = parts[0];
+        const opponentAbbr = parts[1];
+        const location = parts[2];
+        
+        console.log(`Loading game data for ${date} vs ${opponentAbbr} (${location})`);
+        
+        // Try your API first
+        const apiUrl = `/api/nba-simple?date=${date}`;
+        const response = await fetch(apiUrl);
+        
+        if (response.ok) {
+          const gameData = await response.json();
+          console.log('✅ Real NBA data loaded:', gameData);
+          
+          // Update modal with real data
+          updateGameModal(gameData);
+          loadPlayByPlay(gameData);
+          loadBoxScore(gameData);
+          loadGameStats(gameData);
+          
+          // Start auto-refresh for live games
+          if (gameData.status && !gameData.status.includes('Final')) {
+            startAutoRefresh();
+          }
+          
+          return gameData;
+        } else {
+          throw new Error(`API returned ${response.status}`);
+        }
+        
+      } catch (error) {
+        console.warn('⚠️ API failed, using mock data:', error);
+        
+        // Fallback to mock data
+        const mockData = generateMockGameData(gameId);
+        updateGameModal(mockData);
+        loadPlayByPlay(mockData);
+        loadBoxScore(mockData);
+        loadGameStats(mockData);
+        
+        return mockData;
+      }
     }
 
     // Generate mock game data for demo
