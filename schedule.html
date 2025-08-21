@@ -1605,14 +1605,12 @@
           console.log('🔄 Refresh button connected');
         }
         
-        // Then try to get live updates (non-blocking)
-        setTimeout(() => {
-          console.log('🌐 Starting auto-update system...');
-          startAutoUpdates();
-        }, 1000); // Increased delay to ensure page is fully loaded
+        // Skip auto-updates for now to prevent hanging
+        console.log('ℹ️ Auto-updates disabled - using static data only');
         
         console.log('🎯 Schedule initialization complete');
-        
+        Skip auto-updates for now to prevent hanging
+        console.log('ℹ️ Auto-updates disabled - using static data only');
       } catch (error) {
         console.error('❌ Error during schedule initialization:', error);
         // Still try to show basic schedule even if there's an error
@@ -1627,29 +1625,65 @@
 
     // Update statistics
     function updateStats() {
-      const completedGames = scheduleData.filter(game => game.status === 'completed');
-      const wins = completedGames.filter(game => game.result && game.result.startsWith('W')).length;
-      const losses = completedGames.filter(game => game.result && game.result.startsWith('L')).length;
-      
-      document.getElementById('current-record').textContent = `${wins}-${losses}`;
-      
-      // Find next game
-      const upcomingGames = scheduleData.filter(game => game.status === 'upcoming');
-      if (upcomingGames.length > 0) {
-        const nextGame = upcomingGames[0];
-        const gameDate = new Date(nextGame.date);
-        const today = new Date();
-        const daysUntil = Math.ceil((gameDate - today) / (1000 * 60 * 60 * 24));
+      try {
+        console.log('📊 Updating stats with', scheduleData.length, 'games');
         
-        if (daysUntil === 0) {
-          document.getElementById('next-game').textContent = 'Today';
-        } else if (daysUntil === 1) {
-          document.getElementById('next-game').textContent = 'Tomorrow';
-        } else {
-          document.getElementById('next-game').textContent = `${daysUntil} days`;
+        try {
+        console.log('📊 Updating stats with', scheduleData.length, 'games');
+        
+        const completedGames = scheduleData.filter(game => game.status === 'completed');
+          const wins = completedGames.filter(game => game.result && game.result.startsWith('W')).length;
+             const recordEl =  const losses = completedGames.filter(game => game.result && game.result.startsWith('L')).length;
+        
+          const recordEl = document.getElementById('current-record');
+            const nextGameEl = document.getElementById('next-game');
+        
+        if (nextGameEl) {
+            if (recordEl) {
+          recordEl;
+        if (recordEl) {
+          recordEl.textContent = `${wins}-${losses}`;
+          console.log('✅ Record updated:', `${wins}-${losses}`);
+        }    
+            
+      console.log('✅ Record updated:', `${wins}-${losses}`);
         }
-      } else {
-        document.getElementById('next-game').textContent = 'Season Complete';
+        
+        // Find next game
+        const upcomingGames = scheduleData.filter(game => game.status === 'upcoming');
+            const nextGameEl =         nextGameElEl;
+            
+        if (nextGameEl) {
+          if (upcomingGames.length > 0) {
+            const nextGame = upcomingGames[0];
+            const gameDate = new Date(nextGame.date);
+                const today = new Date();
+            const daysUntil = Math.ceil((gameDate - today) / (1000 * 60 * 60 * 24));
+                 console.log('✅ Next game updated:', nextGameEl.textContent);
+          } else {
+            nextGameEl.textContent = 'Season Complete';
+            console.log('✅ Season complete message set');
+          }
+        }
+        
+      } catch (error) {
+        console.error('❌ Error updating stats:', error) 
+            if (daysUntil === 0) {
+              nextGameEl.textContent = 'Today';
+            } else if (daysUntil === 1) {
+              nextGameEl.textContent = 'Tomorrow';
+            } else {
+              nextGameEl.textContent = `${daysUntil} days`;
+            }
+            console.log('✅ Next game updated:', nextGameEl.textContent);
+          } else {
+            nextGameEl.textContent = 'Season Complete';
+            console.log('✅ Season complete message set');
+          }
+        }
+        
+      } catch (error) {
+        console.error('❌ Error updating stats:', error);
       }
     }
 
@@ -1798,7 +1832,7 @@
             `}
           </div>
           <div class="game-details">
-            <div class="game-time">${game.time}</div>
+              <div class="game-time">${game.time}</div>
             <div class="game-venue">${game.venue}</div>
             ${game.tv ? `<div class="tv-info">${game.tv}</div>` : ''}
           </div>
@@ -1810,14 +1844,18 @@
 
     // Setup filters
     function setupFilters() {
-      const filterButtons = document.querySelectorAll('.filter-btn');
+            // Get current game cards and month sections (they might not exist during initial setup)
+            const gameCards = document.querySelectorAll('.game-card');
+              const monthSections = document.querySelectorAll('.month-section');
+  
+              const filterButtons = document.querySelectorAll('.filter-btn');
       const gameCards = document.querySelectorAll('.game-card');
       const monthSections = document.querySelectorAll('.month-section');
 
       filterButtons.forEach(button => {
         button.addEventListener('click', function() {
           // Remove active class from all buttons
-          filterButtons.forEach(btn => btn.classList.remove('active'));
+            filterButtons.forEach(btn => btn.classList.remove('active'));
           // Add active class to clicked button
           this.classList.add('active');
 
@@ -1825,26 +1863,32 @@
 
           // Show/hide game cards based on filter
           gameCards.forEach(card => {
-            const cardType = card.getAttribute('data-type');
+              const cardType = card.getAttribute('data-type');
             const cardMonth = card.getAttribute('data-month');
-            
-            let shouldShow = false;
+                
+                let shouldShow = false;
 
             if (filter === 'all') {
+                shouldShow = true;
+                } else if (filter === 'home' && cardType && cardType.includes('home')) {
+                  shouldShow = true;
+                } else if (filter === 'away' && cardType.includes('away')) {
+                shouldShow = true;
+            } else if (filter === 'upcoming' && cardType && cardType.includes('upcoming')) {
               shouldShow = true;
-            } else if (filter === 'home' && cardType.includes('home')) {
-              shouldShow = true;
-            } else if (filter === 'away' && cardType.includes('away')) {
-              shouldShow = true;
-            } else if (filter === 'upcoming' && cardType.includes('upcoming')) {
-              shouldShow = true;
-            } else if (filter === 'completed' && cardType.includes('completed')) {
-              shouldShow = true;
-            } else if (cardMonth === filter) {
-              shouldShow = true;
-            }
+            } else   if (filter === 'completed' && cardType.includes('completed')) {
+                shouldShow = true;
+              } else if (cardMonth === filter) {
+                shouldShow = true;
+                      
+        console.log('✅ Filters setup complete');
+        
+      } catch (error) {
+        console.error('❌ Error setting up filters:', error);
+      }
+    }
 
-            card.style.display = shouldShow ? 'block' : 'none';
+              card.style.display = shouldShow ? 'block' : 'none';
           });
 
           // Show/hide month sections if they have visible games
