@@ -318,24 +318,91 @@ async function fetchFromBallDontLie(date, opponent) {
 
 // Generate realistic play-by-play data
 function generateRealisticPlays(status, homeScore, awayScore, isHome) {
-  if (status === 'upcoming') {
+  if (status === 'Upcoming' || status === 'upcoming') {
     return [
       { time: "Pregame", description: "🏀 Game starting soon", score: "0-0" }
     ];
   }
   
-  const plays = [
-    { time: "Q3 7:23", description: "🏀 Joel Embiid made 15ft jumper", score: `${homeScore}-${awayScore}` },
-    { time: "Q3 7:45", description: "🤝 Tyrese Maxey assist", score: `${homeScore-2}-${awayScore}` },
-    { time: "Q3 8:12", description: "🚫 Opponent missed 3-pointer", score: `${homeScore-2}-${awayScore}` },
-    { time: "Q3 8:34", description: "🔄 Tobias Harris defensive rebound", score: `${homeScore-2}-${awayScore}` },
-    { time: "Q3 8:56", description: "🎯 Tyrese Maxey made free throw", score: `${homeScore-3}-${awayScore}` },
-    { time: "Q3 9:15", description: "⚠️ Opponent personal foul", score: `${homeScore-4}-${awayScore}` },
-    { time: "Q3 9:32", description: "💥 Joel Embiid made dunk", score: `${homeScore-4}-${awayScore}` },
-    { time: "Q3 9:48", description: "❌ Opponent turnover", score: `${homeScore-6}-${awayScore}` }
+  const sixersPlayers = ['Joel Embiid', 'Tyrese Maxey', 'Paul George', 'Tobias Harris', 'De\'Anthony Melton', 'Kelly Oubre Jr.', 'Nicolas Batum'];
+  const playTypes = [
+    { type: 'made_shot', emoji: '🏀', actions: ['made jumper', 'made layup', 'made hook shot'] },
+    { type: 'made_three', emoji: '🎯', actions: ['made 3PT shot'] },
+    { type: 'made_dunk', emoji: '💥', actions: ['made dunk', 'made alley-oop dunk'] },
+    { type: 'missed_shot', emoji: '🚫', actions: ['missed jumper', 'missed layup', 'missed 3PT shot'] },
+    { type: 'rebound', emoji: '🔄', actions: ['defensive rebound', 'offensive rebound'] },
+    { type: 'assist', emoji: '🤝', actions: ['assist'] },
+    { type: 'foul', emoji: '⚠️', actions: ['personal foul', 'shooting foul'] },
+    { type: 'turnover', emoji: '❌', actions: ['turnover', 'bad pass turnover'] }
   ];
   
-  if (status === 'completed') {
+  const plays = [];
+  let currentScore = { home: homeScore, away: awayScore };
+  
+  // Generate 8-12 recent plays
+  const numPlays = Math.floor(Math.random() * 5) + 8;
+  
+  for (let i = 0; i < numPlays; i++) {
+    const playType = playTypes[Math.floor(Math.random() * playTypes.length)];
+    const player = sixersPlayers[Math.floor(Math.random() * sixersPlayers.length)];
+    const action = playType.actions[Math.floor(Math.random() * playType.actions.length)];
+    
+    // Generate realistic time
+    let quarter, minutes, seconds;
+    if (status.includes('Q')) {
+      quarter = parseInt(status.charAt(1));
+      const timeMatch = status.match(/(\d+):(\d+)/);
+      if (timeMatch) {
+        minutes = parseInt(timeMatch[1]);
+        seconds = parseInt(timeMatch[2]);
+        // Vary the time slightly for each play
+        seconds += Math.floor(Math.random() * 30) + 10;
+        if (seconds >= 60) {
+          minutes += Math.floor(seconds / 60);
+          seconds = seconds % 60;
+        }
+        if (minutes >= 12) {
+          quarter = Math.max(1, quarter - 1);
+          minutes = Math.floor(Math.random() * 12);
+        }
+      } else {
+        quarter = 3;
+        minutes = Math.floor(Math.random() * 12);
+        seconds = Math.floor(Math.random() * 60);
+      }
+    } else {
+      quarter = 4;
+      minutes = Math.floor(Math.random() * 12);
+      seconds = Math.floor(Math.random() * 60);
+    }
+    
+    const timeStr = `Q${quarter} ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Adjust score based on play type
+    if (playType.type === 'made_shot' || playType.type === 'made_dunk') {
+      currentScore.home -= 2;
+    } else if (playType.type === 'made_three') {
+      currentScore.home -= 3;
+    }
+    
+    const description = `${playType.emoji} ${player} ${action}`;
+    const scoreStr = `${Math.max(0, currentScore.home)}-${Math.max(0, currentScore.away)}`;
+    
+    plays.push({
+      time: timeStr,
+      description: description,
+      score: scoreStr
+    });
+  }
+  
+  // Sort plays by time (most recent first)
+  plays.sort((a, b) => {
+    const aTime = a.time.split(' ')[1];
+    const bTime = b.time.split(' ')[1];
+    return bTime.localeCompare(aTime);
+  });
+  
+  if (status === 'Final' || status === 'completed') {
     plays.unshift({ time: "Final", description: "🏀 Game Final", score: `${homeScore}-${awayScore}` });
   }
   
@@ -386,25 +453,50 @@ function generateTeamStats(homeScore, awayScore) {
 
 // Generate mock game data for testing
 function generateMockGameData(date, opponent) {
-  const homeScore = Math.floor(Math.random() * 30) + 95;
-  const awayScore = Math.floor(Math.random() * 30) + 95;
+  const now = new Date();
+  const gameDate = new Date(date);
+  const isToday = gameDate.toDateString() === now.toDateString();
+  const isFuture = gameDate > now;
+  
+  // Determine game status based on date
+  let status, quarter, timeRemaining, homeScore, awayScore;
+  
+  if (isFuture) {
+    // Future game
+    status = "Upcoming";
+    quarter = 0;
+    timeRemaining = "48:00";
+    homeScore = 0;
+    awayScore = 0;
+  } else if (isToday && now.getHours() >= 19 && now.getHours() < 22) {
+    // Live game (between 7 PM and 10 PM today)
+    status = "Q3 7:23";
+    quarter = 3;
+    timeRemaining = "7:23";
+    homeScore = Math.floor(Math.random() * 20) + 85;
+    awayScore = Math.floor(Math.random() * 20) + 85;
+  } else {
+    // Completed game
+    status = "Final";
+    quarter = 4;
+    timeRemaining = "0:00";
+    homeScore = Math.floor(Math.random() * 30) + 95;
+    awayScore = Math.floor(Math.random() * 30) + 95;
+  }
+  
+  const plays = generateRealisticPlays(status, homeScore, awayScore, true);
   
   return {
     success: true,
     opponent: opponent || "Boston Celtics",
     homeScore: homeScore,
     awayScore: awayScore,
-    status: "Final",
-    quarter: 4,
-    timeRemaining: "0:00",
-    plays: [
-      { time: "Q4 0:00", description: "🏀 Game Final", score: `${homeScore}-${awayScore}` },
-      { time: "Q4 0:23", description: "🎯 Tyrese Maxey made 3PT shot", score: `${homeScore-3}-${awayScore}` },
-      { time: "Q4 0:45", description: "🚫 Joel Embiid missed shot", score: `${homeScore-3}-${awayScore}` },
-      { time: "Q4 1:12", description: "🔄 Joel Embiid defensive rebound", score: `${homeScore-3}-${awayScore}` },
-      { time: "Q4 1:34", description: "🤝 Tyrese Maxey assist to Paul George", score: `${homeScore-5}-${awayScore}` }
-    ],
+    status: status,
+    quarter: quarter,
+    timeRemaining: timeRemaining,
+    plays: plays,
     boxScore: generateRealisticBoxScore(opponent || "Boston Celtics", homeScore, awayScore, true),
-    stats: generateTeamStats(homeScore, awayScore)
+    stats: generateTeamStats(homeScore, awayScore),
+    lastUpdated: new Date().toISOString()
   };
 }
