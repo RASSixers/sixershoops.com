@@ -1143,7 +1143,7 @@
     };
 
     // Global variables for data management
-    let scheduleData = [];
+    let scheduleData = fallbackScheduleData; // Initialize with fallback data
     let lastFetchTime = 0;
     let autoRefreshInterval = null;
     let isLoading = false;
@@ -1205,8 +1205,8 @@
     // API Configuration for auto-updates
     const API_CONFIG = {
       UPDATE_INTERVAL: 30000, // 30 seconds
-      VERCEL_API_URL: '/api/nba-game-data', // Your Vercel API endpoint
-      VERCEL_LIVE_API_URL: '/api/nba-live', // Your Vercel Live API endpoint
+      VERCEL_API_URL: 'https://sixershoopsgames.vercel.app/api/nba-game-data', // Your Vercel API endpoint
+      VERCEL_LIVE_API_URL: 'https://sixershoopsgames.vercel.app/api/nba-live', // Your Vercel Live API endpoint
       TEAM_ID: 20, // Philadelphia 76ers ID
       BACKUP_API: 'https://api.balldontlie.io/v1/games'
     };
@@ -1587,28 +1587,53 @@
     function initializeSchedule() {
       console.log('🚀 Initializing schedule page...');
       
-      // Always show the schedule first (with static data)
-      updateStats();
-      renderSchedule();
-      setupFilters();
-      setupMobileMenu();
-      setupScrollEffects();
-      startCountdownTimers();
-      
-      console.log('✅ Schedule page loaded with static data');
-      
-      // Then try to get live updates (non-blocking)
-      setTimeout(() => {
-        startAutoUpdates();
-      }, 500); // Small delay to ensure page is fully loaded
-      
-      // Add manual refresh button functionality
-      const refreshBtn = document.getElementById('refresh-btn');
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', refreshSchedule);
+      try {
+        // Always show the schedule first (with static data)
+      console.log('📊 Loading schedule statistics...');
+        updateStats();
+        
+        console.log('📅 Rendering schedule...');
+        renderSchedule();
+        
+        console.log('🔧 Setting up filters...');
+        setupFilters();
+        
+        console.log('📱 Setting up mobile menu...');
+        setupMobileMenu();
+        
+        console.log('✨ Setting up scroll effects...');
+        setupScrollEffects();
+        
+        console.log('⏰ Starting countdown timers...');
+          startCountdownTimers();
+        
+        console.log('✅ Schedule page loaded with static data');
+        
+        // Add manual refresh button functionality
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+          refreshBtn.addEventListener('click', refreshSchedule);
+          console.log('🔄 Refresh button connected');
+        }
+        
+        // Then try to get live updates (non-blocking)
+        setTimeout(() => {
+          console.log('🌐 Starting auto-update system...');
+          startAutoUpdates();
+        }, 1000); // Increased delay to ensure page is fully loaded
+        
+        console.log('🎯 Schedule initialization complete');
+        
+      } catch (error) {
+        console.error('❌ Error during schedule initialization:', error);
+        // Still try to show basic schedule even if there's an error
+        try {
+          renderSchedule();
+          console.log('🔧 Fallback schedule rendered');
+        } catch (fallbackError) {
+          console.error('❌ Critical error - could not render schedule:', fallbackError);
+        }
       }
-      
-      console.log('🎯 Schedule initialization complete');
     }
 
     // Update statistics
@@ -1641,7 +1666,10 @@
 
     // Render schedule
     function renderSchedule() {
+      console.log('📅 Rendering schedule with', scheduleData.length, 'games');
       const container = document.getElementById('schedule-container');
+      
+      // Clear loading indicator and any existing content
       container.innerHTML = '';
 
       // Group games by month
@@ -1661,6 +1689,8 @@
         const monthSection = createMonthSection(monthYear, gamesByMonth[monthYear]);
         container.appendChild(monthSection);
       });
+      
+      console.log('✅ Schedule rendered successfully with', Object.keys(gamesByMonth).length, 'months');
     }
 
     // Create month section
