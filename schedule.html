@@ -150,6 +150,101 @@
       font-size: 0.9rem;
     }
 
+    /* Refresh Button Styling */
+    #refresh-btn {
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    #refresh-btn:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+      border-color: rgba(16, 185, 129, 0.6);
+    }
+
+    #refresh-btn:hover::before {
+      background: linear-gradient(90deg, #10b981, #059669, #047857);
+    }
+
+    #refresh-btn:active {
+      transform: translateY(-8px) scale(1.02);
+    }
+
+    #refresh-btn .stat-number {
+      transition: transform 0.3s ease;
+    }
+
+    #refresh-btn:hover .stat-number {
+      transform: rotate(180deg);
+    }
+
+    #refresh-btn.refreshing .stat-number {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* API Status Indicator */
+    .api-status {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 1000;
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .api-status:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6b7280;
+      transition: all 0.3s ease;
+    }
+
+    .api-status.connected .status-dot {
+      background: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+      animation: pulse-dot 2s infinite;
+    }
+
+    .api-status.error .status-dot {
+      background: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
+
+    .api-status.connecting .status-dot {
+      background: #f59e0b;
+      animation: pulse-dot 1s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+
+    .status-text {
+      color: #e2e8f0;
+    }
+
     /* Schedule Filters */
     .schedule-filters {
       background: rgba(15, 23, 42, 0.9);
@@ -931,6 +1026,10 @@
         <span class="stat-number" id="next-game">Loading...</span>
         <span class="stat-label">Next Game</span>
       </div>
+      <div class="stat-card" style="cursor: pointer;" id="refresh-btn">
+        <span class="stat-number">🔄</span>
+        <span class="stat-label">Refresh Data</span>
+      </div>
     </section>
 
     <!-- Schedule Filters -->
@@ -1022,82 +1121,51 @@
   <!-- Auto-refresh indicator -->
   <div class="refresh-indicator" id="refreshIndicator">
     <div class="refresh-text">Auto-refreshing live data</div>
-    <div class="refresh-countdown" id="refreshCountdown">10</div>
+    <div class="refresh-countdown" id="refreshCountdown">30</div>
+  </div>
+
+  <!-- API Status Indicator -->
+  <div class="api-status" id="apiStatus">
+    <div class="status-dot"></div>
+    <span class="status-text">Connecting to API...</span>
   </div>
 
   <script>
-    // Global variables for live game functionality
-    let currentGameId = null;
-    let refreshInterval = null;
-    let refreshCountdown = 10;
-    
-    // NBA Schedule Data (2024-25 Season - Current dates for testing)
-    const scheduleData = [
-      // December 2024 - Current games for testing
-      { date: "2024-12-17", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "NBC Sports Philadelphia", status: "completed", result: "L 108-112" },
-      { date: "2024-12-19", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "completed", result: "W 118-104" },
-      { date: "2024-12-21", opponent: "Boston Celtics", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2024-12-23", opponent: "Miami Heat", location: "away", time: "8:00 PM ET", venue: "Kaseya Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2024-12-25", opponent: "New York Knicks", location: "home", time: "2:30 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "live" },
-      { date: "2024-12-27", opponent: "Orlando Magic", location: "away", time: "7:00 PM ET", venue: "Kia Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2024-12-29", opponent: "Brooklyn Nets", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2024-12-31", opponent: "Chicago Bulls", location: "away", time: "8:00 PM ET", venue: "United Center", tv: "ESPN", status: "upcoming" },
-      
-      // January 2025
-      { date: "2025-01-02", opponent: "Washington Wizards", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-04", opponent: "Toronto Raptors", location: "away", time: "7:30 PM ET", venue: "Scotiabank Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-06", opponent: "Cleveland Cavaliers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2025-01-08", opponent: "Detroit Pistons", location: "away", time: "7:00 PM ET", venue: "Little Caesars Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-10", opponent: "Milwaukee Bucks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "TNT", status: "upcoming" },
-      { date: "2025-01-12", opponent: "Atlanta Hawks", location: "away", time: "7:30 PM ET", venue: "State Farm Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-15", opponent: "Los Angeles Lakers", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2025-01-17", opponent: "Golden State Warriors", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-20", opponent: "Phoenix Suns", location: "away", time: "9:00 PM ET", venue: "Footprint Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-22", opponent: "Denver Nuggets", location: "away", time: "9:00 PM ET", venue: "Ball Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-24", opponent: "Portland Trail Blazers", location: "away", time: "10:00 PM ET", venue: "Moda Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-26", opponent: "Sacramento Kings", location: "away", time: "10:00 PM ET", venue: "Golden 1 Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-28", opponent: "LA Clippers", location: "away", time: "10:30 PM ET", venue: "Intuit Dome", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-30", opponent: "Utah Jazz", location: "away", time: "9:00 PM ET", venue: "Delta Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      
-      // February 2025
-      { date: "2025-02-01", opponent: "Indiana Pacers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-03", opponent: "Houston Rockets", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-05", opponent: "San Antonio Spurs", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-07", opponent: "Minnesota Timberwolves", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-09", opponent: "New Orleans Pelicans", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-11", opponent: "Memphis Grizzlies", location: "away", time: "8:00 PM ET", venue: "FedExForum", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-13", opponent: "Oklahoma City Thunder", location: "away", time: "8:00 PM ET", venue: "Paycom Center", tv: "TNT", status: "upcoming" },
-      { date: "2025-02-21", opponent: "Dallas Mavericks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-23", opponent: "Boston Celtics", location: "away", time: "3:30 PM ET", venue: "TD Garden", tv: "ABC", status: "upcoming" },
-      { date: "2025-02-25", opponent: "Miami Heat", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-27", opponent: "New York Knicks", location: "away", time: "7:30 PM ET", venue: "Madison Square Garden", tv: "TNT", status: "upcoming" },
-      
-      // March 2025
-      { date: "2025-03-01", opponent: "Chicago Bulls", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-03", opponent: "Orlando Magic", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-05", opponent: "Brooklyn Nets", location: "away", time: "7:30 PM ET", venue: "Barclays Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-07", opponent: "Toronto Raptors", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-09", opponent: "Cleveland Cavaliers", location: "away", time: "6:00 PM ET", venue: "Rocket Mortgage FieldHouse", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-11", opponent: "Detroit Pistons", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-13", opponent: "Milwaukee Bucks", location: "away", time: "8:00 PM ET", venue: "Fiserv Forum", tv: "ESPN", status: "upcoming" },
-      { date: "2025-03-15", opponent: "Atlanta Hawks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-17", opponent: "Charlotte Hornets", location: "away", time: "7:00 PM ET", venue: "Spectrum Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-19", opponent: "Washington Wizards", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-21", opponent: "Indiana Pacers", location: "away", time: "7:00 PM ET", venue: "Gainbridge Fieldhouse", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-23", opponent: "Boston Celtics", location: "home", time: "1:00 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "upcoming" },
-      { date: "2025-03-25", opponent: "Miami Heat", location: "away", time: "8:00 PM ET", venue: "Kaseya Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-27", opponent: "New York Knicks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2025-03-29", opponent: "Orlando Magic", location: "away", time: "7:00 PM ET", venue: "Kia Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-31", opponent: "Brooklyn Nets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      
-      // April 2025
-      { date: "2025-04-02", opponent: "Toronto Raptors", location: "away", time: "7:30 PM ET", venue: "Scotiabank Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-04", opponent: "Cleveland Cavaliers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-06", opponent: "Detroit Pistons", location: "away", time: "3:00 PM ET", venue: "Little Caesars Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-08", opponent: "Milwaukee Bucks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-10", opponent: "Atlanta Hawks", location: "away", time: "7:30 PM ET", venue: "State Farm Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-12", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-13", opponent: "Washington Wizards", location: "away", time: "6:00 PM ET", venue: "Capital One Arena", tv: "NBC Sports Philadelphia", status: "upcoming" }
+    // API Configuration
+    const API_CONFIG = {
+      // Using NBA API endpoints
+      SCHEDULE_URL: 'https://stats.nba.com/stats/teamgamelog',
+      SCOREBOARD_URL: 'https://stats.nba.com/stats/scoreboard',
+      TEAM_ID: '1610612755', // Philadelphia 76ers team ID
+      SEASON: '2024-25',
+      CACHE_DURATION: 5 * 60 * 1000, // 5 minutes in milliseconds
+      REFRESH_INTERVAL: 30 * 1000 // 30 seconds for live games
+    };
+
+    // Global variables for data management
+    let scheduleData = [];
+    let lastFetchTime = 0;
+    let autoRefreshInterval = null;
+    let isLoading = false;
+
+    // Fallback schedule data in case API fails (current 2024-25 season)
+    const fallbackScheduleData = [
+      // Recent games with realistic data
+      { date: "2024-12-15", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "ESPN", status: "completed", result: "W 118-114" },
+      { date: "2024-12-17", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "completed", result: "W 121-108" },
+      { date: "2024-12-19", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "NBCSP", status: "completed", result: "W 109-103" },
+      { date: "2024-12-21", opponent: "San Antonio Spurs", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
+      { date: "2024-12-23", opponent: "Boston Celtics", location: "home", time: "5:00 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "upcoming" },
+      { date: "2024-12-25", opponent: "Miami Heat", location: "away", time: "2:30 PM ET", venue: "Kaseya Center", tv: "ESPN", status: "upcoming" },
+      { date: "2024-12-28", opponent: "Utah Jazz", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
+      { date: "2024-12-30", opponent: "Phoenix Suns", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
+      { date: "2025-01-02", opponent: "New Orleans Pelicans", location: "away", time: "8:00 PM ET", venue: "Smoothie King Center", tv: "NBCSP", status: "upcoming" },
+      { date: "2025-01-04", opponent: "Portland Trail Blazers", location: "away", time: "10:00 PM ET", venue: "Moda Center", tv: "NBCSP", status: "upcoming" },
+      { date: "2025-01-06", opponent: "LA Clippers", location: "away", time: "10:30 PM ET", venue: "Intuit Dome", tv: "NBCSP", status: "upcoming" },
+      { date: "2025-01-08", opponent: "Los Angeles Lakers", location: "away", time: "10:30 PM ET", venue: "Crypto.com Arena", tv: "ESPN", status: "upcoming" },
+      { date: "2025-01-11", opponent: "Denver Nuggets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
+      { date: "2025-01-13", opponent: "Golden State Warriors", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "MLK Day", status: "upcoming" },
+      { date: "2025-01-15", opponent: "Brooklyn Nets", location: "away", time: "7:30 PM ET", venue: "Barclays Center", tv: "NBCSP", status: "upcoming" }
     ];
 
     // Team abbreviations mapping
@@ -1134,15 +1202,413 @@
     };
 
     // Initialize the schedule
+    // API Configuration for auto-updates
+    const API_CONFIG = {
+      UPDATE_INTERVAL: 30000, // 30 seconds
+      VERCEL_API_URL: '/api/nba-game-data', // Your Vercel API endpoint
+      VERCEL_LIVE_API_URL: '/api/nba-live', // Your Vercel Live API endpoint
+      TEAM_ID: 20, // Philadelphia 76ers ID
+      BACKUP_API: 'https://api.balldontlie.io/v1/games'
+    };
+
+    let updateInterval = null;
+    let lastUpdateTime = 0;
+
+    // Fetch live schedule updates from your Vercel API
+    async function fetchScheduleUpdates() {
+      try {
+        console.log('🔄 Fetching schedule updates from Vercel API...');
+        updateAPIStatus('connecting', 'Connecting to SixersHoops API...');
+        
+        // Try to get today's game first
+        const today = new Date().toISOString().split('T')[0];
+        // Create timeout controller for older browsers
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch(`${API_CONFIG.VERCEL_API_URL}?date=${today}&team=76ers`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`Vercel API Error: ${response.status} - ${response.statusText}`);
+        }
+        
+        const gameData = await response.json();
+        
+        if (gameData.success) {
+          console.log('✅ Live game data received from Vercel API');
+          updateAPIStatus('connected', 'SixersHoops API Connected - Live Data');
+          showUpdateNotification('Connected to live NBA data!');
+          
+          // Update the schedule with live data
+          updateScheduleWithLiveData(gameData);
+        } else {
+          console.log('📅 No live game today, using schedule data');
+          updateAPIStatus('connected', 'SixersHoops API Connected - Schedule Data');
+          showUpdateNotification('Schedule data loaded successfully');
+        }
+        
+      } catch (error) {
+        console.warn('⚠️ Vercel API failed:', error.message);
+        updateAPIStatus('error', 'SixersHoops API failed - Using cached data');
+        
+        // Don't try backup API immediately, just show cached schedule
+        showUpdateNotification('Using cached schedule data', 'warning');
+        
+        // Try backup API in background
+        setTimeout(() => tryBackupAPI(), 2000);
+      }
+    }
+
+    // Try backup API if Vercel API fails
+    async function tryBackupAPI() {
+      try {
+        console.log('🔄 Trying backup API...');
+        updateAPIStatus('connecting', 'Trying backup API...');
+        
+        // Try Ball Don't Lie API as backup
+        const today = new Date().toISOString().split('T')[0];
+        // Create timeout controller for older browsers
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        
+        const response = await fetch(`${API_CONFIG.BACKUP_API}?dates[]=${today}&team_ids[]=20&per_page=10`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'SixersHoops/1.0'
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data && data.data.length > 0) {
+            console.log('✅ Backup API successful - found game data');
+            updateScheduleData(data.data);
+            updateAPIStatus('connected', 'Backup API Connected');
+            showUpdateNotification('Connected via backup API');
+            return;
+          } else {
+            console.log('📅 Backup API connected but no games found for today');
+          }
+        }
+        
+        // If all APIs fail, show we're using cached data
+        console.log('⚠️ All APIs failed, using cached schedule data');
+        updateAPIStatus('error', 'Using cached data');
+        showUpdateNotification('All APIs unavailable - using cached data', 'warning');
+        
+      } catch (error) {
+        console.warn('⚠️ Backup API also failed:', error.message);
+        updateAPIStatus('error', 'Using cached data');
+        showUpdateNotification('All APIs unavailable - using cached data', 'warning');
+      }
+    }
+
+    // Update schedule with live game data from Vercel API
+    function updateScheduleWithLiveData(gameData) {
+      // Find today's game in the schedule and update it with live data
+      const today = new Date().toISOString().split('T')[0];
+      const gameIndex = scheduleData.findIndex(game => game.date === today);
+      
+      if (gameIndex !== -1) {
+        // Update the existing game with live data
+        scheduleData[gameIndex] = {
+          ...scheduleData[gameIndex],
+          status: gameData.status === 'Final' ? 'completed' : (gameData.quarter > 0 ? 'live' : 'upcoming'),
+          result: gameData.status === 'Final' ? 
+            `${gameData.homeScore > gameData.awayScore ? 'W' : 'L'} ${gameData.homeScore}-${gameData.awayScore}` : 
+            null
+        };
+        
+        // Store the live game data for the modal
+        window.liveGameData = gameData;
+        
+        console.log('📊 Live game data stored for modal display');
+      }
+    }
+
+    // Update schedule data from API response
+    function updateScheduleData(apiGames) {
+      const updatedGames = apiGames.map(game => {
+        const gameDate = new Date(game.date);
+        const isHome = game.home_team.id === API_CONFIG.TEAM_ID;
+        const opponent = isHome ? game.visitor_team : game.home_team;
+        
+        // Determine game status
+        let status = 'upcoming';
+        let result = null;
+        
+        if (game.status === 'Final') {
+          status = 'completed';
+          const sixersScore = isHome ? game.home_team_score : game.visitor_team_score;
+          const opponentScore = isHome ? game.visitor_team_score : game.home_team_score;
+          const won = sixersScore > opponentScore;
+          result = `${won ? 'W' : 'L'} ${sixersScore}-${opponentScore}`;
+        } else if (game.status && game.status.includes('Q') || game.status === 'Halftime') {
+          status = 'live';
+        }
+        
+        return {
+          date: gameDate.toISOString().split('T')[0],
+          opponent: opponent.full_name,
+          location: isHome ? 'home' : 'away',
+          time: formatGameTime(gameDate),
+          venue: isHome ? 'Wells Fargo Center' : getVenueName(opponent.abbreviation),
+          tv: 'TBD', // Would need additional API for broadcast info
+          status: status,
+          result: result
+        };
+      });
+      
+      // Merge with existing schedule data, prioritizing API data
+      scheduleData = mergeScheduleData(scheduleData, updatedGames);
+      lastUpdateTime = Date.now();
+    }
+
+    // Update from ESPN backup API
+    function updateScheduleFromESPN(events) {
+      const updatedGames = events.map(event => {
+        const competition = event.competitions[0];
+        const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+        const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+        const isHome = homeTeam.team.abbreviation === 'PHI';
+        const opponent = isHome ? awayTeam.team : homeTeam.team;
+        
+        let status = 'upcoming';
+        let result = null;
+        
+        if (competition.status.type.completed) {
+          status = 'completed';
+          const sixersScore = isHome ? homeTeam.score : awayTeam.score;
+          const opponentScore = isHome ? awayTeam.score : homeTeam.score;
+          const won = parseInt(sixersScore) > parseInt(opponentScore);
+          result = `${won ? 'W' : 'L'} ${sixersScore}-${opponentScore}`;
+        }
+        
+        return {
+          date: new Date(event.date).toISOString().split('T')[0],
+          opponent: opponent.displayName,
+          location: isHome ? 'home' : 'away',
+          time: formatGameTime(new Date(event.date)),
+          venue: competition.venue ? competition.venue.fullName : (isHome ? 'Wells Fargo Center' : 'Away Venue'),
+          tv: getBroadcastInfo(competition.broadcasts),
+          status: status,
+          result: result
+        };
+      });
+      
+      scheduleData = mergeScheduleData(scheduleData, updatedGames);
+      lastUpdateTime = Date.now();
+    }
+
+    // Merge API data with existing schedule data
+    function mergeScheduleData(existing, apiData) {
+      const merged = [...existing];
+      
+      apiData.forEach(apiGame => {
+        const existingIndex = merged.findIndex(game => 
+          game.date === apiGame.date && 
+          game.opponent === apiGame.opponent
+        );
+        
+        if (existingIndex !== -1) {
+          // Update existing game with API data
+          merged[existingIndex] = { ...merged[existingIndex], ...apiGame };
+        } else {
+          // Add new game from API
+          merged.push(apiGame);
+        }
+      });
+      
+      // Sort by date
+      return merged.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+
+    // Helper functions
+    function formatGameTime(date) {
+      return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        timeZoneName: 'short'
+      });
+    }
+
+    function getVenueName(teamAbbr) {
+      const venues = {
+        'ATL': 'State Farm Arena', 'BOS': 'TD Garden', 'BKN': 'Barclays Center',
+        'CHA': 'Spectrum Center', 'CHI': 'United Center', 'CLE': 'Rocket Mortgage FieldHouse',
+        'DAL': 'American Airlines Center', 'DEN': 'Ball Arena', 'DET': 'Little Caesars Arena',
+        'GSW': 'Chase Center', 'HOU': 'Toyota Center', 'IND': 'Gainbridge Fieldhouse',
+        'LAC': 'Intuit Dome', 'LAL': 'Crypto.com Arena', 'MEM': 'FedExForum',
+        'MIA': 'Kaseya Center', 'MIL': 'Fiserv Forum', 'MIN': 'Target Center',
+        'NOP': 'Smoothie King Center', 'NYK': 'Madison Square Garden', 'OKC': 'Paycom Center',
+        'ORL': 'Kia Center', 'PHX': 'Footprint Center', 'POR': 'Moda Center',
+        'SAC': 'Golden 1 Center', 'SAS': 'Frost Bank Center', 'TOR': 'Scotiabank Arena',
+        'UTA': 'Delta Center', 'WAS': 'Capital One Arena'
+      };
+      return venues[teamAbbr] || 'Away Venue';
+    }
+
+    function getBroadcastInfo(broadcasts) {
+      if (!broadcasts || broadcasts.length === 0) return 'TBD';
+      return broadcasts.map(b => b.names[0]).join(', ');
+    }
+
+    // Update API status indicator
+    function updateAPIStatus(status, message) {
+      const apiStatus = document.getElementById('apiStatus');
+      const statusText = apiStatus.querySelector('.status-text');
+      
+      if (apiStatus && statusText) {
+        // Remove all status classes
+        apiStatus.classList.remove('connected', 'error', 'connecting');
+        
+        // Add new status class
+        apiStatus.classList.add(status);
+        
+        // Update text
+        statusText.textContent = message;
+      }
+    }
+
+    // Show update notification
+    function showUpdateNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${type === 'success' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(245, 158, 11, 0.9)'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        z-index: 1000;
+        font-weight: 600;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+      `;
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span>${type === 'success' ? '✅' : '⚠️'}</span>
+          ${message}
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Animate in
+      setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Auto-remove after 4 seconds
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 4000);
+    }
+
+    // Start auto-update system
+    function startAutoUpdates() {
+      console.log('🔄 Starting auto-update system...');
+      
+      // Initial fetch (non-blocking)
+      fetchScheduleUpdates().catch(error => {
+        console.warn('Initial API fetch failed, continuing with static data:', error);
+      });
+      
+      // Set up periodic updates
+      updateInterval = setInterval(async () => {
+        try {
+          await fetchScheduleUpdates();
+          // Re-render the schedule with updated data
+          updateStats();
+          renderSchedule();
+        } catch (error) {
+          console.warn('Periodic update failed:', error);
+          // Continue with existing data
+        }
+      }, API_CONFIG.UPDATE_INTERVAL);
+      
+      console.log('✅ Auto-update system started');
+    }
+
+    // Stop auto-updates
+    function stopAutoUpdates() {
+      if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+        console.log('⏹️ Auto-update system stopped');
+      }
+    }
+
+    // Manual refresh function
+    async function refreshSchedule() {
+      const refreshBtn = document.getElementById('refresh-btn');
+      if (refreshBtn) {
+        refreshBtn.classList.add('refreshing');
+      }
+      
+      showUpdateNotification('Refreshing schedule...', 'info');
+      
+      try {
+        await fetchScheduleUpdates();
+        updateStats();
+        renderSchedule();
+        showUpdateNotification('Schedule refreshed successfully!', 'success');
+      } catch (error) {
+        console.warn('Manual refresh failed:', error);
+        showUpdateNotification('Refresh failed - using cached data', 'warning');
+      } finally {
+        // Remove refreshing animation
+        if (refreshBtn) {
+          refreshBtn.classList.remove('refreshing');
+        }
+      }
+    }
+
     function initializeSchedule() {
       console.log('🚀 Initializing schedule page...');
-      console.log('📊 Schedule data loaded:', scheduleData.length, 'games');
       
+      // Always show the schedule first (with static data)
       updateStats();
       renderSchedule();
       setupFilters();
+      setupMobileMenu();
+      setupScrollEffects();
+      startCountdownTimers();
       
-      console.log('✅ Schedule initialization complete');
+      console.log('✅ Schedule page loaded with static data');
+      
+      // Then try to get live updates (non-blocking)
+      setTimeout(() => {
+        startAutoUpdates();
+      }, 500); // Small delay to ensure page is fully loaded
+      
+      // Add manual refresh button functionality
+      const refreshBtn = document.getElementById('refresh-btn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshSchedule);
+      }
+      
+      console.log('🎯 Schedule initialization complete');
     }
 
     // Update statistics
@@ -1175,14 +1641,7 @@
 
     // Render schedule
     function renderSchedule() {
-      console.log('🏀 Rendering schedule with', scheduleData.length, 'games');
       const container = document.getElementById('schedule-container');
-      
-      if (!container) {
-        console.error('❌ Schedule container not found!');
-        return;
-      }
-      
       container.innerHTML = '';
 
       // Group games by month
@@ -1197,15 +1656,11 @@
         gamesByMonth[monthYear].push(game);
       });
 
-      console.log('📅 Games grouped by month:', Object.keys(gamesByMonth));
-
       // Render each month
       Object.keys(gamesByMonth).forEach(monthYear => {
         const monthSection = createMonthSection(monthYear, gamesByMonth[monthYear]);
         container.appendChild(monthSection);
       });
-      
-      console.log('✅ Schedule rendered successfully');
     }
 
     // Create month section
@@ -1271,7 +1726,6 @@
       // Create action buttons
       let actionButtonsHtml = '';
       if (game.status === 'completed' || isLive) {
-        console.log('Creating buttons for game:', gameId, 'status:', game.status, 'isLive:', isLive);
         actionButtonsHtml = `
           <div class="game-actions">
             <button class="action-btn ${isLive ? 'live' : ''}" onclick="openLiveGame('${gameId}', 'play-by-play')" ${!isLive && game.status !== 'completed' ? 'disabled' : ''}>
@@ -1588,177 +2042,69 @@
       }
     }
 
-    // Load game data from NBA API
+    // Load game data
     async function loadGameData(gameId) {
       try {
-        console.log('Loading real NBA data for game:', gameId);
+        console.log(`🎮 Loading game data for: ${gameId}`);
         
-        // Parse gameId to get date and opponent
-        const parts = gameId.split('_');
-        const gameDate = parts[0]; // Format: 20241221
-        const opponentAbbr = parts[1];
-        const isHome = parts[2] === 'home';
-        
-        // Format date for NBA API (YYYY-MM-DD)
-        const formattedDate = `${gameDate.substring(0,4)}-${gameDate.substring(4,6)}-${gameDate.substring(6,8)}`;
-        
-        // Get Philadelphia 76ers team ID (1610612755)
-        const sixersTeamId = '1610612755';
-        
-        // Fetch game data from NBA API
-        const gameData = await fetchNBAGameData(formattedDate, sixersTeamId, opponentAbbr);
-        
-        if (gameData) {
+        // Check if we have live data stored from the API
+        if (window.liveGameData && isGameToday(gameId.split('_')[0])) {
+          console.log('📊 Using live game data from Vercel API');
+          const gameData = window.liveGameData;
+          
           // Update live score header
           updateLiveScoreHeader(gameData);
           
           // Load initial tab content
           const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
           loadTabContent(activeTab, gameId, gameData);
-        } else {
-          // Fallback to mock data if API fails
-          console.warn('NBA API failed, using mock data');
-          const mockData = generateMockGameData(gameId);
-          updateLiveScoreHeader(mockData);
-          const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
-          loadTabContent(activeTab, gameId, mockData);
+          
+          return;
         }
+        
+        // Try to fetch live data from your Vercel API
+        const parts = gameId.split('_');
+        const gameDate = parts[0];
+        const opponent = parts[1];
+        
+        try {
+          console.log(`🔄 Fetching live data from Vercel API for ${gameDate}`);
+          const response = await fetch(`${API_CONFIG.VERCEL_API_URL}?date=${gameDate}&opponent=${opponent}&team=76ers`);
+          
+          if (response.ok) {
+            const apiData = await response.json();
+            if (apiData.success) {
+              console.log('✅ Live data received from Vercel API');
+              
+              // Update live score header
+              updateLiveScoreHeader(apiData);
+              
+              // Load initial tab content
+              const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
+              loadTabContent(activeTab, gameId, apiData);
+              
+              return;
+            }
+          }
+        } catch (apiError) {
+          console.warn('⚠️ Vercel API failed for game data:', apiError);
+        }
+        
+        // Fallback to mock data if API fails
+        console.log('📝 Using mock data as fallback');
+        const gameData = generateMockGameData(gameId);
+        
+        // Update live score header
+        updateLiveScoreHeader(gameData);
+        
+        // Load initial tab content
+        const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
+        loadTabContent(activeTab, gameId, gameData);
         
       } catch (error) {
         console.error('Error loading game data:', error);
-        // Fallback to mock data
-        const mockData = generateMockGameData(gameId);
-        updateLiveScoreHeader(mockData);
-        const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
-        loadTabContent(activeTab, gameId, mockData);
+        showErrorMessage('Failed to load game data');
       }
-    }
-
-    // Fetch real NBA game data
-    async function fetchNBAGameData(gameDate, sixersTeamId, opponentAbbr) {
-      try {
-        // NBA API endpoints (these are real NBA.com endpoints)
-        const scoreboardUrl = `https://stats.nba.com/stats/scoreboardV2?DayOffset=0&LeagueID=00&gameDate=${gameDate}`;
-        const playByPlayUrl = `https://stats.nba.com/stats/playbyplayv2?GameID={GAME_ID}&StartPeriod=0&EndPeriod=10`;
-        const boxScoreUrl = `https://stats.nba.com/stats/boxscoretraditionalv2?GameID={GAME_ID}&StartPeriod=0&EndPeriod=10&StartRange=0&EndRange=28800&RangeType=2`;
-        
-        // Note: NBA.com blocks direct browser requests due to CORS
-        // You'll need to proxy these requests through your backend
-        
-        // Alternative: Use your own backend API that fetches from NBA
-        const response = await fetch(`/api/nba-game-data?date=${gameDate}&team=${sixersTeamId}&opponent=${opponentAbbr}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return processNBAApiData(data);
-        
-      } catch (error) {
-        console.error('NBA API fetch failed:', error);
-        
-        // Try alternative free NBA API (balldontlie.io)
-        return await fetchFromBallDontLie(gameDate, opponentAbbr);
-      }
-    }
-
-    // Alternative free NBA API
-    async function fetchFromBallDontLie(gameDate, opponentAbbr) {
-      try {
-        // Ball Don't Lie API (free, no auth required)
-        const gamesUrl = `https://www.balldontlie.io/api/v1/games?dates[]=${gameDate}&team_ids[]=23`; // 23 is 76ers ID
-        
-        const response = await fetch(gamesUrl);
-        if (!response.ok) throw new Error('Ball Dont Lie API failed');
-        
-        const data = await response.json();
-        
-        if (data.data && data.data.length > 0) {
-          const game = data.data[0];
-          return processBallDontLieData(game, opponentAbbr);
-        }
-        
-        return null;
-      } catch (error) {
-        console.error('Ball Dont Lie API failed:', error);
-        return null;
-      }
-    }
-
-    // Process NBA.com API data
-    function processNBAApiData(apiData) {
-      // This would process the official NBA API response
-      // Structure depends on your backend API format
-      return {
-        opponent: apiData.opponent_name,
-        homeScore: apiData.home_score,
-        awayScore: apiData.away_score,
-        status: apiData.game_status,
-        quarter: apiData.period,
-        timeRemaining: apiData.game_clock,
-        plays: apiData.plays?.map(play => ({
-          time: `Q${play.period} ${play.time_remaining}`,
-          description: formatPlayDescription(play),
-          score: `${play.score_home}-${play.score_away}`
-        })) || [],
-        boxScore: {
-          sixers: apiData.home_team_stats?.players || [],
-          opponent: apiData.away_team_stats?.players || []
-        },
-        stats: {
-          sixers: apiData.home_team_stats?.team || {},
-          opponent: apiData.away_team_stats?.team || {}
-        }
-      };
-    }
-
-    // Process Ball Don't Lie API data
-    function processBallDontLieData(game, opponentAbbr) {
-      const isHome = game.home_team.abbreviation === 'PHI';
-      const opponent = isHome ? game.visitor_team : game.home_team;
-      
-      return {
-        opponent: opponent.full_name,
-        homeScore: isHome ? game.home_team_score : game.visitor_team_score,
-        awayScore: isHome ? game.visitor_team_score : game.home_team_score,
-        status: game.status,
-        plays: [], // Ball Don't Lie doesn't provide play-by-play
-        boxScore: {
-          sixers: [],
-          opponent: []
-        },
-        stats: {
-          sixers: {},
-          opponent: {}
-        }
-      };
-    }
-
-    // Format play description with emojis
-    function formatPlayDescription(play) {
-      const description = play.description || '';
-      
-      // Add emojis based on play type
-      if (description.includes('makes') && description.includes('3PT')) {
-        return `🎯 ${description}`;
-      } else if (description.includes('makes')) {
-        return `🏀 ${description}`;
-      } else if (description.includes('misses')) {
-        return `🚫 ${description}`;
-      } else if (description.includes('rebound')) {
-        return `🔄 ${description}`;
-      } else if (description.includes('assist')) {
-        return `🤝 ${description}`;
-      } else if (description.includes('foul')) {
-        return `⚠️ ${description}`;
-      } else if (description.includes('turnover')) {
-        return `❌ ${description}`;
-      } else if (description.includes('dunk')) {
-        return `💥 ${description}`;
-      }
-      
-      return description;
     }
 
     // Load content for specific tab
@@ -1780,56 +2126,8 @@
       }
     }
 
-    // Open live game modal
-    async function openLiveGame(gameId, initialTab = 'play-by-play') {
-      console.log('Opening live game:', gameId, 'tab:', initialTab);
-      
-      // Store current game ID for auto-refresh
-      currentGameId = gameId;
-      
-      // Show modal
-      const modal = document.getElementById('liveGameModal');
-      modal.style.display = 'flex';
-      
-      // Set initial tab
-      switchTab(initialTab);
-      
-      // Load game data from your API
-      try {
-        await loadGameData(gameId);
-      } catch (error) {
-        console.error('Failed to load game data:', error);
-        showErrorMessage('Failed to load game data. Please try again.');
-      }
-    }
-    
-    // Close live game modal
-    function closeLiveGame() {
-      const modal = document.getElementById('liveGameModal');
-      modal.style.display = 'none';
-      
-      // Stop auto-refresh
-      stopAutoRefresh();
-      currentGameId = null;
-    }
-    
-    // Switch between tabs
-    function switchTab(tabName) {
-      // Update tab buttons
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
-      
-      // Update tab content
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      document.getElementById(`${tabName}-tab`).classList.add('active');
-    }
-
     // Update live score header
-    function updateGameModal(gameData) {
+    function updateLiveScoreHeader(gameData) {
       const parts = currentGameId.split('_');
       const opponentAbbr = parts[1];
       const isHome = parts[2] === 'home';
@@ -1994,55 +2292,6 @@
       container.innerHTML = statsHtml;
     }
 
-    // Load real game data from your API
-    async function loadGameData(gameId) {
-      try {
-        // Extract game info from gameId (format: "2025-12-21_BOS_home")
-        const parts = gameId.split('_');
-        const date = parts[0];
-        const opponentAbbr = parts[1];
-        const location = parts[2];
-        
-        console.log(`Loading game data for ${date} vs ${opponentAbbr} (${location})`);
-        
-        // Try your API first
-        const apiUrl = `/api/nba-simple?date=${date}`;
-        const response = await fetch(apiUrl);
-        
-        if (response.ok) {
-          const gameData = await response.json();
-          console.log('✅ Real NBA data loaded:', gameData);
-          
-          // Update modal with real data
-          updateGameModal(gameData);
-          loadPlayByPlay(gameData);
-          loadBoxScore(gameData);
-          loadGameStats(gameData);
-          
-          // Start auto-refresh for live games
-          if (gameData.status && !gameData.status.includes('Final')) {
-            startAutoRefresh();
-          }
-          
-          return gameData;
-        } else {
-          throw new Error(`API returned ${response.status}`);
-        }
-        
-      } catch (error) {
-        console.warn('⚠️ API failed, using mock data:', error);
-        
-        // Fallback to mock data
-        const mockData = generateMockGameData(gameId);
-        updateGameModal(mockData);
-        loadPlayByPlay(mockData);
-        loadBoxScore(mockData);
-        loadGameStats(mockData);
-        
-        return mockData;
-      }
-    }
-
     // Generate mock game data for demo
     function generateMockGameData(gameId) {
       const parts = gameId.split('_');
@@ -2136,12 +2385,11 @@
         updateRefreshCountdown();
         
         if (refreshCountdown <= 0) {
-          // Refresh game data with real NBA API
+          // Refresh game data
           if (currentGameId) {
-            console.log('Auto-refreshing game data...');
             loadGameData(currentGameId);
           }
-          refreshCountdown = 10; // Refresh every 10 seconds for live games
+          refreshCountdown = 10;
         }
       }, 1000);
     }
