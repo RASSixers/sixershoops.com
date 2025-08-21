@@ -150,101 +150,6 @@
       font-size: 0.9rem;
     }
 
-    /* Refresh Button Styling */
-    #refresh-btn {
-      transition: all 0.3s ease;
-      position: relative;
-    }
-
-    #refresh-btn:hover {
-      transform: translateY(-10px) scale(1.05);
-      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
-      border-color: rgba(16, 185, 129, 0.6);
-    }
-
-    #refresh-btn:hover::before {
-      background: linear-gradient(90deg, #10b981, #059669, #047857);
-    }
-
-    #refresh-btn:active {
-      transform: translateY(-8px) scale(1.02);
-    }
-
-    #refresh-btn .stat-number {
-      transition: transform 0.3s ease;
-    }
-
-    #refresh-btn:hover .stat-number {
-      transform: rotate(180deg);
-    }
-
-    #refresh-btn.refreshing .stat-number {
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* API Status Indicator */
-    .api-status {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 12px;
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      z-index: 1000;
-      font-size: 0.85rem;
-      font-weight: 500;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-    }
-
-    .api-status:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #6b7280;
-      transition: all 0.3s ease;
-    }
-
-    .api-status.connected .status-dot {
-      background: #10b981;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-      animation: pulse-dot 2s infinite;
-    }
-
-    .api-status.error .status-dot {
-      background: #ef4444;
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-    }
-
-    .api-status.connecting .status-dot {
-      background: #f59e0b;
-      animation: pulse-dot 1s infinite;
-    }
-
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.2); }
-    }
-
-    .status-text {
-      color: #e2e8f0;
-    }
-
     /* Schedule Filters */
     .schedule-filters {
       background: rgba(15, 23, 42, 0.9);
@@ -1026,10 +931,6 @@
         <span class="stat-number" id="next-game">Loading...</span>
         <span class="stat-label">Next Game</span>
       </div>
-      <div class="stat-card" style="cursor: pointer;" id="refresh-btn">
-        <span class="stat-number">🔄</span>
-        <span class="stat-label">Refresh Data</span>
-      </div>
     </section>
 
     <!-- Schedule Filters -->
@@ -1121,51 +1022,82 @@
   <!-- Auto-refresh indicator -->
   <div class="refresh-indicator" id="refreshIndicator">
     <div class="refresh-text">Auto-refreshing live data</div>
-    <div class="refresh-countdown" id="refreshCountdown">30</div>
-  </div>
-
-  <!-- API Status Indicator -->
-  <div class="api-status" id="apiStatus">
-    <div class="status-dot"></div>
-    <span class="status-text">Connecting to API...</span>
+    <div class="refresh-countdown" id="refreshCountdown">10</div>
   </div>
 
   <script>
-    // API Configuration
-    const API_CONFIG = {
-      // Using NBA API endpoints
-      SCHEDULE_URL: 'https://stats.nba.com/stats/teamgamelog',
-      SCOREBOARD_URL: 'https://stats.nba.com/stats/scoreboard',
-      TEAM_ID: '1610612755', // Philadelphia 76ers team ID
-      SEASON: '2024-25',
-      CACHE_DURATION: 5 * 60 * 1000, // 5 minutes in milliseconds
-      REFRESH_INTERVAL: 30 * 1000 // 30 seconds for live games
-    };
-
-    // Global variables for data management
-    let scheduleData = [];
-    let lastFetchTime = 0;
-    let autoRefreshInterval = null;
-    let isLoading = false;
-
-    // Fallback schedule data in case API fails (current 2024-25 season)
-    const fallbackScheduleData = [
-      // Recent games with realistic data
-      { date: "2024-12-15", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "ESPN", status: "completed", result: "W 118-114" },
-      { date: "2024-12-17", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "completed", result: "W 121-108" },
-      { date: "2024-12-19", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "NBCSP", status: "completed", result: "W 109-103" },
-      { date: "2024-12-21", opponent: "San Antonio Spurs", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
-      { date: "2024-12-23", opponent: "Boston Celtics", location: "home", time: "5:00 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "upcoming" },
-      { date: "2024-12-25", opponent: "Miami Heat", location: "away", time: "2:30 PM ET", venue: "Kaseya Center", tv: "ESPN", status: "upcoming" },
-      { date: "2024-12-28", opponent: "Utah Jazz", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
-      { date: "2024-12-30", opponent: "Phoenix Suns", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
-      { date: "2025-01-02", opponent: "New Orleans Pelicans", location: "away", time: "8:00 PM ET", venue: "Smoothie King Center", tv: "NBCSP", status: "upcoming" },
-      { date: "2025-01-04", opponent: "Portland Trail Blazers", location: "away", time: "10:00 PM ET", venue: "Moda Center", tv: "NBCSP", status: "upcoming" },
-      { date: "2025-01-06", opponent: "LA Clippers", location: "away", time: "10:30 PM ET", venue: "Intuit Dome", tv: "NBCSP", status: "upcoming" },
-      { date: "2025-01-08", opponent: "Los Angeles Lakers", location: "away", time: "10:30 PM ET", venue: "Crypto.com Arena", tv: "ESPN", status: "upcoming" },
-      { date: "2025-01-11", opponent: "Denver Nuggets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBCSP", status: "upcoming" },
-      { date: "2025-01-13", opponent: "Golden State Warriors", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "MLK Day", status: "upcoming" },
-      { date: "2025-01-15", opponent: "Brooklyn Nets", location: "away", time: "7:30 PM ET", venue: "Barclays Center", tv: "NBCSP", status: "upcoming" }
+    // Global variables for live game functionality
+    let currentGameId = null;
+    let refreshInterval = null;
+    let refreshCountdown = 10;
+    
+    // NBA Schedule Data (2024-25 Season - Current dates for testing)
+    const scheduleData = [
+      // December 2024 - Current games for testing
+      { date: "2024-12-17", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "NBC Sports Philadelphia", status: "completed", result: "L 108-112" },
+      { date: "2024-12-19", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "completed", result: "W 118-104" },
+      { date: "2024-12-21", opponent: "Boston Celtics", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
+      { date: "2024-12-23", opponent: "Miami Heat", location: "away", time: "8:00 PM ET", venue: "Kaseya Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2024-12-25", opponent: "New York Knicks", location: "home", time: "2:30 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "live" },
+      { date: "2024-12-27", opponent: "Orlando Magic", location: "away", time: "7:00 PM ET", venue: "Kia Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2024-12-29", opponent: "Brooklyn Nets", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2024-12-31", opponent: "Chicago Bulls", location: "away", time: "8:00 PM ET", venue: "United Center", tv: "ESPN", status: "upcoming" },
+      
+      // January 2025
+      { date: "2025-01-02", opponent: "Washington Wizards", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-04", opponent: "Toronto Raptors", location: "away", time: "7:30 PM ET", venue: "Scotiabank Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-06", opponent: "Cleveland Cavaliers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
+      { date: "2025-01-08", opponent: "Detroit Pistons", location: "away", time: "7:00 PM ET", venue: "Little Caesars Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-10", opponent: "Milwaukee Bucks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "TNT", status: "upcoming" },
+      { date: "2025-01-12", opponent: "Atlanta Hawks", location: "away", time: "7:30 PM ET", venue: "State Farm Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-15", opponent: "Los Angeles Lakers", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
+      { date: "2025-01-17", opponent: "Golden State Warriors", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-20", opponent: "Phoenix Suns", location: "away", time: "9:00 PM ET", venue: "Footprint Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-22", opponent: "Denver Nuggets", location: "away", time: "9:00 PM ET", venue: "Ball Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-24", opponent: "Portland Trail Blazers", location: "away", time: "10:00 PM ET", venue: "Moda Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-26", opponent: "Sacramento Kings", location: "away", time: "10:00 PM ET", venue: "Golden 1 Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-28", opponent: "LA Clippers", location: "away", time: "10:30 PM ET", venue: "Intuit Dome", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-01-30", opponent: "Utah Jazz", location: "away", time: "9:00 PM ET", venue: "Delta Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      
+      // February 2025
+      { date: "2025-02-01", opponent: "Indiana Pacers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-03", opponent: "Houston Rockets", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-05", opponent: "San Antonio Spurs", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-07", opponent: "Minnesota Timberwolves", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-09", opponent: "New Orleans Pelicans", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-11", opponent: "Memphis Grizzlies", location: "away", time: "8:00 PM ET", venue: "FedExForum", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-13", opponent: "Oklahoma City Thunder", location: "away", time: "8:00 PM ET", venue: "Paycom Center", tv: "TNT", status: "upcoming" },
+      { date: "2025-02-21", opponent: "Dallas Mavericks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-23", opponent: "Boston Celtics", location: "away", time: "3:30 PM ET", venue: "TD Garden", tv: "ABC", status: "upcoming" },
+      { date: "2025-02-25", opponent: "Miami Heat", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-02-27", opponent: "New York Knicks", location: "away", time: "7:30 PM ET", venue: "Madison Square Garden", tv: "TNT", status: "upcoming" },
+      
+      // March 2025
+      { date: "2025-03-01", opponent: "Chicago Bulls", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-03", opponent: "Orlando Magic", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-05", opponent: "Brooklyn Nets", location: "away", time: "7:30 PM ET", venue: "Barclays Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-07", opponent: "Toronto Raptors", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-09", opponent: "Cleveland Cavaliers", location: "away", time: "6:00 PM ET", venue: "Rocket Mortgage FieldHouse", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-11", opponent: "Detroit Pistons", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-13", opponent: "Milwaukee Bucks", location: "away", time: "8:00 PM ET", venue: "Fiserv Forum", tv: "ESPN", status: "upcoming" },
+      { date: "2025-03-15", opponent: "Atlanta Hawks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-17", opponent: "Charlotte Hornets", location: "away", time: "7:00 PM ET", venue: "Spectrum Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-19", opponent: "Washington Wizards", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-21", opponent: "Indiana Pacers", location: "away", time: "7:00 PM ET", venue: "Gainbridge Fieldhouse", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-23", opponent: "Boston Celtics", location: "home", time: "1:00 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "upcoming" },
+      { date: "2025-03-25", opponent: "Miami Heat", location: "away", time: "8:00 PM ET", venue: "Kaseya Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-27", opponent: "New York Knicks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
+      { date: "2025-03-29", opponent: "Orlando Magic", location: "away", time: "7:00 PM ET", venue: "Kia Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-03-31", opponent: "Brooklyn Nets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      
+      // April 2025
+      { date: "2025-04-02", opponent: "Toronto Raptors", location: "away", time: "7:30 PM ET", venue: "Scotiabank Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-04-04", opponent: "Cleveland Cavaliers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-04-06", opponent: "Detroit Pistons", location: "away", time: "3:00 PM ET", venue: "Little Caesars Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-04-08", opponent: "Milwaukee Bucks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-04-10", opponent: "Atlanta Hawks", location: "away", time: "7:30 PM ET", venue: "State Farm Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-04-12", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      { date: "2025-04-13", opponent: "Washington Wizards", location: "away", time: "6:00 PM ET", venue: "Capital One Arena", tv: "NBC Sports Philadelphia", status: "upcoming" }
     ];
 
     // Team abbreviations mapping
@@ -1202,311 +1134,6 @@
     };
 
     // Initialize the schedule
-    // API Configuration for auto-updates
-    const API_CONFIG = {
-      UPDATE_INTERVAL: 30000, // 30 seconds
-      NBA_API_URL: 'https://api.balldontlie.io/v1/games',
-      TEAM_ID: 20, // Philadelphia 76ers ID
-      BACKUP_API: 'https://www.balldontlie.io/api/v1/games'
-    };
-
-    let updateInterval = null;
-    let lastUpdateTime = 0;
-
-    // Fetch live schedule updates from API
-    async function fetchScheduleUpdates() {
-      try {
-        console.log('🔄 Fetching schedule updates...');
-        updateAPIStatus('connecting', 'Fetching updates...');
-        
-        // Get current season games for 76ers
-        const currentDate = new Date();
-        const seasonStart = new Date(currentDate.getFullYear(), 9, 1); // October 1st
-        const seasonEnd = new Date(currentDate.getFullYear() + 1, 3, 30); // April 30th
-        
-        const response = await fetch(`${API_CONFIG.NBA_API_URL}?team_ids[]=${API_CONFIG.TEAM_ID}&start_date=${seasonStart.toISOString().split('T')[0]}&end_date=${seasonEnd.toISOString().split('T')[0]}&per_page=100`);
-        
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.data && data.data.length > 0) {
-          updateScheduleData(data.data);
-          console.log('✅ Schedule updated successfully');
-          updateAPIStatus('connected', 'API Connected - Live Data');
-          showUpdateNotification('Schedule updated with latest data');
-        } else {
-          updateAPIStatus('error', 'No data received');
-        }
-        
-      } catch (error) {
-        console.warn('⚠️ API update failed:', error.message);
-        updateAPIStatus('error', 'Primary API failed');
-        // Try backup API or continue with existing data
-        tryBackupAPI();
-      }
-    }
-
-    // Try backup API if primary fails
-    async function tryBackupAPI() {
-      try {
-        updateAPIStatus('connecting', 'Trying backup API...');
-        // Use ESPN API as backup
-        const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phi/schedule`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.events) {
-            updateScheduleFromESPN(data.events);
-            updateAPIStatus('connected', 'Backup API Connected');
-            console.log('✅ Backup API successful');
-          }
-        }
-      } catch (error) {
-        console.warn('⚠️ Backup API also failed, using cached data');
-        updateAPIStatus('error', 'Using cached data');
-        showUpdateNotification('Using cached schedule data', 'warning');
-      }
-    }
-
-    // Update schedule data from API response
-    function updateScheduleData(apiGames) {
-      const updatedGames = apiGames.map(game => {
-        const gameDate = new Date(game.date);
-        const isHome = game.home_team.id === API_CONFIG.TEAM_ID;
-        const opponent = isHome ? game.visitor_team : game.home_team;
-        
-        // Determine game status
-        let status = 'upcoming';
-        let result = null;
-        
-        if (game.status === 'Final') {
-          status = 'completed';
-          const sixersScore = isHome ? game.home_team_score : game.visitor_team_score;
-          const opponentScore = isHome ? game.visitor_team_score : game.home_team_score;
-          const won = sixersScore > opponentScore;
-          result = `${won ? 'W' : 'L'} ${sixersScore}-${opponentScore}`;
-        } else if (game.status && game.status.includes('Q') || game.status === 'Halftime') {
-          status = 'live';
-        }
-        
-        return {
-          date: gameDate.toISOString().split('T')[0],
-          opponent: opponent.full_name,
-          location: isHome ? 'home' : 'away',
-          time: formatGameTime(gameDate),
-          venue: isHome ? 'Wells Fargo Center' : getVenueName(opponent.abbreviation),
-          tv: 'TBD', // Would need additional API for broadcast info
-          status: status,
-          result: result
-        };
-      });
-      
-      // Merge with existing schedule data, prioritizing API data
-      scheduleData = mergeScheduleData(scheduleData, updatedGames);
-      lastUpdateTime = Date.now();
-    }
-
-    // Update from ESPN backup API
-    function updateScheduleFromESPN(events) {
-      const updatedGames = events.map(event => {
-        const competition = event.competitions[0];
-        const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
-        const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-        const isHome = homeTeam.team.abbreviation === 'PHI';
-        const opponent = isHome ? awayTeam.team : homeTeam.team;
-        
-        let status = 'upcoming';
-        let result = null;
-        
-        if (competition.status.type.completed) {
-          status = 'completed';
-          const sixersScore = isHome ? homeTeam.score : awayTeam.score;
-          const opponentScore = isHome ? awayTeam.score : homeTeam.score;
-          const won = parseInt(sixersScore) > parseInt(opponentScore);
-          result = `${won ? 'W' : 'L'} ${sixersScore}-${opponentScore}`;
-        }
-        
-        return {
-          date: new Date(event.date).toISOString().split('T')[0],
-          opponent: opponent.displayName,
-          location: isHome ? 'home' : 'away',
-          time: formatGameTime(new Date(event.date)),
-          venue: competition.venue ? competition.venue.fullName : (isHome ? 'Wells Fargo Center' : 'Away Venue'),
-          tv: getBroadcastInfo(competition.broadcasts),
-          status: status,
-          result: result
-        };
-      });
-      
-      scheduleData = mergeScheduleData(scheduleData, updatedGames);
-      lastUpdateTime = Date.now();
-    }
-
-    // Merge API data with existing schedule data
-    function mergeScheduleData(existing, apiData) {
-      const merged = [...existing];
-      
-      apiData.forEach(apiGame => {
-        const existingIndex = merged.findIndex(game => 
-          game.date === apiGame.date && 
-          game.opponent === apiGame.opponent
-        );
-        
-        if (existingIndex !== -1) {
-          // Update existing game with API data
-          merged[existingIndex] = { ...merged[existingIndex], ...apiGame };
-        } else {
-          // Add new game from API
-          merged.push(apiGame);
-        }
-      });
-      
-      // Sort by date
-      return merged.sort((a, b) => new Date(a.date) - new Date(b.date));
-    }
-
-    // Helper functions
-    function formatGameTime(date) {
-      return date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        timeZoneName: 'short'
-      });
-    }
-
-    function getVenueName(teamAbbr) {
-      const venues = {
-        'ATL': 'State Farm Arena', 'BOS': 'TD Garden', 'BKN': 'Barclays Center',
-        'CHA': 'Spectrum Center', 'CHI': 'United Center', 'CLE': 'Rocket Mortgage FieldHouse',
-        'DAL': 'American Airlines Center', 'DEN': 'Ball Arena', 'DET': 'Little Caesars Arena',
-        'GSW': 'Chase Center', 'HOU': 'Toyota Center', 'IND': 'Gainbridge Fieldhouse',
-        'LAC': 'Intuit Dome', 'LAL': 'Crypto.com Arena', 'MEM': 'FedExForum',
-        'MIA': 'Kaseya Center', 'MIL': 'Fiserv Forum', 'MIN': 'Target Center',
-        'NOP': 'Smoothie King Center', 'NYK': 'Madison Square Garden', 'OKC': 'Paycom Center',
-        'ORL': 'Kia Center', 'PHX': 'Footprint Center', 'POR': 'Moda Center',
-        'SAC': 'Golden 1 Center', 'SAS': 'Frost Bank Center', 'TOR': 'Scotiabank Arena',
-        'UTA': 'Delta Center', 'WAS': 'Capital One Arena'
-      };
-      return venues[teamAbbr] || 'Away Venue';
-    }
-
-    function getBroadcastInfo(broadcasts) {
-      if (!broadcasts || broadcasts.length === 0) return 'TBD';
-      return broadcasts.map(b => b.names[0]).join(', ');
-    }
-
-    // Update API status indicator
-    function updateAPIStatus(status, message) {
-      const apiStatus = document.getElementById('apiStatus');
-      const statusText = apiStatus.querySelector('.status-text');
-      
-      if (apiStatus && statusText) {
-        // Remove all status classes
-        apiStatus.classList.remove('connected', 'error', 'connecting');
-        
-        // Add new status class
-        apiStatus.classList.add(status);
-        
-        // Update text
-        statusText.textContent = message;
-      }
-    }
-
-    // Show update notification
-    function showUpdateNotification(message, type = 'success') {
-      const notification = document.createElement('div');
-      notification.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        background: ${type === 'success' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(245, 158, 11, 0.9)'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        z-index: 1000;
-        font-weight: 600;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-      `;
-      notification.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span>${type === 'success' ? '✅' : '⚠️'}</span>
-          ${message}
-        </div>
-      `;
-      
-      document.body.appendChild(notification);
-      
-      // Animate in
-      setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-      }, 100);
-      
-      // Auto-remove after 4 seconds
-      setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-          }
-        }, 300);
-      }, 4000);
-    }
-
-    // Start auto-update system
-    function startAutoUpdates() {
-      // Initial fetch
-      fetchScheduleUpdates();
-      
-      // Set up periodic updates
-      updateInterval = setInterval(() => {
-        fetchScheduleUpdates().then(() => {
-          // Re-render the schedule with updated data
-          updateStats();
-          renderSchedule();
-        });
-      }, API_CONFIG.UPDATE_INTERVAL);
-      
-      console.log('🚀 Auto-update system started');
-    }
-
-    // Stop auto-updates
-    function stopAutoUpdates() {
-      if (updateInterval) {
-        clearInterval(updateInterval);
-        updateInterval = null;
-        console.log('⏹️ Auto-update system stopped');
-      }
-    }
-
-    // Manual refresh function
-    function refreshSchedule() {
-      const refreshBtn = document.getElementById('refresh-btn');
-      if (refreshBtn) {
-        refreshBtn.classList.add('refreshing');
-      }
-      
-      showUpdateNotification('Refreshing schedule...', 'info');
-      
-      fetchScheduleUpdates().then(() => {
-        updateStats();
-        renderSchedule();
-        
-        // Remove refreshing animation
-        if (refreshBtn) {
-          refreshBtn.classList.remove('refreshing');
-        }
-      }).catch(() => {
-        // Remove refreshing animation even on error
-        if (refreshBtn) {
-          refreshBtn.classList.remove('refreshing');
-        }
-      });
-    }
-
     function initializeSchedule() {
       updateStats();
       renderSchedule();
@@ -1514,15 +1141,6 @@
       setupMobileMenu();
       setupScrollEffects();
       startCountdownTimers();
-      
-      // Start the auto-update system
-      startAutoUpdates();
-      
-      // Add manual refresh button functionality
-      const refreshBtn = document.getElementById('refresh-btn');
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', refreshSchedule);
-      }
     }
 
     // Update statistics
@@ -1640,6 +1258,7 @@
       // Create action buttons
       let actionButtonsHtml = '';
       if (game.status === 'completed' || isLive) {
+        console.log('Creating buttons for game:', gameId, 'status:', game.status, 'isLive:', isLive);
         actionButtonsHtml = `
           <div class="game-actions">
             <button class="action-btn ${isLive ? 'live' : ''}" onclick="openLiveGame('${gameId}', 'play-by-play')" ${!isLive && game.status !== 'completed' ? 'disabled' : ''}>
@@ -1956,4 +1575,614 @@
       }
     }
 
-    // Load game data
+    // Load game data from NBA API
+    async function loadGameData(gameId) {
+      try {
+        console.log('Loading real NBA data for game:', gameId);
+        
+        // Parse gameId to get date and opponent
+        const parts = gameId.split('_');
+        const gameDate = parts[0]; // Format: 20241221
+        const opponentAbbr = parts[1];
+        const isHome = parts[2] === 'home';
+        
+        // Format date for NBA API (YYYY-MM-DD)
+        const formattedDate = `${gameDate.substring(0,4)}-${gameDate.substring(4,6)}-${gameDate.substring(6,8)}`;
+        
+        // Get Philadelphia 76ers team ID (1610612755)
+        const sixersTeamId = '1610612755';
+        
+        // Fetch game data from NBA API
+        const gameData = await fetchNBAGameData(formattedDate, sixersTeamId, opponentAbbr);
+        
+        if (gameData) {
+          // Update live score header
+          updateLiveScoreHeader(gameData);
+          
+          // Load initial tab content
+          const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
+          loadTabContent(activeTab, gameId, gameData);
+        } else {
+          // Fallback to mock data if API fails
+          console.warn('NBA API failed, using mock data');
+          const mockData = generateMockGameData(gameId);
+          updateLiveScoreHeader(mockData);
+          const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
+          loadTabContent(activeTab, gameId, mockData);
+        }
+        
+      } catch (error) {
+        console.error('Error loading game data:', error);
+        // Fallback to mock data
+        const mockData = generateMockGameData(gameId);
+        updateLiveScoreHeader(mockData);
+        const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
+        loadTabContent(activeTab, gameId, mockData);
+      }
+    }
+
+    // Fetch real NBA game data
+    async function fetchNBAGameData(gameDate, sixersTeamId, opponentAbbr) {
+      try {
+        // NBA API endpoints (these are real NBA.com endpoints)
+        const scoreboardUrl = `https://stats.nba.com/stats/scoreboardV2?DayOffset=0&LeagueID=00&gameDate=${gameDate}`;
+        const playByPlayUrl = `https://stats.nba.com/stats/playbyplayv2?GameID={GAME_ID}&StartPeriod=0&EndPeriod=10`;
+        const boxScoreUrl = `https://stats.nba.com/stats/boxscoretraditionalv2?GameID={GAME_ID}&StartPeriod=0&EndPeriod=10&StartRange=0&EndRange=28800&RangeType=2`;
+        
+        // Note: NBA.com blocks direct browser requests due to CORS
+        // You'll need to proxy these requests through your backend
+        
+        // Alternative: Use your own backend API that fetches from NBA
+        const response = await fetch(`/api/nba-game-data?date=${gameDate}&team=${sixersTeamId}&opponent=${opponentAbbr}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return processNBAApiData(data);
+        
+      } catch (error) {
+        console.error('NBA API fetch failed:', error);
+        
+        // Try alternative free NBA API (balldontlie.io)
+        return await fetchFromBallDontLie(gameDate, opponentAbbr);
+      }
+    }
+
+    // Alternative free NBA API
+    async function fetchFromBallDontLie(gameDate, opponentAbbr) {
+      try {
+        // Ball Don't Lie API (free, no auth required)
+        const gamesUrl = `https://www.balldontlie.io/api/v1/games?dates[]=${gameDate}&team_ids[]=23`; // 23 is 76ers ID
+        
+        const response = await fetch(gamesUrl);
+        if (!response.ok) throw new Error('Ball Dont Lie API failed');
+        
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+          const game = data.data[0];
+          return processBallDontLieData(game, opponentAbbr);
+        }
+        
+        return null;
+      } catch (error) {
+        console.error('Ball Dont Lie API failed:', error);
+        return null;
+      }
+    }
+
+    // Process NBA.com API data
+    function processNBAApiData(apiData) {
+      // This would process the official NBA API response
+      // Structure depends on your backend API format
+      return {
+        opponent: apiData.opponent_name,
+        homeScore: apiData.home_score,
+        awayScore: apiData.away_score,
+        status: apiData.game_status,
+        quarter: apiData.period,
+        timeRemaining: apiData.game_clock,
+        plays: apiData.plays?.map(play => ({
+          time: `Q${play.period} ${play.time_remaining}`,
+          description: formatPlayDescription(play),
+          score: `${play.score_home}-${play.score_away}`
+        })) || [],
+        boxScore: {
+          sixers: apiData.home_team_stats?.players || [],
+          opponent: apiData.away_team_stats?.players || []
+        },
+        stats: {
+          sixers: apiData.home_team_stats?.team || {},
+          opponent: apiData.away_team_stats?.team || {}
+        }
+      };
+    }
+
+    // Process Ball Don't Lie API data
+    function processBallDontLieData(game, opponentAbbr) {
+      const isHome = game.home_team.abbreviation === 'PHI';
+      const opponent = isHome ? game.visitor_team : game.home_team;
+      
+      return {
+        opponent: opponent.full_name,
+        homeScore: isHome ? game.home_team_score : game.visitor_team_score,
+        awayScore: isHome ? game.visitor_team_score : game.home_team_score,
+        status: game.status,
+        plays: [], // Ball Don't Lie doesn't provide play-by-play
+        boxScore: {
+          sixers: [],
+          opponent: []
+        },
+        stats: {
+          sixers: {},
+          opponent: {}
+        }
+      };
+    }
+
+    // Format play description with emojis
+    function formatPlayDescription(play) {
+      const description = play.description || '';
+      
+      // Add emojis based on play type
+      if (description.includes('makes') && description.includes('3PT')) {
+        return `🎯 ${description}`;
+      } else if (description.includes('makes')) {
+        return `🏀 ${description}`;
+      } else if (description.includes('misses')) {
+        return `🚫 ${description}`;
+      } else if (description.includes('rebound')) {
+        return `🔄 ${description}`;
+      } else if (description.includes('assist')) {
+        return `🤝 ${description}`;
+      } else if (description.includes('foul')) {
+        return `⚠️ ${description}`;
+      } else if (description.includes('turnover')) {
+        return `❌ ${description}`;
+      } else if (description.includes('dunk')) {
+        return `💥 ${description}`;
+      }
+      
+      return description;
+    }
+
+    // Load content for specific tab
+    function loadTabContent(tabName, gameId, gameData = null) {
+      if (!gameData) {
+        gameData = generateMockGameData(gameId);
+      }
+      
+      switch (tabName) {
+        case 'play-by-play':
+          loadPlayByPlay(gameData);
+          break;
+        case 'box-score':
+          loadBoxScore(gameData);
+          break;
+        case 'game-stats':
+          loadGameStats(gameData);
+          break;
+      }
+    }
+
+    // Open live game modal
+    async function openLiveGame(gameId, initialTab = 'play-by-play') {
+      console.log('Opening live game:', gameId, 'tab:', initialTab);
+      
+      // Store current game ID for auto-refresh
+      currentGameId = gameId;
+      
+      // Show modal
+      const modal = document.getElementById('liveGameModal');
+      modal.style.display = 'flex';
+      
+      // Set initial tab
+      switchTab(initialTab);
+      
+      // Load game data from your API
+      try {
+        await loadGameData(gameId);
+      } catch (error) {
+        console.error('Failed to load game data:', error);
+        showErrorMessage('Failed to load game data. Please try again.');
+      }
+    }
+    
+    // Close live game modal
+    function closeLiveGame() {
+      const modal = document.getElementById('liveGameModal');
+      modal.style.display = 'none';
+      
+      // Stop auto-refresh
+      stopAutoRefresh();
+      currentGameId = null;
+    }
+    
+    // Switch between tabs
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    // Update live score header
+    function updateGameModal(gameData) {
+      const parts = currentGameId.split('_');
+      const opponentAbbr = parts[1];
+      const isHome = parts[2] === 'home';
+      
+      document.getElementById('awayTeamLogo').textContent = isHome ? opponentAbbr : '76';
+      document.getElementById('awayTeamName').textContent = isHome ? gameData.opponent : 'Philadelphia 76ers';
+      document.getElementById('awayScore').textContent = gameData.awayScore;
+      
+      document.getElementById('homeScore').textContent = gameData.homeScore;
+      document.getElementById('gameStatusInfo').textContent = gameData.status;
+    }
+
+    // Load play-by-play content
+    function loadPlayByPlay(gameData) {
+      const container = document.getElementById('playByPlayContainer');
+      
+      if (!gameData.plays || gameData.plays.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">No play-by-play data available</div>';
+        return;
+      }
+      
+      const playsHtml = gameData.plays.map(play => `
+        <div class="play-item">
+          <div class="play-time">${play.time}</div>
+          <div class="play-description">${play.description}</div>
+          <div class="play-score">${play.score}</div>
+        </div>
+      `).join('');
+      
+      container.innerHTML = playsHtml;
+    }
+
+    // Load box score content
+    function loadBoxScore(gameData) {
+      const container = document.getElementById('boxScoreContainer');
+      
+      if (!gameData.boxScore) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">No box score data available</div>';
+        return;
+      }
+      
+      const boxScoreHtml = `
+        <div class="team-stats">
+          <div class="team-stats-header">Philadelphia 76ers</div>
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>MIN</th>
+                <th>PTS</th>
+                <th>REB</th>
+                <th>AST</th>
+                <th>FG</th>
+                <th>3P</th>
+                <th>FT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gameData.boxScore.sixers.map(player => `
+                <tr>
+                  <td class="player-name">${player.name}</td>
+                  <td>${player.minutes}</td>
+                  <td>${player.points}</td>
+                  <td>${player.rebounds}</td>
+                  <td>${player.assists}</td>
+                  <td>${player.fg}</td>
+                  <td>${player.threePt}</td>
+                  <td>${player.ft}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="team-stats">
+          <div class="team-stats-header">${gameData.opponent}</div>
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>MIN</th>
+                <th>PTS</th>
+                <th>REB</th>
+                <th>AST</th>
+                <th>FG</th>
+                <th>3P</th>
+                <th>FT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gameData.boxScore.opponent.map(player => `
+                <tr>
+                  <td class="player-name">${player.name}</td>
+                  <td>${player.minutes}</td>
+                  <td>${player.points}</td>
+                  <td>${player.rebounds}</td>
+                  <td>${player.assists}</td>
+                  <td>${player.fg}</td>
+                  <td>${player.threePt}</td>
+                  <td>${player.ft}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      container.innerHTML = boxScoreHtml;
+    }
+
+    // Load game stats content
+    function loadGameStats(gameData) {
+      const container = document.getElementById('gameStatsContainer');
+      
+      const statsHtml = `
+        <div class="team-stats">
+          <div class="team-stats-header">Team Statistics</div>
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Stat</th>
+                <th>76ers</th>
+                <th>${gameData.opponent}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Field Goal %</td>
+                <td>${gameData.stats.sixers.fgPct}%</td>
+                <td>${gameData.stats.opponent.fgPct}%</td>
+              </tr>
+              <tr>
+                <td>3-Point %</td>
+                <td>${gameData.stats.sixers.threePtPct}%</td>
+                <td>${gameData.stats.opponent.threePtPct}%</td>
+              </tr>
+              <tr>
+                <td>Free Throw %</td>
+                <td>${gameData.stats.sixers.ftPct}%</td>
+                <td>${gameData.stats.opponent.ftPct}%</td>
+              </tr>
+              <tr>
+                <td>Rebounds</td>
+                <td>${gameData.stats.sixers.rebounds}</td>
+                <td>${gameData.stats.opponent.rebounds}</td>
+              </tr>
+              <tr>
+                <td>Assists</td>
+                <td>${gameData.stats.sixers.assists}</td>
+                <td>${gameData.stats.opponent.assists}</td>
+              </tr>
+              <tr>
+                <td>Turnovers</td>
+                <td>${gameData.stats.sixers.turnovers}</td>
+                <td>${gameData.stats.opponent.turnovers}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      container.innerHTML = statsHtml;
+    }
+
+    // Load real game data from your API
+    async function loadGameData(gameId) {
+      try {
+        // Extract game info from gameId (format: "2025-12-21_BOS_home")
+        const parts = gameId.split('_');
+        const date = parts[0];
+        const opponentAbbr = parts[1];
+        const location = parts[2];
+        
+        console.log(`Loading game data for ${date} vs ${opponentAbbr} (${location})`);
+        
+        // Try your API first
+        const apiUrl = `/api/nba-simple?date=${date}`;
+        const response = await fetch(apiUrl);
+        
+        if (response.ok) {
+          const gameData = await response.json();
+          console.log('✅ Real NBA data loaded:', gameData);
+          
+          // Update modal with real data
+          updateGameModal(gameData);
+          loadPlayByPlay(gameData);
+          loadBoxScore(gameData);
+          loadGameStats(gameData);
+          
+          // Start auto-refresh for live games
+          if (gameData.status && !gameData.status.includes('Final')) {
+            startAutoRefresh();
+          }
+          
+          return gameData;
+        } else {
+          throw new Error(`API returned ${response.status}`);
+        }
+        
+      } catch (error) {
+        console.warn('⚠️ API failed, using mock data:', error);
+        
+        // Fallback to mock data
+        const mockData = generateMockGameData(gameId);
+        updateGameModal(mockData);
+        loadPlayByPlay(mockData);
+        loadBoxScore(mockData);
+        loadGameStats(mockData);
+        
+        return mockData;
+      }
+    }
+
+    // Generate mock game data for demo
+    function generateMockGameData(gameId) {
+      const parts = gameId.split('_');
+      const opponentAbbr = parts[1];
+      const isHome = parts[2] === 'home';
+      
+      // Mock opponent names
+      const opponentNames = {
+        'BOS': 'Boston Celtics',
+        'CHA': 'Charlotte Hornets',
+        'ORL': 'Orlando Magic',
+        'WAS': 'Washington Wizards',
+        'BKN': 'Brooklyn Nets',
+        'CHI': 'Chicago Bulls',
+        'CLE': 'Cleveland Cavaliers',
+        'TOR': 'Toronto Raptors',
+        'DET': 'Detroit Pistons',
+        'LAC': 'LA Clippers',
+        'MIL': 'Milwaukee Bucks',
+        'MIA': 'Miami Heat',
+        'ATL': 'Atlanta Hawks',
+        'GSW': 'Golden State Warriors',
+        'LAL': 'Los Angeles Lakers',
+        'NYK': 'New York Knicks'
+      };
+      
+      const opponent = opponentNames[opponentAbbr] || 'Opponent';
+      
+      return {
+        opponent: opponent,
+        homeScore: Math.floor(Math.random() * 40) + 80,
+        awayScore: Math.floor(Math.random() * 40) + 80,
+        status: 'Q3 7:23',
+        plays: [
+          { time: 'Q3 7:23', description: '🏀 Joel Embiid made 15ft jumper', score: '89-85' },
+          { time: 'Q3 7:45', description: '🤝 Tyrese Maxey assist', score: '87-85' },
+          { time: 'Q3 8:12', description: '🚫 Opponent missed 3-pointer', score: '87-85' },
+          { time: 'Q3 8:34', description: '🔄 Tobias Harris defensive rebound', score: '87-85' },
+          { time: 'Q3 8:56', description: '🎯 Tyrese Maxey made free throw', score: '87-85' },
+          { time: 'Q3 9:15', description: '⚠️ Opponent personal foul', score: '86-85' },
+          { time: 'Q3 9:32', description: '🏀 **Joel Embiid** made dunk', score: '86-85' },
+          { time: 'Q3 9:48', description: '❌ Opponent turnover', score: '84-85' }
+        ],
+        boxScore: {
+          sixers: [
+            { name: 'Joel Embiid', minutes: '28:45', points: '24', rebounds: '11', assists: '3', fg: '9/15', threePt: '1/3', ft: '5/6' },
+            { name: 'Tyrese Maxey', minutes: '32:12', points: '22', rebounds: '4', assists: '7', fg: '8/16', threePt: '3/7', ft: '3/4' },
+            { name: 'Tobias Harris', minutes: '29:33', points: '16', rebounds: '6', assists: '4', fg: '6/12', threePt: '2/5', ft: '2/2' },
+            { name: 'De\'Anthony Melton', minutes: '24:18', points: '12', rebounds: '3', assists: '5', fg: '4/8', threePt: '2/4', ft: '2/2' },
+            { name: 'P.J. Tucker', minutes: '22:45', points: '6', rebounds: '7', assists: '2', fg: '2/5', threePt: '1/3', ft: '1/2' }
+          ],
+          opponent: [
+            { name: 'Player 1', minutes: '30:15', points: '20', rebounds: '8', assists: '4', fg: '7/14', threePt: '2/6', ft: '4/5' },
+            { name: 'Player 2', minutes: '28:30', points: '18', rebounds: '5', assists: '6', fg: '6/13', threePt: '3/8', ft: '3/4' },
+            { name: 'Player 3', minutes: '26:45', points: '14', rebounds: '9', assists: '2', fg: '5/10', threePt: '1/4', ft: '3/4' },
+            { name: 'Player 4', minutes: '25:12', points: '12', rebounds: '4', assists: '3', fg: '4/9', threePt: '2/5', ft: '2/2' },
+            { name: 'Player 5', minutes: '20:30', points: '8', rebounds: '6', assists: '1', fg: '3/7', threePt: '0/2', ft: '2/3' }
+          ]
+        },
+        stats: {
+          sixers: {
+            fgPct: 48,
+            threePtPct: 36,
+            ftPct: 82,
+            rebounds: 42,
+            assists: 25,
+            turnovers: 12
+          },
+          opponent: {
+            fgPct: 45,
+            threePtPct: 32,
+            ftPct: 78,
+            rebounds: 38,
+            assists: 22,
+            turnovers: 15
+          }
+        }
+      };
+    }
+
+    // Auto-refresh functionality
+    function startAutoRefresh() {
+      const indicator = document.getElementById('refreshIndicator');
+      indicator.classList.add('active');
+      
+      refreshCountdown = 10;
+      updateRefreshCountdown();
+      
+      refreshInterval = setInterval(() => {
+        refreshCountdown--;
+        updateRefreshCountdown();
+        
+        if (refreshCountdown <= 0) {
+          // Refresh game data with real NBA API
+          if (currentGameId) {
+            console.log('Auto-refreshing game data...');
+            loadGameData(currentGameId);
+          }
+          refreshCountdown = 10; // Refresh every 10 seconds for live games
+        }
+      }, 1000);
+    }
+
+    function stopAutoRefresh() {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+      }
+      
+      const indicator = document.getElementById('refreshIndicator');
+      indicator.classList.remove('active');
+    }
+
+    function updateRefreshCountdown() {
+      const countdownElement = document.getElementById('refreshCountdown');
+      if (countdownElement) {
+        countdownElement.textContent = refreshCountdown;
+      }
+    }
+
+    // Show error message
+    function showErrorMessage(message) {
+      const containers = ['playByPlayContainer', 'boxScoreContainer', 'gameStatsContainer'];
+      containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (container && container.classList.contains('active')) {
+          container.innerHTML = `<div style="text-align: center; padding: 2rem; color: #ef4444;">${message}</div>`;
+        }
+      });
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('liveGameModal');
+      if (event.target === modal) {
+        closeLiveGame();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeLiveGame();
+      }
+    });
+
+    // Make functions global so they can be called from onclick attributes
+    window.openLiveGame = openLiveGame;
+    window.closeLiveGame = closeLiveGame;
+    window.switchTab = switchTab;
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initializeSchedule);
+  </script>
+</body>
+</html>
