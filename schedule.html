@@ -1131,23 +1131,6 @@
   </div>
 
   <script>
-    // API Configuration
-    const API_CONFIG = {
-      // Using NBA API endpoints
-      SCHEDULE_URL: 'https://stats.nba.com/stats/teamgamelog',
-      SCOREBOARD_URL: 'https://stats.nba.com/stats/scoreboard',
-      TEAM_ID: '1610612755', // Philadelphia 76ers team ID
-      SEASON: '2024-25',
-      CACHE_DURATION: 5 * 60 * 1000, // 5 minutes in milliseconds
-      REFRESH_INTERVAL: 30 * 1000 // 30 seconds for live games
-    };
-
-    // Global variables for data management
-    let scheduleData = fallbackScheduleData; // Initialize with fallback data
-    let lastFetchTime = 0;
-    let autoRefreshInterval = null;
-    let isLoading = false;
-
     // Fallback schedule data in case API fails (current 2024-25 season)
     const fallbackScheduleData = [
       // Recent games with realistic data
@@ -1200,6 +1183,12 @@
       "San Antonio Spurs": "SAS",
       "Utah Jazz": "UTA"
     };
+
+    // Global variables for data management
+    let scheduleData = fallbackScheduleData; // Initialize with fallback data
+    let lastFetchTime = 0;
+    let autoRefreshInterval = null;
+    let isLoading = false;
 
     // Initialize the schedule
     // API Configuration for auto-updates
@@ -1589,7 +1578,7 @@
       
       try {
         // Always show the schedule first (with static data)
-      console.log('📊 Loading schedule statistics...');
+        console.log('📊 Loading schedule statistics...');
         updateStats();
         
         console.log('📅 Rendering schedule...');
@@ -1605,7 +1594,7 @@
         setupScrollEffects();
         
         console.log('⏰ Starting countdown timers...');
-          startCountdownTimers();
+        startCountdownTimers();
         
         console.log('✅ Schedule page loaded with static data');
         
@@ -2473,7 +2462,37 @@
     window.switchTab = switchTab;
 
     // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', initializeSchedule);
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        console.log('🚀 DOM loaded, starting initialization...');
+        initializeSchedule();
+      } catch (error) {
+        console.error('❌ Critical error during initialization:', error);
+        // Emergency fallback - just show the schedule
+        try {
+          const container = document.getElementById('schedule-container');
+          if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #ef4444;">Error loading schedule. Please refresh the page.</div>';
+          }
+        } catch (fallbackError) {
+          console.error('❌ Even fallback failed:', fallbackError);
+        }
+      }
+    });
+
+    // Emergency timeout to clear loading if something goes wrong
+    setTimeout(function() {
+      const container = document.getElementById('schedule-container');
+      if (container && container.innerHTML.includes('loading')) {
+        console.warn('⚠️ Loading timeout reached, forcing schedule display');
+        try {
+          scheduleData = fallbackScheduleData;
+          renderSchedule();
+        } catch (error) {
+          container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #f59e0b;">Schedule loading timed out. Please refresh the page.</div>';
+        }
+      }
+    }, 5000); // 5 second timeout
   </script>
 </body>
 </html>
