@@ -1026,78 +1026,106 @@
   </div>
 
   <script>
-    // Global variables for live game functionality
-    let currentGameId = null;
-    let refreshInterval = null;
-    let refreshCountdown = 10;
-    
-    // NBA Schedule Data (2024-25 Season - Current dates for testing)
+    // NBA Schedule Data (from official NBA website - 2025-26 Season)
     const scheduleData = [
-      // December 2024 - Current games for testing
-      { date: "2024-12-17", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "NBC Sports Philadelphia", status: "completed", result: "L 108-112" },
-      { date: "2024-12-19", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "completed", result: "W 118-104" },
-      { date: "2024-12-21", opponent: "Boston Celtics", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2024-12-23", opponent: "Miami Heat", location: "away", time: "8:00 PM ET", venue: "Kaseya Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2024-12-25", opponent: "New York Knicks", location: "home", time: "2:30 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "live" },
-      { date: "2024-12-27", opponent: "Orlando Magic", location: "away", time: "7:00 PM ET", venue: "Kia Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2024-12-29", opponent: "Brooklyn Nets", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2024-12-31", opponent: "Chicago Bulls", location: "away", time: "8:00 PM ET", venue: "United Center", tv: "ESPN", status: "upcoming" },
+      // December 2024 - Recent Games for Testing
+      { date: "2024-12-15", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "ESPN", status: "completed", result: "W 112-108" },
+      { date: "2024-12-18", opponent: "Charlotte Hornets", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "completed", result: "L 98-105" },
+      { date: "2024-12-21", opponent: "Orlando Magic", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "live" },
       
-      // January 2025
-      { date: "2025-01-02", opponent: "Washington Wizards", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-04", opponent: "Toronto Raptors", location: "away", time: "7:30 PM ET", venue: "Scotiabank Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-06", opponent: "Cleveland Cavaliers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2025-01-08", opponent: "Detroit Pistons", location: "away", time: "7:00 PM ET", venue: "Little Caesars Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-10", opponent: "Milwaukee Bucks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "TNT", status: "upcoming" },
-      { date: "2025-01-12", opponent: "Atlanta Hawks", location: "away", time: "7:30 PM ET", venue: "State Farm Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-15", opponent: "Los Angeles Lakers", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2025-01-17", opponent: "Golden State Warriors", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-20", opponent: "Phoenix Suns", location: "away", time: "9:00 PM ET", venue: "Footprint Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-22", opponent: "Denver Nuggets", location: "away", time: "9:00 PM ET", venue: "Ball Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-24", opponent: "Portland Trail Blazers", location: "away", time: "10:00 PM ET", venue: "Moda Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-26", opponent: "Sacramento Kings", location: "away", time: "10:00 PM ET", venue: "Golden 1 Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-28", opponent: "LA Clippers", location: "away", time: "10:30 PM ET", venue: "Intuit Dome", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-01-30", opponent: "Utah Jazz", location: "away", time: "9:00 PM ET", venue: "Delta Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      // October 2025 - Regular Season Start
+      { date: "2025-10-22", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "TBD", status: "upcoming" },
+      { date: "2025-10-25", opponent: "Charlotte Hornets", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-10-27", opponent: "Orlando Magic", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-10-28", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "TBD", status: "upcoming" },
+      { date: "2025-10-31", opponent: "Boston Celtics", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "Prime Video", status: "upcoming", isNBACup: true },
       
-      // February 2025
-      { date: "2025-02-01", opponent: "Indiana Pacers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-03", opponent: "Houston Rockets", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-05", opponent: "San Antonio Spurs", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-07", opponent: "Minnesota Timberwolves", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-09", opponent: "New Orleans Pelicans", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-11", opponent: "Memphis Grizzlies", location: "away", time: "8:00 PM ET", venue: "FedExForum", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-13", opponent: "Oklahoma City Thunder", location: "away", time: "8:00 PM ET", venue: "Paycom Center", tv: "TNT", status: "upcoming" },
-      { date: "2025-02-21", opponent: "Dallas Mavericks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-23", opponent: "Boston Celtics", location: "away", time: "3:30 PM ET", venue: "TD Garden", tv: "ABC", status: "upcoming" },
-      { date: "2025-02-25", opponent: "Miami Heat", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-02-27", opponent: "New York Knicks", location: "away", time: "7:30 PM ET", venue: "Madison Square Garden", tv: "TNT", status: "upcoming" },
+      // November 2025
+      { date: "2025-11-02", opponent: "Brooklyn Nets", location: "away", time: "7:00 PM ET", venue: "Barclays Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-05", opponent: "Chicago Bulls", location: "away", time: "9:00 PM ET", venue: "United Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-06", opponent: "Cleveland Cavaliers", location: "away", time: "8:00 PM ET", venue: "Rocket Mortgage FieldHouse", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-09", opponent: "Toronto Raptors", location: "home", time: "8:30 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-10", opponent: "Detroit Pistons", location: "home", time: "8:30 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-12", opponent: "Boston Celtics", location: "home", time: "9:00 PM ET", venue: "Wells Fargo Center", tv: "NBC, Peacock", status: "upcoming" },
+      { date: "2025-11-15", opponent: "Detroit Pistons", location: "away", time: "8:30 PM ET", venue: "Little Caesars Arena", tv: "TBD", status: "upcoming", isNBACup: true },
+      { date: "2025-11-18", opponent: "LA Clippers", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-20", opponent: "Toronto Raptors", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-21", opponent: "Milwaukee Bucks", location: "away", time: "9:00 PM ET", venue: "Fiserv Forum", tv: "TBD", status: "upcoming" },
+      { date: "2025-11-23", opponent: "Miami Heat", location: "home", time: "2:00 PM ET", venue: "Wells Fargo Center", tv: "FanDuel Sports Network - Sun", status: "upcoming" },
+      { date: "2025-11-26", opponent: "Orlando Magic", location: "home", time: "9:00 PM ET", venue: "Wells Fargo Center", tv: "NBC, Peacock", status: "upcoming", isNBACup: true },
+      { date: "2025-11-29", opponent: "Brooklyn Nets", location: "away", time: "8:30 PM ET", venue: "Barclays Center", tv: "TBD", status: "upcoming", isNBACup: true },
+      { date: "2025-11-30", opponent: "Atlanta Hawks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
       
-      // March 2025
-      { date: "2025-03-01", opponent: "Chicago Bulls", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-03", opponent: "Orlando Magic", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-05", opponent: "Brooklyn Nets", location: "away", time: "7:30 PM ET", venue: "Barclays Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-07", opponent: "Toronto Raptors", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-09", opponent: "Cleveland Cavaliers", location: "away", time: "6:00 PM ET", venue: "Rocket Mortgage FieldHouse", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-11", opponent: "Detroit Pistons", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-13", opponent: "Milwaukee Bucks", location: "away", time: "8:00 PM ET", venue: "Fiserv Forum", tv: "ESPN", status: "upcoming" },
-      { date: "2025-03-15", opponent: "Atlanta Hawks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-17", opponent: "Charlotte Hornets", location: "away", time: "7:00 PM ET", venue: "Spectrum Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-19", opponent: "Washington Wizards", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-21", opponent: "Indiana Pacers", location: "away", time: "7:00 PM ET", venue: "Gainbridge Fieldhouse", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-23", opponent: "Boston Celtics", location: "home", time: "1:00 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "upcoming" },
-      { date: "2025-03-25", opponent: "Miami Heat", location: "away", time: "8:00 PM ET", venue: "Kaseya Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-27", opponent: "New York Knicks", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
-      { date: "2025-03-29", opponent: "Orlando Magic", location: "away", time: "7:00 PM ET", venue: "Kia Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-03-31", opponent: "Brooklyn Nets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
+      // December 2025
+      { date: "2025-12-03", opponent: "Washington Wizards", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-05", opponent: "Golden State Warriors", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-06", opponent: "Milwaukee Bucks", location: "away", time: "9:00 PM ET", venue: "Fiserv Forum", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-08", opponent: "Los Angeles Lakers", location: "home", time: "8:30 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-20", opponent: "New York Knicks", location: "away", time: "8:00 PM ET", venue: "Madison Square Garden", tv: "Prime Video", status: "upcoming" },
+      { date: "2025-12-21", opponent: "Dallas Mavericks", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-24", opponent: "Brooklyn Nets", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-27", opponent: "Chicago Bulls", location: "away", time: "9:00 PM ET", venue: "United Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-28", opponent: "Oklahoma City Thunder", location: "away", time: "4:30 PM ET", venue: "Paycom Center", tv: "TBD", status: "upcoming" },
+      { date: "2025-12-31", opponent: "Memphis Grizzlies", location: "away", time: "9:00 PM ET", venue: "FedExForum", tv: "NBC, Peacock", status: "upcoming" },
       
-      // April 2025
-      { date: "2025-04-02", opponent: "Toronto Raptors", location: "away", time: "7:30 PM ET", venue: "Scotiabank Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-04", opponent: "Cleveland Cavaliers", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-06", opponent: "Detroit Pistons", location: "away", time: "3:00 PM ET", venue: "Little Caesars Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-08", opponent: "Milwaukee Bucks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-10", opponent: "Atlanta Hawks", location: "away", time: "7:30 PM ET", venue: "State Farm Arena", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-12", opponent: "Charlotte Hornets", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "upcoming" },
-      { date: "2025-04-13", opponent: "Washington Wizards", location: "away", time: "6:00 PM ET", venue: "Capital One Arena", tv: "NBC Sports Philadelphia", status: "upcoming" }
+      // January 2026
+      { date: "2026-01-02", opponent: "Dallas Mavericks", location: "away", time: "9:30 PM ET", venue: "American Airlines Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-04", opponent: "New York Knicks", location: "away", time: "8:30 PM ET", venue: "Madison Square Garden", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-06", opponent: "Denver Nuggets", location: "home", time: "9:30 PM ET", venue: "Wells Fargo Center", tv: "Peacock", status: "upcoming" },
+      { date: "2026-01-08", opponent: "Washington Wizards", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-10", opponent: "Orlando Magic", location: "away", time: "8:00 PM ET", venue: "Kia Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-11", opponent: "Toronto Raptors", location: "away", time: "7:00 PM ET", venue: "Scotiabank Arena", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-13", opponent: "Toronto Raptors", location: "away", time: "8:30 PM ET", venue: "Scotiabank Arena", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-15", opponent: "Cleveland Cavaliers", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
+      { date: "2026-01-17", opponent: "Cleveland Cavaliers", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-20", opponent: "Indiana Pacers", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-21", opponent: "Phoenix Suns", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-23", opponent: "Houston Rockets", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-25", opponent: "New York Knicks", location: "home", time: "4:00 PM ET", venue: "Wells Fargo Center", tv: "ABC", status: "upcoming" },
+      { date: "2026-01-27", opponent: "Charlotte Hornets", location: "away", time: "8:00 PM ET", venue: "Spectrum Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-01-29", opponent: "Milwaukee Bucks", location: "home", time: "9:00 PM ET", venue: "Wells Fargo Center", tv: "NBC, Peacock", status: "upcoming" },
+      { date: "2026-01-31", opponent: "Sacramento Kings", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      
+      // February 2026
+      { date: "2026-02-01", opponent: "New Orleans Pelicans", location: "home", time: "8:30 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-03", opponent: "LA Clippers", location: "away", time: "11:30 PM ET", venue: "Intuit Dome", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-04", opponent: "Golden State Warriors", location: "away", time: "11:00 PM ET", venue: "Chase Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-06", opponent: "Los Angeles Lakers", location: "away", time: "11:00 PM ET", venue: "Crypto.com Arena", tv: "Prime Video", status: "upcoming" },
+      { date: "2026-02-08", opponent: "Phoenix Suns", location: "away", time: "10:00 PM ET", venue: "Footprint Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-10", opponent: "Portland Trail Blazers", location: "away", time: "11:00 PM ET", venue: "Moda Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-12", opponent: "New York Knicks", location: "home", time: "8:30 PM ET", venue: "Wells Fargo Center", tv: "ESPN", status: "upcoming" },
+      { date: "2026-02-20", opponent: "Atlanta Hawks", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-22", opponent: "New Orleans Pelicans", location: "away", time: "8:00 PM ET", venue: "Smoothie King Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-23", opponent: "Minnesota Timberwolves", location: "away", time: "8:00 PM ET", venue: "Target Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-25", opponent: "Indiana Pacers", location: "away", time: "8:00 PM ET", venue: "Gainbridge Fieldhouse", tv: "TBD", status: "upcoming" },
+      { date: "2026-02-27", opponent: "Miami Heat", location: "home", time: "8:00 PM ET", venue: "Wells Fargo Center", tv: "FanDuel Sports Network - Sun", status: "upcoming" },
+      
+      // March 2026
+      { date: "2026-03-01", opponent: "Boston Celtics", location: "away", time: "7:00 PM ET", venue: "TD Garden", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-04", opponent: "San Antonio Spurs", location: "home", time: "9:00 PM ET", venue: "Wells Fargo Center", tv: "NBC, Peacock", status: "upcoming" },
+      { date: "2026-03-05", opponent: "Utah Jazz", location: "home", time: "8:30 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-08", opponent: "Atlanta Hawks", location: "away", time: "8:30 PM ET", venue: "State Farm Arena", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-09", opponent: "Cleveland Cavaliers", location: "away", time: "7:00 PM ET", venue: "Rocket Mortgage FieldHouse", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-10", opponent: "Memphis Grizzlies", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-12", opponent: "Detroit Pistons", location: "away", time: "7:00 PM ET", venue: "Little Caesars Arena", tv: "Prime Video", status: "upcoming" },
+      { date: "2026-03-14", opponent: "Brooklyn Nets", location: "home", time: "1:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-15", opponent: "Portland Trail Blazers", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-18", opponent: "Denver Nuggets", location: "away", time: "9:00 PM ET", venue: "Ball Arena", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-20", opponent: "Sacramento Kings", location: "away", time: "10:00 PM ET", venue: "Golden 1 Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-22", opponent: "Utah Jazz", location: "away", time: "9:30 PM ET", venue: "Delta Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-23", opponent: "Oklahoma City Thunder", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-25", opponent: "Chicago Bulls", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-28", opponent: "Charlotte Hornets", location: "away", time: "6:00 PM ET", venue: "Spectrum Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-03-30", opponent: "Miami Heat", location: "away", time: "7:00 PM ET", venue: "Kaseya Center", tv: "Peacock", status: "upcoming" },
+      
+      // April 2026
+      { date: "2026-04-01", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "TBD", status: "upcoming" },
+      { date: "2026-04-03", opponent: "Minnesota Timberwolves", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-04-04", opponent: "Detroit Pistons", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-04-07", opponent: "San Antonio Spurs", location: "away", time: "8:00 PM ET", venue: "Frost Bank Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-04-10", opponent: "Houston Rockets", location: "away", time: "8:00 PM ET", venue: "Toyota Center", tv: "TBD", status: "upcoming" },
+      { date: "2026-04-10", opponent: "Indiana Pacers", location: "away", time: "7:30 PM ET", venue: "Gainbridge Fieldhouse", tv: "TBD", status: "upcoming" },
+      { date: "2026-04-12", opponent: "Milwaukee Bucks", location: "home", time: "6:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" }
     ];
 
     // Team abbreviations mapping
@@ -1575,177 +1603,24 @@
       }
     }
 
-    // Load game data from NBA API
+    // Load game data
     async function loadGameData(gameId) {
       try {
-        console.log('Loading real NBA data for game:', gameId);
+        // For demo purposes, we'll use mock data
+        // In production, this would fetch from your API: /api/nba-live?gameId=${gameId}
+        const gameData = generateMockGameData(gameId);
         
-        // Parse gameId to get date and opponent
-        const parts = gameId.split('_');
-        const gameDate = parts[0]; // Format: 20241221
-        const opponentAbbr = parts[1];
-        const isHome = parts[2] === 'home';
+        // Update live score header
+        updateLiveScoreHeader(gameData);
         
-        // Format date for NBA API (YYYY-MM-DD)
-        const formattedDate = `${gameDate.substring(0,4)}-${gameDate.substring(4,6)}-${gameDate.substring(6,8)}`;
-        
-        // Get Philadelphia 76ers team ID (1610612755)
-        const sixersTeamId = '1610612755';
-        
-        // Fetch game data from NBA API
-        const gameData = await fetchNBAGameData(formattedDate, sixersTeamId, opponentAbbr);
-        
-        if (gameData) {
-          // Update live score header
-          updateLiveScoreHeader(gameData);
-          
-          // Load initial tab content
-          const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
-          loadTabContent(activeTab, gameId, gameData);
-        } else {
-          // Fallback to mock data if API fails
-          console.warn('NBA API failed, using mock data');
-          const mockData = generateMockGameData(gameId);
-          updateLiveScoreHeader(mockData);
-          const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
-          loadTabContent(activeTab, gameId, mockData);
-        }
+        // Load initial tab content
+        const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
+        loadTabContent(activeTab, gameId, gameData);
         
       } catch (error) {
         console.error('Error loading game data:', error);
-        // Fallback to mock data
-        const mockData = generateMockGameData(gameId);
-        updateLiveScoreHeader(mockData);
-        const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
-        loadTabContent(activeTab, gameId, mockData);
+        showErrorMessage('Failed to load game data');
       }
-    }
-
-    // Fetch real NBA game data
-    async function fetchNBAGameData(gameDate, sixersTeamId, opponentAbbr) {
-      try {
-        // NBA API endpoints (these are real NBA.com endpoints)
-        const scoreboardUrl = `https://stats.nba.com/stats/scoreboardV2?DayOffset=0&LeagueID=00&gameDate=${gameDate}`;
-        const playByPlayUrl = `https://stats.nba.com/stats/playbyplayv2?GameID={GAME_ID}&StartPeriod=0&EndPeriod=10`;
-        const boxScoreUrl = `https://stats.nba.com/stats/boxscoretraditionalv2?GameID={GAME_ID}&StartPeriod=0&EndPeriod=10&StartRange=0&EndRange=28800&RangeType=2`;
-        
-        // Note: NBA.com blocks direct browser requests due to CORS
-        // You'll need to proxy these requests through your backend
-        
-        // Alternative: Use your own backend API that fetches from NBA
-        const response = await fetch(`/api/nba-game-data?date=${gameDate}&team=${sixersTeamId}&opponent=${opponentAbbr}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return processNBAApiData(data);
-        
-      } catch (error) {
-        console.error('NBA API fetch failed:', error);
-        
-        // Try alternative free NBA API (balldontlie.io)
-        return await fetchFromBallDontLie(gameDate, opponentAbbr);
-      }
-    }
-
-    // Alternative free NBA API
-    async function fetchFromBallDontLie(gameDate, opponentAbbr) {
-      try {
-        // Ball Don't Lie API (free, no auth required)
-        const gamesUrl = `https://www.balldontlie.io/api/v1/games?dates[]=${gameDate}&team_ids[]=23`; // 23 is 76ers ID
-        
-        const response = await fetch(gamesUrl);
-        if (!response.ok) throw new Error('Ball Dont Lie API failed');
-        
-        const data = await response.json();
-        
-        if (data.data && data.data.length > 0) {
-          const game = data.data[0];
-          return processBallDontLieData(game, opponentAbbr);
-        }
-        
-        return null;
-      } catch (error) {
-        console.error('Ball Dont Lie API failed:', error);
-        return null;
-      }
-    }
-
-    // Process NBA.com API data
-    function processNBAApiData(apiData) {
-      // This would process the official NBA API response
-      // Structure depends on your backend API format
-      return {
-        opponent: apiData.opponent_name,
-        homeScore: apiData.home_score,
-        awayScore: apiData.away_score,
-        status: apiData.game_status,
-        quarter: apiData.period,
-        timeRemaining: apiData.game_clock,
-        plays: apiData.plays?.map(play => ({
-          time: `Q${play.period} ${play.time_remaining}`,
-          description: formatPlayDescription(play),
-          score: `${play.score_home}-${play.score_away}`
-        })) || [],
-        boxScore: {
-          sixers: apiData.home_team_stats?.players || [],
-          opponent: apiData.away_team_stats?.players || []
-        },
-        stats: {
-          sixers: apiData.home_team_stats?.team || {},
-          opponent: apiData.away_team_stats?.team || {}
-        }
-      };
-    }
-
-    // Process Ball Don't Lie API data
-    function processBallDontLieData(game, opponentAbbr) {
-      const isHome = game.home_team.abbreviation === 'PHI';
-      const opponent = isHome ? game.visitor_team : game.home_team;
-      
-      return {
-        opponent: opponent.full_name,
-        homeScore: isHome ? game.home_team_score : game.visitor_team_score,
-        awayScore: isHome ? game.visitor_team_score : game.home_team_score,
-        status: game.status,
-        plays: [], // Ball Don't Lie doesn't provide play-by-play
-        boxScore: {
-          sixers: [],
-          opponent: []
-        },
-        stats: {
-          sixers: {},
-          opponent: {}
-        }
-      };
-    }
-
-    // Format play description with emojis
-    function formatPlayDescription(play) {
-      const description = play.description || '';
-      
-      // Add emojis based on play type
-      if (description.includes('makes') && description.includes('3PT')) {
-        return `🎯 ${description}`;
-      } else if (description.includes('makes')) {
-        return `🏀 ${description}`;
-      } else if (description.includes('misses')) {
-        return `🚫 ${description}`;
-      } else if (description.includes('rebound')) {
-        return `🔄 ${description}`;
-      } else if (description.includes('assist')) {
-        return `🤝 ${description}`;
-      } else if (description.includes('foul')) {
-        return `⚠️ ${description}`;
-      } else if (description.includes('turnover')) {
-        return `❌ ${description}`;
-      } else if (description.includes('dunk')) {
-        return `💥 ${description}`;
-      }
-      
-      return description;
     }
 
     // Load content for specific tab
@@ -1767,56 +1642,8 @@
       }
     }
 
-    // Open live game modal
-    async function openLiveGame(gameId, initialTab = 'play-by-play') {
-      console.log('Opening live game:', gameId, 'tab:', initialTab);
-      
-      // Store current game ID for auto-refresh
-      currentGameId = gameId;
-      
-      // Show modal
-      const modal = document.getElementById('liveGameModal');
-      modal.style.display = 'flex';
-      
-      // Set initial tab
-      switchTab(initialTab);
-      
-      // Load game data from your API
-      try {
-        await loadGameData(gameId);
-      } catch (error) {
-        console.error('Failed to load game data:', error);
-        showErrorMessage('Failed to load game data. Please try again.');
-      }
-    }
-    
-    // Close live game modal
-    function closeLiveGame() {
-      const modal = document.getElementById('liveGameModal');
-      modal.style.display = 'none';
-      
-      // Stop auto-refresh
-      stopAutoRefresh();
-      currentGameId = null;
-    }
-    
-    // Switch between tabs
-    function switchTab(tabName) {
-      // Update tab buttons
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
-      
-      // Update tab content
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      document.getElementById(`${tabName}-tab`).classList.add('active');
-    }
-
     // Update live score header
-    function updateGameModal(gameData) {
+    function updateLiveScoreHeader(gameData) {
       const parts = currentGameId.split('_');
       const opponentAbbr = parts[1];
       const isHome = parts[2] === 'home';
@@ -1981,55 +1808,6 @@
       container.innerHTML = statsHtml;
     }
 
-    // Load real game data from your API
-    async function loadGameData(gameId) {
-      try {
-        // Extract game info from gameId (format: "2025-12-21_BOS_home")
-        const parts = gameId.split('_');
-        const date = parts[0];
-        const opponentAbbr = parts[1];
-        const location = parts[2];
-        
-        console.log(`Loading game data for ${date} vs ${opponentAbbr} (${location})`);
-        
-        // Try your API first
-        const apiUrl = `/api/nba-simple?date=${date}`;
-        const response = await fetch(apiUrl);
-        
-        if (response.ok) {
-          const gameData = await response.json();
-          console.log('✅ Real NBA data loaded:', gameData);
-          
-          // Update modal with real data
-          updateGameModal(gameData);
-          loadPlayByPlay(gameData);
-          loadBoxScore(gameData);
-          loadGameStats(gameData);
-          
-          // Start auto-refresh for live games
-          if (gameData.status && !gameData.status.includes('Final')) {
-            startAutoRefresh();
-          }
-          
-          return gameData;
-        } else {
-          throw new Error(`API returned ${response.status}`);
-        }
-        
-      } catch (error) {
-        console.warn('⚠️ API failed, using mock data:', error);
-        
-        // Fallback to mock data
-        const mockData = generateMockGameData(gameId);
-        updateGameModal(mockData);
-        loadPlayByPlay(mockData);
-        loadBoxScore(mockData);
-        loadGameStats(mockData);
-        
-        return mockData;
-      }
-    }
-
     // Generate mock game data for demo
     function generateMockGameData(gameId) {
       const parts = gameId.split('_');
@@ -2123,12 +1901,11 @@
         updateRefreshCountdown();
         
         if (refreshCountdown <= 0) {
-          // Refresh game data with real NBA API
+          // Refresh game data
           if (currentGameId) {
-            console.log('Auto-refreshing game data...');
             loadGameData(currentGameId);
           }
-          refreshCountdown = 10; // Refresh every 10 seconds for live games
+          refreshCountdown = 10;
         }
       }, 1000);
     }
