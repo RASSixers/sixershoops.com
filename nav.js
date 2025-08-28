@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     <!-- PREMIUM SPORTS NAVIGATION -->
     <nav class="navbar" id="navbar">
       <!-- Dynamic Brand Section -->
-      <a href="/" class="nav-brand">
+      <a href="https://sixershoops.com/" class="nav-brand">
         <div class="nav-logo">76</div>
         <div class="brand-text">
           <div class="brand-name">SixersHoops</div>
@@ -15,27 +15,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- Elegant Navigation Menu -->
       <ul class="nav-menu">
-        <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
-        <li class="nav-item"><a href="/news" class="nav-link">Latest News</a></li>
+        <li class="nav-item"><a href="https://sixershoops.com/" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="https://sixershoops.com/news" class="nav-link">Latest News</a></li>
         <li class="nav-item dropdown">
           <button class="dropdown-toggle">Team Hub</button>
           <div class="dropdown-menu">
-            <a href="/roster" class="dropdown-item">Roster</a>
-            <a href="/stats" class="dropdown-item">Stats</a>
-            <a href="/salary" class="dropdown-item">Salary Breakdown</a>
-            <a href="/sixers-depth-chart" class="dropdown-item">Depth Chart</a>
-            <a href="/future-draft-picks" class="dropdown-item">Future Draft Picks</a>
+            <a href="https://sixershoops.com/roster" class="dropdown-item">Roster</a>
+            <a href="https://sixershoops.com/stats" class="dropdown-item">Stats</a>
+            <a href="https://sixershoops.com/salary" class="dropdown-item">Salary Breakdown</a>
+            <a href="https://sixershoops.com/depth" class="dropdown-item">Depth Chart</a>
+            <a href="https://sixershoops.com/draft" class="dropdown-item">Future Draft Picks</a>
           </div>
         </li>
         <li class="nav-item dropdown">
           <button class="dropdown-toggle">Trade Machine</button>
           <div class="dropdown-menu">
-            <a href="/nba-trade-machine" class="dropdown-item">Trade Machine</a>
-            <a href="/mockdrafts" class="dropdown-item">Mock Drafts</a>
+            <a href="https://sixershoops.com/nba-trade-machine" class="dropdown-item">Trade Machine</a>
+            <a href="https://sixershoops.com/mockdrafts" class="dropdown-item">Mock Drafts</a>
           </div>
         </li>
-        <li class="nav-item"><a href="/schedule" class="nav-link">Schedule</a></li>
-        <li class="nav-item"><a href="/contact" class="nav-link">Contact Us</a></li>
+        <li class="nav-item"><a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a></li>
+        <li class="nav-item"><a href="https://sixershoops.com/live-game" class="nav-link">Live Game</a></li>
+        <li class="nav-item"><a href="https://sixershoops.com/contact" class="nav-link">Contact Us</a></li>
       </ul>
 
       <!-- Mobile Menu Button -->
@@ -46,12 +47,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
-      <div class="mobile-nav-item"><a href="/" class="mobile-nav-link">Home</a></div>
-      <div class="mobile-nav-item"><a href="/news" class="mobile-nav-link">Latest News</a></div>
-      <div class="mobile-nav-item"><a href="/roster" class="mobile-nav-link">Team Hub</a></div>
-      <div class="mobile-nav-item"><a href="/nba-trade-machine" class="mobile-nav-link">Trade Machine</a></div>
-      <div class="mobile-nav-item"><a href="/schedule" class="mobile-nav-link">Schedule</a></div>
-      <div class="mobile-nav-item"><a href="/contact" class="mobile-nav-link">Contact Us</a></div>
+      <div class="mobile-nav-item"><a href="https://sixershoops.com/" class="mobile-nav-link">Home</a></div>
+      <div class="mobile-nav-item"><a href="https://sixershoops.com/news" class="mobile-nav-link">Latest News</a></div>
+
+      <div class="mobile-nav-item">
+        <button class="mobile-collapsible" id="mobileTeamHubToggle" aria-expanded="false" aria-controls="mobileTeamHubMenu">Team Hub</button>
+        <div class="mobile-submenu" id="mobileTeamHubMenu">
+          <a href="https://sixershoops.com/roster" class="mobile-nav-link">Roster</a>
+          <a href="https://sixershoops.com/stats" class="mobile-nav-link">Stats</a>
+          <a href="https://sixershoops.com/salary" class="mobile-nav-link">Salary Breakdown</a>
+          <a href="https://sixershoops.com/depth" class="mobile-nav-link">Depth Chart</a>
+          <a href="https://sixershoops.com/draft" class="mobile-nav-link">Future Draft Picks</a>
+        </div>
+      </div>
+
+      <div class="mobile-nav-item">
+        <button class="mobile-collapsible" id="mobileTradeToggle" aria-expanded="false" aria-controls="mobileTradeMenu">Trade Machine</button>
+        <div class="mobile-submenu" id="mobileTradeMenu">
+          <a href="https://sixershoops.com/nba-trade-machine" class="mobile-nav-link">Trade Machine</a>
+          <a href="https://sixershoops.com/mockdrafts" class="mobile-nav-link">Mock Drafts</a>
+        </div>
+      </div>
+
+      <div class="mobile-nav-item"><a href="https://sixershoops.com/schedule" class="mobile-nav-link">Schedule</a></div>
+      <div class="mobile-nav-item"><a href="https://sixershoops.com/live-game" class="mobile-nav-link">Live Game</a></div>
+      <div class="mobile-nav-item"><a href="https://sixershoops.com/contact" class="mobile-nav-link">Contact Us</a></div>
     </div>
   `;
 
@@ -72,7 +92,31 @@ document.addEventListener('DOMContentLoaded', function () {
   menuBtn?.addEventListener('click', () => {
     menuBtn.classList.toggle('active');
     mobile.classList.toggle('active');
-    menuBtn.setAttribute('aria-expanded', mobile.classList.contains('active'));
+    const isOpen = mobile.classList.contains('active');
+    menuBtn.setAttribute('aria-expanded', String(isOpen));
+    document.body.classList.toggle('no-scroll', isOpen);
+  });
+
+  // Close menu when a mobile link is clicked
+  mobile?.addEventListener('click', (e) => {
+    const link = e.target.closest('a.mobile-nav-link');
+    if (!link) return;
+    menuBtn?.classList.remove('active');
+    mobile.classList.remove('active');
+    menuBtn?.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('no-scroll');
+  });
+
+  // Collapsible submenus
+  document.querySelectorAll('.mobile-collapsible').forEach(btn => {
+    const targetId = btn.getAttribute('aria-controls');
+    const panel = document.getElementById(targetId);
+    if (!panel) return;
+    btn.addEventListener('click', () => {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+      panel.classList.toggle('open', !expanded);
+    });
   });
 
   // Close mobile menu on outside click
