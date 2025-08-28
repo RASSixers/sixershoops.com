@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
       menuBtn?.classList.remove('active');
       mobile?.classList.remove('active');
       menuBtn?.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('no-scroll');
     }
   });
 
