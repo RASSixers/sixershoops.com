@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
 
       <div class="mobile-nav-item"><a href="https://sixershoops.com/schedule" class="mobile-nav-link">Schedule</a></div>
-      <div class="mobile-nav-item"><a href="https://sixershoops.com/live-game" class="mobile-nav-link">Live Game</a></div>
+
       <div class="mobile-nav-item"><a href="https://sixershoops.com/contact" class="mobile-nav-link">Contact Us</a></div>
     </div>
   `;
