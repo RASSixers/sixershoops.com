@@ -1,5 +1,9 @@
 // Elite Navigation JavaScript - Universal Auto-Injection
 document.addEventListener('DOMContentLoaded', function () {
+  // Prevent double initialization
+  if (window.__NAVBAR_INITIALIZED__) return;
+  window.__NAVBAR_INITIALIZED__ = true;
+
   // -------------  NAVBAR HTML  -------------
   const navbarHTML = `
     <!-- PREMIUM SPORTS NAVIGATION -->
@@ -88,24 +92,43 @@ document.addEventListener('DOMContentLoaded', function () {
   const menuBtn  = document.getElementById('mobileMenuBtn');
   const mobile   = document.getElementById('mobileMenu');
 
-  // Mobile menu toggle
-  menuBtn?.addEventListener('click', () => {
-    menuBtn.classList.toggle('active');
-    mobile.classList.toggle('active');
-    const isOpen = mobile.classList.contains('active');
-    menuBtn.setAttribute('aria-expanded', String(isOpen));
-    document.body.classList.toggle('no-scroll', isOpen);
-  });
+  // Mobile menu toggle (single binding)
+  if (menuBtn && mobile && !menuBtn.__bound) {
+    menuBtn.__bound = true;
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuBtn.classList.toggle('active');
+      mobile.classList.toggle('active');
+      const isOpen = mobile.classList.contains('active');
+      menuBtn.setAttribute('aria-expanded', String(isOpen));
+      document.body.classList.toggle('no-scroll', isOpen);
+    });
 
-  // Close menu when a mobile link is clicked
-  mobile?.addEventListener('click', (e) => {
-    const link = e.target.closest('a.mobile-nav-link');
-    if (!link) return;
-    menuBtn?.classList.remove('active');
-    mobile.classList.remove('active');
-    menuBtn?.setAttribute('aria-expanded', 'false');
-    document.body.classList.remove('no-scroll');
-  });
+    // Prevent clicks inside menu from closing accidentally
+    mobile.addEventListener('click', (e) => {
+      const link = e.target.closest('a.mobile-nav-link');
+      if (link) {
+        menuBtn.classList.remove('active');
+        mobile.classList.remove('active');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('no-scroll');
+        return;
+      }
+      e.stopPropagation();
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!mobile.classList.contains('active')) return;
+      const clickedInsideNavbar = e.target.closest('#navbar') || e.target.closest('#mobileMenu');
+      if (!clickedInsideNavbar) {
+        menuBtn.classList.remove('active');
+        mobile.classList.remove('active');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('no-scroll');
+      }
+    });
+  }
 
   // Collapsible submenus
   document.querySelectorAll('.mobile-collapsible').forEach(btn => {
