@@ -121,6 +121,40 @@
       white-space: nowrap;
     }
 
+    /* Controls / Filters */
+    .draft-controls {
+      position: fixed; /* fixed to viewport */
+      top: 0; left: 0; /* will be overridden by JS to align with container */
+      z-index: 1000;
+      background: rgba(255,255,255,.98);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(59,130,246,0.12);
+      box-shadow: 0 10px 28px rgba(2,6,23,0.12);
+      border-radius: 14px;
+      padding: .75rem 1rem;
+      margin: 0;
+    }
+    .controls-spacer { height: 0; }
+    .draft-controls .row { display: flex; flex-wrap: nowrap; gap: .75rem 1rem; align-items: center; overflow-x:auto; white-space:nowrap; }
+    .filter-chip {
+      padding: .55rem .9rem; border-radius: 999px; font-weight: 600; font-size: .9rem;
+      border: 1px solid rgba(59,130,246,.25); background: #fff; color: #1e293b; cursor: pointer;
+      transition: all .25s ease;
+    }
+    .filter-chip:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,.15); }
+    .filter-chip.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .filter-select, .filter-search {
+      border: 1px solid rgba(148,163,184,.35); border-radius: 10px; padding: .6rem .8rem; font-weight: 600;
+      background: #fff; color: #0f172a;
+    }
+    .filter-search { flex: 1 1 260px; min-width: 220px; }
+    .draft-controls .spacer { flex: 1; }
+    .muted { color: #64748b; font-weight: 600; font-size: .9rem; }
+
+    /* Collapsible year */
+    .timeline-year.collapsed .picks-container { display: none; }
+    .year-header { cursor: pointer; }
+
     /* Section Styling */
     .future-picks-section,
     .draft-capital-section,
@@ -155,16 +189,28 @@
     .timeline-container {
       display: flex;
       flex-direction: column;
-      gap: 2rem;
+      gap: 2.5rem; /* a bit more breathing room between years */
+      padding-bottom: 3.5rem; /* more bottom breathing room */
     }
 
+    /* Footer breathing room */
+    .main-container { padding-bottom: 80px; }
+
+    /* Make bottom less crammed: soften inner padding on picks, add bottom space */
+    .pick-item { margin-bottom: .25rem; }
+    .draft-timeline + * { margin-top: 2.5rem; }
+
+    /* Bottom cleanup */
+    footer, .site-footer { display:none; }
+    body > script + script + script { display:none; }
+
     .timeline-year {
-      background: white;
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.1);
-      transition: all 0.3s ease;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 1.75rem;
+      box-shadow: 0 12px 30px rgba(2,6,23,0.08);
+      border: 1px solid rgba(2,6,23,0.07);
+      transition: transform .25s ease, box-shadow .25s ease;
       position: relative;
       overflow: hidden;
     }
@@ -175,8 +221,9 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 3px;
       background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
+      opacity: .8;
     }
 
     .timeline-year.featured {
@@ -202,6 +249,22 @@
       flex-wrap: wrap;
       gap: 1rem;
     }
+    .year-header::after { content: '▾'; margin-left: auto; color: #334155; transition: transform .2s ease; }
+    .timeline-year.collapsed .year-header::after { transform: rotate(-90deg); }
+
+    /* Legend & KPI */
+    .draft-legend { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem 1rem; background:#fff; border:1px solid rgba(2,6,23,.08); border-radius:12px; padding:.75rem 1rem; box-shadow:0 6px 18px rgba(2,6,23,.06); margin: 0 0 1rem; }
+    .legend-item { display:flex; align-items:center; gap:.5rem; font-weight:600; color:#334155; }
+    .legend-dot { width:10px; height:10px; border-radius:999px; display:inline-block; border:1px solid rgba(0,0,0,.08); }
+    .legend-own { background:rgba(16,185,129,.3); }
+    .legend-incoming { background:rgba(59,130,246,.3); }
+    .legend-traded { background:rgba(239,68,68,.3); }
+    .legend-swap { background:rgba(245,158,11,.35); }
+    .legend-protected { background:rgba(99,102,241,.35); }
+    .legend-unprotected { background:rgba(148,163,184,.35); }
+
+    .kpi-bar { display:none; } /* remove totals */
+    .kpi-chip { display:none; }
 
     .year-number {
       font-size: 2.5rem;
@@ -253,53 +316,67 @@
 
     .picks-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem 1.5rem;
+      align-items: stretch;
     }
+    .timeline-year { display: block; }
+    .timeline-year + .timeline-year { margin-top: 1.5rem; }
+    .timeline-year .picks-container > .pick-item { height: 100%; display:flex; flex-direction:column; }
 
+    /* Professional pick cards with header, progress bar, and collapsible details */
     .pick-item {
-      background: rgba(248, 250, 252, 0.8);
-      border-radius: 12px;
-      padding: 1.5rem;
-      border: 2px solid transparent;
-      transition: all 0.3s ease;
       position: relative;
+      background: #fff;
+      border-radius: 18px;
+      padding: 0; /* we'll define sections */
+      border: 1px solid rgba(2,6,23,0.06);
+      box-shadow: 0 10px 24px rgba(2,6,23,0.06);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      overflow: hidden;
     }
 
-    .pick-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
+    .pick-item:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(2,6,23,0.12); border-color: rgba(59,130,246,0.25); }
 
-    .pick-item.own {
-      border-color: rgba(34, 197, 94, 0.3);
-      background: rgba(34, 197, 94, 0.05);
-    }
+    .pick-head { display:flex; align-items:center; justify-content:space-between; padding: 1rem 1.15rem; background: linear-gradient(180deg, rgba(59,130,246,.08), rgba(59,130,246,.02)); }
+    .pick-title { font-weight:900; color:#0f172a; letter-spacing:.2px; }
+    .pick-meta { font-weight:600; color:#64748b; font-size:.9rem; }
 
-    .pick-item.traded {
-      border-color: rgba(239, 68, 68, 0.3);
-      background: rgba(239, 68, 68, 0.05);
-    }
+    .pick-accent { height: 3px; background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6); }
 
-    .pick-item.incoming {
-      border-color: rgba(59, 130, 246, 0.3);
-      background: rgba(59, 130, 246, 0.05);
-    }
+    .pick-body { padding: 1.1rem 1.15rem; display:block; }
+    .pick-footer { margin-top:auto; padding: .85rem 1.15rem; background:#f8fafc; border-top:1px solid rgba(2,6,23,.06); display:flex; align-items:center; gap:.6rem; justify-content:space-between; }
 
-    .pick-item.none {
-      border-color: rgba(107, 114, 128, 0.3);
-      background: rgba(107, 114, 128, 0.05);
-    }
+    .pick-toggle { cursor:pointer; font-weight:800; color:#1e3a8a; border:none; background:transparent; }
+    .pick-details-collapsible { display:none; margin-top:.6rem; padding:.7rem .8rem; background: rgba(59,130,246,.05); border:1px dashed rgba(59,130,246,.25); border-radius:12px; }
 
-    .pick-item.swap {
-      border-color: rgba(139, 92, 246, 0.3);
-      background: rgba(139, 92, 246, 0.05);
-    }
+    /* smooth expand/collapse */
+    .pick-details-collapsible { max-height: 0; overflow: hidden; transition: max-height .28s ease, opacity .28s ease; opacity: 0; }
+    .pick-item.details-open .pick-details-collapsible { display:block; max-height: 300px; opacity: 1; }
 
-    .pick-item.conditional {
-      border-color: rgba(245, 158, 11, 0.3);
-      background: rgba(245, 158, 11, 0.05);
-    }
+    /* micro-interactions */
+    .pick-item { transform: translateZ(0); }
+    .pick-item:active { transform: translateY(0); }
+    .pick-head, .pick-footer { will-change: transform; }
+    .pick-item .pick-head { border-bottom: 1px solid rgba(2,6,23,.06); }
+    .timeline-year .year-header:hover { filter: brightness(1.03); }
+    .timeline-year .year-header { transition: filter .15s ease; }
+
+    .pick-badges { position: static; display: flex; gap: .4rem; }
+    .badge { padding: .25rem .55rem; border-radius: 999px; font-weight: 800; font-size: .65rem; letter-spacing: .3px; border: 1px solid rgba(0,0,0,.08); }
+    .badge.own { background: rgba(16,185,129,.12); color: #065f46; border-color: rgba(16,185,129,.25); }
+    .badge.incoming { background: rgba(59,130,246,.12); color: #1e3a8a; border-color: rgba(59,130,246,.25); }
+    .badge.traded { background: rgba(239,68,68,.12); color: #7f1d1d; border-color: rgba(239,68,68,.25); }
+    .badge.swap { background: rgba(245,158,11,.12); color: #7c2d12; border-color: rgba(245,158,11,.25); }
+    .badge.protected { background: rgba(99,102,241,.12); color: #3730a3; border-color: rgba(99,102,241,.25); }
+    .badge.unprotected { background: rgba(148,163,184,.15); color: #334155; border-color: rgba(148,163,184,.3); }
+
+    /* Subtle status tints */
+    .pick-item.own { border-color: rgba(34, 197, 94, 0.25); }
+    .pick-item.traded { border-color: rgba(239, 68, 68, 0.25); }
+    .pick-item.incoming { border-color: rgba(59, 130, 246, 0.25); }
+    .pick-item.swap { border-color: rgba(139, 92, 246, 0.25); }
+    .pick-item.conditional { border-color: rgba(245, 158, 11, 0.25); }
 
     .pick-round {
       font-size: 1.1rem;
@@ -680,9 +757,44 @@
       <p class="page-subtitle">Philadelphia 76ers Draft Capital, Future Picks & Prospect Scouting</p>
     </div>
 
+    <!-- Interactive Controls removed; will be recreated inside timeline above 2026 -->
+
+
     <!-- Draft Picks Timeline -->
     <div class="draft-timeline">
-      <div class="timeline-container">
+      <div class="timeline-container" id="timelineContainer" style="position:relative; scroll-margin-top: 72px;">
+        <!-- Recreated Controls (static) above first year -->
+        <div class="draft-controls" style="position:sticky; top:0; left:0; right:0; z-index:5; margin-bottom: .75rem;">
+          <div class="row" style="overflow-x:auto; white-space:nowrap;">
+            <button class="filter-chip active" data-filter="all">All</button>
+            <button class="filter-chip" data-filter="own">Own</button>
+            <button class="filter-chip" data-filter="incoming">Incoming</button>
+            <button class="filter-chip" data-filter="traded">Traded</button>
+            <button class="filter-chip" data-filter="swap">Swaps</button>
+            <button class="filter-chip" data-filter="protected">Protected</button>
+            <button class="filter-chip" data-filter="unprotected">Unprotected</button>
+            <span class="muted" style="margin-left:1rem;">Year:</span>
+            <select id="yearSelect" class="filter-select">
+              <option value="all" selected>All</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+              <option value="2029">2029</option>
+              <option value="2030">2030</option>
+              <option value="2031-32">2031-32</option>
+            </select>
+            <input id="searchInput" class="filter-search" type="search" placeholder="Search team or note..." />
+          </div>
+        </div>
+        <!-- Legend directly below controls -->
+        <div class="draft-legend" style="position:static; margin-bottom:1rem;">
+          <div class="legend-item"><span class="legend-dot legend-own"></span>Own</div>
+          <div class="legend-item"><span class="legend-dot legend-incoming"></span>Incoming</div>
+          <div class="legend-item"><span class="legend-dot legend-traded"></span>Traded</div>
+          <div class="legend-item"><span class="legend-dot legend-swap"></span>Swap</div>
+          <div class="legend-item"><span class="legend-dot legend-protected"></span>Protected</div>
+          <div class="legend-item"><span class="legend-dot legend-unprotected"></span>Unprotected</div>
+        </div>
         
         <!-- 2026 -->
         <div class="timeline-year">
@@ -690,18 +802,40 @@
             <div class="year-number">2026</div>
           </div>
           <div class="picks-container">
-            <div class="pick-item traded">
-              <div class="pick-round">1st Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">OKC Thunder owns</div>
-                <div class="pick-protection">Top-4 protected to PHI</div>
+            <div class="pick-item traded" data-type="traded" data-year="2026" data-team="okc">
+              <div class="pick-head">
+                <div class="pick-title">1st Round</div>
+                <div class="pick-meta">OKC Thunder owns</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">OKC Thunder owns</div>
+                  <div class="pick-protection">Top-4 protected to PHI</div>
+                </div>
+                <div class="pick-details-collapsible">
+                  Top-4 protection means Sixers retain if pick is 1-4; otherwise conveys to OKC.
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
+                <button class="pick-toggle" type="button">Details</button>
               </div>
             </div>
-            <div class="pick-item none">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">No pick</div>
-                <div class="pick-protection">Traded away</div>
+            <div class="pick-item none" data-type="none" data-year="2026" data-team="none">
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">No pick</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">No pick</div>
+                  <div class="pick-protection">Traded away</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
           </div>
@@ -714,24 +848,53 @@
           </div>
           <div class="picks-container">
             <div class="pick-item traded">
-              <div class="pick-round">1st Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Brooklyn Nets owns</div>
-                <div class="pick-protection">Top-8 protected to PHI</div>
+              <div class="pick-head">
+                <div class="pick-title">1st Round</div>
+                <div class="pick-meta">Brooklyn Nets owns</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Brooklyn Nets owns</div>
+                  <div class="pick-protection">Top-8 protected to PHI</div>
+                </div>
+                <div class="pick-details-collapsible">Top-8 protection scenario applies for 2027.</div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
+                <button class="pick-toggle" type="button">Details</button>
               </div>
             </div>
-            <div class="pick-item incoming">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">More favorable of GSW/PHX</div>
-                <div class="pick-protection">Incoming asset</div>
+            <div class="pick-item incoming" data-type="incoming">
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">More favorable of GSW/PHX</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">More favorable of GSW/PHX</div>
+                  <div class="pick-protection">Incoming asset</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
             <div class="pick-item own">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
           </div>
@@ -744,38 +907,85 @@
           </div>
           <div class="picks-container">
             <div class="pick-item own">
-              <div class="pick-round">1st Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+              <div class="pick-head">
+                <div class="pick-title">1st Round</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
-            <div class="pick-item incoming">
-              <div class="pick-round">1st Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Via LA Clippers</div>
-                <div class="pick-protection">Unprotected</div>
+            <div class="pick-item incoming" data-type="incoming">
+              <div class="pick-head">
+                <div class="pick-title">1st Round</div>
+                <div class="pick-meta">Via LA Clippers</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Via LA Clippers</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
             <div class="pick-item own">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
-            <div class="pick-item incoming">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Via Golden State</div>
-                <div class="pick-protection">Unprotected</div>
+            <div class="pick-item incoming" data-type="incoming">
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">Via Golden State</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Via Golden State</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
             <div class="pick-item conditional">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Via Detroit</div>
-                <div class="pick-protection">Top 55 protected</div>
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">Via Detroit</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Via Detroit</div>
+                  <div class="pick-protection">Top 55 protected</div>
+                </div>
+                <div class="pick-details-collapsible">Conveys only if pick is 56-60.</div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
+                <button class="pick-toggle" type="button">Details</button>
               </div>
             </div>
           </div>
@@ -787,18 +997,38 @@
             <div class="year-number">2029</div>
           </div>
           <div class="picks-container">
-            <div class="pick-item swap">
-              <div class="pick-round">1st Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Swap rights with LAC (top-3 protected)</div>
+            <div class="pick-item swap" data-type="swap">
+              <div class="pick-head">
+                <div class="pick-title">1st Round</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Swap rights with LAC (top-3 protected)</div>
+                </div>
+                <div class="pick-details-collapsible">Swap rights allow taking the more favorable pick (subject to top-3 protection).</div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
+                <button class="pick-toggle" type="button">Details</button>
               </div>
             </div>
             <div class="pick-item own">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
           </div>
@@ -811,10 +1041,19 @@
           </div>
           <div class="picks-container">
             <div class="pick-item own">
-              <div class="pick-round">1st Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+              <div class="pick-head">
+                <div class="pick-title">1st Round</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
             <div class="pick-item incoming">
@@ -824,11 +1063,20 @@
                 <div class="pick-protection">Incoming asset</div>
               </div>
             </div>
-            <div class="pick-item incoming">
-              <div class="pick-round">2nd Round</div>
-              <div class="pick-details">
-                <div class="pick-owner">Via Washington</div>
-                <div class="pick-protection">Unprotected</div>
+            <div class="pick-item incoming" data-type="incoming">
+              <div class="pick-head">
+                <div class="pick-title">2nd Round</div>
+                <div class="pick-meta">Via Washington</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Via Washington</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
           </div>
@@ -840,32 +1088,68 @@
             <div class="year-number">2031-32</div>
           </div>
           <div class="picks-container">
-            <div class="pick-item own">
-              <div class="pick-round">2031 1st</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+            <div class="pick-item own" data-type="own">
+              <div class="pick-head">
+                <div class="pick-title">2031 1st</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
-            <div class="pick-item own">
-              <div class="pick-round">2031 2nd</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+            <div class="pick-item own" data-type="own">
+              <div class="pick-head">
+                <div class="pick-title">2031 2nd</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
-            <div class="pick-item own">
-              <div class="pick-round">2032 1st</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+            <div class="pick-item own" data-type="own">
+              <div class="pick-head">
+                <div class="pick-title">2032 1st</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
-            <div class="pick-item own">
-              <div class="pick-round">2032 2nd</div>
-              <div class="pick-details">
-                <div class="pick-owner">Philadelphia's own</div>
-                <div class="pick-protection">Unprotected</div>
+            <div class="pick-item own" data-type="own">
+              <div class="pick-head">
+                <div class="pick-title">2032 2nd</div>
+                <div class="pick-meta">Philadelphia's own</div>
+              </div>
+              <div class="pick-accent"></div>
+              <div class="pick-body">
+                <div class="pick-details">
+                  <div class="pick-owner">Philadelphia's own</div>
+                  <div class="pick-protection">Unprotected</div>
+                </div>
+              </div>
+              <div class="pick-footer">
+                <div class="pick-badges"></div>
               </div>
             </div>
           </div>
@@ -976,160 +1260,6 @@
 
 
 
-    <!-- Section Divider -->
-    <div class="section-divider">
-      <div class="divider-line"></div>
-      <div class="divider-text">Strategic Analysis</div>
-      <div class="divider-line"></div>
-    </div>
-
-    <!-- Combined Analysis and History Section -->
-    <div class="analysis-section">
-      <div class="draft-card">
-        <div class="card-header">
-          <div class="card-icon">📚</div>
-          <div>
-            <h2 class="card-title">Recent Draft History</h2>
-            <p class="card-subtitle">2020-2025</p>
-          </div>
-        </div>
-        <table class="draft-table">
-          <thead>
-            <tr>
-              <th>Year</th>
-              <th>Pick</th>
-              <th>Player</th>
-              <th>Position</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>2025</td>
-              <td>-</td>
-              <td>No Pick</td>
-              <td>-</td>
-              <td><span class="pick-status traded">Traded Away</span></td>
-            </tr>
-            <tr>
-              <td>2024</td>
-              <td>16th</td>
-              <td>Jared McCain</td>
-              <td>PG/SG</td>
-              <td><span class="pick-status own">On Roster</span></td>
-            </tr>
-            <tr>
-              <td>2023</td>
-              <td>7th</td>
-              <td>Jett Howard</td>
-              <td>SG/SF</td>
-              <td><span class="pick-status traded">Traded</span></td>
-            </tr>
-            <tr>
-              <td>2022</td>
-              <td>23rd</td>
-              <td>David Roddy</td>
-              <td>PF</td>
-              <td><span class="pick-status traded">Traded</span></td>
-            </tr>
-            <tr>
-              <td>2021</td>
-              <td>28th</td>
-              <td>Jaden Springer</td>
-              <td>PG/SG</td>
-              <td><span class="pick-status traded">Traded</span></td>
-            </tr>
-            <tr>
-              <td>2020</td>
-              <td>21st</td>
-              <td>Tyrese Maxey</td>
-              <td>PG/SG</td>
-              <td><span class="pick-status own">All-Star</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="cards-grid">
-        <div class="draft-card">
-          <div class="card-header">
-            <div class="card-icon">🎯</div>
-            <div>
-              <h2 class="card-title">2026 Draft Outlook</h2>
-              <p class="card-subtitle">Current Situation</p>
-            </div>
-          </div>
-          <div style="line-height: 1.8; color: #4b5563;">
-            <p><strong>Key Scenario:</strong> Sixers need to finish with a top-4 record to keep their 2026 1st round pick.</p>
-            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-              <li><strong>Best Case:</strong> Top-4 pick, keep franchise-changing talent</li>
-              <li><strong>Worst Case:</strong> Pick 5-30, goes to OKC Thunder</li>
-              <li><strong>Likely Outcome:</strong> Team performance will determine pick retention</li>
-            </ul>
-            <p><strong>Strategy:</strong> If pick is retained, target franchise-changing talent. If lost, focus on 2028 assets.</p>
-          </div>
-        </div>
-
-        <div class="draft-card">
-          <div class="card-header">
-            <div class="card-icon">📈</div>
-            <div>
-              <h2 class="card-title">2026 Mock Draft Scenarios</h2>
-              <p class="card-subtitle">Top-4 Protection Impact</p>
-            </div>
-          </div>
-          <div style="line-height: 1.8; color: #4b5563;">
-            <p><strong>If Sixers Keep Pick (Top-4):</strong></p>
-            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-              <li><strong>Top-4 Pick:</strong> Access to elite, franchise-changing talent</li>
-              <li><strong>High-Impact Player:</strong> Potential cornerstone for the future</li>
-              <li><strong>Strategic Value:</strong> Major asset for team building</li>
-            </ul>
-            <p><strong>If Pick Goes to OKC:</strong> Focus shifts to 2028 where Sixers have two 1st round picks.</p>
-          </div>
-        </div>
-
-        <div class="draft-card">
-          <div class="card-header">
-            <div class="card-icon">🚀</div>
-            <div>
-              <h2 class="card-title">2028: The Big Year</h2>
-              <p class="card-subtitle">Maximum Asset Accumulation</p>
-            </div>
-          </div>
-          <div style="line-height: 1.8; color: #4b5563;">
-            <p><strong>2028 Assets:</strong></p>
-            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-              <li>Own 1st round pick (unprotected)</li>
-              <li>LA Clippers 1st round pick</li>
-              <li>Own 2nd round pick</li>
-              <li>Golden State 2nd round pick</li>
-              <li>Detroit 2nd round pick (conditional)</li>
-            </ul>
-            <p><strong>Strategy:</strong> Use multiple picks to either draft depth or package for star player. This is the Sixers' best draft capital year in the next decade.</p>
-          </div>
-        </div>
-
-        <div class="draft-card">
-          <div class="card-header">
-            <div class="card-icon">⚖️</div>
-            <div>
-              <h2 class="card-title">Long-term Outlook</h2>
-              <p class="card-subtitle">2026-2032 Strategy</p>
-            </div>
-          </div>
-          <div style="line-height: 1.8; color: #4b5563;">
-            <p><strong>Asset Management:</strong></p>
-            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-              <li><strong>2026-2027:</strong> Limited assets due to past trades</li>
-              <li><strong>2028:</strong> Peak asset accumulation year</li>
-              <li><strong>2029:</strong> Swap rights provide flexibility</li>
-              <li><strong>2030-2032:</strong> Return to normal draft capital</li>
-            </ul>
-            <p><strong>Philosophy:</strong> Maximize 2028 opportunities while maintaining long-term flexibility for the post-Embiid era.</p>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Include navigation JavaScript -->
@@ -1138,6 +1268,281 @@
   <script>
     // Draft page functionality
     document.addEventListener('DOMContentLoaded', function() {
+      // smooth sticky controls: adjust spacer after content images/fonts load
+      setTimeout(() => { const ev = new Event('resize'); window.dispatchEvent(ev); }, 200);
+      // --- Interactive Filters / Search / Collapsible Years ---
+      const chips = document.querySelectorAll('.filter-chip');
+      const yearSelect = document.getElementById('yearSelect');
+      const searchInput = document.getElementById('searchInput');
+
+      const years = document.querySelectorAll('.timeline-year');
+      years.forEach(yearEl => {
+        const yText = yearEl.querySelector('.year-number')?.textContent.trim() || '';
+        yearEl.dataset.year = yText;
+        const header = yearEl.querySelector('.year-header');
+        header?.addEventListener('click', () => {
+          yearEl.classList.toggle('collapsed');
+          updateYearBadges();
+        });
+      });
+
+      const picks = document.querySelectorAll('.pick-item');
+      picks.forEach(p => {
+        // Derive type from class if not present
+        if (!p.dataset.type) {
+          const types = ['own','incoming','traded','swap','conditional','none'];
+          const found = types.find(t => p.classList.contains(t)) || 'own';
+          p.dataset.type = found;
+        }
+        // Protected flag detection (explicit and heuristic)
+        const protText = (p.querySelector('.pick-protection')?.textContent || '').toLowerCase();
+        const ownerText = (p.querySelector('.pick-owner')?.textContent || '').toLowerCase();
+        // Consider 'unprotected' as explicitly NOT protected. Do not treat 'swap' text as protection.
+        let isProtected = false;
+        if (/\bunprotected\b/.test(protText)) {
+          isProtected = false;
+        } else if (/\bprotected\b/.test(protText) || /\btop\s?-?\d+\b/.test(protText) || /\blottery\b/.test(protText)) {
+          isProtected = true;
+        } else if (p.classList.contains('conditional')) {
+          isProtected = true;
+        } else {
+          isProtected = false;
+        }
+        p.dataset.protected = isProtected ? 'true' : 'false';
+
+        // Team token from owner text
+        const teamMatch = ownerText.replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim();
+        p.dataset.team = teamMatch;
+        
+        // Ensure year
+        if (!p.dataset.year) {
+          const parentYear = p.closest('.timeline-year')?.dataset.year || '';
+          p.dataset.year = parentYear;
+        }
+
+        // Render badges dynamically for clarity
+        let badges = p.querySelector('.pick-badges');
+        if (!badges) {
+          badges = document.createElement('div');
+          badges.className = 'pick-badges';
+          p.appendChild(badges);
+        }
+        badges.innerHTML = '';
+        const typeBadge = document.createElement('span');
+        typeBadge.className = `badge ${p.dataset.type}`;
+        typeBadge.textContent = p.dataset.type.toUpperCase();
+        badges.appendChild(typeBadge);
+        const protBadge = document.createElement('span');
+        protBadge.className = `badge ${isProtected ? 'protected' : 'unprotected'}`;
+        protBadge.textContent = isProtected ? 'PROTECTED' : 'UNPROTECTED';
+        badges.appendChild(protBadge);
+
+        // Normalize card structure for consistency (head, accent, body, footer)
+        if (!p.querySelector('.pick-head')) {
+          const roundText = p.querySelector('.pick-round')?.textContent?.trim() ||
+                            p.querySelector('.pick-title')?.textContent?.trim() || 'Pick';
+          const metaText = p.querySelector('.pick-owner')?.textContent?.trim() ||
+                           p.querySelector('.pick-meta')?.textContent?.trim() || '';
+          const head = document.createElement('div');
+          head.className = 'pick-head';
+          const title = document.createElement('div'); title.className = 'pick-title'; title.textContent = roundText;
+          const meta = document.createElement('div'); meta.className = 'pick-meta'; meta.textContent = metaText;
+          head.appendChild(title); head.appendChild(meta);
+          p.insertBefore(head, p.firstChild);
+        }
+        if (!p.querySelector('.pick-accent')) {
+          const accent = document.createElement('div'); accent.className = 'pick-accent';
+          const after = p.querySelector('.pick-head');
+          if (after && after.nextSibling) p.insertBefore(accent, after.nextSibling); else p.appendChild(accent);
+        }
+        if (!p.querySelector('.pick-body')) {
+          const body = document.createElement('div'); body.className = 'pick-body';
+          // move all non-head/accent/footer children into body
+          const toMove = Array.from(p.childNodes).filter(n =>
+            n.nodeType === 1 && !n.classList?.contains('pick-head') && !n.classList?.contains('pick-accent') && !n.classList?.contains('pick-footer')
+          );
+          toMove.forEach(n => body.appendChild(n));
+          p.appendChild(body);
+        }
+
+        // Only show a toggle if a details-collapsible exists and has content
+        const detailsArea = p.querySelector('.pick-details-collapsible');
+        let footer = p.querySelector('.pick-footer');
+        if (!footer) {
+          footer = document.createElement('div');
+          footer.className = 'pick-footer';
+          if (badges && badges.parentElement === p) {
+            footer.appendChild(badges);
+            p.appendChild(footer);
+          } else {
+            p.appendChild(footer);
+          }
+        }
+        // ensure badges container exists in footer
+        if (!footer.querySelector('.pick-badges')) {
+          const badgesHolder = document.createElement('div'); badgesHolder.className = 'pick-badges';
+          footer.prepend(badgesHolder);
+        }
+
+        // Toggle only for cards that have real details content
+        let toggle = p.querySelector('.pick-toggle');
+        const hasDetails = !!(detailsArea && detailsArea.textContent.trim().length > 0);
+        if (hasDetails) {
+          if (!toggle) {
+            toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'pick-toggle';
+            toggle.textContent = 'Details';
+            footer.appendChild(toggle);
+          }
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.addEventListener('click', () => {
+            const open = p.classList.toggle('details-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            toggle.textContent = open ? 'Hide' : 'Details';
+          });
+        } else if (toggle) {
+          // remove stray toggles when no details exist
+          toggle.remove();
+        }
+
+        // Migrate bottom info cards into details (run once)
+        if (!window.__cards_migrated__) {
+          window.__cards_migrated__ = true;
+          const migrations = [
+            {
+              match: (el) => (el.dataset.year||'').includes('2026') && /(okc|thunder)/.test(el.dataset.team||''),
+              html: `<strong>2026 Pick Protection Details (OKC Thunder):</strong><ul style="margin:.6rem 0 0 1rem;">\
+<li>Picks 1-4: Philadelphia keeps the pick</li>\
+<li>Picks 5-30: Conveys to Oklahoma City Thunder</li>\
+<li>If not conveyed in 2026: Same protection applies in 2027</li>\
+<li>If still not conveyed in 2027: Converts to 2027 2nd-round pick for OKC</li>\
+</ul>`
+            },
+            {
+              match: (el) => (el.dataset.year||'').includes('2027') && /(brooklyn|nets)/.test(el.dataset.team||''),
+              html: `<strong>2027 Pick Protection Details (Brooklyn Nets):</strong><ul style="margin:.6rem 0 0 1rem;">\
+<li>Only applies if 2026 pick to OKC has been sent</li>\
+<li>Picks 1-8: Philadelphia keeps the pick</li>\
+<li>Picks 9-30: Conveys to Brooklyn Nets</li>\
+<li>If not conveyed in 2027: Same protection applies in 2028</li>\
+<li>If not conveyed by 2028: Becomes 2028 2nd-round pick</li>\
+</ul>`
+            },
+            {
+              match: (el) => (el.dataset.year||'').includes('2028') && /(detroit|pistons)/.test(el.dataset.team||''),
+              html: `<strong>2028 Detroit Pick (Top-55 protected):</strong><ul style="margin:.6rem 0 0 1rem;">\
+<li>Only conveys if picks 56-60 (top 55 protected)</li>\
+<li>Detroit must be a top-5 team for pick to convey</li>\
+<li>If Detroit not top-5, pick expires</li>\
+</ul>`
+            },
+            {
+              match: (el) => (el.dataset.year||'').includes('2030') && /(por|portland|phx|phoenix|was|washington|wizards)/.test((el.dataset.team||'') + ' ' + (el.textContent||'').toLowerCase()),
+              html: `<strong>2030 Second-Round Scenarios:</strong><ul style="margin:.6rem 0 0 1rem;">\
+<li>More favorable of POR/PHX</li>\
+<li>Additional 2nd via Washington (unprotected)</li>\
+</ul>`
+            },
+            {
+              match: (el) => (el.dataset.year||'').includes('2029') && /(clippers|lac|los angeles)/.test(el.dataset.team||''),
+              html: `<strong>2029 LAC Swap:</strong><ul style="margin:.6rem 0 0 1rem;">\
+<li>Can swap 1st round picks with Clippers</li>\
+<li>Top-3 protected (Clippers keep if picks 1-3)</li>\
+</ul>`
+            }
+          ];
+          document.querySelectorAll('.pick-item').forEach(el => {
+            const m = migrations.find(mig => mig.match(el));
+            if (!m) return;
+            let area = el.querySelector('.pick-details-collapsible');
+            if (!area) {
+              area = document.createElement('div');
+              area.className = 'pick-details-collapsible';
+              (el.querySelector('.pick-body') || el).appendChild(area);
+            }
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = m.html;
+            area.appendChild(wrapper);
+          });
+          // Remove the bottom draft cards
+          document.querySelectorAll('.draft-card').forEach(c => c.remove());
+        }
+      });
+
+      function applyFilters() {
+        const activeChip = document.querySelector('.filter-chip.active')?.dataset.filter || 'all';
+        const yearVal = yearSelect?.value || 'all';
+        const q = (searchInput?.value || '').toLowerCase().trim();
+
+        let total = 0, own=0, incoming=0, traded=0, swap=0, prot=0, unprot=0;
+
+        years.forEach(y => {
+          let visibleCount = 0;
+          y.querySelectorAll('.pick-item').forEach(p => {
+            let show = true;
+            // Type filter
+            if (activeChip !== 'all') {
+              if (activeChip === 'protected') {
+                show = p.dataset.protected === 'true';
+              } else if (activeChip === 'unprotected') {
+                show = p.dataset.protected !== 'true';
+              } else {
+                show = p.dataset.type === activeChip;
+              }
+            }
+            // Year filter
+            if (show && yearVal !== 'all') {
+              show = (p.dataset.year || '').includes(yearVal);
+            }
+            // Search filter
+            if (show && q) {
+              const text = (p.textContent || '').toLowerCase();
+              show = text.includes(q);
+            }
+            p.style.display = show ? '' : 'none';
+            if (show) {
+              visibleCount++;
+              total++;
+              if (p.dataset.type === 'own') own++;
+              if (p.dataset.type === 'incoming') incoming++;
+              if (p.dataset.type === 'traded') traded++;
+              if (p.dataset.type === 'swap') swap++;
+              if (p.dataset.protected === 'true') prot++; else unprot++;
+            }
+          });
+          // Hide whole year if none visible
+          y.style.display = visibleCount ? '' : 'none';
+          // Count badge
+          let badge = y.querySelector('.year-count-badge');
+          if (!badge) {
+            const hdr = y.querySelector('.year-header');
+            if (hdr) {
+              badge = document.createElement('span');
+              badge.className = 'year-count-badge';
+              badge.style.cssText = 'margin-left:auto;background:rgba(59,130,246,.12);color:#1e3a8a;border:1px solid rgba(59,130,246,.3);padding:.25rem .6rem;border-radius:999px;font-weight:700;font-size:.8rem;';
+              hdr.appendChild(badge);
+            }
+          }
+          if (badge) badge.textContent = `${visibleCount} picks`;
+        });
+
+        // KPI totals removed per request
+      }
+
+      function updateYearBadges(){ applyFilters(); }
+
+      chips.forEach(c => {
+        c.addEventListener('click', () => {
+          chips.forEach(x => x.classList.remove('active'));
+          c.classList.add('active');
+          applyFilters();
+        });
+      });
+      yearSelect?.addEventListener('change', applyFilters);
+      searchInput?.addEventListener('input', applyFilters);
+
+      applyFilters();
       // Add hover effects to cards and timeline items
       const cards = document.querySelectorAll('.draft-card, .timeline-year');
       cards.forEach(card => {
@@ -1211,5 +1616,7 @@
       }
     });
   </script>
-</body>
+
+  <!-- --- JavaScript Ad Code --->
+<script src="https://grookilteepsou.net/act/files/tag.min.js?z=9795760" data-cfasync="false" async></script></body>
 </html>
