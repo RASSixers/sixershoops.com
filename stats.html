@@ -3,16 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Philadelphia 76ers Player Stats - SixersHoops</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/favicon.ico" />
-  <meta name="description" content="Interactive Philadelphia 76ers player statistics and performance analytics." />
-  <meta name="keywords" content="Philadelphia 76ers, Sixers, NBA, player stats, Joel Embiid, Tyrese Maxey, Paul George, basketball statistics" />
-  <meta name="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" content="b859edb337ee6d55b516267f6644cb3b2c9cd7f5" />
- 
+  <title>Philadelphia 76ers Stats - SixersHoops</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="favicon.ico" />
+  <meta name="description" content="Comprehensive Philadelphia 76ers statistics, player performance metrics, team analytics, and interactive data visualizations." />
+  <meta name="keywords" content="Philadelphia 76ers stats, Sixers statistics, NBA analytics, player performance, team metrics" />
+  
   <!-- Include the navbar CSS -->
   <link rel="stylesheet" href="navbar-styles.css">
- 
+  
+  <!-- Stats enhancements CSS -->
+  <link rel="stylesheet" href="stats-enhancements.css">
+  
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  
   <!-- Google Analytics 4 (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
   <script>
@@ -21,18 +27,9 @@
     gtag('js', new Date());
     gtag('config', 'G-T1V9Q0MNEM');
   </script>
-
-  <!-- Chart.js for interactive charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
- 
   <style>
-    /* Reset and Base Styles - EXACT MATCH TO INDEX.HTML */
+    /* Reset and Base Styles */
     * {
       margin: 0;
       padding: 0;
@@ -49,24 +46,80 @@
     }
 
     /* Main Container */
-    .container {
+    .main-container {
       max-width: 1400px;
       margin: 0 auto;
       padding: 2rem;
     }
 
-    /* Hero Section */
-    .hero-section {
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      border-radius: 24px;
-      padding: 4rem 3rem;
+    /* Header Section - Same as roster.html */
+    .page-header {
+      text-align: center;
       margin-bottom: 3rem;
+      padding: 3rem 0;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      border-radius: 20px;
+      color: white;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(30, 41, 59, 0.3);
     }
 
-    .hero-section::before {
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { transform: translateX(-100%); }
+      50% { transform: translateX(100%); }
+    }
+
+    .page-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 0%, #3b82f6 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      z-index: 1;
+    }
+
+    .page-subtitle {
+      font-size: 1.2rem;
+      color: #94a3b8;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 2rem;
+    }
+
+    /* Content wrapper */
+    .content-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Main content */
+    .stats-main-content {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stats-main-content::before {
       content: '';
       position: absolute;
       top: 0;
@@ -76,321 +129,759 @@
       background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
     }
 
-    .hero-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      z-index: 2;
-    }
-
-    .hero-text h1 {
-      font-size: 3.5rem;
-      font-weight: 900;
-      color: white;
-      margin-bottom: 1rem;
-      line-height: 1.1;
-    }
-
-    .hero-text p {
-      font-size: 1.3rem;
-      color: #94a3b8;
-      font-weight: 500;
-      max-width: 500px;
-    }
-
-    .hero-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      align-items: flex-end;
-    }
-
-    /* Interactive Season Selector */
-    .season-selector {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Controls Section */
+    .controls-section {
+      background: rgba(248, 250, 252, 0.8);
       border-radius: 16px;
-      padding: 1rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .season-btn {
-      padding: 0.8rem 1.5rem;
-      background: transparent;
-      color: #cbd5e1;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 0.9rem;
-    }
-
-    .season-btn:hover {
-      background: rgba(59, 130, 246, 0.2);
-      border-color: rgba(59, 130, 246, 0.4);
-      color: white;
-      transform: translateY(-2px);
-    }
-
-    .season-btn.active {
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-color: transparent;
-      color: white;
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-    }
-
-    /* View Toggle */
-    .view-toggle {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      padding: 0.5rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .toggle-btn {
-      padding: 0.8rem 1.2rem;
-      background: transparent;
-      color: #cbd5e1;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .toggle-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-    }
-
-    .toggle-btn.active {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-    }
-
-    /* Interactive Filters */
-    .filters-section {
-      background: white;
-      border-radius: 20px;
       padding: 2rem;
       margin-bottom: 2rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 16px rgba(30, 41, 59, 0.08);
       border: 1px solid #e2e8f0;
     }
 
-    .filters-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* Control Panel */
+    .control-panel {
+      display: flex;
       gap: 1.5rem;
-      align-items: end;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
     }
 
-    .filter-group {
+    .control-group {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      min-width: 180px;
     }
 
-    .filter-label {
+    .control-label {
       font-size: 0.9rem;
-      font-weight: 600;
-      color: #64748b;
+      font-weight: 700;
+      color: #1e293b;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .filter-select {
+    .control-select, .control-input {
       padding: 0.8rem 1rem;
       border: 2px solid #e2e8f0;
       border-radius: 12px;
       background: white;
+      font-size: 1rem;
       font-weight: 600;
+      transition: all 0.3s ease;
       color: #1e293b;
+    }
+
+    .control-select:focus, .control-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .control-select:hover, .control-input:hover {
+      border-color: #3b82f6;
+      transform: translateY(-1px);
+    }
+
+    /* Filter Buttons */
+    .filter-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.7rem 1.2rem;
+      border: 2px solid #e2e8f0;
+      background: #ffffff;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #475569;
+      position: relative;
+    }
+
+    .filter-btn::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: #ffffff;
+      border-color: #3b82f6;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .filter-btn:hover::before, .filter-btn.active::before {
+      width: 100%;
+    }
+
+    /* Player Stats Grid */
+    .player-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    /* Player Stat Cards */
+    .player-stat-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 16px rgba(30, 41, 59, 0.08), 0 0 0 1px rgba(59, 130, 246, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      border-top: 3px solid #3b82f6;
+    }
+
+    .player-stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .player-stat-card:hover::before {
+      left: 100%;
+    }
+
+    .player-stat-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 35px rgba(30, 41, 59, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.3);
+      border-top-color: #1d4ed8;
+    }
+
+    /* Player Header */
+    .player-stat-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .player-stat-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      position: relative;
+    }
+
+    .player-stat-avatar::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+    }
+
+    .player-stat-info {
+      flex: 1;
+    }
+
+    .player-stat-name {
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: #1e293b;
+      margin-bottom: 0.3rem;
+      font-family: Georgia, serif;
+    }
+
+    .player-stat-position {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      color: #475569;
+      padding: 0.3rem 0.8rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-block;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Stats Grid within Card */
+    .player-stats-display {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 0.8rem;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      background: #f1f5f9;
+      transform: translateY(-2px);
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #3b82f6;
+      margin-bottom: 0.2rem;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Player Stats Modal */
+    .stats-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .stats-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      animation: slideUp 0.3s ease;
+      position: relative;
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 24px 24px 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .modal-player-info {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .modal-player-avatar {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 900;
+      color: white;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-player-details h2 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      margin: 0;
+      background: linear-gradient(135deg, #ffffff, #e2e8f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .modal-player-meta {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
       cursor: pointer;
       transition: all 0.3s ease;
     }
 
-    .filter-select:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
     }
 
-    .search-input {
-      padding: 0.8rem 1rem 0.8rem 3rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      background: white;
-      font-weight: 600;
+    .modal-body {
+      padding: 2rem;
+    }
+
+    .stats-section {
+      margin-bottom: 3rem;
+    }
+
+    .stats-section h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
       color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stats-section h3::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 2px;
+    }
+
+    .modal-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .modal-stat-item {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      padding: 1.5rem;
+      border-radius: 16px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
       transition: all 0.3s ease;
       position: relative;
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .search-container {
-      position: relative;
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #64748b;
-      font-size: 1.1rem;
-    }
-
-    /* Stats Table */
-    .stats-table-container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e2e8f0;
       overflow: hidden;
+    }
+
+    .modal-stat-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-stat-item:hover {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+    }
+
+    .modal-stat-item:hover::before {
+      transform: scaleX(1);
+    }
+
+    .modal-stat-value {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .modal-stat-label {
+      font-size: 0.9rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(50px) scale(0.95);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* View Details Button */
+    .view-details-btn {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .view-details-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 1rem;
+    }
+
+    .chart-container canvas {
+      border-radius: 10px;
+    }
+
+    /* Player Stats Table */
+    .player-stats-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 30px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 2px;
+    }
+
+    /* Table Styles */
+    .stats-table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
     }
 
     .stats-table {
       width: 100%;
       border-collapse: collapse;
+      background: white;
     }
 
     .stats-table th {
       background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       color: white;
-      padding: 1.5rem 1rem;
+      padding: 1rem;
       text-align: left;
-      font-weight: 700;
+      font-weight: 600;
       font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      cursor: pointer;
-      transition: all 0.3s ease;
     }
 
-    .stats-table th:hover {
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    .stats-table th:first-child {
+      border-top-left-radius: 12px;
     }
 
-    .stats-table th.sortable::after {
-      content: '↕';
-      margin-left: 0.5rem;
-      opacity: 0.5;
-    }
-
-    .stats-table th.sort-asc::after {
-      content: '↑';
-      opacity: 1;
-      color: #3b82f6;
-    }
-
-    .stats-table th.sort-desc::after {
-      content: '↓';
-      opacity: 1;
-      color: #3b82f6;
+    .stats-table th:last-child {
+      border-top-right-radius: 12px;
     }
 
     .stats-table td {
-      padding: 1.5rem 1rem;
+      padding: 1rem;
       border-bottom: 1px solid #f1f5f9;
       transition: all 0.3s ease;
-      font-weight: 600;
-      vertical-align: middle;
     }
 
     .stats-table tr:hover td {
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      transform: scale(1.01);
+      background: #f8fafc;
     }
 
     .stats-table tr:last-child td {
       border-bottom: none;
     }
 
-    /* Player Name Cell */
-    .player-name-cell {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      min-width: 200px;
-    }
-
-    .player-avatar {
-      width: 50px;
-      height: 50px;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      font-weight: 900;
-      color: white;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-      transition: all 0.3s ease;
-    }
-
-    .player-avatar:hover {
-      transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
-    }
-
-    .player-info h4 {
-      font-size: 1.1rem;
-      font-weight: 800;
+    .player-name {
+      font-weight: 600;
       color: #1e293b;
-      margin-bottom: 0.2rem;
     }
 
-    .player-position {
-      font-size: 0.85rem;
+    .stat-value {
+      font-weight: 600;
+      color: #3b82f6;
+    }
+
+    /* Loading States */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
       color: #64748b;
+    }
+
+    .loading::after {
+      content: '';
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Update Indicator */
+    .update-indicator {
+      position: fixed;
+      top: 100px;
+      right: 2rem;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+      transform: translateX(300px);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .update-indicator.show {
+      transform: translateX(0);
+    }
+
+    /* No Players Message */
+    .no-players {
+      text-align: center;
+      padding: 3rem;
+      color: #64748b;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: #f8fafc;
+      border-radius: 16px;
+      border: 2px dashed #e2e8f0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 1rem;
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+      }
+
+      .control-panel {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .control-group {
+        min-width: 100%;
+        max-width: 300px;
+      }
+
+      .filter-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .filter-btn {
+        min-width: 200px;
+      }
+
+      .player-stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .player-stat-card {
+        padding: 1rem;
+      }
+
+      .player-stat-name {
+        font-size: 1.1rem;
+      }
+
+      .player-stats-display {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 0.5rem;
+      }
+
+      .stat-item {
+        padding: 0.5rem;
+      }
+
+      .stat-value {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .player-stats-display {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .controls-section {
+        padding: 1rem;
+      }
+
+      .stats-main-content {
+        padding: 1.5rem;
+      }
+    }
+
+    /* Advanced Features */
+    .comparison-mode {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: white;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      text-align: center;
       font-weight: 600;
     }
 
-    /* Stat Cells */
-    .stat-cell {
-      text-align: center;
-      font-size: 1rem;
-      font-weight: 700;
-      color: #1e293b;
-      position: relative;
+    .filter-chips {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
 
-    .stat-highlight {
-      background: linear-gradient(135deg, #10b981, #059669);
+    .filter-chip {
+      background: #3b82f6;
       color: white;
-      padding: 0.4rem 0.8rem;
-      border-radius: 8px;
-      font-weight: 800;
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    .stat-trend {
+    .filter-chip:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+
+    .filter-chip.active {
+      background: #1d4ed8;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Performance Indicators */
+    .performance-indicator {
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .performance-indicator.excellent {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .performance-indicator.good {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .performance-indicator.average {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* Trend Arrows */
+    .trend-arrow {
+      display: inline-block;
+      margin-left: 0.5rem;
+      font-size: 0.8rem;
     }
 
     .trend-up {
@@ -404,1078 +895,995 @@
     .trend-neutral {
       color: #64748b;
     }
-
-    /* Player Cards View */
-    .players-grid {
-      display: none;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 2rem;
-    }
-
-    .players-grid.active {
-      display: grid;
-    }
-
-    .player-card {
-      background: white;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e2e8f0;
-      transition: all 0.4s ease;
-      cursor: pointer;
-    }
-
-    .player-card:hover {
-      transform: translateY(-12px) scale(1.02);
-      box-shadow: 0 20px 60px rgba(59, 130, 246, 0.15);
-    }
-
-    .player-card-header {
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      color: white;
-      padding: 2rem;
-      position: relative;
-    }
-
-    .player-card-header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
-    }
-
-    .player-card-info {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
-    .card-player-avatar {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      font-weight: 900;
-      color: white;
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-      border: 3px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .card-player-details h3 {
-      font-size: 1.8rem;
-      font-weight: 900;
-      margin-bottom: 0.5rem;
-    }
-
-    .card-player-position {
-      font-size: 1rem;
-      color: #94a3b8;
-      font-weight: 600;
-    }
-
-    .player-card-stats {
-      padding: 2rem;
-    }
-
-    .card-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .card-stat-item {
-      text-align: center;
-      padding: 1.5rem 1rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 12px;
-      transition: all 0.3s ease;
-      border: 1px solid #e2e8f0;
-    }
-
-    .card-stat-item:hover {
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      color: white;
-      transform: translateY(-5px);
-      box-shadow: 0 12px 30px rgba(59, 130, 246, 0.3);
-    }
-
-    .card-stat-value {
-      font-size: 1.8rem;
-      font-weight: 900;
-      color: #1e293b;
-      margin-bottom: 0.3rem;
-      transition: color 0.3s ease;
-    }
-
-    .card-stat-item:hover .card-stat-value {
-      color: white;
-    }
-
-    .card-stat-label {
-      font-size: 0.8rem;
-      color: #64748b;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      transition: color 0.3s ease;
-    }
-
-    .card-stat-item:hover .card-stat-label {
-      color: rgba(255, 255, 255, 0.9);
-    }
-
-    /* Interactive Chart */
-    .chart-container {
-      height: 200px;
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 1rem;
-      position: relative;
-    }
-
-    /* Loading Animation */
-    .loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 200px;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid #e2e8f0;
-      border-top: 3px solid #3b82f6;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Responsive Design */
-    @media (max-width: 1024px) {
-      .hero-content {
-        flex-direction: column;
-        gap: 2rem;
-        text-align: center;
-      }
-
-      .hero-controls {
-        align-items: center;
-      }
-
-      .season-selector {
-        flex-wrap: wrap;
-      }
-
-      .players-grid {
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      }
-    }
-
-    @media (max-width: 768px) {
-      .container {
-        padding: 1rem;
-      }
-
-      .hero-section {
-        padding: 2.5rem 2rem;
-      }
-
-      .hero-text h1 {
-        font-size: 2.5rem;
-      }
-
-      .filters-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .season-selector {
-        justify-content: center;
-      }
-
-      .season-btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.8rem;
-      }
-
-      .stats-table {
-        font-size: 0.9rem;
-      }
-
-      .stats-table th,
-      .stats-table td {
-        padding: 1rem 0.5rem;
-      }
-
-      .players-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .card-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 480px) {
-      .hero-text h1 {
-        font-size: 2rem;
-      }
-
-      .player-name-cell {
-        min-width: 150px;
-      }
-
-      .player-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-      }
-
-      .card-stats-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Construction Popup */
-    .construction-popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0.8);
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      color: white;
-      padding: 2.5rem;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      z-index: 10000;
-      max-width: 500px;
-      width: 90%;
-      text-align: center;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: all 0.4s ease;
-    }
-
-    .construction-popup.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    .construction-popup::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #f59e0b, #ef4444, #f59e0b);
-      border-radius: 20px 20px 0 0;
-    }
-
-    .construction-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      z-index: 9999;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: all 0.4s ease;
-    }
-
-    .construction-overlay.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .construction-icon {
-      font-size: 3rem;
-      color: #f59e0b;
-      margin-bottom: 1rem;
-      animation: bounce 2s infinite;
-    }
-
-    @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
-      }
-      40% {
-        transform: translateY(-10px);
-      }
-      60% {
-        transform: translateY(-5px);
-      }
-    }
-
-    .construction-title {
-      font-size: 1.8rem;
-      font-weight: 900;
-      margin-bottom: 1rem;
-      color: white;
-    }
-
-    .construction-message {
-      font-size: 1.1rem;
-      color: #cbd5e1;
-      margin-bottom: 2rem;
-      line-height: 1.6;
-    }
-
-    .construction-close {
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      color: white;
-      border: none;
-      padding: 0.8rem 2rem;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-    }
-
-    .construction-close:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
-      background: linear-gradient(135deg, #2563eb, #0891b2);
-    }
-
-    /* Animation Classes */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.6s ease forwards;
-    }
-
-    @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .slide-in {
-      opacity: 0;
-      transform: translateX(-20px);
-      animation: slideInRight 0.5s ease forwards;
-    }
-
-    @keyframes slideInRight {
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    /* Staggered animations */
-    .player-card:nth-child(1) { animation-delay: 0.1s; }
-    .player-card:nth-child(2) { animation-delay: 0.2s; }
-    .player-card:nth-child(3) { animation-delay: 0.3s; }
-    .player-card:nth-child(4) { animation-delay: 0.4s; }
-    .player-card:nth-child(5) { animation-delay: 0.5s; }
-    .player-card:nth-child(6) { animation-delay: 0.6s; }
   </style>
 </head>
 <body>
   <!-- Navigation will be injected by nav.js -->
   
-  <!-- Construction Popup -->
-  <div class="construction-overlay" id="constructionOverlay"></div>
-  <div class="construction-popup" id="constructionPopup">
-    <div class="construction-icon">
-      <i class="fas fa-hard-hat"></i>
-    </div>
-    <h3 class="construction-title">Under Construction</h3>
-    <p class="construction-message">
-      This section of the site is currently under development. Player statistics and data may be inaccurate or incomplete. We're working hard to provide you with the most up-to-date information!
-    </p>
-    <button class="construction-close" id="constructionClose">
-      Got it, thanks!
+  <!-- Update Indicator -->
+  <div class="update-indicator" id="updateIndicator">
+    📊 Stats Updated!
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="action-button tooltip" onclick="exportStatsData('json')" title="Export Data">
+      📊
+      <span class="tooltiptext">Export stats to JSON</span>
+    </button>
+    <button class="action-button tooltip" onclick="window.sixersStats.updateAllData()" title="Refresh Data">
+      🔄
+      <span class="tooltiptext">Refresh all data</span>
+    </button>
+    <button class="action-button tooltip" onclick="enableComparisonMode()" title="Compare Players">
+      ⚖️
+      <span class="tooltiptext">Compare players</span>
+    </button>
+    <button class="action-button tooltip" onclick="window.print()" title="Print Stats">
+      🖨️
+      <span class="tooltiptext">Print statistics</span>
     </button>
   </div>
-  
-  <div class="container">
-    <!-- Hero Section -->
-    <div class="hero-section">
-      <div class="hero-content">
-        <div class="hero-text">
-          <h1>Player Statistics</h1>
-          <p>Interactive Philadelphia 76ers player performance analytics and comprehensive statistics dashboard</p>
+
+  <div class="main-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <h1 class="page-title">Philadelphia 76ers Statistics</h1>
+      <p class="page-subtitle">Real-time analytics, player performance, and team insights</p>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="stats-main-content">
+        <!-- Controls Section -->
+        <div class="controls-section">
+          <!-- Control Panel -->
+          <div class="control-panel">
+            <div class="control-group">
+              <label class="control-label">Season</label>
+              <select class="control-select" id="seasonSelect">
+                <option value="2024-25">2024-25</option>
+                <option value="2023-24">2023-24</option>
+                <option value="2022-23">2022-23</option>
+                <option value="2021-22">2021-22</option>
+                <option value="2020-21">2020-21</option>
+              </select>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Game Type</label>
+              <select class="control-select" id="gameTypeSelect">
+                <option value="regular">Regular Season</option>
+                <option value="playoffs">Playoffs</option>
+                <option value="all">All Games</option>
+              </select>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Stat Category</label>
+              <select class="control-select" id="statCategorySelect">
+                <option value="basic">Basic Stats</option>
+                <option value="advanced">Advanced Stats</option>
+                <option value="shooting">Shooting Stats</option>
+                <option value="defense">Defense Stats</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filter Buttons -->
+          <div class="filter-buttons">
+            <div class="filter-btn active" data-filter="all">All Players</div>
+            <div class="filter-btn" data-filter="guards">Guards</div>
+            <div class="filter-btn" data-filter="forwards">Forwards</div>
+            <div class="filter-btn" data-filter="centers">Centers</div>
+          </div>
         </div>
-        
-        <div class="hero-controls">
-          <div class="season-selector">
-            <button class="season-btn active" data-season="2024-25">2024-25</button>
-            <button class="season-btn" data-season="2023-24">2023-24</button>
-            <button class="season-btn" data-season="2022-23">2022-23</button>
-            <button class="season-btn" data-season="2021-22">2021-22</button>
-          </div>
-          
-          <div class="view-toggle">
-            <button class="toggle-btn active" data-view="table">
-              <i class="fas fa-table"></i> Table
-            </button>
-            <button class="toggle-btn" data-view="cards">
-              <i class="fas fa-th-large"></i> Cards
-            </button>
-          </div>
+
+        <!-- Player Stats Grid -->
+        <div class="player-stats-grid" id="playerStatsGrid">
+          <!-- Player stat cards will be dynamically generated here -->
         </div>
       </div>
-    </div>
-
-    <!-- Interactive Filters -->
-    <div class="filters-section">
-      <div class="filters-grid">
-        <div class="filter-group">
-          <label class="filter-label">Position</label>
-          <select class="filter-select" id="positionFilter">
-            <option value="">All Positions</option>
-            <option value="PG">Point Guard</option>
-            <option value="SG">Shooting Guard</option>
-            <option value="SF">Small Forward</option>
-            <option value="PF">Power Forward</option>
-            <option value="C">Center</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label class="filter-label">Sort By</label>
-          <select class="filter-select" id="sortFilter">
-            <option value="pts">Points Per Game</option>
-            <option value="reb">Rebounds Per Game</option>
-            <option value="ast">Assists Per Game</option>
-            <option value="fg">Field Goal %</option>
-            <option value="min">Minutes Per Game</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label class="filter-label">Min PPG</label>
-          <select class="filter-select" id="ppgFilter">
-            <option value="0">All Players</option>
-            <option value="5">5+ PPG</option>
-            <option value="10">10+ PPG</option>
-            <option value="15">15+ PPG</option>
-            <option value="20">20+ PPG</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label class="filter-label">Search Player</label>
-          <div class="search-container">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="search-input" id="playerSearch" placeholder="Search by name...">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats Table View -->
-    <div class="stats-table-container" id="tableView">
-      <table class="stats-table">
-        <thead>
-          <tr>
-            <th class="sortable" data-sort="name">Player</th>
-            <th class="sortable" data-sort="position">Pos</th>
-            <th class="sortable" data-sort="gp">GP</th>
-            <th class="sortable" data-sort="pts">PPG</th>
-            <th class="sortable" data-sort="reb">RPG</th>
-            <th class="sortable" data-sort="ast">APG</th>
-            <th class="sortable" data-sort="fg">FG%</th>
-            <th class="sortable" data-sort="threePt">3P%</th>
-            <th class="sortable" data-sort="ft">FT%</th>
-            <th class="sortable" data-sort="min">MPG</th>
-          </tr>
-        </thead>
-        <tbody id="statsTableBody">
-          <!-- Table data will be populated by JavaScript -->
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Player Cards View -->
-    <div class="players-grid" id="cardsView">
-      <!-- Cards will be populated by JavaScript -->
     </div>
   </div>
 
-  <!-- Include your navigation JavaScript -->
+  <!-- Player Stats Modal -->
+  <div class="stats-modal" id="statsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-close" onclick="closeStatsModal()">&times;</div>
+        <div class="modal-player-info">
+          <div class="modal-player-avatar" id="modalPlayerAvatar"></div>
+          <div class="modal-player-details">
+            <h2 id="modalPlayerName"></h2>
+            <div class="modal-player-meta" id="modalPlayerMeta"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+          <label for="playerSeasonSelect" style="font-weight:600;">Season</label>
+          <select id="playerSeasonSelect" class="control-select"></select>
+        </div>
+        <div class="stats-table-container">
+          <table class="stats-table" id="playerSeasonTable">
+            <thead>
+              <tr>
+                <th>Season</th>
+                <th>GP</th>
+                <th>MIN</th>
+                <th>PTS</th>
+                <th>REB</th>
+                <th>AST</th>
+                <th>FG%</th>
+                <th>3P%</th>
+                <th>FT%</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th>Career</th>
+                <th id="careerGP">-</th>
+                <th id="careerMIN">-</th>
+                <th id="careerPTS">-</th>
+                <th id="careerREB">-</th>
+                <th id="careerAST">-</th>
+                <th id="careerFG">-</th>
+                <th id="career3P">-</th>
+                <th id="careerFT">-</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Overview Cards (hidden for now) -->
+    <div class="stats-grid">
+      <!-- Team Record Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Team Record</h3>
+          <div class="stat-card-icon">🏆</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="recordChart"></canvas>
+        </div>
+        <div id="recordStats"></div>
+      </div>
+
+      <!-- Scoring Stats Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Scoring Average</h3>
+          <div class="stat-card-icon">🏀</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="scoringChart"></canvas>
+        </div>
+        <div id="scoringStats"></div>
+      </div>
+
+      <!-- Defensive Stats Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Defensive Rating</h3>
+          <div class="stat-card-icon">🛡️</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="defenseChart"></canvas>
+        </div>
+        <div id="defenseStats"></div>
+      </div>
+
+      <!-- Efficiency Card -->
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <h3 class="stat-card-title">Team Efficiency</h3>
+          <div class="stat-card-icon">⚡</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="efficiencyChart"></canvas>
+        </div>
+        <div id="efficiencyStats"></div>
+      </div>
+    </div>
+
+    <!-- Player Statistics Section -->
+    <div class="player-stats-section">
+      <h2 class="section-title">Player Statistics</h2>
+      
+      <div class="control-panel">
+        <div class="control-group">
+          <label class="control-label">Sort By</label>
+          <select class="control-select" id="sortSelect">
+            <option value="points">Points</option>
+            <option value="rebounds">Rebounds</option>
+            <option value="assists">Assists</option>
+            <option value="efficiency">Efficiency</option>
+            <option value="minutes">Minutes</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label class="control-label">Min Games</label>
+          <input type="number" class="control-input" id="minGamesInput" value="10" min="1" max="82">
+        </div>
+      </div>
+
+      <div class="stats-table-container">
+        <table class="stats-table" id="playerStatsTable">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>GP</th>
+              <th>MIN</th>
+              <th>PTS</th>
+              <th>REB</th>
+              <th>AST</th>
+              <th>FG%</th>
+              <th>3P%</th>
+              <th>FT%</th>
+              <th>EFF</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody id="playerStatsBody">
+            <tr>
+              <td colspan="11" class="loading">Loading player statistics...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Advanced Analytics Section -->
+    <div class="player-stats-section">
+      <h2 class="section-title">Advanced Analytics</h2>
+      
+      <div class="stats-grid">
+        <!-- Shot Chart -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Shot Chart</h3>
+            <div class="stat-card-icon">🎯</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="shotChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Performance by Quarter -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Performance by Quarter</h3>
+            <div class="stat-card-icon">⏱️</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="quarterChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Home vs Away -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Home vs Away</h3>
+            <div class="stat-card-icon">🏠</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="homeAwayChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Clutch Performance -->
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <h3 class="stat-card-title">Clutch Performance</h3>
+            <div class="stat-card-icon">🔥</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="clutchChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include navigation JavaScript -->
   <script src="nav.js"></script>
-
+  
+  <!-- NBA API Integration -->
+  <script src="nba-api.js"></script>
+  
+  <!-- Stats Manager (charts, API, interactions) -->
+  <script src="stats.js"></script>
+  
+  <!-- Inline bootstrapping and fallback sample data -->
   <script>
-    // Interactive 76ers Stats Dashboard
-    class InteractiveSixersStats {
-      constructor() {
-        this.currentSeason = '2024-25';
-        this.currentView = 'table';
-        this.currentSort = { field: 'pts', direction: 'desc' };
-        this.filters = {
-          position: '',
-          ppg: 0,
-          search: ''
-        };
-        this.playerData = this.getPlayerData();
-        this.init();
-      }
-
-      init() {
-        this.setupEventListeners();
-        this.loadPlayers();
-        this.setupTableSorting();
-      }
-
-      getPlayerData() {
-        return {
-          '2024-25': [
-            {
-              name: 'Joel Embiid',
-              position: 'C',
-              number: '#21',
-              avatar: 'JE',
-              stats: { gp: 39, pts: 23.8, reb: 8.2, ast: 4.5, fg: 47.3, threePt: 33.1, ft: 82.4, min: 30.8 }
-            },
-            {
-              name: 'Tyrese Maxey',
-              position: 'PG',
-              number: '#0',
-              avatar: 'TM',
-              stats: { gp: 57, pts: 26.3, reb: 3.3, ast: 6.1, fg: 45.8, threePt: 37.9, ft: 86.8, min: 35.2 }
-            },
-            {
-              name: 'Paul George',
-              position: 'SF',
-              number: '#8',
-              avatar: 'PG',
-              stats: { gp: 54, pts: 16.2, reb: 5.3, ast: 4.3, fg: 42.6, threePt: 33.8, ft: 87.1, min: 32.8 }
-            },
-            {
-              name: 'Kelly Oubre Jr.',
-              position: 'SF',
-              number: '#9',
-              avatar: 'KO',
-              stats: { gp: 65, pts: 12.4, reb: 4.8, ast: 1.5, fg: 45.2, threePt: 31.6, ft: 78.9, min: 28.1 }
-            },
-            {
-              name: 'Andre Drummond',
-              position: 'C',
-              number: '#5',
-              avatar: 'AD',
-              stats: { gp: 79, pts: 8.4, reb: 9.0, ast: 1.4, fg: 56.3, threePt: 0.0, ft: 71.2, min: 19.8 }
-            },
-            {
-              name: 'Kyle Lowry',
-              position: 'PG',
-              number: '#7',
-              avatar: 'KL',
-              stats: { gp: 60, pts: 7.8, reb: 3.2, ast: 4.6, fg: 40.1, threePt: 32.8, ft: 85.7, min: 24.5 }
-            },
-            {
-              name: 'Caleb Martin',
-              position: 'PF',
-              number: '#16',
-              avatar: 'CM',
-              stats: { gp: 71, pts: 8.2, reb: 4.1, ast: 1.9, fg: 44.8, threePt: 35.4, ft: 81.3, min: 22.7 }
-            },
-            {
-              name: 'Ricky Council IV',
-              position: 'SG',
-              number: '#12',
-              avatar: 'RC',
-              stats: { gp: 68, pts: 7.3, reb: 2.8, ast: 1.2, fg: 43.2, threePt: 29.8, ft: 76.5, min: 18.9 }
-            },
-            {
-              name: 'Guerschon Yabusele',
-              position: 'PF',
-              number: '#28',
-              avatar: 'GY',
-              stats: { gp: 74, pts: 6.1, reb: 3.4, ast: 1.1, fg: 45.7, threePt: 33.9, ft: 78.8, min: 17.3 }
-            },
-            {
-              name: 'Eric Gordon',
-              position: 'SG',
-              number: '#10',
-              avatar: 'EG',
-              stats: { gp: 68, pts: 11.2, reb: 2.1, ast: 2.0, fg: 44.3, threePt: 37.8, ft: 83.3, min: 24.8 }
-            },
-            {
-              name: 'Jared McCain',
-              position: 'PG',
-              number: '#20',
-              avatar: 'JM',
-              stats: { gp: 23, pts: 15.3, reb: 2.4, ast: 2.6, fg: 38.3, threePt: 32.7, ft: 88.9, min: 25.1 }
-            },
-            {
-              name: 'Adem Bona',
-              position: 'C',
-              number: '#25',
-              avatar: 'AB',
-              stats: { gp: 15, pts: 3.2, reb: 2.8, ast: 0.3, fg: 58.3, threePt: 0.0, ft: 66.7, min: 8.4 }
-            }
-          ],
-          '2023-24': [
-            {
-              name: 'Joel Embiid',
-              position: 'C',
-              number: '#21',
-              avatar: 'JE',
-              stats: { gp: 39, pts: 35.3, reb: 11.3, ast: 5.7, fg: 52.9, threePt: 38.5, ft: 88.4, min: 34.7 }
-            },
-            {
-              name: 'Tyrese Maxey',
-              position: 'PG',
-              number: '#0',
-              avatar: 'TM',
-              stats: { gp: 70, pts: 25.9, reb: 3.7, ast: 6.2, fg: 44.8, threePt: 37.3, ft: 86.7, min: 37.1 }
-            },
-            {
-              name: 'Tobias Harris',
-              position: 'PF',
-              number: '#12',
-              avatar: 'TH',
-              stats: { gp: 70, pts: 17.2, reb: 6.5, ast: 3.1, fg: 48.9, threePt: 35.1, ft: 88.0, min: 32.8 }
-            },
-            {
-              name: 'Kelly Oubre Jr.',
-              position: 'SF',
-              number: '#9',
-              avatar: 'KO',
-              stats: { gp: 68, pts: 15.4, reb: 5.0, ast: 1.5, fg: 53.2, threePt: 37.3, ft: 71.4, min: 30.1 }
-            },
-            {
-              name: 'Nicolas Batum',
-              position: 'SF',
-              number: '#33',
-              avatar: 'NB',
-              stats: { gp: 57, pts: 5.5, reb: 4.0, ast: 2.4, fg: 44.8, threePt: 39.7, ft: 81.8, min: 22.7 }
-            },
-            {
-              name: 'Buddy Hield',
-              position: 'SG',
-              number: '#24',
-              avatar: 'BH',
-              stats: { gp: 84, pts: 12.1, reb: 3.2, ast: 2.8, fg: 43.6, threePt: 38.6, ft: 87.3, min: 25.9 }
-            }
-          ],
-          '2022-23': [
-            {
-              name: 'Joel Embiid',
-              position: 'C',
-              number: '#21',
-              avatar: 'JE',
-              stats: { gp: 66, pts: 33.1, reb: 10.2, ast: 4.2, fg: 54.8, threePt: 33.0, ft: 85.6, min: 34.6 }
-            },
-            {
-              name: 'James Harden',
-              position: 'PG',
-              number: '#1',
-              avatar: 'JH',
-              stats: { gp: 58, pts: 21.0, reb: 6.1, ast: 10.7, fg: 44.1, threePt: 38.6, ft: 87.3, min: 36.8 }
-            },
-            {
-              name: 'Tyrese Maxey',
-              position: 'SG',
-              number: '#0',
-              avatar: 'TM',
-              stats: { gp: 60, pts: 20.3, reb: 3.2, ast: 3.5, fg: 48.1, threePt: 43.4, ft: 84.7, min: 35.3 }
-            },
-            {
-              name: 'Tobias Harris',
-              position: 'PF',
-              number: '#12',
-              avatar: 'TH',
-              stats: { gp: 74, pts: 14.7, reb: 5.7, ast: 2.9, fg: 38.7, threePt: 32.7, ft: 84.0, min: 32.1 }
-            }
-          ],
-          '2021-22': [
-            {
-              name: 'Joel Embiid',
-              position: 'C',
-              number: '#21',
-              avatar: 'JE',
-              stats: { gp: 68, pts: 30.6, reb: 11.7, ast: 4.2, fg: 49.9, threePt: 37.1, ft: 81.4, min: 33.8 }
-            },
-            {
-              name: 'Tyrese Maxey',
-              position: 'SG',
-              number: '#0',
-              avatar: 'TM',
-              stats: { gp: 76, pts: 17.5, reb: 3.2, ast: 4.3, fg: 48.5, threePt: 42.4, ft: 86.3, min: 35.3 }
-            },
-            {
-              name: 'Tobias Harris',
-              position: 'PF',
-              number: '#12',
-              avatar: 'TH',
-              stats: { gp: 73, pts: 17.2, reb: 6.8, ast: 3.5, fg: 47.6, threePt: 36.3, ft: 84.8, min: 34.3 }
-            },
-            {
-              name: 'James Harden',
-              position: 'PG',
-              number: '#1',
-              avatar: 'JH',
-              stats: { gp: 21, pts: 21.0, reb: 7.1, ast: 10.5, fg: 40.7, threePt: 32.7, ft: 85.2, min: 37.0 }
-            }
-          ]
-        };
-      }
-
-      setupEventListeners() {
-        // Season buttons
-        document.querySelectorAll('.season-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            this.currentSeason = e.target.dataset.season;
-            this.loadPlayers();
-          });
-        });
-
-        // View toggle
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            this.currentView = e.target.dataset.view;
-            this.switchView();
-          });
-        });
-
-        // Filters
-        document.getElementById('positionFilter').addEventListener('change', (e) => {
-          this.filters.position = e.target.value;
-          this.loadPlayers();
-        });
-
-        document.getElementById('sortFilter').addEventListener('change', (e) => {
-          this.currentSort.field = e.target.value;
-          this.loadPlayers();
-        });
-
-        document.getElementById('ppgFilter').addEventListener('change', (e) => {
-          this.filters.ppg = parseFloat(e.target.value);
-          this.loadPlayers();
-        });
-
-        document.getElementById('playerSearch').addEventListener('input', (e) => {
-          this.filters.search = e.target.value.toLowerCase();
-          this.loadPlayers();
-        });
-      }
-
-      setupTableSorting() {
-        document.querySelectorAll('.sortable').forEach(header => {
-          header.addEventListener('click', (e) => {
-            const field = e.target.dataset.sort;
-            if (this.currentSort.field === field) {
-              this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-              this.currentSort.field = field;
-              this.currentSort.direction = 'desc';
-            }
-            
-            // Update header classes
-            document.querySelectorAll('.sortable').forEach(h => {
-              h.classList.remove('sort-asc', 'sort-desc');
-            });
-            e.target.classList.add(this.currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
-            
-            this.loadPlayers();
-          });
-        });
-      }
-
-      switchView() {
-        const tableView = document.getElementById('tableView');
-        const cardsView = document.getElementById('cardsView');
-        
-        if (this.currentView === 'table') {
-          tableView.style.display = 'block';
-          cardsView.classList.remove('active');
-        } else {
-          tableView.style.display = 'none';
-          cardsView.classList.add('active');
+    // Philadelphia 76ers Player Stats Data by Season (sample/fallback for cards & table)
+    window.seasonStatsData = {
+      '2024-25': [
+        {
+          name: "Joel Embiid", position: "C", jersey: "21", category: "centers",
+          stats: {
+            basic: { gp: 34, mpg: 34.6, ppg: 34.7, rpg: 11.0, apg: 5.6, spg: 1.2, bpg: 1.7, fg: 52.9, fg3: 39.0, ft: 88.3 },
+            advanced: { per: 31.2, ts: 65.5, usg: 36.8, ortg: 118.2, drtg: 108.2, bpm: 9.8, vorp: 8.2, ws: 12.1, ows: 8.9, dws: 3.2 },
+            shooting: { fga: 20.1, fgm: 10.6, fg3a: 4.1, fg3m: 1.6, fta: 11.1, ftm: 9.8, efg: 59.2, tsp: 65.5, ftr: 0.52 },
+            defense: { drb: 8.5, orb: 2.5, stl: 1.2, blk: 1.7, pf: 3.4, tov: 3.9, drtg: 108.2, dbpm: 3.1 }
+          }
+        },
+        {
+          name: "Tyrese Maxey", position: "PG", jersey: "0", category: "guards",
+          stats: {
+            basic: { gp: 43, mpg: 37.8, ppg: 25.9, rpg: 3.7, apg: 6.2, spg: 1.0, bpg: 0.4, fg: 45.0, fg3: 37.3, ft: 86.8 },
+            advanced: { per: 21.8, ts: 56.3, usg: 28.5, ortg: 112.8, drtg: 115.8, bpm: 4.2, vorp: 4.1, ws: 7.2, ows: 5.1, dws: 2.1 },
+            shooting: { fga: 19.8, fgm: 8.9, fg3a: 8.1, fg3m: 3.0, fta: 4.2, ftm: 3.6, efg: 51.2, tsp: 56.3, ftr: 0.21 },
+            defense: { drb: 2.9, orb: 0.8, stl: 1.0, blk: 0.4, pf: 2.1, tov: 3.4, drtg: 115.8, dbpm: -1.6 }
+          }
+        },
+        {
+          name: "Paul George", position: "SF", jersey: "8", category: "forwards",
+          stats: {
+            basic: { gp: 35, mpg: 32.8, ppg: 22.6, rpg: 5.2, apg: 3.5, spg: 2.0, bpg: 0.5, fg: 47.1, fg3: 41.3, ft: 90.7 },
+            advanced: { per: 20.8, ts: 58.3, usg: 27.1, ortg: 115.2, drtg: 112.4, bpm: 3.8, vorp: 3.2, ws: 5.8, ows: 4.2, dws: 1.6 },
+            shooting: { fga: 16.2, fgm: 7.6, fg3a: 7.8, fg3m: 3.2, fta: 2.9, ftm: 2.6, efg: 54.1, tsp: 58.3, ftr: 0.18 },
+            defense: { drb: 4.1, orb: 1.1, stl: 2.0, blk: 0.5, pf: 2.8, tov: 2.4, drtg: 112.4, dbpm: 1.2 }
+          }
+        },
+        {
+          name: "Kelly Oubre Jr.", position: "SF", jersey: "9", category: "forwards",
+          stats: {
+            basic: { gp: 50, mpg: 32.1, ppg: 15.4, rpg: 5.1, apg: 1.5, spg: 1.1, bpg: 0.8, fg: 53.0, fg3: 20.0, ft: 68.4 },
+            advanced: { per: 16.2, ts: 58.1, usg: 19.8, ortg: 114.2, drtg: 114.2, bpm: 1.2, vorp: 1.8, ws: 4.1, ows: 2.8, dws: 1.3 },
+            shooting: { fga: 10.8, fgm: 5.7, fg3a: 1.5, fg3m: 0.3, fta: 1.9, ftm: 1.3, efg: 55.3, tsp: 58.1, ftr: 0.18 },
+            defense: { drb: 4.2, orb: 0.9, stl: 1.1, blk: 0.8, pf: 2.4, tov: 1.8, drtg: 114.2, dbpm: 0.2 }
+          }
+        },
+        {
+          name: "Andre Drummond", position: "C", jersey: "1", category: "centers",
+          stats: {
+            basic: { gp: 45, mpg: 16.2, ppg: 7.9, rpg: 8.4, apg: 2.4, spg: 0.8, bpg: 0.8, fg: 56.3, fg3: 0.0, ft: 71.8 },
+            advanced: { per: 18.1, ts: 58.2, usg: 16.8, ortg: 112.8, drtg: 112.8, bpm: 2.1, vorp: 1.2, ws: 2.8, ows: 1.2, dws: 1.6 },
+            shooting: { fga: 5.8, fgm: 3.3, fg3a: 0.0, fg3m: 0.0, fta: 2.4, ftm: 1.7, efg: 56.3, tsp: 58.2, ftr: 0.41 },
+            defense: { drb: 6.9, orb: 1.5, stl: 0.8, blk: 0.8, pf: 2.1, tov: 1.4, drtg: 112.8, dbpm: 1.8 }
+          }
+        },
+        {
+          name: "Kyle Lowry", position: "PG", jersey: "7", category: "guards",
+          stats: {
+            basic: { gp: 44, mpg: 26.1, ppg: 8.2, rpg: 3.2, apg: 4.6, spg: 1.2, bpg: 0.2, fg: 42.3, fg3: 35.2, ft: 87.0 },
+            advanced: { per: 13.8, ts: 54.1, usg: 16.2, ortg: 108.5, drtg: 113.5, bpm: 1.8, vorp: 1.0, ws: 2.1, ows: 1.2, dws: 0.9 },
+            shooting: { fga: 7.8, fgm: 3.3, fg3a: 4.2, fg3m: 1.5, fta: 1.2, ftm: 1.0, efg: 48.9, tsp: 54.1, ftr: 0.15 },
+            defense: { drb: 2.8, orb: 0.4, stl: 1.2, blk: 0.2, pf: 1.8, tov: 1.9, drtg: 113.5, dbpm: 0.8 }
+          }
+        },
+        {
+          name: "Eric Gordon", position: "SG", jersey: "23", category: "guards",
+          stats: {
+            basic: { gp: 32, mpg: 20.4, ppg: 11.0, rpg: 1.8, apg: 2.0, spg: 0.6, bpg: 0.3, fg: 44.3, fg3: 37.8, ft: 81.5 },
+            advanced: { per: 12.8, ts: 55.8, usg: 18.4, ortg: 110.2, drtg: 115.2, bpm: 0.2, vorp: 0.8, ws: 1.4, ows: 1.0, dws: 0.4 },
+            shooting: { fga: 8.2, fgm: 3.6, fg3a: 5.1, fg3m: 1.9, fta: 1.1, ftm: 0.9, efg: 52.1, tsp: 55.8, ftr: 0.13 },
+            defense: { drb: 1.5, orb: 0.3, stl: 0.6, blk: 0.3, pf: 1.4, tov: 1.2, drtg: 115.2, dbpm: -0.8 }
+          }
+        },
+        {
+          name: "Jared McCain", position: "PG", jersey: "20", category: "guards",
+          stats: {
+            basic: { gp: 23, mpg: 25.1, ppg: 16.3, rpg: 2.4, apg: 2.6, spg: 0.9, bpg: 0.1, fg: 38.3, fg3: 38.3, ft: 88.9 },
+            advanced: { per: 15.2, ts: 55.2, usg: 22.1, ortg: 108.4, drtg: 118.4, bpm: -0.8, vorp: 0.4, ws: 1.2, ows: 1.0, dws: 0.2 },
+            shooting: { fga: 12.8, fgm: 4.9, fg3a: 6.4, fg3m: 2.5, fta: 2.7, ftm: 2.4, efg: 50.8, tsp: 55.2, ftr: 0.21 },
+            defense: { drb: 2.0, orb: 0.4, stl: 0.9, blk: 0.1, pf: 1.8, tov: 1.4, drtg: 118.4, dbpm: -2.1 }
+          }
+        },
+        {
+          name: "Caleb Martin", position: "SF", jersey: "16", category: "forwards",
+          stats: {
+            basic: { gp: 38, mpg: 18.2, ppg: 6.4, rpg: 4.1, apg: 1.2, spg: 0.8, bpg: 0.4, fg: 41.2, fg3: 34.1, ft: 75.0 },
+            advanced: { per: 11.8, ts: 52.1, usg: 14.2, ortg: 106.8, drtg: 114.8, bpm: -0.4, vorp: 0.2, ws: 1.1, ows: 0.6, dws: 0.5 },
+            shooting: { fga: 6.2, fgm: 2.6, fg3a: 2.9, fg3m: 1.0, fta: 0.8, ftm: 0.6, efg: 48.8, tsp: 52.1, ftr: 0.13 },
+            defense: { drb: 3.4, orb: 0.7, stl: 0.8, blk: 0.4, pf: 1.9, tov: 0.8, drtg: 114.8, dbpm: 0.1 }
+          }
+        },
+        {
+          name: "KJ Martin", position: "PF", jersey: "6", category: "forwards",
+          stats: {
+            basic: { gp: 28, mpg: 12.4, ppg: 4.2, rpg: 2.8, apg: 0.6, spg: 0.4, bpg: 0.3, fg: 48.1, fg3: 28.6, ft: 66.7 },
+            advanced: { per: 10.2, ts: 51.8, usg: 12.8, ortg: 104.2, drtg: 116.2, bpm: -1.8, vorp: -0.1, ws: 0.4, ows: 0.2, dws: 0.2 },
+            shooting: { fga: 3.8, fgm: 1.8, fg3a: 1.4, fg3m: 0.4, fta: 0.9, ftm: 0.6, efg: 53.2, tsp: 51.8, ftr: 0.24 },
+            defense: { drb: 2.2, orb: 0.6, stl: 0.4, blk: 0.3, pf: 1.2, tov: 0.8, drtg: 116.2, dbpm: -1.2 }
+          }
+        },
+        {
+          name: "Reggie Jackson", position: "PG", jersey: "25", category: "guards",
+          stats: {
+            basic: { gp: 29, mpg: 14.8, ppg: 6.9, rpg: 1.4, apg: 2.8, spg: 0.5, bpg: 0.1, fg: 40.2, fg3: 32.4, ft: 83.3 },
+            advanced: { per: 12.1, ts: 52.8, usg: 18.4, ortg: 106.8, drtg: 116.4, bpm: -1.2, vorp: 0.1, ws: 0.8, ows: 0.5, dws: 0.3 },
+            shooting: { fga: 6.8, fgm: 2.7, fg3a: 3.4, fg3m: 1.1, fta: 0.6, ftm: 0.5, efg: 48.5, tsp: 52.8, ftr: 0.09 },
+            defense: { drb: 1.2, orb: 0.2, stl: 0.5, blk: 0.1, pf: 1.1, tov: 1.4, drtg: 116.4, dbpm: -1.8 }
+          }
+        },
+        {
+          name: "Guerschon Yabusele", position: "PF", jersey: "28", category: "forwards",
+          stats: {
+            basic: { gp: 41, mpg: 17.1, ppg: 8.4, rpg: 4.8, apg: 1.4, spg: 0.6, bpg: 0.4, fg: 47.2, fg3: 35.8, ft: 78.9 },
+            advanced: { per: 14.2, ts: 56.8, usg: 16.8, ortg: 112.4, drtg: 113.8, bpm: 0.8, vorp: 0.9, ws: 2.1, ows: 1.2, dws: 0.9 },
+            shooting: { fga: 6.8, fgm: 3.2, fg3a: 2.4, fg3m: 0.9, fta: 1.9, ftm: 1.5, efg: 53.8, tsp: 56.8, ftr: 0.28 },
+            defense: { drb: 3.8, orb: 1.0, stl: 0.6, blk: 0.4, pf: 2.1, tov: 1.2, drtg: 113.8, dbpm: 0.2 }
+          }
+        },
+        {
+          name: "Ricky Council IV", position: "SG", jersey: "12", category: "guards",
+          stats: {
+            basic: { gp: 18, mpg: 8.2, ppg: 3.1, rpg: 1.2, apg: 0.4, spg: 0.3, bpg: 0.1, fg: 38.5, fg3: 25.0, ft: 75.0 },
+            advanced: { per: 8.4, ts: 48.2, usg: 14.2, ortg: 102.1, drtg: 118.2, bpm: -3.2, vorp: -0.2, ws: 0.1, ows: 0.1, dws: 0.0 },
+            shooting: { fga: 3.9, fgm: 1.5, fg3a: 1.2, fg3m: 0.3, fta: 0.4, ftm: 0.3, efg: 42.3, tsp: 48.2, ftr: 0.10 },
+            defense: { drb: 1.0, orb: 0.2, stl: 0.3, blk: 0.1, pf: 0.8, tov: 0.6, drtg: 118.2, dbpm: -2.8 }
+          }
+        },
+        {
+          name: "Adem Bona", position: "C", jersey: "35", category: "centers",
+          stats: {
+            basic: { gp: 15, mpg: 6.8, ppg: 2.4, rpg: 2.1, apg: 0.2, spg: 0.2, bpg: 0.4, fg: 52.9, fg3: 0.0, ft: 50.0 },
+            advanced: { per: 12.1, ts: 54.2, usg: 12.8, ortg: 108.2, drtg: 114.2, bpm: -1.8, vorp: 0.0, ws: 0.2, ows: 0.1, dws: 0.1 },
+            shooting: { fga: 1.7, fgm: 0.9, fg3a: 0.0, fg3m: 0.0, fta: 0.4, ftm: 0.2, efg: 52.9, tsp: 54.2, ftr: 0.24 },
+            defense: { drb: 1.8, orb: 0.3, stl: 0.2, blk: 0.4, pf: 1.2, tov: 0.4, drtg: 114.2, dbpm: -0.8 }
+          }
+        },
+        {
+          name: "Jeff Dowtin Jr.", position: "PG", jersey: "21", category: "guards",
+          stats: {
+            basic: { gp: 8, mpg: 4.2, ppg: 1.8, rpg: 0.6, apg: 0.9, spg: 0.1, bpg: 0.0, fg: 33.3, fg3: 20.0, ft: 100.0 },
+            advanced: { per: 8.2, ts: 45.8, usg: 16.2, ortg: 98.2, drtg: 118.8, bpm: -4.2, vorp: -0.1, ws: 0.0, ows: 0.0, dws: 0.0 },
+            shooting: { fga: 2.1, fgm: 0.7, fg3a: 1.0, fg3m: 0.2, fta: 0.1, ftm: 0.1, efg: 38.1, tsp: 45.8, ftr: 0.05 },
+            defense: { drb: 0.5, orb: 0.1, stl: 0.1, blk: 0.0, pf: 0.4, tov: 0.4, drtg: 118.8, dbpm: -3.8 }
+          }
         }
-      }
+      ],
+      '2023-24': [
+        {
+          name: "Joel Embiid", position: "C", jersey: "21", category: "centers",
+          stats: {
+            basic: { gp: 39, mpg: 34.7, ppg: 34.7, rpg: 11.0, apg: 5.6, spg: 1.2, bpg: 1.7, fg: 52.9, fg3: 38.8, ft: 88.3 },
+            advanced: { per: 31.2, ts: 65.5, usg: 36.8, ortg: 118.2, drtg: 108.2, bpm: 9.8, vorp: 8.2, ws: 12.1, ows: 8.9, dws: 3.2 },
+            shooting: { fga: 20.1, fgm: 10.6, fg3a: 4.1, fg3m: 1.6, fta: 11.1, ftm: 9.8, efg: 59.2, tsp: 65.5, ftr: 0.52 },
+            defense: { drb: 8.5, orb: 2.5, stl: 1.2, blk: 1.7, pf: 3.4, tov: 3.9, drtg: 108.2, dbpm: 3.1 }
+          }
+        },
+        {
+          name: "Tyrese Maxey", position: "PG", jersey: "0", category: "guards",
+          stats: {
+            basic: { gp: 70, mpg: 37.4, ppg: 25.9, rpg: 3.7, apg: 6.2, spg: 1.0, bpg: 0.4, fg: 45.0, fg3: 37.3, ft: 86.8 },
+            advanced: { per: 21.8, ts: 56.3, usg: 28.5, ortg: 112.8, drtg: 115.8, bpm: 4.2, vorp: 4.1, ws: 7.2, ows: 5.1, dws: 2.1 },
+            shooting: { fga: 19.8, fgm: 8.9, fg3a: 8.1, fg3m: 3.0, fta: 4.2, ftm: 3.6, efg: 51.2, tsp: 56.3, ftr: 0.21 },
+            defense: { drb: 2.9, orb: 0.8, stl: 1.0, blk: 0.4, pf: 2.1, tov: 3.4, drtg: 115.8, dbpm: -1.6 }
+          }
+        },
+        {
+          name: "Tobias Harris", position: "PF", jersey: "12", category: "forwards",
+          stats: {
+            basic: { gp: 70, mpg: 32.8, ppg: 17.2, rpg: 6.5, apg: 3.1, spg: 1.0, bpg: 0.5, fg: 48.7, fg3: 35.3, ft: 87.8 },
+            advanced: { per: 17.8, ts: 58.2, usg: 22.1, ortg: 115.2, drtg: 114.8, bpm: 2.1, vorp: 2.8, ws: 6.2, ows: 4.1, dws: 2.1 },
+            shooting: { fga: 12.8, fgm: 6.2, fg3a: 3.4, fg3m: 1.2, fta: 2.3, ftm: 2.0, efg: 53.4, tsp: 58.2, ftr: 0.18 },
+            defense: { drb: 5.3, orb: 1.2, stl: 1.0, blk: 0.5, pf: 2.4, tov: 1.8, drtg: 114.8, dbpm: 0.8 }
+          }
+        },
+        {
+          name: "Kelly Oubre Jr.", position: "SF", jersey: "9", category: "forwards",
+          stats: {
+            basic: { gp: 68, mpg: 30.1, ppg: 15.4, rpg: 5.0, apg: 1.4, spg: 1.1, bpg: 0.8, fg: 53.2, fg3: 31.6, ft: 68.1 },
+            advanced: { per: 16.8, ts: 58.4, usg: 20.2, ortg: 114.8, drtg: 113.2, bpm: 1.8, vorp: 2.1, ws: 4.8, ows: 3.2, dws: 1.6 },
+            shooting: { fga: 10.2, fgm: 5.4, fg3a: 2.8, fg3m: 0.9, fta: 1.8, ftm: 1.2, efg: 58.6, tsp: 58.4, ftr: 0.18 },
+            defense: { drb: 4.1, orb: 0.9, stl: 1.1, blk: 0.8, pf: 2.2, tov: 1.6, drtg: 113.2, dbpm: 0.4 }
+          }
+        },
+        {
+          name: "Nicolas Batum", position: "SF", jersey: "33", category: "forwards",
+          stats: {
+            basic: { gp: 57, mpg: 22.1, ppg: 5.5, rpg: 4.2, apg: 2.5, spg: 0.9, bpg: 0.4, fg: 44.8, fg3: 39.7, ft: 81.8 },
+            advanced: { per: 12.8, ts: 58.2, usg: 12.4, ortg: 112.8, drtg: 111.2, bpm: 2.1, vorp: 1.4, ws: 2.8, ows: 1.2, dws: 1.6 },
+            shooting: { fga: 4.8, fgm: 2.2, fg3a: 2.9, fg3m: 1.2, fta: 0.6, ftm: 0.5, efg: 56.2, tsp: 58.2, ftr: 0.12 },
+            defense: { drb: 3.4, orb: 0.8, stl: 0.9, blk: 0.4, pf: 1.8, tov: 1.2, drtg: 111.2, dbpm: 1.2 }
+          }
+        },
+        {
+          name: "De'Anthony Melton", position: "SG", jersey: "8", category: "guards",
+          stats: {
+            basic: { gp: 38, mpg: 26.9, ppg: 11.1, rpg: 3.7, apg: 3.0, spg: 1.6, bpg: 0.8, fg: 38.0, fg3: 32.7, ft: 79.5 },
+            advanced: { per: 14.2, ts: 51.8, usg: 18.2, ortg: 108.4, drtg: 112.8, bpm: 0.8, vorp: 0.9, ws: 1.8, ows: 0.8, dws: 1.0 },
+            shooting: { fga: 9.8, fgm: 3.7, fg3a: 5.5, fg3m: 1.8, fta: 1.8, ftm: 1.4, efg: 47.2, tsp: 51.8, ftr: 0.18 },
+            defense: { drb: 2.9, orb: 0.8, stl: 1.6, blk: 0.8, pf: 2.4, tov: 1.8, drtg: 112.8, dbpm: 0.2 }
+          }
+        },
+        {
+          name: "Buddy Hield", position: "SG", jersey: "17", category: "guards",
+          stats: {
+            basic: { gp: 84, mpg: 25.8, ppg: 12.1, rpg: 3.2, apg: 2.8, spg: 0.9, bpg: 0.3, fg: 43.6, fg3: 38.6, ft: 87.3 },
+            advanced: { per: 13.8, ts: 58.2, usg: 19.2, ortg: 114.2, drtg: 115.8, bpm: 0.4, vorp: 1.8, ws: 3.2, ows: 2.1, dws: 1.1 },
+            shooting: { fga: 9.6, fgm: 4.2, fg3a: 6.8, fg3m: 2.6, fta: 1.1, ftm: 1.0, efg: 56.8, tsp: 58.2, ftr: 0.11 },
+            defense: { drb: 2.6, orb: 0.6, stl: 0.9, blk: 0.3, pf: 1.8, tov: 1.4, drtg: 115.8, dbpm: -0.8 }
+          }
+        },
+        {
+          name: "Cameron Payne", position: "PG", jersey: "1", category: "guards",
+          stats: {
+            basic: { gp: 31, mpg: 16.4, ppg: 9.3, rpg: 1.8, apg: 3.1, spg: 0.6, bpg: 0.1, fg: 44.9, fg3: 36.0, ft: 81.8 },
+            advanced: { per: 15.2, ts: 58.4, usg: 21.8, ortg: 112.4, drtg: 116.2, bpm: -0.2, vorp: 0.4, ws: 1.1, ows: 0.8, dws: 0.3 },
+            shooting: { fga: 7.2, fgm: 3.2, fg3a: 3.6, fg3m: 1.3, fta: 1.1, ftm: 0.9, efg: 53.8, tsp: 58.4, ftr: 0.15 },
+            defense: { drb: 1.4, orb: 0.4, stl: 0.6, blk: 0.1, pf: 1.2, tov: 1.8, drtg: 116.2, dbpm: -1.4 }
+          }
+        },
+        {
+          name: "Robert Covington", position: "PF", jersey: "23", category: "forwards",
+          stats: {
+            basic: { gp: 34, mpg: 17.2, ppg: 4.2, rpg: 3.8, apg: 1.1, spg: 1.0, bpg: 0.8, fg: 32.4, fg3: 31.4, ft: 75.0 },
+            advanced: { per: 9.8, ts: 48.2, usg: 12.8, ortg: 104.2, drtg: 112.8, bpm: -1.2, vorp: 0.2, ws: 0.8, ows: 0.2, dws: 0.6 },
+            shooting: { fga: 5.8, fgm: 1.9, fg3a: 3.5, fg3m: 1.1, fta: 0.4, ftm: 0.3, efg: 41.2, tsp: 48.2, ftr: 0.07 },
+            defense: { drb: 3.2, orb: 0.6, stl: 1.0, blk: 0.8, pf: 2.1, tov: 0.8, drtg: 112.8, dbpm: 0.2 }
+          }
+        },
+        {
+          name: "Paul Reed", position: "C", jersey: "44", category: "centers",
+          stats: {
+            basic: { gp: 82, mpg: 23.4, ppg: 7.3, rpg: 6.0, apg: 1.3, spg: 0.8, bpg: 0.9, fg: 48.2, fg3: 25.0, ft: 68.8 },
+            advanced: { per: 16.8, ts: 52.4, usg: 16.2, ortg: 108.4, drtg: 114.2, bpm: -0.8, vorp: 0.8, ws: 2.1, ows: 0.8, dws: 1.3 },
+            shooting: { fga: 6.2, fgm: 3.0, fg3a: 0.8, fg3m: 0.2, fta: 2.1, ftm: 1.4, efg: 49.8, tsp: 52.4, ftr: 0.34 },
+            defense: { drb: 4.8, orb: 1.2, stl: 0.8, blk: 0.9, pf: 2.8, tov: 1.6, drtg: 114.2, dbpm: -0.2 }
+          }
+        },
+        {
+          name: "Mo Bamba", position: "C", jersey: "5", category: "centers",
+          stats: {
+            basic: { gp: 57, mpg: 12.8, ppg: 4.6, rpg: 4.2, apg: 0.6, spg: 0.4, bpg: 0.9, fg: 45.2, fg3: 29.4, ft: 71.4 },
+            advanced: { per: 14.2, ts: 52.8, usg: 15.2, ortg: 106.8, drtg: 115.2, bpm: -1.8, vorp: 0.2, ws: 1.2, ows: 0.4, dws: 0.8 },
+            shooting: { fga: 4.1, fgm: 1.9, fg3a: 1.7, fg3m: 0.5, fta: 0.7, ftm: 0.5, efg: 50.8, tsp: 52.8, ftr: 0.17 },
+            defense: { drb: 3.4, orb: 0.8, stl: 0.4, blk: 0.9, pf: 1.8, tov: 0.8, drtg: 115.2, dbpm: -0.8 }
+          }
+        },
+        {
+          name: "Ricky Council IV", position: "SG", jersey: "12", category: "guards",
+          stats: {
+            basic: { gp: 32, mpg: 8.4, ppg: 3.8, rpg: 1.4, apg: 0.6, spg: 0.4, bpg: 0.2, fg: 41.2, fg3: 28.6, ft: 77.8 },
+            advanced: { per: 10.2, ts: 50.8, usg: 16.2, ortg: 104.8, drtg: 117.2, bpm: -2.8, vorp: -0.1, ws: 0.4, ows: 0.2, dws: 0.2 },
+            shooting: { fga: 4.2, fgm: 1.7, fg3a: 1.4, fg3m: 0.4, fta: 0.9, ftm: 0.7, efg: 46.8, tsp: 50.8, ftr: 0.21 },
+            defense: { drb: 1.1, orb: 0.3, stl: 0.4, blk: 0.2, pf: 1.2, tov: 0.8, drtg: 117.2, dbpm: -2.4 }
+          }
+        },
+        {
+          name: "KJ Martin", position: "PF", jersey: "6", category: "forwards",
+          stats: {
+            basic: { gp: 47, mpg: 14.2, ppg: 5.4, rpg: 3.2, apg: 0.8, spg: 0.6, bpg: 0.4, fg: 52.1, fg3: 33.3, ft: 72.7 },
+            advanced: { per: 12.8, ts: 58.2, usg: 14.8, ortg: 110.2, drtg: 114.8, bpm: -0.8, vorp: 0.4, ws: 1.2, ows: 0.6, dws: 0.6 },
+            shooting: { fga: 4.2, fgm: 2.2, fg3a: 1.2, fg3m: 0.4, fta: 1.1, ftm: 0.8, efg: 56.8, tsp: 58.2, ftr: 0.26 },
+            defense: { drb: 2.4, orb: 0.8, stl: 0.6, blk: 0.4, pf: 1.8, tov: 1.0, drtg: 114.8, dbpm: -0.2 }
+          }
+        },
+        {
+          name: "Furkan Korkmaz", position: "SG", jersey: "30", category: "guards",
+          stats: {
+            basic: { gp: 48, mpg: 11.2, ppg: 4.8, rpg: 1.4, apg: 1.2, spg: 0.4, bpg: 0.1, fg: 38.2, fg3: 33.8, ft: 85.7 },
+            advanced: { per: 10.8, ts: 52.4, usg: 16.8, ortg: 106.2, drtg: 116.8, bpm: -2.4, vorp: -0.2, ws: 0.6, ows: 0.3, dws: 0.3 },
+            shooting: { fga: 5.2, fgm: 2.0, fg3a: 3.4, fg3m: 1.2, fta: 0.7, ftm: 0.6, efg: 49.8, tsp: 52.4, ftr: 0.13 },
+            defense: { drb: 1.2, orb: 0.2, stl: 0.4, blk: 0.1, pf: 1.1, tov: 1.0, drtg: 116.8, dbpm: -2.2 }
+          }
+        },
+        {
+          name: "Jeff Dowtin Jr.", position: "PG", jersey: "21", category: "guards",
+          stats: {
+            basic: { gp: 15, mpg: 6.2, ppg: 2.4, rpg: 0.8, apg: 1.2, spg: 0.2, bpg: 0.0, fg: 36.4, fg3: 25.0, ft: 100.0 },
+            advanced: { per: 9.8, ts: 48.2, usg: 18.2, ortg: 102.4, drtg: 118.2, bpm: -3.8, vorp: -0.1, ws: 0.1, ows: 0.0, dws: 0.1 },
+            shooting: { fga: 2.8, fgm: 1.0, fg3a: 1.2, fg3m: 0.3, fta: 0.2, ftm: 0.2, efg: 41.2, tsp: 48.2, ftr: 0.07 },
+            defense: { drb: 0.6, orb: 0.2, stl: 0.2, blk: 0.0, pf: 0.8, tov: 0.6, drtg: 118.2, dbpm: -3.4 }
+          }
+        }
+      ],
+      '2022-23': [
+        {
+          name: "Joel Embiid", position: "C", jersey: "21", category: "centers",
+          stats: {
+            basic: { gp: 66, mpg: 34.6, ppg: 33.1, rpg: 10.2, apg: 4.2, spg: 1.0, bpg: 1.7, fg: 54.8, fg3: 33.0, ft: 85.7 },
+            advanced: { per: 31.2, ts: 65.5, usg: 33.8, ortg: 118.2, drtg: 108.2, bpm: 9.8, vorp: 8.2, ws: 12.1, ows: 8.9, dws: 3.2 },
+            shooting: { fga: 20.1, fgm: 11.0, fg3a: 3.6, fg3m: 1.2, fta: 11.1, ftm: 9.5, efg: 59.2, tsp: 65.5, ftr: 0.55 },
+            defense: { drb: 7.8, orb: 2.4, stl: 1.0, blk: 1.7, pf: 3.4, tov: 3.4, drtg: 108.2, dbpm: 3.1 }
+          }
+        },
+        {
+          name: "James Harden", position: "PG", jersey: "1", category: "guards",
+          stats: {
+            basic: { gp: 58, mpg: 36.8, ppg: 21.0, rpg: 6.1, apg: 10.7, spg: 1.2, bpg: 0.6, fg: 44.1, fg3: 38.5, ft: 86.7 },
+            advanced: { per: 24.8, ts: 60.1, usg: 29.2, ortg: 115.8, drtg: 113.2, bpm: 6.8, vorp: 5.2, ws: 8.1, ows: 6.2, dws: 1.9 },
+            shooting: { fga: 14.2, fgm: 6.3, fg3a: 7.0, fg3m: 2.7, fta: 7.0, ftm: 6.1, efg: 53.6, tsp: 60.1, ftr: 0.49 },
+            defense: { drb: 5.1, orb: 1.0, stl: 1.2, blk: 0.6, pf: 2.4, tov: 3.4, drtg: 113.2, dbpm: 1.2 }
+          }
+        },
+        {
+          name: "Tyrese Maxey", position: "PG", jersey: "0", category: "guards",
+          stats: {
+            basic: { gp: 60, mpg: 34.7, ppg: 20.3, rpg: 2.9, apg: 3.5, spg: 0.9, bpg: 0.4, fg: 48.1, fg3: 43.4, ft: 84.4 },
+            advanced: { per: 18.2, ts: 59.7, usg: 24.8, ortg: 115.2, drtg: 112.8, bpm: 2.8, vorp: 2.8, ws: 5.2, ows: 3.8, dws: 1.4 },
+            shooting: { fga: 13.0, fgm: 6.3, fg3a: 5.4, fg3m: 2.3, fta: 3.2, ftm: 2.7, efg: 56.9, tsp: 59.7, ftr: 0.25 },
+            defense: { drb: 2.4, orb: 0.5, stl: 0.9, blk: 0.4, pf: 1.8, tov: 2.0, drtg: 112.8, dbpm: -0.8 }
+          }
+        },
+        {
+          name: "Tobias Harris", position: "PF", jersey: "12", category: "forwards",
+          stats: {
+            basic: { gp: 74, mpg: 32.9, ppg: 14.7, rpg: 5.7, apg: 2.5, spg: 0.6, bpg: 0.6, fg: 47.4, fg3: 32.6, ft: 84.4 },
+            advanced: { per: 15.2, ts: 56.8, usg: 19.8, ortg: 112.8, drtg: 113.2, bpm: 0.8, vorp: 1.8, ws: 4.2, ows: 2.8, dws: 1.4 },
+            shooting: { fga: 11.2, fgm: 5.3, fg3a: 2.8, fg3m: 0.9, fta: 2.3, ftm: 1.9, efg: 51.2, tsp: 56.8, ftr: 0.21 },
+            defense: { drb: 4.8, orb: 0.9, stl: 0.6, blk: 0.6, pf: 2.2, tov: 1.4, drtg: 113.2, dbpm: 0.2 }
+          }
+        }
+      ],
+      '2021-22': [
+        {
+          name: "Joel Embiid", position: "C", jersey: "21", category: "centers",
+          stats: {
+            basic: { gp: 68, mpg: 33.8, ppg: 30.6, rpg: 11.7, apg: 4.2, spg: 1.1, bpg: 1.5, fg: 49.9, fg3: 37.1, ft: 81.4 },
+            advanced: { per: 31.2, ts: 61.8, usg: 33.8, ortg: 116.2, drtg: 106.2, bpm: 9.2, vorp: 7.8, ws: 13.8, ows: 9.2, dws: 4.6 },
+            shooting: { fga: 19.2, fgm: 9.6, fg3a: 3.1, fg3m: 1.2, fta: 11.8, ftm: 9.6, efg: 53.7, tsp: 61.8, ftr: 0.61 },
+            defense: { drb: 8.5, orb: 3.2, stl: 1.1, blk: 1.5, pf: 3.1, tov: 3.2, drtg: 106.2, dbpm: 4.2 }
+          }
+        },
+        {
+          name: "James Harden", position: "PG", jersey: "1", category: "guards",
+          stats: {
+            basic: { gp: 21, mpg: 37.0, ppg: 21.0, rpg: 7.1, apg: 10.5, spg: 1.2, bpg: 0.6, fg: 40.2, fg3: 32.6, ft: 87.9 },
+            advanced: { per: 21.8, ts: 57.2, usg: 30.2, ortg: 112.8, drtg: 114.2, bpm: 4.8, vorp: 2.1, ws: 2.8, ows: 2.1, dws: 0.7 },
+            shooting: { fga: 15.2, fgm: 6.1, fg3a: 7.8, fg3m: 2.5, fta: 8.8, ftm: 7.7, efg: 48.8, tsp: 57.2, ftr: 0.58 },
+            defense: { drb: 5.8, orb: 1.3, stl: 1.2, blk: 0.6, pf: 2.8, tov: 4.6, drtg: 114.2, dbpm: -0.2 }
+          }
+        },
+        {
+          name: "Tyrese Maxey", position: "PG", jersey: "0", category: "guards",
+          stats: {
+            basic: { gp: 75, mpg: 35.3, ppg: 17.5, rpg: 3.2, apg: 4.3, spg: 0.7, bpg: 0.4, fg: 48.5, fg3: 42.7, ft: 86.6 },
+            advanced: { per: 17.2, ts: 58.9, usg: 22.8, ortg: 114.2, drtg: 112.8, bpm: 2.1, vorp: 2.8, ws: 5.8, ows: 4.2, dws: 1.6 },
+            shooting: { fga: 11.8, fgm: 5.7, fg3a: 4.4, fg3m: 1.9, fta: 2.3, ftm: 2.0, efg: 56.4, tsp: 58.9, ftr: 0.19 },
+            defense: { drb: 2.6, orb: 0.6, stl: 0.7, blk: 0.4, pf: 1.6, tov: 1.8, drtg: 112.8, dbpm: -0.4 }
+          }
+        },
+        {
+          name: "Tobias Harris", position: "PF", jersey: "12", category: "forwards",
+          stats: {
+            basic: { gp: 73, mpg: 34.3, ppg: 17.2, rpg: 6.8, apg: 3.5, spg: 0.7, bpg: 0.8, fg: 47.4, fg3: 36.8, ft: 88.9 },
+            advanced: { per: 17.8, ts: 58.2, usg: 22.1, ortg: 115.2, drtg: 111.8, bpm: 2.8, vorp: 3.2, ws: 6.8, ows: 4.2, dws: 2.6 },
+            shooting: { fga: 12.8, fgm: 6.1, fg3a: 3.4, fg3m: 1.3, fta: 2.7, ftm: 2.4, efg: 52.8, tsp: 58.2, ftr: 0.21 },
+            defense: { drb: 5.4, orb: 1.4, stl: 0.7, blk: 0.8, pf: 2.1, tov: 1.8, drtg: 111.8, dbpm: 1.2 }
+          }
+        }
+      ],
+      '2020-21': [
+        {
+          name: "Joel Embiid", position: "C", jersey: "21", category: "centers",
+          stats: {
+            basic: { gp: 51, mpg: 31.1, ppg: 28.5, rpg: 10.6, apg: 2.8, spg: 0.9, bpg: 1.4, fg: 51.3, fg3: 37.7, ft: 85.9 },
+            advanced: { per: 31.2, ts: 63.0, usg: 33.8, ortg: 118.2, drtg: 105.8, bpm: 8.8, vorp: 6.2, ws: 8.8, ows: 6.2, dws: 2.6 },
+            shooting: { fga: 16.2, fgm: 8.3, fg3a: 3.1, fg3m: 1.2, fta: 8.4, ftm: 7.2, efg: 55.3, tsp: 63.0, ftr: 0.52 },
+            defense: { drb: 7.8, orb: 2.8, stl: 0.9, blk: 1.4, pf: 2.4, tov: 3.1, drtg: 105.8, dbpm: 3.8 }
+          }
+        },
+        {
+          name: "Ben Simmons", position: "PG", jersey: "25", category: "guards",
+          stats: {
+            basic: { gp: 58, mpg: 33.7, ppg: 14.3, rpg: 7.2, apg: 6.9, spg: 1.6, bpg: 0.6, fg: 55.7, fg3: 30.0, ft: 61.3 },
+            advanced: { per: 18.2, ts: 56.8, usg: 17.8, ortg: 112.8, drtg: 108.2, bpm: 4.2, vorp: 3.8, ws: 6.2, ows: 3.2, dws: 3.0 },
+            shooting: { fga: 9.9, fgm: 5.5, fg3a: 0.3, fg3m: 0.1, fta: 4.1, ftm: 2.5, efg: 56.2, tsp: 56.8, ftr: 0.41 },
+            defense: { drb: 5.9, orb: 1.3, stl: 1.6, blk: 0.6, pf: 2.8, tov: 3.4, drtg: 108.2, dbpm: 2.8 }
+          }
+        },
+        {
+          name: "Tobias Harris", position: "PF", jersey: "12", category: "forwards",
+          stats: {
+            basic: { gp: 62, mpg: 34.2, ppg: 19.5, rpg: 6.8, apg: 3.5, spg: 0.8, bpg: 0.7, fg: 51.2, fg3: 39.4, ft: 89.2 },
+            advanced: { per: 19.8, ts: 61.2, usg: 24.8, ortg: 118.2, drtg: 110.8, bpm: 3.8, vorp: 3.8, ws: 7.2, ows: 5.2, dws: 2.0 },
+            shooting: { fga: 13.2, fgm: 6.8, fg3a: 4.2, fg3m: 1.7, fta: 2.8, ftm: 2.5, efg: 57.8, tsp: 61.2, ftr: 0.21 },
+            defense: { drb: 5.4, orb: 1.4, stl: 0.8, blk: 0.7, pf: 2.2, tov: 1.8, drtg: 110.8, dbpm: 1.2 }
+          }
+        },
+        {
+          name: "Seth Curry", position: "SG", jersey: "31", category: "guards",
+          stats: {
+            basic: { gp: 57, mpg: 28.2, ppg: 12.5, rpg: 2.4, apg: 3.9, spg: 0.9, bpg: 0.1, fg: 48.7, fg3: 45.0, ft: 95.2 },
+            advanced: { per: 16.8, ts: 65.2, usg: 17.8, ortg: 118.2, drtg: 113.8, bpm: 2.8, vorp: 2.1, ws: 4.2, ows: 3.2, dws: 1.0 },
+            shooting: { fga: 8.2, fgm: 4.0, fg3a: 4.6, fg3m: 2.1, fta: 1.0, ftm: 1.0, efg: 61.2, tsp: 65.2, ftr: 0.12 },
+            defense: { drb: 2.0, orb: 0.4, stl: 0.9, blk: 0.1, pf: 1.4, tov: 1.2, drtg: 113.8, dbpm: -0.8 }
+          }
+        }
+      ]
+    };
 
-      filterPlayers(players) {
-        return players.filter(player => {
-          // Position filter
-          if (this.filters.position && player.position !== this.filters.position) {
-            return false;
-          }
-          
-          // PPG filter
-          if (player.stats.pts < this.filters.ppg) {
-            return false;
-          }
-          
-          // Search filter
-          if (this.filters.search && !player.name.toLowerCase().includes(this.filters.search)) {
-            return false;
-          }
-          
-          return true;
+    // Current filters
+    let currentSeason = '2024-25';
+    let currentGameType = 'regular';
+    let currentStatCategory = 'basic';
+    let currentFilter = 'all';
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      renderPlayerStats();
+      setupEventListeners();
+    });
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Season selector
+      document.getElementById('seasonSelect').addEventListener('change', function(e) {
+        currentSeason = e.target.value;
+        renderPlayerStats();
+      });
+
+      // Game type selector
+      document.getElementById('gameTypeSelect').addEventListener('change', function(e) {
+        currentGameType = e.target.value;
+        renderPlayerStats();
+      });
+
+      // Stat category selector
+      document.getElementById('statCategorySelect').addEventListener('change', function(e) {
+        currentStatCategory = e.target.value;
+        renderPlayerStats();
+      });
+
+      // Filter buttons
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          currentFilter = this.dataset.filter;
+          renderPlayerStats();
         });
-      }
+      });
+    }
 
-      sortPlayers(players) {
-        return players.sort((a, b) => {
-          let aVal, bVal;
-          
-          if (this.currentSort.field === 'name') {
-            aVal = a.name;
-            bVal = b.name;
-          } else if (this.currentSort.field === 'position') {
-            aVal = a.position;
-            bVal = b.position;
-          } else {
-            aVal = a.stats[this.currentSort.field];
-            bVal = b.stats[this.currentSort.field];
-          }
-          
-          if (this.currentSort.direction === 'asc') {
-            return aVal > bVal ? 1 : -1;
-          } else {
-            return aVal < bVal ? 1 : -1;
-          }
-        });
-      }
+    // Get current season data
+    function getCurrentSeasonData() {
+      return seasonStatsData[currentSeason] || [];
+    }
 
-      loadPlayers() {
-        const players = this.playerData[this.currentSeason] || [];
-        const filteredPlayers = this.filterPlayers(players);
-        const sortedPlayers = this.sortPlayers(filteredPlayers);
+    // Filter players based on current criteria
+    function filterPlayers() {
+      const players = getCurrentSeasonData();
+      return players.filter(player => {
+        switch(currentFilter) {
+          case 'guards': return player.category === 'guards';
+          case 'forwards': return player.category === 'forwards';
+          case 'centers': return player.category === 'centers';
+          default: return true;
+        }
+      });
+    }
+
+    // Get stat display based on category
+    function getStatDisplay(player) {
+      const stats = player.stats[currentStatCategory];
+      
+      switch(currentStatCategory) {
+        case 'basic':
+          return [
+            { label: 'PPG', value: stats.ppg },
+            { label: 'RPG', value: stats.rpg },
+            { label: 'APG', value: stats.apg },
+            { label: 'FG%', value: stats.fg + '%' },
+            { label: 'FT%', value: stats.ft + '%' }
+          ];
+        case 'advanced':
+          return [
+            { label: 'PER', value: stats.per },
+            { label: 'TS%', value: stats.ts + '%' },
+            { label: 'USG%', value: stats.usg + '%' },
+            { label: 'BPM', value: stats.bpm },
+            { label: 'VORP', value: stats.vorp }
+          ];
+        case 'shooting':
+          return [
+            { label: '3P%', value: stats.fg3 + '%' },
+            { label: 'eFG%', value: stats.efg + '%' },
+            { label: 'FTr', value: stats.ftr },
+            { label: 'TS%', value: stats.tsp + '%' }
+          ];
+        case 'defense':
+          return [
+            { label: 'STL', value: stats.stl },
+            { label: 'BLK', value: stats.blk },
+            { label: 'DRB', value: stats.drb },
+            { label: 'DRTG', value: stats.drtg }
+          ];
+        default:
+          return [];
+      }
+    }
+
+    // Get detailed stats for expanded view
+    function getDetailedStats(player) {
+      const stats = player.stats;
+      return {
+        basic: [
+          { label: 'GP', value: stats.basic.gp },
+          { label: 'MPG', value: stats.basic.mpg },
+          { label: 'PPG', value: stats.basic.ppg },
+          { label: 'RPG', value: stats.basic.rpg },
+          { label: 'APG', value: stats.basic.apg },
+          { label: 'SPG', value: stats.basic.spg },
+          { label: 'BPG', value: stats.basic.bpg },
+          { label: 'FG%', value: stats.basic.fg + '%' },
+          { label: '3P%', value: stats.basic.fg3 + '%' },
+          { label: 'FT%', value: stats.basic.ft + '%' }
+        ],
+        advanced: [
+          { label: 'PER', value: stats.advanced.per },
+          { label: 'TS%', value: stats.advanced.ts + '%' },
+          { label: 'USG%', value: stats.advanced.usg + '%' },
+          { label: 'ORTG', value: stats.advanced.ortg },
+          { label: 'DRTG', value: stats.advanced.drtg },
+          { label: 'BPM', value: stats.advanced.bpm },
+          { label: 'VORP', value: stats.advanced.vorp },
+          { label: 'WS', value: stats.advanced.ws },
+          { label: 'OWS', value: stats.advanced.ows },
+          { label: 'DWS', value: stats.advanced.dws }
+        ],
+        shooting: [
+          { label: 'FGA', value: stats.shooting.fga },
+          { label: 'FGM', value: stats.shooting.fgm },
+          { label: '3PA', value: stats.shooting.fg3a },
+          { label: '3PM', value: stats.shooting.fg3m },
+          { label: 'FTA', value: stats.shooting.fta },
+          { label: 'FTM', value: stats.shooting.ftm },
+          { label: 'eFG%', value: stats.shooting.efg + '%' },
+          { label: 'TS%', value: stats.shooting.tsp + '%' },
+          { label: 'FTr', value: stats.shooting.ftr }
+        ],
+        defense: [
+          { label: 'DRB', value: stats.defense.drb },
+          { label: 'ORB', value: stats.defense.orb },
+          { label: 'STL', value: stats.defense.stl },
+          { label: 'BLK', value: stats.defense.blk },
+          { label: 'PF', value: stats.defense.pf },
+          { label: 'TOV', value: stats.defense.tov },
+          { label: 'DRTG', value: stats.defense.drtg },
+          { label: 'DBPM', value: stats.defense.dbpm }
+        ]
+      };
+    }
+
+    // Open player stats modal
+    window.openPlayerModal = function(playerData) {
+      const modal = document.getElementById('statsModal');
+      const modalPlayerAvatar = document.getElementById('modalPlayerAvatar');
+      const modalPlayerName = document.getElementById('modalPlayerName');
+      const modalPlayerMeta = document.getElementById('modalPlayerMeta');
+      const modalBody = document.getElementById('modalBody');
+      
+      // Set player info
+      const initials = playerData.name.split(' ').map(n => n[0]).join('');
+      modalPlayerAvatar.textContent = initials;
+      modalPlayerName.textContent = playerData.name;
+      modalPlayerMeta.textContent = `${playerData.position} • #${playerData.jersey} • ${currentSeason} Season`;
+      
+      // Get detailed stats
+      const detailedStats = getDetailedStats(playerData);
+      
+      // Create modal content
+      modalBody.innerHTML = `
+        <div class="stats-section">
+          <h3>Basic Statistics</h3>
+          <div class="modal-stats-grid">
+            ${detailedStats.basic.map(stat => `
+              <div class="modal-stat-item">
+                <div class="modal-stat-value">${stat.value}</div>
+                <div class="modal-stat-label">${stat.label}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
         
-        this.loadPlayersTable(sortedPlayers);
-        this.loadPlayersCards(sortedPlayers);
-      }
-
-      loadPlayersTable(players) {
-        const tableBody = document.getElementById('statsTableBody');
+        <div class="stats-section">
+          <h3>Advanced Statistics</h3>
+          <div class="modal-stats-grid">
+            ${detailedStats.advanced.map(stat => `
+              <div class="modal-stat-item">
+                <div class="modal-stat-value">${stat.value}</div>
+                <div class="modal-stat-label">${stat.label}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
         
-        tableBody.innerHTML = players.map(player => `
-          <tr class="slide-in">
-            <td class="player-name-cell">
-              <div class="player-avatar">${player.avatar}</div>
-              <div class="player-info">
-                <h4>${player.name}</h4>
-                <div class="player-position">${this.getFullPosition(player.position)} • ${player.number}</div>
+        <div class="stats-section">
+          <h3>Shooting Statistics</h3>
+          <div class="modal-stats-grid">
+            ${detailedStats.shooting.map(stat => `
+              <div class="modal-stat-item">
+                <div class="modal-stat-value">${stat.value}</div>
+                <div class="modal-stat-label">${stat.label}</div>
               </div>
-            </td>
-            <td class="stat-cell">${player.position}</td>
-            <td class="stat-cell">${player.stats.gp}</td>
-            <td class="stat-cell ${player.stats.pts >= 20 ? 'stat-highlight' : ''}">${player.stats.pts}</td>
-            <td class="stat-cell">${player.stats.reb}</td>
-            <td class="stat-cell">${player.stats.ast}</td>
-            <td class="stat-cell">${player.stats.fg}%</td>
-            <td class="stat-cell">${player.stats.threePt}%</td>
-            <td class="stat-cell">${player.stats.ft}%</td>
-            <td class="stat-cell">${player.stats.min}</td>
-          </tr>
-        `).join('');
-      }
-
-      loadPlayersCards(players) {
-        const cardsView = document.getElementById('cardsView');
+            `).join('')}
+          </div>
+        </div>
         
-        cardsView.innerHTML = players.map((player, index) => `
-          <div class="player-card fade-in" style="animation-delay: ${index * 0.1}s">
-            <div class="player-card-header">
-              <div class="player-card-info">
-                <div class="card-player-avatar">${player.avatar}</div>
-                <div class="card-player-details">
-                  <h3>${player.name}</h3>
-                  <div class="card-player-position">${this.getFullPosition(player.position)} • ${player.number}</div>
-                </div>
+        <div class="stats-section">
+          <h3>Defensive Statistics</h3>
+          <div class="modal-stats-grid">
+            ${detailedStats.defense.map(stat => `
+              <div class="modal-stat-item">
+                <div class="modal-stat-value">${stat.value}</div>
+                <div class="modal-stat-label">${stat.label}</div>
               </div>
-            </div>
-            
-            <div class="player-card-stats">
-              <div class="card-stats-grid">
-                <div class="card-stat-item">
-                  <div class="card-stat-value">${player.stats.pts}</div>
-                  <div class="card-stat-label">PPG</div>
-                </div>
-                <div class="card-stat-item">
-                  <div class="card-stat-value">${player.stats.reb}</div>
-                  <div class="card-stat-label">RPG</div>
-                </div>
-                <div class="card-stat-item">
-                  <div class="card-stat-value">${player.stats.ast}</div>
-                  <div class="card-stat-label">APG</div>
-                </div>
-                <div class="card-stat-item">
-                  <div class="card-stat-value">${player.stats.fg}%</div>
-                  <div class="card-stat-label">FG%</div>
-                </div>
-                <div class="card-stat-item">
-                  <div class="card-stat-value">${player.stats.threePt}%</div>
-                  <div class="card-stat-label">3P%</div>
-                </div>
-                <div class="card-stat-item">
-                  <div class="card-stat-value">${player.stats.min}</div>
-                  <div class="card-stat-label">MPG</div>
-                </div>
-              </div>
-              
-              <div class="chart-container">
-                <canvas id="chart-${player.avatar}-${index}"></canvas>
-              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      
+      // Show modal
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close player stats modal
+    window.closeStatsModal = function() {
+      const modal = document.getElementById('statsModal');
+      modal.classList.remove('show');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+      const modal = document.getElementById('statsModal');
+      if (e.target === modal) {
+        closeStatsModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeStatsModal();
+      }
+    });
+
+    // Create player stat card
+    function createPlayerStatCard(player) {
+      const initials = player.name.split(' ').map(n => n[0]).join('');
+      const statDisplay = getStatDisplay(player);
+      
+      return `
+        <div class="player-stat-card">
+          <button class="view-details-btn" onclick="openPlayerModal(${JSON.stringify(player).replace(/"/g, '&quot;')})">
+            View Details
+          </button>
+          <div class="player-stat-header">
+            <div class="player-stat-avatar">${initials}</div>
+            <div class="player-stat-info">
+              <div class="player-stat-name">${player.name}</div>
+              <div class="player-stat-position">${player.position} • #${player.jersey}</div>
             </div>
           </div>
-        `).join('');
-
-        // Create charts for cards view
-        if (this.currentView === 'cards') {
-          setTimeout(() => {
-            players.forEach((player, index) => {
-              this.createPlayerChart(player, index);
-            });
-          }, 100);
-        }
-      }
-
-      createPlayerChart(player, index) {
-        const ctx = document.getElementById(`chart-${player.avatar}-${index}`);
-        if (!ctx) return;
-
-        const games = Array.from({length: 10}, (_, i) => `G${i + 1}`);
-        const basePoints = player.stats.pts;
-        const data = games.map(() => {
-          const variation = (Math.random() - 0.5) * 8;
-          return Math.max(0, basePoints + variation);
-        });
-
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: games,
-            datasets: [{
-              label: 'Points',
-              data: data,
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              fill: true,
-              tension: 0.4,
-              pointBackgroundColor: '#3b82f6',
-              pointBorderColor: '#ffffff',
-              pointBorderWidth: 2,
-              pointRadius: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: { color: '#64748b', font: { size: 10 } }
-              },
-              y: {
-                grid: { color: 'rgba(100, 116, 139, 0.1)' },
-                ticks: { color: '#64748b', font: { size: 10 } }
-              }
-            }
-          }
-        });
-      }
-
-      getFullPosition(pos) {
-        const positions = {
-          'PG': 'Point Guard',
-          'SG': 'Shooting Guard',
-          'SF': 'Small Forward',
-          'PF': 'Power Forward',
-          'C': 'Center'
-        };
-        return positions[pos] || pos;
-      }
+          <div class="player-stats-display">
+            ${statDisplay.map(stat => `
+              <div class="stat-item">
+                <div class="stat-value">${stat.value}</div>
+                <div class="stat-label">${stat.label}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
     }
 
-    // Construction Popup Handler
-    class ConstructionPopup {
-      constructor() {
-        this.overlay = document.getElementById('constructionOverlay');
-        this.popup = document.getElementById('constructionPopup');
-        this.closeBtn = document.getElementById('constructionClose');
-        this.init();
-      }
-
-      init() {
-        // Show popup after a short delay
-        setTimeout(() => {
-          this.show();
-        }, 500);
-
-        // Close popup handlers
-        this.closeBtn.addEventListener('click', () => {
-          this.hide();
-        });
-
-        this.overlay.addEventListener('click', () => {
-          this.hide();
-        });
-
-        // Close on Escape key
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') {
-            this.hide();
-          }
-        });
-      }
-
-      show() {
-        this.overlay.classList.add('show');
-        setTimeout(() => {
-          this.popup.classList.add('show');
-        }, 100);
-      }
-
-      hide() {
-        this.popup.classList.remove('show');
-        setTimeout(() => {
-          this.overlay.classList.remove('show');
-        }, 300);
-      }
-    }
-
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      // Show construction popup first
-      new ConstructionPopup();
+    // Render player stats
+    function renderPlayerStats() {
+      const filteredPlayers = filterPlayers();
+      const container = document.getElementById('playerStatsGrid');
       
-      // Initialize stats dashboard
-      window.interactiveSixersStats = new InteractiveSixersStats();
-    });
+      if (filteredPlayers.length === 0) {
+        container.innerHTML = '<div class="no-players">No players found for the ' + currentSeason + ' season.</div>';
+        return;
+      }
+
+      container.innerHTML = filteredPlayers.map(player => createPlayerStatCard(player)).join('');
+    }
   </script>
+  
+  <script src="stats.js"></script>
 </body>
 </html>
-
-
