@@ -22,6 +22,10 @@ class SixersStatsManager {
     this.loadInitialData();
     this.startAutoUpdate();
     this.initializeCharts();
+
+    // Ensure default filter button state reflects statType
+    const defaultBtn = document.querySelector(`.filter-btn[data-filter="${this.filters.statType}"]`) || document.querySelector('.filter-btn');
+    defaultBtn?.classList.add('active');
   }
 
   setupEventListeners() {
@@ -49,12 +53,12 @@ class SixersStatsManager {
       this.filterPlayerStats(parseInt(e.target.value));
     });
 
-    // Filter chips
-    document.querySelectorAll('.filter-chip').forEach(chip => {
+    // Filter chips/buttons
+    document.querySelectorAll('.filter-chip, .filter-btn').forEach(chip => {
       chip.addEventListener('click', (e) => {
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        e.target.classList.add('active');
-        this.filters.statType = e.target.dataset.filter;
+        document.querySelectorAll('.filter-chip, .filter-btn').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        this.filters.statType = e.currentTarget.dataset.filter || this.filters.statType;
         this.updateDisplayedStats();
       });
     });
@@ -476,8 +480,8 @@ class SixersStatsManager {
     if (!tbody || !this.currentData.playerStats) return;
 
     tbody.innerHTML = this.currentData.playerStats.map(player => `
-      <tr>
-        <td class="player-name">${player.name}</td>
+      <tr data-player-name="${player.name}">
+        <td class="player-name"><button class="link-btn" data-player="${player.name}">${player.name}</button></td>
         <td>${player.gp}</td>
         <td>${player.min.toFixed(1)}</td>
         <td class="stat-value">${player.pts.toFixed(1)}</td>
@@ -495,6 +499,13 @@ class SixersStatsManager {
         </td>
       </tr>
     `).join('');
+
+    // clickable player names to open modal
+    tbody.querySelectorAll('button[data-player]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.openPlayerModal(btn.dataset.player);
+      });
+    });
   }
 
   sortPlayerStats(sortBy) {
@@ -603,6 +614,86 @@ class SixersStatsManager {
     setTimeout(() => {
       errorDiv.remove();
     }, 5000);
+  }
+
+  // Open player modal with season-by-season and career rows
+  async openPlayerModal(playerName) {
+    const modal = document.getElementById('statsModal');
+    const seasonSelect = document.getElementById('playerSeasonSelect');
+    const tableBody = document.querySelector('#playerSeasonTable tbody');
+
+    if (!modal || !seasonSelect || !tableBody) return;
+
+    // Fill header
+    document.getElementById('modalPlayerName').textContent = playerName;
+    document.getElementById('modalPlayerMeta').textContent = 'Season-by-season averages';
+
+    // Collect seasons list from inline sample data as fallback
+    const seasons = Object.keys(window.seasonStatsData || {}).sort().reverse();
+    seasonSelect.innerHTML = ['all', ...seasons]
+      .map(s => `<option value="${s}">${s === 'all' ? 'All Seasons' : s}</option>`)
+      .join('');
+
+    const render = (selectedSeason) => {
+      // Build per-season rows from sample data or API later
+      const rows = [];
+      const careerAgg = { gp: 0, min: 0, pts: 0, reb: 0, ast: 0, fgSum: 0, threeSum: 0, ftSum: 0, seasons: 0 };
+
+      const seasonsToShow = selectedSeason && selectedSeason !== 'all' ? [selectedSeason] : seasons;
+
+      seasonsToShow.forEach(season => {
+        const players = (window.seasonStatsData?.[season]) || [];
+        const p = players.find(x => x.name === playerName);
+        if (!p) return;
+        const s = p.stats?.basic || {};
+        rows.push(`
+          <tr>
+            <td>${season}</td>
+            <td>${s.gp ?? '-'}</td>
+            <td>${(s.mpg ?? 0).toFixed ? (s.mpg).toFixed(1) : (s.mpg ?? '-')}</td>
+            <td>${(s.ppg ?? 0).toFixed ? (s.ppg).toFixed(1) : (s.ppg ?? '-')}</td>
+            <td>${(s.rpg ?? 0).toFixed ? (s.rpg).toFixed(1) : (s.rpg ?? '-')}</td>
+            <td>${(s.apg ?? 0).toFixed ? (s.apg).toFixed(1) : (s.apg ?? '-')}</td>
+            <td>${(s.fg ?? 0).toFixed ? (s.fg).toFixed(1) : (s.fg ?? '-')}%</td>
+            <td>${(s.fg3 ?? s.fg3 ?? s.fg3Pct ?? 0).toFixed ? (s.fg3 ?? 0).toFixed(1) : (s.fg3 ?? '-')}%</td>
+            <td>${(s.ft ?? 0).toFixed ? (s.ft).toFixed(1) : (s.ft ?? '-')}%</td>
+          </tr>`);
+
+        // Career aggregates (simple average across available seasons)
+        if (typeof s.gp === 'number') careerAgg.gp += s.gp;
+        if (typeof s.mpg === 'number') careerAgg.min += s.mpg;
+        if (typeof s.ppg === 'number') careerAgg.pts += s.ppg;
+        if (typeof s.rpg === 'number') careerAgg.reb += s.rpg;
+        if (typeof s.apg === 'number') careerAgg.ast += s.apg;
+        if (typeof s.fg === 'number') careerAgg.fgSum += s.fg;
+        if (typeof s.fg3 === 'number') careerAgg.threeSum += s.fg3;
+        if (typeof s.ft === 'number') careerAgg.ftSum += s.ft;
+        careerAgg.seasons += 1;
+      });
+
+      tableBody.innerHTML = rows.join('');
+
+      // Career row (averages across seasons present)
+      const denom = Math.max(careerAgg.seasons, 1);
+      document.getElementById('careerGP').textContent = careerAgg.gp.toString();
+      document.getElementById('careerMIN').textContent = (careerAgg.min / denom).toFixed(1);
+      document.getElementById('careerPTS').textContent = (careerAgg.pts / denom).toFixed(1);
+      document.getElementById('careerREB').textContent = (careerAgg.reb / denom).toFixed(1);
+      document.getElementById('careerAST').textContent = (careerAgg.ast / denom).toFixed(1);
+      document.getElementById('careerFG').textContent = (careerAgg.fgSum / denom).toFixed(1) + '%';
+      document.getElementById('career3P').textContent = (careerAgg.threeSum / denom).toFixed(1) + '%';
+      document.getElementById('careerFT').textContent = (careerAgg.ftSum / denom).toFixed(1) + '%';
+    };
+
+    // Initial render with full season list
+    seasonSelect.value = 'all';
+    render('all');
+
+    seasonSelect.onchange = () => {
+      render(seasonSelect.value);
+    };
+
+    modal.style.display = 'block';
   }
 
   destroy() {
