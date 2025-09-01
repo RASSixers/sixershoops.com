@@ -66,8 +66,8 @@ class SixersStatsTablePage {
     const teamId = 23; // 76ers on balldontlie
 
     // 1) Get roster players for the team
-    const rosterRes = await fetch(`https://www.balldontlie.io/api/v1/players?team_ids[]=${teamId}&per_page=100`);
-    const rosterJson = await rosterRes.json();
+    const rosterRes = await fetch(`https://www.balldontlie.io/api/v1/players?team_ids[]=${teamId}&per_page=100`).catch(() => null);
+    const rosterJson = rosterRes ? await rosterRes.json().catch(() => ({})) : {};
     const players = Array.isArray(rosterJson?.data) ? rosterJson.data : [];
     if (!players.length) return [];
 
@@ -81,8 +81,8 @@ class SixersStatsTablePage {
     const allAverages = [];
     for (const c of chunks) {
       const q = c.map(id => `player_ids[]=${id}`).join('&');
-      const avgRes = await fetch(`https://www.balldontlie.io/api/v1/season_averages?season=${season}&${q}`);
-      const avgJson = await avgRes.json();
+      const avgRes = await fetch(`https://www.balldontlie.io/api/v1/season_averages?season=${season}&${q}`).catch(() => null);
+      const avgJson = avgRes ? await avgRes.json().catch(() => ({})) : {};
       allAverages.push(...(avgJson?.data || []));
     }
 
@@ -124,10 +124,15 @@ class SixersStatsTablePage {
         this.state.players = await this.fetchFromBallDontLie(this.state.season);
       }
       this.renderPlayers();
-      await this.renderCareer();
+      try {
+        await this.renderCareer();
+      } catch (ce) {
+        console.warn('Career render failed (continuing with season only):', ce);
+        this.careerTableBody.innerHTML = '<tr><td colspan="10" class="center">Career data not available</td></tr>';
+      }
     } catch (e) {
       console.error('Failed to load player stats', e);
-      this.tableBody.innerHTML = '<tr><td colspan="14">Failed to load</td></tr>';
+      this.tableBody.innerHTML = '<tr><td colspan="14">Failed to load player data</td></tr>';
     }
   }
 
