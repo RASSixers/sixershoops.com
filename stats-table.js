@@ -54,6 +54,61 @@ class SixersStatsTablePage {
     });
   }
 
+  // Helpers for client-only data source (Ball Don't Lie API)
+  getSeasonStartYear(seasonStr) {
+    // Convert '2024-25' -> 2024, '2023-24' -> 2023
+    const m = /^(\d{4})/.exec(seasonStr);
+    return m ? parseInt(m[1], 10) : 2024;
+  }
+
+  async fetchFromBallDontLie(seasonStr) {
+    const season = this.getSeasonStartYear(seasonStr);
+    const teamId = 23; // 76ers on balldontlie
+
+    // 1) Get roster players for the team
+    const rosterRes = await fetch(`https://www.balldontlie.io/api/v1/players?team_ids[]=${teamId}&per_page=100`);
+    const rosterJson = await rosterRes.json();
+    const players = Array.isArray(rosterJson?.data) ? rosterJson.data : [];
+    if (!players.length) return [];
+
+    const idToName = new Map(players.map(p => [p.id, `${p.first_name} ${p.last_name}`.trim()]));
+
+    // 2) Get season averages for all players in one or two batches
+    const ids = players.map(p => p.id);
+    const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
+    const chunks = chunk(ids, 25); // be safe with query length
+
+    const allAverages = [];
+    for (const c of chunks) {
+      const q = c.map(id => `player_ids[]=${id}`).join('&');
+      const avgRes = await fetch(`https://www.balldontlie.io/api/v1/season_averages?season=${season}&${q}`);
+      const avgJson = await avgRes.json();
+      allAverages.push(...(avgJson?.data || []));
+    }
+
+    // 3) Map into our UI format
+    return allAverages.map(a => {
+      const name = idToName.get(a.player_id) || 'Unknown';
+      const gp = a.games_played || 0;
+      const min = a.min ? (() => { const [mm, ss] = a.min.split(':').map(Number); return (mm || 0) + (ss || 0)/60; })() : 0;
+      const fgPct = a.fg_pct ?? 0;
+      const threePct = a.fg3_pct ?? 0;
+      const ftPct = a.ft_pct ?? 0;
+      const pts = a.pts ?? 0;
+      const reb = a.reb ?? 0;
+      const ast = a.ast ?? 0;
+      const stl = a.stl ?? 0;
+      const blk = a.blk ?? 0;
+      const tov = a.turnover ?? 0;
+      const fga = a.fga ?? 0;
+      const fta = a.fta ?? 0;
+      const fgm = a.fgm ?? 0;
+      const ftm = a.ftm ?? 0;
+      const eff = Number(pts) + Number(reb) + Number(ast) + Number(stl) + Number(blk) - Number(tov) - (Number(fga) - Number(fgm)) - (Number(fta) - Number(ftm));
+      return { name, gp, min, pts, reb, ast, stl, blk, tov, fgPct, threePct, ftPct, plusMinus: 0, eff };
+    }).sort((a,b) => b.pts - a.pts);
+  }
+
   async load() {
     try {
       // API base can be configured on the page via window.API_BASE (defaults to same-origin)
@@ -65,9 +120,8 @@ class SixersStatsTablePage {
       if (proxied && proxied.success && Array.isArray(proxied.players)) {
         this.state.players = proxied.players;
       } else {
-        // Fallback to client-side fetcher as backup
-        const players = await this.api.getPlayerStats(this.state.season);
-        this.state.players = players;
+        // Fallback to client-side fetcher as backup (Ball Don't Lie public API)
+        this.state.players = await this.fetchFromBallDontLie(this.state.season);
       }
       this.renderPlayers();
       await this.renderCareer();
@@ -122,8 +176,8 @@ class SixersStatsTablePage {
             const json = await res.json();
             if (json && json.success && Array.isArray(json.players)) return json.players;
           } catch {}
-          // Fallback to client fetcher
-          return this.api.getPlayerStats(s);
+          // Fallback to client-only public API
+          return this.fetchFromBallDontLie(s);
         }));
         seasonData = results.map((players, idx) => ({ season: seasonOptions[idx], players }));
       } catch (e) {
