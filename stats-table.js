@@ -17,6 +17,7 @@ class SixersStatsTablePage {
     this.init();
     // Auto-refresh every 60s for live updates on stats page
     this.refreshTimer = setInterval(() => this.load(), 60000);
+    this.manualRefresh = false;
   }
 
   init() {
@@ -31,6 +32,7 @@ class SixersStatsTablePage {
     this.tableBody = document.querySelector('#playersTable tbody');
     this.careerContainer = document.getElementById('careerSection');
     this.careerTableBody = document.querySelector('#careerTable tbody');
+    this.refreshBtn = document.getElementById('refreshBtn');
   }
 
   bindEvents() {
@@ -52,6 +54,21 @@ class SixersStatsTablePage {
     document.querySelectorAll('[data-tab]')?.forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
     });
+
+    if (this.refreshBtn) {
+      this.refreshBtn.addEventListener('click', async () => {
+        this.manualRefresh = true;
+        this.refreshBtn.disabled = true;
+        this.refreshBtn.textContent = 'Refreshing...';
+        try {
+          await this.load();
+        } finally {
+          this.refreshBtn.disabled = false;
+          this.refreshBtn.textContent = 'Refresh';
+          this.manualRefresh = false;
+        }
+      });
+    }
   }
 
   // Helpers for client-only data source (Ball Don't Lie API)
@@ -66,7 +83,7 @@ class SixersStatsTablePage {
     const teamId = 23; // 76ers on balldontlie
 
     // 1) Get roster players for the team
-    const rosterRes = await fetch(`https://www.balldontlie.io/api/v1/players?team_ids[]=${teamId}&per_page=100`).catch(() => null);
+    const rosterRes = await fetch(`https://www.balldontlie.io/api/v1/players?team_ids[]=${teamId}&per_page=100`, { cache: 'no-store' }).catch(() => null);
     const rosterJson = rosterRes ? await rosterRes.json().catch(() => ({})) : {};
     const players = Array.isArray(rosterJson?.data) ? rosterJson.data : [];
     if (!players.length) return [];
@@ -81,13 +98,13 @@ class SixersStatsTablePage {
     const allAverages = [];
     for (const c of chunks) {
       const q = c.map(id => `player_ids[]=${id}`).join('&');
-      const avgRes = await fetch(`https://www.balldontlie.io/api/v1/season_averages?season=${season}&${q}`).catch(() => null);
+      const avgRes = await fetch(`https://www.balldontlie.io/api/v1/season_averages?season=${season}&${q}`, { cache: 'no-store' }).catch(() => null);
       const avgJson = avgRes ? await avgRes.json().catch(() => ({})) : {};
       allAverages.push(...(avgJson?.data || []));
     }
 
     // 3) Map into our UI format
-    return allAverages.map(a => {
+    let mapped = allAverages.map(a => {
       const name = idToName.get(a.player_id) || 'Unknown';
       const gp = a.games_played || 0;
       const min = a.min ? (() => { const [mm, ss] = a.min.split(':').map(Number); return (mm || 0) + (ss || 0)/60; })() : 0;
@@ -106,7 +123,55 @@ class SixersStatsTablePage {
       const ftm = a.ftm ?? 0;
       const eff = Number(pts) + Number(reb) + Number(ast) + Number(stl) + Number(blk) - Number(tov) - (Number(fga) - Number(fgm)) - (Number(fta) - Number(ftm));
       return { name, gp, min, pts, reb, ast, stl, blk, tov, fgPct, threePct, ftPct, plusMinus: 0, eff };
-    }).sort((a,b) => b.pts - a.pts);
+    });
+
+    // If season_averages returned empty (common for incomplete rosters), try aggregating from games endpoint
+    if (!mapped.length) {
+      // Pull the first few regular season games and aggregate
+      const gamesRes = await fetch(`https://www.balldontlie.io/api/v1/games?seasons[]=${season}&team_ids[]=${teamId}&per_page=25`, { cache: 'no-store' }).catch(() => null);
+      const gamesJson = gamesRes ? await gamesRes.json().catch(() => ({})) : {};
+      const games = Array.isArray(gamesJson?.data) ? gamesJson.data : [];
+
+      // For each game, fetch stats and accumulate player totals
+      const totals = new Map(); // id -> totals
+      for (const g of games) {
+        const statsRes = await fetch(`https://www.balldontlie.io/api/v1/stats?game_ids[]=${g.id}&team_ids[]=${teamId}&per_page=100`, { cache: 'no-store' }).catch(() => null);
+        const statsJson = statsRes ? await statsRes.json().catch(() => ({})) : {};
+        const stats = Array.isArray(statsJson?.data) ? statsJson.data : [];
+        for (const s of stats) {
+          const pid = s.player?.id;
+          if (!pid) continue;
+          const name = `${s.player?.first_name || ''} ${s.player?.last_name || ''}`.trim();
+          const rec = totals.get(pid) || { name, gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, fgm: 0, fga: 0, ftm: 0, fta: 0 };
+          rec.gp += 1;
+          const minStr = s.min || '0:00';
+          const [mm, ss] = minStr.split(':').map(Number);
+          rec.min += (mm || 0) + (ss || 0)/60;
+          rec.pts += s.pts || 0;
+          rec.reb += s.reb || 0;
+          rec.ast += s.ast || 0;
+          rec.stl += s.stl || 0;
+          rec.blk += s.blk || 0;
+          rec.tov += s.turnover || 0;
+          rec.fgm += s.fgm || 0;
+          rec.fga += s.fga || 0;
+          rec.ftm += s.ftm || 0;
+          rec.fta += s.fta || 0;
+          totals.set(pid, rec);
+        }
+      }
+
+      mapped = Array.from(totals.values()).map(t => {
+        const gp = Math.max(t.gp, 1);
+        const fgPct = t.fga ? (t.fgm / t.fga) : 0;
+        const ftPct = t.fta ? (t.ftm / t.fta) : 0;
+        const threePct = 0; // balldontlie stats endpoint doesn’t include 3PT by default here
+        const eff = t.pts + t.reb + t.ast + t.stl + t.blk - t.tov - (t.fga - t.fgm) - (t.fta - t.ftm);
+        return { name: t.name, gp: t.gp, min: t.min / gp, pts: t.pts / gp, reb: t.reb / gp, ast: t.ast / gp, stl: t.stl / gp, blk: t.blk / gp, tov: t.tov / gp, fgPct, threePct, ftPct, plusMinus: 0, eff };
+      });
+    }
+
+    return mapped.sort((a,b) => b.pts - a.pts);
   }
 
   async load() {
