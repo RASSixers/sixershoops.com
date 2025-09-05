@@ -8,7 +8,7 @@ class SixersStatsTablePage {
   constructor() {
     this.api = new NBAApiManager();
     this.state = {
-      season: this.api.currentSeason || '2023-24',
+      season: '2023-24', // will be set from dropdown if present
       search: '',
       players: [],
       seasonsData: {}, // optional: preloaded season map if provided
@@ -33,6 +33,13 @@ class SixersStatsTablePage {
     this.careerContainer = document.getElementById('careerSection');
     this.careerTableBody = document.querySelector('#careerTable tbody');
     this.refreshBtn = document.getElementById('refreshBtn');
+
+    // Initialize season from dropdown or API manager for auto-current season
+    if (this.seasonSelect && this.seasonSelect.value) {
+      this.state.season = this.seasonSelect.value;
+    } else if (this.api?.currentSeason) {
+      this.state.season = this.api.currentSeason;
+    }
   }
 
   bindEvents() {
