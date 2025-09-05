@@ -98,6 +98,28 @@ document.addEventListener('DOMContentLoaded', function () {
   const navbar   = document.getElementById('navbar');
   const menuBtn  = document.getElementById('mobileMenuBtn');
   const mobile   = document.getElementById('mobileMenu');
+  const navMenu  = document.querySelector('.nav-menu');
+
+  // Enforce mobile-only hamburger via JS (overrides page-specific CSS if needed)
+  function applyResponsiveNav() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      if (navMenu) navMenu.style.display = 'none';
+      if (menuBtn) menuBtn.style.display = 'flex';
+    } else {
+      if (navMenu) navMenu.style.display = 'flex';
+      if (menuBtn) menuBtn.style.display = 'none';
+      // Ensure menu is closed when leaving mobile
+      if (mobile?.classList.contains('active')) {
+        mobile.classList.remove('active');
+        menuBtn?.classList.remove('active');
+        menuBtn?.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('no-scroll');
+      }
+    }
+  }
+  applyResponsiveNav();
+  window.addEventListener('resize', applyResponsiveNav);
 
   // Mobile menu toggle (single binding)
   if (menuBtn && mobile && !menuBtn.__bound) {
