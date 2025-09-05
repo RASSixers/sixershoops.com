@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const isOpen = mobile.classList.contains('active');
       menuBtn.setAttribute('aria-expanded', String(isOpen));
       document.body.classList.toggle('no-scroll', isOpen);
+      document.documentElement.classList.toggle('no-scroll', isOpen);
     });
 
     // Prevent clicks inside menu from closing accidentally
@@ -155,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
         mobile.classList.remove('active');
         menuBtn.setAttribute('aria-expanded', 'false');
         document.body.classList.remove('no-scroll');
+        document.documentElement.classList.remove('no-scroll');
       }
     });
   }
@@ -171,15 +173,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Close mobile menu on outside click
-  document.addEventListener('click', e => {
-    if (!navbar?.contains(e.target) && !mobile?.contains(e.target)) {
-      menuBtn?.classList.remove('active');
-      mobile?.classList.remove('active');
-      menuBtn?.setAttribute('aria-expanded', 'false');
-      document.body.classList.remove('no-scroll');
-    }
-  });
+  // Remove duplicate global outside-click closer (handled above)
+  // (kept intentionally empty to avoid double-closing bugs)
+  // document.addEventListener('click', ...) removed
 
   // Scroll effect
   window.addEventListener('scroll', () => {
@@ -213,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
       mobileBtn?.classList.remove('active');
       mobileBtn?.setAttribute('aria-expanded', 'false');
       document.body.classList.remove('no-scroll');
+      document.documentElement.classList.remove('no-scroll');
     }
   });
 });
