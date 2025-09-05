@@ -39,6 +39,10 @@ class SixersStatsTablePage {
       this.state.season = this.seasonSelect.value;
     } else if (this.api?.currentSeason) {
       this.state.season = this.api.currentSeason;
+    } else {
+      // Build current-season string (e.g., 2024-25) if dropdown missing/empty
+      const y = this.guessCurrentSeasonStart();
+      this.state.season = `${y}-${String(y + 1).slice(2)}`;
     }
   }
 
@@ -82,7 +86,15 @@ class SixersStatsTablePage {
   getSeasonStartYear(seasonStr) {
     // Convert '2024-25' -> 2024, '2023-24' -> 2023
     const m = /^(\d{4})/.exec(seasonStr);
-    return m ? parseInt(m[1], 10) : 2024;
+    return m ? parseInt(m[1], 10) : this.guessCurrentSeasonStart();
+  }
+
+  guessCurrentSeasonStart() {
+    const now = new Date();
+    let y = now.getUTCFullYear();
+    const mth = now.getUTCMonth() + 1; // 1-12
+    if (mth <= 8) y -= 1; // Jan–Aug → previous season start
+    return y;
   }
 
   async fetchFromBallDontLie(seasonStr) {
@@ -183,18 +195,8 @@ class SixersStatsTablePage {
 
   async load() {
     try {
-      // API base can be configured on the page via window.API_BASE (defaults to same-origin)
-      const apiBase = (window.API_BASE || '').replace(/\/$/, '');
-      const apiUrl = (p) => `${apiBase}${p.startsWith('/') ? p : '/' + p}`;
-
-      // Prefer backend proxy to avoid CORS/rate issues
-      const proxied = await fetch(apiUrl(`/api/player-stats?season=${encodeURIComponent(this.state.season)}`)).then(r => r.json()).catch(() => null);
-      if (proxied && proxied.success && Array.isArray(proxied.players)) {
-        this.state.players = proxied.players;
-      } else {
-        // Fallback to client-side fetcher as backup (Ball Don't Lie public API)
-        this.state.players = await this.fetchFromBallDontLie(this.state.season);
-      }
+      // Client-only: use Ball Don't Lie public API exclusively
+      this.state.players = await this.fetchFromBallDontLie(this.state.season);
       this.renderPlayers();
       try {
         await this.renderCareer();
