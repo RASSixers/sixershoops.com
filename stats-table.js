@@ -98,106 +98,120 @@ class SixersStatsTablePage {
   }
 
   async fetchFromBallDontLie(seasonStr) {
-    const BDL_BASE = 'https://api.balldontlie.io/api/v1'; // new domain recommended
+    const BASES = [
+      'https://api.balldontlie.io/api/v1',      // new domain
+      'https://www.balldontlie.io/api/v1'       // legacy domain
+    ];
+    const season = this.getSeasonStartYear(seasonStr);
+    const teamId = 23; // Sixers
+
     const headers = window.BDL_API_KEY ? { Authorization: `Bearer ${window.BDL_API_KEY}` } : {};
 
-    const season = this.getSeasonStartYear(seasonStr);
-    const teamId = 23; // 76ers on Ball Don't Lie
-
-    // 1) Try roster-based season averages
-    let players = [];
-    try {
-      const rosterRes = await fetch(`${BDL_BASE}/players?team_ids[]=${teamId}&per_page=100`, { cache: 'no-store', headers }).catch(() => null);
-      const rosterJson = rosterRes ? await rosterRes.json().catch(() => ({})) : {};
-      players = Array.isArray(rosterJson?.data) ? rosterJson.data : [];
-    } catch {}
-
-    let idToName = new Map();
-    if (players.length) {
-      idToName = new Map(players.map(p => [p.id, `${p.first_name} ${p.last_name}`.trim()]));
-    }
+    const tryJson = async (url, opts) => {
+      try {
+        const r = await fetch(url, opts);
+        if (!r) return null;
+        // Some browsers treat file:// origin oddly; still attempt to parse
+        const j = await r.json().catch(() => null);
+        return j;
+      } catch {
+        return null;
+      }
+    };
 
     let mapped = [];
-    if (players.length) {
-      // 2) Season averages for roster ids
-      const ids = players.map(p => p.id);
-      const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
-      const chunks = chunk(ids, 25);
-      const allAverages = [];
-      for (const c of chunks) {
-        const q = c.map(id => `player_ids[]=${id}`).join('&');
-        const avgRes = await fetch(`${BDL_BASE}/season_averages?season=${season}&${q}`, { cache: 'no-store', headers }).catch(() => null);
-        const avgJson = avgRes ? await avgRes.json().catch(() => ({})) : {};
-        allAverages.push(...(avgJson?.data || []));
-      }
 
-      mapped = allAverages.map(a => {
-        const name = idToName.get(a.player_id) || 'Unknown';
-        const gp = a.games_played || 0;
-        const min = a.min ? (() => { const [mm, ss] = a.min.split(':').map(Number); return (mm || 0) + (ss || 0)/60; })() : 0;
-        const fgPct = a.fg_pct ?? 0;
-        const threePct = a.fg3_pct ?? 0;
-        const ftPct = a.ft_pct ?? 0;
-        const pts = a.pts ?? 0;
-        const reb = a.reb ?? 0;
-        const ast = a.ast ?? 0;
-        const stl = a.stl ?? 0;
-        const blk = a.blk ?? 0;
-        const tov = a.turnover ?? 0;
-        const fga = a.fga ?? 0;
-        const fta = a.fta ?? 0;
-        const fgm = a.fgm ?? 0;
-        const ftm = a.ftm ?? 0;
-        const eff = Number(pts) + Number(reb) + Number(ast) + Number(stl) + Number(blk) - Number(tov) - (Number(fga) - Number(fgm)) - (Number(fta) - Number(ftm));
-        return { name, gp, min, pts, reb, ast, stl, blk, tov, fgPct, threePct, ftPct, plusMinus: 0, eff };
-      });
-    }
+    for (const BDL_BASE of BASES) {
+      // 1) Roster → season_averages
+      let players = [];
+      const rosterJson = await tryJson(`${BDL_BASE}/players?team_ids[]=${teamId}&per_page=100`, { cache: 'no-store', headers });
+      players = Array.isArray(rosterJson?.data) ? rosterJson.data : [];
 
-    // 3) If empty, build from team stats endpoint across pages (no roster needed)
-    if (!mapped.length) {
-      const totals = new Map(); // id -> totals
-      let page = 1;
-      const perPage = 100;
-      while (true) {
-        const statsRes = await fetch(`${BDL_BASE}/stats?seasons[]=${season}&team_ids[]=${teamId}&per_page=${perPage}&page=${page}`, { cache: 'no-store', headers }).catch(() => null);
-        const statsJson = statsRes ? await statsRes.json().catch(() => ({})) : {};
-        const stats = Array.isArray(statsJson?.data) ? statsJson.data : [];
-        for (const s of stats) {
-          const pid = s.player?.id;
-          if (!pid) continue;
-          const name = `${s.player?.first_name || ''} ${s.player?.last_name || ''}`.trim();
-          const rec = totals.get(pid) || { name, gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, fgm: 0, fga: 0, ftm: 0, fta: 0, fg3m: 0, fg3a: 0 };
-          rec.gp += 1;
-          const minStr = s.min || '0:00';
-          const [mm, ss] = minStr.split(':').map(Number);
-          rec.min += (mm || 0) + (ss || 0)/60;
-          rec.pts += s.pts || 0;
-          rec.reb += s.reb || 0;
-          rec.ast += s.ast || 0;
-          rec.stl += s.stl || 0;
-          rec.blk += s.blk || 0;
-          rec.tov += s.turnover || 0;
-          rec.fgm += s.fgm || 0;
-          rec.fga += s.fga || 0;
-          rec.ftm += s.ftm || 0;
-          rec.fta += s.fta || 0;
-          rec.fg3m += s.fg3m || 0;
-          rec.fg3a += s.fg3a || 0;
-          totals.set(pid, rec);
+      let idToName = new Map();
+      if (players.length) idToName = new Map(players.map(p => [p.id, `${p.first_name} ${p.last_name}`.trim()]));
+
+      if (players.length) {
+        const ids = players.map(p => p.id);
+        const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
+        const chunks = chunk(ids, 25);
+        const allAverages = [];
+        for (const c of chunks) {
+          const q = c.map(id => `player_ids[]=${id}`).join('&');
+          const avgJson = await tryJson(`${BDL_BASE}/season_averages?season=${season}&${q}`, { cache: 'no-store', headers });
+          allAverages.push(...(avgJson?.data || []));
         }
-        if (!statsJson?.meta || !statsJson.meta?.next_page) break;
-        page = statsJson.meta.next_page;
-        if (page > 10) break; // safety to avoid too many requests
+        if (allAverages.length) {
+          mapped = allAverages.map(a => {
+            const name = idToName.get(a.player_id) || 'Unknown';
+            const gp = a.games_played || 0;
+            const min = a.min ? (() => { const [mm, ss] = a.min.split(':').map(Number); return (mm || 0) + (ss || 0)/60; })() : 0;
+            const fgPct = a.fg_pct ?? 0;
+            const threePct = a.fg3_pct ?? 0;
+            const ftPct = a.ft_pct ?? 0;
+            const pts = a.pts ?? 0;
+            const reb = a.reb ?? 0;
+            const ast = a.ast ?? 0;
+            const stl = a.stl ?? 0;
+            const blk = a.blk ?? 0;
+            const tov = a.turnover ?? 0;
+            const fga = a.fga ?? 0;
+            const fta = a.fta ?? 0;
+            const fgm = a.fgm ?? 0;
+            const ftm = a.ftm ?? 0;
+            const eff = Number(pts) + Number(reb) + Number(ast) + Number(stl) + Number(blk) - Number(tov) - (Number(fga) - Number(fgm)) - (Number(fta) - Number(ftm));
+            return { name, gp, min, pts, reb, ast, stl, blk, tov, fgPct, threePct, ftPct, plusMinus: 0, eff };
+          });
+        }
       }
 
-      mapped = Array.from(totals.values()).map(t => {
-        const gp = Math.max(t.gp, 1);
-        const fgPct = t.fga ? (t.fgm / t.fga) : 0;
-        const ftPct = t.fta ? (t.ftm / t.fta) : 0;
-        const threePct = t.fg3a ? (t.fg3m / t.fg3a) : 0;
-        const eff = t.pts + t.reb + t.ast + t.stl + t.blk - t.tov - (t.fga - t.fgm) - (t.fta - t.ftm);
-        return { name: t.name, gp: t.gp, min: t.min / gp, pts: t.pts / gp, reb: t.reb / gp, ast: t.ast / gp, stl: t.stl / gp, blk: t.blk / gp, tov: t.tov / gp, fgPct, threePct, ftPct, plusMinus: 0, eff };
-      });
+      // 2) If still empty, aggregate from stats pages
+      if (!mapped.length) {
+        const totals = new Map();
+        let page = 1;
+        const perPage = 100;
+        while (true) {
+          const statsJson = await tryJson(`${BDL_BASE}/stats?seasons[]=${season}&team_ids[]=${teamId}&per_page=${perPage}&page=${page}`, { cache: 'no-store', headers });
+          const stats = Array.isArray(statsJson?.data) ? statsJson.data : [];
+          for (const s of stats) {
+            const pid = s.player?.id;
+            if (!pid) continue;
+            const name = `${s.player?.first_name || ''} ${s.player?.last_name || ''}`.trim();
+            const rec = totals.get(pid) || { name, gp: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, fgm: 0, fga: 0, ftm: 0, fta: 0, fg3m: 0, fg3a: 0 };
+            rec.gp += 1;
+            const minStr = s.min || '0:00';
+            const [mm, ss] = minStr.split(':').map(Number);
+            rec.min += (mm || 0) + (ss || 0)/60;
+            rec.pts += s.pts || 0;
+            rec.reb += s.reb || 0;
+            rec.ast += s.ast || 0;
+            rec.stl += s.stl || 0;
+            rec.blk += s.blk || 0;
+            rec.tov += s.turnover || 0;
+            rec.fgm += s.fgm || 0;
+            rec.fga += s.fga || 0;
+            rec.ftm += s.ftm || 0;
+            rec.fta += s.fta || 0;
+            rec.fg3m += s.fg3m || 0;
+            rec.fg3a += s.fg3a || 0;
+            totals.set(pid, rec);
+          }
+          if (!statsJson?.meta || !statsJson.meta?.next_page) break;
+          page = statsJson.meta.next_page;
+          if (page > 10) break;
+        }
+        if (totals.size) {
+          mapped = Array.from(totals.values()).map(t => {
+            const gp = Math.max(t.gp, 1);
+            const fgPct = t.fga ? (t.fgm / t.fga) : 0;
+            const ftPct = t.fta ? (t.ftm / t.fta) : 0;
+            const threePct = t.fg3a ? (t.fg3m / t.fg3a) : 0;
+            const eff = t.pts + t.reb + t.ast + t.stl + t.blk - t.tov - (t.fga - t.fgm) - (t.fta - t.ftm);
+            return { name: t.name, gp: t.gp, min: t.min / gp, pts: t.pts / gp, reb: t.reb / gp, ast: t.ast / gp, stl: t.stl / gp, blk: t.blk / gp, tov: t.tov / gp, fgPct, threePct, ftPct, plusMinus: 0, eff };
+          });
+        }
+      }
+
+      if (mapped.length) break; // succeeded on this base
     }
 
     return mapped.sort((a,b) => b.pts - a.pts);
