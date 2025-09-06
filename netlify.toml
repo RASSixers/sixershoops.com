@@ -3,6 +3,14 @@
   publish = "."
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["node-fetch"]
+
+[functions."api-player-stats-py"]
+  runtime = "python3.11"
+  included_files = ["api/requirements.txt"]
+
 [[redirects]]
   from = "/api/health"
   to = "/.netlify/functions/health"
@@ -15,14 +23,16 @@
   status = 200
   force = true
 
+# Route stats to Python (Sportsipy)
+[[redirects]]
+  from = "/api/player-stats"
+  to = "/api/player-stats.py"
+  status = 200
+  force = true
+
 # Serve HTML files directly
 [[redirects]]
   from = "/:page.html"
   to = "/:page.html"
   status = 200
 
-# Fallback to index.html for other paths
-[[redirects]]
-  from = "/:path*"
-  to = "/index.html"
-  status = 200
