@@ -205,8 +205,23 @@ class SixersStatsTablePage {
 
   async load() {
     try {
-      // Client-only: use Ball Don't Lie public API exclusively
-      this.state.players = await this.fetchFromBallDontLie(this.state.season);
+      const apiBase = (window.API_BASE || '').replace(/\/$/, '');
+      const ts = Date.now(); // cache-bust to avoid stale CDN
+
+      // 1) Try on-site proxy first (no third-party service, your own code)
+      let proxied = null;
+      try {
+        const res = await fetch(`${apiBase}/api/player-stats?season=${encodeURIComponent(this.state.season)}&_=${ts}`, { cache: 'no-store' });
+        proxied = await res.json();
+      } catch {}
+
+      if (proxied && proxied.success && Array.isArray(proxied.players) && proxied.players.length) {
+        this.state.players = proxied.players;
+      } else {
+        // 2) Fallback to client-only public API
+        this.state.players = await this.fetchFromBallDontLie(this.state.season);
+      }
+
       this.renderPlayers();
       try {
         await this.renderCareer();
