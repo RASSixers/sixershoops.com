@@ -22,6 +22,10 @@ class SixersStatsTablePage {
 
   init() {
     this.cacheEls();
+    // Load any embedded multi-season data if provided on the page
+    if (window.SIXERS_STATS_DATA && window.SIXERS_STATS_DATA.seasons) {
+      this.state.seasonsData = window.SIXERS_STATS_DATA.seasons;
+    }
     this.bindEvents();
     this.load();
   }
@@ -236,17 +240,27 @@ class SixersStatsTablePage {
       const apiBase = (window.API_BASE || '').replace(/\/$/, '');
       const ts = Date.now(); // cache-bust to avoid stale CDN
 
-      // 1) Try on-site proxy first (no third-party service, your own code)
-      let proxied = null;
-      try {
-        const res = await fetch(`${apiBase}/api/player-stats?season=${encodeURIComponent(this.state.season)}&_=${ts}`, { cache: 'no-store' });
-        proxied = await res.json();
-      } catch {}
+      // 1) Try Netlify Python (Sportsipy) directly
+      let data = null;
+      const tryJson = async (url) => {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          return await r.json();
+        } catch { return null; }
+      };
 
-      if (proxied && proxied.success && Array.isArray(proxied.players) && proxied.players.length) {
-        this.state.players = proxied.players;
+      const q = `season=${encodeURIComponent(this.state.season)}&_=${ts}`;
+      data = await tryJson(`${apiBase}/.netlify/functions/player-stats-sportsipy?${q}`);
+
+      // 2) Fallback to existing /api route
+      if (!(data && data.success && Array.isArray(data.players) && data.players.length)) {
+        data = await tryJson(`${apiBase}/api/player-stats?${q}`);
+      }
+
+      // 3) Final fallback to public API
+      if (data && data.success && Array.isArray(data.players) && data.players.length) {
+        this.state.players = data.players;
       } else {
-        // 2) Fallback to client-only public API
         this.state.players = await this.fetchFromBallDontLie(this.state.season);
       }
 
