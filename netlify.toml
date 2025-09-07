@@ -7,9 +7,13 @@
   node_bundler = "esbuild"
   external_node_modules = ["node-fetch"]
 
-[functions."api-player-stats-py"]
+# Enable Python runtime for our function
+[functions."player-stats-sportsipy"]
   runtime = "python3.11"
   included_files = ["api/requirements.txt"]
+
+# Netlify will auto-install from this file if present in repo root or function dir.
+# We'll keep it at api/requirements.txt and reference it above.
 
 [[redirects]]
   from = "/api/health"
@@ -23,10 +27,10 @@
   status = 200
   force = true
 
-# Route stats to Python (Sportsipy)
+# Route stats to Python Sportsipy function
 [[redirects]]
   from = "/api/player-stats"
-  to = "/api/player-stats.py"
+  to = "/.netlify/functions/player-stats-sportsipy"
   status = 200
   force = true
 
