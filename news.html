@@ -305,6 +305,13 @@
       border-radius: 2px;
     }
     /* Quick update link styles */
+    .quick-legend { display:flex; gap:.6rem; flex-wrap:wrap; margin:-.25rem 0 1rem; font-size:.85rem; color:#475569; }
+    .legend-item { display:inline-flex; align-items:center; gap:.35rem; background:#fff; border:1px solid #e2e8f0; border-radius:999px; padding:.25rem .55rem; }
+    .legend-item .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .legend-item .dot.breaking { background:#ef4444; }
+    .legend-item .dot.rumor { background:#3b82f6; }
+    .legend-item .dot.news { background:#10b981; }
+
     .quick-link {
       position: relative;
       display: flex;
@@ -322,24 +329,33 @@
       position: absolute;
       left: 0; top: 0; bottom: 0;
       width: 4px;
-      background: linear-gradient(180deg, #06b6d4, #3b82f6);
+      background: #10b981; /* default News green */
       border-top-left-radius: 14px;
       border-bottom-left-radius: 14px;
     }
+    .quick-link.breaking::before { background:#ef4444; }
+    .quick-link.rumor::before { background:#3b82f6; }
+    .quick-link.news::before { background:#10b981; }
+
     .quick-link:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 28px rgba(2,6,23,.10);
       border-color: #cbd5e1;
     }
-    .quick-link .icon {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #e0f2fe, #e6fffa);
-      color: #0284c7;
-      flex-shrink: 0;
-      margin-top: 2px;
+
+    /* Replace circle icon with a category pill */
+    .quick-badge {
+      display:inline-flex; align-items:center; gap:.35rem;
+      font-size:.72rem; font-weight:800;
+      text-transform:uppercase; letter-spacing:.03em;
+      padding:.22rem .5rem; border-radius:999px; border:1px solid transparent;
+      background:#f1f5f9; color:#0f172a;
+      margin-top: 2px; flex-shrink:0;
     }
+    .quick-badge.breaking { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+    .quick-badge.rumor { background:#dbeafe; color:#1e40af; border-color:#bfdbfe; }
+    .quick-badge.news { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+
     .quick-link .post-title { font-weight: 800; color: #0f172a; line-height: 1.2; }
     .quick-link .post-title a { color: inherit; text-decoration: none; }
     .quick-link .post-title a:hover { text-decoration: underline; }
@@ -917,7 +933,12 @@
         <aside class="right-sidebar">
           <!-- Quick Updates on the side -->
           <section class="user-posts" aria-labelledby="quick-updates-heading">
-            <h2 id="quick-updates-heading"><i class="fas fa-bolt"></i> Small Updates</h2>
+            <h2 id="quick-updates-heading"><i class="fas fa-bolt"></i> Quick Updates</h2>
+            <div class="quick-legend" aria-label="Quick Updates Legend">
+              <span class="legend-item"><span class="dot breaking"></span> Breaking</span>
+              <span class="legend-item"><span class="dot rumor"></span> Rumor</span>
+              <span class="legend-item"><span class="dot news"></span> News</span>
+            </div>
             <div class="posts-list" id="quickLinksList"></div>
           </section>
 
@@ -1012,10 +1033,14 @@
         const url = item.url ? item.url : null;
         const desc = item.desc ? `<div class="desc">${escapeHtml(item.desc)}</div>` : '';
         const when = item.ts ? `<div class="meta">${getTimeAgo(new Date(item.ts))}</div>` : '';
+        // Determine category: allow optional item.type, else infer
+        const type = (item.type || inferTypeFromTitle(item.title || '')).toLowerCase();
+        const typeClass = (type === 'breaking' || type === 'rumor') ? type : 'news';
+        const badge = `<span class="quick-badge ${typeClass}">${typeClass}</span>`;
         const label = url ? `<a href="${url}" target="_blank" rel="noopener">${title}</a>` : `<span class="post-title">${title}</span>`;
         return `
-          <div class="quick-link">
-            <div class="icon"><i class="fas fa-link"></i></div>
+          <div class="quick-link ${typeClass}">
+            ${badge}
             <div>
               <div class="post-title">${label}</div>
               ${desc}
@@ -1024,6 +1049,13 @@
           </div>
         `;
       }).join('');
+
+      function inferTypeFromTitle(text) {
+        const t = text.toLowerCase();
+        if (/(breaking|signs|signed|agrees|agreement|trade|traded|acquire|acquired|deal|extension)/.test(t)) return 'breaking';
+        if (/(rumor|report|linked|interest|talks|pursuing|expected)/.test(t)) return 'rumor';
+        return 'news';
+      }
     }
 
     function escapeHtml(str) {
