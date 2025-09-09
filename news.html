@@ -946,17 +946,7 @@
             <div class="posts-list" id="quickLinksList"></div>
           </section>
 
-          <!-- Featured in sidebar -->
-          <div class="featured-section">
-            <h2><i class="fas fa-fire"></i> Featured Stories</h2>
-            <div class="featured-stories" id="featuredStories"></div>
-          </div>
 
-          <!-- Tweets under sidebar blocks -->
-          <section class="tweets-inline">
-            <h3 class="sources-title"><i class="fab fa-twitter"></i> Tweets</h3>
-            <div class="tweets-embed" id="tweetsEmbed"></div>
-          </section>
         </aside>
       </div>
 
@@ -1039,8 +1029,10 @@
         const when = item.ts ? `<div class="meta">${getTimeAgo(new Date(item.ts))}</div>` : '';
         // Determine category: allow optional item.type, else infer
         const type = (item.type || inferTypeFromTitle(item.title || '')).toLowerCase();
-        const typeClass = (type === 'breaking' || type === 'rumor') ? type : 'news';
-        const badge = `<span class="quick-badge ${typeClass}">${typeClass}</span>`;
+        const allowed = ['breaking','rumor','injury','news'];
+        const typeClass = allowed.includes(type) ? type : 'news';
+        const labelMap = { breaking: 'Breaking', rumor: 'Rumor', injury: 'Injury', news: 'News' };
+        const badge = `<span class="quick-badge ${typeClass}">${labelMap[typeClass]}</span>`;
         const label = url ? `<a href="${url}" target="_blank" rel="noopener">${title}</a>` : `<span class="post-title">${title}</span>`;
         return `
           <div class="quick-link ${typeClass}">
