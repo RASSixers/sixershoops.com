@@ -359,11 +359,11 @@
     .quick-badge.news { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
     .quick-badge.injury { background:#fef3c7; color:#92400e; border-color:#fde68a; }
 
-    .quick-link .post-title { font-weight: 800; color: #0f172a; line-height: 1.2; }
+    .quick-link .post-title { font-weight: 800; color: #0f172a; line-height: 1.25; font-size: .98rem; }
     .quick-link .post-title a { color: inherit; text-decoration: none; }
     .quick-link .post-title a:hover { text-decoration: underline; }
-    .quick-link .desc { color:#334155; margin-top: .2rem; }
-    .quick-link .meta { color:#64748b; font-size:.8rem; margin-top: .35rem; }
+    .quick-link .desc { color:#334155; margin-top: .28rem; font-size: .92rem; }
+    .quick-link .meta { color:#64748b; font-size:.8rem; margin-top: .45rem; display:flex; align-items:center; gap:.35rem; }
     .posts-list {
       display: flex;
       flex-direction: column;
@@ -887,19 +887,19 @@
           <!-- Hero Grid (1 primary + 2 secondary) -->
           <section class="hero-grid" aria-labelledby="hero-heading">
             <article class="hero-card hero-primary">
-              <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1600&auto=format&fit=crop');"></div>
+              <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
               <h2 id="hero-heading" class="hero-title"><i class="fas fa-star"></i> Featured Story</h2>
               <div class="hero-meta"><i class="fas fa-clock"></i> Updated today</div>
               <div class="hero-body">Paste a highlight paragraph or a link to a major story here to pin it at the top.</div>
             </article>
             <article class="hero-card hero-secondary">
-              <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=1200&auto=format&fit=crop');"></div>
+              <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
               <h3 class="hero-title"><i class="fas fa-fire"></i> Secondary Highlight</h3>
               <div class="hero-meta">Today</div>
               <div class="hero-body">Another quick story teaser.</div>
             </article>
             <article class="hero-card hero-secondary">
-              <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1200&auto=format&fit=crop');"></div>
+              <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
               <h3 class="hero-title"><i class="fas fa-bolt"></i> Quick Hit</h3>
               <div class="hero-meta">Today</div>
               <div class="hero-body">Short blurb about a notable update.</div>
@@ -912,14 +912,14 @@
             <div class="news-list grid-list" id="newsList">
               <!-- Example magazine cards; duplicate and replace content/links -->
               <article class="news-card mag">
-                <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1521417531039-94c1f0b0f2f2?q=80&w=1200&auto=format&fit=crop');"></div>
+                <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
                 <div class="card-body">
                   <div class="post-title">Roster tweak ahead of back-to-back</div>
                   <div class="post-meta"><i class="fas fa-calendar"></i> Oct 23, 2025</div>
                 </div>
               </article>
               <article class="news-card mag">
-                <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=1200&auto=format&fit=crop');"></div>
+                <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
                 <div class="card-body">
                   <div class="post-title">Injury update: questionable tag for starter</div>
                   <div class="post-meta"><i class="fas fa-calendar"></i> Oct 23, 2025</div>
@@ -1026,7 +1026,10 @@
         const title = escapeHtml(item.title || 'Update');
         const url = item.url ? item.url : null;
         const desc = item.desc ? `<div class="desc">${escapeHtml(item.desc)}</div>` : '';
-        const when = item.ts ? `<div class="meta">${getTimeAgo(new Date(item.ts))}</div>` : '';
+        const timeTitle = item.ts ? new Date(item.ts).toLocaleString() : '';
+        const when = item.ts
+          ? `<div class="meta" title="${timeTitle}"><i class="fas fa-clock"></i> ${getTimeAgo(new Date(item.ts))}</div>`
+          : `<div class="meta"><i class="fas fa-clock"></i> Just now</div>`;
         // Determine category: allow optional item.type, else infer
         const type = (item.type || inferTypeFromTitle(item.title || '')).toLowerCase();
         const allowed = ['breaking','rumor','injury','news'];
