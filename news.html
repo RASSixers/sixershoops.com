@@ -831,6 +831,8 @@
     .hero-card .thumb { aspect-ratio: 16/9; width: 100%; background: #e2e8f0; background-size: cover; background-position: center; border-top-left-radius: 18px; border-top-right-radius: 18px; }
     .hero-primary .thumb { aspect-ratio: 3/2; }
     .hero-card .hero-title { margin-top: 0.6rem; }
+    .hero-link { color:#0f172a; text-decoration:none; }
+    .hero-link:hover { text-decoration:underline; }
 
     /* Slightly tighter container padding for density */
     .news-main-content { padding: 2rem; }
@@ -888,19 +890,18 @@
           <section class="hero-grid" aria-labelledby="hero-heading">
             <article class="hero-card hero-primary">
               <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
-              <h2 id="hero-heading" class="hero-title"><i class="fas fa-star"></i> Featured Story</h2>
+              <h2 id="hero-heading" class="hero-title"><a class="hero-link" href="#" onclick="return false;"><i class="fas fa-star"></i> Featured Story</a></h2>
               <div class="hero-meta"><i class="fas fa-clock"></i> Updated today</div>
-              <div class="hero-body">Paste a highlight paragraph or a link to a major story here to pin it at the top.</div>
             </article>
             <article class="hero-card hero-secondary">
               <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
-              <h3 class="hero-title"><i class="fas fa-fire"></i> Secondary Highlight</h3>
+              <h3 class="hero-title"><a class="hero-link" href="#" onclick="return false;"><i class="fas fa-fire"></i> Latest Story</a></h3>
               <div class="hero-meta">Today</div>
               <div class="hero-body">Another quick story teaser.</div>
             </article>
             <article class="hero-card hero-secondary">
               <div class="thumb" style="background:#e2e8f0; background-image:none;"></div>
-              <h3 class="hero-title"><i class="fas fa-bolt"></i> Quick Hit</h3>
+              <h3 class="hero-title"><a class="hero-link" href="#" onclick="return false;"><i class="fas fa-bolt"></i> Quick Hit</a></h3>
               <div class="hero-meta">Today</div>
               <div class="hero-body">Short blurb about a notable update.</div>
             </article>
@@ -1036,7 +1037,13 @@
         const typeClass = allowed.includes(type) ? type : 'news';
         const labelMap = { breaking: 'Breaking', rumor: 'Rumor', injury: 'Injury', news: 'News' };
         const badge = `<span class="quick-badge ${typeClass}">${labelMap[typeClass]}</span>`;
-        const label = url ? `<a href="${url}" target="_blank" rel="noopener">${title}</a>` : `<span class="post-title">${title}</span>`;
+        const rawTitle = item.title || 'Update';
+        const escapedTitle = escapeHtml(rawTitle);
+        const linkedTitle = escapedTitle.replace(/@([A-Za-z0-9_]{1,15})/g, (m, h) => {
+          const href = item.url ? item.url : `https://x.com/${h}`;
+          return `<a href="${href}" target="_blank" rel="noopener">${m}</a>`;
+        });
+        const label = linkedTitle;
         return `
           <div class="quick-link ${typeClass}">
             ${badge}
