@@ -1350,14 +1350,18 @@
       function avatarErrorHandler(img, lastLower) {
         const lastCap = lastLower.charAt(0).toUpperCase() + lastLower.slice(1);
         const candidates = [
-          `/roster/Copilot${lastLower}.webp`,
-          `/roster/copilot${lastLower}.webp`,
-          `/roster/copilot${lastCap}.webp`,
-          `/roster/Copilot${lastCap}.webp`,
+          // Prefer PNGs first (root /roster)
           `/roster/Copilot${lastLower}.png`,
           `/roster/copilot${lastLower}.png`,
           `/roster/copilot${lastCap}.png`,
           `/roster/Copilot${lastCap}.png`,
+          // Then WebP variants
+          `/roster/Copilot${lastLower}.webp`,
+          `/roster/copilot${lastLower}.webp`,
+          `/roster/copilot${lastCap}.webp`,
+          `/roster/Copilot${lastCap}.webp`,
+          // Legacy images folder
+          `/roster/images/Copilot${lastLower}.png`,
           `/roster/images/Copilot${lastLower}.webp`,
         ];
         let i = parseInt(img.dataset.srcIndex || '0', 10);
@@ -1441,7 +1445,7 @@
               <div class="player-avatar">
                 <img
                   class="player-avatar-img"
-                  src="/roster/images/Copilot${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}.webp"
+                  src="/roster/Copilot${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}.png"
                   alt="${player.name}"
                   data-src-index="0"
                   onload="this.parentElement.classList.add('has-image')"
