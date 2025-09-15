@@ -428,8 +428,8 @@
     }
 
     .player-avatar{
-      width: 60px;
-      height: 60px;
+      width: 72px;  /* was 60 */
+      height: 72px; /* was 60 */
       border-radius: 50%;
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
       display: flex;
@@ -440,6 +440,7 @@
       font-weight: 700;
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
       position: relative;
+      overflow: hidden; /* ensure circular crop stays clean */
     }
 
 
@@ -449,8 +450,9 @@
       position: absolute;
       inset: 2px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
       z-index: 1; /* behind the image */
+      pointer-events: none;
     }
     .player-avatar.has-image::after{
       display: none; /* hide overlay when real photo is present */
@@ -458,20 +460,22 @@
 
     /* Player avatar image and placeholder design */
     .player-avatar-img {
-      width: 60px;
-      height: 60px;
+      width: 80px;   /* slightly larger than container to allow better crop */
+      height: 80px;  /* slightly larger than container to allow better crop */
       border-radius: 50%;
       object-fit: cover;
+      object-position: center top; /* lift the face into view */
       border: 2px solid #e2e8f0;
       background: #f1f5f9;
       display: block;
       position: relative;
       z-index: 2; /* above overlay */
+      transform: translate(-4px, -6px); /* nudge to better align heads */
     }
 
     .placeholder-design {
-      width: 60px;
-      height: 60px;
+      width: 72px;  /* match container */
+      height: 72px; /* match container */
       border-radius: 50%;
       position: absolute;
       top: 0;
