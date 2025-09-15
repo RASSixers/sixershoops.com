@@ -1338,6 +1338,31 @@
         });
       }
 
+      // Avatar image fallback handling
+      function avatarErrorHandler(img, lastLower) {
+        const lastCap = lastLower.charAt(0).toUpperCase() + lastLower.slice(1);
+        const candidates = [
+          `/roster/Copilot${lastLower}.webp`,
+          `/roster/copilot${lastLower}.webp`,
+          `/roster/copilot${lastCap}.webp`,
+          `/roster/Copilot${lastCap}.webp`,
+          `/roster/Copilot${lastLower}.png`,
+          `/roster/copilot${lastLower}.png`,
+          `/roster/copilot${lastCap}.png`,
+          `/roster/Copilot${lastCap}.png`,
+          `/roster/images/Copilot${lastLower}.webp`,
+        ];
+        let i = parseInt(img.dataset.srcIndex || '0', 10);
+        if (i < candidates.length - 1) {
+          i += 1;
+          img.dataset.srcIndex = String(i);
+          img.src = candidates[i];
+        } else {
+          img.parentElement.classList.add('no-image');
+          img.remove();
+        }
+      }
+
       // Render players
       function renderPlayers() {
         const filteredPlayers = filterPlayers();
@@ -1410,7 +1435,8 @@
                   class="player-avatar-img"
                   src="/roster/images/Copilot${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}.webp"
                   alt="${player.name}"
-                  onerror="this.parentElement.classList.add('no-image'); this.remove();"
+                  data-src-index="0"
+                  onerror="avatarErrorHandler(this, '${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}')"
                 />
                 <div class="placeholder-design" aria-hidden="true">
                   <div class="placeholder-head"></div>
