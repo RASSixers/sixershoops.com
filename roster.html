@@ -450,6 +450,10 @@
       inset: 2px;
       border-radius: 50%;
       background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      z-index: 1; /* behind the image */
+    }
+    .player-avatar.has-image::after{
+      display: none; /* hide overlay when real photo is present */
     }
 
     /* Player avatar image and placeholder design */
@@ -460,6 +464,9 @@
       object-fit: cover;
       border: 2px solid #e2e8f0;
       background: #f1f5f9;
+      display: block;
+      position: relative;
+      z-index: 2; /* above overlay */
     }
 
     .placeholder-design {
@@ -473,6 +480,7 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
+      z-index: 2; /* above overlay */
     }
 
     .player-avatar.no-image .placeholder-design {
@@ -1436,6 +1444,7 @@
                   src="/roster/images/Copilot${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}.webp"
                   alt="${player.name}"
                   data-src-index="0"
+                  onload="this.parentElement.classList.add('has-image')"
                   onerror="avatarErrorHandler(this, '${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}')"
                 />
                 <div class="placeholder-design" aria-hidden="true">
