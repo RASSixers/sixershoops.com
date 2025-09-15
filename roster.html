@@ -441,6 +441,8 @@
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
       position: relative;
       overflow: hidden; /* ensure circular crop stays clean */
+      border: 2px solid #e2e8f0; /* move border to container */
+      background-color: #f1f5f9; /* neutral background for contain */
     }
 
 
@@ -460,17 +462,17 @@
 
     /* Player avatar image and placeholder design */
     .player-avatar-img {
-      width: 80px;   /* slightly larger than container to allow better crop */
-      height: 80px;  /* slightly larger than container to allow better crop */
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
-      object-fit: cover;
-      object-position: center top; /* lift the face into view */
-      border: 2px solid #e2e8f0;
-      background: #f1f5f9;
+      object-fit: contain; /* ensure entire headshot fits */
+      object-position: center center; /* center the image */
+      background: transparent;
       display: block;
       position: relative;
       z-index: 2; /* above overlay */
-      transform: translate(-4px, -6px); /* nudge to better align heads */
+      transform: none; /* remove nudge */
+      border: 0; /* border handled by container */
     }
 
     .placeholder-design {
@@ -1354,16 +1356,16 @@
       function avatarErrorHandler(img, lastLower) {
         const lastCap = lastLower.charAt(0).toUpperCase() + lastLower.slice(1);
         const candidates = [
-          // Prefer PNGs first (root /roster)
+          // Prefer common WebP pattern first to reduce flicker
+          `/roster/copilot${lastLower}.webp`,
+          `/roster/Copilot${lastLower}.webp`,
+          `/roster/copilot${lastCap}.webp`,
+          `/roster/Copilot${lastCap}.webp`,
+          // Then PNG variants
           `/roster/Copilot${lastLower}.png`,
           `/roster/copilot${lastLower}.png`,
           `/roster/copilot${lastCap}.png`,
           `/roster/Copilot${lastCap}.png`,
-          // Then WebP variants
-          `/roster/Copilot${lastLower}.webp`,
-          `/roster/copilot${lastLower}.webp`,
-          `/roster/copilot${lastCap}.webp`,
-          `/roster/Copilot${lastCap}.webp`,
           // Legacy images folder
           `/roster/images/Copilot${lastLower}.png`,
           `/roster/images/Copilot${lastLower}.webp`,
@@ -1449,7 +1451,7 @@
               <div class="player-avatar">
                 <img
                   class="player-avatar-img"
-                  src="/roster/Copilot${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}.png"
+                  src="/roster/copilot${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'')}.webp"
                   alt="${player.name}"
                   data-src-index="0"
                   onload="this.parentElement.classList.add('has-image')"
