@@ -1363,14 +1363,36 @@
         return [lastLower];
       }
 
+      // Explicit filename mapping (from your provided list)
+      function getExplicitImageCandidates(lastLower) {
+        const map = {
+          edgecome: ['/roster/Copilotedgecome.png'],
+          edgecombe: ['/roster/Copilotedgecome.png'],
+          edwards: ['/roster/Copilotedwards.png'],
+          george: ['/roster/Copilotgeorge.png'],
+          mccain: ['/roster/Copilotmccain.png'],
+          watford: ['/roster/Copilotwatford.png'],
+          lowry: ['/roster/copilotLowry.png'],
+          drummond: ['/roster/copilotdrummond.png'],
+          embiid: ['/roster/copilotembiid.png'],
+          gordon: ['/roster/copilotgordon.png'],
+          grimes: ['/roster/copilotgrimes.png'],
+          maxey: ['/roster/copilotmaxey.png'],
+          oubre: ['/roster/copilotoubre.png'],
+        };
+        return map[lastLower] || [];
+      }
+
       // Avatar image fallback handling
       function avatarErrorHandler(img, lastLower) {
         const lastCap = lastLower.charAt(0).toUpperCase() + lastLower.slice(1);
         const stems = getImageStemsFromName(lastLower);
         const candidates = [];
+        // 1) Explicit mapping first (exact filenames you have)
+        candidates.push(...getExplicitImageCandidates(lastLower));
+        // 2) Then generated variants
         for (const s of stems) {
           const sCap = s.charAt(0).toUpperCase() + s.slice(1);
-          // Prefix variants x Last-name casing variants
           candidates.push(`/roster/Copilot${s}.png`);
           candidates.push(`/roster/copilot${s}.png`);
           candidates.push(`/roster/Copilot${sCap}.png`);
