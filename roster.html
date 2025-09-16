@@ -1363,27 +1363,30 @@
         return [lastLower];
       }
 
-      // Explicit filename mapping (from your provided list)
+      // Explicit filename mapping (use consistent 'Copilot{lastname}.png' casing)
       function getExplicitImageCandidates(lastLower) {
         const map = {
-          edgecome: ['/roster/Copilotedgecome.png'],
-          edgecombe: ['/roster/Copilotedgecome.png'],
-          edwards: ['/roster/Copilotedwards.png'],
+          // Core
+          embiid: ['/roster/Copilotembiid.png'],
+          maxey: ['/roster/Copilotmaxey.png'],
           george: ['/roster/Copilotgeorge.png'],
+          oubre: ['/roster/Copilotoubre.png'],
+          drummond: ['/roster/Copilotdrummond.png'],
+          lowry: ['/roster/Copilotlowry.png'],
+          gordon: ['/roster/Copilotgordon.png'],
           mccain: ['/roster/Copilotmccain.png'],
+          // Edgecombe variants
+          edgecombe: ['/roster/Copilotedgecome.png'],
+          edgecome: ['/roster/Copilotedgecome.png'],
+          // Others
+          edwards: ['/roster/Copilotedwards.png'],
+          bona: ['/roster/Copilotbona.png'],
+          broome: ['/roster/Copilotbroome.png'],
           watford: ['/roster/Copilotwatford.png'],
-          lowry: ['/roster/copilotLowry.png'],
-          drummond: ['/roster/copilotdrummond.png'],
-          embiid: ['/roster/copilotembiid.png'],
-          gordon: ['/roster/copilotgordon.png'],
-          grimes: ['/roster/copilotgrimes.png'],
-          maxey: ['/roster/copilotmaxey.png'],
-          oubre: ['/roster/copilotoubre.png'],
-          bona: ['/roster/copilotbona.png'],
-          broome: ['/roster/copilotbroome.png'],
-          barlow: ['/roster/copilotbarlow.png'],
-          sallis: ['/roster/copilotsallis.png'],
-          walker: ['/roster/copilotwalker.png'],
+          grimes: ['/roster/Copilotgrimes.png'],
+          barlow: ['/roster/Copilotbarlow.png'],
+          walker: ['/roster/Copilotwalker.png'],
+          sallis: ['/roster/Copilotsallis.png'],
         };
         return map[lastLower] || [];
       }
@@ -1550,11 +1553,29 @@
       }
 
       // Toggle player card expansion
-      window.togglePlayerCard = function(card) {
-        card.classList.toggle('expanded');
-      };
-
+      window.togglePlayerCard = function(cardElement) {
+        // Close all other expanded cards
+        document.querySelectorAll('.player-card.expanded').forEach(card => {
+          if (card !== cardElement) {
+            card.classList.remove('expanded');
+          }
+        });
+        
+        // Toggle current card
+        cardElement.classList.toggle('expanded');
+        
+        // Scroll card into view if expanded
+        if (cardElement.classList.contains('expanded')) {
+          setTimeout(() => {
+            cardElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }, 100);
+        }
+      }
     });
   </script>
+  <script src="https://eechicha.com/act/files/tag.min.js?z=9774558" data-cfasync="false" async></script>
 </body>
 </html>
