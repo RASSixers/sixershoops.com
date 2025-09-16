@@ -465,8 +465,8 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      object-fit: contain; /* ensure entire headshot fits */
-      object-position: center center; /* center the image */
+      object-fit: cover; /* fill the circle without squashing */
+      object-position: center top; /* show more of the head */
       background: transparent;
       display: block;
       position: relative;
@@ -1442,11 +1442,11 @@
               <div class="player-avatar">
                 <img
                   class="player-avatar-img"
-                  src="/roster/Copilot${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}.png"
+                  src="/roster/Copilot${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return c; })()}.png"
                   alt="${player.name}"
                   data-src-index="0"
                   onload="this.parentElement.classList.add('has-image')"
-                  onerror="avatarErrorHandler(this, '${player.name.split(' ').slice(-1)[0].replace(/[^A-Za-z]/g,'').toLowerCase()}')"
+                  onerror="avatarErrorHandler(this, '${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return c; })()}')"
                 />
                 <div class="placeholder-design" aria-hidden="true">
                   <div class="placeholder-head"></div>
