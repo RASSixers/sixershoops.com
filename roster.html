@@ -1363,7 +1363,7 @@
         return [lastLower];
       }
 
-      // Explicit filename mapping (from your provided list)
+      // Explicit filename mapping (from your provided list) keyed by last name
       function getExplicitImageCandidates(lastLower) {
         const map = {
           edgecome: ['/roster/Copilotedgecome.png'],
@@ -1383,14 +1383,26 @@
         return map[lastLower] || [];
       }
 
-      // Avatar image fallback handling
-      function avatarErrorHandler(img, lastLower) {
-        const lastCap = lastLower.charAt(0).toUpperCase() + lastLower.slice(1);
+      // Utility: derive normalized last name from full name (handles Jr./Sr./II-V)
+      function getLastLowerFromName(name) {
+        const parts = String(name).split(' ').filter(Boolean);
+        let last = parts[parts.length - 1] || '';
+        let c = last.replace(/[^A-Za-z]/g, '').toLowerCase();
+        if (['jr','sr','ii','iii','iv','v'].includes(c) && parts.length > 1) {
+          last = parts[parts.length - 2];
+          c = last.replace(/[^A-Za-z]/g, '').toLowerCase();
+        }
+        return c;
+      }
+
+      // Build full candidate list from full name
+      function getImageCandidatesByName(name) {
+        const lastLower = getLastLowerFromName(name);
         const stems = getImageStemsFromName(lastLower);
         const candidates = [];
         // 1) Explicit mapping first (exact filenames you have)
         candidates.push(...getExplicitImageCandidates(lastLower));
-        // 2) Then generated variants
+        // 2) Then generated variants (prefix + last casing)
         for (const s of stems) {
           const sCap = s.charAt(0).toUpperCase() + s.slice(1);
           candidates.push(`/roster/Copilot${s}.png`);
@@ -1398,6 +1410,12 @@
           candidates.push(`/roster/Copilot${sCap}.png`);
           candidates.push(`/roster/copilot${sCap}.png`);
         }
+        return candidates;
+      }
+
+      // Avatar image fallback handling by full name
+      function avatarErrorHandlerByName(img, name) {
+        const candidates = getImageCandidatesByName(name);
         let i = parseInt(img.dataset.srcIndex || '0', 10);
         if (i < candidates.length - 1) {
           i += 1;
@@ -1479,11 +1497,11 @@
               <div class="player-avatar">
                 <img
                   class="player-avatar-img"
-                  src="/roster/Copilot${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return (getImageStemsFromName(c)[0] || c); })()}.png"
+                  src="${(() => getImageCandidatesByName(player.name)[0])()}"
                   alt="${player.name}"
                   data-src-index="0"
                   onload="this.parentElement.classList.add('has-image')"
-                  onerror="avatarErrorHandler(this, '${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return c; })()}')"
+                  onerror="avatarErrorHandlerByName(this, '${player.name.replace(/'/g, "\'")}')"
                 />
                 <div class="placeholder-design" aria-hidden="true">
                   <div class="placeholder-head"></div>
