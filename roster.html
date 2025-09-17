@@ -1363,50 +1363,62 @@
         return [lastLower];
       }
 
-      // Explicit filename mapping with multiple likely variants per player
-      function getExplicitImageCandidates(lastLower) {
-        const variants = (stems) => {
-          const exts = ['.png', '.PNG', '.jpg', '.jpeg', '.webp'];
-          const bases = new Set();
-          for (const s of stems) {
-            const sCap = s.charAt(0).toUpperCase() + s.slice(1);
-            bases.add(`Copilot${s}`);
-            bases.add(`copilot${s}`);
-            bases.add(`Copilot${sCap}`);
-            bases.add(`copilot${sCap}`);
-            // Plain last name without Copilot prefix
-            bases.add(`${s}`);
-            bases.add(`${sCap}`);
-          }
-          const out = [];
-          for (const b of bases) for (const e of exts) out.push(`roster/${b}${e}`);
-          return out;
-        };
+      // Deterministic image map for guaranteed hits (first entry should exist)
+      const IMAGE_MAP = {
+        // MUST-HAVE players
+        embiid: [
+          'roster/Copilotembiid.png',
+          'roster/CopilotEmbiid.png',
+          'roster/joel_embiid.png',
+          'roster/joelembiid.png'
+        ],
+        maxey: [
+          'roster/Copilotmaxey.png',
+          'roster/CopilotMaxey.png',
+          'roster/tyrese_maxey.png',
+          'roster/tyresemaxey.png'
+        ],
+        lowry: [
+          'roster/Copilotlowry.png',
+          'roster/CopilotLowry.png',
+          'roster/kyle_lowry.png',
+          'roster/kylelowry.png'
+        ],
+        gordon: [
+          'roster/Copilotgordon.png',
+          'roster/CopilotGordon.png',
+          'roster/eric_gordon.png',
+          'roster/ericgordon.png'
+        ],
+        oubre: [
+          'roster/Copilotoubre.png',
+          'roster/CopilotOubre.png',
+          'roster/kelly_oubre.png',
+          'roster/kellyoubre.png'
+        ],
+        drummond: [
+          'roster/Copilotdrummond.png',
+          'roster/CopilotDrummond.png',
+          'roster/andre_drummond.png',
+          'roster/andredrummond.png'
+        ],
 
-        const map = {
-          // Core with first/last/common stems
-          embiid: variants(['embiid','joelembiid','joel_embiid','embid']),
-          maxey: variants(['maxey','tyresemaxey','tyrese_maxey']),
-          george: variants(['george','paulgeorge','paul_george']),
-          oubre: variants(['oubre','kellyoubre','kelly_oubre']),
-          drummond: variants(['drummond','andredrummond','andre_drummond']),
-          lowry: variants(['lowry','kylelowry','kyle_lowry']),
-          gordon: variants(['gordon','ericgordon','eric_gordon']),
-          mccain: variants(['mccain','jaredmccain','jared_mccain']),
-          // Edgecombe variants
-          edgecombe: variants(['edgecombe','edgecome','vjedgecombe','vj_edgecombe','vj_edgecome']),
-          edgecome: variants(['edgecome','edgecombe','vjedgecombe','vj_edgecombe','vj_edgecome']),
-          // Others
-          edwards: variants(['edwards','terenceedwards','terence_edwards','jaydenedwards','jayden_edwards']),
-          bona: variants(['bona','adembona','adem_bona']),
-          broome: variants(['broome','johniibroome','johnni_broome','johni_broome','johnniibroome']),
-          watford: variants(['watford','trendonwatford','trendon_watford']),
-          grimes: variants(['grimes','quintingrimes','quintin_grimes','quentingrimes','quentin_grimes']),
-          barlow: variants(['barlow','sandrobarlow','sandro_barlow','dominicbarlow','dominic_barlow']),
-          walker: variants(['walker','mikalwalker','mikal_walker','camenker_walker','camwalker','cam_walker']),
-          sallis: variants(['sallis','hunter_sallis','huntersallis']),
-        };
-        return map[lastLower] || [];
+        // Others (kept for completeness)
+        george: ['roster/Copilotgeorge.png','roster/CopilotGeorge.png','roster/paul_george.png','roster/paulgeorge.png'],
+        mccain: ['roster/Copilotmccain.png','roster/CopilotMccain.png','roster/jared_mccain.png','roster/jaredmccain.png'],
+        edgecombe: ['roster/Copilotedgecome.png','roster/CopilotEdgecombe.png','roster/vj_edgecombe.png','roster/vjedgecombe.png','roster/edgecombe.png','roster/edgecome.png'],
+        edwards: ['roster/Copilotedwards.png','roster/CopilotEdwards.png','roster/edwards.png'],
+        bona: ['roster/Copilotbona.png','roster/CopilotBona.png','roster/adem_bona.png','roster/adembona.png','roster/bona.png'],
+        broome: ['roster/Copilotbroome.png','roster/CopilotBroome.png','roster/broome.png'],
+        watford: ['roster/Copilotwatford.png','roster/CopilotWatford.png','roster/watford.png'],
+        grimes: ['roster/Copilotgrimes.png','roster/CopilotGrimes.png','roster/grimes.png'],
+        barlow: ['roster/Copilotbarlow.png','roster/CopilotBarlow.png','roster/barlow.png'],
+        walker: ['roster/Copilotwalker.png','roster/CopilotWalker.png','roster/walker.png'],
+        sallis: ['roster/Copilotsallis.png','roster/CopilotSallis.png','roster/sallis.png'],
+      };
+
+      function getExplicitImageCandidates(lastLower) {
+        return IMAGE_MAP[lastLower] || [];
       }
 
       // Prefer explicit mapping for initial src to avoid first 404, then fallbacks
