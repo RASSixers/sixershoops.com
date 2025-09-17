@@ -1396,7 +1396,9 @@
         const explicit = getExplicitImageCandidates(lastLower);
         if (explicit.length) return explicit[0];
         const stem = (getImageStemsFromName(lastLower)[0] || lastLower);
-        return `/roster/Copilot${stem}.png`;
+        // Try common extensions/casing
+        const exts = ['.png', '.PNG', '.jpg', '.jpeg', '.webp'];
+        return `/roster/Copilot${stem}${exts[0]}`; // initial src uses first; others are tried on error
       }
 
       // Avatar image fallback handling
@@ -1405,13 +1407,16 @@
         const candidates = [];
         // 1) Explicit mapping first (exact filenames you have)
         candidates.push(...getExplicitImageCandidates(lastLower));
-        // 2) Then generated variants
+        // 2) Then generated variants with common extension/casing permutations
+        const exts = ['.png', '.PNG', '.jpg', '.jpeg', '.webp'];
         for (const s of stems) {
           const sCap = s.charAt(0).toUpperCase() + s.slice(1);
-          candidates.push(`/roster/Copilot${s}.png`);
-          candidates.push(`/roster/copilot${s}.png`);
-          candidates.push(`/roster/Copilot${sCap}.png`);
-          candidates.push(`/roster/copilot${sCap}.png`);
+          for (const ext of exts) {
+            candidates.push(`/roster/Copilot${s}${ext}`);
+            candidates.push(`/roster/copilot${s}${ext}`);
+            candidates.push(`/roster/Copilot${sCap}${ext}`);
+            candidates.push(`/roster/copilot${sCap}${ext}`);
+          }
         }
         let i = parseInt(img.dataset.srcIndex || '0', 10);
         if (i < candidates.length - 1) {
