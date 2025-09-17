@@ -1391,9 +1391,16 @@
         return map[lastLower] || [];
       }
 
+      // Prefer explicit mapping for initial src to avoid first 404, then fallbacks
+      function getInitialAvatarSrc(lastLower) {
+        const explicit = getExplicitImageCandidates(lastLower);
+        if (explicit.length) return explicit[0];
+        const stem = (getImageStemsFromName(lastLower)[0] || lastLower);
+        return `/roster/Copilot${stem}.png`;
+      }
+
       // Avatar image fallback handling
       function avatarErrorHandler(img, lastLower) {
-        const lastCap = lastLower.charAt(0).toUpperCase() + lastLower.slice(1);
         const stems = getImageStemsFromName(lastLower);
         const candidates = [];
         // 1) Explicit mapping first (exact filenames you have)
@@ -1487,7 +1494,7 @@
               <div class="player-avatar">
                 <img
                   class="player-avatar-img"
-                  src="/roster/Copilot${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return (getImageStemsFromName(c)[0] || c); })()}.png"
+                  src="${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return getInitialAvatarSrc(c); })()}"
                   alt="${player.name}"
                   data-src-index="0"
                   onload="this.parentElement.classList.add('has-image')"
