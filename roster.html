@@ -1363,30 +1363,48 @@
         return [lastLower];
       }
 
-      // Explicit filename mapping (use consistent 'Copilot{lastname}.png' casing)
+      // Explicit filename mapping with multiple likely variants per player
       function getExplicitImageCandidates(lastLower) {
+        const variants = (stems) => {
+          const exts = ['.png', '.PNG', '.jpg', '.jpeg', '.webp'];
+          const bases = new Set();
+          for (const s of stems) {
+            const sCap = s.charAt(0).toUpperCase() + s.slice(1);
+            bases.add(`Copilot${s}`);
+            bases.add(`copilot${s}`);
+            bases.add(`Copilot${sCap}`);
+            bases.add(`copilot${sCap}`);
+            // Plain last name without Copilot prefix
+            bases.add(`${s}`);
+            bases.add(`${sCap}`);
+          }
+          const out = [];
+          for (const b of bases) for (const e of exts) out.push(`/roster/${b}${e}`);
+          return out;
+        };
+
         const map = {
-          // Core
-          embiid: ['/roster/Copilotembiid.png'],
-          maxey: ['/roster/Copilotmaxey.png'],
-          george: ['/roster/Copilotgeorge.png'],
-          oubre: ['/roster/Copilotoubre.png'],
-          drummond: ['/roster/Copilotdrummond.png'],
-          lowry: ['/roster/Copilotlowry.png'],
-          gordon: ['/roster/Copilotgordon.png'],
-          mccain: ['/roster/Copilotmccain.png'],
+          // Core with first/last/common stems
+          embiid: variants(['embiid','joelembiid','joel_embiid','embid']),
+          maxey: variants(['maxey','tyresemaxey','tyrese_maxey']),
+          george: variants(['george','paulgeorge','paul_george']),
+          oubre: variants(['oubre','kellyoubre','kelly_oubre']),
+          drummond: variants(['drummond','andredrummond','andre_drummond']),
+          lowry: variants(['lowry','kylelowry','kyle_lowry']),
+          gordon: variants(['gordon','ericgordon','eric_gordon']),
+          mccain: variants(['mccain','jaredmccain','jared_mccain']),
           // Edgecombe variants
-          edgecombe: ['/roster/Copilotedgecome.png'],
-          edgecome: ['/roster/Copilotedgecome.png'],
+          edgecombe: variants(['edgecombe','edgecome','vjedgecombe','vj_edgecombe','vj_edgecome']),
+          edgecome: variants(['edgecome','edgecombe','vjedgecombe','vj_edgecombe','vj_edgecome']),
           // Others
-          edwards: ['/roster/Copilotedwards.png'],
-          bona: ['/roster/Copilotbona.png'],
-          broome: ['/roster/Copilotbroome.png'],
-          watford: ['/roster/Copilotwatford.png'],
-          grimes: ['/roster/Copilotgrimes.png'],
-          barlow: ['/roster/Copilotbarlow.png'],
-          walker: ['/roster/Copilotwalker.png'],
-          sallis: ['/roster/Copilotsallis.png'],
+          edwards: variants(['edwards','terenceedwards','terence_edwards','jaydenedwards','jayden_edwards']),
+          bona: variants(['bona','adembona','adem_bona']),
+          broome: variants(['broome','johniibroome','johnni_broome','johni_broome','johnniibroome']),
+          watford: variants(['watford','trendonwatford','trendon_watford']),
+          grimes: variants(['grimes','quintingrimes','quintin_grimes','quentingrimes','quentin_grimes']),
+          barlow: variants(['barlow','sandrobarlow','sandro_barlow','dominicbarlow','dominic_barlow']),
+          walker: variants(['walker','mikalwalker','mikal_walker','camenker_walker','camwalker','cam_walker']),
+          sallis: variants(['sallis','hunter_sallis','huntersallis']),
         };
         return map[lastLower] || [];
       }
