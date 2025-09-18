@@ -1307,10 +1307,17 @@
       const controlButtons = document.querySelectorAll('.control-btn');
       const emptyState = document.getElementById('emptyState');
 
-      // Check if elements exist
-      if (!playersContainer || !playerSearch || !emptyState) {
-        console.error('Required DOM elements not found');
+      // Check essentials and create fallbacks if some controls are missing
+      if (!playersContainer) {
+        console.error('playersContainer not found');
         return;
+      }
+      if (!emptyState) {
+        const es = document.createElement('div');
+        es.id = 'emptyState';
+        es.style.display = 'none';
+        es.innerHTML = '<h3>No players found</h3><p>Try adjusting your search or filter criteria</p>';
+        playersContainer.insertAdjacentElement('afterend', es);
       }
 
       // Initialize
