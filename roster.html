@@ -1358,6 +1358,38 @@
         return last;
       }
 
+      // Build candidate image URLs for robust loading
+      function buildAvatarCandidates(name) {
+        const slug = playerLastSlug(name);
+        const alts = [slug];
+        // Known alternative spelling
+        if (slug === 'edgecombe') alts.push('edgecome');
+        // Try absolute and relative paths with multiple extensions/cases
+        const exts = ['png','PNG','jpg','JPG','jpeg','JPEG','webp','WEBP'];
+        const bases = ['\/roster\/copilot', 'roster\/copilot'];
+        const candidates = [];
+        for (const s of alts) {
+          for (const b of bases) {
+            for (const e of exts) {
+              candidates.push(`${b}${s}.${e}`);
+            }
+          }
+        }
+        // Finally, placeholder
+        candidates.push('/roster/placeholder.svg');
+        return candidates;
+      }
+
+      // onerror handler to try next candidate
+      function tryNextAvatar(img, name) {
+        const list = (img._avatarCandidates ||= buildAvatarCandidates(name));
+        let i = (img.dataset.attempt ? parseInt(img.dataset.attempt, 10) : 0);
+        if (i >= list.length) return; // nothing else to try
+        img.dataset.attempt = String(i + 1);
+        img.onerror = function() { tryNextAvatar(img, name); };
+        img.src = list[i];
+      }
+
       // Create player card HTML - Professional card structure
       function createPlayerCard(player) {
         const initials = player.name.split(' ').map(n => n[0]).join('');
@@ -1411,7 +1443,7 @@
             ${twoWayBadge}
             <div class="player-header">
               <div class="player-avatar avatar-${playerLastSlug(player.name)} no-image">
-                <img src="${playerImagePath(player.name)}" alt="${player.name}" onload="this.parentElement.classList.remove('no-image')" onerror="this.onerror=null; this.src='/roster/placeholder.svg'; this.parentElement.classList.remove('no-image');" />
+                <img src="${playerImagePath(player.name)}" alt="${player.name}" onload="this.parentElement.classList.remove('no-image')" onerror="tryNextAvatar(this, '${player.name.replace(/'/g, "\'")}')" />
                 <span class="avatar-initials">${initials}</span>
               </div>
               <div class="player-info">
