@@ -428,8 +428,8 @@
     }
 
     .player-avatar{
-      width: 72px;  /* was 60 */
-      height: 72px; /* was 60 */
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
       display: flex;
@@ -440,73 +440,38 @@
       font-weight: 700;
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
       position: relative;
-      overflow: hidden; /* ensure circular crop stays clean */
-      border: 2px solid #e2e8f0; /* move border to container */
-      background-color: #f1f5f9; /* neutral background for contain */
+      overflow: hidden; /* ensure image is clipped to circle */
     }
 
+    .player-avatar img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
+    .player-avatar .avatar-initials{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      /* initials visible if no image (hidden via CSS when image shows) */
+    }
+
+    .player-avatar:not(.no-image) .avatar-initials{
+      display: none; /* hide initials when image loads */
+    }
 
     .player-avatar::after{
       content: "";
       position: absolute;
       inset: 2px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
-      z-index: 1; /* behind the image */
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
       pointer-events: none;
-    }
-    .player-avatar.has-image::after{
-      display: none; /* hide overlay when real photo is present */
-    }
-
-    /* Player avatar image and placeholder design */
-    .player-avatar-img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover; /* fill the circle without squashing */
-      object-position: center top; /* show more of the head */
-      background: transparent;
-      display: block;
-      position: relative;
-      z-index: 2; /* above overlay */
-      transform: none; /* remove nudge */
-      border: 0; /* border handled by container */
-    }
-
-    .placeholder-design {
-      width: 72px;  /* match container */
-      height: 72px; /* match container */
-      border-radius: 50%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 2; /* above overlay */
-    }
-
-    .player-avatar.no-image .placeholder-design {
-      display: flex;
-    }
-
-    .placeholder-head {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.9);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      margin-bottom: 4px;
-    }
-
-    .placeholder-body {
-      width: 34px;
-      height: 18px;
-      border-radius: 12px 12px 8px 8px;
-      background: rgba(255,255,255,0.85);
+      z-index: 2;
     }
 
     .player-info{
@@ -820,10 +785,6 @@
     }
   </style>
 </head>
-
-<!-- =====================  YOUR AD SCRIPT (mirroring depth chart) ===================== -->
-<script>(function(d,z,s){s.src='https://'+d+'/400/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('vemtoutcheeg.com',9737890,document.createElement('script'))</script>
-<!-- ============================================================================= -->
 
 <body>
   <!-- Navbar is injected by nav.js -->
@@ -1299,25 +1260,18 @@
     let currentFilter = 'all';
     let searchQuery = '';
 
-    // Initialize when DOM is ready (don't wait for images)
-    window.addEventListener('DOMContentLoaded', function() {
+    // Initialize when page loads
+    window.addEventListener('load', function() {
       // DOM elements
       const playersContainer = document.getElementById('playersContainer');
       const playerSearch = document.getElementById('playerSearch');
       const controlButtons = document.querySelectorAll('.control-btn');
       const emptyState = document.getElementById('emptyState');
 
-      // Check essentials and create fallbacks if some controls are missing
-      if (!playersContainer) {
-        console.error('playersContainer not found');
+      // Check if elements exist
+      if (!playersContainer || !playerSearch || !emptyState) {
+        console.error('Required DOM elements not found');
         return;
-      }
-      if (!emptyState) {
-        const es = document.createElement('div');
-        es.id = 'emptyState';
-        es.style.display = 'none';
-        es.innerHTML = '<h3>No players found</h3><p>Try adjusting your search or filter criteria</p>';
-        playersContainer.insertAdjacentElement('afterend', es);
       }
 
       // Initialize
@@ -1359,86 +1313,6 @@
         });
       }
 
-      // Build candidate stems from name using overrides
-      function getImageStemsFromName(lastLower) {
-        const map = {
-          edgecombe: ['edgecombe','edgecome'],
-          embiid: ['embiid','embiiid'],
-          watford: ['watford','watord'],
-        };
-        if (map[lastLower]) return map[lastLower];
-        return [lastLower];
-      }
-
-      // Deterministic image map for guaranteed hits (first entry exists in repo)
-      const IMAGE_MAP = {
-        // MUST-HAVE players (exact filenames from GitHub)
-        embiid: ['roster/copilotembiid.png'],
-        maxey: ['roster/copilotmaxey.png'],
-        lowry: ['roster/copilotLowry.png'],
-        gordon: ['roster/copilotgordon.png'],
-        oubre: ['roster/copilotoubre.png'],
-        drummond: ['roster/copilotdrummond.png'],
-
-        // Others (exact filenames from GitHub)
-        george: ['roster/Copilotgeorge.png'],
-        mccain: ['roster/Copilotmccain.png'],
-        edgecombe: ['roster/Copilotedgecome.png'],
-        edwards: ['roster/Copilotedwards.png'],
-        bona: ['roster/copilotbona.png'],
-        broome: ['roster/copilotbroome.png'],
-        watford: ['roster/Copilotwatford.png'],
-        grimes: ['roster/copilotgrimes.png'],
-        barlow: ['roster/copilotbarlow.png'],
-        walker: ['roster/copilotwalker.png'],
-        sallis: ['roster/copilotsallis.png'],
-      };
-
-      function getExplicitImageCandidates(lastLower) {
-        return IMAGE_MAP[lastLower] || [];
-      }
-
-      // Prefer explicit mapping for initial src to avoid first 404, then fallbacks
-      function getInitialAvatarSrc(lastLower) {
-        const explicit = getExplicitImageCandidates(lastLower);
-        if (explicit.length) return explicit[0];
-        const stem = (getImageStemsFromName(lastLower)[0] || lastLower);
-        // Try common extensions/casing
-        const exts = ['.png', '.PNG', '.jpg', '.jpeg', '.webp'];
-        return `roster/Copilot${stem}${exts[0]}`; // initial src uses first; others are tried on error
-      }
-
-      // Avatar image fallback handling
-      function avatarErrorHandler(img, lastLower) {
-        const stems = getImageStemsFromName(lastLower);
-        const candidates = [];
-        // 1) Explicit mapping first (exact filenames you have)
-        candidates.push(...getExplicitImageCandidates(lastLower));
-        // 2) Then generated variants with common extension/casing permutations
-        const exts = ['.png', '.PNG', '.jpg', '.jpeg', '.webp'];
-        for (const s of stems) {
-          const sCap = s.charAt(0).toUpperCase() + s.slice(1);
-          for (const ext of exts) {
-            candidates.push(`roster/Copilot${s}${ext}`);
-            candidates.push(`roster/copilot${s}${ext}`);
-            candidates.push(`roster/Copilot${sCap}${ext}`);
-            candidates.push(`roster/copilot${sCap}${ext}`);
-          }
-        }
-        let i = parseInt(img.dataset.srcIndex || '0', 10);
-        if (i < candidates.length - 1) {
-          i += 1;
-          img.dataset.srcIndex = String(i);
-          img.src = candidates[i];
-        } else {
-          // Use site logo as a safe placeholder instead of removing the image
-          img.dataset.srcIndex = String(candidates.length);
-          img.src = 'sixershoopslogo.png';
-          img.classList.add('placeholder');
-          img.parentElement.classList.add('has-image');
-        }
-      }
-
       // Render players
       function renderPlayers() {
         const filteredPlayers = filterPlayers();
@@ -1452,6 +1326,17 @@
         playersContainer.style.display = 'grid';
         emptyState.style.display = 'none';
         playersContainer.innerHTML = filteredPlayers.map(player => createPlayerCard(player)).join('');
+      }
+
+      // Helper to build image path from player name (uses last name; handles Jr./Sr./II/III/etc.)
+      function playerImagePath(name) {
+        const tokens = name.trim().split(/\s+/);
+        let last = tokens[tokens.length - 1].toLowerCase().replace(/[^a-z]/g, '');
+        const suffixes = new Set(['jr','sr','ii','iii','iv','v']);
+        if (suffixes.has(last) && tokens.length > 1) {
+          last = tokens[tokens.length - 2].toLowerCase().replace(/[^a-z]/g, '');
+        }
+        return `/roster/copilot${last}.png`;
       }
 
       // Create player card HTML - Professional card structure
@@ -1507,18 +1392,8 @@
             ${twoWayBadge}
             <div class="player-header">
               <div class="player-avatar">
-                <img
-                  class="player-avatar-img"
-                  src="${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return getInitialAvatarSrc(c); })()}"
-                  alt="${player.name}"
-                  data-src-index="0"
-                  onload="this.parentElement.classList.add('has-image')"
-                  onerror="avatarErrorHandler(this, '${(() => { const t = player.name.split(' ').filter(Boolean); let l = t[t.length-1]||''; let c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); if(['jr','sr','ii','iii','iv','v'].includes(c) && t.length>1){ l = t[t.length-2]; c = l.replace(/[^A-Za-z]/g,'').toLowerCase(); } return c; })()}')"
-                />
-                <div class="placeholder-design" aria-hidden="true">
-                  <div class="placeholder-head"></div>
-                  <div class="placeholder-body"></div>
-                </div>
+                <img src="${playerImagePath(player.name)}" alt="${player.name}" onerror="this.style.display='none'; this.parentElement.classList.add('no-image');" />
+                <span class="avatar-initials">${initials}</span>
               </div>
               <div class="player-info">
                 <div class="player-name">${player.name}</div>
@@ -1598,6 +1473,6 @@
       }
     });
   </script>
-  <script src="https://eechicha.com/act/files/tag.min.js?z=9774558" data-cfasync="false" async></script>
+    <script>(function(d,z,s){s.src='https://'+d+'/401/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('gizokraijaw.net',9757245,document.createElement('script'))</script>
 </body>
 </html>
