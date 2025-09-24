@@ -2503,23 +2503,7 @@
       </div>
     </section>
 
-    <!-- Latest Headlines (uses /api/news) -->
-    <section class="headlines" id="headlines">
-      <div class="headlines-card">
-        <div class="headlines-header">
-          <h3 class="live-title">Latest Sixers Headlines</h3>
-          <div class="filters" id="news-filters">
-            <button class="filter-btn active" data-cat="all">All</button>
-            <button class="filter-btn" data-cat="trades">Trades</button>
-            <button class="filter-btn" data-cat="signings">Signings</button>
-            <button class="filter-btn" data-cat="injuries">Injuries</button>
-            <button class="filter-btn" data-cat="games">Games</button>
-            <button class="filter-btn" data-cat="rumors">Rumors</button>
-          </div>
-        </div>
-        <ul class="headline-list" id="headline-list"></ul>
-      </div>
-    </section>
+
 
     <script>
       (function() {
@@ -2547,41 +2531,7 @@
           }
         }
 
-        async function loadNews(category = 'all') {
-          try {
-            const res = await fetch('/api/news', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ providers: ['rss','reddit'], maxResults: 40, category })
-            });
-            const json = await res.json();
-            const items = (json && json.data) ? json.data.slice(0, 8) : [];
-            const list = document.getElementById('headline-list');
-            list.innerHTML = items.map(i => (
-              `<li class="headline-item">
-                <a href="${i.url || '#'}" target="_blank" rel="noopener">${i.text || 'Update'}</a>
-                <span class="headline-meta">${i.source || ''}</span>
-              </li>`
-            )).join('');
-          } catch (e) {
-            document.getElementById('headline-list').innerHTML = '<li class="headline-item">Unable to load headlines right now.</li>';
-          }
-        }
-
-        // Filters
-        const filters = document.getElementById('news-filters');
-        if (filters) {
-          filters.addEventListener('click', (e) => {
-            const btn = e.target.closest('.filter-btn');
-            if (!btn) return;
-            filters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            loadNews(btn.dataset.cat);
-          });
-        }
-
-        // Init
-        loadNews('all');
+        // Headlines removed
       })();
     </script>
 
