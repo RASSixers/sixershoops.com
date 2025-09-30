@@ -249,15 +249,15 @@ font-size: 2.5rem;
 font-size: 1rem;
 }
 
-/* MOBILE CARD-BASED TABLE LAYOUT */
+/* MOBILE COMPACT CARD LAYOUT */
 .salary-table {
 display: block;
-border-radius: 12px;
+border-radius: 8px;
 overflow: visible;
 box-shadow: none;
 border: none;
 background: transparent;
-margin-bottom: 1.5rem;
+margin-bottom: 1rem;
 }
 
 .salary-table thead {
@@ -269,20 +269,21 @@ display: block;
 }
 
 .salary-table tr {
-display: block;
+display: flex;
+align-items: center;
 background: white !important;
-border-radius: 12px;
-margin-bottom: 1rem;
-padding: 1rem;
-box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-border: 1px solid rgba(226, 232, 240, 0.6);
+border-radius: 8px;
+margin-bottom: 0.5rem;
+padding: 0.75rem;
+box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+border: 1px solid rgba(226, 232, 240, 0.4);
 position: relative;
+min-height: 60px;
 }
 
 .salary-table tr:hover {
-background: white !important;
-box-shadow: 0 6px 16px rgba(59, 130, 246, 0.12);
-transform: translateY(-1px);
+background: rgba(59, 130, 246, 0.02) !important;
+box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
 transition: all 0.2s ease;
 }
 
@@ -290,30 +291,31 @@ transition: all 0.2s ease;
 display: block;
 padding: 0;
 border: none;
-text-align: left !important;
 }
 
-/* Rank number in top-right corner */
+/* Rank number - smaller circle */
 .salary-table td:nth-child(1) {
 position: absolute;
-top: 0.8rem;
-right: 1rem;
+top: 0.5rem;
+left: 0.75rem;
 background: linear-gradient(135deg, #3b82f6, #06b6d4);
 color: white;
-width: 28px;
-height: 28px;
+width: 20px;
+height: 20px;
 border-radius: 50%;
 display: flex;
 align-items: center;
 justify-content: center;
-font-size: 0.8rem;
+font-size: 0.7rem;
 font-weight: 700;
+flex-shrink: 0;
 }
 
-/* Player name and position */
+/* Player info - compact layout */
 .salary-table td:nth-child(2) {
-margin-bottom: 0.8rem;
-padding-right: 40px; /* Space for rank number */
+flex: 1;
+margin-left: 35px;
+margin-right: 0.5rem;
 }
 
 .player-info {
@@ -322,65 +324,64 @@ display: block !important;
 
 .player-info strong {
 display: block;
-font-size: 1.1rem;
+font-size: 0.95rem;
 font-weight: 700;
 color: #0f172a;
-margin-bottom: 0.3rem;
+line-height: 1.2;
+margin-bottom: 0.1rem;
 }
 
 .player-position {
 display: inline-block;
 background: #f1f5f9;
-color: #475569;
-padding: 0.2rem 0.6rem;
-border-radius: 12px;
-font-size: 0.75rem;
+color: #64748b;
+padding: 0.1rem 0.4rem;
+border-radius: 8px;
+font-size: 0.65rem;
 font-weight: 600;
 }
 
-/* Salary amount - prominent */
+/* Salary and details - right side */
+.salary-table td:nth-child(3),
+.salary-table td:nth-child(4),
+.salary-table td:nth-child(5) {
+position: absolute;
+right: 0.75rem;
+}
+
+/* Salary amount - top right */
 .salary-table td:nth-child(3) {
-margin-bottom: 0.8rem;
+top: 0.5rem;
 }
 
 .salary-amount {
-font-size: 1.3rem;
-font-weight: 800;
+font-size: 0.9rem;
+font-weight: 700;
 color: #0a174e;
-display: block;
+text-align: right;
 }
 
-.salary-amount::before {
-content: "💰 ";
-margin-right: 0.3rem;
-}
-
-/* Cap percentage */
+/* Cap percentage - middle right */
 .salary-table td:nth-child(4) {
-margin-bottom: 0.5rem;
+top: 1.4rem;
 }
 
 .cap-percentage {
-font-size: 0.9rem;
+font-size: 0.7rem;
 font-weight: 600;
 color: #0057e7;
+text-align: right;
 }
 
-.cap-percentage::before {
-content: "Cap %: ";
-color: #64748b;
-font-weight: 500;
-}
-
-/* Status badge */
+/* Status badge - bottom right */
 .salary-table td:nth-child(5) {
-margin-bottom: 0;
+bottom: 0.5rem;
 }
 
 .status-badge {
-font-size: 0.75rem;
-padding: 0.3rem 0.8rem;
-border-radius: 15px;
+font-size: 0.6rem;
+padding: 0.15rem 0.4rem;
+border-radius: 8px;
 font-weight: 600;
 text-transform: uppercase;
 display: inline-block;
@@ -388,11 +389,42 @@ display: inline-block;
 
 /* Two-way table adjustments */
 .twoway-table tr {
-border-left: 4px solid #dc2626;
+border-left: 3px solid #dc2626;
 }
 
-.twoway-table .salary-amount::before {
-content: "🔄 ";
+/* Responsive adjustments for very small screens */
+@media (max-width: 480px) {
+.salary-table tr {
+padding: 0.6rem;
+min-height: 55px;
+}
+
+.salary-table td:nth-child(1) {
+width: 18px;
+height: 18px;
+font-size: 0.65rem;
+}
+
+.salary-table td:nth-child(2) {
+margin-left: 30px;
+}
+
+.player-info strong {
+font-size: 0.9rem;
+}
+
+.salary-amount {
+font-size: 0.85rem;
+}
+
+.cap-percentage {
+font-size: 0.65rem;
+}
+
+.status-badge {
+font-size: 0.55rem;
+padding: 0.1rem 0.3rem;
+}
 }
 
 /* Mobile section titles */
