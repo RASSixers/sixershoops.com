@@ -40,80 +40,124 @@ margin: 0;
 padding: 0;
 box-sizing: border-box;
 }
-body {
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-color: #1e293b;
-padding-top: 0;
-min-height: 100vh;
+
+:root {
+--color-navy: #0a174e;
+--color-navy-soft: #122860;
+--color-sky: #3b82f6;
+--color-cyan: #06b6d4;
+--color-ice: #f8fafc;
+--color-white: #ffffff;
+--color-slate-900: #0f172a;
+--color-slate-700: #334155;
+--color-slate-500: #64748b;
+--color-gold: #f59e0b;
+--card-radius: 22px;
+--card-shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+--border-glow: 1px solid rgba(59, 130, 246, 0.25);
+--blur: blur(18px);
+--transition: all 0.35s ease;
 }
-/* Seamless Header Integration */
-.salary-header{
-background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+
+body {
+font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+min-height: 100vh;
+background:
+radial-gradient(circle at 5% 15%, rgba(59, 130, 246, 0.22), transparent 55%),
+radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.18), transparent 60%),
+radial-gradient(circle at 50% 85%, rgba(59, 130, 246, 0.18), transparent 58%),
+linear-gradient(135deg, #eef2ff 0%, #e2e8f0 50%, #f8fafc 100%);
+color: var(--color-slate-900);
+line-height: 1.6;
 padding-top: 80px;
+margin: 0;
+position: relative;
+overflow-x: hidden;
+}
+
+body::before {
+content: '';
+position: fixed;
+inset: 0;
+background: url('data:image/svg+xml,%3Csvg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3CradialGradient id="a" cx="0" cy="0" r="1" gradientTransform="translate(80 80) rotate(90) scale(80)" gradientUnits="userSpaceOnUse"%3E%3Cstop stop-color="%23e0f2fe" stop-opacity="0.25"/%3E%3Cstop offset="1" stop-color="white" stop-opacity="0"/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width="160" height="160" fill="url(%23a)"/%3E%3C/svg%3E') repeat;
+opacity: 0.65;
+pointer-events: none;
+z-index: 0;
+}
+
+/* Main Container */
+.main-container {
+max-width: 1400px;
+margin: 0 auto;
+padding: 2.75rem 2rem 3.5rem;
+position: relative;
+z-index: 1;
+}
+
+/* Header Section - Same as news.html */
+.page-header {
+text-align: center;
+margin-bottom: 3rem;
+padding: 3rem 0;
+background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+border-radius: 20px;
+color: white;
 position: relative;
 overflow: hidden;
 }
-.salary-header::before {
+
+.page-header::before {
 content: '';
 position: absolute;
 top: 0;
 left: 0;
 right: 0;
-height: 100%;
-background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-opacity: 0.6;
-pointer-events: none;
+bottom: 0;
+background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+animation: shimmer 3s ease-in-out infinite;
 }
 
-/* Page Title Section */
-.page-title-section{
-position: relative;
-z-index: 1;
-padding: 3rem 0 4rem;
-text-align: center;
+@keyframes shimmer {
+0%, 100% { transform: translateX(-100%); }
+50% { transform: translateX(100%); }
 }
 
-.page-title{
-font-size: 3.2rem;
+.page-title {
+font-size: 3.5rem;
 font-weight: 900;
-font-family: Georgia, serif;
-color: #ffffff;
-letter-spacing: -1px;
-margin-bottom: 0.5rem;
-text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+margin-bottom: 1rem;
+background: linear-gradient(135deg, #ffffff 0%, #3b82f6 50%, #06b6d4 100%);
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 background-clip: text;
+position: relative;
+z-index: 1;
 }
-.page-subtitle{
-font-size: 1.1rem;
+
+.page-subtitle {
+font-size: 1.2rem;
 color: #94a3b8;
-font-weight: 600;
-text-transform: uppercase;
-letter-spacing: 1.5px;
+font-weight: 500;
+position: relative;
+z-index: 1;
 }
 
-/* CONTENT WRAPPER - MATCHING NEWS.HTML LAYOUT */
-.content-wrapper {
-max-width: 1400px !important;
-margin: 0 auto !important;
-padding: 0 20px !important;
-position: relative !important;
+/* ADS WRAPPER STYLING */
+.ads-wrapper {
+position: relative;
+width: 100%;
+height: 0;
 }
 
-@media (max-width: 768px) {
-.content-wrapper {
-padding: 0 10px !important;
-}
-}
-
-/* Hide ads on smaller screens to give more space to content */
-@media (max-width: 1400px) {
 .ad-left-top, .ad-left-bottom, .ad-right-top, .ad-right-bottom {
-display: none !important;
+position: absolute;
 }
+
+/* CONTENT WRAPPER */
+.content-wrapper{
+max-width:1400px;
+margin:0 auto;
+padding:0 20px;
 }
 /* 4 ADS TOTAL - 2 LEFT, 2 RIGHT - FINAL PERFECT POSITION */
 .ad-left-top {
@@ -149,98 +193,97 @@ width: 300px;
 height: 250px;
 margin: 2rem auto;
 }
-/* SALARY PAGE MAIN CONTENT - MATCHING NEWS.HTML LAYOUT */
-.salary-main-content {
-max-width: 1400px !important;
-margin: 3rem auto 0 !important;
-background: #ffffff !important;
-border-radius: 20px !important;
-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-border: 1px solid rgba(59, 130, 246, 0.1) !important;
-padding: 2.5rem !important;
-position: relative !important;
-overflow: hidden !important;
+/* Main content - Same as news.html */
+.salary-main-content{
+background: white;
+border-radius: 20px;
+padding: 2.5rem;
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+border: 1px solid rgba(59, 130, 246, 0.1);
+position: relative;
+overflow: hidden;
 }
 
 .salary-main-content::before {
-content: '' !important;
-position: absolute !important;
-top: 0 !important;
-left: 0 !important;
-right: 0 !important;
-height: 4px !important;
-background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6) !important;
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 4px;
+background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
 }
 
-@media (max-width: 1450px) {
-.salary-main-content {
-margin: 3rem 2rem 0 !important;
-max-width: none !important;
-}
-}
-
-@media (max-width: 768px) {
-.salary-main-content {
-margin: 2rem 1rem 0 !important;
-padding: 1.5rem !important;
-}
-}
-
-@media (max-width: 480px) {
-.salary-main-content {
-margin: 1.5rem 0.5rem 0 !important;
-padding: 1rem !important;
-}
+.salary-main-content::after {
+content: '';
+position: absolute;
+inset: 18px;
+border-radius: calc(var(--card-radius) - 12px);
+border: 1px solid rgba(148, 163, 184, 0.16);
+pointer-events: none;
 }
 .salary-section-title {
-font-size: 1.6rem;
-color: #222;
+font-size: clamp(1.75rem, 2.6vw, 2.1rem);
+color: var(--color-navy);
+font-weight: 800;
+margin-bottom: 1.6rem;
+font-family: 'Cinzel', 'Georgia', serif;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0 0.35rem;
+}
+
+.salary-section-title::before,
+.salary-section-title::after {
+content: '';
+height: 2px;
+flex: 1;
+border-radius: 999px;
+background: linear-gradient(90deg, rgba(99, 102, 241, 0), rgba(99, 102, 241, 0.25), rgba(6, 182, 212, 0));
+margin: 0 1rem;
+opacity: 0.55;
+min-width:80px;
+}
+
+.salary-table {
+width: 100%;
+border-collapse: separate;
+border-spacing: 0;
+margin-bottom: 2.75rem;
+font-size: 1.05rem;
+color: var(--color-slate-900);
+background: rgba(255, 255, 255, 0.95);
+border-radius: 18px;
+overflow: hidden;
+box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+border: 1px solid rgba(226, 232, 240, 0.6);
+}
+.salary-table thead {
+background: linear-gradient(115deg, rgba(10, 23, 78, 0.94) 0%, rgba(59, 130, 246, 0.9) 100%);
+color: var(--color-white);
+}
+.salary-table th, .salary-table td {
+padding: 1rem 1.2rem;
+border-bottom: 1px solid rgba(226, 232, 240, 0.65);
+text-align: left;
+transition: background 0.25s ease, color 0.25s ease;
+}
+.salary-table th {
 font-weight: 700;
-margin-bottom: 1.1rem;
-font-family: 'Georgia', serif;
+font-size: 0.95rem;
+text-transform: uppercase;
+letter-spacing: 0.14em;
+opacity: 0.95;
 }
-.salary-table {
-width: 100% !important;
-border-collapse: collapse !important;
-margin-bottom: 2rem !important;
-font-size: 1.08rem !important;
-color: #222 !important;
-background: #fff !important;
-border-radius: 12px !important;
-overflow: hidden !important;
-box-shadow: 0 4px 20px rgba(10,23,78,0.08) !important;
+.salary-table tbody tr {
+background: rgba(255, 255, 255, 0.92);
 }
-.salary-table th, .salary-table td {
-padding: 1rem 0.8rem !important;
-border-bottom: 1px solid #eee !important;
-text-align: left !important;
+.salary-table tbody tr:nth-child(even) {
+background: rgba(248, 250, 252, 0.9);
 }
-.salary-table th {
-background: #f8fafc !important;
-font-weight: 700 !important;
-color: #1e293b !important;
-font-size: 0.95rem !important;
-text-transform: uppercase !important;
-letter-spacing: 0.025em !important;
-}
-@media (max-width: 768px) {
-.salary-table {
-font-size: 0.9rem !important;
-}
-.salary-table th, .salary-table td {
-padding: 0.6rem 0.5rem !important;
-}
-.salary-table th {
-font-size: 0.8rem !important;
-}
-}
-@media (max-width: 480px) {
-.salary-table {
-font-size: 0.8rem !important;
-}
-.salary-table th, .salary-table td {
-padding: 0.5rem 0.3rem !important;
-}
+.salary-table tbody tr:hover {
+background: rgba(59, 130, 246, 0.08);
 }
 .highlight-green {
 background: #d4f8d4 !important;
@@ -367,127 +410,140 @@ z-index: 1;
 }
 /* INTERACTIVE SALARY PAGE ENHANCEMENTS */
 /* Controls Section */
-.salary-controls {
-background: #fff;
-border-radius: 16px;
-padding: 1.5rem;
-margin-bottom: 2rem;
-box-shadow: 0 4px 20px rgba(10,23,78,0.09);
+.salary-controls{
+background: rgba(255, 255, 255, 0.92);
+border-radius: calc(var(--card-radius) - 8px);
+padding: 1.35rem 1.5rem;
+margin-bottom: 1.9rem;
+box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+border: 1px solid rgba(148, 163, 184, 0.18);
 display: flex;
-justify-content: space-between;
+flex-direction: column;
 align-items: center;
-flex-wrap: wrap;
 gap: 1rem;
+backdrop-filter: blur(6px);
+position: relative;
+overflow: hidden;
+}
+
+.salary-controls::before,
+.salary-controls::after {
+content: '';
+position: absolute;
+opacity: 0.35;
+filter: blur(18px);
+}
+
+.salary-controls::before {
+top: -20%;
+right: -12%;
+width: 32%;
+height: 45%;
+background: radial-gradient(circle, rgba(59, 130, 246, 0.18), transparent 75%);
+}
+
+.salary-controls::after {
+bottom: -18%;
+left: -15%;
+width: 38%;
+height: 48%;
+background: radial-gradient(circle, rgba(6, 182, 212, 0.16), transparent 70%);
 }
 .search-filter-section {
 display: flex;
 align-items: center;
-gap: 1rem;
+gap: 0.75rem;
 flex-wrap: wrap;
 }
 .search-box input {
-padding: 0.75rem 1rem;
-border: 2px solid #e9ecef;
-border-radius: 25px;
-font-size: 1rem;
-width: 250px;
-transition: all 0.3s ease;
+padding: 0.65rem 1rem;
+border: 1px solid rgba(148, 163, 184, 0.28);
+border-radius: 14px;
+font-size: 0.95rem;
+width: min(280px, 75vw);
+transition: var(--transition);
 outline: none;
+background: rgba(255, 255, 255, 0.95);
+box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 16px rgba(15, 23, 42, 0.05);
+color: var(--color-slate-700);
 }
-.search-box input:focus {
-border-color: #0057e7;
-box-shadow: 0 0 0 3px rgba(0, 87, 231, 0.1);
+
+.search-box input::placeholder {
+color: rgba(100, 116, 139, 0.75);
+letter-spacing: 0.06em;
+text-transform: uppercase;
 }
-/* Filter buttons removed - replaced with salary cap tables */
-.view-controls {
-display: flex;
-gap: 0.5rem;
-align-items: center;
-}
-.view-btn, .export-btn {
-padding: 0.75rem 1.25rem;
-border: 2px solid #e9ecef;
-background: #fff;
-border-radius: 8px;
-cursor: pointer;
-transition: all 0.3s ease;
-font-weight: 600;
-font-size: 0.9rem;
-}
-.view-btn:hover, .view-btn.active {
-background: #0057e7;
-color: #fff;
-border-color: #0057e7;
-}
-.export-btn {
-background: #28a745;
-color: #fff;
-border-color: #28a745;
-}
-.export-btn:hover {
-background: #218838;
+
+.search-box input:focus{
+border-color: rgba(59, 130, 246, 0.45);
+box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 transform: translateY(-1px);
 }
-/* Cap Calculator */
-.cap-calculator {
-background: linear-gradient(135deg, #0a174e 0%, #0057e7 100%);
-color: #fff;
-border-radius: 16px;
-padding: 2rem;
-margin-bottom: 2rem;
-box-shadow: 0 8px 32px rgba(10,23,78,0.15);
+/* Filter buttons removed - replaced with salary cap tables */
+.view-controls{
+display: flex;
+gap: 0.65rem;
+align-items: center;
+flex-wrap: wrap;
+justify-content: center;
 }
-.cap-calculator h3 {
-margin-bottom: 1.5rem;
-font-size: 1.5rem;
-text-align: center;
-}
-.cap-metrics {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-gap: 1rem;
-margin-bottom: 2rem;
-}
-.cap-metric {
-background: rgba(255, 255, 255, 0.1);
-padding: 1rem;
+.view-btn, .export-btn {
+padding: 0.6rem 1.1rem;
+border: 1px solid rgba(148, 163, 184, 0.26);
+background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.9));
 border-radius: 12px;
-text-align: center;
-backdrop-filter: blur(10px);
-}
-.metric-label {
-display: block;
+cursor: pointer;
+transition: var(--transition);
+font-weight: 600;
 font-size: 0.9rem;
-opacity: 0.9;
-margin-bottom: 0.5rem;
+letter-spacing: 0.05em;
+text-transform: uppercase;
+color: var(--color-navy);
+box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
 }
-.metric-value {
-display: block;
-font-size: 1.3rem;
-font-weight: 700;
+
+.view-btn:hover, .view-btn.active{
+background: linear-gradient(135deg, rgba(59, 130, 246, 0.85) 0%, rgba(14, 165, 233, 0.82) 100%);
+color: var(--color-white);
+border-color: transparent;
+transform: translateY(-2px);
+box-shadow: 0 12px 28px rgba(59, 130, 246, 0.28);
 }
-.cap-bar {
+
+.export-btn {
+background: linear-gradient(135deg, rgba(34, 197, 94, 0.88), rgba(16, 185, 129, 0.82));
+color: var(--color-white);
+border-color: transparent;
+box-shadow: 0 12px 26px rgba(22, 163, 74, 0.28);
+}
+
+.export-btn:hover {
+transform: translateY(-2px);
+box-shadow: 0 16px 34px rgba(22, 163, 74, 0.34);
+}
+/* Cap Calculator styles removed - now using inline styles for GitHub compatibility */
+.cap-bar{
 position: relative;
-height: 20px;
-background: rgba(255, 255, 255, 0.2);
-border-radius: 10px;
+height: 14px;
+background: #edf0f5;
+border-radius: 7px;
 overflow: hidden;
 }
 .cap-fill {
 height: 100%;
 background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
-border-radius: 10px;
+border-radius: 7px;
 transition: width 0.5s ease;
 }
 .cap-markers {
 position: absolute;
-top: -30px;
+top: -24px;
 width: 100%;
-height: 20px;
+height: 18px;
 }
 .cap-marker {
 position: absolute;
-font-size: 0.8rem;
+font-size: 0.68rem;
 font-weight: 600;
 transform: translateX(-50%);
 }
@@ -539,6 +595,9 @@ padding: 0.2rem 0.5rem;
 border-radius: 12px;
 font-size: 0.75rem;
 font-weight: 600;
+}
+.player-notes.show {
+display: block !important;
 }
 .salary-amount {
 font-weight: 700;
@@ -596,20 +655,20 @@ margin-top: 3rem;
 }
 .season-tabs {
 display: flex;
-gap: 0.5rem;
+gap: 0.6rem;
 margin-bottom: 2rem;
 flex-wrap: wrap;
 justify-content: center;
 }
 .season-tab {
-padding: 0.75rem 1.5rem;
+padding: 0.82rem 1.65rem;
 border: 2px solid #e9ecef;
 background: #fff;
-border-radius: 25px;
+border-radius: 30px;
 cursor: pointer;
 transition: all 0.3s ease;
 font-weight: 600;
-font-size: 1rem;
+font-size: 1.05rem;
 color: #0a174e;
 outline: none;
 }
@@ -833,12 +892,8 @@ flex-wrap: wrap;
 }
 /* Mobile Responsive - Hide ads and adjust layout */
 @media (max-width: 1400px) {
-.ad-left-top, .ad-left-bottom,
-.ad-right-top, .ad-right-bottom {
+.ads-wrapper {
 display: none;
-}
-.content-wrapper {
-padding: 0 20px;
 }
 }
 @media(max-width:950px){
@@ -846,98 +901,271 @@ padding: 0 20px;
 .page-title{font-size:2.4rem;}
 }
 @media(max-width:900px){
-.salary-main-content{padding:1.2rem;margin-left:1rem;margin-right:1rem;}
+.salary-main-content{padding:1.2rem;}
 .page-title-section{padding:2rem 0 3rem;}
 }
 @media(max-width:600px){
 .page-title{font-size:2rem;}
 .page-title-section{padding:1.5rem 0 2.5rem;}
+.salary-main-content{padding:1rem;}
 }
-@media (max-width: 950px) {
-/* The following styles were part of the old inline navbar CSS.
-   They are kept here as a reference for mobile responsiveness,
-   but ideally, your navbar-styles.css should handle these.
-   If your navbar-styles.css already has these, you can remove them. */
-.navbar {
-padding: 0.5rem 1rem;
-}
-.nav-right {
-display: none;
-position: absolute;
-top: 60px;
-left: 0;
-width: 100vw;
-background: #0a174e;
-flex-direction: column;
-box-shadow: 0 8px 24px rgba(10,23,78,0.17);
-padding-bottom: 1rem;
-z-index: 99;
-max-height: 0;
-overflow: hidden;
-border-radius: 0 0 16px 16px;
-border-top: 1px solid #0057e7;
-align-items: flex-start;
-}
-.nav-right.open {
-display: flex;
-max-height: 1000px;
-overflow: visible;
-animation: navShow 0.25s;
-}
-@keyframes navShow {
-from { opacity: 0; transform: translateY(-10px);}
-to { opacity: 1; transform: translateY(0);}
-}
-.hamburger {
-display: flex;
-position: fixed;
-top: 18px;
-right: 32px;
-margin-left: 0;
-background: none;
-border: none;
-}
-.dropdown-content {
-position: static;
-min-width: unset;
-box-shadow: none;
-background: transparent;
-border-radius: 0;
-padding: 0;
-}
-.dropdown-link {
-color: #fff;
-padding: 0.8rem 1.6rem;
-}
-.dropdown-link:hover {
-background: #0057e7;
-color: #fff;
-}
-.salary-main-content {
-padding: 1.2rem 0.6rem;
-}
-.salary-logo {
-width: 120px;
-height: 120px;
-}
-.salary-table th, .salary-table td {
-padding: 0.4rem 0.2rem;
-font-size: 1rem;
-}
-.site-title {
-font-size: 1.2rem;
-}
-.nav-logo {
-width: 35px;
-height: 35px;
-}
-.ad-bottom-center {
-display: none;
-}
-}
+
 @media (max-width: 480px) {
 .navbar {
 padding: 0.5rem;
+}
+}
+/* Mobile responsiveness for cap calculator and controls */
+@media (max-width: 1024px){
+ .ad-left-top, .ad-left-bottom, .ad-right-top, .ad-right-bottom{display:none;}
+ .content-wrapper{padding:0 12px;}
+}
+@media (max-width: 640px){
+ .salary-controls{padding:1rem;}
+ .search-box input{width:100%; max-width:100%;}
+}
+@media (max-width: 400px){
+ /* Cap calculator mobile styles removed - using inline styles */
+}
+/* --- Refreshed lower content layout (banner preserved) --- */
+.content-wrapper{
+max-width:1240px;
+padding:0 clamp(1rem, 3vw, 2rem);
+}
+
+.salary-main-content{
+background:#ffffff;
+border-radius:28px;
+padding:clamp(1.75rem, 3.5vw, 3rem);
+box-shadow:0 24px 45px rgba(15, 23, 42, 0.12);
+border:1px solid rgba(226, 232, 240, 0.9);
+overflow:hidden;
+}
+
+.salary-main-content::before,
+.salary-main-content::after,
+.salary-controls::before,
+.salary-controls::after,
+.cap-calculator::before,
+.cap-calculator::after,
+.cap-metric::before{
+content:none;
+}
+
+.salary-controls{
+background:#f8fafc;
+border-radius:22px;
+padding:clamp(1.1rem, 2vw, 1.75rem);
+border:1px solid rgba(226, 232, 240, 0.9);
+box-shadow:0 14px 30px rgba(15, 23, 42, 0.08);
+display:flex;
+flex-wrap:wrap;
+align-items:center;
+justify-content:center;
+gap:1rem;
+}
+
+.export-btn{
+background:linear-gradient(135deg, #2563eb, #1d4ed8);
+color:var(--color-white);
+border-color:transparent;
+box-shadow:0 16px 32px rgba(37, 99, 235, 0.35);
+}
+
+.export-btn:disabled{
+opacity:0.65;
+box-shadow:none;
+}
+
+/* Duplicate cap-calculator styles removed - using consolidated version above */
+
+/* Duplicate cap-metrics styles removed - using consolidated version above */
+
+.season-tabs{
+justify-content:center;
+gap:0.85rem;
+}
+
+.season-tab{
+background:#f8fafc;
+border:1px solid rgba(226, 232, 240, 0.9);
+border-radius:999px;
+padding:0.7rem 1.7rem;
+font-weight:600;
+color:var(--color-navy);
+box-shadow:0 8px 18px rgba(15, 23, 42, 0.05);
+transition:var(--transition);
+font-size:clamp(0.95rem, 2vw, 1.05rem);
+}
+
+.season-tab:hover{
+transform:translateY(-2px);
+box-shadow:0 12px 24px rgba(10, 23, 78, 0.15);
+}
+
+.season-tab.active{
+background:var(--color-navy);
+color:var(--color-white);
+border-color:var(--color-navy);
+box-shadow:0 16px 28px rgba(10, 23, 78, 0.2);
+}
+
+.season-content{
+background:#ffffff;
+border-radius:24px;
+padding:clamp(1.5rem, 3vw, 2rem);
+border:1px solid rgba(226, 232, 240, 0.9);
+box-shadow:0 18px 36px rgba(15, 23, 42, 0.08);
+}
+
+.table-view{
+position:relative;
+overflow-x:auto;
+border-radius:20px;
+scrollbar-width:thin;
+scrollbar-color:rgba(148, 163, 184, 0.7) transparent;
+padding-bottom:0.5rem;
+}
+
+.table-view::-webkit-scrollbar{
+height:8px;
+}
+
+.table-view::-webkit-scrollbar-thumb{
+background:rgba(148, 163, 184, 0.6);
+border-radius:999px;
+}
+
+.salary-table{
+min-width:680px;
+border-collapse:separate;
+border-spacing:0;
+background:#ffffff;
+border-radius:18px;
+border:1px solid rgba(226, 232, 240, 0.9);
+box-shadow:none;
+}
+
+.salary-table thead{
+background:var(--color-navy);
+color:var(--color-white);
+}
+
+.salary-table th,
+.salary-table td{
+padding:0.9rem 1.1rem;
+border-bottom:1px solid rgba(226, 232, 240, 0.8);
+}
+
+.salary-table tbody tr:hover{
+background:rgba(59, 130, 246, 0.08);
+}
+
+.status-badge{
+border-radius:999px;
+letter-spacing:0.04em;
+}
+
+.enhanced-summary{
+background:#f8fafc;
+border-radius:24px;
+padding:clamp(1.75rem, 3vw, 2.5rem);
+border:1px solid rgba(226, 232, 240, 0.9);
+box-shadow:0 18px 36px rgba(15, 23, 42, 0.08);
+}
+
+.summary-grid{
+gap:1.25rem;
+}
+
+.summary-item{
+background:#ffffff;
+border-radius:18px;
+border:1px solid rgba(226, 232, 240, 0.9);
+box-shadow:0 12px 26px rgba(15, 23, 42, 0.06);
+transition:transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-item:hover{
+transform:translateY(-4px);
+box-shadow:0 16px 34px rgba(15, 23, 42, 0.1);
+}
+
+.twoway-section{
+border-top:2px solid rgba(226, 232, 240, 0.9);
+padding-top:2rem;
+margin-top:2.5rem;
+}
+
+.back-home-btn{
+background:#f1f5f9;
+color:var(--color-navy);
+border:1px solid rgba(226, 232, 240, 0.9);
+}
+
+.back-home-btn:hover{
+background:var(--color-navy);
+color:var(--color-white);
+}
+
+@media (max-width: 1024px){
+.salary-main-content{
+ padding:2rem;
+}
+.season-tabs{
+ justify-content:center;
+}
+}
+
+@media (max-width: 900px){
+.salary-controls{
+ padding:1.5rem;
+}
+}
+
+@media (max-width: 768px){
+.salary-controls{
+ flex-direction:column;
+ align-items:stretch;
+}
+.view-controls{
+ width:100%;
+ justify-content:flex-start;
+}
+.table-view{
+ margin:0 -0.5rem;
+ padding:0 0.5rem 1rem;
+}
+.salary-table{
+ min-width:600px;
+}
+.season-content{
+ padding:1.5rem;
+}
+}
+
+@media (max-width: 640px){
+.enhanced-summary,
+.salary-controls{
+ padding:1.25rem;
+}
+.summary-grid{
+ grid-template-columns:1fr;
+}
+.export-btn,
+.view-btn{
+ width:100%;
+ text-align:center;
+}
+}
+
+@media (max-width: 480px){
+.view-controls{
+ flex-direction:column;
+ align-items:stretch;
+}
+.table-view{
+ margin:0 -1rem;
 }
 }
 </style>
@@ -946,18 +1174,14 @@ padding: 0.5rem;
 <!-- Navbar is injected by nav.js -->
 <script src="nav.js"></script>
 
-<!-- ================= Seamless Header ================= -->
-<header class="salary-header">
-<div class="content-wrapper">
-<div class="page-title-section">
-<!-- Page Title -->
+<div class="main-container">
+<!-- Page Header - Exact Match to news.html -->
+<div class="page-header">
 <h1 class="page-title">Sixers Salary Breakdown</h1>
-<p class="page-subtitle">Elite Basketball Intel</p>
+<p class="page-subtitle">Complete financial analysis & roster breakdown</p>
 </div>
-</div>
-</header>
 
-<div class="content-wrapper">
+<div class="ads-wrapper">
 <!-- 4 ADS TOTAL - 2 LEFT, 2 RIGHT - FINAL PERFECT POSITION -->
 <!-- LEFT SIDE ADS -->
 <div class="ad-left-top">
@@ -1017,7 +1241,8 @@ l.parentNode.insertBefore(s, l);
 })({})
 </script>
 </div>
-<!-- YOUR ORIGINAL SALARY PAGE CONTENT -->
+</div>
+
 <div class="content-wrapper">
 <main class="salary-main-content">
 <!-- INTERACTIVE CONTROLS -->
@@ -1041,139 +1266,50 @@ Salary Projections Notice
 The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 seasons are estimates based on current NBA salary cap growth projections and are subject to change. Actual salary cap figures may vary based on NBA revenue, collective bargaining agreements, and other factors.
 </div>
 </div>
-<!-- CAP SPACE CALCULATOR - MATCHING NEWS.HTML BANNER EXACTLY -->
+<!-- CAP SPACE CALCULATOR -->
 <style>
-/* Cap Calculator Banner - Exact Match to news.html */
-.cap-page-header {
-  text-align: center !important;
-  margin-bottom: 3rem !important;
-  padding: 3rem 0 !important;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  border-radius: 20px !important;
-  color: white !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-.cap-page-header::before {
-  content: '' !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent) !important;
-  animation: shimmer 3s ease-in-out infinite !important;
-}
-
-@keyframes shimmer {
-  0%, 100% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
-}
-
-.cap-page-title {
-  font-size: 3.5rem !important;
-  font-weight: 900 !important;
-  margin-bottom: 1rem !important;
-  background: linear-gradient(135deg, #ffffff 0%, #3b82f6 50%, #06b6d4 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-.cap-page-subtitle {
-  font-size: 1.2rem !important;
-  color: #94a3b8 !important;
-  font-weight: 500 !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-/* Cap metrics container */
-.cap-metrics-container {
-  position: relative !important;
-  z-index: 1 !important;
-  max-width: 1200px !important;
-  margin: 2rem auto 0 !important;
-  padding: 0 2rem !important;
-}
-
-.cap-metrics-row {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  gap: 1rem !important;
-  justify-content: center !important;
-  align-items: stretch !important;
-}
-
-.cap-metric-box {
-  background: rgba(255, 255, 255, 0.95) !important;
-  padding: 1.8rem 1.5rem !important;
-  border-radius: 16px !important;
-  text-align: center !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
-  backdrop-filter: blur(10px) !important;
-  flex: 1 !important;
-  min-width: 0 !important;
-  max-width: 220px !important;
-}
-
 @media (max-width: 768px) {
-  .cap-page-header { padding: 2rem 0 !important; }
-  .cap-page-title { font-size: 2.5rem !important; }
-  .cap-metrics-container { padding: 0 1rem !important; }
-  .cap-metrics-row { flex-wrap: wrap !important; gap: 0.75rem !important; }
-  .cap-metric-box { 
-    flex: 1 1 calc(50% - 0.375rem) !important; 
-    min-width: 140px !important; 
-    padding: 1.2rem 1rem !important; 
-    max-width: none !important;
-  }
+  .cap-snapshot-container { padding: 1.5rem 1rem !important; }
+  .cap-snapshot-title { font-size: 1.2rem !important; }
+  .cap-metrics-row { flex-wrap: wrap !important; gap: 0.5rem !important; }
+  .cap-metric-box { flex: 1 1 calc(50% - 0.25rem) !important; min-width: 140px !important; padding: 1rem 0.8rem !important; }
+  .cap-metric-value { font-size: 1rem !important; }
+  .cap-metric-label { font-size: 0.65rem !important; }
 }
-
 @media (max-width: 480px) {
-  .cap-page-header { padding: 1.5rem 0 !important; }
-  .cap-page-title { font-size: 2rem !important; }
-  .cap-metric-box { padding: 1rem 0.8rem !important; }
+  .cap-snapshot-container { padding: 1rem 0.5rem !important; }
+  .cap-snapshot-title { font-size: 1.1rem !important; }
+  .cap-metric-box { padding: 0.8rem 0.6rem !important; }
 }
 </style>
-
-<div class="cap-page-header">
-  <h1 class="cap-page-title">Cap Snapshot</h1>
-  <p class="cap-page-subtitle">2025-26 Season Financial Overview</p>
-  
-  <div class="cap-metrics-container">
-    <div class="cap-metrics-row">
-      <div class="cap-metric-box">
-        <span class="cap-metric-label" style="display: block !important; font-size: 0.75rem !important; font-weight: 600 !important; color: #64748b !important; margin-bottom: 0.5rem !important; letter-spacing: 0.04em !important; text-transform: uppercase !important; font-family: 'Inter', sans-serif !important;">Total Payroll</span>
-        <span id="currentPayroll" class="cap-metric-value" style="display: block !important; font-size: 1.3rem !important; font-weight: 700 !important; color: #0f172a !important; font-family: 'Inter', sans-serif !important;">$185,892,519</span>
-      </div>
-      <div class="cap-metric-box">
-        <span class="cap-metric-label" style="display: block !important; font-size: 0.75rem !important; font-weight: 600 !important; color: #64748b !important; margin-bottom: 0.5rem !important; letter-spacing: 0.04em !important; text-transform: uppercase !important; font-family: 'Inter', sans-serif !important;">Cap Space</span>
-        <span class="cap-metric-value" style="display: block !important; font-size: 1.3rem !important; font-weight: 700 !important; color: #dc2626 !important; font-family: 'Inter', sans-serif !important;">-$31,245,519</span>
-      </div>
-      <div class="cap-metric-box">
-        <span class="cap-metric-label" style="display: block !important; font-size: 0.75rem !important; font-weight: 600 !important; color: #64748b !important; margin-bottom: 0.5rem !important; letter-spacing: 0.04em !important; text-transform: uppercase !important; font-family: 'Inter', sans-serif !important;">Tax Space</span>
-        <span class="cap-metric-value" style="display: block !important; font-size: 1.3rem !important; font-weight: 700 !important; color: #16a34a !important; font-family: 'Inter', sans-serif !important;">$1,754,701</span>
-      </div>
-      <div class="cap-metric-box">
-        <span class="cap-metric-label" style="display: block !important; font-size: 0.75rem !important; font-weight: 600 !important; color: #64748b !important; margin-bottom: 0.5rem !important; letter-spacing: 0.04em !important; text-transform: uppercase !important; font-family: 'Inter', sans-serif !important;">First Apron Space</span>
-        <span class="cap-metric-value" style="display: block !important; font-size: 1.3rem !important; font-weight: 700 !important; color: #16a34a !important; font-family: 'Inter', sans-serif !important;">$9,804,701</span>
-      </div>
-      <div class="cap-metric-box">
-        <span class="cap-metric-label" style="display: block !important; font-size: 0.75rem !important; font-weight: 600 !important; color: #64748b !important; margin-bottom: 0.5rem !important; letter-spacing: 0.04em !important; text-transform: uppercase !important; font-family: 'Inter', sans-serif !important;">Second Apron Space</span>
-        <span class="cap-metric-value" style="display: block !important; font-size: 1.3rem !important; font-weight: 700 !important; color: #16a34a !important; font-family: 'Inter', sans-serif !important;">$21,683,701</span>
-      </div>
-    </div>
-  </div>
+<div class="cap-snapshot-container" style="background: transparent; padding: 2.5rem 1.5rem; margin-bottom: 2rem; position: relative;">
+<h3 id="capCalculatorTitle" class="cap-snapshot-title" style="margin: 0 0 2rem 0; font-size: 1.4rem; text-align: center; color: #0f172a; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Cap Snapshot · 2025-26 Season</h3>
+<div class="cap-metrics-row" style="display: flex; flex-wrap: nowrap; gap: 0.75rem; margin-bottom: 1rem; justify-content: center; align-items: stretch;">
+<div class="cap-metric-box" style="background: #ffffff; padding: 1.5rem 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); flex: 1; min-width: 0; max-width: 280px;">
+<span class="cap-metric-label" style="display: block; font-size: 0.7rem; font-weight: 600; color: #64748b; margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; font-family: 'Inter', sans-serif;">Total Payroll</span>
+<span id="currentPayroll" class="cap-metric-value" style="display: block; font-size: 1.1rem; font-weight: 700; color: #0f172a; font-family: 'Inter', sans-serif;">$185,892,519</span>
+</div>
+<div class="cap-metric-box" style="background: #ffffff; padding: 1.5rem 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); flex: 1; min-width: 0; max-width: 280px;">
+<span class="cap-metric-label" style="display: block; font-size: 0.7rem; font-weight: 600; color: #64748b; margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; font-family: 'Inter', sans-serif;">Cap Space</span>
+<span class="cap-metric-value" style="display: block; font-size: 1.1rem; font-weight: 700; color: #dc2626; font-family: 'Inter', sans-serif;">-$31,245,519</span>
+</div>
+<div class="cap-metric-box" style="background: #ffffff; padding: 1.5rem 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); flex: 1; min-width: 0; max-width: 280px;">
+<span class="cap-metric-label" style="display: block; font-size: 0.7rem; font-weight: 600; color: #64748b; margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; font-family: 'Inter', sans-serif;">Tax Space</span>
+<span class="cap-metric-value" style="display: block; font-size: 1.1rem; font-weight: 700; color: #16a34a; font-family: 'Inter', sans-serif;">$1,754,701</span>
+</div>
+<div class="cap-metric-box" style="background: #ffffff; padding: 1.5rem 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); flex: 1; min-width: 0; max-width: 280px;">
+<span class="cap-metric-label" style="display: block; font-size: 0.7rem; font-weight: 600; color: #64748b; margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; font-family: 'Inter', sans-serif;">First Apron Space</span>
+<span class="cap-metric-value" style="display: block; font-size: 1.1rem; font-weight: 700; color: #16a34a; font-family: 'Inter', sans-serif;">$9,804,701</span>
+</div>
+<div class="cap-metric-box" style="background: #ffffff; padding: 1.5rem 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); flex: 1; min-width: 0; max-width: 280px;">
+<span class="cap-metric-label" style="display: block; font-size: 0.7rem; font-weight: 600; color: #64748b; margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; font-family: 'Inter', sans-serif;">Second Apron Space</span>
+<span class="cap-metric-value" style="display: block; font-size: 1.1rem; font-weight: 700; color: #16a34a; font-family: 'Inter', sans-serif;">$21,683,701</span>
+</div>
+</div>
 </div>
 <section>
 <h2 class="salary-section-title">
 📋   Payroll Breakdown
-<span class="total-players">13 Players</span>
 </h2>
 <!-- SEASON TABS ABOVE CAP CALCULATOR -->
 <div class="season-tabs-section" style="margin-bottom: 2rem;">
@@ -1194,7 +1330,7 @@ The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 sea
 <!-- 2025-26 Season Content (Current Table) -->
 <div class="season-content active" id="season-2025-26">
 <div class="table-view active">
-<table class="salary-table interactive-table" id="salaryTable">
+<table class="salary-table interactive-table" id="salaryTable2025">
 <thead>
 <tr>
 <th class="sortable" data-sort="rank"># <span class="sort-arrow"> ↕ </span></th>
@@ -1361,7 +1497,7 @@ The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 sea
 <td class="cap-percentage">1.3%</td>
 <td><span class="status-badge non-guaranteed">Non-Guaranteed</span></td>
 </tr>
-<tr data-salary="2296274" data-status="guaranteed">
+<tr data-salary="1272870" data-status="guaranteed">
 <td>12</td>
 <td class="player-name">
 <div class="player-info">
@@ -1369,8 +1505,8 @@ The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 sea
 <span class="player-position">C</span>
 </div>
 </td>
-<td class="salary-amount">$2,296,274</td>
-<td class="cap-percentage">1.5%</td>
+<td class="salary-amount">$1,272,870</td>
+<td class="cap-percentage">0.8%</td>
 <td><span class="status-badge guaranteed">Guaranteed</span></td>
 </tr>
 <tr data-salary="2296274" data-status="guaranteed">
@@ -1441,7 +1577,7 @@ The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 sea
 <!-- 2026-27 Season Table -->
 <div class="season-content" id="season-2026-27">
 <div class="table-view active">
-<table class="salary-table interactive-table">
+<table class="salary-table interactive-table" id="salaryTable2026">
 <thead>
 <tr>
 <th class="sortable" data-sort="rank">#</th>
@@ -1567,7 +1703,7 @@ The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 sea
 <!-- 2027-28 Season Table -->
 <div class="season-content" id="season-2027-28">
 <div class="table-view active">
-<table class="salary-table interactive-table">
+<table class="salary-table interactive-table" id="salaryTable2027">
 <thead>
 <tr>
 <th class="sortable" data-sort="rank">#</th>
@@ -1681,7 +1817,7 @@ The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 sea
 <!-- 2028-29 Season Table -->
 <div class="season-content" id="season-2028-29">
 <div class="table-view active">
-<table class="salary-table interactive-table">
+<table class="salary-table interactive-table" id="salaryTable2028">
 <thead>
 <tr>
 <th class="sortable" data-sort="rank">#</th>
@@ -1758,19 +1894,15 @@ The salary cap numbers and projections for the 2026-27, 2027-28, and 2028-29 sea
 </div>
 <div class="summary-item">
 <span class="summary-label"> 💸   Tax Space</span>
-<span class="summary-value positive">$2,002,481</span>
+<span class="summary-value positive">$1,754,701</span>
 </div>
 <div class="summary-item">
 <span class="summary-label"> 🔴   First Apron Space</span>
-<span class="summary-value positive">$10,052,481</span>
+<span class="summary-value positive">$9,804,701</span>
 </div>
 <div class="summary-item">
 <span class="summary-label"> 🔴   Second Apron Space</span>
-<span class="summary-value positive">$21,931,481</span>
-</div>
-<div class="summary-item">
-<span class="summary-label"> 👥   Roster Count</span>
-<span class="summary-value">13/15</span>
+<span class="summary-value positive">$21,683,701</span>
 </div>
 </div>
 </div>
@@ -1804,7 +1936,7 @@ document.addEventListener("DOMContentLoaded", function() {
 // INTERACTIVE SALARY PAGE FUNCTIONALITY
 // Get table elements
 const searchInput = document.getElementById('playerSearch');
-const tableBody = document.getElementById('salaryTableBody');
+const tableBody = document.querySelector('.season-content.active .salary-table tbody');
 const allRows = Array.from(tableBody.querySelectorAll('tr'));
 // Calculate and update cap percentages
 function updateCapPercentages() {
@@ -1843,10 +1975,9 @@ firstApron: 195945000,
 secondApron: 207824000,
 totalPayroll: 185892519,
 capSpace: -31245519,
-taxSpace: 2002481,
-firstApronSpace: 10052481,
-secondApronSpace: 21931481,
-rosterCount: '13/15'
+taxSpace: 1754701,
+firstApronSpace: 9804701,
+secondApronSpace: 21683701
 },
 '2026-27': {
 salaryCap: 165472000,
@@ -1857,8 +1988,7 @@ totalPayroll: 0, // Will be calculated
 capSpace: 0, // Will be calculated
 taxSpace: 0, // Will be calculated
 firstApronSpace: 0, // Will be calculated
-secondApronSpace: 0, // Will be calculated
-rosterCount: '9/15'
+secondApronSpace: 0 // Will be calculated
 },
 '2027-28': {
 salaryCap: 173746000,
@@ -1869,8 +1999,7 @@ totalPayroll: 0, // Will be calculated
 capSpace: 0, // Will be calculated
 taxSpace: 0, // Will be calculated
 firstApronSpace: 0, // Will be calculated
-secondApronSpace: 0, // Will be calculated
-rosterCount: '8/15'
+secondApronSpace: 0 // Will be calculated
 },
 '2028-29': {
 salaryCap: 182433000,
@@ -1881,8 +2010,7 @@ totalPayroll: 0, // Will be calculated
 capSpace: 0, // Will be calculated
 taxSpace: 0, // Will be calculated
 firstApronSpace: 0, // Will be calculated
-secondApronSpace: 0, // Will be calculated
-rosterCount: '4/15'
+secondApronSpace: 0 // Will be calculated
 }
 };
 // Calculate payrolls for future seasons
@@ -1947,7 +2075,6 @@ summaryItems[3].textContent = (data.firstApronSpace < 0 ? '-$' : '$') + Math.abs
 summaryItems[3].className = 'summary-value ' + (data.firstApronSpace < 0 ? 'negative' : 'positive');
 summaryItems[4].textContent = (data.secondApronSpace < 0 ? '-$' : '$') + Math.abs(data.secondApronSpace).toLocaleString(); // Second Apron Space
 summaryItems[4].className = 'summary-value ' + (data.secondApronSpace < 0 ? 'negative' : 'positive');
-summaryItems[5].textContent = data.rosterCount; // Roster Count
 }
 // Calculate payrolls on page load
 calculateSeasonPayrolls();
@@ -2010,8 +2137,8 @@ aVal = parseInt(a.dataset.salary);
 bVal = parseInt(b.dataset.salary);
 break;
 case 'percentage':
-aVal = parseFloat(a.querySelector('.cap-percentage').textContent);
-bVal = parseFloat(b.querySelector('.cap-percentage').textContent);
+aVal = parseFloat(a.querySelector('.cap-percentage').textContent.replace('%',''));
+bVal = parseFloat(b.querySelector('.cap-percentage').textContent.replace('%',''));
 break;
 case 'rank':
 aVal = parseInt(a.querySelector('td').textContent);
@@ -2412,6 +2539,6 @@ btn.classList.add('active');
 };
 });
 </script>
-<script src="nav.js"></script> <!-- Your custom navigation JavaScript -->
+</div> <!-- Close main-container -->
 </body>
 </html>
