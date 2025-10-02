@@ -1,4 +1,4 @@
-// Elite Navigation JavaScript - Universal Auto-Injection
+// Elite Navigation & Footer JavaScript - Universal Auto-Injection
 document.addEventListener('DOMContentLoaded', function () {
   // Prevent double initialization
   if (window.__NAVBAR_INITIALIZED__) return;
@@ -211,5 +211,120 @@ document.addEventListener('DOMContentLoaded', function () {
       document.body.classList.remove('no-scroll');
       document.documentElement.classList.remove('no-scroll');
     }
+  });
+
+  // =============================================================================
+  // FOOTER INJECTION & LOGIC
+  // =============================================================================
+  
+  // Prevent double footer initialization
+  if (window.__FOOTER_INITIALIZED__) return;
+  window.__FOOTER_INITIALIZED__ = true;
+
+  // -------------  FOOTER HTML  -------------
+  const footerHTML = `
+    <!-- PREMIUM FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-container">
+        <!-- About Section -->
+        <div class="footer-section">
+          <div class="footer-brand">
+            <div class="footer-logo">76</div>
+            <div class="footer-brand-text">SixersHoops</div>
+          </div>
+          <p class="footer-description">
+            Your premier destination for Philadelphia 76ers news, analysis, stats, and insights. 
+            Elite basketball intelligence for the most dedicated fans.
+          </p>
+          <div class="social-links">
+            <a href="https://twitter.com/sixershoops" class="social-link" aria-label="Twitter" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://facebook.com/sixershoops" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://instagram.com/sixershoops" class="social-link" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-instagram"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-section">
+          <h3 class="footer-title">
+            <i class="fas fa-link"></i>
+            Quick Links
+          </h3>
+          <ul class="footer-links">
+            <li><a href="https://sixershoops.com/" class="footer-link">Home</a></li>
+            <li><a href="https://sixershoops.com/news" class="footer-link">Latest News</a></li>
+            <li><a href="https://sixershoops.com/roster" class="footer-link">Roster</a></li>
+            <li><a href="https://sixershoops.com/stats" class="footer-link">Stats</a></li>
+            <li><a href="https://sixershoops.com/schedule" class="footer-link">Schedule</a></li>
+          </ul>
+        </div>
+
+        <!-- Team Resources -->
+        <div class="footer-section">
+          <h3 class="footer-title">
+            <i class="fas fa-basketball-ball"></i>
+            Team Resources
+          </h3>
+          <ul class="footer-links">
+            <li><a href="https://sixershoops.com/salary" class="footer-link">Salary Breakdown</a></li>
+            <li><a href="https://sixershoops.com/sixers-depth-chart" class="footer-link">Depth Chart</a></li>
+            <li><a href="https://sixershoops.com/future-draft-picks" class="footer-link">Future Draft Picks</a></li>
+            <li><a href="https://sixershoops.com/nba-trade-machine" class="footer-link">Trade Machine</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact & Info -->
+        <div class="footer-section">
+          <h3 class="footer-title">
+            <i class="fas fa-info-circle"></i>
+            Information
+          </h3>
+          <ul class="footer-links">
+            <li><a href="https://sixershoops.com/contact" class="footer-link">Contact Us</a></li>
+            <li><a href="https://sixershoops.com/about" class="footer-link">About</a></li>
+            <li><a href="https://sixershoops.com/advertise" class="footer-link">Advertise</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Footer Bottom - Legal Links -->
+      <div class="footer-bottom">
+        <ul class="footer-legal-links">
+          <li><a href="https://sixershoops.com/privacy-policy" class="footer-legal-link">Privacy Policy</a></li>
+          <li><a href="https://sixershoops.com/cookie-policy" class="footer-legal-link">Cookie Policy</a></li>
+          <li><a href="https://sixershoops.com/terms-of-service" class="footer-legal-link">Terms of Service</a></li>
+          <li><a href="https://sixershoops.com/disclaimer" class="footer-legal-link">Disclaimer</a></li>
+        </ul>
+        <p class="footer-copyright">
+          &copy; ${new Date().getFullYear()} SixersHoops.com. All rights reserved. 
+          Not affiliated with the Philadelphia 76ers or NBA.
+        </p>
+      </div>
+    </footer>
+  `;
+
+  // -------------  INJECT FOOTER  -------------
+  // Insert footer at the end of body
+  document.body.insertAdjacentHTML('beforeend', footerHTML);
+
+  // Optional: Smooth scroll to top functionality
+  const footerLinks = document.querySelectorAll('.footer-link, .footer-legal-link');
+  footerLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      // Only smooth scroll for internal links on the same page
+      const href = this.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
   });
 });
