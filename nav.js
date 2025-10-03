@@ -1,10 +1,12 @@
-// Elite Navigation & Footer JavaScript - Universal Auto-Injection
+// SixersHoops Navigation & Footer - Auto-Injection System
 document.addEventListener('DOMContentLoaded', function () {
   // Prevent double initialization
   if (window.__NAVBAR_INITIALIZED__) return;
   window.__NAVBAR_INITIALIZED__ = true;
 
-  // -------------  NAVBAR HTML  -------------
+  // ============================================================================
+  // NAVBAR HTML
+  // ============================================================================
   const navbarHTML = `
     <nav class="navbar" id="navbar">
       <a href="https://sixershoops.com/" class="nav-brand">
@@ -52,158 +54,19 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
   `;
 
-  // -------------  INJECT NAVBAR  -------------
-  // Safely insert without rewriting the whole body (prevents losing event listeners on mobile)
-  document.body.insertAdjacentHTML('afterbegin', navbarHTML);
-  // Remove legacy placeholder comment if present, without touching other markup
-  try {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT);
-    let node;
-    while ((node = walker.nextNode())) {
-      if (node.nodeValue && node.nodeValue.includes('Navbar will be automatically inserted here by nav.js')) {
-        node.parentNode && node.parentNode.removeChild(node);
-        break;
-      }
-    }
-  } catch (_) {}
-
-  // -------------  NAVBAR LOGIC  -------------
-  const navbar   = document.getElementById('navbar');
-  const menuBtn  = document.getElementById('mobileMenuBtn');
-  const mobile   = document.getElementById('mobileMenu');
-  const navMenu  = document.querySelector('.nav-menu');
-
-  // Enforce mobile-only hamburger via JS (overrides page-specific CSS if needed)
-  function applyResponsiveNav() {
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-      if (navMenu) navMenu.style.display = 'none';
-      if (menuBtn) menuBtn.style.display = 'flex';
-    } else {
-      if (navMenu) navMenu.style.display = 'flex';
-      if (menuBtn) menuBtn.style.display = 'none';
-      // Ensure menu is closed when leaving mobile
-      if (mobile?.classList.contains('active')) {
-        mobile.classList.remove('active');
-        menuBtn?.classList.remove('active');
-        menuBtn?.setAttribute('aria-expanded', 'false');
-        document.body.classList.remove('no-scroll');
-      }
-    }
-  }
-  applyResponsiveNav();
-  window.addEventListener('resize', applyResponsiveNav);
-
-  // Mobile menu toggle (single binding)
-  if (menuBtn && mobile && !menuBtn.__bound) {
-    menuBtn.__bound = true;
-    menuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      menuBtn.classList.toggle('active');
-      mobile.classList.toggle('active');
-      const isOpen = mobile.classList.contains('active');
-      menuBtn.setAttribute('aria-expanded', String(isOpen));
-      document.body.classList.toggle('no-scroll', isOpen);
-      document.documentElement.classList.toggle('no-scroll', isOpen);
-    });
-
-    // Close menu when clicking a link
-    mobile.addEventListener('click', (e) => {
-      const link = e.target.closest('a.mobile-link');
-      if (link) {
-        menuBtn.classList.remove('active');
-        mobile.classList.remove('active');
-        menuBtn.setAttribute('aria-expanded', 'false');
-        document.body.classList.remove('no-scroll');
-        document.documentElement.classList.remove('no-scroll');
-        return;
-      }
-      e.stopPropagation();
-    });
-
-    // Close when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!mobile.classList.contains('active')) return;
-      const clickedInsideNavbar = e.target.closest('#navbar') || e.target.closest('#mobileMenu');
-      if (!clickedInsideNavbar) {
-        menuBtn.classList.remove('active');
-        mobile.classList.remove('active');
-        menuBtn.setAttribute('aria-expanded', 'false');
-        document.body.classList.remove('no-scroll');
-        document.documentElement.classList.remove('no-scroll');
-      }
-    });
-  }
-
-  // Mobile dropdown toggle
-  const mobileTeamToggle = document.getElementById('mobileTeamToggle');
-  const mobileTeamMenu = document.getElementById('mobileTeamMenu');
-  if (mobileTeamToggle && mobileTeamMenu) {
-    mobileTeamToggle.addEventListener('click', () => {
-      mobileTeamMenu.classList.toggle('open');
-      mobileTeamToggle.classList.toggle('open');
-    });
-  }
-
-  // Remove duplicate global outside-click closer (handled above)
-  // (kept intentionally empty to avoid double-closing bugs)
-  // document.addEventListener('click', ...) removed
-
-  // Scroll effect
-  window.addEventListener('scroll', () => {
-    navbar?.classList.toggle('scrolled', window.scrollY > 20);
-  });
-
-  // Active link highlighting
-  function setActiveLink() {
-    const normalize = (p) => {
-      if (!p) return '/';
-      p = p.replace(/\/index\.html?$/i, '/').replace(/\/$/, '');
-      return p === '' ? '/' : p.toLowerCase();
-    };
-    const currentPath = normalize(window.location.pathname);
-    document.querySelectorAll('.nav-link, .mobile-link, .dropdown-item').forEach(link => {
-      link.classList.remove('active');
-      const linkPath = normalize(new URL(link.getAttribute('href'), window.location.origin).pathname);
-      if (linkPath === currentPath || (currentPath === '/' && (linkPath === '/' || linkPath === '/index'))) {
-        link.classList.add('active');
-      }
-    });
-  }
-  setActiveLink();
-  window.addEventListener('popstate', setActiveLink);
-  // Close mobile menu when switching to desktop width
-  window.addEventListener('resize', () => {
-    const mobileMenu = document.getElementById('mobileMenu');
-    const mobileBtn = document.getElementById('mobileMenuBtn');
-    if (window.innerWidth > 768 && mobileMenu?.classList.contains('active')) {
-      mobileMenu.classList.remove('active');
-      mobileBtn?.classList.remove('active');
-      mobileBtn?.setAttribute('aria-expanded', 'false');
-      document.body.classList.remove('no-scroll');
-      document.documentElement.classList.remove('no-scroll');
-    }
-  });
-
-  // =============================================================================
-  // FOOTER INJECTION & LOGIC
-  // =============================================================================
-  
-  // Prevent double footer initialization
-  if (window.__FOOTER_INITIALIZED__) return;
-  window.__FOOTER_INITIALIZED__ = true;
-
-  // -------------  FOOTER HTML  -------------
+  // ============================================================================
+  // FOOTER HTML
+  // ============================================================================
   const footerHTML = `
     <footer class="site-footer">
       <div class="footer-container">
         <!-- Brand -->
-        <div class="footer-section footer-brand-section">
+        <div class="footer-brand-section">
           <div class="footer-brand">
             <div class="footer-logo">76</div>
             <div class="footer-brand-text">SixersHoops</div>
           </div>
-          <p class="footer-description">Philadelphia 76ers news, stats, and analysis.</p>
+          <p class="footer-description">Your premier source for Philadelphia 76ers news, analysis, stats, and insights. Stay updated with the latest on your favorite team.</p>
           <div class="social-links">
             <a href="https://twitter.com/sixershoops" class="social-link" aria-label="Twitter" target="_blank" rel="noopener noreferrer">
               <i class="fab fa-twitter"></i>
@@ -265,23 +128,114 @@ document.addEventListener('DOMContentLoaded', function () {
     </footer>
   `;
 
-  // -------------  INJECT FOOTER  -------------
-  // Insert footer at the end of body
+  // ============================================================================
+  // INJECT NAVBAR & FOOTER
+  // ============================================================================
+  document.body.insertAdjacentHTML('afterbegin', navbarHTML);
   document.body.insertAdjacentHTML('beforeend', footerHTML);
 
-  // Optional: Smooth scroll to top functionality
-  const footerLinks = document.querySelectorAll('.footer-link, .footer-legal-link');
-  footerLinks.forEach(link => {
-    link.addEventListener('click', function(e) {
-      // Only smooth scroll for internal links on the same page
-      const href = this.getAttribute('href');
-      if (href && href.startsWith('#')) {
-        e.preventDefault();
-        const target = document.querySelector(href);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+  // ============================================================================
+  // NAVBAR FUNCTIONALITY
+  // ============================================================================
+  const navbar = document.getElementById('navbar');
+  const menuBtn = document.getElementById('mobileMenuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const navMenu = document.querySelector('.nav-menu');
+
+  // Responsive navigation
+  function applyResponsiveNav() {
+    const isMobile = window.innerWidth <= 968;
+    if (isMobile) {
+      if (navMenu) navMenu.style.display = 'none';
+      if (menuBtn) menuBtn.style.display = 'flex';
+    } else {
+      if (navMenu) navMenu.style.display = 'flex';
+      if (menuBtn) menuBtn.style.display = 'none';
+      closeMobileMenu();
+    }
+  }
+
+  // Close mobile menu
+  function closeMobileMenu() {
+    if (mobileMenu?.classList.contains('active')) {
+      mobileMenu.classList.remove('active');
+      menuBtn?.classList.remove('active');
+      menuBtn?.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('no-scroll');
+      document.documentElement.classList.remove('no-scroll');
+    }
+  }
+
+  // Mobile menu toggle
+  if (menuBtn && mobileMenu && !menuBtn.__bound) {
+    menuBtn.__bound = true;
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuBtn.classList.toggle('active');
+      mobileMenu.classList.toggle('active');
+      const isOpen = mobileMenu.classList.contains('active');
+      menuBtn.setAttribute('aria-expanded', String(isOpen));
+      document.body.classList.toggle('no-scroll', isOpen);
+      document.documentElement.classList.toggle('no-scroll', isOpen);
+    });
+
+    // Close menu when clicking a link
+    mobileMenu.addEventListener('click', (e) => {
+      if (e.target.closest('a.mobile-link')) {
+        closeMobileMenu();
+        return;
+      }
+      e.stopPropagation();
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!mobileMenu.classList.contains('active')) return;
+      const clickedInside = e.target.closest('#navbar') || e.target.closest('#mobileMenu');
+      if (!clickedInside) closeMobileMenu();
+    });
+  }
+
+  // Mobile dropdown toggle
+  const mobileTeamToggle = document.getElementById('mobileTeamToggle');
+  const mobileTeamMenu = document.getElementById('mobileTeamMenu');
+  if (mobileTeamToggle && mobileTeamMenu) {
+    mobileTeamToggle.addEventListener('click', () => {
+      mobileTeamMenu.classList.toggle('open');
+      mobileTeamToggle.classList.toggle('open');
+    });
+  }
+
+  // Scroll effect
+  window.addEventListener('scroll', () => {
+    navbar?.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // Active link highlighting
+  function setActiveLink() {
+    const normalize = (p) => {
+      if (!p) return '/';
+      p = p.replace(/\/index\.html?$/i, '/').replace(/\/$/, '');
+      return p === '' ? '/' : p.toLowerCase();
+    };
+    const currentPath = normalize(window.location.pathname);
+    document.querySelectorAll('.nav-link, .mobile-link, .dropdown-item').forEach(link => {
+      link.classList.remove('active');
+      const linkPath = normalize(new URL(link.getAttribute('href'), window.location.origin).pathname);
+      if (linkPath === currentPath || (currentPath === '/' && (linkPath === '/' || linkPath === '/index'))) {
+        link.classList.add('active');
       }
     });
+  }
+
+  // Initialize
+  applyResponsiveNav();
+  setActiveLink();
+
+  // Event listeners
+  window.addEventListener('resize', () => {
+    applyResponsiveNav();
+    if (window.innerWidth > 968) closeMobileMenu();
   });
+  window.addEventListener('popstate', setActiveLink);
 });
