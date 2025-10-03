@@ -266,5 +266,5 @@ if (document.readyState === 'loading') {
 
 // Export for manual usage
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createNavbar, createMobileMenu, createFooter, initializeNavigation };
+    module.exports = { createNavbar, createMobileMenu, initializeNavigation, createFooter };
 }
