@@ -1,6 +1,5 @@
 // ============================================
-// PROFESSIONAL NAVBAR COMPONENT
-// SixersHoops.com
+// NAVBAR COMPONENT
 // ============================================
 
 function createNavbar() {
@@ -8,6 +7,7 @@ function createNavbar() {
     nav.className = 'navbar';
     
     nav.innerHTML = `
+        <!-- Brand -->
         <a href="/index.html" class="nav-brand">
             <div class="nav-logo">76</div>
             <div class="brand-text">
@@ -15,6 +15,7 @@ function createNavbar() {
             </div>
         </a>
 
+        <!-- Desktop Navigation -->
         <ul class="nav-menu">
             <li class="nav-item">
                 <a href="/index.html" class="nav-link">Home</a>
@@ -23,7 +24,7 @@ function createNavbar() {
                 <a href="/news.html" class="nav-link">News</a>
             </li>
             <li class="nav-item dropdown">
-                <button class="dropdown-toggle">Team</button>
+                <span class="dropdown-toggle">Team</span>
                 <div class="dropdown-menu">
                     <a href="/roster.html" class="dropdown-item">Roster</a>
                     <a href="/stats.html" class="dropdown-item">Stats</a>
@@ -43,7 +44,8 @@ function createNavbar() {
             </li>
         </ul>
 
-        <button class="mobile-menu-btn" aria-label="Toggle menu">
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
             <span></span>
             <span></span>
             <span></span>
@@ -64,20 +66,15 @@ function createMobileMenu() {
         <div class="mobile-nav-item">
             <a href="/news.html" class="mobile-nav-link">News</a>
         </div>
-        <div class="mobile-nav-item">
-            <a href="/roster.html" class="mobile-nav-link">Roster</a>
-        </div>
-        <div class="mobile-nav-item">
-            <a href="/stats.html" class="mobile-nav-link">Stats</a>
-        </div>
-        <div class="mobile-nav-item">
-            <a href="/salary.html" class="mobile-nav-link">Salary Cap</a>
-        </div>
-        <div class="mobile-nav-item">
-            <a href="/depth.html" class="mobile-nav-link">Depth Chart</a>
-        </div>
-        <div class="mobile-nav-item">
-            <a href="/future-draft-picks.html" class="mobile-nav-link">Draft Picks</a>
+        <div class="mobile-nav-item mobile-dropdown">
+            <span class="mobile-dropdown-toggle">Team</span>
+            <div class="mobile-dropdown-menu">
+                <a href="/roster.html" class="mobile-dropdown-item">Roster</a>
+                <a href="/stats.html" class="mobile-dropdown-item">Stats</a>
+                <a href="/salary.html" class="mobile-dropdown-item">Salary Cap</a>
+                <a href="/depth.html" class="mobile-dropdown-item">Depth Chart</a>
+                <a href="/future-draft-picks.html" class="mobile-dropdown-item">Draft Picks</a>
+            </div>
         </div>
         <div class="mobile-nav-item">
             <a href="/nba-trade-machine.html" class="mobile-nav-link">Trade Machine</a>
@@ -93,9 +90,68 @@ function createMobileMenu() {
     return mobileMenu;
 }
 
+function initializeNavigation() {
+    // Mobile menu toggle
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuBtn.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+        });
+
+        // Close mobile menu when clicking links
+        const mobileLinks = mobileMenu.querySelectorAll('.mobile-nav-link, .mobile-dropdown-item');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenuBtn.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Mobile dropdown toggle
+        const mobileDropdownToggle = mobileMenu.querySelector('.mobile-dropdown-toggle');
+        if (mobileDropdownToggle) {
+            mobileDropdownToggle.addEventListener('click', () => {
+                const dropdownMenu = mobileDropdownToggle.nextElementSibling;
+                dropdownMenu.classList.toggle('active');
+                mobileDropdownToggle.classList.toggle('active');
+            });
+        }
+    }
+
+    // Scroll effect
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const navbar = document.querySelector('.navbar');
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+        
+        lastScroll = currentScroll;
+    });
+
+    // Highlight active page
+    const currentPage = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-link, .dropdown-item');
+    
+    navLinks.forEach(link => {
+        const linkPath = new URL(link.href).pathname;
+        if (linkPath === currentPage) {
+            link.classList.add('active');
+        }
+    });
+}
+
 // ============================================
-// PROFESSIONAL FOOTER COMPONENT
-// SixersHoops.com
+// FOOTER COMPONENT
 // ============================================
 
 function createFooter() {
@@ -183,87 +239,32 @@ function createFooter() {
 }
 
 // ============================================
-// INITIALIZATION & EVENT HANDLERS
+// AUTO-INITIALIZATION
 // ============================================
 
-function initializeNavigation() {
-    // Create and insert navbar
+function initializePage() {
+    // Insert navbar at the beginning of body
     const navbar = createNavbar();
+    const mobileMenu = createMobileMenu();
+    document.body.insertBefore(mobileMenu, document.body.firstChild);
     document.body.insertBefore(navbar, document.body.firstChild);
     
-    // Create and insert mobile menu
-    const mobileMenu = createMobileMenu();
-    document.body.insertBefore(mobileMenu, document.body.children[1]);
+    // Initialize navigation functionality
+    initializeNavigation();
     
-    // Mobile menu toggle
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const mobileMenuElement = document.querySelector('.mobile-menu');
-    
-    if (mobileMenuBtn && mobileMenuElement) {
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenuBtn.classList.toggle('active');
-            mobileMenuElement.classList.toggle('active');
-            document.body.style.overflow = mobileMenuElement.classList.contains('active') ? 'hidden' : '';
-        });
-        
-        // Close mobile menu when clicking links
-        const mobileLinks = mobileMenuElement.querySelectorAll('.mobile-nav-link');
-        mobileLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenuBtn.classList.remove('active');
-                mobileMenuElement.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        });
-    }
-    
-    // Scroll effect for navbar
-    let lastScroll = 0;
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
-        const navbar = document.querySelector('.navbar');
-        
-        if (navbar) {
-            if (currentScroll > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        }
-        
-        lastScroll = currentScroll;
-    });
-    
-    // Set active link based on current page
-    const currentPage = window.location.pathname;
-    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
-    
-    navLinks.forEach(link => {
-        if (link.getAttribute('href') === currentPage || 
-            (currentPage === '/' && link.getAttribute('href') === '/index.html')) {
-            link.classList.add('active');
-        }
-    });
-}
-
-function initializeFooter() {
-    // Create and append footer
+    // Append footer at the end of body
     const footer = createFooter();
     document.body.appendChild(footer);
 }
 
-// Auto-load navbar and footer when DOM is ready
+// Auto-load when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeNavigation();
-        initializeFooter();
-    });
+    document.addEventListener('DOMContentLoaded', initializePage);
 } else {
-    initializeNavigation();
-    initializeFooter();
+    initializePage();
 }
 
 // Export for manual usage
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createNavbar, createMobileMenu, createFooter, initializeNavigation, initializeFooter };
+    module.exports = { createNavbar, createMobileMenu, createFooter, initializeNavigation };
 }
