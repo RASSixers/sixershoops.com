@@ -1,4 +1,103 @@
-// Professional Footer Component for SixersHoops.com
+// ============================================
+// PROFESSIONAL NAVBAR COMPONENT
+// SixersHoops.com
+// ============================================
+
+function createNavbar() {
+    const nav = document.createElement('nav');
+    nav.className = 'navbar';
+    
+    nav.innerHTML = `
+        <a href="/index.html" class="nav-brand">
+            <div class="nav-logo">76</div>
+            <div class="brand-text">
+                <span class="brand-name">SixersHoops</span>
+            </div>
+        </a>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/index.html" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="/news.html" class="nav-link">News</a>
+            </li>
+            <li class="nav-item dropdown">
+                <button class="dropdown-toggle">Team</button>
+                <div class="dropdown-menu">
+                    <a href="/roster.html" class="dropdown-item">Roster</a>
+                    <a href="/stats.html" class="dropdown-item">Stats</a>
+                    <a href="/salary.html" class="dropdown-item">Salary Cap</a>
+                    <a href="/depth.html" class="dropdown-item">Depth Chart</a>
+                    <a href="/future-draft-picks.html" class="dropdown-item">Draft Picks</a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="/nba-trade-machine.html" class="nav-link">Trade Machine</a>
+            </li>
+            <li class="nav-item">
+                <a href="/schedule.html" class="nav-link">Schedule</a>
+            </li>
+            <li class="nav-item">
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </li>
+        </ul>
+
+        <button class="mobile-menu-btn" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    `;
+    
+    return nav;
+}
+
+function createMobileMenu() {
+    const mobileMenu = document.createElement('div');
+    mobileMenu.className = 'mobile-menu';
+    
+    mobileMenu.innerHTML = `
+        <div class="mobile-nav-item">
+            <a href="/index.html" class="mobile-nav-link">Home</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/news.html" class="mobile-nav-link">News</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/roster.html" class="mobile-nav-link">Roster</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/stats.html" class="mobile-nav-link">Stats</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/salary.html" class="mobile-nav-link">Salary Cap</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/depth.html" class="mobile-nav-link">Depth Chart</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/future-draft-picks.html" class="mobile-nav-link">Draft Picks</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/nba-trade-machine.html" class="mobile-nav-link">Trade Machine</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/schedule.html" class="mobile-nav-link">Schedule</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/contact.html" class="mobile-nav-link">Contact</a>
+        </div>
+    `;
+    
+    return mobileMenu;
+}
+
+// ============================================
+// PROFESSIONAL FOOTER COMPONENT
+// SixersHoops.com
+// ============================================
+
 function createFooter() {
     const footer = document.createElement('footer');
     footer.className = 'site-footer';
@@ -83,16 +182,88 @@ function createFooter() {
     return footer;
 }
 
-// Auto-load footer when DOM is ready
+// ============================================
+// INITIALIZATION & EVENT HANDLERS
+// ============================================
+
+function initializeNavigation() {
+    // Create and insert navbar
+    const navbar = createNavbar();
+    document.body.insertBefore(navbar, document.body.firstChild);
+    
+    // Create and insert mobile menu
+    const mobileMenu = createMobileMenu();
+    document.body.insertBefore(mobileMenu, document.body.children[1]);
+    
+    // Mobile menu toggle
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const mobileMenuElement = document.querySelector('.mobile-menu');
+    
+    if (mobileMenuBtn && mobileMenuElement) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuBtn.classList.toggle('active');
+            mobileMenuElement.classList.toggle('active');
+            document.body.style.overflow = mobileMenuElement.classList.contains('active') ? 'hidden' : '';
+        });
+        
+        // Close mobile menu when clicking links
+        const mobileLinks = mobileMenuElement.querySelectorAll('.mobile-nav-link');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenuBtn.classList.remove('active');
+                mobileMenuElement.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    }
+    
+    // Scroll effect for navbar
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        const navbar = document.querySelector('.navbar');
+        
+        if (navbar) {
+            if (currentScroll > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        }
+        
+        lastScroll = currentScroll;
+    });
+    
+    // Set active link based on current page
+    const currentPage = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+    
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPage || 
+            (currentPage === '/' && link.getAttribute('href') === '/index.html')) {
+            link.classList.add('active');
+        }
+    });
+}
+
+function initializeFooter() {
+    // Create and append footer
+    const footer = createFooter();
+    document.body.appendChild(footer);
+}
+
+// Auto-load navbar and footer when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        document.body.appendChild(createFooter());
+        initializeNavigation();
+        initializeFooter();
     });
 } else {
-    document.body.appendChild(createFooter());
+    initializeNavigation();
+    initializeFooter();
 }
 
 // Export for manual usage
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createFooter };
+    module.exports = { createNavbar, createMobileMenu, createFooter, initializeNavigation, initializeFooter };
 }
