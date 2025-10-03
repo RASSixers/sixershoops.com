@@ -212,5 +212,4 @@ document.addEventListener('DOMContentLoaded', function () {
       document.documentElement.classList.remove('no-scroll');
     }
   });
-});<link rel="stylesheet" href="navbar-styles.css">
-<script src="nav.js" defer></script>
+});
