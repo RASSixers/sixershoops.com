@@ -1045,7 +1045,7 @@
     const scheduleData = [
       // October 2025 - Preseason
       { date: "2025-10-02", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "completed", result: "L 99-84", isPreseason: true },
-      { date: "2025-10-04", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "live", isPreseason: true, espnGameId: "401812483", isLive: true },
+      { date: "2025-10-04", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "live", isPreseason: true, espnGameId: "401812483", nbaGameId: "0012500010", isLive: true },
       { date: "2025-10-10", opponent: "Orlando Magic", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "upcoming", isPreseason: true },
       { date: "2025-10-17", opponent: "Minnesota Timberwolves", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming", isPreseason: true },
       
@@ -1976,9 +1976,9 @@
     // Live Score Update Functionality
     let liveGameUpdateInterval = null;
     
-    async function fetchLiveGameData(espnGameId) {
+    async function fetchLiveGameData(nbaGameId) {
       try {
-        const response = await fetch(`/api/espn-live-game?gameId=${espnGameId}`);
+        const response = await fetch(`/api/nba-live-game?gameId=${nbaGameId}`);
         const data = await response.json();
         
         if (data.success) {
@@ -1994,14 +1994,14 @@
     }
     
     function updateLiveGameCard(game, liveData) {
-      if (!liveData || !liveData.game) return;
+      if (!liveData || !liveData.data) return;
       
       const gameId = `${game.date.replace(/-/g, '')}_${getOpponentAbbreviation(game.opponent)}_${game.location}`;
       const gameCard = document.querySelector(`[data-game-id="${gameId}"]`);
       
       if (!gameCard) return;
       
-      const gameInfo = liveData.game;
+      const gameInfo = liveData.data;
       const isHome = game.location === 'home';
       
       // Update score
@@ -2022,7 +2022,7 @@
       // Update game status
       const statusElement = gameCard.querySelector('.game-status');
       if (statusElement) {
-        statusElement.textContent = gameInfo.status === 'in' ? 'LIVE' : gameInfo.statusText;
+        statusElement.textContent = gameInfo.status === 'live' ? 'LIVE' : gameInfo.statusText;
         statusElement.className = `game-status ${gameInfo.status === 'in' ? 'live' : gameInfo.status}`;
       }
       
@@ -2035,14 +2035,14 @@
     }
     
     function startLiveGameUpdates() {
-      // Find all games with ESPN game IDs
-      const liveGames = scheduleData.filter(game => game.espnGameId && game.isLive);
+      // Find all games with NBA.com game IDs
+      const liveGames = scheduleData.filter(game => game.nbaGameId && game.isLive);
       
       if (liveGames.length === 0) return;
       
       // Update immediately
       liveGames.forEach(async (game) => {
-        const liveData = await fetchLiveGameData(game.espnGameId);
+        const liveData = await fetchLiveGameData(game.nbaGameId);
         if (liveData) {
           updateLiveGameCard(game, liveData);
         }
@@ -2051,7 +2051,7 @@
       // Set up interval to update every 10 seconds
       liveGameUpdateInterval = setInterval(() => {
         liveGames.forEach(async (game) => {
-          const liveData = await fetchLiveGameData(game.espnGameId);
+          const liveData = await fetchLiveGameData(game.nbaGameId);
           if (liveData) {
             updateLiveGameCard(game, liveData);
           }
@@ -2066,7 +2066,7 @@
       }
     }
     
-    // Update the loadGameData function to use real ESPN data
+    // Update the loadGameData function to use real NBA.com data
     async function loadGameDataReal(gameId) {
       // Find the game in scheduleData
       const game = scheduleData.find(g => {
@@ -2074,13 +2074,13 @@
         return gId === gameId;
       });
       
-      if (!game || !game.espnGameId) {
+      if (!game || !game.nbaGameId) {
         // Fall back to mock data
         return loadGameData(gameId);
       }
       
       try {
-        const liveData = await fetchLiveGameData(game.espnGameId);
+        const liveData = await fetchLiveGameData(game.nbaGameId);
         
         if (!liveData || !liveData.success) {
           return loadGameData(gameId);
@@ -2100,14 +2100,14 @@
     }
     
     function updateLiveScoreHeaderReal(liveData, game) {
-      const gameInfo = liveData.game;
+      const gameInfo = liveData.data;
       const isHome = game.location === 'home';
       
-      document.getElementById('awayTeamLogo').textContent = isHome ? gameInfo.awayTeam.abbreviation : '76';
+      document.getElementById('awayTeamLogo').textContent = isHome ? gameInfo.awayTeam.tricode : '76';
       document.getElementById('awayTeamName').textContent = isHome ? gameInfo.awayTeam.name : 'Philadelphia 76ers';
       document.getElementById('awayScore').textContent = gameInfo.awayTeam.score;
       
-      document.getElementById('homeTeamLogo').textContent = isHome ? '76' : gameInfo.homeTeam.abbreviation;
+      document.getElementById('homeTeamLogo').textContent = isHome ? '76' : gameInfo.homeTeam.tricode;
       document.getElementById('homeTeamName').textContent = isHome ? 'Philadelphia 76ers' : gameInfo.homeTeam.name;
       document.getElementById('homeScore').textContent = gameInfo.homeTeam.score;
       
@@ -2131,16 +2131,16 @@
     function loadPlayByPlayReal(liveData) {
       const container = document.getElementById('playByPlayContainer');
       
-      if (!liveData.plays || liveData.plays.length === 0) {
+      if (!liveData.data.plays || liveData.data.plays.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">No play-by-play data available yet</div>';
         return;
       }
       
-      const playsHtml = liveData.plays.map(play => `
+      const playsHtml = liveData.data.plays.map(play => `
         <div class="play-item">
-          <div class="play-time">${play.time}</div>
+          <div class="play-time">${play.emoji} Q${play.period} ${play.clock}</div>
           <div class="play-description">${play.description}</div>
-          <div class="play-score">${play.score}</div>
+          <div class="play-score">${play.scoreAway}-${play.scoreHome}</div>
         </div>
       `).join('');
       
@@ -2150,20 +2150,20 @@
     function loadBoxScoreReal(liveData) {
       const container = document.getElementById('boxScoreContainer');
       
-      if (!liveData.boxScore) {
+      if (!liveData.data.homeTeam.boxScore || !liveData.data.awayTeam.boxScore) {
         container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">Box score not available yet</div>';
         return;
       }
       
-      const homePlayers = liveData.boxScore.homeTeam.players || [];
-      const awayPlayers = liveData.boxScore.awayTeam.players || [];
+      const homePlayers = liveData.data.homeTeam.boxScore || [];
+      const awayPlayers = liveData.data.awayTeam.boxScore || [];
       
       let html = '<div class="box-score-tables">';
       
       // Away team
       html += `
         <div class="team-box-score">
-          <h3>${liveData.game.awayTeam.name}</h3>
+          <h3>${liveData.data.awayTeam.name}</h3>
           <table class="box-score-table">
             <thead>
               <tr>
@@ -2181,13 +2181,13 @@
               ${awayPlayers.map(p => `
                 <tr>
                   <td>${p.name}</td>
-                  <td>${p.minutes}</td>
+                  <td>${p.minutes.replace('PT', '').replace('M', ':').replace('.00S', '')}</td>
                   <td>${p.points}</td>
                   <td>${p.rebounds}</td>
                   <td>${p.assists}</td>
-                  <td>${p.fg}</td>
-                  <td>${p.threePt}</td>
-                  <td>${p.ft}</td>
+                  <td>${p.fieldGoalsMade}-${p.fieldGoalsAttempted}</td>
+                  <td>${p.threePointersMade}-${p.threePointersAttempted}</td>
+                  <td>${p.freeThrowsMade}-${p.freeThrowsAttempted}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -2198,7 +2198,7 @@
       // Home team
       html += `
         <div class="team-box-score">
-          <h3>${liveData.game.homeTeam.name}</h3>
+          <h3>${liveData.data.homeTeam.name}</h3>
           <table class="box-score-table">
             <thead>
               <tr>
@@ -2216,13 +2216,13 @@
               ${homePlayers.map(p => `
                 <tr>
                   <td>${p.name}</td>
-                  <td>${p.minutes}</td>
+                  <td>${p.minutes.replace('PT', '').replace('M', ':').replace('.00S', '')}</td>
                   <td>${p.points}</td>
                   <td>${p.rebounds}</td>
                   <td>${p.assists}</td>
-                  <td>${p.fg}</td>
-                  <td>${p.threePt}</td>
-                  <td>${p.ft}</td>
+                  <td>${p.fieldGoalsMade}-${p.fieldGoalsAttempted}</td>
+                  <td>${p.threePointersMade}-${p.threePointersAttempted}</td>
+                  <td>${p.freeThrowsMade}-${p.freeThrowsAttempted}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -2237,38 +2237,70 @@
     function loadGameStatsReal(liveData) {
       const container = document.getElementById('gameStatsContainer');
       
-      if (!liveData.teamStats) {
+      if (!liveData.data.homeTeam.stats || !liveData.data.awayTeam.stats) {
         container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">Team stats not available yet</div>';
         return;
       }
       
-      const stats = liveData.teamStats;
+      const homeStats = liveData.data.homeTeam.stats;
+      const awayStats = liveData.data.awayTeam.stats;
       
       const html = `
-        <div class="team-stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">${stats.fieldGoalPct}%</div>
-            <div class="stat-label">Field Goal %</div>
+        <div class="team-stats-comparison">
+          <h3>${liveData.data.homeTeam.name} Stats</h3>
+          <div class="team-stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">${(parseFloat(homeStats.fieldGoalPct) * 100).toFixed(1)}%</div>
+              <div class="stat-label">Field Goal %</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${(parseFloat(homeStats.threePointerPct) * 100).toFixed(1)}%</div>
+              <div class="stat-label">3-Point %</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${(parseFloat(homeStats.freeThrowPct) * 100).toFixed(1)}%</div>
+              <div class="stat-label">Free Throw %</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${homeStats.rebounds}</div>
+              <div class="stat-label">Rebounds</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${homeStats.assists}</div>
+              <div class="stat-label">Assists</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${homeStats.turnovers}</div>
+              <div class="stat-label">Turnovers</div>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-value">${stats.threePtPct}%</div>
-            <div class="stat-label">3-Point %</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${stats.freeThrowPct}%</div>
-            <div class="stat-label">Free Throw %</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${stats.rebounds}</div>
-            <div class="stat-label">Rebounds</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${stats.assists}</div>
-            <div class="stat-label">Assists</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${stats.turnovers}</div>
-            <div class="stat-label">Turnovers</div>
+          
+          <h3 style="margin-top: 2rem;">${liveData.data.awayTeam.name} Stats</h3>
+          <div class="team-stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">${(parseFloat(awayStats.fieldGoalPct) * 100).toFixed(1)}%</div>
+              <div class="stat-label">Field Goal %</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${(parseFloat(awayStats.threePointerPct) * 100).toFixed(1)}%</div>
+              <div class="stat-label">3-Point %</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${(parseFloat(awayStats.freeThrowPct) * 100).toFixed(1)}%</div>
+              <div class="stat-label">Free Throw %</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${awayStats.rebounds}</div>
+              <div class="stat-label">Rebounds</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${awayStats.assists}</div>
+              <div class="stat-label">Assists</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${awayStats.turnovers}</div>
+              <div class="stat-label">Turnovers</div>
+            </div>
           </div>
         </div>
       `;
