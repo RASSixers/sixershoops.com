@@ -1,270 +1,314 @@
-// NBA.com Live Game Data API for Vercel Serverless Functions
-// Fetches real-time game data from NBA.com's official Stats API
-
-export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  
-  if (req.method !== 'GET') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
-  
-  try {
-    const { gameId } = req.query;
-    
-    if (!gameId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'gameId parameter is required (NBA.com format: 00XXXXXXXXX)' 
-      });
-    }
-    
-    console.log(`Fetching NBA.com game data for gameId: ${gameId}`);
-    
-    // Fetch from NBA.com's official Stats API endpoints
-    const [boxScoreResponse, playByPlayResponse] = await Promise.all([
-      fetch(`https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json`, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'https://www.nba.com/',
-          'Origin': 'https://www.nba.com'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA API Test | SixersHoops</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }),
-      fetch(`https://cdn.nba.com/static/json/liveData/playbyplay/playbyplay_${gameId}.json`, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'https://www.nba.com/',
-          'Origin': 'https://www.nba.com'
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
         }
-      }).catch(() => null) // Play-by-play might not be available for all games
-    ]);
-    
-    if (!boxScoreResponse.ok) {
-      throw new Error(`NBA.com API returned status: ${boxScoreResponse.status}`);
-    }
-    
-    const boxScoreData = await boxScoreResponse.json();
-    let playByPlayData = null;
-    
-    if (playByPlayResponse && playByPlayResponse.ok) {
-      playByPlayData = await playByPlayResponse.json();
-    }
-    
-    // Parse and format the data
-    const gameData = parseNBAGameData(boxScoreData, playByPlayData);
-    
-    return res.status(200).json({
-      success: true,
-      data: gameData,
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    console.error('Error fetching NBA game data:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch game data',
-      timestamp: new Date().toISOString()
-    });
-  }
-}
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #3b82f6;
+        }
+        .test-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 2px solid #334155;
+        }
+        .test-section h2 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success {
+            color: #10b981;
+        }
+        .error {
+            color: #ef4444;
+        }
+        .info {
+            color: #60a5fa;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.online {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+        .status-indicator.offline {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+        .box-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .box-score-table th,
+        .box-score-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        .box-score-table th {
+            background: #0f172a;
+            color: #60a5fa;
+            font-weight: 600;
+        }
+        .box-score-table tr:hover {
+            background: #0f172a;
+        }
+        .team-header {
+            background: #3b82f6;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏀 NBA API Test Dashboard</h1>
 
-function parseNBAGameData(boxScoreData, playByPlayData) {
-  const game = boxScoreData.game;
-  
-  // Determine game status
-  let status = 'scheduled';
-  let statusText = 'Scheduled';
-  let period = 0;
-  let clock = '12:00';
-  
-  if (game.gameStatusText) {
-    const statusLower = game.gameStatusText.toLowerCase();
-    if (statusLower.includes('final')) {
-      status = 'final';
-      statusText = 'Final';
-    } else if (statusLower.includes('halftime')) {
-      status = 'halftime';
-      statusText = 'Halftime';
-      period = 2;
-    } else if (statusLower.match(/q[1-4]|period [1-4]/i)) {
-      status = 'live';
-      statusText = game.gameStatusText;
-      period = game.period || 0;
-      clock = game.gameClock || '0:00';
-    } else if (game.gameStatus === 2) {
-      status = 'live';
-      statusText = game.gameStatusText;
-      period = game.period || 0;
-      clock = game.gameClock || '0:00';
-    } else if (game.gameStatus === 3) {
-      status = 'final';
-      statusText = 'Final';
-    }
-  }
-  
-  // Get team data
-  const homeTeam = game.homeTeam;
-  const awayTeam = game.awayTeam;
-  
-  // Determine winner
-  const homeScore = parseInt(homeTeam.score) || 0;
-  const awayScore = parseInt(awayTeam.score) || 0;
-  const homeWinner = status === 'final' && homeScore > awayScore;
-  const awayWinner = status === 'final' && awayScore > homeScore;
-  
-  // Parse box score
-  const homeBoxScore = parseTeamBoxScore(homeTeam, boxScoreData.game.homeTeam);
-  const awayBoxScore = parseTeamBoxScore(awayTeam, boxScoreData.game.awayTeam);
-  
-  // Parse play-by-play
-  const plays = playByPlayData ? parsePlayByPlay(playByPlayData) : [];
-  
-  // Parse team stats
-  const homeStats = parseTeamStats(homeTeam.statistics || {});
-  const awayStats = parseTeamStats(awayTeam.statistics || {});
-  
-  return {
-    gameId: game.gameId,
-    status: status,
-    statusText: statusText,
-    period: period,
-    clock: clock,
-    homeTeam: {
-      id: homeTeam.teamId,
-      name: homeTeam.teamName,
-      tricode: homeTeam.teamTricode,
-      score: homeScore,
-      logo: `https://cdn.nba.com/logos/nba/${homeTeam.teamId}/primary/L/logo.svg`,
-      record: `${homeTeam.wins || 0}-${homeTeam.losses || 0}`,
-      winner: homeWinner,
-      boxScore: homeBoxScore,
-      stats: homeStats,
-      periods: homeTeam.periods || []
-    },
-    awayTeam: {
-      id: awayTeam.teamId,
-      name: awayTeam.teamName,
-      tricode: awayTeam.teamTricode,
-      score: awayScore,
-      logo: `https://cdn.nba.com/logos/nba/${awayTeam.teamId}/primary/L/logo.svg`,
-      record: `${awayTeam.wins || 0}-${awayTeam.losses || 0}`,
-      winner: awayWinner,
-      boxScore: awayBoxScore,
-      stats: awayStats,
-      periods: awayTeam.periods || []
-    },
-    plays: plays
-  };
-}
+        <!-- Server Status -->
+        <div class="test-section">
+            <h2><span class="status-indicator offline" id="statusIndicator"></span>Server Status</h2>
+            <p id="serverStatus">Checking...</p>
+            <button class="btn" onclick="checkServer()">Check Server</button>
+        </div>
 
-function parseTeamBoxScore(team, teamData) {
-  const players = teamData.players || [];
-  
-  return players.map(player => {
-    const stats = player.statistics || {};
-    
-    return {
-      personId: player.personId,
-      name: player.name || `${player.firstName} ${player.familyName}`,
-      firstName: player.firstName,
-      familyName: player.familyName,
-      jersey: player.jerseyNum,
-      position: player.position || '',
-      starter: player.starter === '1' || player.starter === true,
-      oncourt: player.oncourt === '1' || player.oncourt === true,
-      played: player.played === '1' || player.played === true,
-      minutes: stats.minutes || '0:00',
-      points: parseInt(stats.points) || 0,
-      rebounds: parseInt(stats.reboundsTotal) || 0,
-      assists: parseInt(stats.assists) || 0,
-      steals: parseInt(stats.steals) || 0,
-      blocks: parseInt(stats.blocks) || 0,
-      turnovers: parseInt(stats.turnovers) || 0,
-      fouls: parseInt(stats.foulsPersonal) || 0,
-      fieldGoalsMade: parseInt(stats.fieldGoalsMade) || 0,
-      fieldGoalsAttempted: parseInt(stats.fieldGoalsAttempted) || 0,
-      fieldGoalPct: stats.fieldGoalsPercentage || '0.0',
-      threePointersMade: parseInt(stats.threePointersMade) || 0,
-      threePointersAttempted: parseInt(stats.threePointersAttempted) || 0,
-      threePointerPct: stats.threePointersPercentage || '0.0',
-      freeThrowsMade: parseInt(stats.freeThrowsMade) || 0,
-      freeThrowsAttempted: parseInt(stats.freeThrowsAttempted) || 0,
-      freeThrowPct: stats.freeThrowsPercentage || '0.0',
-      plusMinus: stats.plusMinusPoints || '0',
-      offensiveRebounds: parseInt(stats.reboundsOffensive) || 0,
-      defensiveRebounds: parseInt(stats.reboundsDefensive) || 0
-    };
-  }).filter(player => player.played); // Only return players who played
-}
+        <!-- API Test -->
+        <div class="test-section">
+            <h2>Test NBA Live Game API</h2>
+            <p>Test the October 4th, 2024 preseason game (76ers vs Knicks)</p>
+            <button class="btn" onclick="testGameAPI()" id="testBtn">Fetch Game Data</button>
+            <button class="btn" onclick="showBoxScore()" id="boxScoreBtn" disabled>Show Box Score</button>
+            <button class="btn" onclick="showPlayByPlay()" id="playByPlayBtn" disabled>Show Play-by-Play</button>
+            <div class="result" id="apiResult"></div>
+        </div>
 
-function parseTeamStats(stats) {
-  return {
-    fieldGoalPct: stats.fieldGoalsPercentage || '0.0',
-    threePointerPct: stats.threePointersPercentage || '0.0',
-    freeThrowPct: stats.freeThrowsPercentage || '0.0',
-    rebounds: parseInt(stats.reboundsTotal) || 0,
-    assists: parseInt(stats.assists) || 0,
-    turnovers: parseInt(stats.turnovers) || 0,
-    steals: parseInt(stats.steals) || 0,
-    blocks: parseInt(stats.blocks) || 0,
-    points: parseInt(stats.points) || 0,
-    fieldGoalsMade: parseInt(stats.fieldGoalsMade) || 0,
-    fieldGoalsAttempted: parseInt(stats.fieldGoalsAttempted) || 0,
-    threePointersMade: parseInt(stats.threePointersMade) || 0,
-    threePointersAttempted: parseInt(stats.threePointersAttempted) || 0,
-    freeThrowsMade: parseInt(stats.freeThrowsMade) || 0,
-    freeThrowsAttempted: parseInt(stats.freeThrowsAttempted) || 0
-  };
-}
+        <!-- Box Score Display -->
+        <div class="test-section" id="boxScoreSection" style="display: none;">
+            <h2>📊 Box Score</h2>
+            <div id="boxScoreDisplay"></div>
+        </div>
 
-function parsePlayByPlay(playByPlayData) {
-  const actions = playByPlayData.game?.actions || [];
-  
-  return actions
-    .filter(action => action.actionType !== 'period' && action.description)
-    .map(action => {
-      let emoji = '🏀';
-      const desc = action.description.toLowerCase();
-      
-      // Add emojis based on play type
-      if (desc.includes('3pt')) emoji = '🎯';
-      else if (desc.includes('dunk')) emoji = '💥';
-      else if (desc.includes('layup')) emoji = '🏀';
-      else if (desc.includes('miss')) emoji = '🚫';
-      else if (desc.includes('rebound')) emoji = '🔄';
-      else if (desc.includes('assist')) emoji = '🤝';
-      else if (desc.includes('steal')) emoji = '🔥';
-      else if (desc.includes('block')) emoji = '🛡️';
-      else if (desc.includes('turnover')) emoji = '❌';
-      else if (desc.includes('foul')) emoji = '⚠️';
-      else if (desc.includes('free throw')) emoji = '🎯';
-      
-      return {
-        clock: action.clock || '0:00',
-        period: action.period || 1,
-        teamId: action.teamId || null,
-        teamTricode: action.teamTricode || '',
-        personId: action.personId || null,
-        playerName: action.playerName || action.playerNameI || '',
-        actionType: action.actionType || '',
-        subType: action.subType || '',
-        description: action.description || '',
-        emoji: emoji,
-        scoreHome: action.scoreHome || '0',
-        scoreAway: action.scoreAway || '0'
-      };
-    })
-    .reverse(); // Most recent plays first
-}
+        <!-- Play-by-Play Display -->
+        <div class="test-section" id="playByPlaySection" style="display: none;">
+            <h2>📝 Play-by-Play</h2>
+            <div id="playByPlayDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        let gameData = null;
+        const API_URL = 'http://localhost:3001/api/nba-live-game?gameId=0012500010';
+
+        async function checkServer() {
+            const statusText = document.getElementById('serverStatus');
+            const indicator = document.getElementById('statusIndicator');
+            
+            statusText.textContent = 'Checking...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    statusText.innerHTML = '<span class="success">✅ Server is running on http://localhost:3001</span>';
+                    indicator.classList.remove('offline');
+                    indicator.classList.add('online');
+                } else {
+                    throw new Error('Server not healthy');
+                }
+            } catch (error) {
+                statusText.innerHTML = '<span class="error">❌ Server is not running. Please start start-local-server.bat</span>';
+                indicator.classList.remove('online');
+                indicator.classList.add('offline');
+            }
+        }
+
+        async function testGameAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            const testBtn = document.getElementById('testBtn');
+            const boxScoreBtn = document.getElementById('boxScoreBtn');
+            const playByPlayBtn = document.getElementById('playByPlayBtn');
+            
+            testBtn.disabled = true;
+            resultDiv.innerHTML = '<span class="info">Fetching data from NBA.com...</span>';
+            
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                if (data.success) {
+                    gameData = data.data;
+                    
+                    resultDiv.innerHTML = `
+<span class="success">✅ API Request Successful!</span>
+
+<span class="info">Game Information:</span>
+Game ID: ${gameData.gameId}
+Status: ${gameData.statusText}
+${gameData.awayTeam.name} (${gameData.awayTeam.tricode}): ${gameData.awayTeam.score}
+${gameData.homeTeam.name} (${gameData.homeTeam.tricode}): ${gameData.homeTeam.score}
+
+<span class="info">Box Score Data:</span>
+${gameData.awayTeam.name}: ${gameData.awayTeam.boxScore.length} players
+${gameData.homeTeam.name}: ${gameData.homeTeam.boxScore.length} players
+
+<span class="info">Play-by-Play:</span>
+${gameData.plays.length} plays available
+
+<span class="success">✅ All data loaded successfully!</span>
+                    `;
+                    
+                    boxScoreBtn.disabled = false;
+                    playByPlayBtn.disabled = false;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ API Error: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Failed to fetch: ${error.message}</span>`;
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        function showBoxScore() {
+            if (!gameData) return;
+            
+            const section = document.getElementById('boxScoreSection');
+            const display = document.getElementById('boxScoreDisplay');
+            
+            let html = '';
+            
+            // Away Team
+            html += `<div class="team-header">${gameData.awayTeam.name} - ${gameData.awayTeam.score}</div>`;
+            html += '<table class="box-score-table"><thead><tr>';
+            html += '<th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>3PT</th><th>FT</th>';
+            html += '</tr></thead><tbody>';
+            
+            gameData.awayTeam.boxScore.forEach(player => {
+                html += `<tr>
+                    <td>${player.name}</td>
+                    <td>${player.minutes.replace('PT', '').replace('M', ':').replace('.00S', '')}</td>
+                    <td>${player.points}</td>
+                    <td>${player.rebounds}</td>
+                    <td>${player.assists}</td>
+                    <td>${player.fieldGoalsMade}-${player.fieldGoalsAttempted}</td>
+                    <td>${player.threePointersMade}-${player.threePointersAttempted}</td>
+                    <td>${player.freeThrowsMade}-${player.freeThrowsAttempted}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            
+            // Home Team
+            html += `<div class="team-header">${gameData.homeTeam.name} - ${gameData.homeTeam.score}</div>`;
+            html += '<table class="box-score-table"><thead><tr>';
+            html += '<th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>3PT</th><th>FT</th>';
+            html += '</tr></thead><tbody>';
+            
+            gameData.homeTeam.boxScore.forEach(player => {
+                html += `<tr>
+                    <td>${player.name}</td>
+                    <td>${player.minutes.replace('PT', '').replace('M', ':').replace('.00S', '')}</td>
+                    <td>${player.points}</td>
+                    <td>${player.rebounds}</td>
+                    <td>${player.assists}</td>
+                    <td>${player.fieldGoalsMade}-${player.fieldGoalsAttempted}</td>
+                    <td>${player.threePointersMade}-${player.threePointersAttempted}</td>
+                    <td>${player.freeThrowsMade}-${player.freeThrowsAttempted}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            
+            display.innerHTML = html;
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showPlayByPlay() {
+            if (!gameData) return;
+            
+            const section = document.getElementById('playByPlaySection');
+            const display = document.getElementById('playByPlayDisplay');
+            
+            let html = '<div class="result">';
+            
+            gameData.plays.slice(0, 50).forEach(play => {
+                html += `${play.emoji} Q${play.period} ${play.clock} - ${play.description} (${play.scoreAway}-${play.scoreHome})\n`;
+            });
+            
+            html += '</div>';
+            
+            display.innerHTML = html;
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Check server on load
+        checkServer();
+    </script>
+</body>
+</html>
