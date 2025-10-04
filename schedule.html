@@ -434,6 +434,21 @@
       border: 1px solid rgba(59, 130, 246, 0.3);
     }
 
+    /* Preseason Badge */
+    .preseason-badge {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+      color: #ffffff;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
     /* Countdown Timer */
     .countdown-timer {
       background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
@@ -1028,10 +1043,11 @@
   <script>
     // NBA Schedule Data (from official NBA website - 2025-26 Season)
     const scheduleData = [
-      // December 2024 - Recent Games for Testing
-      { date: "2024-12-15", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "ESPN", status: "completed", result: "W 112-108" },
-      { date: "2024-12-18", opponent: "Charlotte Hornets", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "completed", result: "L 98-105" },
-      { date: "2024-12-21", opponent: "Orlando Magic", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBC Sports Philadelphia", status: "live" },
+      // October 2025 - Preseason
+      { date: "2025-10-02", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "completed", result: "L 99-84", isPreseason: true },
+      { date: "2025-10-04", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "live", isPreseason: true, espnGameId: "401812483", isLive: true },
+      { date: "2025-10-10", opponent: "Orlando Magic", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "upcoming", isPreseason: true },
+      { date: "2025-10-17", opponent: "Minnesota Timberwolves", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming", isPreseason: true },
       
       // October 2025 - Regular Season Start
       { date: "2025-10-22", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "TBD", status: "upcoming" },
@@ -1310,12 +1326,16 @@
         `;
       }
 
+      // Add preseason badge if applicable
+      const preseasonBadge = game.isPreseason ? `<div class="preseason-badge">🏀 PRESEASON</div>` : '';
+      
       return `
         <div class="game-card ${gameClass}" data-type="${game.location} ${game.status}" data-month="${date.toLocaleDateString('en-US', { month: 'long' }).toLowerCase()}" data-game-id="${gameId}">
           <div class="game-header">
             <div class="game-date">${formattedDate}</div>
             <div class="game-status ${game.status}">${isLive ? 'live' : game.status}</div>
           </div>
+          ${preseasonBadge}
           <div class="game-matchup">
             ${isHome ? `
               <div class="team-info">
@@ -1953,13 +1973,333 @@
       }
     });
 
+    // Live Score Update Functionality
+    let liveGameUpdateInterval = null;
+    
+    async function fetchLiveGameData(espnGameId) {
+      try {
+        const response = await fetch(`/api/espn-live-game?gameId=${espnGameId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          return data;
+        } else {
+          console.error('Failed to fetch live game data:', data.error);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error fetching live game data:', error);
+        return null;
+      }
+    }
+    
+    function updateLiveGameCard(game, liveData) {
+      if (!liveData || !liveData.game) return;
+      
+      const gameId = `${game.date.replace(/-/g, '')}_${getOpponentAbbreviation(game.opponent)}_${game.location}`;
+      const gameCard = document.querySelector(`[data-game-id="${gameId}"]`);
+      
+      if (!gameCard) return;
+      
+      const gameInfo = liveData.game;
+      const isHome = game.location === 'home';
+      
+      // Update score
+      const scoreElement = gameCard.querySelector('.vs-indicator, .game-score');
+      if (scoreElement) {
+        const sixersScore = isHome ? gameInfo.homeTeam.score : gameInfo.awayTeam.score;
+        const opponentScore = isHome ? gameInfo.awayTeam.score : gameInfo.homeTeam.score;
+        
+        scoreElement.className = 'game-score live-score';
+        scoreElement.innerHTML = `
+          <div class="live-score-display">
+            <span class="score-value">${sixersScore} - ${opponentScore}</span>
+            <span class="live-status-text">${gameInfo.statusText}</span>
+          </div>
+        `;
+      }
+      
+      // Update game status
+      const statusElement = gameCard.querySelector('.game-status');
+      if (statusElement) {
+        statusElement.textContent = gameInfo.status === 'in' ? 'LIVE' : gameInfo.statusText;
+        statusElement.className = `game-status ${gameInfo.status === 'in' ? 'live' : gameInfo.status}`;
+      }
+      
+      // Add pulsing effect to live games
+      if (gameInfo.status === 'in') {
+        gameCard.classList.add('live-updating');
+      } else {
+        gameCard.classList.remove('live-updating');
+      }
+    }
+    
+    function startLiveGameUpdates() {
+      // Find all games with ESPN game IDs
+      const liveGames = scheduleData.filter(game => game.espnGameId && game.isLive);
+      
+      if (liveGames.length === 0) return;
+      
+      // Update immediately
+      liveGames.forEach(async (game) => {
+        const liveData = await fetchLiveGameData(game.espnGameId);
+        if (liveData) {
+          updateLiveGameCard(game, liveData);
+        }
+      });
+      
+      // Set up interval to update every 10 seconds
+      liveGameUpdateInterval = setInterval(() => {
+        liveGames.forEach(async (game) => {
+          const liveData = await fetchLiveGameData(game.espnGameId);
+          if (liveData) {
+            updateLiveGameCard(game, liveData);
+          }
+        });
+      }, 10000); // Update every 10 seconds
+    }
+    
+    function stopLiveGameUpdates() {
+      if (liveGameUpdateInterval) {
+        clearInterval(liveGameUpdateInterval);
+        liveGameUpdateInterval = null;
+      }
+    }
+    
+    // Update the loadGameData function to use real ESPN data
+    async function loadGameDataReal(gameId) {
+      // Find the game in scheduleData
+      const game = scheduleData.find(g => {
+        const gId = `${g.date.replace(/-/g, '')}_${getOpponentAbbreviation(g.opponent)}_${g.location}`;
+        return gId === gameId;
+      });
+      
+      if (!game || !game.espnGameId) {
+        // Fall back to mock data
+        return loadGameData(gameId);
+      }
+      
+      try {
+        const liveData = await fetchLiveGameData(game.espnGameId);
+        
+        if (!liveData || !liveData.success) {
+          return loadGameData(gameId);
+        }
+        
+        // Update live score header
+        updateLiveScoreHeaderReal(liveData, game);
+        
+        // Load initial tab content
+        const activeTab = document.querySelector('.tab-btn.active').textContent.toLowerCase().replace(' ', '-').replace('by-', 'by-');
+        loadTabContentReal(activeTab, liveData);
+        
+      } catch (error) {
+        console.error('Error loading real game data:', error);
+        return loadGameData(gameId);
+      }
+    }
+    
+    function updateLiveScoreHeaderReal(liveData, game) {
+      const gameInfo = liveData.game;
+      const isHome = game.location === 'home';
+      
+      document.getElementById('awayTeamLogo').textContent = isHome ? gameInfo.awayTeam.abbreviation : '76';
+      document.getElementById('awayTeamName').textContent = isHome ? gameInfo.awayTeam.name : 'Philadelphia 76ers';
+      document.getElementById('awayScore').textContent = gameInfo.awayTeam.score;
+      
+      document.getElementById('homeTeamLogo').textContent = isHome ? '76' : gameInfo.homeTeam.abbreviation;
+      document.getElementById('homeTeamName').textContent = isHome ? 'Philadelphia 76ers' : gameInfo.homeTeam.name;
+      document.getElementById('homeScore').textContent = gameInfo.homeTeam.score;
+      
+      document.getElementById('gameStatusInfo').textContent = gameInfo.statusText;
+    }
+    
+    function loadTabContentReal(tabName, liveData) {
+      switch (tabName) {
+        case 'play-by-play':
+          loadPlayByPlayReal(liveData);
+          break;
+        case 'box-score':
+          loadBoxScoreReal(liveData);
+          break;
+        case 'game-stats':
+          loadGameStatsReal(liveData);
+          break;
+      }
+    }
+    
+    function loadPlayByPlayReal(liveData) {
+      const container = document.getElementById('playByPlayContainer');
+      
+      if (!liveData.plays || liveData.plays.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">No play-by-play data available yet</div>';
+        return;
+      }
+      
+      const playsHtml = liveData.plays.map(play => `
+        <div class="play-item">
+          <div class="play-time">${play.time}</div>
+          <div class="play-description">${play.description}</div>
+          <div class="play-score">${play.score}</div>
+        </div>
+      `).join('');
+      
+      container.innerHTML = playsHtml;
+    }
+    
+    function loadBoxScoreReal(liveData) {
+      const container = document.getElementById('boxScoreContainer');
+      
+      if (!liveData.boxScore) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">Box score not available yet</div>';
+        return;
+      }
+      
+      const homePlayers = liveData.boxScore.homeTeam.players || [];
+      const awayPlayers = liveData.boxScore.awayTeam.players || [];
+      
+      let html = '<div class="box-score-tables">';
+      
+      // Away team
+      html += `
+        <div class="team-box-score">
+          <h3>${liveData.game.awayTeam.name}</h3>
+          <table class="box-score-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>MIN</th>
+                <th>PTS</th>
+                <th>REB</th>
+                <th>AST</th>
+                <th>FG</th>
+                <th>3PT</th>
+                <th>FT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${awayPlayers.map(p => `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${p.minutes}</td>
+                  <td>${p.points}</td>
+                  <td>${p.rebounds}</td>
+                  <td>${p.assists}</td>
+                  <td>${p.fg}</td>
+                  <td>${p.threePt}</td>
+                  <td>${p.ft}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      // Home team
+      html += `
+        <div class="team-box-score">
+          <h3>${liveData.game.homeTeam.name}</h3>
+          <table class="box-score-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>MIN</th>
+                <th>PTS</th>
+                <th>REB</th>
+                <th>AST</th>
+                <th>FG</th>
+                <th>3PT</th>
+                <th>FT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${homePlayers.map(p => `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${p.minutes}</td>
+                  <td>${p.points}</td>
+                  <td>${p.rebounds}</td>
+                  <td>${p.assists}</td>
+                  <td>${p.fg}</td>
+                  <td>${p.threePt}</td>
+                  <td>${p.ft}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+    
+    function loadGameStatsReal(liveData) {
+      const container = document.getElementById('gameStatsContainer');
+      
+      if (!liveData.teamStats) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">Team stats not available yet</div>';
+        return;
+      }
+      
+      const stats = liveData.teamStats;
+      
+      const html = `
+        <div class="team-stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">${stats.fieldGoalPct}%</div>
+            <div class="stat-label">Field Goal %</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.threePtPct}%</div>
+            <div class="stat-label">3-Point %</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.freeThrowPct}%</div>
+            <div class="stat-label">Free Throw %</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.rebounds}</div>
+            <div class="stat-label">Rebounds</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.assists}</div>
+            <div class="stat-label">Assists</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.turnovers}</div>
+            <div class="stat-label">Turnovers</div>
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
     // Make functions global so they can be called from onclick attributes
     window.openLiveGame = openLiveGame;
     window.closeLiveGame = closeLiveGame;
     window.switchTab = switchTab;
 
     // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', initializeSchedule);
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeSchedule();
+      startLiveGameUpdates(); // Start live updates for games with ESPN IDs
+    });
+    
+    // Stop live updates when page is hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopLiveGameUpdates();
+      } else {
+        startLiveGameUpdates();
+      }
+    });
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      stopLiveGameUpdates();
+    });
   </script>
 </body>
 </html>
