@@ -478,68 +478,69 @@ app.get('/api/health', (req, res) => {
 
 // Internal function to fetch Twitter news (reusable)
 async function fetchTwitterNews({ maxResults = 50, category = 'all', startTime, endTime, handles } = {}) {
-  // Define Twitter accounts to monitor
-  const defaultAccounts = [
-      // Official accounts
-      'sixers', 'NBA',
+  try {
+    // Define Twitter accounts to monitor
+    const defaultAccounts = [
+        // Official accounts
+        'sixers', 'NBA',
+        
+        // Top NBA Reporters
+        'wojespn', 'ShamsCharania', 'ZachLowe_NBA', 'ramonashelburne',
+        
+        // Local Philadelphia Media
+        'PompeyOnSixers', 'DerekBodnerNBA', 'KyleNeubeck', 'rich_hofmann', 'JClarkNBCS',
+        
+        // Additional NBA Insiders
+        'WindhorstESPN', 'ChrisBHaynes', 'TheSteinLine'
+      ];
+
+      const accounts = Array.isArray(handles) && handles.length ? handles : defaultAccounts;
+
+      // Build search query based on category
+      let query = '';
       
-      // Top NBA Reporters
-      'wojespn', 'ShamsCharania', 'ZachLowe_NBA', 'ramonashelburne',
-      
-      // Local Philadelphia Media
-      'PompeyOnSixers', 'DerekBodnerNBA', 'KyleNeubeck', 'rich_hofmann', 'JClarkNBCS',
-      
-      // Additional NBA Insiders
-      'WindhorstESPN', 'ChrisBHaynes', 'TheSteinLine'
-    ];
+      if (category === 'all' || category === 'breaking') {
+        // General 76ers content
+        query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers" OR "Joel Embiid" OR "Tyrese Maxey" OR "Paul George" OR #Sixers OR #PhilaUnite)`;
+      } else if (category === 'trades') {
+        query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (trade OR traded OR "trade rumors" OR deal OR acquired)`;
+      } else if (category === 'signings') {
+        query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (signing OR signed OR agrees OR agreed OR "agreed to" OR "has signed" OR re-signed OR resigns OR extension OR extensions OR contract OR two-way OR 10-day)`;
+      } else if (category === 'injuries') {
+        query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) ("Joel Embiid" OR "Tyrese Maxey" OR "Paul George" OR Sixers) (injury OR injured OR "injury report" OR questionable OR doubtful OR out)`;
+      } else if (category === 'games') {
+        query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (game OR tonight OR "game day" OR vs OR final OR score)`;
+      } else if (category === 'live') {
+        // Live game feed
+        query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR PHI) (Q1 OR Q2 OR Q3 OR Q4 OR halftime OR "end of" OR "start of" OR tipoff OR tip-off OR timeout OR "time out" OR run OR lead OR "leads" OR "trails" OR vs OR "Final")`;
+      } else if (category === 'rumors') {
+        query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (rumor OR rumors OR "sources tell" OR "league sources" OR reportedly)`;
+      }
 
-    const accounts = Array.isArray(handles) && handles.length ? handles : defaultAccounts;
+      // Twitter API parameters
+      const params = {
+        query: query,
+        max_results: Math.min(maxResults, 100), // Twitter API limit
+        'tweet.fields': 'created_at,author_id,public_metrics,context_annotations,entities,attachments',
+        'user.fields': 'name,username,verified,profile_image_url',
+        // Expand to include authors and media
+        'expansions': 'author_id,attachments.media_keys',
+        'media.fields': 'preview_image_url,url,width,height,alt_text,variants,type',
+        'sort_order': 'recency'
+      };
 
-    // Build search query based on category
-    let query = '';
-    
-    if (category === 'all' || category === 'breaking') {
-      // General 76ers content
-      query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers" OR "Joel Embiid" OR "Tyrese Maxey" OR "Paul George" OR #Sixers OR #PhilaUnite)`;
-    } else if (category === 'trades') {
-      query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (trade OR traded OR "trade rumors" OR deal OR acquired)`;
-    } else if (category === 'signings') {
-      query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (signing OR signed OR agrees OR agreed OR "agreed to" OR "has signed" OR re-signed OR resigns OR extension OR extensions OR contract OR two-way OR 10-day)`;
-    } else if (category === 'injuries') {
-      query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) ("Joel Embiid" OR "Tyrese Maxey" OR "Paul George" OR Sixers) (injury OR injured OR "injury report" OR questionable OR doubtful OR out)`;
-    } else if (category === 'games') {
-      query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (game OR tonight OR "game day" OR vs OR final OR score)`;
-    } else if (category === 'live') {
-      // Live game feed
-      query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR PHI) (Q1 OR Q2 OR Q3 OR Q4 OR halftime OR "end of" OR "start of" OR tipoff OR tip-off OR timeout OR "time out" OR run OR lead OR "leads" OR "trails" OR vs OR "Final")`;
-    } else if (category === 'rumors') {
-      query = `(${accounts.map(handle => `from:${handle}`).join(' OR ')}) (Sixers OR "Philadelphia 76ers") (rumor OR rumors OR "sources tell" OR "league sources" OR reportedly)`;
-    }
+      if (startTime) params.start_time = new Date(startTime).toISOString();
+      if (endTime) params.end_time = new Date(endTime).toISOString();
 
-    // Twitter API parameters
-    const params = {
-      query: query,
-      max_results: Math.min(maxResults, 100), // Twitter API limit
-      'tweet.fields': 'created_at,author_id,public_metrics,context_annotations,entities,attachments',
-      'user.fields': 'name,username,verified,profile_image_url',
-      // Expand to include authors and media
-      'expansions': 'author_id,attachments.media_keys',
-      'media.fields': 'preview_image_url,url,width,height,alt_text,variants,type',
-      'sort_order': 'recency'
-    };
+      console.log('🔍 Searching Twitter with query:', query);
 
-    if (startTime) params.start_time = new Date(startTime).toISOString();
-    if (endTime) params.end_time = new Date(endTime).toISOString();
+      // Make request to Twitter API
+      const twitterData = await makeTwitterRequest('/tweets/search/recent', params);
 
-    console.log('🔍 Searching Twitter with query:', query);
+      // Process and format the response
+      const processedNews = processTwitterData(twitterData);
 
-    // Make request to Twitter API
-    const twitterData = await makeTwitterRequest('/tweets/search/recent', params);
-
-    // Process and format the response
-    const processedNews = processTwitterData(twitterData);
-
-    return processedNews;
+      return processedNews;
 
   } catch (error) {
     console.error('❌ Error fetching Twitter news:', error);
