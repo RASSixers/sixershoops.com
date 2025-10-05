@@ -36,6 +36,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Serve static files from parent directory (HTML, CSS, JS, images)
+const path = require('path');
+app.use(express.static(path.join(__dirname, '..')));
+
 // Twitter API configuration
 const TWITTER_API_URL = 'https://api.twitter.com/2';
 const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
