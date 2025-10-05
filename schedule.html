@@ -1282,8 +1282,26 @@
       
       let scoreOrVs = '';
       if (game.status === 'completed' && game.result) {
-        const score = game.result.substring(2); // Remove "W " or "L "
-        scoreOrVs = `<div class="game-score">${score}</div>`;
+        // Parse result: "W 104-113" or "L 99-84"
+        const isWin = game.result.startsWith('W');
+        const scorePart = game.result.substring(2); // Remove "W " or "L "
+        const [score1, score2] = scorePart.split('-').map(s => parseInt(s.trim()));
+        
+        // Determine Sixers score and opponent score
+        let sixersScore, opponentScore;
+        if (isWin) {
+          // If Sixers won, first score is Sixers
+          sixersScore = score1;
+          opponentScore = score2;
+        } else {
+          // If Sixers lost, first score is opponent
+          opponentScore = score1;
+          sixersScore = score2;
+        }
+        
+        // Display score with Sixers first if home, opponent first if away
+        const displayScore = isHome ? `${sixersScore}-${opponentScore}` : `${opponentScore}-${sixersScore}`;
+        scoreOrVs = `<div class="game-score">${displayScore}</div>`;
       } else {
         scoreOrVs = `<div class="vs-indicator">vs</div>`;
       }
@@ -2341,6 +2359,11 @@
       `;
       
       container.innerHTML = html;
+    }
+
+    // Helper function to get opponent abbreviation
+    function getOpponentAbbreviation(opponentName) {
+      return teamAbbreviations[opponentName] || opponentName.substring(0, 3).toUpperCase();
     }
 
     // Make functions global so they can be called from onclick attributes
