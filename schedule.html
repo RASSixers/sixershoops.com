@@ -1044,8 +1044,8 @@
     // NBA Schedule Data (from official NBA website - 2025-26 Season)
     const scheduleData = [
       // October 2025 - Preseason
-      { date: "2025-10-02", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "completed", result: "L 99-84", isPreseason: true },
-      { date: "2025-10-04", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "live", isPreseason: true, espnGameId: "401812483", nbaGameId: "0012500010", isLive: true },
+      { date: "2025-10-02", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "completed", result: "L 99-84", isPreseason: true, nbaGameId: "0012500008" },
+      { date: "2025-10-04", opponent: "New York Knicks", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "completed", isPreseason: true, espnGameId: "401812483", nbaGameId: "0012500010", result: "W 104-113" },
       { date: "2025-10-10", opponent: "Orlando Magic", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "NBA TV", status: "upcoming", isPreseason: true },
       { date: "2025-10-17", opponent: "Minnesota Timberwolves", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming", isPreseason: true },
       
@@ -1588,7 +1588,7 @@
       switchTab(initialTab);
       
       // Load game data
-      loadGameData(gameId);
+      loadGameDataReal(gameId);
       
       // Start auto-refresh if game is live
       if (gameStatus === 'live' || isGameToday(gameId.split('_')[0])) {
@@ -1608,7 +1608,7 @@
     }
 
     // Switch tabs in modal
-    function switchTab(tabName) {
+    async function switchTab(tabName) {
       // Update tab buttons
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
@@ -1619,7 +1619,25 @@
       
       // Load content for the tab
       if (currentGameId) {
-        loadTabContent(tabName, currentGameId);
+        // Find the game in scheduleData
+        const game = scheduleData.find(g => {
+          const gId = `${g.date.replace(/-/g, '')}_${getOpponentAbbreviation(g.opponent)}_${g.location}`;
+          return gId === currentGameId;
+        });
+        
+        if (game && game.nbaGameId) {
+          // Use real NBA.com data
+          const liveData = await fetchLiveGameData(game.nbaGameId);
+          if (liveData && liveData.success) {
+            loadTabContentReal(tabName, liveData);
+          } else {
+            // Fallback to mock data
+            loadTabContent(tabName, currentGameId);
+          }
+        } else {
+          // Fallback to mock data
+          loadTabContent(tabName, currentGameId);
+        }
       }
     }
 
@@ -1923,7 +1941,7 @@
         if (refreshCountdown <= 0) {
           // Refresh game data
           if (currentGameId) {
-            loadGameData(currentGameId);
+            loadGameDataReal(currentGameId);
           }
           refreshCountdown = 10;
         }
@@ -1978,7 +1996,15 @@
     
     async function fetchLiveGameData(nbaGameId) {
       try {
-        const response = await fetch(`/api/nba-live-game?gameId=${nbaGameId}`);
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/nba-live-game?gameId=${nbaGameId}&_t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -2068,21 +2094,30 @@
     
     // Update the loadGameData function to use real NBA.com data
     async function loadGameDataReal(gameId) {
+      console.log('loadGameDataReal called with gameId:', gameId);
+      
       // Find the game in scheduleData
       const game = scheduleData.find(g => {
         const gId = `${g.date.replace(/-/g, '')}_${getOpponentAbbreviation(g.opponent)}_${g.location}`;
         return gId === gameId;
       });
       
+      console.log('Found game:', game);
+      
       if (!game || !game.nbaGameId) {
+        console.log('No nbaGameId found, falling back to mock data');
         // Fall back to mock data
         return loadGameData(gameId);
       }
       
       try {
+        console.log('Fetching live data for nbaGameId:', game.nbaGameId);
         const liveData = await fetchLiveGameData(game.nbaGameId);
         
+        console.log('Received live data:', liveData);
+        
         if (!liveData || !liveData.success) {
+          console.log('Live data fetch failed, falling back to mock data');
           return loadGameData(gameId);
         }
         
