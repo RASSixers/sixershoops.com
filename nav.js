@@ -28,13 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <a href="https://sixershoops.com/salary" class="dropdown-item">Salary Breakdown</a>
             <a href="https://sixershoops.com/sixers-depth-chart" class="dropdown-item">Depth Chart</a>
             <a href="https://sixershoops.com/future-draft-picks" class="dropdown-item">Future Draft Picks</a>
-          </div>
-        </li>
-        <li class="nav-item dropdown">
-          <button class="dropdown-toggle">Trade Machine</button>
-          <div class="dropdown-menu">
             <a href="https://sixershoops.com/nba-trade-machine" class="dropdown-item">Trade Machine</a>
-            <!-- Removed mockdrafts dead link -->
           </div>
         </li>
         <li class="nav-item"><a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a></li>
@@ -60,14 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <a href="https://sixershoops.com/salary" class="mobile-nav-link">Salary Breakdown</a>
           <a href="https://sixershoops.com/sixers-depth-chart" class="mobile-nav-link">Depth Chart</a>
           <a href="https://sixershoops.com/future-draft-picks" class="mobile-nav-link">Future Draft Picks</a>
-        </div>
-      </div>
-
-      <div class="mobile-nav-item">
-        <button class="mobile-collapsible" id="mobileTradeToggle" aria-expanded="false" aria-controls="mobileTradeMenu">Trade Machine</button>
-        <div class="mobile-submenu" id="mobileTradeMenu">
           <a href="https://sixershoops.com/nba-trade-machine" class="mobile-nav-link">Trade Machine</a>
-          <!-- Removed mockdrafts dead link -->
         </div>
       </div>
 
