@@ -10,10 +10,9 @@ document.addEventListener('DOMContentLoaded', function () {
     <nav class="navbar" id="navbar">
       <!-- Brand Section -->
       <a href="https://sixershoops.com/" class="nav-brand">
-        <svg class="brand-icon" width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
-          <path d="M16 8L20 16L16 24L12 16L16 8Z" fill="currentColor"/>
-          <circle cx="16" cy="16" r="3" fill="currentColor"/>
+        <svg class="brand-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill="currentColor" opacity="0.9"/>
+          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" stroke="currentColor" stroke-width="1.5" fill="none"/>
         </svg>
         <div class="brand-text">
           <div class="brand-name">SixersHoops</div>
