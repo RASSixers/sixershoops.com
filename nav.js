@@ -10,10 +10,6 @@ document.addEventListener('DOMContentLoaded', function () {
     <nav class="navbar" id="navbar">
       <!-- Brand Section -->
       <a href="https://sixershoops.com/" class="nav-brand">
-        <svg class="brand-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill="currentColor" opacity="0.9"/>
-          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-        </svg>
         <div class="brand-text">
           <div class="brand-name">SixersHoops</div>
           <div class="brand-tagline">Elite Basketball Intel</div>
@@ -58,28 +54,6 @@ document.addEventListener('DOMContentLoaded', function () {
             </a>
             <a href="https://sixershoops.com/nba-trade-machine" class="dropdown-item">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M11 2v4l1.5-1.5L14 6V2h-3zm-6 8v4H2v-4l1.5 1.5L5 10zM8 4a4 4 0 110 8 4 4 0 010-8z"/>
-              </svg>
-              <span>Trade Machine</span>
-            </a>
-          </div> 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM8 4a.75.75 0 00-.75.75v3.5a.75.75 0 001.5 0v-3.5A.75.75 0 008 4zm0 7a1 1 0 110 2 1 1 0 010-2z"/>
-              </svg>
-              <span>Salary Cap</span>
-            </a>
-            <a href="https://sixershoops.com/sixers-depth-chart" class="dropdown-item">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M1 3h14v2H1V3zm0 4h14v2H1V7zm0 4h14v2H1v-2z"/>
-              </svg>
-              <span>Depth Chart</span>
-            </a>
-            <a href="https://sixershoops.com/future-draft-picks" class="dropdown-item">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M14 2H2a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V3a1 1 0 00-1-1zM8 11.5l-3.5-3.5h2.25V4h2.5v4h2.25L8 11.5z"/>
-              </svg>
-              <span>Draft Picks</span>
-            </a>
-            <a href="https://sixershoops.com/nba-trade-machine" class="dropdown-item">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M11 2v4l1.5-1.5L14 6V2h-3zm-6 8v4H2v-4l1.5 1.5L5 10zM8 4a4 4 0 110 8 4 4 0 010-8z"/>
               </svg>
               <span>Trade Machine</span>
