@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player Grades - Sixers vs Celtics Oct 22 - SixersHoops</title>
+  <link rel="icon" type="image/x-icon" href="../favicon.ico" />
+  <link rel="stylesheet" href="../navbar-styles.css" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --brand: #3b82f6;
+      --brand-2: #06b6d4;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body { 
+      margin: 0; 
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+      color: var(--text); 
+      padding-top: 80px; 
+      line-height: 1.6;
+    }
+    
+    .container { 
+      max-width: 900px; 
+      margin: 0 auto; 
+      padding: 24px; 
+    }
+
+    /* Article Container */
+    .article {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 3rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--border);
+    }
+
+    /* Header */
+    .article-header {
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .article-title {
+      font-size: 2.5rem;
+      font-weight: 900;
+      margin: 0 0 0.5rem;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .article-meta {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .article-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Content */
+    .article-content {
+      margin-bottom: 3rem;
+    }
+
+    .article-content p {
+      margin: 0 0 1.5rem;
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 1.8;
+    }
+
+    /* Player Grade Section */
+    .grade-section {
+      margin-bottom: 2rem;
+    }
+
+    .grade-section h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 2rem 0 1rem;
+      color: var(--text);
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--brand);
+      display: inline-block;
+    }
+
+    /* Player Grade Entry */
+    .player-grade {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      background: #f8fafc;
+      border-radius: 10px;
+      border-left: 4px solid var(--brand);
+      transition: all 0.3s ease;
+    }
+
+    .player-grade:hover {
+      background: #f1f5f9;
+    }
+
+    .grade-badge {
+      min-width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 900;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: white;
+      font-family: 'Courier New', monospace;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .grade-badge.a {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .grade-badge.b {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .grade-badge.c {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .grade-badge.d {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .player-info {
+      flex: 1;
+    }
+
+    .player-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 0.5rem;
+    }
+
+    .player-position {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+    }
+
+    .player-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      display: block;
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--text);
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-top: 0.3rem;
+      font-weight: 600;
+    }
+
+    .player-comment {
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-style: italic;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .article {
+        padding: 1.5rem;
+      }
+
+      .article-title {
+        font-size: 1.8rem;
+      }
+
+      .article-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .player-grade {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .grade-badge {
+        align-self: flex-start;
+      }
+
+      .player-stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+
+  <script src="../nav.js" defer></script>
+  <!-- Google Analytics 4 (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T1V9Q0MNEM');
+  </script>
+</head>
+<body>
+
+<div class="container">
+  <article class="article">
+    <!-- Header -->
+    <div class="article-header">
+      <h1 class="article-title">Philadelphia 76ers Player Grades</h1>
+      <div class="article-meta">
+        <span>Sixers vs Boston Celtics</span>
+        <span>October 22, 2025</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="article-content">
+      <p>
+        The Philadelphia 76ers faced the Boston Celtics in a crucial matchup on October 22, 2025. Here's how each Sixers player performed on the night.
+      </p>
+    </div>
+
+    <!-- Grades Section -->
+    <div class="grade-section" id="grades-container">
+      <!-- Players will be populated here -->
+    </div>
+  </article>
+</div>
+
+<script>
+// Player grades data
+const players = [
+  { name: 'Joel Embiid', position: 'C', grade: 'A', points: 28, rebounds: 10, assists: 3, comment: 'Dominant performance in the paint, controlling both ends of the floor.' },
+  { name: 'Tyrese Maxey', position: 'PG', grade: 'A-', points: 22, rebounds: 3, assists: 8, comment: 'Excellent ball handling and playmaking despite tough defensive pressure.' },
+  { name: 'Paul George', position: 'SF', grade: 'B+', points: 18, rebounds: 6, assists: 4, comment: 'Solid all-around game with key defensive stops in crunch time.' },
+  { name: 'Kyle Lowry', position: 'PG', grade: 'B', points: 8, rebounds: 2, assists: 5, comment: 'Smart floor general, managing the offense effectively throughout.' },
+  { name: 'Jalen McDaniels', position: 'PF', grade: 'B-', points: 10, rebounds: 7, assists: 1, comment: 'Provided solid depth scoring and rebounding off the bench.' },
+  { name: 'Guerschon Yabusele', position: 'PF', grade: 'B', points: 12, rebounds: 8, assists: 1, comment: 'Aggressive on the boards and physical defense.' },
+  { name: 'Caleb Martin', position: 'SF', grade: 'C+', points: 5, rebounds: 4, assists: 1, comment: 'Limited offensive output but showed defensive effort.' },
+  { name: 'Andre Drummond', position: 'C', grade: 'B', points: 8, rebounds: 12, assists: 1, comment: 'Dominated the boards with 12 rebounds and strong pick-and-roll defense.' }
+];
+
+function renderGrades() {
+  const container = document.getElementById('grades-container');
+  
+  container.innerHTML = players.map(player => {
+    const gradeClass = player.grade.split('+')[0].split('-')[0].toLowerCase();
+    const shortGrade = player.grade.split('+')[0].split('-')[0];
+    
+    return `
+      <div class="player-grade">
+        <div class="grade-badge ${gradeClass}">${shortGrade}</div>
+        <div class="player-info">
+          <div class="player-name">${player.name}</div>
+          <div class="player-position">${player.position}</div>
+          <div class="player-stats">
+            <div class="stat">
+              <span class="stat-value">${player.points}</span>
+              <span class="stat-label">PTS</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">${player.rebounds}</span>
+              <span class="stat-label">REB</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">${player.assists}</span>
+              <span class="stat-label">AST</span>
+            </div>
+          </div>
+          <p class="player-comment">${player.comment}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  renderGrades();
+});
+</script>
+
+</body>
+</html>
