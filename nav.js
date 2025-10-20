@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
       </a>
 
-      <!-- Center Navigation Menu -->
+      <!-- Navigation Menu -->
       <ul class="nav-menu">
         <li class="nav-item"><a href="https://sixershoops.com/" class="nav-link">Home</a></li>
         <li class="nav-item"><a href="https://sixershoops.com/news" class="nav-link">News</a></li>
@@ -63,16 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
         <li class="nav-item"><a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a></li>
         <li class="nav-item"><a href="https://sixershoops.com/contact" class="nav-link">Contact</a></li>
       </ul>
-
-      <!-- Right Side CTA -->
-      <div class="nav-actions">
-        <a href="https://sixershoops.com/news" class="nav-cta">
-          Latest Updates
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-      </div>
 
       <!-- Mobile Menu Button -->
       <button class="mobile-menu-btn" id="mobileMenuBtn" aria-expanded="false" aria-label="Toggle mobile menu">
@@ -131,15 +121,6 @@ document.addEventListener('DOMContentLoaded', function () {
             <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm1 11H7v-2h2v2zm0-3H7V4h2v5z"/>
           </svg>
           Contact
-        </a>
-      </div>
-
-      <div class="mobile-nav-cta">
-        <a href="https://sixershoops.com/news" class="mobile-cta-btn">
-          Latest Updates
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
         </a>
       </div>
     </div>
@@ -281,10 +262,6 @@ document.addEventListener('DOMContentLoaded', function () {
           <!-- Brand Section -->
           <div class="footer-section footer-brand">
             <div class="footer-logo-wrapper">
-              <svg class="footer-brand-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill="currentColor" opacity="0.9"/>
-                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-              </svg>
               <div class="footer-brand-text">
                 <h3 class="footer-logo">SixersHoops</h3>
                 <p class="footer-subtitle">Elite Basketball Intel</p>
