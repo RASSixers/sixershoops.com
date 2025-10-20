@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function () {
     <nav class="navbar" id="navbar">
       <!-- Dynamic Brand Section -->
       <a href="https://sixershoops.com/" class="nav-brand">
-        <div class="nav-logo">76</div>
         <div class="brand-text">
           <div class="brand-name">SixersHoops</div>
           <div class="brand-tagline">Elite Basketball Intel</div>
@@ -32,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
           </div>
         </li>
         <li class="nav-item"><a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a></li>
-
         <li class="nav-item"><a href="https://sixershoops.com/contact" class="nav-link">Contact Us</a></li>
       </ul>
 
@@ -59,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
 
       <div class="mobile-nav-item"><a href="https://sixershoops.com/schedule" class="mobile-nav-link">Schedule</a></div>
-
       <div class="mobile-nav-item"><a href="https://sixershoops.com/contact" class="mobile-nav-link">Contact Us</a></div>
     </div>
   `;
@@ -158,10 +155,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Remove duplicate global outside-click closer (handled above)
-  // (kept intentionally empty to avoid double-closing bugs)
-  // document.addEventListener('click', ...) removed
-
   // Scroll effect
   window.addEventListener('scroll', () => {
     navbar?.classList.toggle('scrolled', window.scrollY > 20);
@@ -185,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   setActiveLink();
   window.addEventListener('popstate', setActiveLink);
+  
   // Close mobile menu when switching to desktop width
   window.addEventListener('resize', () => {
     const mobileMenu = document.getElementById('mobileMenu');
@@ -216,13 +210,12 @@ document.addEventListener('DOMContentLoaded', function () {
           <!-- Brand Section -->
           <div class="footer-section footer-brand">
             <div class="footer-logo-wrapper">
-              <div class="footer-logo-icon">76</div>
               <div class="footer-brand-text">
                 <h3 class="footer-logo">SixersHoops</h3>
                 <p class="footer-subtitle">Elite Basketball Intel</p>
               </div>
             </div>
-            <p class="footer-tagline">Your ultimate source for Philadelphia 76ers news, stats, and analysis.</p>
+            <p class="footer-tagline">Your ultimate source for Philadelphia 76ers news, stats, and analysis. Stay updated with the latest team information, player statistics, and in-depth basketball coverage.</p>
             <div class="footer-social">
               <a href="#" class="social-link" aria-label="Twitter">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -272,21 +265,19 @@ document.addEventListener('DOMContentLoaded', function () {
               <li><a href="https://sixershoops.com/terms-of-service">Terms of Service</a></li>
               <li><a href="https://sixershoops.com/privacy-policy">Privacy Policy</a></li>
               <li><a href="https://sixershoops.com/cookie-policy">Cookie Policy</a></li>
-              <li><a href="https://sixershoops.com/contact">About Us</a></li>
+              <li><a href="https://sixershoops.com/contact">Contact</a></li>
             </ul>
           </div>
         </div>
 
         <!-- Footer Bottom -->
         <div class="footer-bottom">
-          <div class="footer-bottom-content">
-            <p class="copyright">
-              &copy; ${new Date().getFullYear()} SixersHoops.com. All rights reserved.
-            </p>
-            <p class="disclaimer-text">
-              Not affiliated with the NBA or Philadelphia 76ers. All team logos and trademarks are property of their respective owners.
-            </p>
-          </div>
+          <p>&copy; ${new Date().getFullYear()} SixersHoops.com. All rights reserved.</p>
+          <ul class="footer-bottom-links">
+            <li><a href="https://sixershoops.com/privacy-policy">Privacy</a></li>
+            <li><a href="https://sixershoops.com/terms-of-service">Terms</a></li>
+            <li><a href="https://sixershoops.com/contact">Contact</a></li>
+          </ul>
         </div>
       </div>
     </footer>
