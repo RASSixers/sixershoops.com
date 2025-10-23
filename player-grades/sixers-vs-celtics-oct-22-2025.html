@@ -174,7 +174,14 @@
 
     .player-stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
       gap: 1rem;
       margin-bottom: 0.8rem;
     }
@@ -198,6 +205,14 @@
       letter-spacing: 0.03em;
       margin-top: 0.3rem;
       font-weight: 600;
+    }
+
+    .shooting-stats {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
     }
 
     .player-comment {
@@ -277,19 +292,19 @@
 <script>
 // Game grades with stats and comments
 const players = [
-  { name: 'Tyrese Maxey', position: 'PG', grade: 'A+', pts: 40, reb: 2, ast: 6, comment: 'Maxey was simply phenomenal tonight. The Celtics had no answer for him when he put his head down and attacked. He finished 7-9 from three, and every shot looked like it was going in. When the Celtics tried to take away the drive, he knocked down threes. When they stayed home, he went right by for a layup. This is the Maxey we\'ve been hoping for, and if he plays like this for the whole season, the Sixers will be in good shape.' },
-  { name: 'VJ Edgecombe', position: 'SG', grade: 'A-', pts: 34, reb: 7, ast: 3, comment: 'What a debut. VJ dropped 34 in his first NBA game on the road in Boston like it was nothing. Edgecombe played with zero fear, attacking defenders and getting his shot whenever he wanted. The future is bright for him.' },
-  { name: 'Dominick Barlow', position: 'PF', grade: 'B', pts: 13, reb: 8, ast: 5, comment: 'Barlow handled all the dirty work. Those 5-offensive boards were huge for second chances, and he passed the ball extremely well with 5 assists. Shot the ball efficiently, got to the free-throw line, and didn\'t try to do too much.' },
-  { name: 'Kelly Oubre Jr.', position: 'SF', grade: 'B+', pts: 10, reb: 4, ast: 1, comment: 'Oubre brought the energy and hit his shots when they needed him. He had some lapses on defense but other than that good performance.' },
-  { name: 'Joel Embiid', position: 'C', grade: 'D+', pts: 4, reb: 6, ast: 2, comment: 'Rough. Just really rough. 1-9 from the field and 0-4 from three is not what you want to see. Embiid looked out of rhythm all game and seemed cautious coming back from his injury. Hopefully, after a few games he will be back to being the Embiid we know.' },
-  { name: 'Quentin Grimes', position: 'SG', grade: 'B+', pts: 10, reb: 5, ast: 5, comment: 'Grimes was great off the bench. Ran the offense smoothly, hit a couple catch and shoot threes when they needed spacing, and grabbed 5 boards. Solid performance all around.' },
-  { name: 'Jabari Walker', position: 'PF', grade: 'B', pts: 6, reb: 4, ast: 0, comment: 'Walker came in and was super efficient, making 3 of 4 shots. He also grabbed some critical rebounds.' },
-  { name: 'Adem Bona', position: 'C', grade: 'C+', pts: 0, reb: 3, ast: 1, comment: 'Didn\'t do much offensively in his 15 minutes but didn\'t hurt the team either. Grabbed a few rebounds and played decent defense. Still learning, and that\'s fine for a young guy getting his feet wet.' },
-  { name: 'Andre Drummond', position: 'C', grade: 'F', pts: 0, reb: 1, ast: 0, comment: 'Three minutes, one rebound and that\'s it. Struggled to guard the rim.' },
-  { name: 'Justin Edwards', position: 'SG', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' },
-  { name: 'Johni Broome', position: 'C', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' },
-  { name: 'Kyle Lowry', position: 'PG', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' },
-  { name: 'Eric Gordon', position: 'SG', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' }
+  { name: 'Tyrese Maxey', position: 'PG', grade: 'A+', pts: 40, reb: 2, ast: 6, stl: 2, blk: 1, fg: '13-24', fgp: 54.2, tp: '7-9', tpp: 77.8, ft: '7-8', ftp: 87.5, comment: 'Maxey was simply phenomenal tonight. The Celtics had no answer for him when he put his head down and attacked. He finished 7-9 from three, and every shot looked like it was going in. When the Celtics tried to take away the drive, he knocked down threes. When they stayed home, he went right by for a layup. This is the Maxey we\'ve been hoping for, and if he plays like this for the whole season, the Sixers will be in good shape.' },
+  { name: 'VJ Edgecombe', position: 'SG', grade: 'A-', pts: 34, reb: 7, ast: 3, stl: 1, blk: 0, fg: '13-26', fgp: 50.0, tp: '5-13', tpp: 38.5, ft: '3-6', ftp: 50.0, comment: 'What a debut. VJ dropped 34 in his first NBA game on the road in Boston like it was nothing. Edgecombe played with zero fear, attacking defenders and getting his shot whenever he wanted. The future is bright for him.' },
+  { name: 'Dominick Barlow', position: 'PF', grade: 'B', pts: 13, reb: 8, ast: 5, stl: 0, blk: 1, fg: '4-8', fgp: 50.0, tp: '0-2', tpp: 0.0, ft: '5-6', ftp: 83.3, comment: 'Barlow handled all the dirty work. Those 5-offensive boards were huge for second chances, and he passed the ball extremely well with 5 assists. Shot the ball efficiently, got to the free-throw line, and didn\'t try to do too much.' },
+  { name: 'Kelly Oubre Jr.', position: 'SF', grade: 'B+', pts: 10, reb: 4, ast: 1, stl: 0, blk: 1, fg: '2-6', fgp: 33.3, tp: '2-6', tpp: 33.3, ft: '4-4', ftp: 100.0, comment: 'Oubre brought the energy and hit his shots when they needed him. He had some lapses on defense but other than that good performance.' },
+  { name: 'Joel Embiid', position: 'C', grade: 'D+', pts: 4, reb: 6, ast: 2, stl: 0, blk: 1, fg: '1-9', fgp: 11.1, tp: '0-4', tpp: 0.0, ft: '2-2', ftp: 100.0, comment: 'Rough. Just really rough. 1-9 from the field and 0-4 from three is not what you want to see. Embiid looked out of rhythm all game and seemed cautious coming back from his injury. Hopefully, after a few games he will be back to being the Embiid we know.' },
+  { name: 'Quentin Grimes', position: 'SG', grade: 'B+', pts: 10, reb: 5, ast: 5, stl: 0, blk: 0, fg: '3-8', fgp: 37.5, tp: '2-5', tpp: 40.0, ft: '2-4', ftp: 50.0, comment: 'Grimes was great off the bench. Ran the offense smoothly, hit a couple catch and shoot threes when they needed spacing, and grabbed 5 boards. Solid performance all around.' },
+  { name: 'Jabari Walker', position: 'PF', grade: 'B', pts: 6, reb: 4, ast: 0, stl: 0, blk: 0, fg: '3-4', fgp: 75.0, tp: '0-1', tpp: 0.0, ft: '0-0', ftp: 0.0, comment: 'Walker came in and was super efficient, making 3 of 4 shots. He also grabbed some critical rebounds.' },
+  { name: 'Adem Bona', position: 'C', grade: 'C+', pts: 0, reb: 3, ast: 1, stl: 0, blk: 0, fg: '0-0', fgp: 0.0, tp: '0-0', tpp: 0.0, ft: '0-0', ftp: 0.0, comment: 'Didn\'t do much offensively in his 15 minutes but didn\'t hurt the team either. Grabbed a few rebounds and played decent defense. Still learning, and that\'s fine for a young guy getting his feet wet.' },
+  { name: 'Andre Drummond', position: 'C', grade: 'F', pts: 0, reb: 1, ast: 0, stl: 0, blk: 0, fg: '0-0', fgp: 0.0, tp: '0-0', tpp: 0.0, ft: '0-0', ftp: 0.0, comment: 'Three minutes, one rebound and that\'s it. Struggled to guard the rim.' },
+  { name: 'Justin Edwards', position: 'SG', grade: 'DNP', pts: '-', reb: '-', ast: '-', stl: '-', blk: '-', fg: '-', fgp: 0.0, tp: '-', tpp: 0.0, ft: '-', ftp: 0.0, comment: 'Did not play' },
+  { name: 'Johni Broome', position: 'C', grade: 'DNP', pts: '-', reb: '-', ast: '-', stl: '-', blk: '-', fg: '-', fgp: 0.0, tp: '-', tpp: 0.0, ft: '-', ftp: 0.0, comment: 'Did not play' },
+  { name: 'Kyle Lowry', position: 'PG', grade: 'DNP', pts: '-', reb: '-', ast: '-', stl: '-', blk: '-', fg: '-', fgp: 0.0, tp: '-', tpp: 0.0, ft: '-', ftp: 0.0, comment: 'Did not play' },
+  { name: 'Eric Gordon', position: 'SG', grade: 'DNP', pts: '-', reb: '-', ast: '-', stl: '-', blk: '-', fg: '-', fgp: 0.0, tp: '-', tpp: 0.0, ft: '-', ftp: 0.0, comment: 'Did not play' }
 ];
 
 function getGradeBadgeClass(grade) {
@@ -315,6 +330,8 @@ function renderGrades() {
     const badgeClass = getGradeBadgeClass(player.grade);
     const badgeStyle = getGradeBadgeStyle(player.grade);
     
+    const isDNP = player.grade === 'DNP';
+    
     return `
       <div class="player-grade">
         <div class="grade-badge ${badgeClass}" ${badgeStyle}>${player.grade}</div>
@@ -334,7 +351,24 @@ function renderGrades() {
               <span class="stat-value">${player.ast}</span>
               <span class="stat-label">AST</span>
             </div>
+            <div class="stat">
+              <span class="stat-value">${player.stl}</span>
+              <span class="stat-label">STL</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">${player.blk}</span>
+              <span class="stat-label">BLK</span>
+            </div>
           </div>
+          ${!isDNP ? `
+            <div class="shooting-stats">
+              <div style="margin-bottom: 0.5rem;">
+                <strong>FG:</strong> ${player.fg} (${player.fgp.toFixed(1)}%) | 
+                <strong>3PT:</strong> ${player.tp} (${player.tpp.toFixed(1)}%) | 
+                <strong>FT:</strong> ${player.ft} (${player.ftp.toFixed(1)}%)
+              </div>
+            </div>
+          ` : ''}
           <p class="player-comment">${player.comment}</p>
         </div>
       </div>
