@@ -258,15 +258,13 @@
     <div class="article-header">
       <h1 class="article-title">Philadelphia 76ers Player Grades</h1>
       <div class="article-meta">
-        <span>Sixers vs Celtics (Wednesday)</span>
+        <span>🏀 Sixers 117, Celtics 116</span>
+        <span>Record: 1-0</span>
       </div>
     </div>
 
     <!-- Content -->
     <div class="article-content">
-      <p>
-        Grades for the Philadelphia 76ers Wednesday game will be available after the game concludes. Below is our full roster ready for evaluation.
-      </p>
     </div>
 
     <!-- Grades Section -->
@@ -277,52 +275,67 @@
 </div>
 
 <script>
-// Full roster with blank grades for Wednesday game
+// Game grades with stats and comments
 const players = [
-  { name: 'Joel Embiid', position: 'C' },
-  { name: 'Tyrese Maxey', position: 'PG' },
-  { name: 'Paul George', position: 'SF' },
-  { name: 'Kelly Oubre Jr.', position: 'SF' },
-  { name: 'Andre Drummond', position: 'C' },
-  { name: 'Kyle Lowry', position: 'PG' },
-  { name: 'Eric Gordon', position: 'SG' },
-  { name: 'Jared McCain', position: 'PG' },
-  { name: 'VJ Edgecombe', position: 'SG' },
-  { name: 'Justin Edwards', position: 'SG' },
-  { name: 'Adem Bona', position: 'C' },
-  { name: 'Johni Broome', position: 'C' },
-  { name: 'Trendon Watford', position: 'PF' },
-  { name: 'Quentin Grimes', position: 'SG' },
-  { name: 'Dominick Barlow', position: 'PF' },
-  { name: 'Jabari Walker', position: 'PF' },
-  { name: 'Hunter Sallis', position: 'SG' }
+  { name: 'Tyrese Maxey', position: 'PG', grade: 'A+', pts: 40, reb: 2, ast: 6, comment: 'Maxey was simply phenomenal tonight. The Celtics had no answer for him when he put his head down and attacked. He finished 7-9 from three, and every shot looked like it was going in. When the Celtics tried to take away the drive, he knocked down threes. When they stayed home, he went right by for a layup. This is the Maxey we\'ve been hoping for, and if he plays like this for the whole season, the Sixers will be in good shape.' },
+  { name: 'VJ Edgecombe', position: 'SG', grade: 'A-', pts: 34, reb: 7, ast: 3, comment: 'What a debut. VJ dropped 34 in his first NBA game on the road in Boston like it was nothing. Edgecombe played with zero fear, attacking defenders and getting his shot whenever he wanted. The future is bright for him.' },
+  { name: 'Dominick Barlow', position: 'PF', grade: 'B', pts: 13, reb: 8, ast: 5, comment: 'Barlow handled all the dirty work. Those 5-offensive boards were huge for second chances, and he passed the ball extremely well with 5 assists. Shot the ball efficiently, got to the free-throw line, and didn\'t try to do too much.' },
+  { name: 'Kelly Oubre Jr.', position: 'SF', grade: 'B+', pts: 10, reb: 4, ast: 1, comment: 'Oubre brought the energy and hit his shots when they needed him. He had some lapses on defense but other than that good performance.' },
+  { name: 'Joel Embiid', position: 'C', grade: 'D+', pts: 4, reb: 6, ast: 2, comment: 'Rough. Just really rough. 1-9 from the field and 0-4 from three is not what you want to see. Embiid looked out of rhythm all game and seemed cautious coming back from his injury. Hopefully, after a few games he will be back to being the Embiid we know.' },
+  { name: 'Quentin Grimes', position: 'SG', grade: 'B+', pts: 10, reb: 5, ast: 5, comment: 'Grimes was great off the bench. Ran the offense smoothly, hit a couple catch and shoot threes when they needed spacing, and grabbed 5 boards. Solid performance all around.' },
+  { name: 'Jabari Walker', position: 'PF', grade: 'B', pts: 6, reb: 4, ast: 0, comment: 'Walker came in and was super efficient, making 3 of 4 shots. He also grabbed some critical rebounds.' },
+  { name: 'Adem Bona', position: 'C', grade: 'C+', pts: 0, reb: 3, ast: 1, comment: 'Didn\'t do much offensively in his 15 minutes but didn\'t hurt the team either. Grabbed a few rebounds and played decent defense. Still learning, and that\'s fine for a young guy getting his feet wet.' },
+  { name: 'Andre Drummond', position: 'C', grade: 'F', pts: 0, reb: 1, ast: 0, comment: 'Three minutes, one rebound and that\'s it. Struggled to guard the rim.' },
+  { name: 'Justin Edwards', position: 'SG', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' },
+  { name: 'Johni Broome', position: 'C', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' },
+  { name: 'Kyle Lowry', position: 'PG', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' },
+  { name: 'Eric Gordon', position: 'SG', grade: 'DNP', pts: '-', reb: '-', ast: '-', comment: 'Did not play' }
 ];
+
+function getGradeBadgeClass(grade) {
+  const firstChar = grade.charAt(0);
+  if (firstChar === 'A') return 'a';
+  if (firstChar === 'B') return 'b';
+  if (firstChar === 'C') return 'c';
+  if (firstChar === 'D' || firstChar === 'F') return 'd';
+  return '';
+}
+
+function getGradeBadgeStyle(grade) {
+  if (grade === 'DNP') {
+    return 'style="background: #cbd5e1; color: #64748b; font-size: 1.2rem;"';
+  }
+  return '';
+}
 
 function renderGrades() {
   const container = document.getElementById('grades-container');
   
   container.innerHTML = players.map(player => {
+    const badgeClass = getGradeBadgeClass(player.grade);
+    const badgeStyle = getGradeBadgeStyle(player.grade);
+    
     return `
       <div class="player-grade">
-        <div class="grade-badge" style="background: #cbd5e1; color: #64748b; font-size: 1.2rem;">-</div>
+        <div class="grade-badge ${badgeClass}" ${badgeStyle}>${player.grade}</div>
         <div class="player-info">
           <div class="player-name">${player.name}</div>
           <div class="player-position">${player.position}</div>
           <div class="player-stats">
             <div class="stat">
-              <span class="stat-value">-</span>
+              <span class="stat-value">${player.pts}</span>
               <span class="stat-label">PTS</span>
             </div>
             <div class="stat">
-              <span class="stat-value">-</span>
+              <span class="stat-value">${player.reb}</span>
               <span class="stat-label">REB</span>
             </div>
             <div class="stat">
-              <span class="stat-value">-</span>
+              <span class="stat-value">${player.ast}</span>
               <span class="stat-label">AST</span>
             </div>
           </div>
-
+          <p class="player-comment">${player.comment}</p>
         </div>
       </div>
     `;
