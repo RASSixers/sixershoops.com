@@ -1050,7 +1050,7 @@
       { date: "2025-10-17", opponent: "Minnesota Timberwolves", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming", isPreseason: true },
       
       // October 2025 - Regular Season Start
-      { date: "2025-10-22", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "TBD", status: "upcoming" },
+      { date: "2025-10-22", opponent: "Boston Celtics", location: "away", time: "7:30 PM ET", venue: "TD Garden", tv: "TBD", status: "completed", result: "W 117-116", espnGameId: "401809936", nbaGameId: "0012500036" },
       { date: "2025-10-25", opponent: "Charlotte Hornets", location: "home", time: "7:30 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
       { date: "2025-10-27", opponent: "Orlando Magic", location: "home", time: "7:00 PM ET", venue: "Wells Fargo Center", tv: "TBD", status: "upcoming" },
       { date: "2025-10-28", opponent: "Washington Wizards", location: "away", time: "7:00 PM ET", venue: "Capital One Arena", tv: "TBD", status: "upcoming" },
@@ -1189,14 +1189,15 @@
 
     // Update statistics
     function updateStats() {
-      const completedGames = scheduleData.filter(game => game.status === 'completed');
+      // Only count regular season games (exclude preseason)
+      const completedGames = scheduleData.filter(game => game.status === 'completed' && !game.isPreseason);
       const wins = completedGames.filter(game => game.result && game.result.startsWith('W')).length;
       const losses = completedGames.filter(game => game.result && game.result.startsWith('L')).length;
       
       document.getElementById('current-record').textContent = `${wins}-${losses}`;
       
-      // Find next game
-      const upcomingGames = scheduleData.filter(game => game.status === 'upcoming');
+      // Find next game (excluding preseason)
+      const upcomingGames = scheduleData.filter(game => game.status === 'upcoming' && !game.isPreseason);
       if (upcomingGames.length > 0) {
         const nextGame = upcomingGames[0];
         const gameDate = new Date(nextGame.date);
@@ -1220,9 +1221,12 @@
       const container = document.getElementById('schedule-container');
       container.innerHTML = '';
 
-      // Group games by month
+      // Group games by month (excluding preseason games)
       const gamesByMonth = {};
       scheduleData.forEach(game => {
+        // Skip preseason games
+        if (game.isPreseason) return;
+        
         const date = new Date(game.date);
         const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         
