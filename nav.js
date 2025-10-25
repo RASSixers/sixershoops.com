@@ -64,6 +64,27 @@ document.addEventListener('DOMContentLoaded', function () {
         <li class="nav-item"><a href="https://sixershoops.com/contact" class="nav-link">Contact</a></li>
       </ul>
 
+      <!-- Auth Actions -->
+      <div class="nav-auth" id="navAuth">
+        <button id="loginBtn" class="btn-login" title="Login with Google">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span id="authText">Login</span>
+        </button>
+        <div id="profileMenu" class="profile-menu" style="display: none;">
+          <button id="profileHeader" class="profile-header" style="cursor: pointer; background: none; border: none; width: 100%;">
+            <div id="profileAvatar" class="profile-avatar"></div>
+            <div class="profile-info">
+              <div id="profileName" class="profile-name"></div>
+              <div id="profileEmail" class="profile-email"></div>
+            </div>
+          </button>
+          <button id="logoutBtn" class="profile-logout">Logout</button>
+        </div>
+      </div>
+
       <!-- Mobile Menu Button -->
       <button class="mobile-menu-btn" id="mobileMenuBtn" aria-expanded="false" aria-label="Toggle mobile menu">
         <span></span><span></span><span></span>
@@ -246,6 +267,102 @@ document.addEventListener('DOMContentLoaded', function () {
       document.documentElement.classList.remove('no-scroll');
     }
   });
+
+  // ============================================
+  // GOOGLE OAUTH LOGIN
+  // ============================================
+  if (window.appwriteClient) {
+    const account = new Appwrite.Account(window.appwriteClient);
+    const loginBtn = document.getElementById('loginBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    const authText = document.getElementById('authText');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const profileName = document.getElementById('profileName');
+    const profileEmail = document.getElementById('profileEmail');
+    const profileAvatar = document.getElementById('profileAvatar');
+
+    async function checkAuthStatus() {
+      try {
+        const session = await account.getSession('current');
+        const user = await account.get();
+        if (user && session) {
+          showProfileMenu(user);
+        }
+      } catch (e) {
+        showLoginButton();
+      }
+    }
+
+    function showLoginButton() {
+      loginBtn.style.display = 'inline-flex';
+      profileMenu.style.display = 'none';
+      authText.textContent = 'Login';
+    }
+
+    function showProfileMenu(user) {
+      loginBtn.style.display = 'none';
+      profileMenu.style.display = 'block';
+      profileName.textContent = user.name || 'User';
+      profileEmail.textContent = user.email;
+      
+      // Generate avatar from initials
+      const initials = (user.name || user.email || 'U')
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+      profileAvatar.textContent = initials;
+    }
+
+    loginBtn.addEventListener('click', async () => {
+      try {
+        const redirectUrl = window.location.origin + window.location.pathname + '?oauth_success=true';
+        await account.createOAuth2Session('google', redirectUrl, redirectUrl);
+      } catch (e) {
+        console.error('Login failed:', e);
+        alert('Login failed. Please try again.');
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await account.deleteSession('current');
+        showLoginButton();
+        window.location.reload();
+      } catch (e) {
+        console.error('Logout failed:', e);
+      }
+    });
+
+    // Check auth status on page load
+    checkAuthStatus();
+
+    // Clean up OAuth success query parameter
+    if (window.location.search.includes('oauth_success=true')) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Toggle profile menu on avatar click
+    const profileHeader = document.getElementById('profileHeader');
+    if (profileHeader) {
+      profileHeader.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = profileMenu.style.display === 'block';
+        profileMenu.style.display = isVisible ? 'none' : 'block';
+      });
+    }
+
+    // Close profile menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.nav-auth')) {
+        profileMenu.style.display = 'none';
+      }
+    });
+
+    // Re-check auth every 30 seconds
+    setInterval(checkAuthStatus, 30000);
+  }
 });
 
 // ============================================
