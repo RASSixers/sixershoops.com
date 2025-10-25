@@ -11,6 +11,14 @@ const PORT = process.env.PORT || 3001;
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
 
+// Daily Pick'em API
+const {
+  handleDailyPickemAuth,
+  handleDailyPickemQuestions,
+  handleDailyPickemPicks,
+  handleDailyPickemLeaderboard
+} = require('../api/daily-pickem');
+
 // Security middleware
 app.use(helmet());
 
@@ -39,6 +47,64 @@ app.use(express.json());
 // Serve static files from parent directory (HTML, CSS, JS, images)
 const path = require('path');
 app.use(express.static(path.join(__dirname, '..')));
+
+// ========================
+// DATABASE INITIALIZATION
+// ========================
+const { db, rawDb } = require('./db-init');
+const { handlePickemAuth, handlePickemPicks, handlePickemLeaderboard } = require('../api/pickem');
+const { checkAndGradeGames, initializeTestGames } = require('./grading-service');
+const { 
+  handleQuestionSetAdmin, 
+  handleQuestionAdmin, 
+  handleCustomPickemUser, 
+  handleCustomPickemLeaderboard, 
+  handleGrading 
+} = require('../api/custom-pickem');
+
+// Initialize database and pick'em routes
+let dbReady = false;
+(async () => {
+  try {
+    // Initialize test games if needed
+    await initializeTestGames(db);
+    
+    console.log('✅ Database and pick\'em system initialized');
+    dbReady = true;
+    
+    // Register traditional pick'em routes (NBA games)
+    await handlePickemAuth(app, db);
+    await handlePickemPicks(app, db);
+    await handlePickemLeaderboard(app, db);
+    
+    // Register custom question pick'em routes
+    await handleQuestionSetAdmin(app, db);
+    await handleQuestionAdmin(app, db);
+    await handleCustomPickemUser(app, db);
+    await handleCustomPickemLeaderboard(app, db);
+    await handleGrading(app, db);
+
+    // Register daily pick'em routes
+    await handleDailyPickemAuth(app, db);
+    await handleDailyPickemQuestions(app, db);
+    await handleDailyPickemPicks(app, db);
+    await handleDailyPickemLeaderboard(app, db);
+    
+    // Auto-grading job - runs every 2 minutes
+    setInterval(async () => {
+      try {
+        await checkAndGradeGames(db);
+      } catch (error) {
+        console.error('Auto-grading error:', error);
+      }
+    }, 2 * 60 * 1000);
+    
+    console.log('✅ Auto-grading job scheduled');
+  } catch (error) {
+    console.error('❌ Failed to initialize database:', error);
+    process.exit(1);
+  }
+})();
 
 // Twitter API configuration
 const TWITTER_API_URL = 'https://api.twitter.com/2';
@@ -804,15 +870,24 @@ app.listen(PORT, () => {
   console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
   console.log(`🔑 Twitter Bearer Token: ${BEARER_TOKEN ? '✅ Configured' : '❌ Missing'}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🎮 Pick'em System: ${dbReady ? '✅ Ready' : '⏳ Initializing'}`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('👋 SIGTERM received, shutting down gracefully');
+  if (rawDb) {
+    rawDb.close();
+    console.log('✅ Database connection closed');
+  }
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('👋 SIGINT received, shutting down gracefully');
+  if (rawDb) {
+    rawDb.close();
+    console.log('✅ Database connection closed');
+  }
   process.exit(0);
 });
