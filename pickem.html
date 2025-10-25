@@ -195,6 +195,7 @@
       width: 18px;
       height: 18px;
       cursor: pointer;
+      accent-color: var(--brand);
     }
 
     .text-input {
@@ -327,12 +328,6 @@
       color: var(--muted);
     }
 
-    .empty-state-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      opacity: 0.5;
-    }
-
     .message {
       padding: 16px 20px;
       border-radius: 12px;
@@ -355,12 +350,6 @@
       background: rgba(239, 68, 68, 0.1);
       color: #7f1d1d;
       border: 1px solid rgba(239, 68, 68, 0.2);
-    }
-
-    .message.info {
-      background: rgba(59, 130, 246, 0.1);
-      color: #1e3a8a;
-      border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
     .progress-bar {
@@ -410,6 +399,24 @@
       font-weight: 900;
     }
 
+    .user-name-input {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .user-name-input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(0, 61, 166, 0.1);
+    }
+
     @media (max-width: 768px) {
       .page-title { font-size: 2rem; }
       .questions-container { grid-template-columns: 1fr; }
@@ -435,6 +442,9 @@
 
     <div id="picks" class="tab-content active">
       <div id="message" class="message"></div>
+      
+      <input type="text" id="userName" class="user-name-input" placeholder="Enter your name" maxlength="30">
+      
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill"></div>
       </div>
@@ -457,7 +467,6 @@
             <th>Player</th>
             <th>Score</th>
             <th>Correct</th>
-            <th>Win %</th>
           </tr>
         </thead>
         <tbody id="leaderboardBody"></tbody>
@@ -469,39 +478,37 @@
   <script src="questions.js"></script>
   <script>
     const QUESTIONS = window.QUESTIONS || [];
-    const API_BASE = '/api/custom-pickem';
-    let userToken = localStorage.getItem('pickem_token');
-    let currentSetId = null;
+    let scores = {};
 
-    async function init() {
-      if (!userToken) {
-        showMessage('Please login to participate', 'info');
+    function loadScores() {
+      const saved = localStorage.getItem('pickem_scores');
+      scores = saved ? JSON.parse(saved) : {};
+    }
+
+    function saveScores() {
+      localStorage.setItem('pickem_scores', JSON.stringify(scores));
+    }
+
+    function loadUserName() {
+      return localStorage.getItem('pickem_username') || '';
+    }
+
+    function saveUserName(name) {
+      localStorage.setItem('pickem_username', name);
+    }
+
+    function init() {
+      if (QUESTIONS.length === 0) {
+        showMessage('No questions loaded. Check questions.js', 'error');
         return;
       }
 
-      await loadActiveSet();
-      setupTabs();
+      document.getElementById('userName').value = loadUserName();
+      renderQuestions();
       setupFormHandling();
+      setupTabs();
+      loadScores();
       loadLeaderboard();
-    }
-
-    async function loadActiveSet() {
-      try {
-        const res = await fetch(`${API_BASE}/sets/active`, {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-        const data = await res.json();
-        if (data.success && data.data) {
-          currentSetId = data.data.id;
-          renderQuestions();
-          await loadUserPicks();
-        } else {
-          showMessage('No active question set available', 'info');
-        }
-      } catch (err) {
-        console.error(err);
-        showMessage('Error loading questions', 'error');
-      }
     }
 
     function renderQuestions() {
@@ -542,76 +549,6 @@
           </div>
         `;
       }).join('');
-    }
-
-    async function loadUserPicks() {
-      try {
-        const res = await fetch(`${API_BASE}/picks/${currentSetId}`, {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-        const data = await res.json();
-        if (data.success && data.data) {
-          data.data.forEach((pick, idx) => {
-            const input = document.querySelector(`input[name="q${idx}"]`);
-            if (input) {
-              if (input.type === 'radio' || input.type === 'checkbox') {
-                input.value === pick.answer && (input.checked = true);
-              } else {
-                input.value = pick.answer;
-              }
-              document.querySelector(`[data-index="${idx}"]`)?.classList.add('answered');
-            }
-          });
-          updateProgress();
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    function setupFormHandling() {
-      document.getElementById('picksForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const picks = [];
-        QUESTIONS.forEach((q, i) => {
-          const input = document.querySelector(`input[name="q${i}"]`);
-          if (input) {
-            if (input.type === 'radio') {
-              const checked = document.querySelector(`input[name="q${i}"]:checked`);
-              picks.push(checked ? checked.value : null);
-            } else {
-              picks.push(input.value);
-            }
-          }
-        });
-
-        if (picks.some(p => !p)) {
-          showMessage('Please answer all questions', 'error');
-          return;
-        }
-
-        try {
-          const res = await fetch(`${API_BASE}/picks/submit`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${userToken}`
-            },
-            body: JSON.stringify({ set_id: currentSetId, picks })
-          });
-          const data = await res.json();
-          if (data.success) {
-            showMessage('Picks submitted successfully!', 'success');
-            await loadUserPicks();
-            await loadLeaderboard();
-          } else {
-            showMessage(data.error || 'Error submitting picks', 'error');
-          }
-        } catch (err) {
-          console.error(err);
-          showMessage('Error submitting picks', 'error');
-        }
-      });
 
       document.querySelectorAll('input[name^="q"]').forEach(input => {
         input.addEventListener('change', updateProgress);
@@ -623,55 +560,64 @@
       let answered = 0;
       QUESTIONS.forEach((q, i) => {
         const input = document.querySelector(`input[name="q${i}"]`);
-        if (input && input.value) answered++;
+        if (input && input.value) {
+          answered++;
+          document.querySelector(`[data-index="${i}"]`)?.classList.add('answered');
+        } else {
+          document.querySelector(`[data-index="${i}"]`)?.classList.remove('answered');
+        }
       });
       const percent = (answered / total) * 100;
       document.getElementById('progressFill').style.width = percent + '%';
     }
 
-    async function loadLeaderboard() {
-      if (!currentSetId) return;
-      try {
-        const res = await fetch(`${API_BASE}/leaderboard/${currentSetId}`, {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-        const data = await res.json();
-        if (data.success && data.data) {
-          const lb = data.data;
-          const statsHtml = `
-            <div class="stat-card">
-              <div class="stat-value">${lb.length}</div>
-              <div class="stat-label">Total Players</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">${lb[0]?.score || 0}</div>
-              <div class="stat-label">Winning Score</div>
-            </div>
-          `;
-          document.getElementById('statsContainer').innerHTML = statsHtml;
+    function setupFormHandling() {
+      document.getElementById('picksForm').addEventListener('submit', (e) => {
+        e.preventDefault();
 
-          const bodyHtml = lb.map((entry, idx) => {
-            let badgeClass = '';
-            if (idx === 0) badgeClass = 'rank-1';
-            else if (idx === 1) badgeClass = 'rank-2';
-            else if (idx === 2) badgeClass = 'rank-3';
-
-            return `
-              <tr>
-                <td><span class="rank-badge ${badgeClass}">${idx + 1}</span></td>
-                <td>${entry.username}</td>
-                <td><span class="score">${entry.score}</span></td>
-                <td>${entry.correct}</td>
-                <td>${entry.win_percent}%</td>
-              </tr>
-            `;
-          }).join('');
-
-          document.getElementById('leaderboardBody').innerHTML = bodyHtml || '<tr><td colspan="5" class="empty-state">No scores yet</td></tr>';
+        const userName = document.getElementById('userName').value.trim();
+        if (!userName) {
+          showMessage('Please enter your name', 'error');
+          return;
         }
-      } catch (err) {
-        console.error(err);
-      }
+
+        const picks = [];
+        let allAnswered = true;
+
+        QUESTIONS.forEach((q, i) => {
+          const input = document.querySelector(`input[name="q${i}"]`);
+          if (input) {
+            if (input.type === 'radio') {
+              const checked = document.querySelector(`input[name="q${i}"]:checked`);
+              if (checked) {
+                picks.push(checked.value);
+              } else {
+                allAnswered = false;
+              }
+            } else {
+              if (input.value) {
+                picks.push(input.value);
+              } else {
+                allAnswered = false;
+              }
+            }
+          }
+        });
+
+        if (!allAnswered) {
+          showMessage('Please answer all questions', 'error');
+          return;
+        }
+
+        saveUserName(userName);
+        scores[userName] = {
+          picks: picks,
+          timestamp: new Date().toISOString()
+        };
+        saveScores();
+        showMessage('Picks submitted! Check the leaderboard.', 'success');
+        loadLeaderboard();
+      });
     }
 
     function setupTabs() {
@@ -687,14 +633,60 @@
       });
     }
 
+    function loadLeaderboard() {
+      const leaderboardData = Object.entries(scores).map(([name, data]) => {
+        const correct = data.picks.filter((pick, idx) => {
+          return QUESTIONS[idx] && QUESTIONS[idx].answer === pick;
+        }).length;
+        return {
+          name,
+          score: correct,
+          correct
+        };
+      }).sort((a, b) => b.score - a.score);
+
+      const statsHtml = `
+        <div class="stat-card">
+          <div class="stat-value">${leaderboardData.length}</div>
+          <div class="stat-label">Total Players</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${leaderboardData[0]?.score || 0}</div>
+          <div class="stat-label">Winning Score</div>
+        </div>
+      `;
+      document.getElementById('statsContainer').innerHTML = statsHtml;
+
+      const bodyHtml = leaderboardData.map((entry, idx) => {
+        let badgeClass = '';
+        if (idx === 0) badgeClass = 'rank-1';
+        else if (idx === 1) badgeClass = 'rank-2';
+        else if (idx === 2) badgeClass = 'rank-3';
+
+        return `
+          <tr>
+            <td><span class="rank-badge ${badgeClass}">${idx + 1}</span></td>
+            <td>${entry.name}</td>
+            <td><span class="score">${entry.score}</span></td>
+            <td>${entry.correct}/${QUESTIONS.length}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('leaderboardBody').innerHTML = bodyHtml || '<tr><td colspan="4" class="empty-state">No submissions yet</td></tr>';
+    }
+
     function showMessage(text, type = 'info') {
       const msg = document.getElementById('message');
       msg.textContent = text;
       msg.className = `message show ${type}`;
-      setTimeout(() => msg.classList.remove('show'), 5000);
+      setTimeout(() => msg.classList.remove('show'), 4000);
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadScores();
+      init();
+    });
   </script>
 </body>
 </html>
