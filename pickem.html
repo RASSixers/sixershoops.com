@@ -893,9 +893,9 @@
         if (!response.ok) throw new Error(data.error || 'Login failed');
 
         localStorage.setItem('pickem_token', data.token);
-        localStorage.setItem('pickem_user', data.user);
+        localStorage.setItem('pickem_user', data.user.username);
         currentToken = data.token;
-        currentUser = data.user;
+        currentUser = data.user.username;
         showMessage('Login successful!', 'success', 'authMessage');
         setTimeout(showApp, 500);
       } catch (err) {
@@ -928,11 +928,12 @@
 
         if (!response.ok) throw new Error(data.error || 'Registration failed');
 
-        showMessage('Account created! Please login.', 'success', 'authMessage2');
+        showMessage('✅ Account created! Please log in with your new credentials.', 'success', 'authMessage2');
         setTimeout(() => {
           clearRegisterForm();
           document.querySelectorAll('.auth-tab-btn')[0].click();
           document.getElementById('loginUsername').value = username;
+          document.getElementById('loginPassword').focus();
         }, 500);
       } catch (err) {
         showMessage(err.message, 'error', 'authMessage2');
