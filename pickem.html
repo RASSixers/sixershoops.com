@@ -948,7 +948,10 @@
 
       <!-- Daily Leaderboard Tab -->
       <div id="daily-lb" class="tab-content">
-        <div class="stats" id="dailyStatsContainer"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div class="stats" id="dailyStatsContainer"></div>
+          <button type="button" class="btn btn-secondary" id="refreshDailyBtn" style="height: fit-content;">🔄 Refresh</button>
+        </div>
         <table class="leaderboard-table">
           <thead>
             <tr>
@@ -964,7 +967,10 @@
 
       <!-- Weekly Leaderboard Tab -->
       <div id="weekly-lb" class="tab-content">
-        <div class="stats" id="weeklyStatsContainer"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div class="stats" id="weeklyStatsContainer"></div>
+          <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn" style="height: fit-content;">🔄 Refresh</button>
+        </div>
         <table class="leaderboard-table">
           <thead>
             <tr>
@@ -980,7 +986,10 @@
 
       <!-- Monthly Leaderboard Tab -->
       <div id="monthly-lb" class="tab-content">
-        <div class="stats" id="monthlyStatsContainer"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div class="stats" id="monthlyStatsContainer"></div>
+          <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn" style="height: fit-content;">🔄 Refresh</button>
+        </div>
         <table class="leaderboard-table">
           <thead>
             <tr>
@@ -1769,14 +1778,17 @@
         await refreshLeaderboardPreview(dateInput);
         document.getElementById('refreshLeaderboardBtn').style.display = 'inline-block';
         
+        // Add a small delay to ensure Firestore has replicated the data
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Always refresh ALL main leaderboards (don't check if active)
         // This ensures scores update even if user isn't currently viewing them
-        console.log('Refreshing all leaderboards after answer save...');
+        console.log('🔄 Refreshing all leaderboards after answer save...');
         await loadLeaderboard('daily');
         await loadLeaderboard('weekly');
         await loadLeaderboard('monthly');
         
-        showMessage('✅ All leaderboards updated!', 'success', 'markAnswersMessage');
+        showMessage('✅ All leaderboards updated! Use the 🔄 Refresh buttons anytime to get latest scores.', 'success', 'markAnswersMessage');
       } catch (err) {
         console.error('Error saving correct answers:', err);
         console.error('Error code:', err.code);
@@ -2329,6 +2341,25 @@
       });
     });
 
+    // === Leaderboard Refresh Buttons ===
+    document.getElementById('refreshDailyBtn').addEventListener('click', async () => {
+      console.log('User clicked refresh Daily leaderboard');
+      await loadLeaderboard('daily');
+      showMessage('✅ Daily leaderboard refreshed!', 'success');
+    });
+
+    document.getElementById('refreshWeeklyBtn').addEventListener('click', async () => {
+      console.log('User clicked refresh Weekly leaderboard');
+      await loadLeaderboard('weekly');
+      showMessage('✅ Weekly leaderboard refreshed!', 'success');
+    });
+
+    document.getElementById('refreshMonthlyBtn').addEventListener('click', async () => {
+      console.log('User clicked refresh Monthly leaderboard');
+      await loadLeaderboard('monthly');
+      showMessage('✅ Monthly leaderboard refreshed!', 'success');
+    });
+
     async function loadLeaderboard(period) {
       try {
         console.log(`loadLeaderboard called for period: ${period}`);
@@ -2416,6 +2447,8 @@
       const statsId = `${period}StatsContainer`;
       const bodyId = `${period}LeaderboardBody`;
       
+      console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries:`, entries);
+      
       const stats = `
         <div class="stat-card">
           <div class="stat-value">${entries.length}</div>
@@ -2434,6 +2467,7 @@
         if (idx < 3) {
           badge = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
         }
+        console.log(`  ${idx + 1}. ${entry.username}: ${entry.correct_count}/${entry.total_count}`);
         return `
           <tr>
             <td>${badge}${idx + 1}</td>
@@ -2444,6 +2478,10 @@
         `;
       }).join('');
 
+      if (entries.length === 0) {
+        console.warn(`⚠️  No entries to display for ${period} leaderboard`);
+      }
+      
       document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="4" class="empty-state">No data yet</td></tr>';
     }
 
