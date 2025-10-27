@@ -8,10 +8,10 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/favicon.ico" />
   <link rel="stylesheet" href="navbar-styles.css">
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
+  <!-- Firebase SDK (Compat version for better compatibility) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --ink: #0f172a;
@@ -743,10 +743,24 @@
       measurementId: "G-B22K71F01E"
     };
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    // Wait for Firebase SDK to load before initializing
+    let auth, db;
+    let firebaseReady = false;
+    
+    function initializeFirebase() {
+      if (typeof firebase === 'undefined') {
+        setTimeout(initializeFirebase, 100);
+        return;
+      }
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+      firebaseReady = true;
+      initAuth();
+    }
+    
+    // Start Firebase initialization
+    initializeFirebase();
 
     let currentUser = null;
     let todayQuestions = [];
@@ -1271,7 +1285,7 @@
     }
 
     // === Init ===
-    document.addEventListener('DOMContentLoaded', initAuth);
+    // initAuth is now called from initializeFirebase() after Firebase is ready
   </script>
 </body>
 </html>
