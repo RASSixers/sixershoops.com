@@ -1126,7 +1126,7 @@
       document.getElementById('appContainer').style.display = 'block';
       document.getElementById('currentUser').textContent = currentUser;
       
-      const isAdmin = currentUserEmail === ADMIN_EMAIL;
+      const isAdmin = isUserAdmin();
       if (isAdmin) {
         document.getElementById('userBadge').textContent = 'Admin';
         document.getElementById('userBadge').style.background = '#fef3c7';
@@ -1136,6 +1136,20 @@
         document.getElementById('adminTabBtn').style.display = 'none';
       }
       loadTodayQuestions();
+    }
+
+    // Check if current user is admin
+    function isUserAdmin() {
+      return currentUserEmail === ADMIN_EMAIL;
+    }
+
+    // Check admin permission before admin operations
+    function checkAdminPermission() {
+      if (!isUserAdmin()) {
+        showMessage('⛔ Unauthorized: Admin access required', 'error', 'adminMessage');
+        return false;
+      }
+      return true;
     }
 
     // Clear all error messages
