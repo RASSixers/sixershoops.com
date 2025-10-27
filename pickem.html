@@ -410,6 +410,84 @@
       box-shadow: 0 0 0 3px rgba(0, 61, 166, 0.1);
     }
 
+    .date-picker-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+      padding: 12px 0;
+      scroll-behavior: smooth;
+    }
+
+    .date-picker-btn {
+      background: var(--white);
+      border: 2px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      font-weight: 600;
+      font-size: 13px;
+      min-width: 90px;
+      text-align: center;
+    }
+
+    .date-picker-btn:hover {
+      border-color: var(--brand);
+      background: var(--chip);
+    }
+
+    .date-picker-btn.active {
+      background: linear-gradient(135deg, var(--brand), #1e3a8a);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    .date-picker-btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .date-picker-date {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    .date-slider-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .date-nav-btn {
+      background: var(--white);
+      border: 2px solid var(--border);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand);
+      font-weight: bold;
+    }
+
+    .date-nav-btn:hover {
+      background: var(--chip);
+      border-color: var(--brand);
+    }
+
+    .date-nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .submit-section {
       display: flex;
       gap: 12px;
@@ -849,10 +927,12 @@
       <div id="picks" class="tab-content active">
         <div id="message" class="message"></div>
         
-        <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
-          <label class="form-label">Select Game Date</label>
-          <input type="date" id="pickDate" class="form-input" />
+        <div class="date-slider-controls">
+          <button class="date-nav-btn" id="prevDateBtn">‹</button>
+          <div id="datePickerContainer" class="date-picker-container"></div>
+          <button class="date-nav-btn" id="nextDateBtn">›</button>
         </div>
+        <input type="hidden" id="pickDate" />
         
         <div class="progress-bar">
           <div class="progress-fill" id="progressFill"></div>
@@ -1749,17 +1829,91 @@
       updateProgress();
     });
 
-    // === Date Picker ===
-    document.getElementById('pickDate').addEventListener('change', (e) => {
-      const selectedDate = e.target.value;
-      if (selectedDate) {
-        loadQuestionsForDate(selectedDate);
+    // === ESPN-Style Date Slider ===
+    let currentDateOffset = 0;
+    const DATES_TO_SHOW = 7;
+
+    function formatDateLabel(date) {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      if (date.toDateString() === today.toDateString()) return 'Today';
+      if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+      
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return dayNames[date.getDay()];
+    }
+
+    function formatDateForComparison(date) {
+      return date.toISOString().split('T')[0];
+    }
+
+    function renderDateSlider() {
+      const container = document.getElementById('datePickerContainer');
+      const today = new Date();
+      const dates = [];
+
+      // Generate 14 days of dates
+      for (let i = 0; i < 14; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() + i);
+        dates.push({
+          date: date,
+          label: formatDateLabel(date),
+          value: formatDateForComparison(date),
+          dayNum: date.getDate()
+        });
+      }
+
+      // Show DATES_TO_SHOW dates at a time
+      const visibleDates = dates.slice(currentDateOffset, currentDateOffset + DATES_TO_SHOW);
+
+      container.innerHTML = visibleDates.map(d => {
+        const isActive = document.getElementById('pickDate').value === d.value;
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-date="${d.value}">
+            <div>${d.label}</div>
+            <div class="date-picker-date">${d.dayNum}</div>
+          </button>
+        `;
+      }).join('');
+
+      // Update nav button states
+      document.getElementById('prevDateBtn').disabled = currentDateOffset === 0;
+      document.getElementById('nextDateBtn').disabled = currentDateOffset >= dates.length - DATES_TO_SHOW;
+
+      // Attach click handlers to date buttons
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dateValue = btn.dataset.date;
+          document.getElementById('pickDate').value = dateValue;
+          renderDateSlider();
+          loadQuestionsForDate(dateValue);
+        });
+      });
+    }
+
+    document.getElementById('prevDateBtn').addEventListener('click', () => {
+      if (currentDateOffset > 0) {
+        currentDateOffset--;
+        renderDateSlider();
       }
     });
 
-    // Set default date to today
+    document.getElementById('nextDateBtn').addEventListener('click', () => {
+      const today = new Date();
+      const maxDates = 14;
+      if (currentDateOffset < maxDates - DATES_TO_SHOW) {
+        currentDateOffset++;
+        renderDateSlider();
+      }
+    });
+
+    // Initialize date slider
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('pickDate').value = today;
+    renderDateSlider();
     loadQuestionsForDate(today);
 
     // === Tabs ===
