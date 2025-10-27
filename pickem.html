@@ -838,16 +838,21 @@
       </div>
 
       <div class="tabs">
-        <button class="tab-btn active" data-tab="picks">Today's Picks</button>
+        <button class="tab-btn active" data-tab="picks">Picks</button>
         <button class="tab-btn" data-tab="daily-lb">Daily Leaderboard</button>
         <button class="tab-btn" data-tab="weekly-lb">Weekly Leaderboard</button>
         <button class="tab-btn" data-tab="monthly-lb">Monthly Leaderboard</button>
         <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display: none;">Manage Questions</button>
       </div>
 
-      <!-- Today's Picks Tab -->
+      <!-- Picks Tab -->
       <div id="picks" class="tab-content active">
         <div id="message" class="message"></div>
+        
+        <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
+          <label class="form-label">Select Game Date</label>
+          <input type="date" id="pickDate" class="form-input" />
+        </div>
         
         <div class="progress-bar">
           <div class="progress-fill" id="progressFill"></div>
@@ -992,6 +997,7 @@
     let currentUserEmail = null;
     let todayQuestions = [];
     let adminQuestions = [];
+    let selectedPickDate = null;
     const ADMIN_EMAIL = 'rashappy9@gmail.com';
 
     // === Authentication ===
@@ -1376,11 +1382,11 @@
     });
 
     // === Questions & Picks ===
-    async function loadTodayQuestions() {
+    async function loadQuestionsForDate(dateStr) {
       if (!currentUser) return;
       try {
-        const today = new Date().toISOString().split('T')[0];
-        const snapshot = await db.collection('questions').where('date', '==', today).get();
+        selectedPickDate = dateStr;
+        const snapshot = await db.collection('questions').where('date', '==', dateStr).get();
         
         if (snapshot.empty) {
           todayQuestions = [];
@@ -1396,11 +1402,11 @@
         
         renderQuestions();
         
-        // Check if already submitted today
-        await checkTodaySubmission();
+        // Check if already submitted for this date
+        await checkSubmissionForDate(dateStr);
       } catch (err) {
         console.error('Error loading questions:', err);
-        showMessage('Could not load today\'s questions. Please try again.', 'error');
+        showMessage('Could not load questions. Please try again.', 'error');
       }
     }
 
@@ -1428,7 +1434,8 @@
             </label>
           `;
         } else if (q.question_type === 'multiple_choice') {
-          const options = q.options ? JSON.parse(q.options) : [];
+          // Parse comma-separated options
+          const options = q.options ? q.options.split(',').map(opt => opt.trim()) : [];
           optionsHtml = options.map(opt => `
             <label class="option radio-option">
               <input type="radio" name="q${i}" value="${opt}">
@@ -1481,11 +1488,10 @@
       document.getElementById('progressFill').style.width = percent + '%';
     }
 
-    async function checkTodaySubmission() {
+    async function checkSubmissionForDate(dateStr) {
       if (!auth.currentUser) return;
       try {
-        const today = new Date().toISOString().split('T')[0];
-        const snapshot = await db.collection('picks').where('userId', '==', auth.currentUser.uid).where('date', '==', today).get();
+        const snapshot = await db.collection('picks').where('userId', '==', auth.currentUser.uid).where('date', '==', dateStr).get();
         
         if (!snapshot.empty) {
           const picks = snapshot.docs[0].data().answers || [];
@@ -1500,8 +1506,12 @@
             }
           });
           document.getElementById('submitBtn').disabled = true;
-          document.getElementById('submitBtn').textContent = 'Already Submitted Today';
-          showMessage('You have already submitted your picks for today!', 'success');
+          document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
+          showMessage('You have already submitted your picks for this date!', 'success');
+        } else {
+          // Reset submit button if not submitted yet
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('submitBtn').textContent = 'Submit Picks';
         }
       } catch (err) {
         // Not submitted yet
@@ -1511,6 +1521,11 @@
     document.getElementById('submitBtn').addEventListener('click', async () => {
       if (!auth.currentUser) {
         showMessage('Not logged in', 'error');
+        return;
+      }
+
+      if (!selectedPickDate) {
+        showMessage('Please select a game date', 'error');
         return;
       }
 
@@ -1539,18 +1554,17 @@
       }
 
       try {
-        const today = new Date().toISOString().split('T')[0];
         const pickRef = await db.collection('picks').add({
           userId: auth.currentUser.uid,
           username: currentUser,
-          date: today,
+          date: selectedPickDate,
           answers: answers,
           submittedAt: new Date().toISOString()
         });
 
-        showMessage('Picks submitted successfully!', 'success');
+        showMessage('✅ Picks submitted successfully!', 'success');
         document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').textContent = 'Already Submitted Today';
+        document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
       } catch (err) {
         console.error('Error saving picks:', err);
         showMessage(err.message || 'Submission failed', 'error');
@@ -1564,6 +1578,19 @@
       });
       updateProgress();
     });
+
+    // === Date Picker ===
+    document.getElementById('pickDate').addEventListener('change', (e) => {
+      const selectedDate = e.target.value;
+      if (selectedDate) {
+        loadQuestionsForDate(selectedDate);
+      }
+    });
+
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('pickDate').value = today;
+    loadQuestionsForDate(today);
 
     // === Tabs ===
     document.querySelectorAll('.tab-btn').forEach(btn => {
