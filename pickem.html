@@ -8,6 +8,10 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/favicon.ico" />
   <link rel="stylesheet" href="navbar-styles.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
   <style>
     :root {
       --ink: #0f172a;
@@ -589,8 +593,8 @@
         <div id="authMessage" class="message"></div>
         <form id="loginFormEl">
           <div class="form-group">
-            <label class="form-label">Username or Email</label>
-            <input type="text" class="form-input" id="loginUsername" required>
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="loginUsername" required>
             <span class="error-text" id="loginUsernameError"></span>
           </div>
           <div class="form-group">
@@ -728,23 +732,38 @@
 
   <script src="nav.js"></script>
   <script>
-    const API_BASE = 'http://localhost:3001/api/daily-pickem';
-    let currentToken = null;
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzMlBV5gbZZlg_eTwNWrRDrhx-_ATIPS0",
+      authDomain: "pickem-1e12b.firebaseapp.com",
+      projectId: "pickem-1e12b",
+      storageBucket: "pickem-1e12b.firebasestorage.app",
+      messagingSenderId: "715626120695",
+      appId: "1:715626120695:web:4942646cf3d6ca7e181af2",
+      measurementId: "G-B22K71F01E"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
     let currentUser = null;
     let todayQuestions = [];
 
     // === Authentication ===
     function initAuth() {
-      const token = localStorage.getItem('pickem_token');
-      const user = localStorage.getItem('pickem_user');
-      
-      if (token && user) {
-        currentToken = token;
-        currentUser = user;
-        showApp();
-      } else {
-        showAuth();
-      }
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          currentUser = user.displayName || user.email.split('@')[0];
+          localStorage.setItem('pickem_user', currentUser);
+          showApp();
+        } else {
+          currentUser = null;
+          localStorage.removeItem('pickem_user');
+          showAuth();
+        }
+      });
     }
 
     function showAuth() {
@@ -872,34 +891,25 @@
     // Login Form
     document.getElementById('loginFormEl').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('loginUsername').value;
+      const email = document.getElementById('loginUsername').value;
       const password = document.getElementById('loginPassword').value;
 
       // Validate
-      const errors = validateLoginForm(username, password);
+      const errors = validateLoginForm(email, password);
       if (Object.keys(errors).length > 0) {
         displayErrors(errors, 'login');
         return;
       }
 
       try {
-        const response = await fetch(`${API_BASE}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await response.json();
-
-        if (!response.ok) throw new Error(data.error || 'Login failed');
-
-        localStorage.setItem('pickem_token', data.token);
-        localStorage.setItem('pickem_user', data.user.username);
-        currentToken = data.token;
-        currentUser = data.user.username;
+        await auth.signInWithEmailAndPassword(email, password);
         showMessage('Login successful!', 'success', 'authMessage');
-        setTimeout(showApp, 500);
+        setTimeout(() => {
+          document.getElementById('loginFormEl').reset();
+          showApp();
+        }, 500);
       } catch (err) {
-        showMessage(err.message, 'error', 'authMessage');
+        showMessage(err.message || 'Login failed', 'error', 'authMessage');
       }
     });
 
@@ -919,24 +929,26 @@
       }
 
       try {
-        const response = await fetch(`${API_BASE}/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, password, displayName: username })
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({ displayName: username });
+        
+        // Save user profile to Firestore
+        await db.collection('users').doc(userCredential.user.uid).set({
+          username: username,
+          email: email,
+          createdAt: new Date().toISOString()
         });
-        const data = await response.json();
-
-        if (!response.ok) throw new Error(data.error || 'Registration failed');
 
         showMessage('✅ Account created! Please log in with your new credentials.', 'success', 'authMessage2');
         setTimeout(() => {
           clearRegisterForm();
           document.querySelectorAll('.auth-tab-btn')[0].click();
-          document.getElementById('loginUsername').value = username;
+          document.getElementById('loginUsername').value = email;
           document.getElementById('loginPassword').focus();
+          auth.signOut();
         }, 500);
       } catch (err) {
-        showMessage(err.message, 'error', 'authMessage2');
+        showMessage(err.message || 'Registration failed', 'error', 'authMessage2');
       }
     });
 
@@ -947,33 +959,42 @@
     });
 
     // Logout
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('pickem_token');
-      localStorage.removeItem('pickem_user');
-      currentToken = null;
-      currentUser = null;
-      document.getElementById('loginFormEl').reset();
-      document.getElementById('registerFormEl').reset();
-      showAuth();
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await auth.signOut();
+        document.getElementById('loginFormEl').reset();
+        document.getElementById('registerFormEl').reset();
+        showAuth();
+      } catch (err) {
+        showMessage('Error logging out', 'error');
+      }
     });
 
     // === Questions & Picks ===
     async function loadTodayQuestions() {
+      if (!currentUser) return;
       try {
         const today = new Date().toISOString().split('T')[0];
-        const response = await fetch(`${API_BASE}/questions/${today}`, {
-          headers: { 'Authorization': `Bearer ${currentToken}` }
-        });
+        const snapshot = await db.collection('questions').where('date', '==', today).get();
         
-        if (!response.ok) throw new Error('Failed to load questions');
+        if (snapshot.empty) {
+          todayQuestions = [];
+          renderQuestions();
+          return;
+        }
+
+        const docs = snapshot.docs;
+        if (docs.length > 0) {
+          const questionData = docs[0].data();
+          todayQuestions = questionData.items || [];
+        }
         
-        const data = await response.json();
-        todayQuestions = data.questions || [];
         renderQuestions();
         
         // Check if already submitted today
         await checkTodaySubmission();
       } catch (err) {
+        console.error('Error loading questions:', err);
         showMessage('Could not load today\'s questions. Please try again.', 'error');
       }
     }
@@ -1056,18 +1077,22 @@
     }
 
     async function checkTodaySubmission() {
+      if (!auth.currentUser) return;
       try {
         const today = new Date().toISOString().split('T')[0];
-        const response = await fetch(`${API_BASE}/picks/${today}`, {
-          headers: { 'Authorization': `Bearer ${currentToken}` }
-        });
+        const snapshot = await db.collection('picks').where('userId', '==', auth.currentUser.uid).where('date', '==', today).get();
         
-        if (response.ok) {
-          const data = await response.json();
+        if (!snapshot.empty) {
+          const picks = snapshot.docs[0].data().answers || [];
           // Pre-fill the form with submitted answers
-          data.picks.forEach((pick, i) => {
+          picks.forEach((answer, i) => {
             const input = document.querySelector(`input[name="q${i}"]`);
-            if (input) input.value = pick.user_answer;
+            if (input && input.type === 'radio') {
+              const radioToCheck = document.querySelector(`input[name="q${i}"][value="${answer}"]`);
+              if (radioToCheck) radioToCheck.checked = true;
+            } else if (input) {
+              input.value = answer;
+            }
           });
           document.getElementById('submitBtn').disabled = true;
           document.getElementById('submitBtn').textContent = 'Already Submitted Today';
@@ -1079,6 +1104,11 @@
     }
 
     document.getElementById('submitBtn').addEventListener('click', async () => {
+      if (!auth.currentUser) {
+        showMessage('Not logged in', 'error');
+        return;
+      }
+
       const answers = [];
       let allAnswered = true;
 
@@ -1105,26 +1135,20 @@
 
       try {
         const today = new Date().toISOString().split('T')[0];
-        const response = await fetch(`${API_BASE}/picks`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentToken}`
-          },
-          body: JSON.stringify({
-            question_date: today,
-            answers: answers
-          })
+        const pickRef = await db.collection('picks').add({
+          userId: auth.currentUser.uid,
+          username: currentUser,
+          date: today,
+          answers: answers,
+          submittedAt: new Date().toISOString()
         });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Submission failed');
 
         showMessage('Picks submitted successfully!', 'success');
         document.getElementById('submitBtn').disabled = true;
         document.getElementById('submitBtn').textContent = 'Already Submitted Today';
       } catch (err) {
-        showMessage(err.message, 'error');
+        console.error('Error saving picks:', err);
+        showMessage(err.message || 'Submission failed', 'error');
       }
     });
 
@@ -1153,15 +1177,51 @@
 
     async function loadLeaderboard(period) {
       try {
-        const response = await fetch(`${API_BASE}/leaderboard/${period}`, {
-          headers: { 'Authorization': `Bearer ${currentToken}` }
+        const snapshot = await db.collection('picks').get();
+        
+        if (snapshot.empty) {
+          renderLeaderboard(period, []);
+          return;
+        }
+
+        // Calculate date range based on period
+        const now = new Date();
+        let startDate = new Date();
+        
+        if (period === 'daily') {
+          startDate.setDate(now.getDate());
+        } else if (period === 'weekly') {
+          startDate.setDate(now.getDate() - 7);
+        } else if (period === 'monthly') {
+          startDate.setMonth(now.getMonth());
+          startDate.setDate(1);
+        }
+
+        const dateStr = startDate.toISOString().split('T')[0];
+
+        // Group picks by user
+        const userScores = {};
+        snapshot.docs.forEach(doc => {
+          const pick = doc.data();
+          if (pick.date >= dateStr) {
+            if (!userScores[pick.username]) {
+              userScores[pick.username] = { correct: 0, total: 0 };
+            }
+            userScores[pick.username].total += pick.answers?.length || 0;
+          }
         });
-        
-        if (!response.ok) throw new Error('Failed to load leaderboard');
-        
-        const data = await response.json();
-        renderLeaderboard(period, data.leaderboard);
+
+        // For now, we'll calculate scores without correct answers
+        // This will be updated when admin sets correct answers
+        const leaderboard = Object.entries(userScores).map(([username, scores]) => ({
+          username,
+          correct_count: scores.correct,
+          total_count: scores.total
+        })).sort((a, b) => b.correct_count - a.correct_count);
+
+        renderLeaderboard(period, leaderboard);
       } catch (err) {
+        console.error('Error loading leaderboard:', err);
         showMessage(`Failed to load ${period} leaderboard`, 'error');
       }
     }
