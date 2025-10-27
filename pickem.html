@@ -1802,24 +1802,36 @@
         const userScores = {};
         picksSnapshot.forEach(pickDoc => {
           const pickData = pickDoc.data();
-          const userId = pickData.userId || pickData.email;
+          const userId = pickData.userId;
+          const userEmail = pickData.userEmail || pickData.username || userId;
           
           if (!userScores[userId]) {
             userScores[userId] = {
-              email: pickData.email || userId,
+              email: userEmail,
               correct: 0,
-              total: questions.length,
-              picks: []
+              total: questions.length
             };
           }
 
-          const qIdx = pickData.questionId;
-          const userPick = pickData.answer;
-          const correctAnswer = correctAnswersMap[qIdx];
-
-          if (correctAnswer !== undefined && userPick === correctAnswer) {
-            userScores[userId].correct++;
-          }
+          // Iterate through each answer for this user
+          const userAnswers = pickData.answers || [];
+          userAnswers.forEach((userPick, qIdx) => {
+            const correctAnswer = correctAnswersMap[qIdx];
+            
+            // Normalize comparison for numeric vs string types
+            let isCorrect = false;
+            if (userPick !== undefined && correctAnswer !== undefined) {
+              if (typeof userPick === 'number' || typeof correctAnswer === 'number') {
+                isCorrect = parseFloat(userPick) === parseFloat(correctAnswer);
+              } else {
+                isCorrect = userPick === correctAnswer;
+              }
+            }
+            
+            if (isCorrect) {
+              userScores[userId].correct++;
+            }
+          });
         });
 
         // Convert to array and sort by correct answers (descending)
@@ -1942,9 +1954,20 @@
         picksSnapshot.docs.forEach(doc => {
           const pickData = doc.data();
           questions.forEach((q, qIdx) => {
-            const userPick = pickData.answers && pickData.answers[qIdx] ? pickData.answers[qIdx] : '-';
+            const userPick = pickData.answers && pickData.answers[qIdx] !== undefined ? pickData.answers[qIdx] : '-';
             const correctAnswer = correctAnswers[qIdx] !== undefined ? correctAnswers[qIdx] : '(Not Set)';
-            const isCorrect = userPick === correctAnswer;
+            
+            // Normalize comparison to handle both string and number types
+            let isCorrect = false;
+            if (userPick !== '-' && correctAnswer !== '(Not Set)') {
+              // For numeric comparisons, convert both to strings then compare
+              if (typeof userPick === 'number' || typeof correctAnswer === 'number') {
+                isCorrect = parseFloat(userPick) === parseFloat(correctAnswer);
+              } else {
+                isCorrect = userPick === correctAnswer;
+              }
+            }
+            
             const status = correctAnswers[qIdx] === undefined ? '⏳ Pending' : (isCorrect ? '✅ Correct' : '❌ Wrong');
             const statusColor = isCorrect ? '#27ae60' : (correctAnswers[qIdx] === undefined ? '#f39c12' : '#e74c3c');
 
@@ -2134,8 +2157,12 @@
           } else {
             allAnswered = false;
           }
-        } else if (input && input.value) {
-          answers.push(input.value);
+        } else if (input && input.type === 'number') {
+          if (input.value) {
+            answers.push(parseFloat(input.value));
+          } else {
+            allAnswered = false;
+          }
         } else {
           allAnswered = false;
         }
@@ -2150,6 +2177,7 @@
         const pickRef = await db.collection('picks').add({
           userId: auth.currentUser.uid,
           username: currentUser,
+          userEmail: auth.currentUser.email,
           date: selectedPickDate,
           answers: answers,
           submittedAt: new Date().toISOString()
