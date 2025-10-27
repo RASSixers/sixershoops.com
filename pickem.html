@@ -1055,6 +1055,39 @@
 
             <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="margin-top: 1rem; display: none;">Save Correct Answers</button>
           </div>
+
+          <!-- View User Responses Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="user-responses-section">
+            <h2>View User Responses</h2>
+            <div id="responsesMessage" class="message"></div>
+
+            <div class="admin-date-section">
+              <label>Select Date:</label>
+              <input type="date" id="responsesDate" />
+              <button class="btn btn-secondary" id="loadResponsesBtn">Load Responses</button>
+            </div>
+
+            <div style="overflow-x: auto; margin-top: 1.5rem;">
+              <table id="responsesTable" style="width: 100%; border-collapse: collapse; display: none;">
+                <thead>
+                  <tr style="background: var(--form); border-bottom: 2px solid var(--border);">
+                    <th style="padding: 12px; text-align: left;">User</th>
+                    <th style="padding: 12px; text-align: center;">Question</th>
+                    <th style="padding: 12px; text-align: center;">User's Pick</th>
+                    <th style="padding: 12px; text-align: center;">Correct Answer</th>
+                    <th style="padding: 12px; text-align: center;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="responsesTableBody">
+                </tbody>
+              </table>
+              <div id="noResponsesMessage" style="text-align: center; padding: 40px; color: var(--muted);">
+                <p style="font-size: 32px; margin-bottom: 10px;">📋</p>
+                <p>No responses found for this date</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1652,6 +1685,88 @@
         console.error('Error code:', err.code);
         console.error('Error details:', err.message);
         showMessage('Error saving correct answers: ' + err.message, 'error', 'markAnswersMessage');
+      }
+    });
+
+    // Load User Responses
+    document.getElementById('loadResponsesBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const dateInput = document.getElementById('responsesDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date', 'error', 'responsesMessage');
+        return;
+      }
+
+      try {
+        showMessage('Loading responses...', 'info', 'responsesMessage');
+        
+        // Get questions for this date
+        const questionsSnapshot = await db.collection('questions').where('date', '==', dateInput).get();
+        if (questionsSnapshot.empty) {
+          showMessage('No questions found for this date', 'error', 'responsesMessage');
+          document.getElementById('responsesTable').style.display = 'none';
+          document.getElementById('noResponsesMessage').style.display = 'block';
+          return;
+        }
+
+        const questionDoc = questionsSnapshot.docs[0].data();
+        const questions = questionDoc.items || [];
+
+        // Get correct answers for this date
+        const answersSnapshot = await db.collection('correctAnswers').where('date', '==', dateInput).get();
+        let correctAnswers = {};
+        if (!answersSnapshot.empty) {
+          const answersDoc = answersSnapshot.docs[0].data();
+          answersDoc.answers.forEach(ans => {
+            correctAnswers[ans.questionId] = ans.correctAnswer;
+          });
+        }
+
+        // Get all picks for this date
+        const picksSnapshot = await db.collection('picks').where('date', '==', dateInput).get();
+        
+        if (picksSnapshot.empty) {
+          showMessage('No user responses for this date', 'info', 'responsesMessage');
+          document.getElementById('responsesTable').style.display = 'none';
+          document.getElementById('noResponsesMessage').style.display = 'block';
+          return;
+        }
+
+        // Build response table
+        const tbody = document.getElementById('responsesTableBody');
+        tbody.innerHTML = '';
+        
+        picksSnapshot.docs.forEach(doc => {
+          const pickData = doc.data();
+          questions.forEach((q, qIdx) => {
+            const userPick = pickData.picks[qIdx] || '-';
+            const correctAnswer = correctAnswers[qIdx] !== undefined ? correctAnswers[qIdx] : '(Not Set)';
+            const isCorrect = userPick === correctAnswer;
+            const status = correctAnswers[qIdx] === undefined ? '⏳ Pending' : (isCorrect ? '✅ Correct' : '❌ Wrong');
+            const statusColor = isCorrect ? '#27ae60' : (correctAnswers[qIdx] === undefined ? '#f39c12' : '#e74c3c');
+
+            const row = document.createElement('tr');
+            row.style.borderBottom = '1px solid var(--border)';
+            row.innerHTML = `
+              <td style="padding: 12px;">${pickData.userEmail || pickData.userId}</td>
+              <td style="padding: 12px; text-align: center;">${qIdx + 1}. ${q.question}</td>
+              <td style="padding: 12px; text-align: center; font-weight: 500;">${userPick}</td>
+              <td style="padding: 12px; text-align: center; font-weight: 500;">${correctAnswer}</td>
+              <td style="padding: 12px; text-align: center; color: ${statusColor}; font-weight: 600;">${status}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        });
+
+        document.getElementById('responsesTable').style.display = 'table';
+        document.getElementById('noResponsesMessage').style.display = 'none';
+        showMessage(`✅ Loaded ${picksSnapshot.size} user submissions`, 'success', 'responsesMessage');
+      } catch (err) {
+        console.error('Error loading responses:', err);
+        showMessage('Error loading responses: ' + err.message, 'error', 'responsesMessage');
+        document.getElementById('responsesTable').style.display = 'none';
+        document.getElementById('noResponsesMessage').style.display = 'block';
       }
     });
 
