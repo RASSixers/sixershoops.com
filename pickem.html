@@ -88,9 +88,42 @@
       margin: 3rem auto;
       background: var(--white);
       border-radius: 16px;
-      border: 1px solid var(--border);
+      border: 2px solid var(--brand);
       overflow: hidden;
       box-shadow: 0 10px 28px rgba(2, 6, 23, 0.06);
+      position: relative;
+    }
+
+    .auth-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--brand), var(--accent), var(--brand));
+    }
+
+    .auth-header-section {
+      padding: 2rem;
+      background: linear-gradient(135deg, rgba(0, 61, 166, 0.08), rgba(225, 29, 72, 0.04));
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .auth-title {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--brand);
+      margin: 0 0 0.5rem 0;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin: 0;
+      font-weight: 600;
     }
 
     .auth-tabs {
@@ -115,14 +148,30 @@
     .auth-tab-btn.active {
       color: var(--brand);
       background: var(--chip);
+      border-bottom: 3px solid var(--brand);
     }
 
     .auth-form-content {
       padding: 2rem;
+      background: linear-gradient(to bottom, var(--white), #fafafa);
     }
 
     .auth-form-content.hidden {
       display: none;
+    }
+
+    #registerForm::before {
+      content: 'Ready to compete? Create your account below';
+      display: block;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, rgba(0, 61, 166, 0.05), rgba(225, 29, 72, 0.02));
+      border-left: 4px solid var(--brand);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: left;
     }
 
     .form-group {
@@ -396,6 +445,20 @@
       transform: none;
     }
 
+    .btn-signup {
+      background: linear-gradient(135deg, var(--accent), #be123c) !important;
+      font-size: 15px !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.05em !important;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-signup:hover {
+      box-shadow: 0 16px 32px rgba(225, 29, 72, 0.4) !important;
+      transform: translateY(-3px) !important;
+    }
+
     .btn-secondary {
       background: var(--white);
       color: var(--brand);
@@ -533,162 +596,199 @@
     }
 
     .stat-value {
-      font-size: 2rem;
+      font-size: 28px;
       font-weight: 900;
       color: var(--brand);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .stat-label {
       font-size: 12px;
-      font-weight: 700;
-      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: .06em;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     @media (max-width: 768px) {
       .page-title { font-size: 2rem; }
       .questions-container { grid-template-columns: 1fr; }
-      .auth-section { max-width: 100%; }
+      .tabs { padding-bottom: 12px; }
+      .submit-section { flex-direction: column; }
+      .leaderboard-table { font-size: 14px; }
+      .leaderboard-table thead th,
+      .leaderboard-table tbody td { padding: 12px 16px; }
+      .auth-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
-  <!-- Navbar placeholder - filled by nav.js -->
-  <div id="navbar"></div>
-
   <div class="main-container">
-    <!-- Page Header -->
-    <div class="page-header">
-      <h1 class="page-title">🏀 Sixers Pick'em</h1>
-      <p class="page-subtitle">Make your daily predictions and compete for the championship</p>
-    </div>
-
-    <!-- Auth/Login Section -->
-    <div id="authContainer" class="auth-section">
+    <!-- Login/Register Section -->
+    <div id="authContainer" class="auth-section" style="display: none;">
+      <div class="auth-header-section">
+        <h2 class="auth-title">Sixers Pick'em</h2>
+        <p class="auth-subtitle">Daily Predictions Competition - Make Your Picks & Compete</p>
+      </div>
       <div class="auth-tabs">
-        <button class="auth-tab-btn active" data-tab="login">Login</button>
-        <button class="auth-tab-btn" data-tab="register">Sign Up</button>
+        <button class="auth-tab-btn active" data-auth-tab="login">Login</button>
+        <button class="auth-tab-btn" data-auth-tab="register">Sign Up</button>
       </div>
 
       <!-- Login Form -->
-      <div id="login" class="auth-form-content">
-        <div id="loginMessage" class="message"></div>
-        <form id="loginForm">
+      <div id="loginForm" class="auth-form-content">
+        <div id="authMessage" class="message"></div>
+        <form id="loginFormEl">
           <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <input type="email" id="loginEmail" class="form-input" required />
-            <span id="loginEmailError" class="error-text"></span>
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="loginUsername" required>
+            <span class="error-text" id="loginUsernameError"></span>
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input type="password" id="loginPassword" class="form-input" required />
-            <span id="loginPasswordError" class="error-text"></span>
+            <input type="password" class="form-input" id="loginPassword" required>
+            <span class="error-text" id="loginPasswordError"></span>
           </div>
-          <button type="submit" class="btn btn-primary">Login</button>
-          <button type="button" class="forgot-password-btn">Forgot password?</button>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+          <div style="text-align: right; margin-top: 12px;">
+            <button type="button" class="forgot-password-btn" id="forgotPasswordBtn">Forgot password?</button>
+          </div>
         </form>
       </div>
 
-      <!-- Signup Form -->
-      <div id="register" class="auth-form-content hidden">
-        <div id="registerMessage" class="message"></div>
-        <form id="registerForm">
+      <!-- Sign Up Form -->
+      <div id="registerForm" class="auth-form-content hidden">
+        <div id="authMessage2" class="message"></div>
+        <form id="registerFormEl">
           <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <input type="email" id="registerEmail" class="form-input" required />
-            <span id="registerEmailError" class="error-text"></span>
+            <label class="form-label">Username</label>
+            <input type="text" class="form-input" id="registerUsername" required>
+            <span class="error-text" id="registerUsernameError"></span>
           </div>
+          
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="registerEmail" required>
+            <span class="error-text" id="registerEmailError"></span>
+          </div>
+          
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input type="password" id="registerPassword" class="form-input" required />
-            <span id="registerPasswordError" class="error-text"></span>
+            <input type="password" class="form-input" id="registerPassword" required>
+            <span class="error-text" id="registerPasswordError"></span>
           </div>
+          
           <div class="form-group">
             <label class="form-label">Confirm Password</label>
-            <input type="password" id="registerConfirmPassword" class="form-input" required />
-            <span id="registerConfirmPasswordError" class="error-text"></span>
+            <input type="password" class="form-input" id="registerConfirmPassword" required>
+            <span class="error-text" id="registerConfirmPasswordError"></span>
           </div>
-          <button type="submit" class="btn btn-primary">Create Account</button>
+          
+          <button type="submit" class="btn btn-primary btn-signup" style="width: 100%;">Join Pick'em Competition</button>
         </form>
       </div>
     </div>
 
-    <!-- Dashboard Section (hidden initially) -->
-    <div id="dashboardContainer" style="display: none;">
-      <!-- Auth Header -->
-      <div class="auth-header">
-        <div class="user-info">
-          <span class="user-welcome">Welcome back!</span>
-          <span class="user-badge" id="userBadge">USER</span>
-        </div>
-        <button id="logoutBtn" class="logout-btn">Logout</button>
+    <!-- Main App Section -->
+    <div id="appContainer" style="display: none;">
+      <div class="page-header">
+        <h1 class="page-title">Sixers Pick'em</h1>
+        <p class="page-subtitle">Make your daily predictions and compete on the leaderboards</p>
       </div>
 
-      <!-- Tabs for sections -->
+      <div class="auth-header">
+        <div class="user-info">
+          <span class="user-welcome">Welcome, <strong id="currentUser"></strong>!</span>
+          <span class="user-badge" id="userBadge">Player</span>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+
       <div class="tabs">
-        <button class="tab-btn active" data-tab="daily">Today's Picks</button>
+        <button class="tab-btn active" data-tab="picks">Today's Picks</button>
         <button class="tab-btn" data-tab="daily-lb">Daily Leaderboard</button>
         <button class="tab-btn" data-tab="weekly-lb">Weekly Leaderboard</button>
         <button class="tab-btn" data-tab="monthly-lb">Monthly Leaderboard</button>
       </div>
 
-      <!-- Tab: Daily Picks -->
-      <div id="daily" class="tab-content active">
+      <!-- Today's Picks Tab -->
+      <div id="picks" class="tab-content active">
         <div id="message" class="message"></div>
+        
         <div class="progress-bar">
-          <div id="progressFill" class="progress-fill"></div>
+          <div class="progress-fill" id="progressFill"></div>
         </div>
-        <div class="questions-container" id="questionsContainer"></div>
+
+        <div id="questionsContainer" class="questions-container"></div>
+        
         <div class="submit-section">
-          <button id="submitBtn" class="btn btn-primary">Submit Picks</button>
-          <button id="clearBtn" class="btn btn-secondary">Clear</button>
+          <button type="button" class="btn btn-primary" id="submitBtn">Submit Picks</button>
+          <button type="button" class="btn btn-secondary" id="clearBtn">Clear All</button>
         </div>
       </div>
 
-      <!-- Tab: Daily Leaderboard -->
+      <!-- Daily Leaderboard Tab -->
       <div id="daily-lb" class="tab-content">
-        <div id="dailyStatsContainer" class="stats"></div>
+        <div class="stats" id="dailyStatsContainer"></div>
         <table class="leaderboard-table">
           <thead>
             <tr>
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
-              <th>Total</th>
+              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="dailyLeaderboardBody"></tbody>
         </table>
       </div>
 
-      <!-- Tab: Weekly Leaderboard -->
+      <!-- Weekly Leaderboard Tab -->
       <div id="weekly-lb" class="tab-content">
-        <div id="weeklyStatsContainer" class="stats"></div>
+        <div class="stats" id="weeklyStatsContainer"></div>
         <table class="leaderboard-table">
           <thead>
             <tr>
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
-              <th>Total</th>
+              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="weeklyLeaderboardBody"></tbody>
         </table>
       </div>
 
-      <!-- Tab: Monthly Leaderboard -->
+      <!-- Monthly Leaderboard Tab -->
       <div id="monthly-lb" class="tab-content">
-        <div id="monthlyStatsContainer" class="stats"></div>
+        <div class="stats" id="monthlyStatsContainer"></div>
         <table class="leaderboard-table">
           <thead>
             <tr>
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
-              <th>Total</th>
+              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="monthlyLeaderboardBody"></tbody>
@@ -697,160 +797,344 @@
     </div>
   </div>
 
-  <!-- Firebase Configuration and Initialize -->
+  <script src="nav.js"></script>
   <script>
-    let auth, db, currentUser;
+    // Firebase Config
     const firebaseConfig = {
-      apiKey: "AIzaSyBM_QdNVN0yUqMzUZgJN5pOLdKTVkLQbvk",
-      authDomain: "sixers-hoops-challenge.firebaseapp.com",
-      projectId: "sixers-hoops-challenge",
-      storageBucket: "sixers-hoops-challenge.appspot.com",
-      messagingSenderId: "696254819816",
-      appId: "1:696254819816:web:5cc63dbed82a9f7a7c28d6"
+      apiKey: "AIzaSyBzMlBV5gbZZlg_eTwNWrRDrhx-_ATIPS0",
+      authDomain: "pickem-1e12b.firebaseapp.com",
+      projectId: "pickem-1e12b",
+      storageBucket: "pickem-1e12b.firebasestorage.app",
+      messagingSenderId: "715626120695",
+      appId: "1:715626120695:web:4942646cf3d6ca7e181af2",
+      measurementId: "G-B22K71F01E"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    db = firebase.firestore();
-
-    // === Auth UI Management ===
-    const authContainer = document.getElementById('authContainer');
-    const dashboardContainer = document.getElementById('dashboardContainer');
-
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        currentUser = user.email;
-        document.getElementById('userBadge').textContent = user.email.split('@')[0].toUpperCase();
-        authContainer.style.display = 'none';
-        dashboardContainer.style.display = 'block';
-        checkTodaySubmission();
-        renderTodayQuestions();
-      } else {
-        currentUser = null;
-        authContainer.style.display = 'block';
-        dashboardContainer.style.display = 'none';
+    // Wait for Firebase SDK to load before initializing
+    let auth, db;
+    let firebaseReady = false;
+    
+    function initializeFirebase() {
+      if (typeof firebase === 'undefined') {
+        setTimeout(initializeFirebase, 100);
+        return;
       }
-    });
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+      firebaseReady = true;
+      initAuth();
+    }
+    
+    // Start Firebase initialization
+    initializeFirebase();
 
-    // === Tab Switching ===
+    let currentUser = null;
+    let todayQuestions = [];
+
+    // === Authentication ===
+    function initAuth() {
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          currentUser = user.displayName || user.email.split('@')[0];
+          localStorage.setItem('pickem_user', currentUser);
+          showApp();
+        } else {
+          currentUser = null;
+          localStorage.removeItem('pickem_user');
+          showAuth();
+        }
+      });
+    }
+
+    function showAuth() {
+      document.getElementById('authContainer').style.display = 'block';
+      document.getElementById('appContainer').style.display = 'none';
+    }
+
+    function showApp() {
+      document.getElementById('authContainer').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      document.getElementById('currentUser').textContent = currentUser;
+      if (currentUser === 'admin') {
+        document.getElementById('userBadge').textContent = 'Admin';
+        document.getElementById('userBadge').style.background = '#fef3c7';
+        document.getElementById('userBadge').style.color = '#92400e';
+      }
+      loadTodayQuestions();
+    }
+
+    // Clear all error messages
+    function clearErrors() {
+      document.querySelectorAll('.error-text').forEach(el => el.textContent = '');
+    }
+
+    // Clear form input values
+    function clearLoginForm() {
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+      clearErrors();
+    }
+
+    function clearRegisterForm() {
+      document.getElementById('registerUsername').value = '';
+      document.getElementById('registerEmail').value = '';
+      document.getElementById('registerPassword').value = '';
+      document.getElementById('registerConfirmPassword').value = '';
+      clearErrors();
+    }
+
+    // Auth Tab Switching
     document.querySelectorAll('.auth-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tabName = btn.dataset.tab;
+      btn.addEventListener('click', (e) => {
+        const tab = btn.dataset.authTab;
         document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.auth-form-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.auth-form-content').forEach(f => f.classList.add('hidden'));
+        document.querySelectorAll('.message').forEach(m => m.classList.remove('show'));
         btn.classList.add('active');
-        document.getElementById(tabName).classList.remove('hidden');
+        document.getElementById(tab + 'Form').classList.remove('hidden');
+        clearErrors();
       });
     });
 
-    // === Login Form ===
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    // Login Form Validation
+    function validateLoginForm(username, password) {
+      const errors = {};
+      if (!username.trim()) {
+        errors.username = 'Username or email is required';
+      }
+      if (!password) {
+        errors.password = 'Password is required';
+      }
+      return errors;
+    }
+
+    // Register Form Validation
+    function validateRegisterForm(formData) {
+      const errors = {};
+      const { username, email, password, confirmPassword } = formData;
+
+      // Username validation
+      if (!username.trim()) {
+        errors.username = 'Username is required';
+      } else if (username.length < 3) {
+        errors.username = 'Username must be at least 3 characters';
+      }
+
+      // Email validation
+      if (!email.trim()) {
+        errors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(email)) {
+        errors.email = 'Email is invalid';
+      }
+
+      // Password validation
+      if (!password) {
+        errors.password = 'Password is required';
+      } else if (password.length < 6) {
+        errors.password = 'Password must be at least 6 characters';
+      }
+
+      // Confirm password validation
+      if (password !== confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
+
+      return errors;
+    }
+
+    // Display form errors
+    function displayErrors(errors, formType) {
+      clearErrors();
+      if (formType === 'login') {
+        if (errors.username) {
+          document.getElementById('loginUsernameError').textContent = errors.username;
+        }
+        if (errors.password) {
+          document.getElementById('loginPasswordError').textContent = errors.password;
+        }
+      } else if (formType === 'register') {
+        if (errors.username) {
+          document.getElementById('registerUsernameError').textContent = errors.username;
+        }
+        if (errors.email) {
+          document.getElementById('registerEmailError').textContent = errors.email;
+        }
+        if (errors.password) {
+          document.getElementById('registerPasswordError').textContent = errors.password;
+        }
+        if (errors.confirmPassword) {
+          document.getElementById('registerConfirmPasswordError').textContent = errors.confirmPassword;
+        }
+      }
+    }
+
+    // Login Form
+    document.getElementById('loginFormEl').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
+      const email = document.getElementById('loginUsername').value;
       const password = document.getElementById('loginPassword').value;
 
-      if (!email || !password) {
-        showMessage('Please fill in all fields', 'error', 'loginMessage');
+      // Validate
+      const errors = validateLoginForm(email, password);
+      if (Object.keys(errors).length > 0) {
+        displayErrors(errors, 'login');
         return;
       }
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
-        showMessage('Login successful!', 'success', 'loginMessage');
+        showMessage('Login successful!', 'success', 'authMessage');
+        setTimeout(() => {
+          document.getElementById('loginFormEl').reset();
+          showApp();
+        }, 500);
       } catch (err) {
-        showMessage(err.message || 'Login failed', 'error', 'loginMessage');
+        showMessage(err.message || 'Login failed', 'error', 'authMessage');
       }
     });
 
-    // === Register Form ===
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    // Register Form
+    document.getElementById('registerFormEl').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const username = document.getElementById('registerUsername').value;
       const email = document.getElementById('registerEmail').value;
       const password = document.getElementById('registerPassword').value;
       const confirmPassword = document.getElementById('registerConfirmPassword').value;
 
-      if (!email || !password || !confirmPassword) {
-        showMessage('Please fill in all fields', 'error', 'registerMessage');
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        showMessage('Passwords do not match', 'error', 'registerMessage');
-        return;
-      }
-
-      if (password.length < 6) {
-        showMessage('Password must be at least 6 characters', 'error', 'registerMessage');
+      // Validate
+      const errors = validateRegisterForm({ username, email, password, confirmPassword });
+      if (Object.keys(errors).length > 0) {
+        displayErrors(errors, 'register');
         return;
       }
 
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({ displayName: username });
+        
         // Save user profile to Firestore
         await db.collection('users').doc(userCredential.user.uid).set({
+          username: username,
           email: email,
           createdAt: new Date().toISOString()
         });
-        showMessage('Account created successfully!', 'success', 'registerMessage');
+
+        showMessage('✅ Account created! Please log in with your new credentials.', 'success', 'authMessage2');
+        setTimeout(() => {
+          clearRegisterForm();
+          document.querySelectorAll('.auth-tab-btn')[0].click();
+          document.getElementById('loginUsername').value = email;
+          document.getElementById('loginPassword').focus();
+          auth.signOut();
+        }, 500);
       } catch (err) {
-        showMessage(err.message || 'Registration failed', 'error', 'registerMessage');
+        showMessage(err.message || 'Registration failed', 'error', 'authMessage2');
       }
     });
 
-    // === Logout ===
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      auth.signOut();
+    // Forgot Password Button
+    document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      showMessage('Password reset functionality coming soon!', 'error', 'authMessage');
     });
 
-    // === Questions ===
-    const todayQuestions = [
-      { id: 1, text: "Will the Sixers win today?", type: "radio", options: ["Yes", "No"] },
-      { id: 2, text: "Over/Under: 105.5 points for the Sixers", type: "radio", options: ["Over", "Under"] },
-      { id: 3, text: "Will Embiid score 20+ points?", type: "radio", options: ["Yes", "No"] },
-      { id: 4, text: "Predict the final score (Sixers):", type: "text", options: [] }
-    ];
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await auth.signOut();
+        document.getElementById('loginFormEl').reset();
+        document.getElementById('registerFormEl').reset();
+        showAuth();
+      } catch (err) {
+        showMessage('Error logging out', 'error');
+      }
+    });
 
-    function renderTodayQuestions() {
+    // === Questions & Picks ===
+    async function loadTodayQuestions() {
+      if (!currentUser) return;
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const snapshot = await db.collection('questions').where('date', '==', today).get();
+        
+        if (snapshot.empty) {
+          todayQuestions = [];
+          renderQuestions();
+          return;
+        }
+
+        const docs = snapshot.docs;
+        if (docs.length > 0) {
+          const questionData = docs[0].data();
+          todayQuestions = questionData.items || [];
+        }
+        
+        renderQuestions();
+        
+        // Check if already submitted today
+        await checkTodaySubmission();
+      } catch (err) {
+        console.error('Error loading questions:', err);
+        showMessage('Could not load today\'s questions. Please try again.', 'error');
+      }
+    }
+
+    function renderQuestions() {
       const container = document.getElementById('questionsContainer');
+      
+      if (todayQuestions.length === 0) {
+        container.innerHTML = '<div class="empty-state">No questions available today. Check back later!</div>';
+        document.getElementById('submitBtn').disabled = true;
+        return;
+      }
+
       container.innerHTML = todayQuestions.map((q, i) => {
-        if (q.type === 'radio') {
-          return `
-            <div class="question-card" data-index="${i}">
-              <div class="question-number">Question ${i + 1}</div>
-              <div class="question-text">${q.text}</div>
-              <div class="options">
-                ${q.options.map(opt => `
-                  <label class="radio-option">
-                    <input type="radio" name="q${i}" value="${opt}" />
-                    ${opt}
-                  </label>
-                `).join('')}
-              </div>
-            </div>
+        let optionsHtml = '';
+
+        if (q.question_type === 'yes_no') {
+          optionsHtml = `
+            <label class="option radio-option">
+              <input type="radio" name="q${i}" value="yes">
+              <span>Yes</span>
+            </label>
+            <label class="option radio-option">
+              <input type="radio" name="q${i}" value="no">
+              <span>No</span>
+            </label>
           `;
-        } else if (q.type === 'text') {
-          return `
-            <div class="question-card" data-index="${i}">
-              <div class="question-number">Question ${i + 1}</div>
-              <div class="question-text">${q.text}</div>
-              <input type="text" name="q${i}" class="text-input" placeholder="Enter your answer" />
-            </div>
+        } else if (q.question_type === 'multiple_choice') {
+          const options = q.options ? JSON.parse(q.options) : [];
+          optionsHtml = options.map(opt => `
+            <label class="option radio-option">
+              <input type="radio" name="q${i}" value="${opt}">
+              <span>${opt}</span>
+            </label>
+          `).join('');
+        } else if (q.question_type === 'numeric') {
+          optionsHtml = `
+            <input type="number" name="q${i}" class="text-input" placeholder="Enter your answer">
           `;
         }
+
+        return `
+          <div class="question-card" data-index="${i}">
+            <div class="question-number">Question ${i + 1}</div>
+            <div class="question-text">${q.question}</div>
+            <div class="options">${optionsHtml}</div>
+          </div>
+        `;
       }).join('');
 
       document.querySelectorAll('input[name^="q"]').forEach(input => {
         input.addEventListener('change', updateProgress);
-        input.addEventListener('input', updateProgress);
       });
-
-      updateProgress();
     }
 
     function updateProgress() {
       const total = todayQuestions.length;
       let answered = 0;
-
+      
       todayQuestions.forEach((q, i) => {
         const input = document.querySelector(`input[name="q${i}"]`);
         if (input && input.type === 'radio') {
@@ -868,7 +1152,7 @@
           document.querySelector(`[data-index="${i}"]`)?.classList.remove('answered');
         }
       });
-
+      
       const percent = (answered / total) * 100;
       document.getElementById('progressFill').style.width = percent + '%';
     }
@@ -877,8 +1161,8 @@
       if (!auth.currentUser) return;
       try {
         const today = new Date().toISOString().split('T')[0];
-        const snapshot = await db.collection('picks').where('userId', '==', auth.currentUser.uid).where('date', '==', today).get();    
-
+        const snapshot = await db.collection('picks').where('userId', '==', auth.currentUser.uid).where('date', '==', today).get();
+        
         if (!snapshot.empty) {
           const picks = snapshot.docs[0].data().answers || [];
           // Pre-fill the form with submitted answers
@@ -965,7 +1249,7 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(tabName).classList.add('active');
-
+        
         if (tabName === 'daily-lb') loadLeaderboard('daily');
         if (tabName === 'weekly-lb') loadLeaderboard('weekly');
         if (tabName === 'monthly-lb') loadLeaderboard('monthly');
@@ -975,7 +1259,7 @@
     async function loadLeaderboard(period) {
       try {
         const snapshot = await db.collection('picks').get();
-
+        
         if (snapshot.empty) {
           renderLeaderboard(period, []);
           return;
@@ -984,7 +1268,7 @@
         // Calculate date range based on period
         const now = new Date();
         let startDate = new Date();
-
+        
         if (period === 'daily') {
           startDate.setDate(now.getDate());
         } else if (period === 'weekly') {
@@ -1026,7 +1310,7 @@
     function renderLeaderboard(period, entries) {
       const statsId = `${period}StatsContainer`;
       const bodyId = `${period}LeaderboardBody`;
-
+      
       const stats = `
         <div class="stat-card">
           <div class="stat-value">${entries.length}</div>
