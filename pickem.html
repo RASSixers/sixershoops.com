@@ -8,10 +8,10 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/favicon.ico" />
   <link rel="stylesheet" href="navbar-styles.css">
-  <!-- Firebase SDK (Compat version for better compatibility) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase SDK v9 (stable modular version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
   <style>
     :root {
       --ink: #0f172a;
@@ -91,6 +91,66 @@
       border: 1px solid var(--border);
       overflow: hidden;
       box-shadow: 0 10px 28px rgba(2, 6, 23, 0.06);
+    }
+
+    .signup-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #003da6 50%, #0284c7 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+      display: none;
+    }
+
+    .signup-header.show {
+      display: block;
+    }
+
+    .signup-header h2 {
+      font-size: 1.75rem;
+      font-weight: 900;
+      margin: 0 0 0.5rem 0;
+      background: linear-gradient(135deg, #ffffff 0%, #bfdbfe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .signup-header p {
+      margin: 0 0 1.5rem 0;
+      font-size: 0.95rem;
+      color: #e0f2fe;
+      line-height: 1.5;
+    }
+
+    .signup-features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .signup-features li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: #e0f2fe;
+      font-weight: 600;
+    }
+
+    .signup-features li::before {
+      content: '✓';
+      display: inline-flex;
+      width: 20px;
+      height: 20px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      font-weight: 900;
+      flex-shrink: 0;
     }
 
     .auth-tabs {
@@ -583,6 +643,18 @@
   <div class="main-container">
     <!-- Login/Register Section -->
     <div id="authContainer" class="auth-section" style="display: none;">
+      <!-- Sign Up Header (shown only on sign up tab) -->
+      <div id="signupHeader" class="signup-header">
+        <h2>Join the Pick'em Challenge</h2>
+        <p>Make daily predictions on 76ers games and compete with fans</p>
+        <ul class="signup-features">
+          <li>Daily Predictions</li>
+          <li>Live Leaderboards</li>
+          <li>Track Progress</li>
+          <li>Weekly Rankings</li>
+        </ul>
+      </div>
+
       <div class="auth-tabs">
         <button class="auth-tab-btn active" data-auth-tab="login">Login</button>
         <button class="auth-tab-btn" data-auth-tab="register">Sign Up</button>
@@ -593,8 +665,8 @@
         <div id="authMessage" class="message"></div>
         <form id="loginFormEl">
           <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" id="loginUsername" required>
+            <label class="form-label">Email or Username</label>
+            <input type="text" class="form-input" id="loginUsername" placeholder="Enter your email or username" required>
             <span class="error-text" id="loginUsernameError"></span>
           </div>
           <div class="form-group">
@@ -743,30 +815,56 @@
       measurementId: "G-B22K71F01E"
     };
 
-    // Wait for Firebase SDK to load before initializing
+    // Wait for Firebase SDK to load with timeout
     let auth, db;
     let firebaseReady = false;
+    let currentUser = null;
+    let todayQuestions = [];
+    let initAttempts = 0;
+    const MAX_INIT_ATTEMPTS = 50; // 5 seconds max wait
     
     function initializeFirebase() {
-      if (typeof firebase === 'undefined') {
+      // Check if Firebase is available (either as firebase global or window.firebase)
+      const fb = typeof firebase !== 'undefined' ? firebase : (window.firebase || null);
+      
+      if (!fb) {
+        initAttempts++;
+        if (initAttempts > MAX_INIT_ATTEMPTS) {
+          console.error('Firebase SDK failed to load after 5 seconds');
+          showAuth(); // Still show auth UI so users can see error
+          return;
+        }
         setTimeout(initializeFirebase, 100);
         return;
       }
-      firebase.initializeApp(firebaseConfig);
-      auth = firebase.auth();
-      db = firebase.firestore();
-      firebaseReady = true;
-      initAuth();
+      
+      try {
+        // Initialize Firebase app
+        if (!fb.apps || fb.apps.length === 0) {
+          fb.initializeApp(firebaseConfig);
+        }
+        auth = fb.auth();
+        db = fb.firestore();
+        firebaseReady = true;
+        console.log('Firebase initialized successfully');
+        initAuth();
+      } catch (error) {
+        console.error('Firebase initialization error:', error);
+        showAuth();
+      }
     }
     
-    // Start Firebase initialization
+    // Start Firebase initialization immediately
     initializeFirebase();
-
-    let currentUser = null;
-    let todayQuestions = [];
 
     // === Authentication ===
     function initAuth() {
+      if (!auth) {
+        console.error('Auth not available');
+        setTimeout(initAuth, 100);
+        return;
+      }
+      
       auth.onAuthStateChanged(async (user) => {
         if (user) {
           currentUser = user.displayName || user.email.split('@')[0];
@@ -826,15 +924,51 @@
         document.querySelectorAll('.message').forEach(m => m.classList.remove('show'));
         btn.classList.add('active');
         document.getElementById(tab + 'Form').classList.remove('hidden');
+        
+        // Show/hide signup header
+        const signupHeader = document.getElementById('signupHeader');
+        if (tab === 'register') {
+          signupHeader.classList.add('show');
+        } else {
+          signupHeader.classList.remove('show');
+        }
+        
         clearErrors();
       });
     });
+
+    // Function to resolve username to email
+    async function resolveUsernameToEmail(input) {
+      // If it looks like an email, return it as is
+      if (input.includes('@')) {
+        return input;
+      }
+      
+      // Otherwise, search for a user with this username (case-insensitive)
+      try {
+        const snapshot = await db.collection('users')
+          .where('usernameLower', '==', input.toLowerCase())
+          .limit(1)
+          .get();
+        
+        if (snapshot.empty) {
+          return null;
+        }
+        
+        // Get the email from the first (and only) result
+        const userDoc = snapshot.docs[0];
+        return userDoc.data().email;
+      } catch (error) {
+        console.error('Error looking up username:', error);
+        return null;
+      }
+    }
 
     // Login Form Validation
     function validateLoginForm(username, password) {
       const errors = {};
       if (!username.trim()) {
-        errors.username = 'Username or email is required';
+        errors.username = 'Email or username is required';
       }
       if (!password) {
         errors.password = 'Password is required';
@@ -905,17 +1039,30 @@
     // Login Form
     document.getElementById('loginFormEl').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('loginUsername').value;
+      const input = document.getElementById('loginUsername').value;
       const password = document.getElementById('loginPassword').value;
 
       // Validate
-      const errors = validateLoginForm(email, password);
+      const errors = validateLoginForm(input, password);
       if (Object.keys(errors).length > 0) {
         displayErrors(errors, 'login');
         return;
       }
 
       try {
+        // Resolve username to email if needed
+        showMessage('Signing in...', 'info', 'authMessage');
+        let email = input;
+        
+        // If input is not an email, try to look it up as a username
+        if (!input.includes('@')) {
+          email = await resolveUsernameToEmail(input);
+          if (!email) {
+            showMessage('Username or email not found', 'error', 'authMessage');
+            return;
+          }
+        }
+        
         await auth.signInWithEmailAndPassword(email, password);
         showMessage('Login successful!', 'success', 'authMessage');
         setTimeout(() => {
@@ -946,9 +1093,10 @@
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         await userCredential.user.updateProfile({ displayName: username });
         
-        // Save user profile to Firestore
+        // Save user profile to Firestore (store lowercase username for case-insensitive lookup)
         await db.collection('users').doc(userCredential.user.uid).set({
           username: username,
+          usernameLower: username.toLowerCase(),
           email: email,
           createdAt: new Date().toISOString()
         });
