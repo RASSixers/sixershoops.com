@@ -630,6 +630,119 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Admin Panel Styles */
+    .admin-panel {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .admin-panel h2 {
+      margin-bottom: 2rem;
+      color: var(--brand);
+    }
+
+    .admin-panel h3 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      color: var(--ink);
+      font-size: 1.1rem;
+    }
+
+    .admin-date-section {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      align-items: center;
+      background: var(--chip);
+      padding: 1rem;
+      border-radius: 12px;
+    }
+
+    .admin-date-section label {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .admin-date-section input {
+      padding: 8px 12px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .admin-form {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .admin-questions-list {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+
+    .admin-question-item {
+      background: var(--chip);
+      border-left: 4px solid var(--brand);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .admin-question-item-content {
+      flex: 1;
+    }
+
+    .admin-question-item-text {
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .admin-question-item-type {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .admin-question-item-options {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .admin-question-item-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .admin-question-item-actions button {
+      padding: 6px 12px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .2s ease;
+      font-weight: 700;
+    }
+
+    .admin-delete-btn {
+      background: var(--error);
+      color: white;
+    }
+
+    .admin-delete-btn:hover {
+      opacity: 0.9;
+    }
+
     @media (max-width: 768px) {
       .page-title { font-size: 2rem; }
       .questions-container { grid-template-columns: 1fr; }
@@ -729,6 +842,7 @@
         <button class="tab-btn" data-tab="daily-lb">Daily Leaderboard</button>
         <button class="tab-btn" data-tab="weekly-lb">Weekly Leaderboard</button>
         <button class="tab-btn" data-tab="monthly-lb">Monthly Leaderboard</button>
+        <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display: none;">Manage Questions</button>
       </div>
 
       <!-- Today's Picks Tab -->
@@ -794,6 +908,51 @@
           <tbody id="monthlyLeaderboardBody"></tbody>
         </table>
       </div>
+
+      <!-- Admin Panel Tab -->
+      <div id="admin" class="tab-content">
+        <div class="admin-panel">
+          <h2>Manage Today's Questions</h2>
+          <div id="adminMessage" class="message"></div>
+
+          <div class="admin-date-section">
+            <label>Date:</label>
+            <input type="date" id="adminDate" />
+            <button class="btn btn-secondary" id="loadDateBtn">Load Questions</button>
+          </div>
+
+          <div class="admin-form">
+            <h3>Add New Question</h3>
+            
+            <div class="form-group">
+              <label class="form-label">Question Text</label>
+              <input type="text" id="adminQuestionText" class="form-input" placeholder="e.g., Will the 76ers win today?" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Question Type</label>
+              <select id="adminQuestionType" class="form-input">
+                <option value="yes_no">Yes/No</option>
+                <option value="multiple_choice">Multiple Choice</option>
+                <option value="numeric">Numeric</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="optionsGroup" style="display: none;">
+              <label class="form-label">Options (comma separated)</label>
+              <input type="text" id="adminOptions" class="form-input" placeholder="e.g., Option 1, Option 2, Option 3" />
+            </div>
+
+            <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
+          </div>
+
+          <div class="admin-questions-list">
+            <h3>Today's Questions</h3>
+            <div id="adminQuestionsList"></div>
+            <button class="btn btn-primary" id="saveQuestionsBtn" style="margin-top: 1rem;">Save All to Database</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -830,17 +989,22 @@
     initializeFirebase();
 
     let currentUser = null;
+    let currentUserEmail = null;
     let todayQuestions = [];
+    let adminQuestions = [];
+    const ADMIN_EMAIL = 'rashappy9@gmail.com';
 
     // === Authentication ===
     function initAuth() {
       auth.onAuthStateChanged(async (user) => {
         if (user) {
           currentUser = user.displayName || user.email.split('@')[0];
+          currentUserEmail = user.email;
           localStorage.setItem('pickem_user', currentUser);
           showApp();
         } else {
           currentUser = null;
+          currentUserEmail = null;
           localStorage.removeItem('pickem_user');
           showAuth();
         }
@@ -856,10 +1020,15 @@
       document.getElementById('authContainer').style.display = 'none';
       document.getElementById('appContainer').style.display = 'block';
       document.getElementById('currentUser').textContent = currentUser;
-      if (currentUser === 'admin') {
+      
+      const isAdmin = currentUserEmail === ADMIN_EMAIL;
+      if (isAdmin) {
         document.getElementById('userBadge').textContent = 'Admin';
         document.getElementById('userBadge').style.background = '#fef3c7';
         document.getElementById('userBadge').style.color = '#92400e';
+        document.getElementById('adminTabBtn').style.display = 'block';
+      } else {
+        document.getElementById('adminTabBtn').style.display = 'none';
       }
       loadTodayQuestions();
     }
@@ -1048,6 +1217,161 @@
         showAuth();
       } catch (err) {
         showMessage('Error logging out', 'error');
+      }
+    });
+
+    // === Admin Panel ===
+    // Set today's date by default
+    document.getElementById('adminDate').valueAsDate = new Date();
+
+    // Toggle options field based on question type
+    document.getElementById('adminQuestionType').addEventListener('change', (e) => {
+      const optionsGroup = document.getElementById('optionsGroup');
+      if (e.target.value === 'multiple_choice') {
+        optionsGroup.style.display = 'block';
+      } else {
+        optionsGroup.style.display = 'none';
+      }
+    });
+
+    // Add question to admin list
+    document.getElementById('addQuestionBtn').addEventListener('click', () => {
+      const text = document.getElementById('adminQuestionText').value.trim();
+      const type = document.getElementById('adminQuestionType').value;
+      const options = document.getElementById('adminOptions').value.trim();
+
+      if (!text) {
+        showMessage('Please enter a question', 'error', 'adminMessage');
+        return;
+      }
+
+      if (type === 'multiple_choice' && !options) {
+        showMessage('Please enter options for multiple choice question', 'error', 'adminMessage');
+        return;
+      }
+
+      const newQuestion = {
+        question: text,
+        question_type: type,
+        options: type === 'multiple_choice' ? options : null,
+        tempId: Date.now()
+      };
+
+      adminQuestions.push(newQuestion);
+      renderAdminQuestions();
+      
+      // Clear form
+      document.getElementById('adminQuestionText').value = '';
+      document.getElementById('adminOptions').value = '';
+      document.getElementById('adminQuestionType').value = 'yes_no';
+      document.getElementById('optionsGroup').style.display = 'none';
+      
+      showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
+    });
+
+    // Delete question from admin list
+    function deleteAdminQuestion(tempId) {
+      adminQuestions = adminQuestions.filter(q => q.tempId !== tempId);
+      renderAdminQuestions();
+    }
+
+    // Render admin questions list
+    function renderAdminQuestions() {
+      const container = document.getElementById('adminQuestionsList');
+      
+      if (adminQuestions.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); text-align: center;">No questions added yet.</p>';
+        return;
+      }
+
+      container.innerHTML = adminQuestions.map((q, index) => `
+        <div class="admin-question-item">
+          <div class="admin-question-item-content">
+            <div class="admin-question-item-text">${index + 1}. ${q.question}</div>
+            <div class="admin-question-item-type">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+            ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
+          </div>
+          <div class="admin-question-item-actions">
+            <button class="admin-delete-btn" onclick="deleteAdminQuestion(${q.tempId})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Load questions for a specific date
+    document.getElementById('loadDateBtn').addEventListener('click', async () => {
+      const dateInput = document.getElementById('adminDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date', 'error', 'adminMessage');
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('questions').where('date', '==', dateInput).get();
+        
+        if (snapshot.empty) {
+          adminQuestions = [];
+          showMessage('No questions found for this date', 'info', 'adminMessage');
+        } else {
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          adminQuestions = (data.items || []).map(q => ({
+            ...q,
+            tempId: Date.now() + Math.random()
+          }));
+          showMessage('Questions loaded successfully', 'success', 'adminMessage');
+        }
+        renderAdminQuestions();
+      } catch (err) {
+        console.error('Error loading questions:', err);
+        showMessage('Error loading questions', 'error', 'adminMessage');
+      }
+    });
+
+    // Save all questions to database
+    document.getElementById('saveQuestionsBtn').addEventListener('click', async () => {
+      if (adminQuestions.length === 0) {
+        showMessage('Please add at least one question', 'error', 'adminMessage');
+        return;
+      }
+
+      const dateInput = document.getElementById('adminDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date', 'error', 'adminMessage');
+        return;
+      }
+
+      try {
+        // Remove tempId from questions before saving
+        const questionsToSave = adminQuestions.map(q => {
+          const { tempId, ...rest } = q;
+          return rest;
+        });
+
+        // Check if document exists for this date
+        const snapshot = await db.collection('questions').where('date', '==', dateInput).get();
+        
+        if (!snapshot.empty) {
+          // Update existing document
+          await snapshot.docs[0].ref.update({
+            items: questionsToSave,
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          // Create new document
+          await db.collection('questions').add({
+            date: dateInput,
+            items: questionsToSave,
+            createdAt: new Date().toISOString()
+          });
+        }
+
+        showMessage('✅ Questions saved successfully!', 'success', 'adminMessage');
+        adminQuestions = [];
+        renderAdminQuestions();
+      } catch (err) {
+        console.error('Error saving questions:', err);
+        showMessage('Error saving questions: ' + err.message, 'error', 'adminMessage');
       }
     });
 
