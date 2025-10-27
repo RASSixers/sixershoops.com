@@ -1040,7 +1040,10 @@
           <!-- Mark Correct Answers Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <div class="mark-answers-section">
-            <h2>Mark Correct Answers</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h2 style="margin: 0;">Mark Correct Answers</h2>
+              <button class="btn btn-success" id="refreshLeaderboardBtn" style="display: none; background: #10b981; padding: 0.5rem 1rem; font-size: 0.9rem;">🔄 Refresh & Grade</button>
+            </div>
             <div id="markAnswersMessage" class="message"></div>
 
             <div class="admin-date-section">
@@ -1053,7 +1056,35 @@
               <!-- Questions will be loaded here with answer input fields -->
             </div>
 
-            <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="margin-top: 1rem; display: none;">Save Correct Answers</button>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+              <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none;">Save Correct Answers</button>
+              <button class="btn btn-secondary" id="previewScoresBtn" style="display: none; background: #6366f1;">👁️ Preview Scores</button>
+            </div>
+          </div>
+
+          <!-- Leaderboard Preview Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="leaderboard-preview-section">
+            <h2>Live Leaderboard Preview</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">Auto-updates when you save correct answers</p>
+            <div style="overflow-x: auto;">
+              <table id="leaderboardPreviewTable" style="width: 100%; border-collapse: collapse; display: none;">
+                <thead>
+                  <tr style="background: var(--form); border-bottom: 2px solid var(--border);">
+                    <th style="padding: 12px; text-align: left;">Rank</th>
+                    <th style="padding: 12px; text-align: left;">Player</th>
+                    <th style="padding: 12px; text-align: center;">Correct</th>
+                    <th style="padding: 12px; text-align: center;">Win %</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboardPreviewBody">
+                </tbody>
+              </table>
+              <div id="noLeaderboardMessage" style="text-align: center; padding: 40px; color: var(--muted);">
+                <p style="font-size: 32px; margin-bottom: 10px;">📊</p>
+                <p>No scores to display yet. Mark correct answers first!</p>
+              </div>
+            </div>
           </div>
 
           <!-- View User Responses Section -->
@@ -1566,6 +1597,8 @@
 
         renderAnswersForm();
         document.getElementById('saveCorrectAnswersBtn').style.display = 'block';
+        document.getElementById('previewScoresBtn').style.display = 'block';
+        document.getElementById('refreshLeaderboardBtn').style.display = 'inline-block';
         showMessage('Questions loaded successfully', 'success', 'markAnswersMessage');
       } catch (err) {
         console.error('Error loading questions:', err);
@@ -1583,45 +1616,96 @@
 
       container.innerHTML = questionsForAnswers.map((q, idx) => {
         let answerInput = '';
+        const inputId = `answer_${idx}`;
         
         if (q.question_type === 'yes_no') {
           answerInput = `
-            <div style="margin-top: 0.5rem;">
-              <label style="display: block; margin-bottom: 0.3rem;">
-                <input type="radio" name="answer_${idx}" value="Yes" /> Yes
+            <div style="margin-top: 0.75rem; display: flex; gap: 2rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="${inputId}" value="Yes" class="answer-input-${idx}" /> 
+                <span style="font-weight: 500;">Yes</span>
               </label>
-              <label style="display: block;">
-                <input type="radio" name="answer_${idx}" value="No" /> No
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="${inputId}" value="No" class="answer-input-${idx}" /> 
+                <span style="font-weight: 500;">No</span>
               </label>
             </div>
           `;
         } else if (q.question_type === 'multiple_choice') {
           const options = q.options.split(',').map(opt => opt.trim());
           answerInput = `
-            <div style="margin-top: 0.5rem;">
+            <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
               ${options.map((opt, optIdx) => `
-                <label style="display: block; margin-bottom: 0.3rem;">
-                  <input type="radio" name="answer_${idx}" value="${opt}" /> ${opt}
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 6px; transition: background 0.2s;">
+                  <input type="radio" name="${inputId}" value="${opt}" class="answer-input-${idx}" /> 
+                  <span>${opt}</span>
                 </label>
               `).join('')}
             </div>
           `;
         } else if (q.question_type === 'numeric') {
           answerInput = `
-            <input type="number" name="answer_${idx}" class="form-input" placeholder="Enter the correct number" style="margin-top: 0.5rem; width: 200px;" />
+            <input type="number" name="${inputId}" class="form-input answer-input-${idx}" placeholder="Enter the correct number" style="margin-top: 0.75rem; max-width: 250px; padding: 0.6rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem;" />
           `;
         }
 
         return `
-          <div style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
-            <div style="font-weight: 600; margin-bottom: 0.5rem;">${idx + 1}. ${q.question}</div>
-            <div style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem;">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
-            ${q.options ? `<div style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Options: ${q.options}</div>` : ''}
-            <div style="margin-top: 1rem; font-weight: 500;">Correct Answer:</div>
+          <div class="answer-card-${idx}" style="border: 2px solid var(--border); padding: 1.25rem; margin-bottom: 1rem; border-radius: 12px; background: var(--white); transition: all 0.3s; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <div>
+                <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem;">${idx + 1}. ${q.question}</div>
+                <div style="color: var(--muted); font-size: 0.85rem;">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+              </div>
+              <span class="answer-indicator-${idx}" style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">⏳</span>
+            </div>
+            ${q.options ? `<div style="color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Options: ${q.options}</div>` : ''}
+            <div style="margin-top: 0.75rem; font-weight: 600; color: var(--ink);">Correct Answer:</div>
             ${answerInput}
           </div>
         `;
       }).join('');
+
+      // Add change listeners to track which answers are set
+      questionsForAnswers.forEach((q, idx) => {
+        const inputs = document.querySelectorAll(`.answer-input-${idx}`);
+        inputs.forEach(input => {
+          input.addEventListener('change', () => {
+            updateAnswerIndicator(idx);
+          });
+        });
+      });
+    }
+
+    function updateAnswerIndicator(idx) {
+      const inputs = document.querySelectorAll(`.answer-input-${idx}`);
+      let isAnswered = false;
+      
+      for (let input of inputs) {
+        if (input.type === 'radio' && input.checked) {
+          isAnswered = true;
+          break;
+        } else if (input.type === 'number' && input.value) {
+          isAnswered = true;
+          break;
+        }
+      }
+
+      const indicator = document.querySelector(`.answer-indicator-${idx}`);
+      const card = document.querySelector(`.answer-card-${idx}`);
+      
+      if (isAnswered) {
+        indicator.innerHTML = '✅';
+        indicator.style.background = '#d1fae5';
+        indicator.style.color = '#065f46';
+        card.style.borderColor = '#10b981';
+        card.style.background = '#f0fdf4';
+      } else {
+        indicator.innerHTML = '⏳';
+        indicator.style.background = '#e5e7eb';
+        indicator.style.color = '#666';
+        card.style.borderColor = 'var(--border)';
+        card.style.background = 'var(--white)';
+      }
     }
 
     document.getElementById('saveCorrectAnswersBtn').addEventListener('click', async () => {
@@ -1679,13 +1763,131 @@
           createdAt: new Date().toISOString()
         });
 
-        showMessage('✅ Correct answers saved successfully!', 'success', 'markAnswersMessage');
+        showMessage('✅ Correct answers saved successfully! Refreshing leaderboard...', 'success', 'markAnswersMessage');
+        
+        // Auto-refresh leaderboard preview
+        await refreshLeaderboardPreview(dateInput);
+        document.getElementById('refreshLeaderboardBtn').style.display = 'inline-block';
       } catch (err) {
         console.error('Error saving correct answers:', err);
         console.error('Error code:', err.code);
         console.error('Error details:', err.message);
         showMessage('Error saving correct answers: ' + err.message, 'error', 'markAnswersMessage');
       }
+    });
+
+    // Calculate scores based on user picks and correct answers
+    async function calculateScoresForDate(date) {
+      try {
+        // Get questions for the date
+        const questionsSnapshot = await db.collection('questions').where('date', '==', date).get();
+        if (questionsSnapshot.empty) return [];
+
+        const doc = questionsSnapshot.docs[0];
+        const questions = doc.data().items || [];
+
+        // Get correct answers
+        const answersSnapshot = await db.collection('correctAnswers').where('date', '==', date).get();
+        if (answersSnapshot.empty) return [];
+
+        const correctAnswersDoc = answersSnapshot.docs[0].data();
+        const correctAnswersMap = {};
+        correctAnswersDoc.answers.forEach(a => {
+          correctAnswersMap[a.questionId] = a.correctAnswer;
+        });
+
+        // Get all picks for this date
+        const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
+        
+        const userScores = {};
+        picksSnapshot.forEach(pickDoc => {
+          const pickData = pickDoc.data();
+          const userId = pickData.userId || pickData.email;
+          
+          if (!userScores[userId]) {
+            userScores[userId] = {
+              email: pickData.email || userId,
+              correct: 0,
+              total: questions.length,
+              picks: []
+            };
+          }
+
+          const qIdx = pickData.questionId;
+          const userPick = pickData.answer;
+          const correctAnswer = correctAnswersMap[qIdx];
+
+          if (correctAnswer !== undefined && userPick === correctAnswer) {
+            userScores[userId].correct++;
+          }
+        });
+
+        // Convert to array and sort by correct answers (descending)
+        return Object.values(userScores)
+          .sort((a, b) => b.correct - a.correct)
+          .map((score, idx) => ({
+            rank: idx + 1,
+            email: score.email,
+            correct: score.correct,
+            total: score.total,
+            percentage: score.total > 0 ? ((score.correct / score.total) * 100).toFixed(1) : 0
+          }));
+      } catch (err) {
+        console.error('Error calculating scores:', err);
+        return [];
+      }
+    }
+
+    // Refresh leaderboard preview
+    async function refreshLeaderboardPreview(date) {
+      try {
+        const scores = await calculateScoresForDate(date);
+        
+        if (scores.length === 0) {
+          document.getElementById('leaderboardPreviewTable').style.display = 'none';
+          document.getElementById('noLeaderboardMessage').style.display = 'block';
+          return;
+        }
+
+        const tbody = document.getElementById('leaderboardPreviewBody');
+        tbody.innerHTML = scores.map(score => `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 12px; font-weight: 600; color: var(--brand);">#${score.rank}</td>
+            <td style="padding: 12px;">${score.email}</td>
+            <td style="padding: 12px; text-align: center; font-weight: 600;">${score.correct}/${score.total}</td>
+            <td style="padding: 12px; text-align: center; color: var(--success); font-weight: 600;">${score.percentage}%</td>
+          </tr>
+        `).join('');
+
+        document.getElementById('leaderboardPreviewTable').style.display = 'table';
+        document.getElementById('noLeaderboardMessage').style.display = 'none';
+      } catch (err) {
+        console.error('Error refreshing leaderboard:', err);
+      }
+    }
+
+    // Preview scores button
+    document.getElementById('previewScoresBtn').addEventListener('click', async () => {
+      const dateInput = document.getElementById('markAnswersDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date first', 'error', 'markAnswersMessage');
+        return;
+      }
+      await refreshLeaderboardPreview(dateInput);
+      showMessage('✅ Leaderboard preview loaded!', 'success', 'markAnswersMessage');
+    });
+
+    // Refresh leaderboard button - calculates live scores from current state
+    document.getElementById('refreshLeaderboardBtn').addEventListener('click', async () => {
+      const dateInput = document.getElementById('markAnswersDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date first', 'error', 'markAnswersMessage');
+        return;
+      }
+      
+      showMessage('🔄 Calculating scores...', 'info', 'markAnswersMessage');
+      await refreshLeaderboardPreview(dateInput);
+      showMessage('✅ Leaderboard refreshed! Click "Preview Scores" to see current standings.', 'success', 'markAnswersMessage');
     });
 
     // Load User Responses
