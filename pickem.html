@@ -1769,21 +1769,14 @@
         await refreshLeaderboardPreview(dateInput);
         document.getElementById('refreshLeaderboardBtn').style.display = 'inline-block';
         
-        // Refresh main leaderboards for the period
-        const today = new Date().toISOString().split('T')[0];
-        if (dateInput === today) {
-          // If setting today's answers, refresh daily leaderboard
-          if (document.getElementById('daily-lb')?.classList.contains('active')) {
-            await loadLeaderboard('daily');
-          }
-        }
-        // Also refresh weekly and monthly if they're currently displayed
-        if (document.getElementById('weekly-lb')?.classList.contains('active')) {
-          await loadLeaderboard('weekly');
-        }
-        if (document.getElementById('monthly-lb')?.classList.contains('active')) {
-          await loadLeaderboard('monthly');
-        }
+        // Always refresh ALL main leaderboards (don't check if active)
+        // This ensures scores update even if user isn't currently viewing them
+        console.log('Refreshing all leaderboards after answer save...');
+        await loadLeaderboard('daily');
+        await loadLeaderboard('weekly');
+        await loadLeaderboard('monthly');
+        
+        showMessage('✅ All leaderboards updated!', 'success', 'markAnswersMessage');
       } catch (err) {
         console.error('Error saving correct answers:', err);
         console.error('Error code:', err.code);
@@ -1795,25 +1788,38 @@
     // Calculate scores based on user picks and correct answers
     async function calculateScoresForDate(date) {
       try {
+        console.log(`calculateScoresForDate called for date: ${date}`);
+        
         // Get questions for the date
         const questionsSnapshot = await db.collection('questions').where('date', '==', date).get();
-        if (questionsSnapshot.empty) return [];
+        console.log(`Found ${questionsSnapshot.size} question documents for date ${date}`);
+        if (questionsSnapshot.empty) {
+          console.log(`No questions found for date ${date}`);
+          return [];
+        }
 
         const doc = questionsSnapshot.docs[0];
         const questions = doc.data().items || [];
+        console.log(`Loaded ${questions.length} questions for date ${date}`);
 
         // Get correct answers
         const answersSnapshot = await db.collection('correctAnswers').where('date', '==', date).get();
-        if (answersSnapshot.empty) return [];
+        console.log(`Found ${answersSnapshot.size} correct answer documents for date ${date}`);
+        if (answersSnapshot.empty) {
+          console.log(`No correct answers found for date ${date}`);
+          return [];
+        }
 
         const correctAnswersDoc = answersSnapshot.docs[0].data();
         const correctAnswersMap = {};
         correctAnswersDoc.answers.forEach(a => {
           correctAnswersMap[a.questionId] = a.correctAnswer;
+          console.log(`Question ${a.questionId}: Correct answer = ${a.correctAnswer}`);
         });
 
         // Get all picks for this date
         const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
+        console.log(`Found ${picksSnapshot.size} pick documents for date ${date}`);
         
         const userScores = {};
         picksSnapshot.forEach(pickDoc => {
@@ -1831,6 +1837,9 @@
 
           // Iterate through each answer for this user
           const userAnswers = pickData.answers || [];
+          console.log(`User ${userEmail} submitted ${userAnswers.length} answers`);
+          let userCorrectCount = 0;
+          
           userAnswers.forEach((userPick, qIdx) => {
             const correctAnswer = correctAnswersMap[qIdx];
             
@@ -1842,12 +1851,17 @@
               } else {
                 isCorrect = userPick === correctAnswer;
               }
-            }
-            
-            if (isCorrect) {
-              userScores[userId].correct++;
+              
+              if (isCorrect) {
+                userCorrectCount++;
+              }
+              
+              console.log(`Q${qIdx} - User: "${userPick}" (${typeof userPick}), Correct: "${correctAnswer}" (${typeof correctAnswer}), Match: ${isCorrect}`);
             }
           });
+          
+          userScores[userId].correct = userCorrectCount;
+          console.log(`User ${userEmail} scored ${userCorrectCount}/${userScores[userId].total}`);
         });
 
         // Convert to array and sort by correct answers (descending)
@@ -2317,6 +2331,8 @@
 
     async function loadLeaderboard(period) {
       try {
+        console.log(`loadLeaderboard called for period: ${period}`);
+        
         // Calculate date range based on period
         const now = new Date();
         let startDate = new Date();
@@ -2336,10 +2352,12 @@
 
         const startDateStr = startDate.toISOString().split('T')[0];
         const endDateStr = now.toISOString().split('T')[0];
+        console.log(`${period} leaderboard: date range ${startDateStr} to ${endDateStr}`);
 
         // Get all dates in the range with picks
         const picksSnapshot = await db.collection('picks').get();
         if (picksSnapshot.empty) {
+          console.log(`No picks found for ${period} leaderboard`);
           renderLeaderboard(period, []);
           return;
         }
@@ -2352,11 +2370,16 @@
             datesInRange.add(pickDate);
           }
         });
+        
+        console.log(`Found ${datesInRange.size} dates with picks in range for ${period}`);
 
         // Calculate scores for each date and aggregate by user
         const userScoresMap = {};
         for (const date of datesInRange) {
+          console.log(`Calculating scores for ${period} - date: ${date}`);
           const dailyScores = await calculateScoresForDate(date);
+          console.log(`Got ${dailyScores.length} users with scores for date ${date}`);
+          
           dailyScores.forEach(dayScore => {
             if (!userScoresMap[dayScore.email]) {
               userScoresMap[dayScore.email] = {
@@ -2367,6 +2390,7 @@
             }
             userScoresMap[dayScore.email].totalCorrect += dayScore.correct;
             userScoresMap[dayScore.email].totalQuestions += dayScore.total;
+            console.log(`${dayScore.email}: ${dayScore.correct}/${dayScore.total} (running total: ${userScoresMap[dayScore.email].totalCorrect}/${userScoresMap[dayScore.email].totalQuestions})`);
           });
         }
 
@@ -2378,6 +2402,8 @@
             total_count: score.totalQuestions
           }))
           .sort((a, b) => b.correct_count - a.correct_count);
+        
+        console.log(`${period} leaderboard final: ${leaderboard.length} users, top score: ${leaderboard[0]?.correct_count || 0}`);
 
         renderLeaderboard(period, leaderboard);
       } catch (err) {
