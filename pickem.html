@@ -1763,11 +1763,27 @@
           createdAt: new Date().toISOString()
         });
 
-        showMessage('✅ Correct answers saved successfully! Refreshing leaderboard...', 'success', 'markAnswersMessage');
+        showMessage('✅ Correct answers saved successfully! Refreshing leaderboards...', 'success', 'markAnswersMessage');
         
         // Auto-refresh leaderboard preview
         await refreshLeaderboardPreview(dateInput);
         document.getElementById('refreshLeaderboardBtn').style.display = 'inline-block';
+        
+        // Refresh main leaderboards for the period
+        const today = new Date().toISOString().split('T')[0];
+        if (dateInput === today) {
+          // If setting today's answers, refresh daily leaderboard
+          if (document.getElementById('daily-lb')?.classList.contains('active')) {
+            await loadLeaderboard('daily');
+          }
+        }
+        // Also refresh weekly and monthly if they're currently displayed
+        if (document.getElementById('weekly-lb')?.classList.contains('active')) {
+          await loadLeaderboard('weekly');
+        }
+        if (document.getElementById('monthly-lb')?.classList.contains('active')) {
+          await loadLeaderboard('monthly');
+        }
       } catch (err) {
         console.error('Error saving correct answers:', err);
         console.error('Error code:', err.code);
@@ -2301,47 +2317,67 @@
 
     async function loadLeaderboard(period) {
       try {
-        const snapshot = await db.collection('picks').get();
-        
-        if (snapshot.empty) {
-          renderLeaderboard(period, []);
-          return;
-        }
-
         // Calculate date range based on period
         const now = new Date();
         let startDate = new Date();
         
         if (period === 'daily') {
-          startDate.setDate(now.getDate());
+          // Start of today
+          startDate.setHours(0, 0, 0, 0);
         } else if (period === 'weekly') {
+          // 7 days ago
+          startDate = new Date(now);
           startDate.setDate(now.getDate() - 7);
+          startDate.setHours(0, 0, 0, 0);
         } else if (period === 'monthly') {
-          startDate.setMonth(now.getMonth());
-          startDate.setDate(1);
+          // First day of current month
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         }
 
-        const dateStr = startDate.toISOString().split('T')[0];
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = now.toISOString().split('T')[0];
 
-        // Group picks by user
-        const userScores = {};
-        snapshot.docs.forEach(doc => {
-          const pick = doc.data();
-          if (pick.date >= dateStr) {
-            if (!userScores[pick.username]) {
-              userScores[pick.username] = { correct: 0, total: 0 };
-            }
-            userScores[pick.username].total += pick.answers?.length || 0;
+        // Get all dates in the range with picks
+        const picksSnapshot = await db.collection('picks').get();
+        if (picksSnapshot.empty) {
+          renderLeaderboard(period, []);
+          return;
+        }
+
+        // Collect all dates in range
+        const datesInRange = new Set();
+        picksSnapshot.docs.forEach(doc => {
+          const pickDate = doc.data().date;
+          if (pickDate >= startDateStr && pickDate <= endDateStr) {
+            datesInRange.add(pickDate);
           }
         });
 
-        // For now, we'll calculate scores without correct answers
-        // This will be updated when admin sets correct answers
-        const leaderboard = Object.entries(userScores).map(([username, scores]) => ({
-          username,
-          correct_count: scores.correct,
-          total_count: scores.total
-        })).sort((a, b) => b.correct_count - a.correct_count);
+        // Calculate scores for each date and aggregate by user
+        const userScoresMap = {};
+        for (const date of datesInRange) {
+          const dailyScores = await calculateScoresForDate(date);
+          dailyScores.forEach(dayScore => {
+            if (!userScoresMap[dayScore.email]) {
+              userScoresMap[dayScore.email] = {
+                email: dayScore.email,
+                totalCorrect: 0,
+                totalQuestions: 0
+              };
+            }
+            userScoresMap[dayScore.email].totalCorrect += dayScore.correct;
+            userScoresMap[dayScore.email].totalQuestions += dayScore.total;
+          });
+        }
+
+        // Convert to array and sort by correct answers (descending)
+        const leaderboard = Object.values(userScoresMap)
+          .map(score => ({
+            username: score.email,
+            correct_count: score.totalCorrect,
+            total_count: score.totalQuestions
+          }))
+          .sort((a, b) => b.correct_count - a.correct_count);
 
         renderLeaderboard(period, leaderboard);
       } catch (err) {
