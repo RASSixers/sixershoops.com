@@ -745,10 +745,9 @@
         <div id="authMessage" class="message"></div>
         <form id="loginFormEl">
           <div class="form-group">
-            <label class="form-label">Email or Username</label>
-            <span class="form-hint">👤 Use your email address or pick'em username</span>
-            <input type="text" class="form-input" id="loginUsername" placeholder="yourname@example.com or username" required>
-            <span class="error-text" id="loginUsernameError"></span>
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" required>
+            <span class="error-text" id="loginEmailError"></span>
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
@@ -767,22 +766,13 @@
         <div id="authMessage2" class="message"></div>
         <form id="registerFormEl">
           <div class="form-group">
-            <label class="form-label">Pick'em Username</label>
-            <span class="form-hint">🏀 Your unique identity on the leaderboards</span>
-            <input type="text" class="form-input" id="registerUsername" placeholder="Enter your username" required>
-            <span class="error-text" id="registerUsernameError"></span>
-          </div>
-          
-          <div class="form-group">
             <label class="form-label">Email Address</label>
-            <span class="form-hint">✉️ We'll use this to recover your account</span>
             <input type="email" class="form-input" id="registerEmail" placeholder="your@email.com" required>
             <span class="error-text" id="registerEmailError"></span>
           </div>
           
           <div class="form-group">
             <label class="form-label">Password</label>
-            <span class="form-hint">🔒 At least 6 characters for security</span>
             <input type="password" class="form-input" id="registerPassword" placeholder="Create a strong password" required>
             <span class="error-text" id="registerPasswordError"></span>
           </div>
@@ -793,7 +783,7 @@
             <span class="error-text" id="registerConfirmPasswordError"></span>
           </div>
           
-          <button type="submit" class="btn btn-primary" style="width: 100%;">🚀 Create Account</button>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
         </form>
       </div>
     </div>
@@ -986,13 +976,12 @@
 
     // Clear form input values
     function clearLoginForm() {
-      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginEmail').value = '';
       document.getElementById('loginPassword').value = '';
       clearErrors();
     }
 
     function clearRegisterForm() {
-      document.getElementById('registerUsername').value = '';
       document.getElementById('registerEmail').value = '';
       document.getElementById('registerPassword').value = '';
       document.getElementById('registerConfirmPassword').value = '';
@@ -1049,10 +1038,12 @@
     }
 
     // Login Form Validation
-    function validateLoginForm(username, password) {
+    function validateLoginForm(email, password) {
       const errors = {};
-      if (!username.trim()) {
-        errors.username = 'Email or username is required';
+      if (!email.trim()) {
+        errors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(email)) {
+        errors.email = 'Email is invalid';
       }
       if (!password) {
         errors.password = 'Password is required';
@@ -1063,14 +1054,7 @@
     // Register Form Validation
     function validateRegisterForm(formData) {
       const errors = {};
-      const { username, email, password, confirmPassword } = formData;
-
-      // Username validation
-      if (!username.trim()) {
-        errors.username = 'Username is required';
-      } else if (username.length < 3) {
-        errors.username = 'Username must be at least 3 characters';
-      }
+      const { email, password, confirmPassword } = formData;
 
       // Email validation
       if (!email.trim()) {
@@ -1098,16 +1082,13 @@
     function displayErrors(errors, formType) {
       clearErrors();
       if (formType === 'login') {
-        if (errors.username) {
-          document.getElementById('loginUsernameError').textContent = errors.username;
+        if (errors.email) {
+          document.getElementById('loginEmailError').textContent = errors.email;
         }
         if (errors.password) {
           document.getElementById('loginPasswordError').textContent = errors.password;
         }
       } else if (formType === 'register') {
-        if (errors.username) {
-          document.getElementById('registerUsernameError').textContent = errors.username;
-        }
         if (errors.email) {
           document.getElementById('registerEmailError').textContent = errors.email;
         }
@@ -1123,30 +1104,18 @@
     // Login Form
     document.getElementById('loginFormEl').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const input = document.getElementById('loginUsername').value;
+      const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
 
       // Validate
-      const errors = validateLoginForm(input, password);
+      const errors = validateLoginForm(email, password);
       if (Object.keys(errors).length > 0) {
         displayErrors(errors, 'login');
         return;
       }
 
       try {
-        // Resolve username to email if needed
         showMessage('Signing in...', 'info', 'authMessage');
-        let email = input;
-        
-        // If input is not an email, try to look it up as a username
-        if (!input.includes('@')) {
-          email = await resolveUsernameToEmail(input);
-          if (!email) {
-            showMessage('Username or email not found', 'error', 'authMessage');
-            return;
-          }
-        }
-        
         await auth.signInWithEmailAndPassword(email, password);
         showMessage('Login successful!', 'success', 'authMessage');
         setTimeout(() => {
@@ -1161,13 +1130,12 @@
     // Register Form
     document.getElementById('registerFormEl').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('registerUsername').value;
       const email = document.getElementById('registerEmail').value;
       const password = document.getElementById('registerPassword').value;
       const confirmPassword = document.getElementById('registerConfirmPassword').value;
 
       // Validate
-      const errors = validateRegisterForm({ username, email, password, confirmPassword });
+      const errors = validateRegisterForm({ email, password, confirmPassword });
       if (Object.keys(errors).length > 0) {
         displayErrors(errors, 'register');
         return;
@@ -1175,12 +1143,9 @@
 
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        await userCredential.user.updateProfile({ displayName: username });
         
-        // Save user profile to Firestore (store lowercase username for case-insensitive lookup)
+        // Save user profile to Firestore
         await db.collection('users').doc(userCredential.user.uid).set({
-          username: username,
-          usernameLower: username.toLowerCase(),
           email: email,
           createdAt: new Date().toISOString()
         });
@@ -1189,7 +1154,7 @@
         setTimeout(() => {
           clearRegisterForm();
           document.querySelectorAll('.auth-tab-btn')[0].click();
-          document.getElementById('loginUsername').value = email;
+          document.getElementById('loginEmail').value = email;
           document.getElementById('loginPassword').focus();
           auth.signOut();
         }, 500);
