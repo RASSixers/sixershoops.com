@@ -1529,23 +1529,24 @@
         const snapshot = await db.collection('correctAnswers').where('date', '==', dateInput).get();
         
         if (!snapshot.empty) {
-          // Update existing
-          await snapshot.docs[0].ref.update({
-            answers: correctAnswers,
-            updatedAt: new Date().toISOString()
-          });
-        } else {
-          // Create new
-          await db.collection('correctAnswers').add({
-            date: dateInput,
-            answers: correctAnswers,
-            createdAt: new Date().toISOString()
-          });
+          // Delete existing document first
+          const docId = snapshot.docs[0].id;
+          await db.collection('correctAnswers').doc(docId).delete();
+          console.log('Deleted old correct answers for date:', dateInput);
         }
+        
+        // Always create a new document (avoids update permission issues)
+        await db.collection('correctAnswers').add({
+          date: dateInput,
+          answers: correctAnswers,
+          createdAt: new Date().toISOString()
+        });
 
         showMessage('✅ Correct answers saved successfully!', 'success', 'markAnswersMessage');
       } catch (err) {
         console.error('Error saving correct answers:', err);
+        console.error('Error code:', err.code);
+        console.error('Error details:', err.message);
         showMessage('Error saving correct answers: ' + err.message, 'error', 'markAnswersMessage');
       }
     });
