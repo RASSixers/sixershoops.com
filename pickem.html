@@ -1942,7 +1942,7 @@
         picksSnapshot.docs.forEach(doc => {
           const pickData = doc.data();
           questions.forEach((q, qIdx) => {
-            const userPick = pickData.picks[qIdx] || '-';
+            const userPick = pickData.answers && pickData.answers[qIdx] ? pickData.answers[qIdx] : '-';
             const correctAnswer = correctAnswers[qIdx] !== undefined ? correctAnswers[qIdx] : '(Not Set)';
             const isCorrect = userPick === correctAnswer;
             const status = correctAnswers[qIdx] === undefined ? '⏳ Pending' : (isCorrect ? '✅ Correct' : '❌ Wrong');
@@ -2016,11 +2016,11 @@
         if (q.question_type === 'yes_no') {
           optionsHtml = `
             <label class="option radio-option">
-              <input type="radio" name="q${i}" value="yes">
+              <input type="radio" name="q${i}" value="Yes">
               <span>Yes</span>
             </label>
             <label class="option radio-option">
-              <input type="radio" name="q${i}" value="no">
+              <input type="radio" name="q${i}" value="No">
               <span>No</span>
             </label>
           `;
@@ -2091,8 +2091,10 @@
             const input = document.querySelector(`input[name="q${i}"]`);
             if (input && input.type === 'radio') {
               const radioToCheck = document.querySelector(`input[name="q${i}"][value="${answer}"]`);
-              if (radioToCheck) radioToCheck.checked = true;
-            } else if (input) {
+              if (radioToCheck) {
+                radioToCheck.checked = true;
+              }
+            } else if (input && input.type === 'number') {
               input.value = answer;
             }
           });
