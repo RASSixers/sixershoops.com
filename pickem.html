@@ -1858,17 +1858,30 @@
             // Normalize comparison for numeric vs string types
             let isCorrect = false;
             if (userPick !== undefined && correctAnswer !== undefined) {
-              if (typeof userPick === 'number' || typeof correctAnswer === 'number') {
-                isCorrect = parseFloat(userPick) === parseFloat(correctAnswer);
+              // Normalize values for comparison
+              let normalizedPick = userPick;
+              let normalizedAnswer = correctAnswer;
+              
+              // Convert booleans to lowercase strings
+              if (typeof userPick === 'boolean') normalizedPick = userPick.toString().toLowerCase();
+              if (typeof correctAnswer === 'boolean') normalizedAnswer = correctAnswer.toString().toLowerCase();
+              
+              // Convert to lowercase strings and trim whitespace
+              normalizedPick = String(normalizedPick).trim().toLowerCase();
+              normalizedAnswer = String(normalizedAnswer).trim().toLowerCase();
+              
+              // Handle numeric comparisons
+              if (!isNaN(parseFloat(normalizedPick)) && !isNaN(parseFloat(normalizedAnswer))) {
+                isCorrect = parseFloat(normalizedPick) === parseFloat(normalizedAnswer);
               } else {
-                isCorrect = userPick === correctAnswer;
+                isCorrect = normalizedPick === normalizedAnswer;
               }
               
               if (isCorrect) {
                 userCorrectCount++;
               }
               
-              console.log(`Q${qIdx} - User: "${userPick}" (${typeof userPick}), Correct: "${correctAnswer}" (${typeof correctAnswer}), Match: ${isCorrect}`);
+              console.log(`Q${qIdx} - User: "${userPick}" (${typeof userPick}) → "${normalizedPick}", Correct: "${correctAnswer}" (${typeof correctAnswer}) → "${normalizedAnswer}", Match: ${isCorrect}`);
             }
           });
           
