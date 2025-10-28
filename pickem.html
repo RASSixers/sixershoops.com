@@ -1414,8 +1414,14 @@
     });
 
     // === Admin Panel ===
-    // Set today's date by default
-    document.getElementById('adminDate').valueAsDate = new Date();
+    // Set today's date by default using timezone-safe formatting
+    const today = new Date();
+    const adminDateInput = document.getElementById('adminDate');
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    adminDateInput.value = `${year}-${month}-${day}`;
+    console.log(`📅 Admin date initialized to: ${adminDateInput.value}`);
 
     // Toggle options field based on question type
     document.getElementById('adminQuestionType').addEventListener('change', (e) => {
@@ -1541,7 +1547,16 @@
       }
 
       try {
-        console.log(`💾 Admin saving ${adminQuestions.length} questions for date: "${dateInput}" (type: ${typeof dateInput}, length: ${dateInput.length})`);
+        // Validate date format is correct (should be YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+          console.warn(`⚠️ Invalid date format: "${dateInput}" - expected YYYY-MM-DD`);
+          showMessage('Invalid date format. Please use date picker.', 'error', 'adminMessage');
+          return;
+        }
+        
+        console.log(`💾 Admin saving ${adminQuestions.length} questions for date: "${dateInput}" (format verified: YYYY-MM-DD)`);
+        console.log(`   Date from input element: "${dateInput}" (selected: ${document.getElementById('adminDate').value})`);
+        console.log(`   Current local time: ${new Date().toString()}`);
         
         // Remove tempId from questions before saving
         const questionsToSave = adminQuestions.map(q => {
@@ -2330,8 +2345,13 @@
       };
     }
 
+    // Format date for comparison using LOCAL timezone (not UTC)
     function formatDateForComparison(date) {
-      return date.toISOString().split('T')[0];
+      // Pad month and day with leading zeros
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
 
     function renderDateSlider() {
@@ -2343,12 +2363,17 @@
       for (let i = 0; i < 14; i++) {
         const date = new Date(today);
         date.setDate(date.getDate() + i);
+        const formattedValue = formatDateForComparison(date);
         dates.push({
           date: date,
           label: formatDateLabel(date),
-          value: formatDateForComparison(date),
+          value: formattedValue,
           dayNum: date.getDate()
         });
+        
+        if (i === 0 || i === 1) {
+          console.log(`📅 Day ${i}: Local date: ${date.toString()} → Formatted: ${formattedValue}`);
+        }
       }
 
       // Show DATES_TO_SHOW dates at a time
@@ -2395,13 +2420,14 @@
       }
     });
 
-    // Initialize date slider
-    const today = new Date().toISOString().split('T')[0];
-    console.log(`🚀 PAGE INITIALIZATION: Loading picks for today: ${today}`);
-    document.getElementById('pickDate').value = today;
+    // Initialize date slider using timezone-safe formatting
+    const todayForInit = new Date();
+    const todayFormatted = formatDateForComparison(todayForInit);
+    console.log(`🚀 PAGE INITIALIZATION: Loading picks for today: ${todayFormatted}`);
+    document.getElementById('pickDate').value = todayFormatted;
     renderDateSlider();
-    console.log(`📅 Date slider rendered. Loading questions for: ${today}`);
-    loadQuestionsForDate(today);
+    console.log(`📅 Date slider rendered. Loading questions for: ${todayFormatted}`);
+    loadQuestionsForDate(todayFormatted);
 
     // === Tabs ===
     document.querySelectorAll('.tab-btn').forEach(btn => {
