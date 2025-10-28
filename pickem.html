@@ -1784,36 +1784,77 @@
         console.log(`📝 Saving answers for date: ${dateInput}`);
         console.log(`📝 Answers being saved:`, correctAnswers);
         
-        const docRef = await db.collection('correctAnswers').add({
-          date: dateInput,
-          answers: correctAnswers,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
+        // CRITICAL FIX: Check if answers already exist for this date
+        // If they do, update them; if not, create new document
+        const existingAnswers = await db.collection('correctAnswers').where('date', '==', dateInput).get();
         
-        console.log('✅ Correct answers saved with ID:', docRef.id);
-        showMessage('✅ Correct answers saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
-        
-        // Wait for Firestore to replicate (increased from 1000ms to 2000ms)
-        console.log('⏳ Waiting 2 seconds for Firestore replication...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Refresh all leaderboards
-        console.log('🔄 Recalculating all leaderboards after answer save...');
-        try {
-          await Promise.all([
-            loadLeaderboard('daily'),
-            loadLeaderboard('weekly'),
-            loadLeaderboard('monthly')
-          ]);
-          console.log('✅ All leaderboards recalculated successfully');
-        } catch (leaderboardErr) {
-          console.error('❌ Error recalculating leaderboards:', leaderboardErr);
-          showMessage('⚠️ Answers saved but leaderboard update failed. Check console for details.', 'error', 'markAnswersMessage');
-          return;
+        let docRef;
+        if (!existingAnswers.empty) {
+          console.log(`📝 Found existing answer document for ${dateInput}. Updating it...`);
+          docRef = existingAnswers.docs[0].ref;
+          await docRef.set({
+            date: dateInput,
+            answers: correctAnswers,
+            createdAt: existingAnswers.docs[0].data().createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          console.log('✅ Correct answers UPDATED with ID:', docRef.id);
+        } else {
+          console.log(`📝 No existing answers found for ${dateInput}. Creating new document...`);
+          docRef = await db.collection('correctAnswers').add({
+            date: dateInput,
+            answers: correctAnswers,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          console.log('✅ Correct answers CREATED with ID:', docRef.id);
         }
         
-        showMessage('✅ Leaderboards updated! Scores have been recalculated.', 'success', 'markAnswersMessage');
+        showMessage('✅ Correct answers saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
+        
+        // Wait for Firestore replication with extended timeout and retry logic
+        console.log('⏳ Waiting for Firestore replication with retry...');
+        
+        let leaderboardsLoaded = false;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          const waitTime = attempt === 1 ? 2000 : attempt === 2 ? 3000 : 5000;
+          console.log(`  🔄 Attempt ${attempt}/3: Waiting ${waitTime}ms before loading leaderboards...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          // Verify the answers were actually saved by querying them back
+          const verifySnapshot = await db.collection('correctAnswers').where('date', '==', dateInput).get();
+          console.log(`  ✓ Verification: Found ${verifySnapshot.size} answer document(s) for ${dateInput}`);
+          
+          if (verifySnapshot.empty) {
+            console.warn(`  ⚠️ Answers not yet replicated. Retrying...`);
+            continue;
+          }
+          
+          // Refresh all leaderboards
+          console.log(`🔄 Recalculating all leaderboards (attempt ${attempt}/3)...`);
+          try {
+            await Promise.all([
+              loadLeaderboard('daily'),
+              loadLeaderboard('weekly'),
+              loadLeaderboard('monthly')
+            ]);
+            console.log('✅ All leaderboards recalculated successfully');
+            leaderboardsLoaded = true;
+            break;
+          } catch (leaderboardErr) {
+            console.error(`❌ Error recalculating leaderboards on attempt ${attempt}:`, leaderboardErr);
+            if (attempt < 3) {
+              console.log('  ⏳ Will retry...');
+              continue;
+            }
+            showMessage('⚠️ Answers saved but leaderboard update failed. Check console for details.', 'error', 'markAnswersMessage');
+            return;
+          }
+        }
+        
+        if (leaderboardsLoaded) {
+          showMessage('✅ Leaderboards updated! Scores have been recalculated.', 'success', 'markAnswersMessage');
+        }
       } catch (err) {
         console.error('Error saving correct answers:', err);
         console.error('Error code:', err.code);
@@ -2487,12 +2528,22 @@
     if (dailyRefreshBtn) {
       dailyRefreshBtn.addEventListener('click', async () => {
         console.log('🔄 User clicked refresh Daily leaderboard');
+        const originalText = dailyRefreshBtn.textContent;
+        dailyRefreshBtn.disabled = true;
+        dailyRefreshBtn.textContent = 'Loading...';
         try {
           await loadLeaderboard('daily');
-          showMessage('✅ Daily leaderboard refreshed!', 'success');
+          console.log('✅ Daily leaderboard refreshed successfully');
+          dailyRefreshBtn.textContent = 'Refreshed! ✓';
+          setTimeout(() => {
+            dailyRefreshBtn.textContent = originalText;
+            dailyRefreshBtn.disabled = false;
+          }, 2000);
         } catch (err) {
           console.error('Error refreshing daily leaderboard:', err);
-          showMessage('❌ Failed to refresh. Check console for details.', 'error');
+          dailyRefreshBtn.textContent = 'Error - Try Again';
+          dailyRefreshBtn.disabled = false;
+          showMessage('❌ Failed to refresh daily leaderboard. Check console for details.', 'error');
         }
       });
       console.log('✅ Daily refresh button listener attached');
@@ -2501,12 +2552,22 @@
     if (weeklyRefreshBtn) {
       weeklyRefreshBtn.addEventListener('click', async () => {
         console.log('🔄 User clicked refresh Weekly leaderboard');
+        const originalText = weeklyRefreshBtn.textContent;
+        weeklyRefreshBtn.disabled = true;
+        weeklyRefreshBtn.textContent = 'Loading...';
         try {
           await loadLeaderboard('weekly');
-          showMessage('✅ Weekly leaderboard refreshed!', 'success');
+          console.log('✅ Weekly leaderboard refreshed successfully');
+          weeklyRefreshBtn.textContent = 'Refreshed! ✓';
+          setTimeout(() => {
+            weeklyRefreshBtn.textContent = originalText;
+            weeklyRefreshBtn.disabled = false;
+          }, 2000);
         } catch (err) {
           console.error('Error refreshing weekly leaderboard:', err);
-          showMessage('❌ Failed to refresh. Check console for details.', 'error');
+          weeklyRefreshBtn.textContent = 'Error - Try Again';
+          weeklyRefreshBtn.disabled = false;
+          showMessage('❌ Failed to refresh weekly leaderboard. Check console for details.', 'error');
         }
       });
       console.log('✅ Weekly refresh button listener attached');
@@ -2515,12 +2576,22 @@
     if (monthlyRefreshBtn) {
       monthlyRefreshBtn.addEventListener('click', async () => {
         console.log('🔄 User clicked refresh Monthly leaderboard');
+        const originalText = monthlyRefreshBtn.textContent;
+        monthlyRefreshBtn.disabled = true;
+        monthlyRefreshBtn.textContent = 'Loading...';
         try {
           await loadLeaderboard('monthly');
-          showMessage('✅ Monthly leaderboard refreshed!', 'success');
+          console.log('✅ Monthly leaderboard refreshed successfully');
+          monthlyRefreshBtn.textContent = 'Refreshed! ✓';
+          setTimeout(() => {
+            monthlyRefreshBtn.textContent = originalText;
+            monthlyRefreshBtn.disabled = false;
+          }, 2000);
         } catch (err) {
           console.error('Error refreshing monthly leaderboard:', err);
-          showMessage('❌ Failed to refresh. Check console for details.', 'error');
+          monthlyRefreshBtn.textContent = 'Error - Try Again';
+          monthlyRefreshBtn.disabled = false;
+          showMessage('❌ Failed to refresh monthly leaderboard. Check console for details.', 'error');
         }
       });
       console.log('✅ Monthly refresh button listener attached');
