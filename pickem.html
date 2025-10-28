@@ -1781,6 +1781,9 @@
       }
 
       try {
+        console.log(`📝 Saving answers for date: ${dateInput}`);
+        console.log(`📝 Answers being saved:`, correctAnswers);
+        
         const docRef = await db.collection('correctAnswers').add({
           date: dateInput,
           answers: correctAnswers,
@@ -1791,16 +1794,24 @@
         console.log('✅ Correct answers saved with ID:', docRef.id);
         showMessage('✅ Correct answers saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
         
-        // Wait for Firestore to replicate
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait for Firestore to replicate (increased from 1000ms to 2000ms)
+        console.log('⏳ Waiting 2 seconds for Firestore replication...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Refresh all leaderboards
         console.log('🔄 Recalculating all leaderboards after answer save...');
-        await Promise.all([
-          loadLeaderboard('daily'),
-          loadLeaderboard('weekly'),
-          loadLeaderboard('monthly')
-        ]);
+        try {
+          await Promise.all([
+            loadLeaderboard('daily'),
+            loadLeaderboard('weekly'),
+            loadLeaderboard('monthly')
+          ]);
+          console.log('✅ All leaderboards recalculated successfully');
+        } catch (leaderboardErr) {
+          console.error('❌ Error recalculating leaderboards:', leaderboardErr);
+          showMessage('⚠️ Answers saved but leaderboard update failed. Check console for details.', 'error', 'markAnswersMessage');
+          return;
+        }
         
         showMessage('✅ Leaderboards updated! Scores have been recalculated.', 'success', 'markAnswersMessage');
       } catch (err) {
@@ -1828,25 +1839,25 @@
     // Calculate scores based on user picks and correct answers
     async function calculateScoresForDate(date) {
       try {
-        console.log(`calculateScoresForDate called for date: ${date}`);
+        console.log(`📊 calculateScoresForDate called for date: ${date}`);
         
         // Get questions for the date
         const questionsSnapshot = await db.collection('questions').where('date', '==', date).get();
-        console.log(`Found ${questionsSnapshot.size} question documents for date ${date}`);
+        console.log(`  📚 Found ${questionsSnapshot.size} question documents for date ${date}`);
         if (questionsSnapshot.empty) {
-          console.log(`No questions found for date ${date}`);
+          console.warn(`  ⚠️ No questions found for date ${date} - cannot calculate scores`);
           return [];
         }
 
         const doc = questionsSnapshot.docs[0];
         const questions = doc.data().items || [];
-        console.log(`Loaded ${questions.length} questions for date ${date}`);
+        console.log(`  ✅ Loaded ${questions.length} questions for date ${date}`);
 
         // Get correct answers
         const answersSnapshot = await db.collection('correctAnswers').where('date', '==', date).get();
-        console.log(`Found ${answersSnapshot.size} correct answer document(s) for date ${date}`);
+        console.log(`  📝 Found ${answersSnapshot.size} correct answer document(s) for date ${date}`);
         if (answersSnapshot.empty) {
-          console.log(`⚠️ No correct answers found for date ${date}. Scores cannot be calculated.`);
+          console.warn(`  ⚠️ No correct answers found for date ${date}. Scores cannot be calculated.`);
           return [];
         }
 
@@ -1855,16 +1866,22 @@
         if (correctAnswersDoc.answers && Array.isArray(correctAnswersDoc.answers)) {
           correctAnswersDoc.answers.forEach(a => {
             correctAnswersMap[a.questionId] = a.correctAnswer;
-            console.log(`Q${a.questionId}: Correct answer = ${a.correctAnswer}`);
+            console.log(`    Q${a.questionId}: ${a.correctAnswer}`);
           });
+          console.log(`  ✅ Loaded ${Object.keys(correctAnswersMap).length} correct answers`);
         } else {
-          console.warn(`⚠️ answers field is missing or not an array in correctAnswers doc`);
+          console.warn(`  ⚠️ answers field is missing or not an array in correctAnswers doc`);
           return [];
         }
 
         // Get all picks for this date
         const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
-        console.log(`Found ${picksSnapshot.size} pick documents for date ${date}`);
+        console.log(`  🗳️ Found ${picksSnapshot.size} pick documents for date ${date}`);
+        
+        if (picksSnapshot.empty) {
+          console.warn(`  ⚠️ No user picks found for date ${date} - cannot calculate individual scores`);
+          return [];
+        }
         
         const userScores = {};
         picksSnapshot.forEach(pickDoc => {
@@ -1882,7 +1899,7 @@
 
           // Iterate through each answer for this user
           const userAnswers = pickData.answers || [];
-          console.log(`User ${userEmail} submitted ${userAnswers.length} answers`);
+          console.log(`    👤 ${userEmail}: ${userAnswers.length} answers`);
           let userCorrectCount = 0;
           
           userAnswers.forEach((userPick, qIdx) => {
@@ -2459,38 +2476,55 @@
     });
 
     // === Leaderboard Refresh Buttons ===
-    document.getElementById('refreshDailyBtn').addEventListener('click', async () => {
-      console.log('🔄 User clicked refresh Daily leaderboard');
-      try {
-        await loadLeaderboard('daily');
-        showMessage('✅ Daily leaderboard refreshed!', 'success');
-      } catch (err) {
-        console.error('Error refreshing daily leaderboard:', err);
-        showMessage('❌ Failed to refresh. Check console for details.', 'error');
-      }
-    });
+    const dailyRefreshBtn = document.getElementById('refreshDailyBtn');
+    const weeklyRefreshBtn = document.getElementById('refreshWeeklyBtn');
+    const monthlyRefreshBtn = document.getElementById('refreshMonthlyBtn');
+    
+    if (!dailyRefreshBtn) console.error('❌ refreshDailyBtn not found!');
+    if (!weeklyRefreshBtn) console.error('❌ refreshWeeklyBtn not found!');
+    if (!monthlyRefreshBtn) console.error('❌ refreshMonthlyBtn not found!');
+    
+    if (dailyRefreshBtn) {
+      dailyRefreshBtn.addEventListener('click', async () => {
+        console.log('🔄 User clicked refresh Daily leaderboard');
+        try {
+          await loadLeaderboard('daily');
+          showMessage('✅ Daily leaderboard refreshed!', 'success');
+        } catch (err) {
+          console.error('Error refreshing daily leaderboard:', err);
+          showMessage('❌ Failed to refresh. Check console for details.', 'error');
+        }
+      });
+      console.log('✅ Daily refresh button listener attached');
+    }
 
-    document.getElementById('refreshWeeklyBtn').addEventListener('click', async () => {
-      console.log('🔄 User clicked refresh Weekly leaderboard');
-      try {
-        await loadLeaderboard('weekly');
-        showMessage('✅ Weekly leaderboard refreshed!', 'success');
-      } catch (err) {
-        console.error('Error refreshing weekly leaderboard:', err);
-        showMessage('❌ Failed to refresh. Check console for details.', 'error');
-      }
-    });
+    if (weeklyRefreshBtn) {
+      weeklyRefreshBtn.addEventListener('click', async () => {
+        console.log('🔄 User clicked refresh Weekly leaderboard');
+        try {
+          await loadLeaderboard('weekly');
+          showMessage('✅ Weekly leaderboard refreshed!', 'success');
+        } catch (err) {
+          console.error('Error refreshing weekly leaderboard:', err);
+          showMessage('❌ Failed to refresh. Check console for details.', 'error');
+        }
+      });
+      console.log('✅ Weekly refresh button listener attached');
+    }
 
-    document.getElementById('refreshMonthlyBtn').addEventListener('click', async () => {
-      console.log('🔄 User clicked refresh Monthly leaderboard');
-      try {
-        await loadLeaderboard('monthly');
-        showMessage('✅ Monthly leaderboard refreshed!', 'success');
-      } catch (err) {
-        console.error('Error refreshing monthly leaderboard:', err);
-        showMessage('❌ Failed to refresh. Check console for details.', 'error');
-      }
-    });
+    if (monthlyRefreshBtn) {
+      monthlyRefreshBtn.addEventListener('click', async () => {
+        console.log('🔄 User clicked refresh Monthly leaderboard');
+        try {
+          await loadLeaderboard('monthly');
+          showMessage('✅ Monthly leaderboard refreshed!', 'success');
+        } catch (err) {
+          console.error('Error refreshing monthly leaderboard:', err);
+          showMessage('❌ Failed to refresh. Check console for details.', 'error');
+        }
+      });
+      console.log('✅ Monthly refresh button listener attached');
+    }
 
     async function loadLeaderboard(period) {
       try {
@@ -2515,12 +2549,13 @@
 
         const startDateStr = startDate.toISOString().split('T')[0];
         const endDateStr = now.toISOString().split('T')[0];
-        console.log(`${period} leaderboard: date range ${startDateStr} to ${endDateStr}`);
+        console.log(`📅 ${period.toUpperCase()} leaderboard: date range ${startDateStr} to ${endDateStr}`);
 
         // Get all dates in the range with picks
         const picksSnapshot = await db.collection('picks').get();
+        console.log(`  📦 Total picks in database: ${picksSnapshot.size}`);
         if (picksSnapshot.empty) {
-          console.log(`No picks found for ${period} leaderboard`);
+          console.warn(`  ⚠️ No picks found in database for ${period} leaderboard`);
           renderLeaderboard(period, []);
           return;
         }
@@ -2534,14 +2569,14 @@
           }
         });
         
-        console.log(`Found ${datesInRange.size} dates with picks in range for ${period}`);
+        console.log(`  📅 Found ${datesInRange.size} dates with picks in range: [${Array.from(datesInRange).join(', ')}]`);
 
         // Calculate scores for each date and aggregate by user
         const userScoresMap = {};
         for (const date of datesInRange) {
-          console.log(`Calculating scores for ${period} - date: ${date}`);
+          console.log(`  🔄 Calculating scores for date: ${date}`);
           const dailyScores = await calculateScoresForDate(date);
-          console.log(`Got ${dailyScores.length} users with scores for date ${date}`);
+          console.log(`    ➡️ Got ${dailyScores.length} users with scores for ${date}`);
           
           dailyScores.forEach(dayScore => {
             if (!userScoresMap[dayScore.email]) {
