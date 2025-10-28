@@ -1049,10 +1049,7 @@
           <!-- Mark Correct Answers Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <div class="mark-answers-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h2 style="margin: 0;">Mark Correct Answers</h2>
-              <button class="btn btn-success" id="refreshLeaderboardBtn" style="display: none; background: #10b981; padding: 0.5rem 1rem; font-size: 0.9rem;">🔄 Refresh & Grade</button>
-            </div>
+            <h2>Mark Correct Answers</h2>
             <div id="markAnswersMessage" class="message"></div>
 
             <div class="admin-date-section">
@@ -1065,33 +1062,37 @@
               <!-- Questions will be loaded here with answer input fields -->
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-              <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none;">Save Correct Answers</button>
-              <button class="btn btn-secondary" id="previewScoresBtn" style="display: none; background: #6366f1;">👁️ Preview Scores</button>
-            </div>
+            <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none; margin-top: 1rem;">Save Correct Answers</button>
           </div>
 
-          <!-- Leaderboard Preview Section -->
+          <!-- Delete Submissions Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
-          <div class="leaderboard-preview-section">
-            <h2>Live Leaderboard Preview</h2>
-            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">Auto-updates when you save correct answers</p>
-            <div style="overflow-x: auto;">
-              <table id="leaderboardPreviewTable" style="width: 100%; border-collapse: collapse; display: none;">
+          <div class="delete-submissions-section">
+            <h2>🗑️ Delete Submissions</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Remove user picks for a specific date</p>
+            <div id="deleteMessage" class="message"></div>
+
+            <div class="admin-date-section">
+              <label>Select Date:</label>
+              <input type="date" id="deleteSubmissionsDate" />
+              <button class="btn btn-secondary" id="loadSubmissionsForDeleteBtn">Load Submissions</button>
+            </div>
+
+            <div style="overflow-x: auto; margin-top: 1.5rem;">
+              <table id="deleteSubmissionsTable" style="width: 100%; border-collapse: collapse; display: none;">
                 <thead>
                   <tr style="background: var(--form); border-bottom: 2px solid var(--border);">
-                    <th style="padding: 12px; text-align: left;">Rank</th>
-                    <th style="padding: 12px; text-align: left;">Player</th>
-                    <th style="padding: 12px; text-align: center;">Correct</th>
-                    <th style="padding: 12px; text-align: center;">Win %</th>
+                    <th style="padding: 12px; text-align: left;">User Email</th>
+                    <th style="padding: 12px; text-align: center;">Answers Submitted</th>
+                    <th style="padding: 12px; text-align: center;">Action</th>
                   </tr>
                 </thead>
-                <tbody id="leaderboardPreviewBody">
+                <tbody id="deleteSubmissionsTableBody">
                 </tbody>
               </table>
-              <div id="noLeaderboardMessage" style="text-align: center; padding: 40px; color: var(--muted);">
-                <p style="font-size: 32px; margin-bottom: 10px;">📊</p>
-                <p>No scores to display yet. Mark correct answers first!</p>
+              <div id="noSubmissionsForDeleteMessage" style="text-align: center; padding: 40px; color: var(--muted);">
+                <p style="font-size: 32px; margin-bottom: 10px;">📭</p>
+                <p>No submissions found for this date</p>
               </div>
             </div>
           </div>
@@ -1606,8 +1607,6 @@
 
         renderAnswersForm();
         document.getElementById('saveCorrectAnswersBtn').style.display = 'block';
-        document.getElementById('previewScoresBtn').style.display = 'block';
-        document.getElementById('refreshLeaderboardBtn').style.display = 'inline-block';
         showMessage('Questions loaded successfully', 'success', 'markAnswersMessage');
       } catch (err) {
         console.error('Error loading questions:', err);
@@ -1774,10 +1773,6 @@
 
         showMessage('✅ Correct answers saved successfully! Refreshing leaderboards...', 'success', 'markAnswersMessage');
         
-        // Auto-refresh leaderboard preview
-        await refreshLeaderboardPreview(dateInput);
-        document.getElementById('refreshLeaderboardBtn').style.display = 'inline-block';
-        
         // Add a small delay to ensure Firestore has replicated the data
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -1905,56 +1900,81 @@
       }
     }
 
-    // Refresh leaderboard preview
-    async function refreshLeaderboardPreview(date) {
+    // Load submissions for deletion
+    async function loadSubmissionsForDelete(date) {
       try {
-        const scores = await calculateScoresForDate(date);
+        showMessage('Loading submissions...', 'info', 'deleteMessage');
         
-        if (scores.length === 0) {
-          document.getElementById('leaderboardPreviewTable').style.display = 'none';
-          document.getElementById('noLeaderboardMessage').style.display = 'block';
+        const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
+        
+        if (picksSnapshot.empty) {
+          document.getElementById('deleteSubmissionsTable').style.display = 'none';
+          document.getElementById('noSubmissionsForDeleteMessage').style.display = 'block';
+          showMessage('No submissions found for this date', 'info', 'deleteMessage');
           return;
         }
 
-        const tbody = document.getElementById('leaderboardPreviewBody');
-        tbody.innerHTML = scores.map(score => `
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding: 12px; font-weight: 600; color: var(--brand);">#${score.rank}</td>
-            <td style="padding: 12px;">${score.email}</td>
-            <td style="padding: 12px; text-align: center; font-weight: 600;">${score.correct}/${score.total}</td>
-            <td style="padding: 12px; text-align: center; color: var(--success); font-weight: 600;">${score.percentage}%</td>
-          </tr>
-        `).join('');
+        const tbody = document.getElementById('deleteSubmissionsTableBody');
+        tbody.innerHTML = picksSnapshot.docs.map(doc => {
+          const data = doc.data();
+          const userEmail = data.userEmail || data.username || data.userId;
+          const answerCount = (data.answers || []).length;
+          
+          return `
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px;">${userEmail}</td>
+              <td style="padding: 12px; text-align: center;">${answerCount}</td>
+              <td style="padding: 12px; text-align: center;">
+                <button class="btn btn-danger delete-submission-btn" data-doc-id="${doc.id}" style="padding: 6px 12px; font-size: 0.9rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
 
-        document.getElementById('leaderboardPreviewTable').style.display = 'table';
-        document.getElementById('noLeaderboardMessage').style.display = 'none';
+        document.getElementById('deleteSubmissionsTable').style.display = 'table';
+        document.getElementById('noSubmissionsForDeleteMessage').style.display = 'none';
+        showMessage(`✅ Loaded ${picksSnapshot.size} submission(s)`, 'success', 'deleteMessage');
+
+        // Add event listeners to delete buttons
+        document.querySelectorAll('.delete-submission-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const docId = e.target.dataset.docId;
+            if (confirm('Are you sure you want to delete this submission? This cannot be undone.')) {
+              await deleteSubmission(docId, date);
+            }
+          });
+        });
       } catch (err) {
-        console.error('Error refreshing leaderboard:', err);
+        console.error('Error loading submissions:', err);
+        showMessage('Error loading submissions: ' + err.message, 'error', 'deleteMessage');
       }
     }
 
-    // Preview scores button
-    document.getElementById('previewScoresBtn').addEventListener('click', async () => {
-      const dateInput = document.getElementById('markAnswersDate').value;
-      if (!dateInput) {
-        showMessage('Please select a date first', 'error', 'markAnswersMessage');
-        return;
+    // Delete individual submission
+    async function deleteSubmission(docId, date) {
+      try {
+        showMessage('Deleting submission...', 'info', 'deleteMessage');
+        await db.collection('picks').doc(docId).delete();
+        showMessage('✅ Submission deleted successfully!', 'success', 'deleteMessage');
+        
+        // Reload the table
+        await loadSubmissionsForDelete(date);
+      } catch (err) {
+        console.error('Error deleting submission:', err);
+        showMessage('Error deleting submission: ' + err.message, 'error', 'deleteMessage');
       }
-      await refreshLeaderboardPreview(dateInput);
-      showMessage('✅ Leaderboard preview loaded!', 'success', 'markAnswersMessage');
-    });
+    }
 
-    // Refresh leaderboard button - calculates live scores from current state
-    document.getElementById('refreshLeaderboardBtn').addEventListener('click', async () => {
-      const dateInput = document.getElementById('markAnswersDate').value;
+    // Load submissions for delete button
+    document.getElementById('loadSubmissionsForDeleteBtn').addEventListener('click', async () => {
+      const dateInput = document.getElementById('deleteSubmissionsDate').value;
       if (!dateInput) {
-        showMessage('Please select a date first', 'error', 'markAnswersMessage');
+        showMessage('Please select a date first', 'error', 'deleteMessage');
         return;
       }
-      
-      showMessage('🔄 Calculating scores...', 'info', 'markAnswersMessage');
-      await refreshLeaderboardPreview(dateInput);
-      showMessage('✅ Leaderboard refreshed! Click "Preview Scores" to see current standings.', 'success', 'markAnswersMessage');
+      await loadSubmissionsForDelete(dateInput);
     });
 
     // Load User Responses
