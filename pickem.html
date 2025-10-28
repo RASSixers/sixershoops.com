@@ -1946,11 +1946,12 @@
         picksSnapshot.forEach(pickDoc => {
           const pickData = pickDoc.data();
           const userId = pickData.userId;
-          const userEmail = pickData.userEmail || pickData.username || userId;
+          const userDisplay = pickData.username || pickData.userEmail || userId;
           
           if (!userScores[userId]) {
             userScores[userId] = {
-              email: userEmail,
+              username: userDisplay,
+              email: pickData.userEmail,
               correct: 0,
               total: questions.length
             };
@@ -2003,6 +2004,7 @@
           .sort((a, b) => b.correct - a.correct)
           .map((score, idx) => ({
             rank: idx + 1,
+            username: score.username,
             email: score.email,
             correct: score.correct,
             total: score.total,
@@ -2674,6 +2676,7 @@
           dailyScores.forEach(dayScore => {
             if (!userScoresMap[dayScore.email]) {
               userScoresMap[dayScore.email] = {
+                username: dayScore.username,
                 email: dayScore.email,
                 totalCorrect: 0,
                 totalQuestions: 0
@@ -2681,14 +2684,14 @@
             }
             userScoresMap[dayScore.email].totalCorrect += dayScore.correct;
             userScoresMap[dayScore.email].totalQuestions += dayScore.total;
-            console.log(`${dayScore.email}: ${dayScore.correct}/${dayScore.total} (running total: ${userScoresMap[dayScore.email].totalCorrect}/${userScoresMap[dayScore.email].totalQuestions})`);
+            console.log(`${dayScore.username}: ${dayScore.correct}/${dayScore.total} (running total: ${userScoresMap[dayScore.email].totalCorrect}/${userScoresMap[dayScore.email].totalQuestions})`);
           });
         }
 
         // Convert to array and sort by correct answers (descending)
         const leaderboard = Object.values(userScoresMap)
           .map(score => ({
-            username: score.email,
+            username: score.username,
             correct_count: score.totalCorrect,
             total_count: score.totalQuestions
           }))
