@@ -1946,12 +1946,11 @@
         picksSnapshot.forEach(pickDoc => {
           const pickData = pickDoc.data();
           const userId = pickData.userId;
-          const userDisplay = pickData.username || pickData.userEmail || userId;
+          const userEmail = pickData.userEmail || pickData.username || userId;
           
           if (!userScores[userId]) {
             userScores[userId] = {
-              username: userDisplay,
-              email: pickData.userEmail,
+              email: userEmail,
               correct: 0,
               total: questions.length
             };
@@ -1959,7 +1958,7 @@
 
           // Iterate through each answer for this user
           const userAnswers = pickData.answers || [];
-          console.log(`    👤 ${userDisplay}: ${userAnswers.length} answers`);
+          console.log(`    👤 ${userEmail}: ${userAnswers.length} answers`);
           let userCorrectCount = 0;
           
           userAnswers.forEach((userPick, qIdx) => {
@@ -1996,7 +1995,7 @@
           });
           
           userScores[userId].correct = userCorrectCount;
-          console.log(`User ${userDisplay} scored ${userCorrectCount}/${userScores[userId].total}`);
+          console.log(`User ${userEmail} scored ${userCorrectCount}/${userScores[userId].total}`);
         });
 
         // Convert to array and sort by correct answers (descending)
@@ -2004,7 +2003,6 @@
           .sort((a, b) => b.correct - a.correct)
           .map((score, idx) => ({
             rank: idx + 1,
-            username: score.username,
             email: score.email,
             correct: score.correct,
             total: score.total,
@@ -2674,25 +2672,23 @@
           console.log(`    ➡️ Got ${dailyScores.length} users with scores for ${date}`);
           
           dailyScores.forEach(dayScore => {
-            const key = dayScore.email || dayScore.username || 'unknown';
-            if (!userScoresMap[key]) {
-              userScoresMap[key] = {
-                username: dayScore.username,
+            if (!userScoresMap[dayScore.email]) {
+              userScoresMap[dayScore.email] = {
                 email: dayScore.email,
                 totalCorrect: 0,
                 totalQuestions: 0
               };
             }
-            userScoresMap[key].totalCorrect += dayScore.correct;
-            userScoresMap[key].totalQuestions += dayScore.total;
-            console.log(`${dayScore.username || dayScore.email}: ${dayScore.correct}/${dayScore.total} (running total: ${userScoresMap[key].totalCorrect}/${userScoresMap[key].totalQuestions})`);
+            userScoresMap[dayScore.email].totalCorrect += dayScore.correct;
+            userScoresMap[dayScore.email].totalQuestions += dayScore.total;
+            console.log(`${dayScore.email}: ${dayScore.correct}/${dayScore.total} (running total: ${userScoresMap[dayScore.email].totalCorrect}/${userScoresMap[dayScore.email].totalQuestions})`);
           });
         }
 
         // Convert to array and sort by correct answers (descending)
         const leaderboard = Object.values(userScoresMap)
           .map(score => ({
-            username: score.username,
+            username: score.email,
             correct_count: score.totalCorrect,
             total_count: score.totalQuestions
           }))
