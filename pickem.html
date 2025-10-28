@@ -1959,7 +1959,7 @@
 
           // Iterate through each answer for this user
           const userAnswers = pickData.answers || [];
-          console.log(`    👤 ${userEmail}: ${userAnswers.length} answers`);
+          console.log(`    👤 ${userDisplay}: ${userAnswers.length} answers`);
           let userCorrectCount = 0;
           
           userAnswers.forEach((userPick, qIdx) => {
@@ -1996,7 +1996,7 @@
           });
           
           userScores[userId].correct = userCorrectCount;
-          console.log(`User ${userEmail} scored ${userCorrectCount}/${userScores[userId].total}`);
+          console.log(`User ${userDisplay} scored ${userCorrectCount}/${userScores[userId].total}`);
         });
 
         // Convert to array and sort by correct answers (descending)
@@ -2674,17 +2674,18 @@
           console.log(`    ➡️ Got ${dailyScores.length} users with scores for ${date}`);
           
           dailyScores.forEach(dayScore => {
-            if (!userScoresMap[dayScore.email]) {
-              userScoresMap[dayScore.email] = {
+            const key = dayScore.email || dayScore.username || 'unknown';
+            if (!userScoresMap[key]) {
+              userScoresMap[key] = {
                 username: dayScore.username,
                 email: dayScore.email,
                 totalCorrect: 0,
                 totalQuestions: 0
               };
             }
-            userScoresMap[dayScore.email].totalCorrect += dayScore.correct;
-            userScoresMap[dayScore.email].totalQuestions += dayScore.total;
-            console.log(`${dayScore.username}: ${dayScore.correct}/${dayScore.total} (running total: ${userScoresMap[dayScore.email].totalCorrect}/${userScoresMap[dayScore.email].totalQuestions})`);
+            userScoresMap[key].totalCorrect += dayScore.correct;
+            userScoresMap[key].totalQuestions += dayScore.total;
+            console.log(`${dayScore.username || dayScore.email}: ${dayScore.correct}/${dayScore.total} (running total: ${userScoresMap[key].totalCorrect}/${userScoresMap[key].totalQuestions})`);
           });
         }
 
