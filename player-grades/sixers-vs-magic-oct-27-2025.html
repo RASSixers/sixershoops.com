@@ -6,6 +6,8 @@
   <title>Player Grades - Sixers vs Magic Oct 27 - SixersHoops</title>
   <link rel="icon" type="image/x-icon" href="../favicon.ico" />
   <link rel="stylesheet" href="../navbar-styles.css" />
+  <!-- Twitter Widgets Script - Load early for embeds -->
+  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -386,8 +388,8 @@ function renderGrades() {
           <p class="player-comment">${player.comment}</p>
           ${player.tweet ? `
             <div class="twitter-embed-container">
-              <blockquote class="twitter-tweet">
-                <a href="${player.tweet}"></a>
+              <blockquote class="twitter-tweet" data-dnt="true">
+                <a href="${player.tweet}">Tweet</a>
               </blockquote>
             </div>
           ` : ''}
@@ -395,21 +397,18 @@ function renderGrades() {
       </div>
     `;
   }).join('');
+  
+  // Load Twitter widgets after DOM update
+  if (window.twttr && window.twttr.widgets) {
+    window.twttr.widgets.load();
+  }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   renderGrades();
-  
-  // Load Twitter widgets if they exist
-  if (window.twttr && window.twttr.widgets) {
-    window.twttr.widgets.load();
-  }
 });
 </script>
-
-<!-- Twitter Widgets Script -->
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 </body>
 </html>
