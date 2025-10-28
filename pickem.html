@@ -315,6 +315,27 @@
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
       gap: 20px;
       margin-bottom: 2rem;
+      min-height: 200px;
+    }
+
+    .loading-state, .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      font-size: 16px;
+      color: var(--text-muted, #666);
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .loading-state {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
     }
 
     .question-card {
@@ -948,9 +969,8 @@
 
       <!-- Daily Leaderboard Tab -->
       <div id="daily-lb" class="tab-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <div class="stats" id="dailyStatsContainer"></div>
-          <button type="button" class="btn btn-secondary" id="refreshDailyBtn" style="height: fit-content;">🔄 Refresh</button>
+        <div style="margin-bottom: 15px;">
+          <button type="button" class="btn btn-secondary" id="refreshDailyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
           <thead>
@@ -967,9 +987,8 @@
 
       <!-- Weekly Leaderboard Tab -->
       <div id="weekly-lb" class="tab-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <div class="stats" id="weeklyStatsContainer"></div>
-          <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn" style="height: fit-content;">🔄 Refresh</button>
+        <div style="margin-bottom: 15px;">
+          <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
           <thead>
@@ -986,9 +1005,8 @@
 
       <!-- Monthly Leaderboard Tab -->
       <div id="monthly-lb" class="tab-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <div class="stats" id="monthlyStatsContainer"></div>
-          <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn" style="height: fit-content;">🔄 Refresh</button>
+        <div style="margin-bottom: 15px;">
+          <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
           <thead>
@@ -2173,6 +2191,10 @@
         console.log(`📋 Loading questions for date: ${dateStr} (type: ${typeof dateStr})`);
         selectedPickDate = dateStr;
         
+        // Show loading state
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '<div class="loading-state">📋 Loading questions...</div>';
+        
         // Debug: Check all questions in collection
         const allDocs = await db.collection('questions').get();
         console.log(`📊 DEBUG - Total questions documents in collection: ${allDocs.size}`);
@@ -2682,22 +2704,9 @@
     }
 
     function renderLeaderboard(period, entries) {
-      const statsId = `${period}StatsContainer`;
       const bodyId = `${period}LeaderboardBody`;
       
       console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries:`, entries);
-      
-      const stats = `
-        <div class="stat-card">
-          <div class="stat-value">${entries.length}</div>
-          <div class="stat-label">Total Players</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${entries[0]?.correct_count || 0}</div>
-          <div class="stat-label">Top Score</div>
-        </div>
-      `;
-      document.getElementById(statsId).innerHTML = stats;
 
       const medals = ['🥇', '🥈', '🥉'];
       const bodyHtml = entries.map((entry, idx) => {
