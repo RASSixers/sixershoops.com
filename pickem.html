@@ -1706,6 +1706,9 @@
           });
         });
       });
+      
+      // Setup auto-save indicator
+      setupAnswerAutoSaveIndicator();
     }
 
     function updateAnswerIndicator(idx) {
@@ -1778,43 +1781,49 @@
       }
 
       try {
-        // Check if correct answers already exist for this date
-        const snapshot = await db.collection('correctAnswers').where('date', '==', dateInput).get();
-        
-        if (!snapshot.empty) {
-          // Delete existing document first
-          const docId = snapshot.docs[0].id;
-          await db.collection('correctAnswers').doc(docId).delete();
-          console.log('Deleted old correct answers for date:', dateInput);
-        }
-        
-        // Always create a new document (avoids update permission issues)
-        await db.collection('correctAnswers').add({
+        const docRef = await db.collection('correctAnswers').add({
           date: dateInput,
           answers: correctAnswers,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         });
-
-        showMessage('✅ Correct answers saved successfully! Refreshing leaderboards...', 'success', 'markAnswersMessage');
         
-        // Add a small delay to ensure Firestore has replicated the data
-        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('✅ Correct answers saved with ID:', docRef.id);
+        showMessage('✅ Correct answers saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
         
-        // Always refresh ALL main leaderboards (don't check if active)
-        // This ensures scores update even if user isn't currently viewing them
-        console.log('🔄 Refreshing all leaderboards after answer save...');
-        await loadLeaderboard('daily');
-        await loadLeaderboard('weekly');
-        await loadLeaderboard('monthly');
+        // Wait for Firestore to replicate
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        showMessage('✅ All leaderboards updated! Use the 🔄 Refresh buttons anytime to get latest scores.', 'success', 'markAnswersMessage');
+        // Refresh all leaderboards
+        console.log('🔄 Recalculating all leaderboards after answer save...');
+        await Promise.all([
+          loadLeaderboard('daily'),
+          loadLeaderboard('weekly'),
+          loadLeaderboard('monthly')
+        ]);
+        
+        showMessage('✅ Leaderboards updated! Scores have been recalculated.', 'success', 'markAnswersMessage');
       } catch (err) {
         console.error('Error saving correct answers:', err);
         console.error('Error code:', err.code);
         console.error('Error details:', err.message);
-        showMessage('Error saving correct answers: ' + err.message, 'error', 'markAnswersMessage');
+        showMessage('❌ Error: ' + (err.message || 'Failed to save answers'), 'error', 'markAnswersMessage');
       }
     });
+
+    // Auto-save indicator
+    function setupAnswerAutoSaveIndicator() {
+      if (questionsForAnswers.length === 0) return;
+      
+      questionsForAnswers.forEach((q, idx) => {
+        const inputs = document.querySelectorAll(`.answer-input-${idx}`);
+        inputs.forEach(input => {
+          input.addEventListener('change', () => {
+            console.log(`Answer ${idx} changed - Remember to click Save button to persist changes`);
+          });
+        });
+      });
+    }
 
     // Calculate scores based on user picks and correct answers
     async function calculateScoresForDate(date) {
@@ -1835,18 +1844,23 @@
 
         // Get correct answers
         const answersSnapshot = await db.collection('correctAnswers').where('date', '==', date).get();
-        console.log(`Found ${answersSnapshot.size} correct answer documents for date ${date}`);
+        console.log(`Found ${answersSnapshot.size} correct answer document(s) for date ${date}`);
         if (answersSnapshot.empty) {
-          console.log(`No correct answers found for date ${date}`);
+          console.log(`⚠️ No correct answers found for date ${date}. Scores cannot be calculated.`);
           return [];
         }
 
         const correctAnswersDoc = answersSnapshot.docs[0].data();
         const correctAnswersMap = {};
-        correctAnswersDoc.answers.forEach(a => {
-          correctAnswersMap[a.questionId] = a.correctAnswer;
-          console.log(`Question ${a.questionId}: Correct answer = ${a.correctAnswer}`);
-        });
+        if (correctAnswersDoc.answers && Array.isArray(correctAnswersDoc.answers)) {
+          correctAnswersDoc.answers.forEach(a => {
+            correctAnswersMap[a.questionId] = a.correctAnswer;
+            console.log(`Q${a.questionId}: Correct answer = ${a.correctAnswer}`);
+          });
+        } else {
+          console.warn(`⚠️ answers field is missing or not an array in correctAnswers doc`);
+          return [];
+        }
 
         // Get all picks for this date
         const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
@@ -2446,21 +2460,36 @@
 
     // === Leaderboard Refresh Buttons ===
     document.getElementById('refreshDailyBtn').addEventListener('click', async () => {
-      console.log('User clicked refresh Daily leaderboard');
-      await loadLeaderboard('daily');
-      showMessage('✅ Daily leaderboard refreshed!', 'success');
+      console.log('🔄 User clicked refresh Daily leaderboard');
+      try {
+        await loadLeaderboard('daily');
+        showMessage('✅ Daily leaderboard refreshed!', 'success');
+      } catch (err) {
+        console.error('Error refreshing daily leaderboard:', err);
+        showMessage('❌ Failed to refresh. Check console for details.', 'error');
+      }
     });
 
     document.getElementById('refreshWeeklyBtn').addEventListener('click', async () => {
-      console.log('User clicked refresh Weekly leaderboard');
-      await loadLeaderboard('weekly');
-      showMessage('✅ Weekly leaderboard refreshed!', 'success');
+      console.log('🔄 User clicked refresh Weekly leaderboard');
+      try {
+        await loadLeaderboard('weekly');
+        showMessage('✅ Weekly leaderboard refreshed!', 'success');
+      } catch (err) {
+        console.error('Error refreshing weekly leaderboard:', err);
+        showMessage('❌ Failed to refresh. Check console for details.', 'error');
+      }
     });
 
     document.getElementById('refreshMonthlyBtn').addEventListener('click', async () => {
-      console.log('User clicked refresh Monthly leaderboard');
-      await loadLeaderboard('monthly');
-      showMessage('✅ Monthly leaderboard refreshed!', 'success');
+      console.log('🔄 User clicked refresh Monthly leaderboard');
+      try {
+        await loadLeaderboard('monthly');
+        showMessage('✅ Monthly leaderboard refreshed!', 'success');
+      } catch (err) {
+        console.error('Error refreshing monthly leaderboard:', err);
+        showMessage('❌ Failed to refresh. Check console for details.', 'error');
+      }
     });
 
     async function loadLeaderboard(period) {
@@ -2594,7 +2623,9 @@
       if (!msg) return;
       msg.textContent = text;
       msg.className = `message show ${type}`;
-      setTimeout(() => msg.classList.remove('show'), 4000);
+      console.log(`[${type.toUpperCase()}] ${text}`);
+      // Auto-hide after 5 seconds (increased from 4s for better UX)
+      setTimeout(() => msg.classList.remove('show'), 5000);
     }
 
     // === Init ===
