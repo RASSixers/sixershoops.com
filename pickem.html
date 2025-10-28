@@ -1541,7 +1541,7 @@
       }
 
       try {
-        console.log(`💾 Admin saving ${adminQuestions.length} questions for date: ${dateInput}`);
+        console.log(`💾 Admin saving ${adminQuestions.length} questions for date: "${dateInput}" (type: ${typeof dateInput}, length: ${dateInput.length})`);
         
         // Remove tempId from questions before saving
         const questionsToSave = adminQuestions.map(q => {
@@ -1556,6 +1556,7 @@
         
         if (!snapshot.empty) {
           console.log(`📤 Updating existing questions document for ${dateInput}`);
+          console.log(`   Existing doc ID: ${snapshot.docs[0].id}`);
           // Update existing document
           await snapshot.docs[0].ref.update({
             items: questionsToSave,
@@ -1563,12 +1564,12 @@
           });
         } else {
           console.log(`🆕 Creating new questions document for ${dateInput}`);
-          // Create new document
-          await db.collection('questions').add({
+          const docRef = await db.collection('questions').add({
             date: dateInput,
             items: questionsToSave,
             createdAt: new Date().toISOString()
           });
+          console.log(`   New doc ID: ${docRef.id}`);
         }
 
         console.log(`✅ Questions saved successfully for ${dateInput}!`);
@@ -2082,14 +2083,25 @@
     async function loadQuestionsForDate(dateStr) {
       if (!currentUser) return;
       try {
-        console.log(`📋 Loading questions for date: ${dateStr}`);
+        console.log(`📋 Loading questions for date: ${dateStr} (type: ${typeof dateStr})`);
         selectedPickDate = dateStr;
+        
+        // Debug: Check all questions in collection
+        const allDocs = await db.collection('questions').get();
+        console.log(`📊 DEBUG - Total questions documents in collection: ${allDocs.size}`);
+        allDocs.forEach(doc => {
+          const data = doc.data();
+          console.log(`  Document - Date: "${data.date}" (type: ${typeof data.date}), Items count: ${data.items?.length || 0}`);
+        });
+        
         const snapshot = await db.collection('questions').where('date', '==', dateStr).get();
         
-        console.log(`Found ${snapshot.size} document(s) in questions collection for ${dateStr}`);
+        console.log(`Found ${snapshot.size} document(s) matching query for ${dateStr}`);
         
         if (snapshot.empty) {
           console.warn(`⚠️ No questions found for ${dateStr}`);
+          console.warn(`  Searched for exact match: "${dateStr}"`);
+          console.warn(`  Are there any questions saved at all? Check collection above.`);
           todayQuestions = [];
           renderQuestions();
           return;
@@ -2118,12 +2130,16 @@
       
       if (todayQuestions.length === 0) {
         console.warn('⚠️ renderQuestions called with 0 questions');
+        console.warn(`  Current date: ${selectedPickDate}`);
+        console.warn(`  todayQuestions array: ${JSON.stringify(todayQuestions)}`);
         container.innerHTML = '<div class="empty-state">No questions available today. Check back later!</div>';
         document.getElementById('submitBtn').disabled = true;
         return;
       }
       
-      console.log(`🎨 Rendering ${todayQuestions.length} questions to the page`);
+      console.log(`🎨 Rendering ${todayQuestions.length} questions to the page for date ${selectedPickDate}`);
+      console.log(`   Questions: ${JSON.stringify(todayQuestions)}`);
+      console.log(`   Container ID: ${container.id}, exists: ${!!container}`);
 
       container.innerHTML = todayQuestions.map((q, i) => {
         let optionsHtml = '';
@@ -2163,9 +2179,14 @@
         `;
       }).join('');
 
+      console.log(`✅ HTML rendered to container. DOM update complete.`);
+      console.log(`   Question cards in DOM: ${document.querySelectorAll('.question-card').length}`);
+
       document.querySelectorAll('input[name^="q"]').forEach(input => {
         input.addEventListener('change', updateProgress);
       });
+      
+      console.log(`✅ Event listeners attached to ${document.querySelectorAll('input[name^="q"]').length} input elements`);
     }
 
     function updateProgress() {
@@ -2376,8 +2397,10 @@
 
     // Initialize date slider
     const today = new Date().toISOString().split('T')[0];
+    console.log(`🚀 PAGE INITIALIZATION: Loading picks for today: ${today}`);
     document.getElementById('pickDate').value = today;
     renderDateSlider();
+    console.log(`📅 Date slider rendered. Loading questions for: ${today}`);
     loadQuestionsForDate(today);
 
     // === Tabs ===
