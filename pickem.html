@@ -961,6 +961,18 @@
 
         <div id="questionsContainer" class="questions-container"></div>
         
+        <!-- Lock Time Status Display -->
+        <div id="lockTimeStatus" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; border-left: 4px solid var(--error); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));">
+          <p style="margin: 0 0 0.5rem 0; font-weight: 700; color: var(--error);">⏰ Submissions Closed</p>
+          <p id="lockTimeStatusMessage" style="margin: 0; color: var(--ink); font-size: 0.95rem;"></p>
+        </div>
+
+        <!-- Countdown Timer Display -->
+        <div id="countdownTimer" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; border-left: 4px solid var(--brand); background: linear-gradient(135deg, rgba(0, 61, 166, 0.1), rgba(0, 61, 166, 0.05));">
+          <p style="margin: 0 0 0.5rem 0; font-weight: 700; color: var(--brand);">⏱️ Time Until Submissions Close</p>
+          <p id="countdownText" style="margin: 0; color: var(--ink); font-size: 1.1rem; font-weight: 700;"></p>
+        </div>
+        
         <div class="submit-section">
           <button type="button" class="btn btn-primary" id="submitBtn">Submit Picks</button>
           <button type="button" class="btn btn-secondary" id="clearBtn">Clear All</button>
@@ -1062,6 +1074,37 @@
             <h3>Today's Questions</h3>
             <div id="adminQuestionsList"></div>
             <button class="btn btn-primary" id="saveQuestionsBtn" style="margin-top: 1rem;">Save All to Database</button>
+          </div>
+
+          <!-- Set Submission Lock Time Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="lock-time-section">
+            <h2>⏰ Set Submission Lock Time</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Set the time when submissions lock for this date (EST timezone)</p>
+            <div id="lockTimeMessage" class="message"></div>
+
+            <div style="background: var(--chip); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Select Date:</label>
+                <input type="date" id="lockTimeDate" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Lock Time (EST):</label>
+                <input type="time" id="lockTimeInput" class="form-input" />
+                <small style="color: var(--muted); display: block; margin-top: 0.5rem;">Example: 19:00 for 7:00 PM</small>
+              </div>
+
+              <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" id="saveLockTimeBtn">💾 Save Lock Time</button>
+                <button class="btn btn-secondary" id="loadLockTimeBtn">Load Current Lock Time</button>
+              </div>
+            </div>
+
+            <div id="lockTimeDisplay" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--success); display: none;">
+              <p style="margin: 0; font-weight: 700;">Current Lock Time:</p>
+              <p id="lockTimeDisplayValue" style="margin: 0.5rem 0 0 0; font-size: 1.2rem; color: var(--success);"></p>
+            </div>
           </div>
 
           <!-- Mark Correct Answers Section -->
@@ -1435,10 +1478,13 @@
     // Set today's date by default using timezone-safe formatting
     const today = new Date();
     const adminDateInput = document.getElementById('adminDate');
+    const lockTimeDateInput = document.getElementById('lockTimeDate');
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    adminDateInput.value = `${year}-${month}-${day}`;
+    const todayDateStr = `${year}-${month}-${day}`;
+    adminDateInput.value = todayDateStr;
+    lockTimeDateInput.value = todayDateStr;
     console.log(`📅 Admin date initialized to: ${adminDateInput.value}`);
 
     // Toggle options field based on question type
@@ -1615,6 +1661,214 @@
         showMessage('Error saving questions: ' + err.message, 'error', 'adminMessage');
       }
     });
+
+    // === Lock Time Management ===
+    // Convert EST time to stored format (time is stored as HH:MM in EST)
+    function convertESTToLocal(estTime) {
+      if (!estTime) return null;
+      const [hours, minutes] = estTime.split(':');
+      return `${hours}:${minutes}`;
+    }
+
+    // Get current time in EST
+    function getESTNow() {
+      const now = new Date();
+      const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      return estTime;
+    }
+
+    // Check if submissions are locked for a given date and time
+    function areSubmissionsLocked(date, lockTime) {
+      if (!lockTime) return false; // No lock time set
+      
+      const now = getESTNow();
+      const today = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      // Only check lock if it's the lock date
+      if (date === todayStr) {
+        const [lockHours, lockMinutes] = lockTime.split(':');
+        const lockDate = new Date(today);
+        lockDate.setHours(parseInt(lockHours), parseInt(lockMinutes), 0);
+        return now >= lockDate;
+      }
+      return false;
+    }
+
+    // Get time until lock
+    function getTimeUntilLock(date, lockTime) {
+      if (!lockTime) return null;
+      
+      const now = getESTNow();
+      const today = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      if (date !== todayStr) return null;
+      
+      const [lockHours, lockMinutes] = lockTime.split(':');
+      const lockDate = new Date(today);
+      lockDate.setHours(parseInt(lockHours), parseInt(lockMinutes), 0);
+      
+      if (now >= lockDate) return 0; // Already locked
+      
+      const diff = lockDate - now;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      return { hours, mins, secs, diff };
+    }
+
+    // Format countdown timer display
+    function formatCountdown(timeObj) {
+      if (!timeObj) return '';
+      const { hours, mins, secs } = timeObj;
+      if (hours > 0) {
+        return `${hours}h ${mins}m ${secs}s`;
+      } else if (mins > 0) {
+        return `${mins}m ${secs}s`;
+      } else {
+        return `${secs}s`;
+      }
+    }
+
+    // Load and display lock time for a date (admin)
+    document.getElementById('loadLockTimeBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const dateInput = document.getElementById('lockTimeDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date', 'error', 'lockTimeMessage');
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('lockTimes').where('date', '==', dateInput).get();
+        
+        if (snapshot.empty) {
+          document.getElementById('lockTimeInput').value = '';
+          document.getElementById('lockTimeDisplay').style.display = 'none';
+          showMessage('No lock time set for this date', 'info', 'lockTimeMessage');
+        } else {
+          const lockTime = snapshot.docs[0].data().lockTime;
+          document.getElementById('lockTimeInput').value = lockTime;
+          document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST`;
+          document.getElementById('lockTimeDisplay').style.display = 'block';
+          showMessage('Lock time loaded successfully', 'success', 'lockTimeMessage');
+        }
+      } catch (err) {
+        console.error('Error loading lock time:', err);
+        showMessage('Error loading lock time', 'error', 'lockTimeMessage');
+      }
+    });
+
+    // Save lock time (admin)
+    document.getElementById('saveLockTimeBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const dateInput = document.getElementById('lockTimeDate').value;
+      const lockTime = document.getElementById('lockTimeInput').value;
+      
+      if (!dateInput) {
+        showMessage('Please select a date', 'error', 'lockTimeMessage');
+        return;
+      }
+
+      if (!lockTime) {
+        showMessage('Please set a lock time', 'error', 'lockTimeMessage');
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('lockTimes').where('date', '==', dateInput).get();
+        
+        if (!snapshot.empty) {
+          await snapshot.docs[0].ref.update({
+            lockTime: lockTime,
+            updatedAt: new Date().toISOString()
+          });
+          console.log(`📝 Updated lock time for ${dateInput} to ${lockTime}`);
+        } else {
+          await db.collection('lockTimes').add({
+            date: dateInput,
+            lockTime: lockTime,
+            createdAt: new Date().toISOString()
+          });
+          console.log(`🆕 Created lock time for ${dateInput}: ${lockTime}`);
+        }
+
+        document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST`;
+        document.getElementById('lockTimeDisplay').style.display = 'block';
+        showMessage('✅ Lock time saved successfully!', 'success', 'lockTimeMessage');
+      } catch (err) {
+        console.error('Error saving lock time:', err);
+        showMessage('Error saving lock time: ' + err.message, 'error', 'lockTimeMessage');
+      }
+    });
+
+    // Update lock time date when admin loads a date
+    document.getElementById('loadDateBtn').addEventListener('click', function() {
+      const adminDate = document.getElementById('adminDate').value;
+      if (adminDate) {
+        document.getElementById('lockTimeDate').value = adminDate;
+      }
+    });
+
+    // Check lock status for users
+    async function checkAndDisplayLockStatus(date) {
+      try {
+        const snapshot = await db.collection('lockTimes').where('date', '==', date).get();
+        
+        if (snapshot.empty) {
+          // No lock time set
+          document.getElementById('lockTimeStatus').style.display = 'none';
+          document.getElementById('countdownTimer').style.display = 'none';
+          document.getElementById('submitBtn').disabled = false;
+          return;
+        }
+
+        const lockTime = snapshot.docs[0].data().lockTime;
+        const isLocked = areSubmissionsLocked(date, lockTime);
+
+        if (isLocked) {
+          // Submissions are locked
+          document.getElementById('lockTimeStatus').style.display = 'block';
+          document.getElementById('countdownTimer').style.display = 'none';
+          document.getElementById('lockTimeStatusMessage').textContent = `Submissions are closed. Lock time was ${lockTime} EST.`;
+          document.getElementById('submitBtn').disabled = true;
+          document.getElementById('submitBtn').textContent = 'Submissions Closed';
+        } else {
+          // Show countdown
+          const timeUntil = getTimeUntilLock(date, lockTime);
+          if (timeUntil && timeUntil.diff > 0) {
+            document.getElementById('lockTimeStatus').style.display = 'none';
+            document.getElementById('countdownTimer').style.display = 'block';
+            document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(timeUntil)})`;
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').textContent = 'Submit Picks';
+
+            // Update countdown every second
+            clearInterval(window.countdownInterval);
+            window.countdownInterval = setInterval(() => {
+              const updated = getTimeUntilLock(date, lockTime);
+              if (updated && updated.diff > 0) {
+                document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(updated)})`;
+              } else {
+                // Time is up
+                checkAndDisplayLockStatus(date);
+              }
+            }, 1000);
+          } else {
+            document.getElementById('lockTimeStatus').style.display = 'none';
+            document.getElementById('countdownTimer').style.display = 'none';
+          }
+        }
+      } catch (err) {
+        console.error('Error checking lock status:', err);
+        document.getElementById('lockTimeStatus').style.display = 'none';
+        document.getElementById('countdownTimer').style.display = 'none';
+      }
+    }
 
     // === Mark Correct Answers ===
     let questionsForAnswers = [];
@@ -2227,6 +2481,9 @@
         
         // Check if already submitted for this date
         await checkSubmissionForDate(dateStr);
+
+        // Check and display lock status for this date
+        await checkAndDisplayLockStatus(dateStr);
       } catch (err) {
         console.error('Error loading questions:', err);
         console.error('Error details:', err.message);
@@ -2343,8 +2600,15 @@
               input.value = answer;
             }
           });
-          document.getElementById('submitBtn').disabled = true;
-          document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
+          
+          // Only disable button if not locked, otherwise lock time status will handle it
+          const lockSnapshot = await db.collection('lockTimes').where('date', '==', dateStr).get();
+          const isLocked = lockSnapshot.empty ? false : areSubmissionsLocked(dateStr, lockSnapshot.docs[0].data().lockTime);
+          
+          if (!isLocked) {
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
+          }
           showMessage('You have already submitted your picks for this date!', 'success');
         } else {
           // Reset submit button if not submitted yet
@@ -2365,6 +2629,20 @@
       if (!selectedPickDate) {
         showMessage('Please select a game date', 'error');
         return;
+      }
+
+      // Check if submissions are locked
+      try {
+        const lockSnapshot = await db.collection('lockTimes').where('date', '==', selectedPickDate).get();
+        if (!lockSnapshot.empty) {
+          const lockTime = lockSnapshot.docs[0].data().lockTime;
+          if (areSubmissionsLocked(selectedPickDate, lockTime)) {
+            showMessage('⏰ Submissions are closed for this date.', 'error');
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Error checking lock time:', err);
       }
 
       const answers = [];
