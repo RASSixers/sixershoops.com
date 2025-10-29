@@ -981,7 +981,11 @@
 
       <!-- Daily Leaderboard Tab -->
       <div id="daily-lb" class="tab-content">
-        <div style="margin-bottom: 15px;">
+        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+          <label for="dailyDateSelect" style="font-weight: 700; color: var(--muted);">Select Date:</label>
+          <select id="dailyDateSelect" style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer;">
+            <option value="">Loading dates...</option>
+          </select>
           <button type="button" class="btn btn-secondary" id="refreshDailyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -990,7 +994,6 @@
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
-              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="dailyLeaderboardBody"></tbody>
@@ -999,7 +1002,11 @@
 
       <!-- Weekly Leaderboard Tab -->
       <div id="weekly-lb" class="tab-content">
-        <div style="margin-bottom: 15px;">
+        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+          <label for="weeklyWeekSelect" style="font-weight: 700; color: var(--muted);">Select Week:</label>
+          <select id="weeklyWeekSelect" style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer;">
+            <option value="">Loading weeks...</option>
+          </select>
           <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -1008,7 +1015,6 @@
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
-              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="weeklyLeaderboardBody"></tbody>
@@ -1017,7 +1023,11 @@
 
       <!-- Monthly Leaderboard Tab -->
       <div id="monthly-lb" class="tab-content">
-        <div style="margin-bottom: 15px;">
+        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+          <label for="monthlyMonthSelect" style="font-weight: 700; color: var(--muted);">Select Month:</label>
+          <select id="monthlyMonthSelect" style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer;">
+            <option value="">Loading months...</option>
+          </select>
           <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -1026,7 +1036,6 @@
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
-              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="monthlyLeaderboardBody"></tbody>
@@ -2874,16 +2883,40 @@
 
     // === Tabs ===
     document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const tabName = btn.dataset.tab;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(tabName).classList.add('active');
         
-        if (tabName === 'daily-lb') loadLeaderboard('daily');
-        if (tabName === 'weekly-lb') loadLeaderboard('weekly');
-        if (tabName === 'monthly-lb') loadLeaderboard('monthly');
+        if (tabName === 'daily-lb') {
+          await populateDateDropdown();
+          const selectedDate = document.getElementById('dailyDateSelect').value;
+          if (selectedDate) {
+            await loadLeaderboard('daily', selectedDate);
+          } else {
+            await loadLeaderboard('daily');
+          }
+        }
+        if (tabName === 'weekly-lb') {
+          await populateWeekDropdown();
+          const selectedWeek = document.getElementById('weeklyWeekSelect').value;
+          if (selectedWeek) {
+            await loadLeaderboard('weekly', selectedWeek);
+          } else {
+            await loadLeaderboard('weekly');
+          }
+        }
+        if (tabName === 'monthly-lb') {
+          await populateMonthDropdown();
+          const selectedMonth = document.getElementById('monthlyMonthSelect').value;
+          if (selectedMonth) {
+            await loadLeaderboard('monthly', selectedMonth);
+          } else {
+            await loadLeaderboard('monthly');
+          }
+        }
       });
     });
 
@@ -2903,7 +2936,8 @@
         dailyRefreshBtn.disabled = true;
         dailyRefreshBtn.textContent = 'Loading...';
         try {
-          await loadLeaderboard('daily');
+          const selectedDate = document.getElementById('dailyDateSelect').value;
+          await loadLeaderboard('daily', selectedDate);
           console.log('✅ Daily leaderboard refreshed successfully');
           dailyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
@@ -2927,7 +2961,8 @@
         weeklyRefreshBtn.disabled = true;
         weeklyRefreshBtn.textContent = 'Loading...';
         try {
-          await loadLeaderboard('weekly');
+          const selectedWeek = document.getElementById('weeklyWeekSelect').value;
+          await loadLeaderboard('weekly', selectedWeek);
           console.log('✅ Weekly leaderboard refreshed successfully');
           weeklyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
@@ -2951,7 +2986,8 @@
         monthlyRefreshBtn.disabled = true;
         monthlyRefreshBtn.textContent = 'Loading...';
         try {
-          await loadLeaderboard('monthly');
+          const selectedMonth = document.getElementById('monthlyMonthSelect').value;
+          await loadLeaderboard('monthly', selectedMonth);
           console.log('✅ Monthly leaderboard refreshed successfully');
           monthlyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
@@ -2968,29 +3004,192 @@
       console.log('✅ Monthly refresh button listener attached');
     }
 
-    async function loadLeaderboard(period) {
+    // === Dropdown Helpers ===
+    const PICKEM_START_DATE = new Date(2024, 10, 1); // November 1, 2024
+    
+    function getWeekInfo(date) {
+      // Get the week structure based on November 1 start date
+      const dateObj = new Date(date);
+      const dayOfMonth = dateObj.getDate();
+      
+      if (dayOfMonth >= 1 && dayOfMonth <= 7) return { week: 1, start: 1, end: 7 };
+      if (dayOfMonth >= 8 && dayOfMonth <= 14) return { week: 2, start: 8, end: 14 };
+      if (dayOfMonth >= 15 && dayOfMonth <= 21) return { week: 3, start: 15, end: 21 };
+      if (dayOfMonth >= 22 && dayOfMonth <= 30) return { week: 4, start: 22, end: 30 };
+      return null; // Outside valid range
+    }
+
+    async function populateDateDropdown() {
       try {
-        console.log(`loadLeaderboard called for period: ${period}`);
+        const select = document.getElementById('dailyDateSelect');
+        const picksSnapshot = await db.collection('picks').get();
+        const datesSet = new Set();
         
-        // Calculate date range based on period
+        picksSnapshot.docs.forEach(doc => {
+          const date = doc.data().date;
+          if (date) datesSet.add(date);
+        });
+        
+        const sortedDates = Array.from(datesSet).sort().reverse();
+        
+        select.innerHTML = '<option value="">-- Select a Date --</option>';
+        sortedDates.forEach(date => {
+          const d = new Date(date);
+          const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          const option = document.createElement('option');
+          option.value = date;
+          option.textContent = `${label} (${date})`;
+          select.appendChild(option);
+        });
+        
+        // Set to today's date if available
+        const today = new Date().toISOString().split('T')[0];
+        if (sortedDates.includes(today)) {
+          select.value = today;
+        }
+      } catch (err) {
+        console.error('Error populating date dropdown:', err);
+      }
+    }
+
+    async function populateWeekDropdown() {
+      try {
+        const select = document.getElementById('weeklyWeekSelect');
+        const picksSnapshot = await db.collection('picks').get();
+        const weeksSet = new Set();
+        
+        picksSnapshot.docs.forEach(doc => {
+          const date = doc.data().date;
+          if (date) {
+            const weekInfo = getWeekInfo(date);
+            if (weekInfo) {
+              const monthYear = new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+              weeksSet.add(`${monthYear}-W${weekInfo.week}`);
+            }
+          }
+        });
+        
+        const sortedWeeks = Array.from(weeksSet).sort().reverse();
+        
+        select.innerHTML = '<option value="">-- Select a Week --</option>';
+        sortedWeeks.forEach(week => {
+          const option = document.createElement('option');
+          option.value = week;
+          option.textContent = `Week ${week.split('-W')[1]} - ${week.split('-W')[0]}`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error('Error populating week dropdown:', err);
+      }
+    }
+
+    async function populateMonthDropdown() {
+      try {
+        const select = document.getElementById('monthlyMonthSelect');
+        const picksSnapshot = await db.collection('picks').get();
+        const monthsSet = new Set();
+        
+        picksSnapshot.docs.forEach(doc => {
+          const date = doc.data().date;
+          if (date) {
+            const monthYear = new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+            monthsSet.add(monthYear);
+          }
+        });
+        
+        const sortedMonths = Array.from(monthsSet).sort().reverse();
+        
+        select.innerHTML = '<option value="">-- Select a Month --</option>';
+        sortedMonths.forEach(month => {
+          const option = document.createElement('option');
+          option.value = month;
+          option.textContent = month;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error('Error populating month dropdown:', err);
+      }
+    }
+
+    // Attach dropdown listeners
+    document.getElementById('dailyDateSelect')?.addEventListener('change', async (e) => {
+      if (e.target.value) {
+        await loadLeaderboard('daily', e.target.value);
+      }
+    });
+
+    document.getElementById('weeklyWeekSelect')?.addEventListener('change', async (e) => {
+      if (e.target.value) {
+        await loadLeaderboard('weekly', e.target.value);
+      }
+    });
+
+    document.getElementById('monthlyMonthSelect')?.addEventListener('change', async (e) => {
+      if (e.target.value) {
+        await loadLeaderboard('monthly', e.target.value);
+      }
+    });
+
+    async function loadLeaderboard(period, selectedValue) {
+      try {
+        console.log(`loadLeaderboard called for period: ${period}, selectedValue: ${selectedValue}`);
+        
+        // Calculate date range based on period and selected value
         const now = new Date();
         let startDate = new Date();
+        let endDate = now;
         
         if (period === 'daily') {
-          // Start of today
-          startDate.setHours(0, 0, 0, 0);
+          if (selectedValue) {
+            startDate = new Date(selectedValue);
+            endDate = new Date(selectedValue);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+          } else {
+            // Default: today
+            startDate.setHours(0, 0, 0, 0);
+          }
         } else if (period === 'weekly') {
-          // 7 days ago
-          startDate = new Date(now);
-          startDate.setDate(now.getDate() - 7);
-          startDate.setHours(0, 0, 0, 0);
+          if (selectedValue) {
+            // Parse week value format: "Nov-W1" -> extract week number and get dates
+            const [monthYear, weekNum] = selectedValue.split('-W');
+            const week = parseInt(weekNum);
+            const weekInfo = { week, start: (week - 1) * 7 + 1, end: week * 7 + (week === 4 ? 2 : 0) };
+            
+            // Find first day of the month to calculate week start
+            const monthDate = new Date(monthYear);
+            const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+            startDate = new Date(monthStart);
+            startDate.setDate(weekInfo.start);
+            startDate.setHours(0, 0, 0, 0);
+            
+            endDate = new Date(monthStart);
+            endDate.setDate(weekInfo.end);
+            endDate.setHours(23, 59, 59, 999);
+          } else {
+            // Default: last 7 days
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 7);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = now;
+          }
         } else if (period === 'monthly') {
-          // First day of current month
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          if (selectedValue) {
+            // Parse month value format: "Nov 2024"
+            const monthDate = new Date(selectedValue);
+            startDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+            endDate.setHours(23, 59, 59, 999);
+          } else {
+            // Default: current month
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = now;
+          }
         }
 
         const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = now.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
         console.log(`📅 ${period.toUpperCase()} leaderboard: date range ${startDateStr} to ${endDateStr}`);
 
         // Get all dates in the range with picks
@@ -3069,7 +3268,6 @@
             <td>${badge}${idx + 1}</td>
             <td>${entry.username}</td>
             <td><span class="score">${entry.correct_count}</span></td>
-            <td>${entry.total_count}</td>
           </tr>
         `;
       }).join('');
@@ -3078,7 +3276,7 @@
         console.warn(`⚠️  No entries to display for ${period} leaderboard`);
       }
       
-      document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="4" class="empty-state">No data yet</td></tr>';
+      document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="3" class="empty-state">No data yet</td></tr>';
     }
 
     // === Utility ===
