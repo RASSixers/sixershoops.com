@@ -1085,8 +1085,9 @@
 
             <div style="background: var(--chip); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
               <div class="form-group" style="margin-bottom: 1rem;">
-                <label class="form-label">Select Date:</label>
-                <input type="date" id="lockTimeDate" />
+                <label class="form-label">Select Date: <span id="selectedLockDate" style="color: var(--brand); font-weight: 700; font-size: 0.9rem;"></span></label>
+                <input type="date" id="lockTimeDate" style="border: 2px solid var(--border);" />
+                <small style="color: var(--muted); display: block; margin-top: 0.5rem;">💡 Tip: Click "Load Questions" above first to auto-fill this date</small>
               </div>
 
               <div class="form-group" style="margin-bottom: 1rem;">
@@ -1096,7 +1097,7 @@
               </div>
 
               <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" id="saveLockTimeBtn">💾 Save Lock Time</button>
+                <button class="btn btn-primary" id="saveLockTimeBtn">💾 Save Lock Time for Selected Date</button>
                 <button class="btn btn-secondary" id="loadLockTimeBtn">Load Current Lock Time</button>
               </div>
             </div>
@@ -1663,6 +1664,22 @@
     });
 
     // === Lock Time Management ===
+    // Update the visual indicator when lock time date changes
+    document.getElementById('lockTimeDate').addEventListener('change', function() {
+      const date = this.value;
+      const indicator = document.getElementById('selectedLockDate');
+      if (date) {
+        const dateObj = new Date(date + 'T00:00:00');
+        const options = { weekday: 'short', month: 'short', day: 'numeric' };
+        const formatted = dateObj.toLocaleDateString('en-US', options);
+        indicator.textContent = `(${formatted})`;
+        this.style.borderColor = 'var(--success)';  // Green border when date is selected
+      } else {
+        indicator.textContent = '';
+        this.style.borderColor = 'var(--border)';
+      }
+    });
+
     // Convert 24-hour format (19:00) to 12-hour format (7:00 PM)
     function convert24To12(time24) {
       if (!time24) return null;
@@ -1765,9 +1782,13 @@
       
       const dateInput = document.getElementById('lockTimeDate').value;
       if (!dateInput) {
-        showMessage('Please select a date', 'error', 'lockTimeMessage');
+        showMessage('❌ Please select a date first using the date picker.', 'error', 'lockTimeMessage');
+        document.getElementById('lockTimeDate').focus();
+        document.getElementById('lockTimeDate').style.borderColor = 'var(--error)';
         return;
       }
+
+      document.getElementById('lockTimeDate').style.borderColor = '';  // Remove error highlight
 
       try {
         const snapshot = await db.collection('lockTimes').where('date', '==', dateInput).get();
@@ -1775,19 +1796,19 @@
         if (snapshot.empty) {
           document.getElementById('lockTimeInput').value = '';
           document.getElementById('lockTimeDisplay').style.display = 'none';
-          showMessage('No lock time set for this date', 'info', 'lockTimeMessage');
+          showMessage(`ℹ️ No lock time set for ${dateInput}. You can create one now.`, 'info', 'lockTimeMessage');
         } else {
           const lockTime = snapshot.docs[0].data().lockTime;
           // Convert stored 12-hour format back to 24-hour for input field
           const time24 = convert12To24(lockTime);
           document.getElementById('lockTimeInput').value = time24;
-          document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST`;
+          document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST (for ${dateInput})`;
           document.getElementById('lockTimeDisplay').style.display = 'block';
-          showMessage('Lock time loaded successfully', 'success', 'lockTimeMessage');
+          showMessage(`✅ Loaded lock time for ${dateInput}`, 'success', 'lockTimeMessage');
         }
       } catch (err) {
         console.error('Error loading lock time:', err);
-        showMessage('Error loading lock time', 'error', 'lockTimeMessage');
+        showMessage('Error loading lock time: ' + err.message, 'error', 'lockTimeMessage');
       }
     });
 
@@ -1799,12 +1820,20 @@
       const lockTime24 = document.getElementById('lockTimeInput').value;
       
       if (!dateInput) {
-        showMessage('Please select a date', 'error', 'lockTimeMessage');
+        showMessage('❌ Please select a date first. Use the date picker above.', 'error', 'lockTimeMessage');
+        document.getElementById('lockTimeDate').focus();
+        document.getElementById('lockTimeDate').style.borderColor = 'var(--error)';
         return;
       }
 
       if (!lockTime24) {
         showMessage('Please set a lock time', 'error', 'lockTimeMessage');
+        return;
+      }
+
+      // Validate that the date is actually a valid date format (YYYY-MM-DD)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        showMessage('❌ Invalid date format. Please use the date picker.', 'error', 'lockTimeMessage');
         return;
       }
 
@@ -1816,6 +1845,7 @@
         
         if (!snapshot.empty) {
           await snapshot.docs[0].ref.update({
+            date: dateInput,  // Explicitly set date to ensure it's stored
             lockTime: lockTime12,
             updatedAt: new Date().toISOString()
           });
@@ -1829,9 +1859,10 @@
           console.log(`🆕 Created lock time for ${dateInput}: ${lockTime12}`);
         }
 
-        document.getElementById('lockTimeDisplayValue').textContent = `${lockTime12} EST`;
+        document.getElementById('lockTimeDisplayValue').textContent = `${lockTime12} EST (for ${dateInput})`;
         document.getElementById('lockTimeDisplay').style.display = 'block';
-        showMessage('✅ Lock time saved successfully!', 'success', 'lockTimeMessage');
+        document.getElementById('lockTimeDate').style.borderColor = '';  // Remove error highlight
+        showMessage(`✅ Lock time saved successfully for ${dateInput}!`, 'success', 'lockTimeMessage');
       } catch (err) {
         console.error('Error saving lock time:', err);
         showMessage('Error saving lock time: ' + err.message, 'error', 'lockTimeMessage');
@@ -1842,7 +1873,15 @@
     document.getElementById('loadDateBtn').addEventListener('click', function() {
       const adminDate = document.getElementById('adminDate').value;
       if (adminDate) {
+        // Auto-populate lock time date when loading questions
         document.getElementById('lockTimeDate').value = adminDate;
+        document.getElementById('lockTimeDate').style.borderColor = '';  // Clear any error highlight
+        
+        // Clear lock time inputs when switching dates to prevent mistakes
+        document.getElementById('lockTimeInput').value = '';
+        document.getElementById('lockTimeDisplay').style.display = 'none';
+        
+        showMessage(`📅 Lock time date automatically set to ${adminDate}`, 'info', 'lockTimeMessage');
       }
     });
 
