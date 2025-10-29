@@ -3037,11 +3037,11 @@
           currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        // Sort in reverse chronological order (newest first)
+        // Sort in reverse chronological order (newest first) - matches picks tab
         dailyDatesData = allDates.sort().reverse();
         dailySliderOffset = 0;
         
-        // Set to today's date if available
+        // Set to today's date if available, otherwise most recent date
         const todayStr = new Date().toISOString().split('T')[0];
         selectedDailyDate = dailyDatesData.includes(todayStr) ? todayStr : (dailyDatesData[0] || null);
         
@@ -3100,22 +3100,25 @@
         while (currentDate <= futureDate) {
           const weekInfo = getWeekInfo(currentDate.toISOString().split('T')[0]);
           if (weekInfo) {
-            const monthYear = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-            const weekKey = `${monthYear}-W${weekInfo.week}`;
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const weekKey = `${year}-${month}-W${weekInfo.week}`;
             weeksSet.add(weekKey);
           }
           currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        weeklyWeeksData = Array.from(weeksSet).sort().reverse();
+        // Sort in forward chronological order (oldest first)
+        weeklyWeeksData = Array.from(weeksSet).sort();
         weeklySliderOffset = 0;
         
-        // Select current week or most recent week
+        // Select current week or first week
         const today_str = new Date().toISOString().split('T')[0];
         const currentWeekInfo = getWeekInfo(today_str);
         if (currentWeekInfo) {
-          const monthYear = new Date(today_str).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-          const currentWeekKey = `${monthYear}-W${currentWeekInfo.week}`;
+          const year = new Date(today_str).getFullYear();
+          const month = String(new Date(today_str).getMonth() + 1).padStart(2, '0');
+          const currentWeekKey = `${year}-${month}-W${currentWeekInfo.week}`;
           selectedWeeklyWeek = weeklyWeeksData.includes(currentWeekKey) ? currentWeekKey : (weeklyWeeksData[0] || null);
         } else {
           selectedWeeklyWeek = weeklyWeeksData[0] || null;
@@ -3135,13 +3138,16 @@
       const visibleWeeks = weeklyWeeksData.slice(weeklySliderOffset, weeklySliderOffset + SLIDERS_TO_SHOW);
       
       container.innerHTML = visibleWeeks.map(weekStr => {
-        const [monthYear, weekNum] = weekStr.split('-W');
+        const [yearMonth, weekNum] = weekStr.split('-W');
+        const [year, month] = yearMonth.split('-');
+        const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthName = monthNames[parseInt(month)];
         const isActive = selectedWeeklyWeek === weekStr;
         
         return `
           <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${weekStr}" data-type="weekly">
             <div style="font-weight: 700; font-size: 12px;">Week ${weekNum}</div>
-            <div class="date-picker-date">${monthYear}</div>
+            <div class="date-picker-date">${monthName} ${year}</div>
           </button>
         `;
       }).join('');
@@ -3171,17 +3177,23 @@
         
         let currentDate = new Date(startDate);
         while (currentDate <= futureDate) {
-          const monthYear = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-          monthsSet.add(monthYear);
+          const year = currentDate.getFullYear();
+          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+          const monthKey = `${year}-${month}`;
+          monthsSet.add(monthKey);
           currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        monthlyMonthsData = Array.from(monthsSet).sort().reverse();
+        // Sort in forward chronological order (oldest first)
+        monthlyMonthsData = Array.from(monthsSet).sort();
         monthlySliderOffset = 0;
         
-        // Select current month or most recent month
-        const currentMonthYear = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        selectedMonthlyMonth = monthlyMonthsData.includes(currentMonthYear) ? currentMonthYear : (monthlyMonthsData[0] || null);
+        // Select current month or first month
+        const today_date = new Date();
+        const currentYear = today_date.getFullYear();
+        const currentMonth = String(today_date.getMonth() + 1).padStart(2, '0');
+        const currentMonthKey = `${currentYear}-${currentMonth}`;
+        selectedMonthlyMonth = monthlyMonthsData.includes(currentMonthKey) ? currentMonthKey : (monthlyMonthsData[0] || null);
         
         renderMonthlyMonthSlider();
         if (selectedMonthlyMonth) {
@@ -3197,11 +3209,15 @@
       const visibleMonths = monthlyMonthsData.slice(monthlySliderOffset, monthlySliderOffset + SLIDERS_TO_SHOW);
       
       container.innerHTML = visibleMonths.map(monthStr => {
+        const [year, month] = monthStr.split('-');
+        const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthName = monthNames[parseInt(month)];
+        const displayText = `${monthName} ${year}`;
         const isActive = selectedMonthlyMonth === monthStr;
         
         return `
           <button class="date-picker-btn ${isActive ? 'active' : ''}" data-month="${monthStr}" data-type="monthly">
-            <div style="font-weight: 700; font-size: 14px;">${monthStr}</div>
+            <div style="font-weight: 700; font-size: 14px;">${displayText}</div>
           </button>
         `;
       }).join('');
@@ -3284,20 +3300,17 @@
           }
         } else if (period === 'weekly') {
           if (selectedValue) {
-            // Parse week value format: "Nov-W1" -> extract week number and get dates
-            const [monthYear, weekNum] = selectedValue.split('-W');
+            // Parse week value format: "2024-11-W1" -> extract year, month, and week number
+            const [yearMonth, weekNum] = selectedValue.split('-W');
+            const [year, month] = yearMonth.split('-');
             const week = parseInt(weekNum);
             const weekInfo = { week, start: (week - 1) * 7 + 1, end: week * 7 + (week === 4 ? 2 : 0) };
             
-            // Find first day of the month to calculate week start
-            const monthDate = new Date(monthYear);
-            const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-            startDate = new Date(monthStart);
-            startDate.setDate(weekInfo.start);
+            // Calculate the week dates
+            startDate = new Date(parseInt(year), parseInt(month) - 1, weekInfo.start);
             startDate.setHours(0, 0, 0, 0);
             
-            endDate = new Date(monthStart);
-            endDate.setDate(weekInfo.end);
+            endDate = new Date(parseInt(year), parseInt(month) - 1, weekInfo.end);
             endDate.setHours(23, 59, 59, 999);
           } else {
             // Default: last 7 days
@@ -3308,11 +3321,11 @@
           }
         } else if (period === 'monthly') {
           if (selectedValue) {
-            // Parse month value format: "Nov 2024"
-            const monthDate = new Date(selectedValue);
-            startDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+            // Parse month value format: "2024-11"
+            const [year, month] = selectedValue.split('-');
+            startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
             startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+            endDate = new Date(parseInt(year), parseInt(month), 0);
             endDate.setHours(23, 59, 59, 999);
           } else {
             // Default: current month
