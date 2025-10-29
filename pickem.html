@@ -3023,20 +3023,27 @@
 
     async function populateDateSlider() {
       try {
-        const picksSnapshot = await db.collection('picks').get();
-        const datesSet = new Set();
+        // Generate all dates from start date to today + 30 days ahead
+        const allDates = [];
+        const startDate = new Date(PICKEM_START_DATE);
+        const today = new Date();
+        const futureDate = new Date(today);
+        futureDate.setDate(futureDate.getDate() + 30); // Look ahead 30 days
         
-        picksSnapshot.docs.forEach(doc => {
-          const date = doc.data().date;
-          if (date) datesSet.add(date);
-        });
+        let currentDate = new Date(startDate);
+        while (currentDate <= futureDate) {
+          const dateStr = currentDate.toISOString().split('T')[0];
+          allDates.push(dateStr);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
         
-        dailyDatesData = Array.from(datesSet).sort().reverse();
+        // Sort in reverse chronological order (newest first)
+        dailyDatesData = allDates.sort().reverse();
         dailySliderOffset = 0;
         
         // Set to today's date if available
-        const today = new Date().toISOString().split('T')[0];
-        selectedDailyDate = dailyDatesData.includes(today) ? today : (dailyDatesData[0] || null);
+        const todayStr = new Date().toISOString().split('T')[0];
+        selectedDailyDate = dailyDatesData.includes(todayStr) ? todayStr : (dailyDatesData[0] || null);
         
         renderDailyDateSlider();
         if (selectedDailyDate) {
@@ -3082,24 +3089,37 @@
 
     async function populateWeekSlider() {
       try {
-        const picksSnapshot = await db.collection('picks').get();
-        const weeksMap = {};
+        // Generate all possible weeks from start date through future
+        const weeksSet = new Set();
+        const startDate = new Date(PICKEM_START_DATE);
+        const today = new Date();
+        const futureDate = new Date(today);
+        futureDate.setDate(futureDate.getDate() + 30);
         
-        picksSnapshot.docs.forEach(doc => {
-          const date = doc.data().date;
-          if (date) {
-            const weekInfo = getWeekInfo(date);
-            if (weekInfo) {
-              const monthYear = new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-              const weekKey = `${monthYear}-W${weekInfo.week}`;
-              weeksMap[weekKey] = true;
-            }
+        let currentDate = new Date(startDate);
+        while (currentDate <= futureDate) {
+          const weekInfo = getWeekInfo(currentDate.toISOString().split('T')[0]);
+          if (weekInfo) {
+            const monthYear = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+            const weekKey = `${monthYear}-W${weekInfo.week}`;
+            weeksSet.add(weekKey);
           }
-        });
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
         
-        weeklyWeeksData = Object.keys(weeksMap).sort().reverse();
+        weeklyWeeksData = Array.from(weeksSet).sort().reverse();
         weeklySliderOffset = 0;
-        selectedWeeklyWeek = weeklyWeeksData[0] || null;
+        
+        // Select current week or most recent week
+        const today_str = new Date().toISOString().split('T')[0];
+        const currentWeekInfo = getWeekInfo(today_str);
+        if (currentWeekInfo) {
+          const monthYear = new Date(today_str).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+          const currentWeekKey = `${monthYear}-W${currentWeekInfo.week}`;
+          selectedWeeklyWeek = weeklyWeeksData.includes(currentWeekKey) ? currentWeekKey : (weeklyWeeksData[0] || null);
+        } else {
+          selectedWeeklyWeek = weeklyWeeksData[0] || null;
+        }
         
         renderWeeklyWeekSlider();
         if (selectedWeeklyWeek) {
@@ -3142,20 +3162,26 @@
 
     async function populateMonthSlider() {
       try {
-        const picksSnapshot = await db.collection('picks').get();
+        // Generate all possible months from start date through future
         const monthsSet = new Set();
+        const startDate = new Date(PICKEM_START_DATE);
+        const today = new Date();
+        const futureDate = new Date(today);
+        futureDate.setDate(futureDate.getDate() + 30);
         
-        picksSnapshot.docs.forEach(doc => {
-          const date = doc.data().date;
-          if (date) {
-            const monthYear = new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-            monthsSet.add(monthYear);
-          }
-        });
+        let currentDate = new Date(startDate);
+        while (currentDate <= futureDate) {
+          const monthYear = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+          monthsSet.add(monthYear);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
         
         monthlyMonthsData = Array.from(monthsSet).sort().reverse();
         monthlySliderOffset = 0;
-        selectedMonthlyMonth = monthlyMonthsData[0] || null;
+        
+        // Select current month or most recent month
+        const currentMonthYear = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        selectedMonthlyMonth = monthlyMonthsData.includes(currentMonthYear) ? currentMonthYear : (monthlyMonthsData[0] || null);
         
         renderMonthlyMonthSlider();
         if (selectedMonthlyMonth) {
