@@ -1092,7 +1092,7 @@
               <div class="form-group" style="margin-bottom: 1rem;">
                 <label class="form-label">Lock Time (EST):</label>
                 <input type="time" id="lockTimeInput" class="form-input" />
-                <small style="color: var(--muted); display: block; margin-top: 0.5rem;">Example: 19:00 for 7:00 PM</small>
+                <small style="color: var(--muted); display: block; margin-top: 0.5rem;">Example: 19:00 for 7:00 PM (displays as 7:00 PM)</small>
               </div>
 
               <div style="display: flex; gap: 10px;">
@@ -1663,11 +1663,34 @@
     });
 
     // === Lock Time Management ===
-    // Convert EST time to stored format (time is stored as HH:MM in EST)
-    function convertESTToLocal(estTime) {
-      if (!estTime) return null;
-      const [hours, minutes] = estTime.split(':');
-      return `${hours}:${minutes}`;
+    // Convert 24-hour format (19:00) to 12-hour format (7:00 PM)
+    function convert24To12(time24) {
+      if (!time24) return null;
+      const [hours, minutes] = time24.split(':');
+      let hour = parseInt(hours);
+      const minute = minutes;
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      hour = hour % 12;
+      hour = hour ? hour : 12; // 0 should be 12
+      return `${hour}:${minute} ${ampm}`;
+    }
+
+    // Convert 12-hour format (7:00 PM) to 24-hour format (19:00)
+    function convert12To24(time12) {
+      if (!time12) return null;
+      const parts = time12.trim().split(' ');
+      const timePart = parts[0];
+      const ampm = parts[1];
+      let [hours, minutes] = timePart.split(':');
+      let hour = parseInt(hours);
+      
+      if (ampm === 'PM' && hour !== 12) {
+        hour += 12;
+      } else if (ampm === 'AM' && hour === 12) {
+        hour = 0;
+      }
+      
+      return `${String(hour).padStart(2, '0')}:${minutes}`;
     }
 
     // Get current time in EST
@@ -1687,7 +1710,9 @@
       
       // Only check lock if it's the lock date
       if (date === todayStr) {
-        const [lockHours, lockMinutes] = lockTime.split(':');
+        // Convert 12-hour format to 24-hour for calculation
+        const time24 = convert12To24(lockTime);
+        const [lockHours, lockMinutes] = time24.split(':');
         const lockDate = new Date(today);
         lockDate.setHours(parseInt(lockHours), parseInt(lockMinutes), 0);
         return now >= lockDate;
@@ -1705,7 +1730,9 @@
       
       if (date !== todayStr) return null;
       
-      const [lockHours, lockMinutes] = lockTime.split(':');
+      // Convert 12-hour format to 24-hour for calculation
+      const time24 = convert12To24(lockTime);
+      const [lockHours, lockMinutes] = time24.split(':');
       const lockDate = new Date(today);
       lockDate.setHours(parseInt(lockHours), parseInt(lockMinutes), 0);
       
@@ -1751,7 +1778,9 @@
           showMessage('No lock time set for this date', 'info', 'lockTimeMessage');
         } else {
           const lockTime = snapshot.docs[0].data().lockTime;
-          document.getElementById('lockTimeInput').value = lockTime;
+          // Convert stored 12-hour format back to 24-hour for input field
+          const time24 = convert12To24(lockTime);
+          document.getElementById('lockTimeInput').value = time24;
           document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST`;
           document.getElementById('lockTimeDisplay').style.display = 'block';
           showMessage('Lock time loaded successfully', 'success', 'lockTimeMessage');
@@ -1767,37 +1796,40 @@
       if (!checkAdminPermission()) return;
       
       const dateInput = document.getElementById('lockTimeDate').value;
-      const lockTime = document.getElementById('lockTimeInput').value;
+      const lockTime24 = document.getElementById('lockTimeInput').value;
       
       if (!dateInput) {
         showMessage('Please select a date', 'error', 'lockTimeMessage');
         return;
       }
 
-      if (!lockTime) {
+      if (!lockTime24) {
         showMessage('Please set a lock time', 'error', 'lockTimeMessage');
         return;
       }
+
+      // Convert 24-hour format to 12-hour format for storage
+      const lockTime12 = convert24To12(lockTime24);
 
       try {
         const snapshot = await db.collection('lockTimes').where('date', '==', dateInput).get();
         
         if (!snapshot.empty) {
           await snapshot.docs[0].ref.update({
-            lockTime: lockTime,
+            lockTime: lockTime12,
             updatedAt: new Date().toISOString()
           });
-          console.log(`📝 Updated lock time for ${dateInput} to ${lockTime}`);
+          console.log(`📝 Updated lock time for ${dateInput} to ${lockTime12}`);
         } else {
           await db.collection('lockTimes').add({
             date: dateInput,
-            lockTime: lockTime,
+            lockTime: lockTime12,
             createdAt: new Date().toISOString()
           });
-          console.log(`🆕 Created lock time for ${dateInput}: ${lockTime}`);
+          console.log(`🆕 Created lock time for ${dateInput}: ${lockTime12}`);
         }
 
-        document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST`;
+        document.getElementById('lockTimeDisplayValue').textContent = `${lockTime12} EST`;
         document.getElementById('lockTimeDisplay').style.display = 'block';
         showMessage('✅ Lock time saved successfully!', 'success', 'lockTimeMessage');
       } catch (err) {
