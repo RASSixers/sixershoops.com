@@ -981,11 +981,12 @@
 
       <!-- Daily Leaderboard Tab -->
       <div id="daily-lb" class="tab-content">
-        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
-          <label for="dailyDateSelect" style="font-weight: 700; color: var(--muted);">Select Date:</label>
-          <select id="dailyDateSelect" style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer;">
-            <option value="">Loading dates...</option>
-          </select>
+        <div style="margin-bottom: 20px;">
+          <div class="date-slider-controls" style="margin-bottom: 15px;">
+            <button class="date-nav-btn" id="dailyPrevBtn">‹</button>
+            <div id="dailyDateSliderContainer" class="date-picker-container"></div>
+            <button class="date-nav-btn" id="dailyNextBtn">›</button>
+          </div>
           <button type="button" class="btn btn-secondary" id="refreshDailyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -1002,11 +1003,12 @@
 
       <!-- Weekly Leaderboard Tab -->
       <div id="weekly-lb" class="tab-content">
-        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
-          <label for="weeklyWeekSelect" style="font-weight: 700; color: var(--muted);">Select Week:</label>
-          <select id="weeklyWeekSelect" style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer;">
-            <option value="">Loading weeks...</option>
-          </select>
+        <div style="margin-bottom: 20px;">
+          <div class="date-slider-controls" style="margin-bottom: 15px;">
+            <button class="date-nav-btn" id="weeklyPrevBtn">‹</button>
+            <div id="weeklyWeekSliderContainer" class="date-picker-container"></div>
+            <button class="date-nav-btn" id="weeklyNextBtn">›</button>
+          </div>
           <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -1023,11 +1025,12 @@
 
       <!-- Monthly Leaderboard Tab -->
       <div id="monthly-lb" class="tab-content">
-        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
-          <label for="monthlyMonthSelect" style="font-weight: 700; color: var(--muted);">Select Month:</label>
-          <select id="monthlyMonthSelect" style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer;">
-            <option value="">Loading months...</option>
-          </select>
+        <div style="margin-bottom: 20px;">
+          <div class="date-slider-controls" style="margin-bottom: 15px;">
+            <button class="date-nav-btn" id="monthlyPrevBtn">‹</button>
+            <div id="monthlyMonthSliderContainer" class="date-picker-container"></div>
+            <button class="date-nav-btn" id="monthlyNextBtn">›</button>
+          </div>
           <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -2891,31 +2894,13 @@
         document.getElementById(tabName).classList.add('active');
         
         if (tabName === 'daily-lb') {
-          await populateDateDropdown();
-          const selectedDate = document.getElementById('dailyDateSelect').value;
-          if (selectedDate) {
-            await loadLeaderboard('daily', selectedDate);
-          } else {
-            await loadLeaderboard('daily');
-          }
+          await populateDateSlider();
         }
         if (tabName === 'weekly-lb') {
-          await populateWeekDropdown();
-          const selectedWeek = document.getElementById('weeklyWeekSelect').value;
-          if (selectedWeek) {
-            await loadLeaderboard('weekly', selectedWeek);
-          } else {
-            await loadLeaderboard('weekly');
-          }
+          await populateWeekSlider();
         }
         if (tabName === 'monthly-lb') {
-          await populateMonthDropdown();
-          const selectedMonth = document.getElementById('monthlyMonthSelect').value;
-          if (selectedMonth) {
-            await loadLeaderboard('monthly', selectedMonth);
-          } else {
-            await loadLeaderboard('monthly');
-          }
+          await populateMonthSlider();
         }
       });
     });
@@ -2936,10 +2921,11 @@
         dailyRefreshBtn.disabled = true;
         dailyRefreshBtn.textContent = 'Loading...';
         try {
-          const selectedDate = document.getElementById('dailyDateSelect').value;
-          await loadLeaderboard('daily', selectedDate);
-          console.log('✅ Daily leaderboard refreshed successfully');
-          dailyRefreshBtn.textContent = 'Refreshed! ✓';
+          if (selectedDailyDate) {
+            await loadLeaderboard('daily', selectedDailyDate);
+            console.log('✅ Daily leaderboard refreshed successfully');
+            dailyRefreshBtn.textContent = 'Refreshed! ✓';
+          }
           setTimeout(() => {
             dailyRefreshBtn.textContent = originalText;
             dailyRefreshBtn.disabled = false;
@@ -2961,10 +2947,11 @@
         weeklyRefreshBtn.disabled = true;
         weeklyRefreshBtn.textContent = 'Loading...';
         try {
-          const selectedWeek = document.getElementById('weeklyWeekSelect').value;
-          await loadLeaderboard('weekly', selectedWeek);
-          console.log('✅ Weekly leaderboard refreshed successfully');
-          weeklyRefreshBtn.textContent = 'Refreshed! ✓';
+          if (selectedWeeklyWeek) {
+            await loadLeaderboard('weekly', selectedWeeklyWeek);
+            console.log('✅ Weekly leaderboard refreshed successfully');
+            weeklyRefreshBtn.textContent = 'Refreshed! ✓';
+          }
           setTimeout(() => {
             weeklyRefreshBtn.textContent = originalText;
             weeklyRefreshBtn.disabled = false;
@@ -2986,10 +2973,11 @@
         monthlyRefreshBtn.disabled = true;
         monthlyRefreshBtn.textContent = 'Loading...';
         try {
-          const selectedMonth = document.getElementById('monthlyMonthSelect').value;
-          await loadLeaderboard('monthly', selectedMonth);
-          console.log('✅ Monthly leaderboard refreshed successfully');
-          monthlyRefreshBtn.textContent = 'Refreshed! ✓';
+          if (selectedMonthlyMonth) {
+            await loadLeaderboard('monthly', selectedMonthlyMonth);
+            console.log('✅ Monthly leaderboard refreshed successfully');
+            monthlyRefreshBtn.textContent = 'Refreshed! ✓';
+          }
           setTimeout(() => {
             monthlyRefreshBtn.textContent = originalText;
             monthlyRefreshBtn.disabled = false;
@@ -3019,9 +3007,22 @@
       return null; // Outside valid range
     }
 
-    async function populateDateDropdown() {
+    // Slider offset tracking
+    let dailySliderOffset = 0;
+    let weeklySliderOffset = 0;
+    let monthlySliderOffset = 0;
+    const SLIDERS_TO_SHOW = 5;
+
+    // Store data for sliders
+    let dailyDatesData = [];
+    let weeklyWeeksData = [];
+    let monthlyMonthsData = [];
+    let selectedDailyDate = null;
+    let selectedWeeklyWeek = null;
+    let selectedMonthlyMonth = null;
+
+    async function populateDateSlider() {
       try {
-        const select = document.getElementById('dailyDateSelect');
         const picksSnapshot = await db.collection('picks').get();
         const datesSet = new Set();
         
@@ -3030,33 +3031,59 @@
           if (date) datesSet.add(date);
         });
         
-        const sortedDates = Array.from(datesSet).sort().reverse();
-        
-        select.innerHTML = '<option value="">-- Select a Date --</option>';
-        sortedDates.forEach(date => {
-          const d = new Date(date);
-          const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-          const option = document.createElement('option');
-          option.value = date;
-          option.textContent = `${label} (${date})`;
-          select.appendChild(option);
-        });
+        dailyDatesData = Array.from(datesSet).sort().reverse();
+        dailySliderOffset = 0;
         
         // Set to today's date if available
         const today = new Date().toISOString().split('T')[0];
-        if (sortedDates.includes(today)) {
-          select.value = today;
+        selectedDailyDate = dailyDatesData.includes(today) ? today : (dailyDatesData[0] || null);
+        
+        renderDailyDateSlider();
+        if (selectedDailyDate) {
+          await loadLeaderboard('daily', selectedDailyDate);
         }
       } catch (err) {
-        console.error('Error populating date dropdown:', err);
+        console.error('Error populating date slider:', err);
       }
     }
 
-    async function populateWeekDropdown() {
+    function renderDailyDateSlider() {
+      const container = document.getElementById('dailyDateSliderContainer');
+      const visibleDates = dailyDatesData.slice(dailySliderOffset, dailySliderOffset + SLIDERS_TO_SHOW);
+      
+      container.innerHTML = visibleDates.map(dateStr => {
+        const d = new Date(dateStr);
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNum = d.getDate();
+        const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const isActive = selectedDailyDate === dateStr;
+        
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-date="${dateStr}" data-type="daily">
+            <div style="font-weight: 700; font-size: 12px;">${dayNum}</div>
+            <div class="date-picker-date">${monthDay}</div>
+          </button>
+        `;
+      }).join('');
+      
+      // Update nav button states
+      document.getElementById('dailyPrevBtn').disabled = dailySliderOffset === 0;
+      document.getElementById('dailyNextBtn').disabled = dailySliderOffset >= dailyDatesData.length - SLIDERS_TO_SHOW;
+      
+      // Attach click handlers
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          selectedDailyDate = btn.dataset.date;
+          renderDailyDateSlider();
+          await loadLeaderboard('daily', selectedDailyDate);
+        });
+      });
+    }
+
+    async function populateWeekSlider() {
       try {
-        const select = document.getElementById('weeklyWeekSelect');
         const picksSnapshot = await db.collection('picks').get();
-        const weeksSet = new Set();
+        const weeksMap = {};
         
         picksSnapshot.docs.forEach(doc => {
           const date = doc.data().date;
@@ -3064,28 +3091,57 @@
             const weekInfo = getWeekInfo(date);
             if (weekInfo) {
               const monthYear = new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-              weeksSet.add(`${monthYear}-W${weekInfo.week}`);
+              const weekKey = `${monthYear}-W${weekInfo.week}`;
+              weeksMap[weekKey] = true;
             }
           }
         });
         
-        const sortedWeeks = Array.from(weeksSet).sort().reverse();
+        weeklyWeeksData = Object.keys(weeksMap).sort().reverse();
+        weeklySliderOffset = 0;
+        selectedWeeklyWeek = weeklyWeeksData[0] || null;
         
-        select.innerHTML = '<option value="">-- Select a Week --</option>';
-        sortedWeeks.forEach(week => {
-          const option = document.createElement('option');
-          option.value = week;
-          option.textContent = `Week ${week.split('-W')[1]} - ${week.split('-W')[0]}`;
-          select.appendChild(option);
-        });
+        renderWeeklyWeekSlider();
+        if (selectedWeeklyWeek) {
+          await loadLeaderboard('weekly', selectedWeeklyWeek);
+        }
       } catch (err) {
-        console.error('Error populating week dropdown:', err);
+        console.error('Error populating week slider:', err);
       }
     }
 
-    async function populateMonthDropdown() {
+    function renderWeeklyWeekSlider() {
+      const container = document.getElementById('weeklyWeekSliderContainer');
+      const visibleWeeks = weeklyWeeksData.slice(weeklySliderOffset, weeklySliderOffset + SLIDERS_TO_SHOW);
+      
+      container.innerHTML = visibleWeeks.map(weekStr => {
+        const [monthYear, weekNum] = weekStr.split('-W');
+        const isActive = selectedWeeklyWeek === weekStr;
+        
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${weekStr}" data-type="weekly">
+            <div style="font-weight: 700; font-size: 12px;">Week ${weekNum}</div>
+            <div class="date-picker-date">${monthYear}</div>
+          </button>
+        `;
+      }).join('');
+      
+      // Update nav button states
+      document.getElementById('weeklyPrevBtn').disabled = weeklySliderOffset === 0;
+      document.getElementById('weeklyNextBtn').disabled = weeklySliderOffset >= weeklyWeeksData.length - SLIDERS_TO_SHOW;
+      
+      // Attach click handlers
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          selectedWeeklyWeek = btn.dataset.week;
+          renderWeeklyWeekSlider();
+          await loadLeaderboard('weekly', selectedWeeklyWeek);
+        });
+      });
+    }
+
+    async function populateMonthSlider() {
       try {
-        const select = document.getElementById('monthlyMonthSelect');
         const picksSnapshot = await db.collection('picks').get();
         const monthsSet = new Set();
         
@@ -3097,36 +3153,87 @@
           }
         });
         
-        const sortedMonths = Array.from(monthsSet).sort().reverse();
+        monthlyMonthsData = Array.from(monthsSet).sort().reverse();
+        monthlySliderOffset = 0;
+        selectedMonthlyMonth = monthlyMonthsData[0] || null;
         
-        select.innerHTML = '<option value="">-- Select a Month --</option>';
-        sortedMonths.forEach(month => {
-          const option = document.createElement('option');
-          option.value = month;
-          option.textContent = month;
-          select.appendChild(option);
-        });
+        renderMonthlyMonthSlider();
+        if (selectedMonthlyMonth) {
+          await loadLeaderboard('monthly', selectedMonthlyMonth);
+        }
       } catch (err) {
-        console.error('Error populating month dropdown:', err);
+        console.error('Error populating month slider:', err);
       }
     }
 
-    // Attach dropdown listeners
-    document.getElementById('dailyDateSelect')?.addEventListener('change', async (e) => {
-      if (e.target.value) {
-        await loadLeaderboard('daily', e.target.value);
+    function renderMonthlyMonthSlider() {
+      const container = document.getElementById('monthlyMonthSliderContainer');
+      const visibleMonths = monthlyMonthsData.slice(monthlySliderOffset, monthlySliderOffset + SLIDERS_TO_SHOW);
+      
+      container.innerHTML = visibleMonths.map(monthStr => {
+        const isActive = selectedMonthlyMonth === monthStr;
+        
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-month="${monthStr}" data-type="monthly">
+            <div style="font-weight: 700; font-size: 14px;">${monthStr}</div>
+          </button>
+        `;
+      }).join('');
+      
+      // Update nav button states
+      document.getElementById('monthlyPrevBtn').disabled = monthlySliderOffset === 0;
+      document.getElementById('monthlyNextBtn').disabled = monthlySliderOffset >= monthlyMonthsData.length - SLIDERS_TO_SHOW;
+      
+      // Attach click handlers
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          selectedMonthlyMonth = btn.dataset.month;
+          renderMonthlyMonthSlider();
+          await loadLeaderboard('monthly', selectedMonthlyMonth);
+        });
+      });
+    }
+
+    // Add navigation button listeners
+    document.getElementById('dailyPrevBtn').addEventListener('click', () => {
+      if (dailySliderOffset > 0) {
+        dailySliderOffset--;
+        renderDailyDateSlider();
       }
     });
 
-    document.getElementById('weeklyWeekSelect')?.addEventListener('change', async (e) => {
-      if (e.target.value) {
-        await loadLeaderboard('weekly', e.target.value);
+    document.getElementById('dailyNextBtn').addEventListener('click', () => {
+      if (dailySliderOffset < dailyDatesData.length - SLIDERS_TO_SHOW) {
+        dailySliderOffset++;
+        renderDailyDateSlider();
       }
     });
 
-    document.getElementById('monthlyMonthSelect')?.addEventListener('change', async (e) => {
-      if (e.target.value) {
-        await loadLeaderboard('monthly', e.target.value);
+    document.getElementById('weeklyPrevBtn').addEventListener('click', () => {
+      if (weeklySliderOffset > 0) {
+        weeklySliderOffset--;
+        renderWeeklyWeekSlider();
+      }
+    });
+
+    document.getElementById('weeklyNextBtn').addEventListener('click', () => {
+      if (weeklySliderOffset < weeklyWeeksData.length - SLIDERS_TO_SHOW) {
+        weeklySliderOffset++;
+        renderWeeklyWeekSlider();
+      }
+    });
+
+    document.getElementById('monthlyPrevBtn').addEventListener('click', () => {
+      if (monthlySliderOffset > 0) {
+        monthlySliderOffset--;
+        renderMonthlyMonthSlider();
+      }
+    });
+
+    document.getElementById('monthlyNextBtn').addEventListener('click', () => {
+      if (monthlySliderOffset < monthlyMonthsData.length - SLIDERS_TO_SHOW) {
+        monthlySliderOffset++;
+        renderMonthlyMonthSlider();
       }
     });
 
