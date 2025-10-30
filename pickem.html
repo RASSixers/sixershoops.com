@@ -3080,17 +3080,25 @@
 
     async function populateWeekSlider() {
       try {
-        // Generate current week + next 8 weeks
+        // Week 1 starts November 1, 2024 - only generate weeks from Nov 1 onward
         const weeks = [];
         const today = new Date();
         const todayStr = formatDateForComparison(today);
         const currentWeekInfo = getWeekInfo(todayStr);
         
-        // Start from current week
+        // Define Nov 1, 2024 as Week 1 start
+        const nov1 = new Date(2024, 10, 1); // November 1, 2024
+        
+        // Start from current week (but not before Nov 1)
         let startDate = new Date(today);
         startDate.setDate(startDate.getDate() - (today.getDate() - currentWeekInfo.start)); // Go to start of current week
         
-        // Generate 9 weeks (current + 8 forward)
+        // If before Nov 1, start from Nov 1 instead
+        if (startDate < nov1) {
+          startDate = new Date(nov1);
+        }
+        
+        // Generate 9 weeks starting from Nov 1 onwards (current + 8 forward)
         for (let i = 0; i < 9; i++) {
           const week = new Date(startDate);
           week.setDate(week.getDate() + (i * 7));
@@ -3109,9 +3117,8 @@
         weeklyWeeksData = weeks;
         weeklySliderOffset = 0;
         
-        // Select current week
-        const currentWeekKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-W${currentWeekInfo.week}`;
-        selectedWeeklyWeek = weeklyWeeksData[0]; // Default to first week (current week)
+        // Select current week (or first week if before Nov 1)
+        selectedWeeklyWeek = weeklyWeeksData[0]; // Default to first week
         
         renderWeeklyWeekSlider();
         if (selectedWeeklyWeek) {
@@ -3334,8 +3341,16 @@
         const datesInRange = new Set();
         picksSnapshot.docs.forEach(doc => {
           const pickDate = doc.data().date;
-          if (pickDate >= startDateStr && pickDate <= endDateStr) {
-            datesInRange.add(pickDate);
+          // For daily leaderboards, use EXACT date match only
+          if (period === 'daily') {
+            if (pickDate === startDateStr) {
+              datesInRange.add(pickDate);
+            }
+          } else {
+            // For weekly/monthly, use date range
+            if (pickDate >= startDateStr && pickDate <= endDateStr) {
+              datesInRange.add(pickDate);
+            }
           }
         });
         
