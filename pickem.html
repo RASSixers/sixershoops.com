@@ -3277,7 +3277,10 @@
         const now = new Date();
         let startDate = new Date();
         let endDate = now;
-        
+        // Parse date string (YYYY-MM-DD) in local timezone, not UTC
+            const [year, month, day] = selectedValue.split('-');
+            startDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            endDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day)
         if (period === 'daily') {
           if (selectedValue) {
             startDate = new Date(selectedValue);
@@ -3321,11 +3324,12 @@
             // Default: current month
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
             endDate = now;
-          }
+          // Use local date format (not UTC) for consistency
+        const startDateStr = formatDateForComparison(startDate);
+        const endDateStr = formatDateForComparison(endDate)}
         }
 
-        const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
+               const endDateStr = endDate.toISOString().split('T')[0];
         console.log(`📅 ${period.toUpperCase()} leaderboard: date range ${startDateStr} to ${endDateStr}`);
 
         // Get all dates in the range with picks
