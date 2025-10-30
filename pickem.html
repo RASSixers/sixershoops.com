@@ -3011,7 +3011,7 @@
     let dailySliderOffset = 0;
     let weeklySliderOffset = 0;
     let monthlySliderOffset = 0;
-    const SLIDERS_TO_SHOW = 7; // Match picks tab display count
+    const SLIDERS_TO_SHOW = 5;
 
     // Store data for sliders
     let dailyDatesData = [];
@@ -3023,23 +3023,27 @@
 
     async function populateDateSlider() {
       try {
-        // Generate 14 days starting from today (same as picks tab)
-        const today = new Date();14 days starting from today (same as picks tab)
-        const dates = [];
+        // Generate all dates from start date to today + 30 days ahead
+        const allDates = [];
+        const startDate = new Date(PICKEM_START_DATE);
+        const today = new Date();
+        const futureDate = new Date(today);
+        futureDate.setDate(futureDate.getDate() + 30); // Look ahead 30 days
         
-        for (let i = 0; i < 14; i++) {
-          const ddates = [formattedValue = formatDateForComparison(date);
-        
-        for (let i = 0; i < 14; i++) {
-          const date = new Date(today);
-          date.setDate(date.getDate() + i);
-          const formattedValue = formatDateForComparison(date);
-        dates.push(formattedValue);
+        let currentDate = new Date(startDate);
+        while (currentDate <= futureDate) {
+          const dateStr = currentDate.toISOString().split('T')[0];
+          allDates.push(dateStr);
+          currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        dailyDatesData = dates;
+        // Sort in reverse chronological order (newest first) - matches picks tab
+        dailyDatesData = allDates.sort().reverse();
         dailySliderOffset = 0;
-        selectedDailyDate = dates[0]; // Select today by default
+        
+        // Set to today's date if available, otherwise most recent date
+        const todayStr = new Date().toISOString().split('T')[0];
+        selectedDailyDate = dailyDatesData.includes(todayStr) ? todayStr : (dailyDatesData[0] || null);
         
         renderDailyDateSlider();
         if (selectedDailyDate) {
@@ -3055,14 +3059,16 @@
       const visibleDates = dailyDatesData.slice(dailySliderOffset, dailySliderOffset + SLIDERS_TO_SHOW);
       
       container.innerHTML = visibleDates.map(dateStr => {
-        const d = new Date(dateStr + 'T00:00:00');
-        const label = formatDateLabel(d);
+        const d = new Date(dateStr);
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNum = d.getDate();
+        const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const isActive = selectedDailyDate === dateStr;
         
         return `
           <button class="date-picker-btn ${isActive ? 'active' : ''}" data-date="${dateStr}" data-type="daily">
-            <div style="font-weight: 700; font-size: 12px;">${label.day}</div>
-            <div class="date-picker-date">${label.date}</div>
+            <div style="font-weight: 700; font-size: 12px;">${dayNum}</div>
+            <div class="date-picker-date">${monthDay}</div>
           </button>
         `;
       }).join('');
@@ -3083,37 +3089,40 @@
 
     async function populateWeekSlider() {
       try {
-        // Generate current week + next 8 weeks
-        const weeks = [];
-        const todayconst todayStr = formatDateForComparison(today);
-        const currentWeekInfo = getWeekInfo(todayStr);
+        // Generate all possible weeks from start date through future
+        const weeksSet = new Set();
+        const startDate = new Date(PICKEM_START_DATE);
+        const today = new Date();
+        const futureDate = new Date(today);
+        futureDate.setDate(futureDate.getDate() + 30);
         
-        // Start from current week
-        let startDate = new Date(today);
-        startDate.setDate(startDate.getDate() - (today.getDate() - currentWeekInfo.start)); // Go to start of current week
-        
-        // Generate 9 weeks (current + 8 forward)
-        for (let i = 0; i < 9; i++) {
-          const week = new Date(startDatecurrent week + next 8 weeks
-          week.setDate(week.getDate(startDate.getDate() - (today.getDate() - currentWeekInfo.start)); // Go to start of current week
-              }
-        // Generate 9 weeks (current + 8 forward)
-        for (let i = 0; i < 9; i++)     week = new Date(startDate)) {
-          if (!weeks.find(w => w === week.getDate() + (i * 7));
-          const weekStr = formatDateForComparison(week);)
-        const currentWeekKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-W${weekInfo.week}`;
-          if (!weeks.find(w => w === weekKey)) {
-              weeks.push(weekKey);
-            }
+        let currentDate = new Date(startDate);
+        while (currentDate <= futureDate) {
+          const weekInfo = getWeekInfo(currentDate.toISOString().split('T')[0]);
+          if (weekInfo) {
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const weekKey = `${year}-${month}-W${weekInfo.week}`;
+            weeksSet.add(weekKey);
           }
+          currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        weeklyWeeksData[0]; // Default to first week (current week) = weeks;
+        // Sort in forward chronological order (oldest first)
+        weeklyWeeksData = Array.from(weeksSet).sort();
         weeklySliderOffset = 0;
         
-        // Select current week
-        const currentWeekKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-W${currentWeekInfo.week}`;
-        selectedWeeklyWeek = weeklyWeeksData[0]; // Default to first week (current week)
+        // Select current week or first week
+        const today_str = new Date().toISOString().split('T')[0];
+        const currentWeekInfo = getWeekInfo(today_str);
+        if (currentWeekInfo) {
+          const year = new Date(today_str).getFullYear();
+          const month = String(new Date(today_str).getMonth() + 1).padStart(2, '0');
+          const currentWeekKey = `${year}-${month}-W${currentWeekInfo.week}`;
+          selectedWeeklyWeek = weeklyWeeksData.includes(currentWeekKey) ? currentWeekKey : (weeklyWeeksData[0] || null);
+        } else {
+          selectedWeeklyWeek = weeklyWeeksData[0] || null;
+        }
         
         renderWeeklyWeekSlider();
         if (selectedWeeklyWeek) {
@@ -3159,28 +3168,32 @@
 
     async function populateMonthSlider() {
       try {
-        // Generate current month + next 11 months
-        const months = [];
-        const today = new 
+        // Generate all possible months from start date through future
+        const monthsSet = new Set();
+        const startDate = new Date(PICKEM_START_DATE);
+        const today = new Date();
+        const futureDate = new Date(today);
+        futureDate.setDate(futureDate.getDate() + 30);
         
-        for (let i = 0; i < 12; i++) {
-         Date(today.getFullYear(), today.getMonth() + i, 1);
-          const year = mo.getFullYear();
-          const month = String(mo.getMonth() + 1).padStart(2, '0');
+        let currentDate = new Date(startDate);
+        while (currentDate <= futureDate) {
+          const year = currentDate.getFullYear();
+          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
           const monthKey = `${year}-${month}`;
-          months.push(monthKey);
-      currentMonthKey  }
+          monthsSet.add(monthKey);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
         
-        monthlyMonthsData = months}
-        
-        monthlyMonthsData = months;
+        // Sort in forward chronological order (oldest first)
+        monthlyMonthsData = Array.from(monthsSet).sort();
         monthlySliderOffset = 0;
         
-        // Select current month
-        const currentYear = today.getFullYear();
-        const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+        // Select current month or first month
+        const today_date = new Date();
+        const currentYear = today_date.getFullYear();
+        const currentMonth = String(today_date.getMonth() + 1).padStart(2, '0');
         const currentMonthKey = `${currentYear}-${currentMonth}`;
-        selectedMonthlyMonth = currentMonthKey;
+        selectedMonthlyMonth = monthlyMonthsData.includes(currentMonthKey) ? currentMonthKey : (monthlyMonthsData[0] || null);
         
         renderMonthlyMonthSlider();
         if (selectedMonthlyMonth) {
