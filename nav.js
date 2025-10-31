@@ -1,10 +1,10 @@
 // nav.js - Reusable Navigation Component
 
 function createNavbar() {
-    const navHTML = `
+    return `
         <nav class="navbar">
             <div class="logo">
-                <a href="https://sixershoops.com" style="color: inherit; text-decoration: none;">
+                <a href="https://sixershoops.com">
                     <span>Sixers Hoops</span>
                 </a>
             </div>
@@ -14,7 +14,7 @@ function createNavbar() {
                 <li><a href="#pickem">Pickem</a></li>
                 <li class="dropdown">
                     <span class="dropdown-toggle">
-                        <a>Team Hub</a> ▾
+                        <span>Team Hub ▾</span>
                     </span>
                     <div class="dropdown-content">
                         <a href="https://sixershoops.com/news">News</a>
@@ -33,14 +33,22 @@ function createNavbar() {
             </ul>
         </nav>
     `;
-    
-    return navHTML;
 }
 
-// Initialize navbar when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize navbar immediately
+(function() {
     const navContainer = document.getElementById('navbar-container');
     if (navContainer) {
         navContainer.innerHTML = createNavbar();
     }
-});
+})();
+
+// Also try on DOM load in case script runs before element exists
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        const navContainer = document.getElementById('navbar-container');
+        if (navContainer && !navContainer.innerHTML) {
+            navContainer.innerHTML = createNavbar();
+        }
+    });
+}
