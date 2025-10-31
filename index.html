@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+.games-grid {
+                grid-template-columns: 1fr;
+            }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -28,11 +30,17 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(ellipse at 50% 0%, rgba(88, 28, 135, 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse at 0% 50%, rgba(59, 130, 246, 0.2) 0%, transparent 40%),
-                radial-gradient(ellipse at 100% 50%, rgba(139, 92, 246, 0.2) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 100%, rgba(29, 78, 216, 0.15) 0%, transparent 50%);
+                radial-gradient(ellipse at 50% 0%, rgba(14, 116, 144, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 0% 50%, rgba(37, 99, 235, 0.2) 0%, transparent 40%),
+                radial-gradient(ellipse at 100% 50%, rgba(59, 130, 246, 0.2) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 100%, rgba(6, 78, 59, 0.15) 0%, transparent 50%);
             pointer-events: none;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
 
         .navbar {
@@ -51,18 +59,30 @@
             gap: 0.75rem;
             font-size: 1.25rem;
             font-weight: 700;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
         }
 
         .logo-icon {
             width: 45px;
             height: 45px;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
             font-weight: 800;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4); }
+            50% { box-shadow: 0 4px 30px rgba(14, 165, 233, 0.6); }
         }
 
         .nav-links {
@@ -77,12 +97,27 @@
             text-decoration: none;
             font-size: 0.95rem;
             font-weight: 500;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
             position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #0ea5e9, #2563eb);
+            transition: width 0.3s ease;
         }
 
         .nav-links a:hover {
             color: #ffffff;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
         }
 
         .dropdown {
@@ -113,6 +148,12 @@
 
         .dropdown:hover .dropdown-content {
             display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .dropdown-content a {
@@ -123,8 +164,9 @@
         }
 
         .dropdown-content a:hover {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(14, 165, 233, 0.15);
             color: #ffffff;
+            transform: translateX(5px);
         }
 
         .contact-btn {
@@ -141,14 +183,15 @@
         }
 
         .contact-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(14, 165, 233, 0.2);
+            border-color: #0ea5e9;
             transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.3);
         }
 
         .hero {
             text-align: center;
-            padding: 6rem 2rem 4rem;
+            padding: 4rem 2rem 3rem;
             position: relative;
             z-index: 1;
         }
@@ -157,18 +200,33 @@
             font-size: 4.5rem;
             font-weight: 800;
             line-height: 1.1;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .gradient-text {
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #06b6d4 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            background-size: 200% auto;
+            animation: gradientFlow 4s linear infinite;
         }
 
+        @keyframes gradientFlow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+
+
         .blog-section {
-            padding: 4rem 4rem 6rem;
+            padding: 3rem 4rem 6rem;
             position: relative;
             z-index: 1;
         }
@@ -199,21 +257,42 @@
 
         .blog-card:hover {
             transform: translateY(-12px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 25px 50px rgba(14, 165, 233, 0.3);
         }
 
         .blog-image {
             width: 100%;
             height: 240px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
             position: relative;
             overflow: hidden;
+        }
+
+        .blog-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(37, 99, 235, 0.3));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .blog-card:hover .blog-image::after {
+            opacity: 1;
         }
 
         .blog-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .blog-card:hover .blog-image img {
+            transform: scale(1.1);
         }
 
         .blog-content {
@@ -224,7 +303,7 @@
         .category-tag {
             display: inline-block;
             padding: 0.4rem 1rem;
-            background: #3b82f6;
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
             color: #ffffff;
             border-radius: 20px;
             font-size: 0.8rem;
@@ -252,38 +331,6 @@
             font-size: 0.95rem;
         }
 
-        .blog-footer {
-            display: none;
-        }
-
-        .author-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .author-info {
-            flex: 1;
-        }
-
-        .author-name {
-            font-weight: 600;
-            color: #1a1a1a;
-            font-size: 0.9rem;
-        }
-
-        .post-time {
-            color: #999;
-            font-size: 0.8rem;
-        }
-
         @media (max-width: 1024px) {
             .navbar {
                 padding: 1.5rem 2rem;
@@ -298,7 +345,7 @@
             }
 
             .blog-section {
-                padding: 4rem 2rem;
+                padding: 3rem 2rem;
             }
 
             .blog-grid {
@@ -314,13 +361,16 @@
             .blog-grid {
                 grid-template-columns: 1fr;
             }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="logo">
-            <div class="logo-icon">S</div>
             <span>Sixers Hoops</span>
         </div>
         
@@ -367,13 +417,6 @@
                     <div class="post-date">October 28, 2024</div>
                     <h3 class="blog-title">Sixers Season Preview: Championship Aspirations</h3>
                     <p class="blog-excerpt">An in-depth look at the Sixers' roster, key matchups, and what it will take to bring a title to Philadelphia this season.</p>
-                    <div class="blog-footer">
-                        <div class="author-avatar">JD</div>
-                        <div class="author-info">
-                            <div class="author-name">John Davis</div>
-                            <div class="post-time">2h ago</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -386,13 +429,6 @@
                     <div class="post-date">October 25, 2024</div>
                     <h3 class="blog-title">Joel Embiid MVP Watch: Week 1 Breakdown</h3>
                     <p class="blog-excerpt">Breaking down Embiid's dominant start to the season and his case for back-to-back MVP honors.</p>
-                    <div class="blog-footer">
-                        <div class="author-avatar">SK</div>
-                        <div class="author-info">
-                            <div class="author-name">Sarah Kim</div>
-                            <div class="post-time">5h ago</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -405,13 +441,6 @@
                     <div class="post-date">October 22, 2024</div>
                     <h3 class="blog-title">Analyzing the Sixers' Defensive Scheme</h3>
                     <p class="blog-excerpt">A tactical breakdown of how the Sixers' defense has evolved and what makes them elite on that end of the floor.</p>
-                    <div class="blog-footer">
-                        <div class="author-avatar">MT</div>
-                        <div class="author-info">
-                            <div class="author-name">Mike Thompson</div>
-                            <div class="post-time">1d ago</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -424,13 +453,6 @@
                     <div class="post-date">October 20, 2024</div>
                     <h3 class="blog-title">Tyrese Maxey's Breakout Performance</h3>
                     <p class="blog-excerpt">How Maxey's improved playmaking and scoring are elevating the Sixers to new heights this season.</p>
-                    <div class="blog-footer">
-                        <div class="author-avatar">ER</div>
-                        <div class="author-info">
-                            <div class="author-name">Emily Rodriguez</div>
-                            <div class="post-time">2d ago</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -443,13 +465,6 @@
                     <div class="post-date">October 18, 2024</div>
                     <h3 class="blog-title">Salary Cap Breakdown: Future Flexibility</h3>
                     <p class="blog-excerpt">Understanding the Sixers' cap situation and potential moves heading into the trade deadline and beyond.</p>
-                    <div class="blog-footer">
-                        <div class="author-avatar">BC</div>
-                        <div class="author-info">
-                            <div class="author-name">Brian Chen</div>
-                            <div class="post-time">3d ago</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -462,13 +477,6 @@
                     <div class="post-date">October 15, 2024</div>
                     <h3 class="blog-title">Eastern Conference Power Rankings Update</h3>
                     <p class="blog-excerpt">Where do the Sixers stand among the East's elite teams? A comprehensive ranking with analysis.</p>
-                    <div class="blog-footer">
-                        <div class="author-avatar">LM</div>
-                        <div class="author-info">
-                            <div class="author-name">Lisa Martinez</div>
-                            <div class="post-time">4d ago</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
