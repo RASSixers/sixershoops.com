@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sixers Hoops</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(to bottom right, #eff6ff, #ffffff);
+    }
+
+    /* Navigation */
+    nav {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #dbeafe;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2563eb;
+    }
+
+    .nav-links {
+      display: none;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: #374151;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #2563eb;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #2563eb;
+      padding: 1rem 2rem;
+      border-radius: 0.5rem;
+      border: 2px solid #2563eb;
+      cursor: pointer;
+      font-size: 1.125rem;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #f9fafb;
+    }
+
+    /* Hero Section */
+    .hero {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #111827;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title-highlight {
+      color: #2563eb;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      color: #4b5563;
+      margin-bottom: 2rem;
+      max-width: 42rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-hero {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    /* Articles Section */
+    .articles-section {
+      background: white;
+      padding: 5rem 0;
+    }
+
+    .articles-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .articles-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .articles-header h2 {
+      font-size: 2.25rem;
+      font-weight: bold;
+      color: #111827;
+      margin-bottom: 1rem;
+    }
+
+    .articles-header p {
+      font-size: 1.25rem;
+      color: #4b5563;
+    }
+
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .article-card {
+      background: white;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.2s;
+      cursor: pointer;
+      border: 1px solid #f3f4f6;
+    }
+
+    .article-card:hover {
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .article-image-container {
+      position: relative;
+      height: 12rem;
+      overflow: hidden;
+    }
+
+    .article-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .article-card:hover .article-image {
+      transform: scale(1.1);
+    }
+
+    .article-category {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: #2563eb;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .article-content {
+      padding: 1.5rem;
+    }
+
+    .article-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #111827;
+      margin-bottom: 0.75rem;
+      transition: color 0.2s;
+    }
+
+    .article-card:hover .article-title {
+      color: #2563eb;
+    }
+
+    .article-excerpt {
+      color: #4b5563;
+      margin-bottom: 1rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .article-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .icon {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .view-all-container {
+      text-align: center;
+    }
+
+    .btn-view-all {
+      background: #2563eb;
+      color: white;
+      padding: 0.75rem 2rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn-view-all:hover {
+      background: #1d4ed8;
+    }
+
+    @media (min-width: 768px) {
+      .nav-links {
+        display: flex;
+      }
+
+      h1 {
+        font-size: 4.5rem;
+      }
+
+      .hero {
+        padding: 8rem 1.5rem;
+      }
+
+      .articles-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <div class="logo">Sixers Hoops</div>
+      <div class="nav-links">
+        <a href="#articles">Articles</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <button class="btn-primary">Get Started</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Welcome to <span class="hero-title-highlight">Sixers Hoops</span></h1>
+    <p>Your ultimate destination for in-depth analysis, breaking news, and exclusive content about the team.</p>
+    <div class="hero-buttons">
+      <button class="btn-primary btn-hero">
+        Start Now
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+      </button>
+      <button class="btn-secondary btn-hero">Learn More</button>
+    </div>
+  </section>
+
+  <!-- Articles Section -->
+  <section id="articles" class="articles-section">
+    <div class="articles-container">
+      <div class="articles-header">
+        <h2>Latest Articles</h2>
+        <p>Stay up to date with our expert analysis and insights</p>
+      </div>
+      <div class="articles-grid" id="articlesGrid"></div>
+      <div class="view-all-container">
+        <button class="btn-view-all">View All Articles</button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const articles = [
+      {
+        id: 1,
+        title: 'Breaking Down the Latest Game Strategy',
+        excerpt: "An in-depth analysis of the team's performance and tactical decisions in last night's matchup.",
+        date: 'March 15, 2024',
+        readTime: '5 min read',
+        image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=80',
+        category: 'Analysis',
+      },
+      {
+        id: 2,
+        title: 'Player Spotlight: Rising Stars',
+        excerpt: 'Taking a closer look at the emerging talent making waves this season.',
+        date: 'March 14, 2024',
+        readTime: '4 min read',
+        image: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=80',
+        category: 'Features',
+      },
+      {
+        id: 3,
+        title: 'Season Predictions and Playoff Outlook',
+        excerpt: 'What the numbers tell us about our chances as we head into the final stretch.',
+        date: 'March 13, 2024',
+        readTime: '6 min read',
+        image: 'https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=800&q=80',
+        category: 'Predictions',
+      },
+    ];
+
+    function renderArticles() {
+      const grid = document.getElementById('articlesGrid');
+      
+      articles.forEach(article => {
+        const card = document.createElement('article');
+        card.className = 'article-card';
+        
+        card.innerHTML = `
+          <div class="article-image-container">
+            <img src="${article.image}" alt="${article.title}" class="article-image">
+            <div class="article-category">${article.category}</div>
+          </div>
+          <div class="article-content">
+            <h3 class="article-title">${article.title}</h3>
+            <p class="article-excerpt">${article.excerpt}</p>
+            <div class="article-meta">
+              <div class="meta-item">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>${article.date}</span>
+              </div>
+              <div class="meta-item">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>${article.readTime}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    // Render articles on page load
+    renderArticles();
+  </script>
+</body>
+</html>
