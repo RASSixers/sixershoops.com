@@ -1,764 +1,462 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sixers Hoops</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      min-height: 100vh;
-      background: linear-gradient(to bottom right, #eff6ff, #ffffff);
-    }
-
-    /* Navbar Styles */
-    nav {
-      width: 100%;
-      background: white;
-      border-bottom: 1px solid #f3f4f6;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    }
-
-    .nav-container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-
-    .nav-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 5rem;
-    }
-
-    .logo {
-      flex-shrink: 0;
-    }
-
-    .logo h1 {
-      font-size: 1.5rem;
-      font-weight: bold;
-      letter-spacing: -0.025em;
-    }
-
-    .logo-highlight {
-      color: #2563eb;
-    }
-
-    .desktop-nav {
-      display: none;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    .nav-link {
-      padding: 0.5rem 1rem;
-      color: #374151;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.2s;
-      border-radius: 0.5rem;
-    }
-
-    .nav-link:hover {
-      color: #2563eb;
-      background: #eff6ff;
-    }
-
-    .nav-button {
-      margin-left: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      background: #2563eb;
-      color: white;
-      font-weight: 500;
-      border-radius: 0.5rem;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .nav-button:hover {
-      background: #1d4ed8;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .dropdown {
-      position: relative;
-    }
-
-    .dropdown-button {
-      display: flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      color: #374151;
-      font-weight: 500;
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-    }
-
-    .dropdown-button:hover {
-      color: #2563eb;
-      background: #eff6ff;
-    }
-
-    .chevron {
-      margin-left: 0.25rem;
-      width: 1rem;
-      height: 1rem;
-      transition: transform 0.2s;
-    }
-
-    .chevron.rotate {
-      transform: rotate(180deg);
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      margin-top: 0.5rem;
-      width: 13rem;
-      background: white;
-      border-radius: 0.75rem;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      border: 1px solid #f3f4f6;
-      padding: 0.5rem 0;
-      display: none;
-      animation: fadeIn 0.2s ease-out;
-    }
-
-    .dropdown-menu.show {
-      display: block;
-    }
-
-    .dropdown-link {
-      display: block;
-      padding: 0.625rem 1rem;
-      font-size: 0.875rem;
-      color: #374151;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.15s;
-    }
-
-    .dropdown-link:hover {
-      background: #eff6ff;
-      color: #2563eb;
-    }
-
-    .mobile-menu-button {
-      display: block;
-      padding: 0.5rem;
-      color: #374151;
-      background: none;
-      border: none;
-      cursor: pointer;
-      border-radius: 0.5rem;
-      transition: all 0.2s;
-    }
-
-    .mobile-menu-button:hover {
-      color: #2563eb;
-      background: #eff6ff;
-    }
-
-    .icon {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
-
-    .mobile-nav {
-      display: none;
-      padding: 1rem 0;
-      border-top: 1px solid #f3f4f6;
-      animation: slideDown 0.2s ease-out;
-    }
-
-    .mobile-nav.show {
-      display: block;
-    }
-
-    .mobile-nav-links {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .mobile-nav-link {
-      padding: 0.75rem 1rem;
-      color: #374151;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.15s;
-      border-radius: 0.5rem;
-    }
-
-    .mobile-nav-link:hover {
-      color: #2563eb;
-      background: #eff6ff;
-    }
-
-    .mobile-dropdown-button {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 0.75rem 1rem;
-      color: #374151;
-      font-weight: 500;
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: all 0.15s;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      text-align: left;
-    }
-
-    .mobile-dropdown-button:hover {
-      color: #2563eb;
-      background: #eff6ff;
-    }
-
-    .mobile-dropdown-menu {
-      display: none;
-      margin-top: 0.25rem;
-      margin-left: 1rem;
-      flex-direction: column;
-      gap: 0.25rem;
-      animation: slideDown 0.2s ease-out;
-    }
-
-    .mobile-dropdown-menu.show {
-      display: flex;
-    }
-
-    .mobile-dropdown-link {
-      padding: 0.625rem 1rem;
-      font-size: 0.875rem;
-      color: #4b5563;
-      text-decoration: none;
-      transition: all 0.15s;
-      border-radius: 0.5rem;
-    }
-
-    .mobile-dropdown-link:hover {
-      color: #2563eb;
-      background: #eff6ff;
-    }
-
-    .mobile-nav-button {
-      margin: 0.5rem 1rem 0;
-      padding: 0.75rem 1.25rem;
-      background: #2563eb;
-      color: white;
-      font-weight: 500;
-      border-radius: 0.5rem;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      text-align: center;
-      text-decoration: none;
-      display: block;
-    }
-
-    .mobile-nav-button:hover {
-      background: #1d4ed8;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-0.5rem);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-0.5rem);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Hero Section */
-    .hero {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 5rem 1.5rem;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #111827;
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-title-highlight {
-      color: #2563eb;
-    }
-
-    .hero p {
-      font-size: 1.25rem;
-      color: #4b5563;
-      margin-bottom: 2rem;
-      max-width: 42rem;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn-primary {
-      background: #2563eb;
-      color: white;
-      padding: 1rem 2rem;
-      border-radius: 0.5rem;
-      border: none;
-      cursor: pointer;
-      font-size: 1.125rem;
-      font-weight: 600;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn-primary:hover {
-      background: #1d4ed8;
-    }
-
-    .btn-secondary {
-      background: white;
-      color: #2563eb;
-      padding: 1rem 2rem;
-      border-radius: 0.5rem;
-      border: 2px solid #2563eb;
-      cursor: pointer;
-      font-size: 1.125rem;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .btn-secondary:hover {
-      background: #f9fafb;
-    }
-
-    /* Articles Section */
-    .articles-section {
-      background: white;
-      padding: 5rem 0;
-    }
-
-    .articles-container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-    }
-
-    .articles-header {
-      text-align: center;
-      margin-bottom: 4rem;
-    }
-
-    .articles-header h2 {
-      font-size: 2.25rem;
-      font-weight: bold;
-      color: #111827;
-      margin-bottom: 1rem;
-    }
-
-    .articles-header p {
-      font-size: 1.25rem;
-      color: #4b5563;
-    }
-
-    .articles-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-bottom: 3rem;
-    }
-
-    .article-card {
-      background: white;
-      border-radius: 1rem;
-      overflow: hidden;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      transition: box-shadow 0.2s;
-      cursor: pointer;
-      border: 1px solid #f3f4f6;
-    }
-
-    .article-card:hover {
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-
-    .article-image-container {
-      position: relative;
-      height: 12rem;
-      overflow: hidden;
-    }
-
-    .article-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s;
-    }
-
-    .article-card:hover .article-image {
-      transform: scale(1.1);
-    }
-
-    .article-category {
-      position: absolute;
-      top: 1rem;
-      left: 1rem;
-      background: #2563eb;
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-
-    .article-content {
-      padding: 1.5rem;
-    }
-
-    .article-title {
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: #111827;
-      margin-bottom: 0.75rem;
-      transition: color 0.2s;
-    }
-
-    .article-card:hover .article-title {
-      color: #2563eb;
-    }
-
-    .article-excerpt {
-      color: #4b5563;
-      margin-bottom: 1rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .article-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.875rem;
-      color: #6b7280;
-    }
-
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn-view-all {
-      background: #2563eb;
-      color: white;
-      padding: 0.75rem 2rem;
-      border-radius: 0.5rem;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .btn-view-all:hover {
-      background: #1d4ed8;
-    }
-
-    .view-all-container {
-      text-align: center;
-    }
-
-    @media (min-width: 768px) {
-      .desktop-nav {
-        display: flex;
-      }
-
-      .mobile-menu-button {
-        display: none;
-      }
-
-      .nav-container {
-        padding: 0 1.5rem;
-      }
-
-      h1 {
-        font-size: 4.5rem;
-      }
-
-      .hero {
-        padding: 8rem 1.5rem;
-      }
-
-      .articles-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .nav-container {
-        padding: 0 2rem;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sixers Hoops</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1d3a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 4rem;
+            position: relative;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(20, 25, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.75rem 0;
+            min-width: 180px;
+            margin-top: 0.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 0.75rem 1.25rem;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #ffffff;
+        }
+
+        .contact-btn {
+            padding: 0.75rem 1.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: #ffffff;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .blog-section {
+            padding: 4rem 4rem 6rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .blog-card {
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .blog-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .blog-image {
+            width: 100%;
+            height: 240px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blog-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .blog-content {
+            padding: 1.75rem;
+            background: #f8f9fa;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: #3b82f6;
+            color: #ffffff;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .blog-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #1a1a1a;
+            line-height: 1.3;
+        }
+
+        .blog-excerpt {
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .blog-footer {
+            display: none;
+        }
+
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .author-info {
+            flex: 1;
+        }
+
+        .author-name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.9rem;
+        }
+
+        .post-time {
+            color: #999;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 1024px) {
+            .navbar {
+                padding: 1.5rem 2rem;
+            }
+
+            .nav-links {
+                gap: 1.5rem;
+            }
+
+            .hero h1 {
+                font-size: 3.5rem;
+            }
+
+            .blog-section {
+                padding: 4rem 2rem;
+            }
+
+            .blog-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .blog-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav>
-    <div class="nav-container">
-      <div class="nav-header">
+    <nav class="navbar">
         <div class="logo">
-          <h1>Sixers <span class="logo-highlight">Hoops</span></h1>
+            <div class="logo-icon">S</div>
+            <span>Sixers Hoops</span>
         </div>
-
-        <div class="desktop-nav">
-          <a href="/" class="nav-link">Home</a>
-          <a href="/pickem" class="nav-link">Pickem</a>
-          <a href="/news" class="nav-link">News</a>
-          
-          <div class="dropdown" id="teamHubDropdown">
-            <button class="dropdown-button" id="teamHubButton">
-              Team Hub
-              <svg class="chevron" id="teamHubChevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-            <div class="dropdown-menu" id="teamHubMenu">
-              <a href="/roster" class="dropdown-link">Roster</a>
-              <a href="/salary-cap" class="dropdown-link">Salary Cap</a>
-              <a href="/depth-chart" class="dropdown-link">Depth Chart</a>
-              <a href="/draft-picks" class="dropdown-link">Draft Picks</a>
-            </div>
-          </div>
-
-          <a href="/schedule" class="nav-link">Schedule</a>
-          <a href="/contact" class="nav-button">Contact</a>
-        </div>
-
-        <button class="mobile-menu-button" id="mobileMenuButton">
-          <svg class="icon" id="menuIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-          <svg class="icon" id="closeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="mobile-nav" id="mobileNav">
-        <div class="mobile-nav-links">
-          <a href="/" class="mobile-nav-link">Home</a>
-          <a href="/pickem" class="mobile-nav-link">Pickem</a>
-          <a href="/news" class="mobile-nav-link">News</a>
-          
-          <div>
-            <button class="mobile-dropdown-button" id="mobileTeamHubButton">
-              Team Hub
-              <svg class="chevron" id="mobileTeamHubChevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-            <div class="mobile-dropdown-menu" id="mobileTeamHubMenu">
-              <a href="/roster" class="mobile-dropdown-link">Roster</a>
-              <a href="/salary-cap" class="mobile-dropdown-link">Salary Cap</a>
-              <a href="/depth-chart" class="mobile-dropdown-link">Depth Chart</a>
-              <a href="/draft-picks" class="mobile-dropdown-link">Draft Picks</a>
-            </div>
-          </div>
-
-          <a href="/schedule" class="mobile-nav-link">Schedule</a>
-          <a href="/contact" class="mobile-nav-button">Contact</a>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Hero Section -->
-  <section class="hero">
-    <h1>Welcome to <span class="hero-title-highlight">Sixers Hoops</span></h1>
-    <p>Your ultimate destination for in-depth analysis, breaking news, and exclusive content about the team.</p>
-    <div class="hero-buttons">
-      <button class="btn-primary">
-        Start Now
-        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-        </svg>
-      </button>
-      <button class="btn-secondary">Learn More</button>
-    </div>
-  </section>
-
-  <!-- Articles Section -->
-  <section id="articles" class="articles-section">
-    <div class="articles-container">
-      <div class="articles-header">
-        <h2>Latest Articles</h2>
-        <p>Stay up to date with our expert analysis and insights</p>
-      </div>
-      <div class="articles-grid" id="articlesGrid"></div>
-      <div class="view-all-container">
-        <button class="btn-view-all">View All Articles</button>
-      </div>
-    </div>
-  </section>
-
-  <script>
-    // Navbar functionality
-    const teamHubDropdown = document.getElementById('teamHubDropdown');
-    const teamHubMenu = document.getElementById('teamHubMenu');
-    const teamHubChevron = document.getElementById('teamHubChevron');
-
-    teamHubDropdown.addEventListener('mouseenter', () => {
-      teamHubMenu.classList.add('show');
-      teamHubChevron.classList.add('rotate');
-    });
-
-    teamHubDropdown.addEventListener('mouseleave', () => {
-      teamHubMenu.classList.remove('show');
-      teamHubChevron.classList.remove('rotate');
-    });
-
-    const mobileMenuButton = document.getElementById('mobileMenuButton');
-    const mobileNav = document.getElementById('mobileNav');
-    const menuIcon = document.getElementById('menuIcon');
-    const closeIcon = document.getElementById('closeIcon');
-
-    mobileMenuButton.addEventListener('click', () => {
-      const isOpen = mobileNav.classList.toggle('show');
-      
-      if (isOpen) {
-        menuIcon.style.display = 'none';
-        closeIcon.style.display = 'block';
-      } else {
-        menuIcon.style.display = 'block';
-        closeIcon.style.display = 'none';
-      }
-    });
-
-    const mobileTeamHubButton = document.getElementById('mobileTeamHubButton');
-    const mobileTeamHubMenu = document.getElementById('mobileTeamHubMenu');
-    const mobileTeamHubChevron = document.getElementById('mobileTeamHubChevron');
-
-    mobileTeamHubButton.addEventListener('click', () => {
-      mobileTeamHubMenu.classList.toggle('show');
-      mobileTeamHubChevron.classList.toggle('rotate');
-    });
-
-    // Articles functionality
-    document.addEventListener('DOMContentLoaded', function () {
-      const articles = [
-        {
-          id: 1,
-          title: 'Breaking Down the Latest Game Strategy',
-          excerpt: "An in-depth analysis of the team's performance and tactical decisions in last night's matchup.",
-          date: 'March 15, 2024',
-          readTime: '5 min read',
-          image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=80',
-          category: 'Analysis',
-        },
-        {
-          id: 2,
-          title: 'Player Spotlight: Rising Stars',
-          excerpt: 'Taking a closer look at the emerging talent making waves this season.',
-          date: 'March 14, 2024',
-          readTime: '4 min read',
-          image: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=80',
-          category: 'Features',
-        },
-        {
-          id: 3,
-          title: 'Season Predictions and Playoff Outlook',
-          excerpt: 'What the numbers tell us about our chances as we head into the final stretch.',
-          date: 'March 13, 2024',
-          readTime: '6 min read',
-          image: 'https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=800&q=80',
-          category: 'Predictions',
-        },
-      ];
-
-      function renderArticles() {
-        const grid = document.getElementById('articlesGrid');
         
-        articles.forEach(article => {
-          const card = document.createElement('article');
-          card.className = 'article-card';
-          
-          card.innerHTML = `
-            <div class="article-image-container">
-              <img src="${article.image}" alt="${article.title}" class="article-image">
-              <div class="article-category">${article.category}</div>
-            </div>
-            <div class="article-content">
-              <h3 class="article-title">${article.title}</h3>
-              <p class="article-excerpt">${article.excerpt}</p>
-              <div class="article-meta">
-                <div class="meta-item">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                  </svg>
-                  <span>${article.date}</span>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#pickem">Pickem</a></li>
+            <li class="dropdown">
+                <span class="dropdown-toggle">
+                    <a>Team Hub</a> ▾
+                </span>
+                <div class="dropdown-content">
+                    <a href="#news">News</a>
+                    <a href="#roster">Roster</a>
+                    <a href="#salary-cap">Salary Cap</a>
+                    <a href="#depth-chart">Depth Chart</a>
+                    <a href="#draft-picks">Draft Picks</a>
                 </div>
-                <div class="meta-item">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <span>${article.readTime}</span>
-                </div>
-              </div>
-            </div>
-          `;
-          
-          grid.appendChild(card);
-        });
-      }
+            </li>
+            <li><a href="#schedule">Schedule</a></li>
+            <li>
+                <a href="#contact" class="contact-btn">
+                    <span>→</span> Contact
+                </a>
+            </li>
+        </ul>
+    </nav>
 
-      renderArticles();
-    });
-  </script>
+    <section class="hero">
+        <h1>
+            Welcome to<br>
+            <span class="gradient-text">Sixers Hoops</span>
+        </h1>
+    </section>
+
+    <section class="blog-section">
+        <h2 class="section-title">Latest Articles</h2>
+        <div class="blog-grid">
+            <div class="blog-card">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop" alt="Basketball court">
+                </div>
+                <div class="blog-content">
+                    <span class="category-tag">Analysis</span>
+                    <h3 class="blog-title">Sixers Season Preview: Championship Aspirations</h3>
+                    <p class="blog-excerpt">An in-depth look at the Sixers' roster, key matchups, and what it will take to bring a title to Philadelphia this season.</p>
+                    <div class="blog-footer">
+                        <div class="author-avatar">JD</div>
+                        <div class="author-info">
+                            <div class="author-name">John Davis</div>
+                            <div class="post-time">2h ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog-card">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=800&auto=format&fit=crop" alt="Basketball player">
+                </div>
+                <div class="blog-content">
+                    <span class="category-tag">MVP Watch</span>
+                    <h3 class="blog-title">Joel Embiid MVP Watch: Week 1 Breakdown</h3>
+                    <p class="blog-excerpt">Breaking down Embiid's dominant start to the season and his case for back-to-back MVP honors.</p>
+                    <div class="blog-footer">
+                        <div class="author-avatar">SK</div>
+                        <div class="author-info">
+                            <div class="author-name">Sarah Kim</div>
+                            <div class="post-time">5h ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog-card">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&auto=format&fit=crop" alt="Basketball game">
+                </div>
+                <div class="blog-content">
+                    <span class="category-tag">Strategy</span>
+                    <h3 class="blog-title">Analyzing the Sixers' Defensive Scheme</h3>
+                    <p class="blog-excerpt">A tactical breakdown of how the Sixers' defense has evolved and what makes them elite on that end of the floor.</p>
+                    <div class="blog-footer">
+                        <div class="author-avatar">MT</div>
+                        <div class="author-info">
+                            <div class="author-name">Mike Thompson</div>
+                            <div class="post-time">1d ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog-card">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&auto=format&fit=crop" alt="Basketball action">
+                </div>
+                <div class="blog-content">
+                    <span class="category-tag">Player Focus</span>
+                    <h3 class="blog-title">Tyrese Maxey's Breakout Performance</h3>
+                    <p class="blog-excerpt">How Maxey's improved playmaking and scoring are elevating the Sixers to new heights this season.</p>
+                    <div class="blog-footer">
+                        <div class="author-avatar">ER</div>
+                        <div class="author-info">
+                            <div class="author-name">Emily Rodriguez</div>
+                            <div class="post-time">2d ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog-card">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=800&auto=format&fit=crop" alt="Basketball arena">
+                </div>
+                <div class="blog-content">
+                    <span class="category-tag">Finance</span>
+                    <h3 class="blog-title">Salary Cap Breakdown: Future Flexibility</h3>
+                    <p class="blog-excerpt">Understanding the Sixers' cap situation and potential moves heading into the trade deadline and beyond.</p>
+                    <div class="blog-footer">
+                        <div class="author-avatar">BC</div>
+                        <div class="author-info">
+                            <div class="author-name">Brian Chen</div>
+                            <div class="post-time">3d ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog-card">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=800&auto=format&fit=crop" alt="Basketball trophy">
+                </div>
+                <div class="blog-content">
+                    <span class="category-tag">Rankings</span>
+                    <h3 class="blog-title">Eastern Conference Power Rankings Update</h3>
+                    <p class="blog-excerpt">Where do the Sixers stand among the East's elite teams? A comprehensive ranking with analysis.</p>
+                    <div class="blog-footer">
+                        <div class="author-avatar">LM</div>
+                        <div class="author-info">
+                            <div class="author-name">Lisa Martinez</div>
+                            <div class="post-time">4d ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </body>
 </html>
