@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const navbarHTML = `
     <nav class="navbar">
         <a href="#" class="nav-brand">
-            <div class="nav-logo">🏀</div>
             <div class="brand-text">
                 <div class="brand-name">Sixers Hoops</div>
                 <div class="brand-tagline">Elite Analysis</div>
