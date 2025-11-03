@@ -12,23 +12,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="/" class="nav-link">Home</a>
             </li>
             <li class="nav-item">
-                <a href="/pickem" class="nav-link">Pickem</a>
-            </li>
-            <li class="nav-item">
-                <a href="https://sixershoops.com/news" class="nav-link">News</a>
-            </li>
-            <li class="nav-item">
-                <a href="https://sixershoops.com/roster" class="nav-link">Roster</a>
+                <a href="/pickem" class="nav-link">Pick'em</a>
             </li>
             <li class="nav-item dropdown">
-                <button class="dropdown-toggle">More</button>
+                <button class="dropdown-toggle">Team Hub</button>
                 <div class="dropdown-menu">
-                    <a href="https://sixershoops.com/salary" class="dropdown-item">Salary Cap</a>
+                    <a href="https://sixershoops.com/roster" class="dropdown-item">Roster</a>
+                    <a href="https://sixershoops.com/salary" class="dropdown-item">Salary Breakdown</a>
                     <a href="https://sixershoops.com/sixers-depth-chart" class="dropdown-item">Depth Chart</a>
                     <a href="https://sixershoops.com/future-draft-picks" class="dropdown-item">Draft Picks</a>
-                    <a href="https://sixershoops.com/schedule" class="dropdown-item">Schedule</a>
-                    <a href="https://sixershoops.com/contact" class="dropdown-item">Contact</a>
                 </div>
+            </li>
+            <li class="nav-item">
+                <a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a>
+            </li>
+            <li class="nav-item">
+                <a href="https://sixershoops.com/contact" class="nav-link">Contact</a>
             </li>
         </ul>
 
@@ -60,16 +59,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="/" class="mobile-nav-link">Home</a>
         </div>
         <div class="mobile-nav-item">
-            <a href="/pickem" class="mobile-nav-link">Pickem</a>
-        </div>
-        <div class="mobile-nav-item">
-            <a href="https://sixershoops.com/news" class="mobile-nav-link">News</a>
+            <a href="/pickem" class="mobile-nav-link">Pick'em</a>
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/roster" class="mobile-nav-link">Roster</a>
         </div>
         <div class="mobile-nav-item">
-            <a href="https://sixershoops.com/salary" class="mobile-nav-link">Salary Cap</a>
+            <a href="https://sixershoops.com/salary" class="mobile-nav-link">Salary Breakdown</a>
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/sixers-depth-chart" class="mobile-nav-link">Depth Chart</a>
