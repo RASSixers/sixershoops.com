@@ -3,9 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const navbarHTML = `
     <nav class="navbar">
         <a href="#" class="nav-brand">
+            <div class="nav-logo">SH</div>
             <div class="brand-text">
                 <div class="brand-name">Sixers Hoops</div>
-                <div class="brand-tagline">Elite Analysis</div>
             </div>
         </a>
 
@@ -30,9 +30,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a>
             </li>
             <li class="nav-item">
-                <a href="https://sixershoops.com/contact" class="nav-cta">Contact</a>
+                <a href="https://sixershoops.com/contact" class="nav-link">Contact</a>
             </li>
         </ul>
+
+        <div class="nav-icons">
+            <button class="icon-btn" aria-label="Search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
+            <button class="icon-btn" aria-label="Theme Toggle">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+            </button>
+        </div>
 
         <button class="mobile-menu-btn" id="mobileMenuBtn">
             <span></span>
@@ -103,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     navLinks.forEach(link => {
         if (link.getAttribute('href') === currentLocation || 
-            (currentLocation === '/' && link.getAttribute('href') === '#home')) {
+            (currentLocation === '/' && link.getAttribute('href') === '/')) {
             link.classList.add('active');
         }
     });
@@ -114,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('scroll', function() {
             let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             
-            if (scrollTop > 50) {
+            if (scrollTop > 20) {
                 navbar.classList.add('scrolled');
             } else {
                 navbar.classList.remove('scrolled');
