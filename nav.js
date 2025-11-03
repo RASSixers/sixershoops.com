@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navbarHTML = `
     <nav class="navbar">
         <a href="/" class="nav-brand">
-            <div class="nav-logo">SH</div>
+            <img src="OneDrive/Pictures/sixershoopslogonew.png" alt="Sixers Hoops Logo" class="nav-logo">
             <span class="brand-name">SIXERS HOOPS</span>
         </a>
 
