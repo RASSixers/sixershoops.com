@@ -2,11 +2,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const navbarHTML = `
     <nav class="navbar">
-        <a href="#" class="nav-brand">
+        <a href="/" class="nav-brand">
             <div class="nav-logo">SH</div>
-            <div class="brand-text">
-                <div class="brand-name">Sixers Hoops</div>
-            </div>
+            <span class="brand-name">SIXERS HOOPS</span>
         </a>
 
         <ul class="nav-menu">
@@ -16,21 +14,21 @@ document.addEventListener('DOMContentLoaded', function() {
             <li class="nav-item">
                 <a href="/pickem" class="nav-link">Pickem</a>
             </li>
+            <li class="nav-item">
+                <a href="https://sixershoops.com/news" class="nav-link">News</a>
+            </li>
+            <li class="nav-item">
+                <a href="https://sixershoops.com/roster" class="nav-link">Roster</a>
+            </li>
             <li class="nav-item dropdown">
-                <button class="dropdown-toggle">Team Hub</button>
+                <button class="dropdown-toggle">More</button>
                 <div class="dropdown-menu">
-                    <a href="https://sixershoops.com/news" class="dropdown-item">News</a>
-                    <a href="https://sixershoops.com/roster" class="dropdown-item">Roster</a>
                     <a href="https://sixershoops.com/salary" class="dropdown-item">Salary Cap</a>
                     <a href="https://sixershoops.com/sixers-depth-chart" class="dropdown-item">Depth Chart</a>
                     <a href="https://sixershoops.com/future-draft-picks" class="dropdown-item">Draft Picks</a>
+                    <a href="https://sixershoops.com/schedule" class="dropdown-item">Schedule</a>
+                    <a href="https://sixershoops.com/contact" class="dropdown-item">Contact</a>
                 </div>
-            </li>
-            <li class="nav-item">
-                <a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a>
-            </li>
-            <li class="nav-item">
-                <a href="https://sixershoops.com/contact" class="nav-link">Contact</a>
             </li>
         </ul>
 
@@ -41,17 +39,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
             </button>
-            <button class="icon-btn" aria-label="Theme Toggle">
+            <button class="icon-btn" aria-label="Menu">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    <line x1="4" x2="20" y1="12" y2="12"></line>
+                    <line x1="4" x2="20" y1="6" y2="6"></line>
+                    <line x1="4" x2="20" y1="18" y2="18"></line>
                 </svg>
             </button>
         </div>
