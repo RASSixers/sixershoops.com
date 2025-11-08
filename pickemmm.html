@@ -729,6 +729,35 @@
       to { transform: rotate(360deg); }
     }
 
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      max-width: 300px;
+      height: 8px;
+      background: var(--border);
+      border-radius: 10px;
+      margin: 1.5rem auto;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--brand), #1e3a8a);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
     /* Admin Panel Styles */
     .admin-panel {
       max-width: 900px;
@@ -856,6 +885,16 @@
 </head>
 <body>
   <div class="main-container">
+    <!-- Loading State -->
+    <div id="loadingContainer" class="loading">
+      <div class="spinner"></div>
+      <p style="margin-top: 1rem;">Loading...</p>
+      <div class="progress-bar-container">
+        <div id="progressBar" class="progress-bar-fill"></div>
+      </div>
+      <p id="loadingPercent" style="margin-top: 1rem; font-weight: 700; color: var(--brand);">0%</p>
+    </div>
+
     <!-- Login/Register Section -->
     <div id="authContainer" class="auth-section" style="display: none;">
       <div class="auth-header-section">
@@ -3448,53 +3487,4 @@
         console.log(`${period} leaderboard final: ${leaderboard.length} users, top score: ${leaderboard[0]?.correct_count || 0}`);
 
         renderLeaderboard(period, leaderboard);
-      } catch (err) {
-        console.error('Error loading leaderboard:', err);
-        showMessage(`Failed to load ${period} leaderboard`, 'error');
-      }
-    }
-
-    function renderLeaderboard(period, entries) {
-      const bodyId = `${period}LeaderboardBody`;
-      
-      console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries:`, entries);
-
-      const medals = ['🥇', '🥈', '🥉'];
-      const bodyHtml = entries.map((entry, idx) => {
-        let badge = '';
-        if (idx < 3) {
-          badge = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
-        }
-        console.log(`  ${idx + 1}. ${entry.username}: ${entry.correct_count}/${entry.total_count}`);
-        return `
-          <tr>
-            <td>${badge}${idx + 1}</td>
-            <td>${entry.username}</td>
-            <td><span class="score">${entry.correct_count}</span></td>
-          </tr>
-        `;
-      }).join('');
-
-      if (entries.length === 0) {
-        console.warn(`⚠️  No entries to display for ${period} leaderboard`);
-      }
-      
-      document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="3" class="empty-state">No data yet</td></tr>';
-    }
-
-    // === Utility ===
-    function showMessage(text, type = 'info', elementId = 'message') {
-      const msg = document.getElementById(elementId);
-      if (!msg) return;
-      msg.textContent = text;
-      msg.className = `message show ${type}`;
-      console.log(`[${type.toUpperCase()}] ${text}`);
-      // Auto-hide after 5 seconds (increased from 4s for better UX)
-      setTimeout(() => msg.classList.remove('show'), 5000);
-    }
-
-    // === Init ===
-    // initAuth is now called from initializeFirebase() after Firebase is ready
-  </script>
-</body>
-</html>
+    
