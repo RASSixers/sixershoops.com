@@ -729,35 +729,6 @@
       to { transform: rotate(360deg); }
     }
 
-    .loading {
-      text-align: center;
-      padding: 2rem;
-      color: var(--muted);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 400px;
-    }
-
-    .progress-bar-container {
-      width: 100%;
-      max-width: 300px;
-      height: 8px;
-      background: var(--border);
-      border-radius: 10px;
-      margin: 1.5rem auto;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--brand), #1e3a8a);
-      border-radius: 10px;
-      transition: width 0.3s ease;
-    }
-
     /* Admin Panel Styles */
     .admin-panel {
       max-width: 900px;
@@ -885,16 +856,6 @@
 </head>
 <body>
   <div class="main-container">
-    <!-- Loading State -->
-    <div id="loadingContainer" class="loading">
-      <div class="spinner"></div>
-      <p style="margin-top: 1rem;">Loading...</p>
-      <div class="progress-bar-container">
-        <div id="progressBar" class="progress-bar-fill"></div>
-      </div>
-      <p id="loadingPercent" style="margin-top: 1rem; font-weight: 700; color: var(--brand);">0%</p>
-    </div>
-
     <!-- Login/Register Section -->
     <div id="authContainer" class="auth-section" style="display: none;">
       <div class="auth-header-section">
@@ -1020,12 +981,7 @@
 
       <!-- Daily Leaderboard Tab -->
       <div id="daily-lb" class="tab-content">
-        <div style="margin-bottom: 20px;">
-          <div class="date-slider-controls" style="margin-bottom: 15px;">
-            <button class="date-nav-btn" id="dailyPrevBtn">‹</button>
-            <div id="dailyDateSliderContainer" class="date-picker-container"></div>
-            <button class="date-nav-btn" id="dailyNextBtn">›</button>
-          </div>
+        <div style="margin-bottom: 15px;">
           <button type="button" class="btn btn-secondary" id="refreshDailyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -1034,6 +990,7 @@
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
+              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="dailyLeaderboardBody"></tbody>
@@ -1042,12 +999,7 @@
 
       <!-- Weekly Leaderboard Tab -->
       <div id="weekly-lb" class="tab-content">
-        <div style="margin-bottom: 20px;">
-          <div class="date-slider-controls" style="margin-bottom: 15px;">
-            <button class="date-nav-btn" id="weeklyPrevBtn">‹</button>
-            <div id="weeklyWeekSliderContainer" class="date-picker-container"></div>
-            <button class="date-nav-btn" id="weeklyNextBtn">›</button>
-          </div>
+        <div style="margin-bottom: 15px;">
           <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -1056,6 +1008,7 @@
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
+              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="weeklyLeaderboardBody"></tbody>
@@ -1064,12 +1017,7 @@
 
       <!-- Monthly Leaderboard Tab -->
       <div id="monthly-lb" class="tab-content">
-        <div style="margin-bottom: 20px;">
-          <div class="date-slider-controls" style="margin-bottom: 15px;">
-            <button class="date-nav-btn" id="monthlyPrevBtn">‹</button>
-            <div id="monthlyMonthSliderContainer" class="date-picker-container"></div>
-            <button class="date-nav-btn" id="monthlyNextBtn">›</button>
-          </div>
+        <div style="margin-bottom: 15px;">
           <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">🔄 Refresh</button>
         </div>
         <table class="leaderboard-table">
@@ -1078,6 +1026,7 @@
               <th>Rank</th>
               <th>Player</th>
               <th>Correct</th>
+              <th>Total Picks</th>
             </tr>
           </thead>
           <tbody id="monthlyLeaderboardBody"></tbody>
@@ -1260,42 +1209,9 @@
       measurementId: "G-B22K71F01E"
     };
 
-    // Initialize progress tracking variables FIRST
-    let loadingProgress = 0;
-    let progressInterval = null;
-
-    // Initialize loading progress bar
-    function startLoadingProgress() {
-      loadingProgress = 0;
-      const progressBar = document.getElementById('progressBar');
-      const loadingPercent = document.getElementById('loadingPercent');
-      
-      // Simulate progress: increase quickly at first, then slow down as we approach 90%
-      progressInterval = setInterval(() => {
-        if (loadingProgress < 90) {
-          loadingProgress += Math.random() * (10 - loadingProgress / 10);
-        }
-        if (progressBar) progressBar.style.width = loadingProgress + '%';
-        if (loadingPercent) loadingPercent.textContent = Math.floor(loadingProgress) + '%';
-      }, 200);
-    }
-
-    function completeLoadingProgress() {
-      loadingProgress = 100;
-      if (progressInterval) clearInterval(progressInterval);
-      const progressBar = document.getElementById('progressBar');
-      const loadingPercent = document.getElementById('loadingPercent');
-      if (progressBar) progressBar.style.width = '100%';
-      if (loadingPercent) loadingPercent.textContent = '100%';
-    }
-
-    // Start progress immediately
-    startLoadingProgress();
-
     // Wait for Firebase SDK to load before initializing
     let auth, db;
     let firebaseReady = false;
-    let authTimeout = null;
     
     function initializeFirebase() {
       if (typeof firebase === 'undefined') {
@@ -1321,19 +1237,7 @@
 
     // === Authentication ===
     function initAuth() {
-      // Set a timeout to show auth if Firebase takes too long
-      authTimeout = setTimeout(() => {
-        console.warn('Firebase auth check timeout - showing login form');
-        completeLoadingProgress();
-        showAuth();
-      }, 3000);
-
       auth.onAuthStateChanged(async (user) => {
-        // Clear the timeout since auth state has been determined
-        if (authTimeout) clearTimeout(authTimeout);
-        
-        completeLoadingProgress();
-
         if (user) {
           currentUser = user.displayName || user.email.split('@')[0];
           currentUserEmail = user.email;
@@ -1349,23 +1253,13 @@
     }
 
     function showAuth() {
-      const loadingContainer = document.getElementById('loadingContainer');
-      const authContainer = document.getElementById('authContainer');
-      const appContainer = document.getElementById('appContainer');
-      
-      if (loadingContainer) loadingContainer.style.display = 'none';
-      if (authContainer) authContainer.style.display = 'block';
-      if (appContainer) appContainer.style.display = 'none';
+      document.getElementById('authContainer').style.display = 'block';
+      document.getElementById('appContainer').style.display = 'none';
     }
 
     function showApp() {
-      const loadingContainer = document.getElementById('loadingContainer');
-      const authContainer = document.getElementById('authContainer');
-      const appContainer = document.getElementById('appContainer');
-      
-      if (loadingContainer) loadingContainer.style.display = 'none';
-      if (authContainer) authContainer.style.display = 'none';
-      if (appContainer) appContainer.style.display = 'block';
+      document.getElementById('authContainer').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
       document.getElementById('currentUser').textContent = currentUser;
       
       const isAdmin = isUserAdmin();
@@ -2980,22 +2874,16 @@
 
     // === Tabs ===
     document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', () => {
         const tabName = btn.dataset.tab;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(tabName).classList.add('active');
         
-        if (tabName === 'daily-lb') {
-          await populateDateSlider();
-        }
-        if (tabName === 'weekly-lb') {
-          await populateWeekSlider();
-        }
-        if (tabName === 'monthly-lb') {
-          await populateMonthSlider();
-        }
+        if (tabName === 'daily-lb') loadLeaderboard('daily');
+        if (tabName === 'weekly-lb') loadLeaderboard('weekly');
+        if (tabName === 'monthly-lb') loadLeaderboard('monthly');
       });
     });
 
@@ -3015,11 +2903,9 @@
         dailyRefreshBtn.disabled = true;
         dailyRefreshBtn.textContent = 'Loading...';
         try {
-          if (selectedDailyDate) {
-            await loadLeaderboard('daily', selectedDailyDate);
-            console.log('✅ Daily leaderboard refreshed successfully');
-            dailyRefreshBtn.textContent = 'Refreshed! ✓';
-          }
+          await loadLeaderboard('daily');
+          console.log('✅ Daily leaderboard refreshed successfully');
+          dailyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
             dailyRefreshBtn.textContent = originalText;
             dailyRefreshBtn.disabled = false;
@@ -3041,11 +2927,9 @@
         weeklyRefreshBtn.disabled = true;
         weeklyRefreshBtn.textContent = 'Loading...';
         try {
-          if (selectedWeeklyWeek) {
-            await loadLeaderboard('weekly', selectedWeeklyWeek);
-            console.log('✅ Weekly leaderboard refreshed successfully');
-            weeklyRefreshBtn.textContent = 'Refreshed! ✓';
-          }
+          await loadLeaderboard('weekly');
+          console.log('✅ Weekly leaderboard refreshed successfully');
+          weeklyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
             weeklyRefreshBtn.textContent = originalText;
             weeklyRefreshBtn.disabled = false;
@@ -3067,11 +2951,9 @@
         monthlyRefreshBtn.disabled = true;
         monthlyRefreshBtn.textContent = 'Loading...';
         try {
-          if (selectedMonthlyMonth) {
-            await loadLeaderboard('monthly', selectedMonthlyMonth);
-            console.log('✅ Monthly leaderboard refreshed successfully');
-            monthlyRefreshBtn.textContent = 'Refreshed! ✓';
-          }
+          await loadLeaderboard('monthly');
+          console.log('✅ Monthly leaderboard refreshed successfully');
+          monthlyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
             monthlyRefreshBtn.textContent = originalText;
             monthlyRefreshBtn.disabled = false;
@@ -3086,344 +2968,29 @@
       console.log('✅ Monthly refresh button listener attached');
     }
 
-    // === Dropdown Helpers ===
-    const PICKEM_START_DATE = new Date(2024, 10, 1); // November 1, 2024
-    
-    function getWeekInfo(date) {
-      // Get the week structure based on November 1 start date
-      const dateObj = new Date(date);
-      const dayOfMonth = dateObj.getDate();
-      
-      if (dayOfMonth >= 1 && dayOfMonth <= 7) return { week: 1, start: 1, end: 7 };
-      if (dayOfMonth >= 8 && dayOfMonth <= 14) return { week: 2, start: 8, end: 14 };
-      if (dayOfMonth >= 15 && dayOfMonth <= 21) return { week: 3, start: 15, end: 21 };
-      if (dayOfMonth >= 22 && dayOfMonth <= 30) return { week: 4, start: 22, end: 30 };
-      return null; // Outside valid range
-    }
-
-    // Slider offset tracking
-    let dailySliderOffset = 0;
-    let weeklySliderOffset = 0;
-    let monthlySliderOffset = 0;
-    const SLIDERS_TO_SHOW = 7;
-
-    // Store data for sliders
-    let dailyDatesData = [];
-    let weeklyWeeksData = [];
-    let monthlyMonthsData = [];
-    let selectedDailyDate = null;
-    let selectedWeeklyWeek = null;
-    let selectedMonthlyMonth = null;
-
-    async function populateDateSlider() {
+    async function loadLeaderboard(period) {
       try {
-        // Generate 14 days starting from today (same as picks tab)
-        const today = new Date();
-        const dates = [];
+        console.log(`loadLeaderboard called for period: ${period}`);
         
-        for (let i = 0; i < 14; i++) {
-          const date = new Date(today);
-          date.setDate(date.getDate() + i);
-          const formattedValue = formatDateForComparison(date);
-          dates.push(formattedValue);
-        }
-        
-        dailyDatesData = dates;
-        dailySliderOffset = 0;
-        selectedDailyDate = dates[0]; // Select today by default
-        
-        renderDailyDateSlider();
-        if (selectedDailyDate) {
-          await loadLeaderboard('daily', selectedDailyDate);
-        }
-      } catch (err) {
-        console.error('Error populating date slider:', err);
-      }
-    }
-
-    function renderDailyDateSlider() {
-      const container = document.getElementById('dailyDateSliderContainer');
-      const visibleDates = dailyDatesData.slice(dailySliderOffset, dailySliderOffset + SLIDERS_TO_SHOW);
-      
-      container.innerHTML = visibleDates.map(dateStr => {
-        const d = new Date(dateStr + 'T00:00:00');
-        const label = formatDateLabel(d);
-        const isActive = selectedDailyDate === dateStr;
-        
-        return `
-          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-date="${dateStr}" data-type="daily">
-            <div style="font-weight: 700; font-size: 12px;">${label.day}</div>
-            <div class="date-picker-date">${label.date}</div>
-          </button>
-        `;
-      }).join('');
-      
-      // Update nav button states
-      document.getElementById('dailyPrevBtn').disabled = dailySliderOffset === 0;
-      document.getElementById('dailyNextBtn').disabled = dailySliderOffset >= dailyDatesData.length - SLIDERS_TO_SHOW;
-      
-      // Attach click handlers
-      container.querySelectorAll('.date-picker-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          selectedDailyDate = btn.dataset.date;
-          renderDailyDateSlider();
-          await loadLeaderboard('daily', selectedDailyDate);
-        });
-      });
-    }
-
-    async function populateWeekSlider() {
-      try {
-        // Week 1 starts November 1, 2024 - only generate weeks from Nov 1 onward
-        const weeks = [];
-        const today = new Date();
-        const todayStr = formatDateForComparison(today);
-        const currentWeekInfo = getWeekInfo(todayStr);
-        
-        // Define Nov 1, 2024 as Week 1 start
-        const nov1 = new Date(2024, 10, 1); // November 1, 2024
-        
-        // Start from current week (but not before Nov 1)
-        let startDate = new Date(today);
-        startDate.setDate(startDate.getDate() - (today.getDate() - currentWeekInfo.start)); // Go to start of current week
-        
-        // If before Nov 1, start from Nov 1 instead
-        if (startDate < nov1) {
-          startDate = new Date(nov1);
-        }
-        
-        // Generate 9 weeks starting from Nov 1 onwards (current + 8 forward)
-        for (let i = 0; i < 9; i++) {
-          const week = new Date(startDate);
-          week.setDate(week.getDate() + (i * 7));
-          const weekStr = formatDateForComparison(week);
-          const weekInfo = getWeekInfo(weekStr);
-          if (weekInfo) {
-            const year = week.getFullYear();
-            const month = String(week.getMonth() + 1).padStart(2, '0');
-            const weekKey = `${year}-${month}-W${weekInfo.week}`;
-            if (!weeks.find(w => w === weekKey)) {
-              weeks.push(weekKey);
-            }
-          }
-        }
-        
-        weeklyWeeksData = weeks;
-        weeklySliderOffset = 0;
-        
-        // Select current week (or first week if before Nov 1)
-        selectedWeeklyWeek = weeklyWeeksData[0]; // Default to first week
-        
-        renderWeeklyWeekSlider();
-        if (selectedWeeklyWeek) {
-          await loadLeaderboard('weekly', selectedWeeklyWeek);
-        }
-      } catch (err) {
-        console.error('Error populating week slider:', err);
-      }
-    }
-
-    function renderWeeklyWeekSlider() {
-      const container = document.getElementById('weeklyWeekSliderContainer');
-      const visibleWeeks = weeklyWeeksData.slice(weeklySliderOffset, weeklySliderOffset + SLIDERS_TO_SHOW);
-      
-      container.innerHTML = visibleWeeks.map(weekStr => {
-        const [yearMonth, weekNum] = weekStr.split('-W');
-        const [year, month] = yearMonth.split('-');
-        const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const monthName = monthNames[parseInt(month)];
-        const isActive = selectedWeeklyWeek === weekStr;
-        
-        return `
-          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${weekStr}" data-type="weekly">
-            <div style="font-weight: 700; font-size: 12px;">Week ${weekNum}</div>
-            <div class="date-picker-date">${monthName} ${year}</div>
-          </button>
-        `;
-      }).join('');
-      
-      // Update nav button states
-      document.getElementById('weeklyPrevBtn').disabled = weeklySliderOffset === 0;
-      document.getElementById('weeklyNextBtn').disabled = weeklySliderOffset >= weeklyWeeksData.length - SLIDERS_TO_SHOW;
-      
-      // Attach click handlers
-      container.querySelectorAll('.date-picker-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          selectedWeeklyWeek = btn.dataset.week;
-          renderWeeklyWeekSlider();
-          await loadLeaderboard('weekly', selectedWeeklyWeek);
-        });
-      });
-    }
-
-    async function populateMonthSlider() {
-      try {
-        // Generate current month + next 11 months
-        const months = [];
-        const today = new Date();
-        
-        for (let i = 0; i < 12; i++) {
-          const monthDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
-          const year = monthDate.getFullYear();
-          const month = String(monthDate.getMonth() + 1).padStart(2, '0');
-          const monthKey = `${year}-${month}`;
-          months.push(monthKey);
-        }
-        
-        monthlyMonthsData = months;
-        monthlySliderOffset = 0;
-        
-        // Select current month
-        const currentYear = today.getFullYear();
-        const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
-        const currentMonthKey = `${currentYear}-${currentMonth}`;
-        selectedMonthlyMonth = currentMonthKey;
-        
-        renderMonthlyMonthSlider();
-        if (selectedMonthlyMonth) {
-          await loadLeaderboard('monthly', selectedMonthlyMonth);
-        }
-      } catch (err) {
-        console.error('Error populating month slider:', err);
-      }
-    }
-
-    function renderMonthlyMonthSlider() {
-      const container = document.getElementById('monthlyMonthSliderContainer');
-      const visibleMonths = monthlyMonthsData.slice(monthlySliderOffset, monthlySliderOffset + SLIDERS_TO_SHOW);
-      
-      container.innerHTML = visibleMonths.map(monthStr => {
-        const [year, month] = monthStr.split('-');
-        const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const monthName = monthNames[parseInt(month)];
-        const displayText = `${monthName} ${year}`;
-        const isActive = selectedMonthlyMonth === monthStr;
-        
-        return `
-          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-month="${monthStr}" data-type="monthly">
-            <div style="font-weight: 700; font-size: 14px;">${displayText}</div>
-          </button>
-        `;
-      }).join('');
-      
-      // Update nav button states
-      document.getElementById('monthlyPrevBtn').disabled = monthlySliderOffset === 0;
-      document.getElementById('monthlyNextBtn').disabled = monthlySliderOffset >= monthlyMonthsData.length - SLIDERS_TO_SHOW;
-      
-      // Attach click handlers
-      container.querySelectorAll('.date-picker-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          selectedMonthlyMonth = btn.dataset.month;
-          renderMonthlyMonthSlider();
-          await loadLeaderboard('monthly', selectedMonthlyMonth);
-        });
-      });
-    }
-
-    // Add navigation button listeners
-    document.getElementById('dailyPrevBtn').addEventListener('click', () => {
-      if (dailySliderOffset > 0) {
-        dailySliderOffset--;
-        renderDailyDateSlider();
-      }
-    });
-
-    document.getElementById('dailyNextBtn').addEventListener('click', () => {
-      if (dailySliderOffset < dailyDatesData.length - SLIDERS_TO_SHOW) {
-        dailySliderOffset++;
-        renderDailyDateSlider();
-      }
-    });
-
-    document.getElementById('weeklyPrevBtn').addEventListener('click', () => {
-      if (weeklySliderOffset > 0) {
-        weeklySliderOffset--;
-        renderWeeklyWeekSlider();
-      }
-    });
-
-    document.getElementById('weeklyNextBtn').addEventListener('click', () => {
-      if (weeklySliderOffset < weeklyWeeksData.length - SLIDERS_TO_SHOW) {
-        weeklySliderOffset++;
-        renderWeeklyWeekSlider();
-      }
-    });
-
-    document.getElementById('monthlyPrevBtn').addEventListener('click', () => {
-      if (monthlySliderOffset > 0) {
-        monthlySliderOffset--;
-        renderMonthlyMonthSlider();
-      }
-    });
-
-    document.getElementById('monthlyNextBtn').addEventListener('click', () => {
-      if (monthlySliderOffset < monthlyMonthsData.length - SLIDERS_TO_SHOW) {
-        monthlySliderOffset++;
-        renderMonthlyMonthSlider();
-      }
-    });
-
-    async function loadLeaderboard(period, selectedValue) {
-      try {
-        console.log(`loadLeaderboard called for period: ${period}, selectedValue: ${selectedValue}`);
-        
-        // Calculate date range based on period and selected value
+        // Calculate date range based on period
         const now = new Date();
         let startDate = new Date();
-        let endDate = now;
-        // Parse date string in LOCAL timezone, not UTC
-            const [year, month, day] = selectedValue.split('-');
-            startDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            endDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day)
+        
         if (period === 'daily') {
-          if (selectedValue) {
-            startDate = new Date(selectedValue);
-            endDate = new Date(selectedValue);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
-          } else {
-            // Default: today
-            startDate.setHours(0, 0, 0, 0);
-          }
+          // Start of today
+          startDate.setHours(0, 0, 0, 0);
         } else if (period === 'weekly') {
-          if (selectedValue) {
-            // Parse week value format: "2024-11-W1" -> extract year, month, and week number
-            const [yearMonth, weekNum] = selectedValue.split('-W');
-            const [year, month] = yearMonth.split('-');
-            const week = parseInt(weekNum);
-            const weekInfo = { week, start: (week - 1) * 7 + 1, end: week * 7 + (week === 4 ? 2 : 0) };
-            
-            // Calculate the week dates
-            startDate = new Date(parseInt(year), parseInt(month) - 1, weekInfo.start);
-            startDate.setHours(0, 0, 0, 0);
-            
-            endDate = new Date(parseInt(year), parseInt(month) - 1, weekInfo.end);
-            endDate.setHours(23, 59, 59, 999);
-          } else {
-            // Default: last 7 days
-            startDate = new Date(now);
-            startDate.setDate(now.getDate() - 7);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = now;
-          }
+          // 7 days ago
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          startDate.setHours(0, 0, 0, 0);
         } else if (period === 'monthly') {
-          if (selectedValue) {
-            // Parse month value format: "2024-11"
-            const [year, month] = selectedValue.split('-');
-            startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(parseInt(year), parseInt(month), 0);
-            endDate.setHours(23, 59, 59, 999);
-          } else {
-            // Default: current month
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = now;
-          formatDateForComparison(startDate);
-        const endDateStr = formatDateForComparison(endDate)}
+          // First day of current month
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         }
 
         const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
+        const endDateStr = now.toISOString().split('T')[0];
         console.log(`📅 ${period.toUpperCase()} leaderboard: date range ${startDateStr} to ${endDateStr}`);
 
         // Get all dates in the range with picks
@@ -3439,16 +3006,8 @@
         const datesInRange = new Set();
         picksSnapshot.docs.forEach(doc => {
           const pickDate = doc.data().date;
-          // For daily leaderboards, use EXACT date match only
-          if (period === 'daily') {
-            if (pickDate === startDateStr) {
-              datesInRange.add(pickDate);
-            }
-          } else {
-            // For weekly/monthly, use date range
-            if (pickDate >= startDateStr && pickDate <= endDateStr) {
-              datesInRange.add(pickDate);
-            }
+          if (pickDate >= startDateStr && pickDate <= endDateStr) {
+            datesInRange.add(pickDate);
           }
         });
         
@@ -3487,4 +3046,54 @@
         console.log(`${period} leaderboard final: ${leaderboard.length} users, top score: ${leaderboard[0]?.correct_count || 0}`);
 
         renderLeaderboard(period, leaderboard);
-    
+      } catch (err) {
+        console.error('Error loading leaderboard:', err);
+        showMessage(`Failed to load ${period} leaderboard`, 'error');
+      }
+    }
+
+    function renderLeaderboard(period, entries) {
+      const bodyId = `${period}LeaderboardBody`;
+      
+      console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries:`, entries);
+
+      const medals = ['🥇', '🥈', '🥉'];
+      const bodyHtml = entries.map((entry, idx) => {
+        let badge = '';
+        if (idx < 3) {
+          badge = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
+        }
+        console.log(`  ${idx + 1}. ${entry.username}: ${entry.correct_count}/${entry.total_count}`);
+        return `
+          <tr>
+            <td>${badge}${idx + 1}</td>
+            <td>${entry.username}</td>
+            <td><span class="score">${entry.correct_count}</span></td>
+            <td>${entry.total_count}</td>
+          </tr>
+        `;
+      }).join('');
+
+      if (entries.length === 0) {
+        console.warn(`⚠️  No entries to display for ${period} leaderboard`);
+      }
+      
+      document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="4" class="empty-state">No data yet</td></tr>';
+    }
+
+    // === Utility ===
+    function showMessage(text, type = 'info', elementId = 'message') {
+      const msg = document.getElementById(elementId);
+      if (!msg) return;
+      msg.textContent = text;
+      msg.className = `message show ${type}`;
+      console.log(`[${type.toUpperCase()}] ${text}`);
+      // Auto-hide after 5 seconds (increased from 4s for better UX)
+      setTimeout(() => msg.classList.remove('show'), 5000);
+    }
+
+    // === Init ===
+    // initAuth is now called from initializeFirebase() after Firebase is ready
+  </script>
+</body>
+</html>
