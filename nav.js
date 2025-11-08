@@ -32,15 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </ul>
 
         <div class="nav-icons">
-            <div class="search-container">
-                <input type="text" class="search-input" id="searchInput" placeholder="Search...">
-                <button class="icon-btn search-btn" id="searchBtn" aria-label="Search">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                </button>
-            </div>
             <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
                 <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="5"></circle>
@@ -150,13 +141,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const moonIcon = document.querySelector('.moon-icon');
     const htmlElement = document.documentElement;
     
-    // Load saved theme preference or use system preference
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    // Load saved theme preference - default to light mode
+    const savedTheme = localStorage.getItem('theme') || 'light';
     
     // Apply theme immediately to prevent flash
-    if (initialTheme === 'dark') {
+    if (savedTheme === 'dark') {
         htmlElement.classList.add('dark-mode');
         if (sunIcon && moonIcon) {
             sunIcon.style.display = 'none';
@@ -178,35 +167,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-
-    // Search Functionality
-    const searchBtn = document.getElementById('searchBtn');
-    const searchInput = document.getElementById('searchInput');
-    
-    if (searchBtn && searchInput) {
-        searchBtn.addEventListener('click', function() {
-            const searchContainer = document.querySelector('.search-container');
-            searchContainer.classList.toggle('active');
-            
-            if (searchContainer.classList.contains('active')) {
-                searchInput.focus();
-            }
-        });
-        
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && this.value.trim()) {
-                // Handle search - customize this based on your needs
-                console.log('Searching for:', this.value);
-                // Example: window.location.href = `/search?q=${encodeURIComponent(this.value)}`;
-            }
-        });
-        
-        // Close search on Escape
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelector('.search-container').classList.remove('active');
-                this.value = '';
-            }
-        });
-    }
 });
