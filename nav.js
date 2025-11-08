@@ -85,8 +85,50 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     `;
 
+    // Footer HTML
+    const footerHTML = `
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <a href="/" class="footer-brand">
+                    <img src="https://sixershoops.com/sixershoopslogonew.png" alt="Sixers Hoops Logo" class="footer-logo">
+                    <span class="footer-brand-name">SIXERS HOOPS</span>
+                </a>
+                <p class="footer-tagline">Your source for Philadelphia 76ers analysis and insights.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3 class="footer-title">Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/pickem">Pick'em</a></li>
+                    <li><a href="https://sixershoops.com/schedule">Schedule</a></li>
+                    <li><a href="https://sixershoops.com/contact">Contact</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3 class="footer-title">Policies</h3>
+                <ul class="footer-links">
+                    <li><a href="/privacy-policy">Privacy Policy</a></li>
+                    <li><a href="/cookie-policy">Cookie Policy</a></li>
+                    <li><a href="/terms-of-service">Terms of Service</a></li>
+                    <li><a href="/disclaimer">Disclaimer</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Sixers Hoops. All rights reserved.</p>
+        </div>
+    </footer>
+    `;
+
     // Insert navbar at the beginning of body
     document.body.insertAdjacentHTML('afterbegin', navbarHTML);
+    
+    // Insert footer at the end of body
+    document.body.insertAdjacentHTML('beforeend', footerHTML);
 
     // Mobile Menu Toggle
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
