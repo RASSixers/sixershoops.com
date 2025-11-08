@@ -771,28 +771,7 @@
       measurementId: "G-B22K71F01E"
     };
 
-    // Wait for Firebase SDK to load before initializing
-    let auth, db;
-    let firebaseReady = false;
-    
-    function initializeFirebase() {
-      if (typeof firebase === 'undefined') {
-        setTimeout(initializeFirebase, 100);
-        return;
-      }
-      firebase.initializeApp(firebaseConfig);
-      auth = firebase.auth();
-      db = firebase.firestore();
-      firebaseReady = true;
-      initAuth();
-    }
-    
-    // Start Firebase initialization
-    initializeFirebase();
-
-    let currentUser = null;
-    let todayQuestions = [];
-    let authTimeout = null;
+    // Initialize progress tracking variables FIRST
     let loadingProgress = 0;
     let progressInterval = null;
 
@@ -821,8 +800,31 @@
       if (loadingPercent) loadingPercent.textContent = '100%';
     }
 
-    // Start progress on page load
+    // Start progress immediately
     startLoadingProgress();
+
+    // Wait for Firebase SDK to load before initializing
+    let auth, db;
+    let firebaseReady = false;
+    
+    function initializeFirebase() {
+      if (typeof firebase === 'undefined') {
+        setTimeout(initializeFirebase, 100);
+        return;
+      }
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+      firebaseReady = true;
+      initAuth();
+    }
+    
+    // Start Firebase initialization
+    initializeFirebase();
+
+    let currentUser = null;
+    let todayQuestions = [];
+    let authTimeout = null;
 
     // === Authentication ===
     function initAuth() {
