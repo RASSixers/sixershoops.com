@@ -1119,6 +1119,34 @@
             </div>
           </div>
 
+          <!-- Load Week Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="load-week-section">
+            <h2>📂 Load Week Data</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Load questions and answers for a specific week</p>
+            <div id="loadWeekMessage" class="message"></div>
+
+            <div style="background: var(--chip); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+              <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                  <label class="form-label">Select Week</label>
+                  <select id="weekSelector" class="form-input">
+                    <option value="">-- Choose a week --</option>
+                  </select>
+                </div>
+                <button class="btn btn-secondary" id="loadWeekBtn">📂 Load Week Questions</button>
+              </div>
+            </div>
+
+            <div id="weekAnswersSection" style="display: none;">
+              <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--success); margin-bottom: 1.5rem;">
+                <p style="margin: 0 0 1rem 0; font-weight: 700; color: var(--ink);">Week Loaded Successfully</p>
+                <button class="btn btn-primary" id="loadWeekAnswersBtn" style="margin-bottom: 0.5rem;">✅ Load Correct Answers for This Week</button>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--muted);">Click to load all correct answers associated with this week</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Manage Weeks Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <div class="manage-weeks-section">
@@ -2108,6 +2136,135 @@
     }
 
     loadWeeks();
+
+    // === Load Week Data ===
+    let selectedWeekData = null;
+
+    function updateWeekSelector() {
+      const selector = document.getElementById('weekSelector');
+      selector.innerHTML = '<option value="">-- Choose a week --</option>';
+      
+      allWeeks.forEach(week => {
+        const option = document.createElement('option');
+        option.value = week.docId;
+        option.textContent = `Week ${week.weekNumber} (${week.startDate} to ${week.endDate})`;
+        selector.appendChild(option);
+      });
+    }
+
+    const weekSelectorOriginalRenderWeeks = renderWeeks;
+    renderWeeks = function() {
+      weekSelectorOriginalRenderWeeks();
+      updateWeekSelector();
+    };
+
+    updateWeekSelector();
+
+    document.getElementById('loadWeekBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const selectedWeekId = document.getElementById('weekSelector').value;
+      if (!selectedWeekId) {
+        showMessage('Please select a week', 'error', 'loadWeekMessage');
+        return;
+      }
+
+      try {
+        const weekDoc = allWeeks.find(w => w.docId === selectedWeekId);
+        if (!weekDoc) {
+          showMessage('Week not found', 'error', 'loadWeekMessage');
+          return;
+        }
+
+        const startDate = weekDoc.startDate;
+        const endDate = weekDoc.endDate;
+
+        const snapshot = await db.collection('questions')
+          .where('date', '>=', startDate)
+          .where('date', '<=', endDate)
+          .orderBy('date', 'asc')
+          .get();
+
+        if (snapshot.empty) {
+          showMessage(`No questions found for Week ${weekDoc.weekNumber} (${startDate} to ${endDate})`, 'info', 'loadWeekMessage');
+          adminQuestions = [];
+          selectedWeekData = null;
+          document.getElementById('weekAnswersSection').style.display = 'none';
+        } else {
+          adminQuestions = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            (data.items || []).forEach(q => {
+              adminQuestions.push({
+                ...q,
+                tempId: Date.now() + Math.random(),
+                date: data.date
+              });
+            });
+          });
+
+          selectedWeekData = {
+            weekNumber: weekDoc.weekNumber,
+            startDate: startDate,
+            endDate: endDate,
+            docId: selectedWeekId,
+            questionCount: adminQuestions.length
+          };
+
+          renderAdminQuestions();
+          document.getElementById('weekAnswersSection').style.display = 'block';
+          showMessage(`✅ Loaded ${adminQuestions.length} questions for Week ${weekDoc.weekNumber}`, 'success', 'loadWeekMessage');
+        }
+      } catch (err) {
+        console.error('Error loading week questions:', err);
+        showMessage('Error loading week: ' + err.message, 'error', 'loadWeekMessage');
+      }
+    });
+
+    document.getElementById('loadWeekAnswersBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      if (!selectedWeekData) {
+        showMessage('Please load a week first', 'error', 'loadWeekMessage');
+        return;
+      }
+
+      try {
+        const startDate = selectedWeekData.startDate;
+        const endDate = selectedWeekData.endDate;
+
+        const snapshot = await db.collection('correctAnswers')
+          .where('date', '>=', startDate)
+          .where('date', '<=', endDate)
+          .orderBy('date', 'asc')
+          .get();
+
+        if (snapshot.empty) {
+          showMessage(`No correct answers found for Week ${selectedWeekData.weekNumber}`, 'info', 'loadWeekMessage');
+          questionsForAnswers = [];
+          document.getElementById('answersList').innerHTML = '';
+          return;
+        }
+
+        questionsForAnswers = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          (data.answers || []).forEach((answer, idx) => {
+            questionsForAnswers.push({
+              ...answer,
+              date: data.date,
+              originalIndex: idx
+            });
+          });
+        });
+
+        renderAnswersForm();
+        document.getElementById('markAnswersTabBtn').click();
+        showMessage(`✅ Loaded ${questionsForAnswers.length} correct answers for Week ${selectedWeekData.weekNumber}`, 'success', 'loadWeekMessage');
+      } catch (err) {
+        console.error('Error loading week answers:', err);
+        showMessage('Error loading answers: ' + err.message, 'error', 'loadWeekMessage');
+      }
+    });
 
     // === Lock Time Management ===
     // Update the visual indicator when lock time date changes
