@@ -1360,6 +1360,12 @@
         document.getElementById('adminTabBtn').style.display = 'none';
       }
       loadTodayQuestions();
+      
+      // Initialize leaderboard pickers after a brief delay
+      setTimeout(() => {
+        console.log('⏰ InitializeLeaderboardPickers starting (500ms delay)');
+        initializeLeaderboardPickers();
+      }, 500);
     }
 
     // Check if current user is admin
@@ -2645,7 +2651,7 @@
             userScores[userId] = {
               username: username,
               correct: 0,
-              total: questions.length
+              total: questions.length * 10
             };
           }
 
@@ -2680,14 +2686,14 @@
               }
               
               if (isCorrect) {
-                userCorrectCount += 10;
+                userCorrectCount++;
               }
               
               console.log(`Q${qIdx} - User: "${userPick}" (${typeof userPick}) → "${normalizedPick}", Correct: "${correctAnswer}" (${typeof correctAnswer}) → "${normalizedAnswer}", Match: ${isCorrect}`);
             }
           });
           
-          userScores[userId].correct = userCorrectCount;
+          userScores[userId].correct = userCorrectCount * 10;
           console.log(`User ${username} scored ${userCorrectCount}/${userScores[userId].total}`);
         });
 
@@ -3275,14 +3281,21 @@
     let currentDailyDateOffset = 0;
     
     function renderDailyDatePicker() {
+      console.log('🗓️ renderDailyDatePicker called');
       const container = document.getElementById('dailyDatePickerContainer');
+      if (!container) {
+        console.error('❌ dailyDatePickerContainer not found!');
+        return;
+      }
       const today = new Date();
       const dates = [];
+      console.log(`📅 Generating daily dates from ${today.toISOString().split('T')[0]} minus ${PAST_DAYS} days...`);
 
-      // Generate past days (30 days back) and future days (up to May 15th)
-      const endDate = new Date('2025-05-15');
+      // Generate past days (30 days back) and future days (about 200 days forward)
       const startDate = new Date(today);
       startDate.setDate(startDate.getDate() - PAST_DAYS);
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + 200);
       
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
@@ -3334,9 +3347,10 @@
 
     document.getElementById('nextDailyDateBtn').addEventListener('click', () => {
       const today = new Date();
-      const endDate = new Date('2025-05-15');
       const startDate = new Date(today);
       startDate.setDate(startDate.getDate() - PAST_DAYS);
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + 200);
       
       let currentDate = new Date(startDate);
       let totalDates = 0;
@@ -3358,9 +3372,19 @@
     const MONTHS_TO_SHOW = 4;
     let selectedWeek = null;
     let selectedMonth = 0;
+    
+    // Initialize daily leaderboard date
+    const todayForDailyLb = formatDateForComparison(new Date());
+    document.getElementById('dailyLbDate').value = todayForDailyLb;
+    currentDailyDateOffset = PAST_DAYS;
 
     function renderWeekSlider() {
+      console.log('📅 renderWeekSlider called with allWeeks:', allWeeks);
       const container = document.getElementById('weekPickerContainer');
+      if (!container) {
+        console.error('❌ weekPickerContainer not found!');
+        return;
+      }
       let weeks = [];
 
       if (allWeeks.length > 0) {
@@ -3785,6 +3809,29 @@
 
     // === Init ===
     // initAuth is now called from initializeFirebase() after Firebase is ready
+    
+    // Initialize leaderboard pickers when app first shows
+    function initializeLeaderboardPickers() {
+      console.log('🚀 Initializing leaderboard pickers');
+      try {
+        console.log('📅 Rendering daily date picker');
+        renderDailyDatePicker();
+      } catch (err) {
+        console.error('❌ Error rendering daily date picker:', err);
+      }
+      try {
+        console.log('📅 Rendering week slider');
+        renderWeekSlider();
+      } catch (err) {
+        console.error('❌ Error rendering week slider:', err);
+      }
+      try {
+        console.log('📅 Rendering month slider');
+        renderMonthSlider();
+      } catch (err) {
+        console.error('❌ Error rendering month slider:', err);
+      }
+    }
   </script>
 </body>
 </html>
