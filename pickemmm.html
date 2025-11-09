@@ -12,6 +12,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8055761449140377"
+       crossorigin="anonymous"></script>
   <style>
     :root {
       --ink: #0f172a;
@@ -1167,67 +1170,67 @@
             <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none; margin-top: 1rem;">Save Correct Answers</button>
           </div>
 
-          <!-- Delete Submissions Section -->
+          <!-- View & Manage User Submissions Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
-          <div class="delete-submissions-section">
-            <h2>🗑️ Delete Submissions</h2>
-            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Remove user picks for a specific date</p>
-            <div id="deleteMessage" class="message"></div>
+          <div class="submissions-section">
+            <h2>📊 View & Manage User Submissions</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">View user responses and delete submissions for a specific date</p>
+            <div id="submissionsMessage" class="message"></div>
 
             <div class="admin-date-section">
               <label>Select Date:</label>
-              <input type="date" id="deleteSubmissionsDate" />
-              <button class="btn btn-secondary" id="loadSubmissionsForDeleteBtn">Load Submissions</button>
+              <input type="date" id="submissionsDate" />
+              <button class="btn btn-secondary" id="loadSubmissionsBtn">Load Submissions</button>
             </div>
 
-            <div style="overflow-x: auto; margin-top: 1.5rem;">
-              <table id="deleteSubmissionsTable" style="width: 100%; border-collapse: collapse; display: none;">
-                <thead>
-                  <tr style="background: var(--form); border-bottom: 2px solid var(--border);">
-                    <th style="padding: 12px; text-align: left;">User Email</th>
-                    <th style="padding: 12px; text-align: center;">Answers Submitted</th>
-                    <th style="padding: 12px; text-align: center;">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="deleteSubmissionsTableBody">
-                </tbody>
-              </table>
-              <div id="noSubmissionsForDeleteMessage" style="text-align: center; padding: 40px; color: var(--muted);">
-                <p style="font-size: 32px; margin-bottom: 10px;">📭</p>
-                <p>No submissions found for this date</p>
+            <div style="margin-top: 2rem;">
+              <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <button class="btn btn-secondary" id="viewResponsesTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">📋 View Responses</button>
+                <button class="btn btn-secondary" id="deleteSubmissionsTabBtn" style="flex: 1;">🗑️ Delete Submissions</button>
               </div>
-            </div>
-          </div>
 
-          <!-- View User Responses Section -->
-          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
-          <div class="user-responses-section">
-            <h2>View User Responses</h2>
-            <div id="responsesMessage" class="message"></div>
+              <!-- Responses View Tab -->
+              <div id="responsesViewTab" style="display: block;">
+                <div style="overflow-x: auto;">
+                  <table id="responsesTable" style="width: 100%; border-collapse: collapse; display: none;">
+                    <thead>
+                      <tr style="background: #f8fafc; border-bottom: 2px solid var(--border);">
+                        <th style="padding: 14px; text-align: left; font-weight: 900; color: var(--brand);">User</th>
+                        <th style="padding: 14px; text-align: left; font-weight: 900; color: var(--brand);">Question</th>
+                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">User's Pick</th>
+                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">Correct Answer</th>
+                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="responsesTableBody">
+                    </tbody>
+                  </table>
+                  <div id="noResponsesMessage" style="text-align: center; padding: 60px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
+                    <p style="font-size: 36px; margin-bottom: 10px;">📋</p>
+                    <p style="font-weight: 600; font-size: 1rem;">No responses found for this date</p>
+                  </div>
+                </div>
+              </div>
 
-            <div class="admin-date-section">
-              <label>Select Date:</label>
-              <input type="date" id="responsesDate" />
-              <button class="btn btn-secondary" id="loadResponsesBtn">Load Responses</button>
-            </div>
-
-            <div style="overflow-x: auto; margin-top: 1.5rem;">
-              <table id="responsesTable" style="width: 100%; border-collapse: collapse; display: none;">
-                <thead>
-                  <tr style="background: var(--form); border-bottom: 2px solid var(--border);">
-                    <th style="padding: 12px; text-align: left;">User</th>
-                    <th style="padding: 12px; text-align: center;">Question</th>
-                    <th style="padding: 12px; text-align: center;">User's Pick</th>
-                    <th style="padding: 12px; text-align: center;">Correct Answer</th>
-                    <th style="padding: 12px; text-align: center;">Status</th>
-                  </tr>
-                </thead>
-                <tbody id="responsesTableBody">
-                </tbody>
-              </table>
-              <div id="noResponsesMessage" style="text-align: center; padding: 40px; color: var(--muted);">
-                <p style="font-size: 32px; margin-bottom: 10px;">📋</p>
-                <p>No responses found for this date</p>
+              <!-- Delete Submissions View Tab -->
+              <div id="deleteViewTab" style="display: none;">
+                <div style="overflow-x: auto;">
+                  <table id="deleteSubmissionsTable" style="width: 100%; border-collapse: collapse; display: none;">
+                    <thead>
+                      <tr style="background: #f8fafc; border-bottom: 2px solid var(--border);">
+                        <th style="padding: 14px; text-align: left; font-weight: 900; color: var(--brand);">User Email</th>
+                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">Answers Submitted</th>
+                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="deleteSubmissionsTableBody">
+                    </tbody>
+                  </table>
+                  <div id="noSubmissionsForDeleteMessage" style="text-align: center; padding: 60px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
+                    <p style="font-size: 36px; margin-bottom: 10px;">📭</p>
+                    <p style="font-weight: 600; font-size: 1rem;">No submissions found for this date</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2471,14 +2474,14 @@
     // Load submissions for deletion
     async function loadSubmissionsForDelete(date) {
       try {
-        showMessage('Loading submissions...', 'info', 'deleteMessage');
+        showMessage('Loading submissions...', 'info', 'submissionsMessage');
         
         const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
         
         if (picksSnapshot.empty) {
           document.getElementById('deleteSubmissionsTable').style.display = 'none';
           document.getElementById('noSubmissionsForDeleteMessage').style.display = 'block';
-          showMessage('No submissions found for this date', 'info', 'deleteMessage');
+          showMessage('No submissions found for this date', 'info', 'submissionsMessage');
           return;
         }
 
@@ -2489,12 +2492,12 @@
           const answerCount = (data.answers || []).length;
           
           return `
-            <tr style="border-bottom: 1px solid var(--border);">
-              <td style="padding: 12px;">${userEmail}</td>
-              <td style="padding: 12px; text-align: center;">${answerCount}</td>
-              <td style="padding: 12px; text-align: center;">
-                <button class="btn btn-danger delete-submission-btn" data-doc-id="${doc.id}" style="padding: 6px 12px; font-size: 0.9rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                  Delete
+            <tr style="border-bottom: 1px solid var(--border); background: ${picksSnapshot.docs.indexOf(doc) % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)'};">
+              <td style="padding: 14px; font-weight: 600; color: var(--brand);">${userEmail}</td>
+              <td style="padding: 14px; text-align: center; font-weight: 600;">${answerCount}</td>
+              <td style="padding: 14px; text-align: center;">
+                <button class="btn btn-danger delete-submission-btn" data-doc-id="${doc.id}" style="padding: 8px 16px; font-size: 0.85rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700;">
+                  🗑️ Delete
                 </button>
               </td>
             </tr>
@@ -2503,7 +2506,7 @@
 
         document.getElementById('deleteSubmissionsTable').style.display = 'table';
         document.getElementById('noSubmissionsForDeleteMessage').style.display = 'none';
-        showMessage(`✅ Loaded ${picksSnapshot.size} submission(s)`, 'success', 'deleteMessage');
+        showMessage(`✅ Loaded ${picksSnapshot.size} submission(s)`, 'success', 'submissionsMessage');
 
         // Add event listeners to delete buttons
         document.querySelectorAll('.delete-submission-btn').forEach(btn => {
@@ -2516,52 +2519,83 @@
         });
       } catch (err) {
         console.error('Error loading submissions:', err);
-        showMessage('Error loading submissions: ' + err.message, 'error', 'deleteMessage');
+        showMessage('Error loading submissions: ' + err.message, 'error', 'submissionsMessage');
       }
     }
 
     // Delete individual submission
     async function deleteSubmission(docId, date) {
       try {
-        showMessage('Deleting submission...', 'info', 'deleteMessage');
+        showMessage('Deleting submission...', 'info', 'submissionsMessage');
         await db.collection('picks').doc(docId).delete();
-        showMessage('✅ Submission deleted successfully!', 'success', 'deleteMessage');
+        showMessage('✅ Submission deleted successfully!', 'success', 'submissionsMessage');
         
         // Reload the table
         await loadSubmissionsForDelete(date);
       } catch (err) {
         console.error('Error deleting submission:', err);
-        showMessage('Error deleting submission: ' + err.message, 'error', 'deleteMessage');
+        showMessage('Error deleting submission: ' + err.message, 'error', 'submissionsMessage');
       }
     }
 
-    // Load submissions for delete button
-    document.getElementById('loadSubmissionsForDeleteBtn').addEventListener('click', async () => {
-      const dateInput = document.getElementById('deleteSubmissionsDate').value;
+    // Tab switching for submissions view
+    document.getElementById('viewResponsesTabBtn').addEventListener('click', () => {
+      document.getElementById('responsesViewTab').style.display = 'block';
+      document.getElementById('deleteViewTab').style.display = 'none';
+      
+      document.getElementById('viewResponsesTabBtn').style.background = '#e0e7ff';
+      document.getElementById('viewResponsesTabBtn').style.color = 'var(--brand)';
+      document.getElementById('viewResponsesTabBtn').style.border = '2px solid var(--brand)';
+      
+      document.getElementById('deleteSubmissionsTabBtn').style.background = 'transparent';
+      document.getElementById('deleteSubmissionsTabBtn').style.color = 'var(--muted)';
+      document.getElementById('deleteSubmissionsTabBtn').style.border = 'none';
+    });
+
+    document.getElementById('deleteSubmissionsTabBtn').addEventListener('click', () => {
+      document.getElementById('responsesViewTab').style.display = 'none';
+      document.getElementById('deleteViewTab').style.display = 'block';
+      
+      document.getElementById('deleteSubmissionsTabBtn').style.background = '#e0e7ff';
+      document.getElementById('deleteSubmissionsTabBtn').style.color = 'var(--brand)';
+      document.getElementById('deleteSubmissionsTabBtn').style.border = '2px solid var(--brand)';
+      
+      document.getElementById('viewResponsesTabBtn').style.background = 'transparent';
+      document.getElementById('viewResponsesTabBtn').style.color = 'var(--muted)';
+      document.getElementById('viewResponsesTabBtn').style.border = 'none';
+    });
+
+    // Load submissions button for unified interface
+    document.getElementById('loadSubmissionsBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const dateInput = document.getElementById('submissionsDate').value;
       if (!dateInput) {
-        showMessage('Please select a date first', 'error', 'deleteMessage');
+        showMessage('Please select a date first', 'error', 'submissionsMessage');
         return;
       }
-      await loadSubmissionsForDelete(dateInput);
+      
+      // Load both views based on active tab
+      const isResponsesView = document.getElementById('responsesViewTab').style.display !== 'none';
+      
+      if (isResponsesView) {
+        await loadUserResponses(dateInput);
+      } else {
+        await loadSubmissionsForDelete(dateInput);
+      }
     });
 
     // Load User Responses
-    document.getElementById('loadResponsesBtn').addEventListener('click', async () => {
+    async function loadUserResponses(dateInput) {
       if (!checkAdminPermission()) return;
-      
-      const dateInput = document.getElementById('responsesDate').value;
-      if (!dateInput) {
-        showMessage('Please select a date', 'error', 'responsesMessage');
-        return;
-      }
 
       try {
-        showMessage('Loading responses...', 'info', 'responsesMessage');
+        showMessage('Loading responses...', 'info', 'submissionsMessage');
         
         // Get questions for this date
         const questionsSnapshot = await db.collection('questions').where('date', '==', dateInput).get();
         if (questionsSnapshot.empty) {
-          showMessage('No questions found for this date', 'error', 'responsesMessage');
+          showMessage('No questions found for this date', 'error', 'submissionsMessage');
           document.getElementById('responsesTable').style.display = 'none';
           document.getElementById('noResponsesMessage').style.display = 'block';
           return;
@@ -2584,7 +2618,7 @@
         const picksSnapshot = await db.collection('picks').where('date', '==', dateInput).get();
         
         if (picksSnapshot.empty) {
-          showMessage('No user responses for this date', 'info', 'responsesMessage');
+          showMessage('No user responses for this date', 'info', 'submissionsMessage');
           document.getElementById('responsesTable').style.display = 'none';
           document.getElementById('noResponsesMessage').style.display = 'block';
           return;
@@ -2616,12 +2650,13 @@
 
             const row = document.createElement('tr');
             row.style.borderBottom = '1px solid var(--border)';
+            row.style.background = document.querySelectorAll('#responsesTableBody tr').length % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)';
             row.innerHTML = `
-              <td style="padding: 12px;">${pickData.userEmail || pickData.userId}</td>
-              <td style="padding: 12px; text-align: center;">${qIdx + 1}. ${q.question}</td>
-              <td style="padding: 12px; text-align: center; font-weight: 500;">${userPick}</td>
-              <td style="padding: 12px; text-align: center; font-weight: 500;">${correctAnswer}</td>
-              <td style="padding: 12px; text-align: center; color: ${statusColor}; font-weight: 600;">${status}</td>
+              <td style="padding: 14px; font-weight: 600; color: var(--brand);">${pickData.userEmail || pickData.userId}</td>
+              <td style="padding: 14px; font-size: 0.95rem;">${qIdx + 1}. ${q.question}</td>
+              <td style="padding: 14px; text-align: center; font-weight: 600;">${userPick}</td>
+              <td style="padding: 14px; text-align: center; font-weight: 600;">${correctAnswer}</td>
+              <td style="padding: 14px; text-align: center; color: ${statusColor}; font-weight: 700;">${status}</td>
             `;
             tbody.appendChild(row);
           });
@@ -2629,14 +2664,14 @@
 
         document.getElementById('responsesTable').style.display = 'table';
         document.getElementById('noResponsesMessage').style.display = 'none';
-        showMessage(`✅ Loaded ${picksSnapshot.size} user submissions`, 'success', 'responsesMessage');
+        showMessage(`✅ Loaded ${picksSnapshot.size} user submissions`, 'success', 'submissionsMessage');
       } catch (err) {
         console.error('Error loading responses:', err);
-        showMessage('Error loading responses: ' + err.message, 'error', 'responsesMessage');
+        showMessage('Error loading responses: ' + err.message, 'error', 'submissionsMessage');
         document.getElementById('responsesTable').style.display = 'none';
         document.getElementById('noResponsesMessage').style.display = 'block';
       }
-    });
+    }
 
     // === Questions & Picks ===
     async function loadQuestionsForDate(dateStr) {
