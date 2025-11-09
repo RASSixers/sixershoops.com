@@ -2903,6 +2903,8 @@
     // === ESPN-Style Date Slider ===
     let currentDateOffset = 0;
     const DATES_TO_SHOW = 7;
+    const PAST_DAYS = 30;
+    const FUTURE_DAYS = 14;
 
     function formatDateLabel(date) {
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -2931,8 +2933,8 @@
       const today = new Date();
       const dates = [];
 
-      // Generate 14 days of dates
-      for (let i = 0; i < 14; i++) {
+      // Generate past days (30 days back) and future days (14 days forward)
+      for (let i = -PAST_DAYS; i < FUTURE_DAYS; i++) {
         const date = new Date(today);
         date.setDate(date.getDate() + i);
         const formattedValue = formatDateForComparison(date);
@@ -2942,10 +2944,6 @@
           value: formattedValue,
           dayNum: date.getDate()
         });
-        
-        if (i === 0 || i === 1) {
-          console.log(`📅 Day ${i}: Local date: ${date.toString()} → Formatted: ${formattedValue}`);
-        }
       }
 
       // Show DATES_TO_SHOW dates at a time
@@ -2984,9 +2982,8 @@
     });
 
     document.getElementById('nextDateBtn').addEventListener('click', () => {
-      const today = new Date();
-      const maxDates = 14;
-      if (currentDateOffset < maxDates - DATES_TO_SHOW) {
+      const totalDates = PAST_DAYS + FUTURE_DAYS;
+      if (currentDateOffset < totalDates - DATES_TO_SHOW) {
         currentDateOffset++;
         renderDateSlider();
       }
@@ -2997,6 +2994,8 @@
     const todayFormatted = formatDateForComparison(todayForInit);
     console.log(`🚀 PAGE INITIALIZATION: Loading picks for today: ${todayFormatted}`);
     document.getElementById('pickDate').value = todayFormatted;
+    // Start offset so today is visible (PAST_DAYS ensures today is at position PAST_DAYS in the array)
+    currentDateOffset = PAST_DAYS;
     renderDateSlider();
     console.log(`📅 Date slider rendered. Loading questions for: ${todayFormatted}`);
     loadQuestionsForDate(todayFormatted);
@@ -3034,7 +3033,6 @@
         return `
           <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${w.value}">
             <div style="font-weight: 700; font-size: 12px;">${w.label}</div>
-            <div class="date-picker-date">${w.monthLabel}</div>
           </button>
         `;
       }).join('');
@@ -3133,7 +3131,10 @@
         btn.classList.add('active');
         document.getElementById(tabName).classList.add('active');
         
-        if (tabName === 'daily-lb') loadLeaderboard('daily');
+        if (tabName === 'daily-lb') {
+          const selectedDate = document.getElementById('pickDate').value;
+          loadLeaderboard('daily', null, null, selectedDate);
+        }
         if (tabName === 'weekly-lb') {
           renderWeekSlider();
           loadLeaderboard('weekly', selectedWeek);
@@ -3158,10 +3159,11 @@
       dailyRefreshBtn.addEventListener('click', async () => {
         console.log('🔄 User clicked refresh Daily leaderboard');
         const originalText = dailyRefreshBtn.textContent;
+        const selectedDate = document.getElementById('pickDate').value;
         dailyRefreshBtn.disabled = true;
         dailyRefreshBtn.textContent = 'Loading...';
         try {
-          await loadLeaderboard('daily');
+          await loadLeaderboard('daily', null, null, selectedDate);
           console.log('✅ Daily leaderboard refreshed successfully');
           dailyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
@@ -3226,9 +3228,9 @@
       console.log('✅ Monthly refresh button listener attached');
     }
 
-    async function loadLeaderboard(period, weekOffset = null, monthOffset = null) {
+    async function loadLeaderboard(period, weekOffset = null, monthOffset = null, selectedDate = null) {
       try {
-        console.log(`loadLeaderboard called for period: ${period}, weekOffset: ${weekOffset}, monthOffset: ${monthOffset}`);
+        console.log(`loadLeaderboard called for period: ${period}, weekOffset: ${weekOffset}, monthOffset: ${monthOffset}, selectedDate: ${selectedDate}`);
         
         // Calculate date range based on period
         const now = new Date();
@@ -3236,8 +3238,17 @@
         let endDate = new Date(now);
         
         if (period === 'daily') {
-          // Start of today
+          // Use selected date if provided, otherwise use today
+          if (selectedDate) {
+            const [year, month, day] = selectedDate.split('-');
+            startDate = new Date(year, month - 1, day);
+          } else {
+            startDate = new Date(now);
+          }
+          // Start of the selected day
           startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(startDate);
+          endDate.setHours(23, 59, 59, 999);
         } else if (period === 'weekly') {
           // Calculate based on week offset (future weeks)
           if (weekOffset !== null && weekOffset !== undefined) {
