@@ -3240,20 +3240,33 @@
 
     function renderWeekSlider() {
       const container = document.getElementById('weekPickerContainer');
-      const now = new Date();
-      const weeks = [];
+      let weeks = [];
 
-      // Generate 12 weeks starting from week 1 into the future
-      for (let i = 0; i < 12; i++) {
-        const weekDate = new Date(now);
-        weekDate.setDate(weekDate.getDate() + (i * 7));
-        const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][weekDate.getMonth()];
-        weeks.push({
-          value: i,
-          label: `Week ${i + 1}`,
-          monthLabel: monthName,
-          date: weekDate
+      if (allWeeks.length > 0) {
+        weeks = allWeeks.map((w, idx) => {
+          const startDate = new Date(w.startDate);
+          const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][startDate.getMonth()];
+          return {
+            value: idx,
+            label: `Week ${w.weekNumber}`,
+            monthLabel: monthName,
+            date: startDate,
+            weekNumber: w.weekNumber
+          };
         });
+      } else {
+        const now = new Date();
+        for (let i = 0; i < 12; i++) {
+          const weekDate = new Date(now);
+          weekDate.setDate(weekDate.getDate() + (i * 7));
+          const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][weekDate.getMonth()];
+          weeks.push({
+            value: i,
+            label: `Week ${i + 1}`,
+            monthLabel: monthName,
+            date: weekDate
+          });
+        }
       }
 
       const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
@@ -3480,15 +3493,45 @@
           endDate = new Date(startDate);
           endDate.setHours(23, 59, 59, 999);
         } else if (period === 'weekly') {
-          // Calculate based on week offset (future weeks)
-          if (weekOffset !== null && weekOffset !== undefined) {
-            const weeksFromNow = weekOffset;
-            startDate = new Date(now);
-            startDate.setDate(now.getDate() + (weeksFromNow * 7));
-            endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + 6);
+          // Use database-defined weeks instead of calculated offsets
+          if (weekOffset !== null && weekOffset !== undefined && allWeeks.length > 0) {
+            const targetWeekNum = weekOffset + 1;
+            const weekDef = allWeeks.find(w => w.weekNumber === targetWeekNum);
+            
+            if (weekDef) {
+              const [startYear, startMonth, startDay] = weekDef.startDate.split('-');
+              const [endYear, endMonth, endDay] = weekDef.endDate.split('-');
+              startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1, parseInt(startDay));
+              endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDay));
+              console.log(`✅ Using database-defined Week ${targetWeekNum}: ${weekDef.startDate} to ${weekDef.endDate}`);
+            } else {
+              console.warn(`⚠️ Week ${targetWeekNum} not found in database. Using offset calculation as fallback.`);
+              const weeksFromNow = weekOffset;
+              startDate = new Date(now);
+              startDate.setDate(now.getDate() + (weeksFromNow * 7));
+              endDate = new Date(startDate);
+              endDate.setDate(startDate.getDate() + 6);
+            }
+          } else if (allWeeks.length > 0) {
+            const currentWeek = allWeeks.find(w => {
+              const wStart = new Date(w.startDate);
+              const wEnd = new Date(w.endDate);
+              return now >= wStart && now <= wEnd;
+            });
+            
+            if (currentWeek) {
+              const [startYear, startMonth, startDay] = currentWeek.startDate.split('-');
+              const [endYear, endMonth, endDay] = currentWeek.endDate.split('-');
+              startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1, parseInt(startDay));
+              endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDay));
+              console.log(`✅ Using current Week ${currentWeek.weekNumber}: ${currentWeek.startDate} to ${currentWeek.endDate}`);
+            } else {
+              console.warn('⚠️ Current date not in any defined week. Using offset calculation as fallback.');
+              startDate = new Date(now);
+              endDate = new Date(now);
+              endDate.setDate(now.getDate() + 6);
+            }
           } else {
-            // Current week
             startDate = new Date(now);
             endDate = new Date(now);
             endDate.setDate(now.getDate() + 6);
