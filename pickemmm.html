@@ -1076,6 +1076,36 @@
             <button class="btn btn-primary" id="saveQuestionsBtn" style="margin-top: 1rem;">Save All to Database</button>
           </div>
 
+          <!-- Manage Weeks Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="manage-weeks-section">
+            <h2>📅 Manage Weeks</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Define date ranges for each week (used in leaderboards)</p>
+            <div id="weeksMessage" class="message"></div>
+
+            <div style="background: var(--chip); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Week Number</label>
+                  <input type="number" id="newWeekNumber" class="form-input" placeholder="e.g., 1" min="1" />
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Start Date</label>
+                  <input type="date" id="newWeekStartDate" class="form-input" />
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">End Date</label>
+                  <input type="date" id="newWeekEndDate" class="form-input" />
+                </div>
+              </div>
+              <button class="btn btn-primary" id="addWeekBtn">Add Week</button>
+            </div>
+
+            <div id="weeksList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+              <!-- Weeks will be listed here -->
+            </div>
+          </div>
+
           <!-- Set Submission Lock Time Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <div class="lock-time-section">
@@ -1111,7 +1141,7 @@
           <!-- Mark Correct Answers Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <div class="mark-answers-section">
-            <h2>Mark Correct Answers & Set Weeks</h2>
+            <h2>Mark Correct Answers</h2>
             <div id="markAnswersMessage" class="message"></div>
 
             <div class="admin-date-section">
@@ -1124,7 +1154,7 @@
               <!-- Questions will be loaded here with answer input fields -->
             </div>
 
-            <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none; margin-top: 1rem;">Save Correct Answers & Weeks</button>
+            <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none; margin-top: 1rem;">Save Correct Answers</button>
           </div>
 
           <!-- Delete Submissions Section -->
@@ -1758,12 +1788,6 @@
             ${q.options ? `<div style="color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Options: ${q.options}</div>` : ''}
             <div style="margin-top: 0.75rem; font-weight: 600; color: var(--ink);">Correct Answer:</div>
             ${answerInput}
-            
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-              <label class="form-label">Weeks Span (comma separated):</label>
-              <input type="text" class="form-input weeks-input-${idx}" placeholder="e.g., 1, 2, 3 or leave blank for all weeks" style="margin-top: 0.5rem; max-width: 300px;" />
-              <small style="color: var(--muted); display: block; margin-top: 0.4rem;">Leave blank to include in all weeks</small>
-            </div>
           </div>
         `;
       }).join('');
@@ -1838,14 +1862,10 @@
           allAnswered = false;
         }
 
-        const weeksInput = document.querySelector(`.weeks-input-${idx}`).value.trim();
-        const weeks = weeksInput ? weeksInput.split(',').map(w => parseInt(w.trim())).filter(w => !isNaN(w)) : null;
-
         correctAnswers.push({
           questionId: idx,
           question: q.question,
-          correctAnswer: answer,
-          weeks: weeks
+          correctAnswer: answer
         });
       });
 
@@ -1882,7 +1902,7 @@
           console.log('✅ Correct answers CREATED with ID:', docRef.id);
         }
         
-        showMessage('✅ Correct answers and weeks saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
+        showMessage('✅ Correct answers saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
         
         console.log('⏳ Waiting for Firestore replication with retry...');
         
@@ -1944,6 +1964,99 @@
         });
       });
     }
+
+    // === Manage Weeks ===
+    let allWeeks = [];
+
+    async function loadWeeks() {
+      try {
+        const snapshot = await db.collection('weeks').orderBy('weekNumber', 'asc').get();
+        allWeeks = [];
+        snapshot.forEach(doc => {
+          allWeeks.push({
+            ...doc.data(),
+            docId: doc.id
+          });
+        });
+        renderWeeks();
+      } catch (err) {
+        console.error('Error loading weeks:', err);
+      }
+    }
+
+    function renderWeeks() {
+      const container = document.getElementById('weeksList');
+      if (allWeeks.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); text-align: center; grid-column: 1 / -1;">No weeks created yet.</p>';
+        return;
+      }
+
+      container.innerHTML = allWeeks.map(week => `
+        <div style="border: 2px solid var(--border); padding: 1rem; border-radius: 12px; background: var(--white);">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+            <div>
+              <div style="font-weight: 700; font-size: 1.1rem; color: var(--brand);">Week ${week.weekNumber}</div>
+              <div style="font-size: 0.9rem; color: var(--muted);">${week.startDate} to ${week.endDate}</div>
+            </div>
+            <button class="admin-delete-btn" onclick="deleteWeek('${week.docId}')" style="padding: 4px 8px; font-size: 0.85rem;">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('addWeekBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+
+      const weekNumber = document.getElementById('newWeekNumber').value.trim();
+      const startDate = document.getElementById('newWeekStartDate').value;
+      const endDate = document.getElementById('newWeekEndDate').value;
+
+      if (!weekNumber || !startDate || !endDate) {
+        showMessage('Please fill in all fields', 'error', 'weeksMessage');
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        showMessage('Start date must be before end date', 'error', 'weeksMessage');
+        return;
+      }
+
+      try {
+        await db.collection('weeks').add({
+          weekNumber: parseInt(weekNumber),
+          startDate: startDate,
+          endDate: endDate,
+          createdAt: new Date().toISOString()
+        });
+
+        document.getElementById('newWeekNumber').value = '';
+        document.getElementById('newWeekStartDate').value = '';
+        document.getElementById('newWeekEndDate').value = '';
+
+        showMessage('✅ Week added successfully!', 'success', 'weeksMessage');
+        loadWeeks();
+      } catch (err) {
+        console.error('Error adding week:', err);
+        showMessage('Error adding week: ' + err.message, 'error', 'weeksMessage');
+      }
+    });
+
+    async function deleteWeek(docId) {
+      if (!checkAdminPermission()) return;
+      
+      if (!confirm('Are you sure you want to delete this week?')) return;
+
+      try {
+        await db.collection('weeks').doc(docId).delete();
+        showMessage('✅ Week deleted successfully!', 'success', 'weeksMessage');
+        loadWeeks();
+      } catch (err) {
+        console.error('Error deleting week:', err);
+        showMessage('Error deleting week: ' + err.message, 'error', 'weeksMessage');
+      }
+    }
+
+    loadWeeks();
 
     // === Lock Time Management ===
     // Update the visual indicator when lock time date changes
