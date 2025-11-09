@@ -998,8 +998,7 @@
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>Correct</th>
-              <th>Total Picks</th>
+              <th>Score</th>
             </tr>
           </thead>
           <tbody id="dailyLeaderboardBody"></tbody>
@@ -1021,8 +1020,7 @@
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>Correct</th>
-              <th>Total Picks</th>
+              <th>Score</th>
             </tr>
           </thead>
           <tbody id="weeklyLeaderboardBody"></tbody>
@@ -1044,8 +1042,7 @@
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>Correct</th>
-              <th>Total Picks</th>
+              <th>Score</th>
             </tr>
           </thead>
           <tbody id="monthlyLeaderboardBody"></tbody>
@@ -3438,6 +3435,11 @@
           loadLeaderboard('weekly', selectedWeek);
         });
       });
+
+      if (selectedWeek !== null) {
+        console.log(`📅 Auto-loading weekly leaderboard for Week ${selectedWeek}`);
+        loadLeaderboard('weekly', selectedWeek);
+      }
     }
 
     function renderMonthSlider() {
@@ -3778,13 +3780,12 @@
         if (idx < 3) {
           badge = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
         }
-        console.log(`  ${idx + 1}. ${entry.username}: ${entry.correct_count}/${entry.total_count}`);
+        console.log(`  ${idx + 1}. ${entry.username}: ${entry.correct_count}`);
         return `
           <tr>
             <td>${badge}${idx + 1}</td>
             <td>${entry.username}</td>
             <td><span class="score">${entry.correct_count}</span></td>
-            <td>${entry.total_count}</td>
           </tr>
         `;
       }).join('');
@@ -3793,7 +3794,7 @@
         console.warn(`⚠️  No entries to display for ${period} leaderboard`);
       }
       
-      document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="4" class="empty-state">No data yet</td></tr>';
+      document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="3" class="empty-state">No data yet</td></tr>';
     }
 
     // === Utility ===
