@@ -1058,35 +1058,65 @@
             <button class="btn btn-secondary" id="loadDateBtn">Load Questions</button>
           </div>
 
-          <div class="admin-form">
-            <h3>Add New Question</h3>
-            
-            <div class="form-group">
-              <label class="form-label">Question Text</label>
-              <input type="text" id="adminQuestionText" class="form-input" placeholder="e.g., Will the 76ers win today?" />
+          <div style="margin-bottom: 2rem;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+              <button class="btn btn-secondary" id="addQuestionTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">➕ Add Questions</button>
+              <button class="btn btn-secondary" id="markAnswersTabBtn" style="flex: 1;">✅ Mark Correct Answers</button>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Question Type</label>
-              <select id="adminQuestionType" class="form-input">
-                <option value="yes_no">Yes/No</option>
-                <option value="multiple_choice">Multiple Choice</option>
-                <option value="numeric">Numeric</option>
-              </select>
+            <!-- Add Questions Tab -->
+            <div id="addQuestionTab" style="display: block;">
+              <div class="admin-form">
+                <h3 style="margin-top: 0;">Add New Question</h3>
+                
+                <div class="form-group">
+                  <label class="form-label">Question Text</label>
+                  <input type="text" id="adminQuestionText" class="form-input" placeholder="e.g., Will the 76ers win today?" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Question Type</label>
+                  <select id="adminQuestionType" class="form-input">
+                    <option value="yes_no">Yes/No</option>
+                    <option value="multiple_choice">Multiple Choice</option>
+                    <option value="numeric">Numeric</option>
+                  </select>
+                </div>
+
+                <div class="form-group" id="optionsGroup" style="display: none;">
+                  <label class="form-label">Options (comma separated)</label>
+                  <input type="text" id="adminOptions" class="form-input" placeholder="e.g., Option 1, Option 2, Option 3" />
+                </div>
+
+                <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
+              </div>
+
+              <div class="admin-questions-list">
+                <h3>Today's Questions</h3>
+                <div id="adminQuestionsList"></div>
+                <button class="btn btn-primary" id="saveQuestionsBtn" style="margin-top: 1rem;">Save All to Database</button>
+              </div>
             </div>
 
-            <div class="form-group" id="optionsGroup" style="display: none;">
-              <label class="form-label">Options (comma separated)</label>
-              <input type="text" id="adminOptions" class="form-input" placeholder="e.g., Option 1, Option 2, Option 3" />
+            <!-- Mark Answers Tab -->
+            <div id="markAnswersTab" style="display: none;">
+              <div class="admin-form">
+                <h3 style="margin-top: 0;">Mark Correct Answers</h3>
+                <div id="markAnswersMessage" class="message"></div>
+
+                <div class="admin-date-section" style="background: var(--chip); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                  <label style="margin: 0; font-weight: 700; color: var(--ink);">Select Date:</label>
+                  <input type="date" id="markAnswersDate" />
+                  <button class="btn btn-secondary" id="loadQuestionsForAnswersBtn">Load Questions</button>
+                </div>
+
+                <div class="answers-list" id="answersList" style="margin-top: 1.5rem;">
+                  <!-- Questions will be loaded here with answer input fields -->
+                </div>
+
+                <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none; margin-top: 1rem;">Save Correct Answers</button>
+              </div>
             </div>
-
-            <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
-          </div>
-
-          <div class="admin-questions-list">
-            <h3>Today's Questions</h3>
-            <div id="adminQuestionsList"></div>
-            <button class="btn btn-primary" id="saveQuestionsBtn" style="margin-top: 1rem;">Save All to Database</button>
           </div>
 
           <!-- Manage Weeks Section -->
@@ -1149,25 +1179,6 @@
               <p style="margin: 0; font-weight: 700;">Current Lock Time:</p>
               <p id="lockTimeDisplayValue" style="margin: 0.5rem 0 0 0; font-size: 1.2rem; color: var(--success);"></p>
             </div>
-          </div>
-
-          <!-- Mark Correct Answers Section -->
-          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
-          <div class="mark-answers-section">
-            <h2>Mark Correct Answers</h2>
-            <div id="markAnswersMessage" class="message"></div>
-
-            <div class="admin-date-section">
-              <label>Select Date:</label>
-              <input type="date" id="markAnswersDate" />
-              <button class="btn btn-secondary" id="loadQuestionsForAnswersBtn">Load Questions</button>
-            </div>
-
-            <div class="answers-list" id="answersList" style="margin-top: 1.5rem;">
-              <!-- Questions will be loaded here with answer input fields -->
-            </div>
-
-            <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none; margin-top: 1rem;">Save Correct Answers</button>
           </div>
 
           <!-- View & Manage User Submissions Section -->
@@ -1539,6 +1550,33 @@
       } else {
         optionsGroup.style.display = 'none';
       }
+    });
+
+    // Tab switching for add questions and mark answers
+    document.getElementById('addQuestionTabBtn').addEventListener('click', () => {
+      document.getElementById('addQuestionTab').style.display = 'block';
+      document.getElementById('markAnswersTab').style.display = 'none';
+      
+      document.getElementById('addQuestionTabBtn').style.background = '#e0e7ff';
+      document.getElementById('addQuestionTabBtn').style.color = 'var(--brand)';
+      document.getElementById('addQuestionTabBtn').style.border = '2px solid var(--brand)';
+      
+      document.getElementById('markAnswersTabBtn').style.background = 'transparent';
+      document.getElementById('markAnswersTabBtn').style.color = 'var(--muted)';
+      document.getElementById('markAnswersTabBtn').style.border = 'none';
+    });
+
+    document.getElementById('markAnswersTabBtn').addEventListener('click', () => {
+      document.getElementById('addQuestionTab').style.display = 'none';
+      document.getElementById('markAnswersTab').style.display = 'block';
+      
+      document.getElementById('markAnswersTabBtn').style.background = '#e0e7ff';
+      document.getElementById('markAnswersTabBtn').style.color = 'var(--brand)';
+      document.getElementById('markAnswersTabBtn').style.border = '2px solid var(--brand)';
+      
+      document.getElementById('addQuestionTabBtn').style.background = 'transparent';
+      document.getElementById('addQuestionTabBtn').style.color = 'var(--muted)';
+      document.getElementById('addQuestionTabBtn').style.border = 'none';
     });
 
     // Add question to admin list
