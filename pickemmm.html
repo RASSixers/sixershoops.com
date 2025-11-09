@@ -1878,6 +1878,23 @@
             updateAnswerIndicator(idx);
           });
         });
+
+        // Pre-populate with existing correct answer if available
+        if (q.correctAnswer !== undefined && q.correctAnswer !== null) {
+          if (q.question_type === 'yes_no' || q.question_type === 'multiple_choice') {
+            const radio = document.querySelector(`input[name="answer_${idx}"][value="${q.correctAnswer}"]`);
+            if (radio) {
+              radio.checked = true;
+              updateAnswerIndicator(idx);
+            }
+          } else if (q.question_type === 'numeric') {
+            const numInput = document.querySelector(`input[name="answer_${idx}"]`);
+            if (numInput) {
+              numInput.value = q.correctAnswer;
+              updateAnswerIndicator(idx);
+            }
+          }
+        }
       });
       
       setupAnswerAutoSaveIndicator();
@@ -2232,13 +2249,30 @@
         const startDate = selectedWeekData.startDate;
         const endDate = selectedWeekData.endDate;
 
-        const snapshot = await db.collection('correctAnswers')
+        // First load all questions in the week to get question_type and options
+        const questionsSnapshot = await db.collection('questions')
           .where('date', '>=', startDate)
           .where('date', '<=', endDate)
           .orderBy('date', 'asc')
           .get();
 
-        if (snapshot.empty) {
+        // Build a map of question text to question data
+        const questionMap = {};
+        questionsSnapshot.forEach(doc => {
+          const data = doc.data();
+          (data.items || []).forEach(q => {
+            questionMap[q.question] = q;
+          });
+        });
+
+        // Now load the answers
+        const answersSnapshot = await db.collection('correctAnswers')
+          .where('date', '>=', startDate)
+          .where('date', '<=', endDate)
+          .orderBy('date', 'asc')
+          .get();
+
+        if (answersSnapshot.empty) {
           showMessage(`No correct answers found for Week ${selectedWeekData.weekNumber}`, 'info', 'loadWeekMessage');
           questionsForAnswers = [];
           document.getElementById('answersList').innerHTML = '';
@@ -2246,13 +2280,17 @@
         }
 
         questionsForAnswers = [];
-        snapshot.forEach(doc => {
+        answersSnapshot.forEach(doc => {
           const data = doc.data();
           (data.answers || []).forEach((answer, idx) => {
+            const questionData = questionMap[answer.question] || {};
             questionsForAnswers.push({
               ...answer,
+              question_type: questionData.question_type,
+              options: questionData.options,
               date: data.date,
-              originalIndex: idx
+              originalIndex: idx,
+              docId: doc.id
             });
           });
         });
