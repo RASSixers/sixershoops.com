@@ -984,6 +984,12 @@
 
       <!-- Daily Leaderboard Tab -->
       <div id="daily-lb" class="tab-content">
+        <div class="date-slider-controls" style="margin-bottom: 15px;">
+          <button class="date-nav-btn" id="prevDailyDateBtn">‹</button>
+          <div id="dailyDatePickerContainer" class="date-picker-container"></div>
+          <button class="date-nav-btn" id="nextDailyDateBtn">›</button>
+        </div>
+        <input type="hidden" id="dailyLbDate" />
         <div style="margin-bottom: 15px;">
           <button type="button" class="btn btn-secondary" id="refreshDailyBtn">🔄 Refresh</button>
         </div>
@@ -3265,6 +3271,86 @@
     console.log(`📅 Date slider rendered. Loading questions for: ${todayFormatted}`);
     loadQuestionsForDate(todayFormatted);
 
+    // === Daily Leaderboard Date Picker ===
+    let currentDailyDateOffset = 0;
+    
+    function renderDailyDatePicker() {
+      const container = document.getElementById('dailyDatePickerContainer');
+      const today = new Date();
+      const dates = [];
+
+      // Generate past days (30 days back) and future days (up to May 15th)
+      const endDate = new Date('2025-05-15');
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - PAST_DAYS);
+      
+      let currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const formattedValue = formatDateForComparison(currentDate);
+        dates.push({
+          date: new Date(currentDate),
+          label: formatDateLabel(currentDate),
+          value: formattedValue,
+          dayNum: currentDate.getDate()
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Show DATES_TO_SHOW dates at a time
+      const visibleDates = dates.slice(currentDailyDateOffset, currentDailyDateOffset + DATES_TO_SHOW);
+
+      container.innerHTML = visibleDates.map(d => {
+        const currentDailyLbDate = document.getElementById('dailyLbDate').value;
+        const isActive = currentDailyLbDate === d.value;
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-daily-date="${d.value}">
+            <div style="font-weight: 700; font-size: 12px;">${d.label.day}</div>
+            <div class="date-picker-date">${d.label.date}</div>
+          </button>
+        `;
+      }).join('');
+
+      // Update nav button states
+      document.getElementById('prevDailyDateBtn').disabled = currentDailyDateOffset === 0;
+      document.getElementById('nextDailyDateBtn').disabled = currentDailyDateOffset >= dates.length - DATES_TO_SHOW;
+
+      // Attach click handlers to date buttons
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dateValue = btn.dataset.dailyDate;
+          document.getElementById('dailyLbDate').value = dateValue;
+          renderDailyDatePicker();
+          loadLeaderboard('daily', null, null, dateValue);
+        });
+      });
+    }
+
+    document.getElementById('prevDailyDateBtn').addEventListener('click', () => {
+      if (currentDailyDateOffset > 0) {
+        currentDailyDateOffset--;
+        renderDailyDatePicker();
+      }
+    });
+
+    document.getElementById('nextDailyDateBtn').addEventListener('click', () => {
+      const today = new Date();
+      const endDate = new Date('2025-05-15');
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - PAST_DAYS);
+      
+      let currentDate = new Date(startDate);
+      let totalDates = 0;
+      while (currentDate <= endDate) {
+        totalDates++;
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      if (currentDailyDateOffset < totalDates - DATES_TO_SHOW) {
+        currentDailyDateOffset++;
+        renderDailyDatePicker();
+      }
+    });
+
     // === Week and Month Sliders ===
     let currentWeekOffset = 0;
     let currentMonthOffset = 0;
@@ -3309,9 +3395,7 @@
         selectedWeek = weeks[0].value;
       }
 
-      const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
-
-      container.innerHTML = visibleWeeks.map(w => {
+      container.innerHTML = weeks.map(w => {
         const isActive = selectedWeek === w.value;
         return `
           <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${w.value}">
@@ -3320,8 +3404,8 @@
         `;
       }).join('');
 
-      document.getElementById('prevWeekBtn').disabled = currentWeekOffset === 0;
-      document.getElementById('nextWeekBtn').disabled = currentWeekOffset >= weeks.length - WEEKS_TO_SHOW;
+      document.getElementById('prevWeekBtn').style.display = 'none';
+      document.getElementById('nextWeekBtn').style.display = 'none';
 
       container.querySelectorAll('.date-picker-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -3415,7 +3499,13 @@
         document.getElementById(tabName).classList.add('active');
         
         if (tabName === 'daily-lb') {
-          const selectedDate = document.getElementById('pickDate').value;
+          let selectedDate = document.getElementById('dailyLbDate').value;
+          if (!selectedDate) {
+            selectedDate = formatDateForComparison(new Date());
+            document.getElementById('dailyLbDate').value = selectedDate;
+            currentDailyDateOffset = PAST_DAYS;
+          }
+          renderDailyDatePicker();
           loadLeaderboard('daily', null, null, selectedDate);
         }
         if (tabName === 'weekly-lb') {
@@ -3442,7 +3532,7 @@
       dailyRefreshBtn.addEventListener('click', async () => {
         console.log('🔄 User clicked refresh Daily leaderboard');
         const originalText = dailyRefreshBtn.textContent;
-        const selectedDate = document.getElementById('pickDate').value;
+        const selectedDate = document.getElementById('dailyLbDate').value;
         dailyRefreshBtn.disabled = true;
         dailyRefreshBtn.textContent = 'Loading...';
         try {
@@ -3590,8 +3680,8 @@
           }
         }
 
-        const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
+        const startDateStr = formatDateForComparison(startDate);
+        const endDateStr = formatDateForComparison(endDate);
         console.log(`📅 ${period.toUpperCase()} leaderboard: date range ${startDateStr} to ${endDateStr}`);
 
         // Get all dates in the range with picks
