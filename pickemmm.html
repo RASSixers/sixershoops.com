@@ -1067,19 +1067,6 @@
               <input type="text" id="adminOptions" class="form-input" placeholder="e.g., Option 1, Option 2, Option 3" />
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Weeks Span (comma separated week numbers)</label>
-              <input type="text" id="adminWeeks" class="form-input" placeholder="e.g., 1, 2, 3 or leave blank for all weeks" />
-              <small style="color: var(--muted); display: block; margin-top: 0.5rem;">Enter week numbers that this question spans (affects leaderboards). Leave blank to include in all weeks.</small>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Correct Answer</label>
-              <div id="correctAnswerGroup" style="margin-top: 0.75rem;">
-                <small style="color: var(--muted);">Question type will determine input method</small>
-              </div>
-            </div>
-
             <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
           </div>
 
@@ -1121,8 +1108,24 @@
             </div>
           </div>
 
-          <!-- Mark Correct Answers Section (Integrated into Create Questions Above) -->
-          <!-- This functionality is now available in the "Add New Question" section -->
+          <!-- Mark Correct Answers Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="mark-answers-section">
+            <h2>Mark Correct Answers & Set Weeks</h2>
+            <div id="markAnswersMessage" class="message"></div>
+
+            <div class="admin-date-section">
+              <label>Select Date:</label>
+              <input type="date" id="markAnswersDate" />
+              <button class="btn btn-secondary" id="loadQuestionsForAnswersBtn">Load Questions</button>
+            </div>
+
+            <div class="answers-list" id="answersList" style="margin-top: 1.5rem;">
+              <!-- Questions will be loaded here with answer input fields -->
+            </div>
+
+            <button class="btn btn-primary" id="saveCorrectAnswersBtn" style="display: none; margin-top: 1rem;">Save Correct Answers & Weeks</button>
+          </div>
 
           <!-- Delete Submissions Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
@@ -1488,65 +1491,12 @@
     // Toggle options field based on question type
     document.getElementById('adminQuestionType').addEventListener('change', (e) => {
       const optionsGroup = document.getElementById('optionsGroup');
-      const answerGroup = document.getElementById('correctAnswerGroup');
-      
       if (e.target.value === 'multiple_choice') {
         optionsGroup.style.display = 'block';
       } else {
         optionsGroup.style.display = 'none';
       }
-      
-      updateCorrectAnswerInput();
     });
-    
-    function updateCorrectAnswerInput() {
-      const type = document.getElementById('adminQuestionType').value;
-      const answerGroup = document.getElementById('correctAnswerGroup');
-      let answerInput = '';
-      
-      if (type === 'yes_no') {
-        answerInput = `
-          <div style="display: flex; gap: 2rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="radio" name="correctAnswer" value="Yes" class="correct-answer-input" /> 
-              <span style="font-weight: 500;">Yes</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="radio" name="correctAnswer" value="No" class="correct-answer-input" /> 
-              <span style="font-weight: 500;">No</span>
-            </label>
-          </div>
-        `;
-      } else if (type === 'multiple_choice') {
-        const optionsText = document.getElementById('adminOptions').value.trim();
-        const options = optionsText ? optionsText.split(',').map(o => o.trim()) : [];
-        if (options.length > 0) {
-          answerInput = `
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-              ${options.map(opt => `
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                  <input type="radio" name="correctAnswer" value="${opt}" class="correct-answer-input" /> 
-                  <span>${opt}</span>
-                </label>
-              `).join('')}
-            </div>
-          `;
-        } else {
-          answerInput = '<small style="color: var(--muted);">Add options above first</small>';
-        }
-      } else if (type === 'numeric') {
-        answerInput = `
-          <input type="number" class="form-input correct-answer-input" placeholder="Enter the correct number" style="max-width: 250px;" />
-        `;
-      }
-      
-      answerGroup.innerHTML = answerInput;
-    }
-    
-    document.getElementById('adminOptions').addEventListener('change', updateCorrectAnswerInput);
-    document.getElementById('adminQuestionType').addEventListener('change', updateCorrectAnswerInput);
-    
-    updateCorrectAnswerInput();
 
     // Add question to admin list
     document.getElementById('addQuestionBtn').addEventListener('click', () => {
@@ -1555,19 +1505,6 @@
       const text = document.getElementById('adminQuestionText').value.trim();
       const type = document.getElementById('adminQuestionType').value;
       const options = document.getElementById('adminOptions').value.trim();
-      const weeksInput = document.getElementById('adminWeeks').value.trim();
-      
-      let correctAnswer = null;
-      const answerInputs = document.querySelectorAll('.correct-answer-input');
-      for (let input of answerInputs) {
-        if (input.type === 'radio' && input.checked) {
-          correctAnswer = input.value;
-          break;
-        } else if (input.type === 'number' && input.value) {
-          correctAnswer = parseFloat(input.value);
-          break;
-        }
-      }
 
       if (!text) {
         showMessage('Please enter a question', 'error', 'adminMessage');
@@ -1579,19 +1516,10 @@
         return;
       }
 
-      if (correctAnswer === null) {
-        showMessage('Please select a correct answer', 'error', 'adminMessage');
-        return;
-      }
-
-      const weeks = weeksInput ? weeksInput.split(',').map(w => parseInt(w.trim())).filter(w => !isNaN(w)) : null;
-
       const newQuestion = {
         question: text,
         question_type: type,
         options: type === 'multiple_choice' ? options : null,
-        correctAnswer: correctAnswer,
-        weeks: weeks,
         tempId: Date.now()
       };
 
@@ -1601,10 +1529,8 @@
       // Clear form
       document.getElementById('adminQuestionText').value = '';
       document.getElementById('adminOptions').value = '';
-      document.getElementById('adminWeeks').value = '';
       document.getElementById('adminQuestionType').value = 'yes_no';
       document.getElementById('optionsGroup').style.display = 'none';
-      updateCorrectAnswerInput();
       
       showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
     });
@@ -1630,10 +1556,6 @@
             <div class="admin-question-item-text">${index + 1}. ${q.question}</div>
             <div class="admin-question-item-type">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
             ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
-            <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
-              <div style="font-size: 0.85rem; color: var(--success); font-weight: 600; margin-bottom: 0.25rem;">✓ Answer: ${q.correctAnswer}</div>
-              ${q.weeks ? `<div style="font-size: 0.85rem; color: var(--brand);">📅 Weeks: ${q.weeks.join(', ')}</div>` : '<div style="font-size: 0.85rem; color: var(--muted);">📅 Weeks: All</div>'}
-            </div>
           </div>
           <div class="admin-question-item-actions">
             <button class="admin-delete-btn" onclick="deleteAdminQuestion(${q.tempId})">Delete</button>
@@ -1730,37 +1652,8 @@
           console.log(`   New doc ID: ${docRef.id}`);
         }
 
-        const correctAnswers = questionsToSave
-          .map((q, idx) => ({
-            questionId: idx,
-            question: q.question,
-            correctAnswer: q.correctAnswer
-          }))
-          .filter(a => a.correctAnswer !== undefined);
-
-        console.log(`📝 Saving ${correctAnswers.length} correct answers...`);
-        const existingAnswers = await db.collection('correctAnswers').where('date', '==', dateInput).get();
-        
-        if (!existingAnswers.empty) {
-          await existingAnswers.docs[0].ref.set({
-            date: dateInput,
-            answers: correctAnswers,
-            createdAt: existingAnswers.docs[0].data().createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-          console.log('✅ Correct answers UPDATED');
-        } else {
-          await db.collection('correctAnswers').add({
-            date: dateInput,
-            answers: correctAnswers,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-          console.log('✅ Correct answers CREATED');
-        }
-
-        console.log(`✅ Questions and answers saved successfully for ${dateInput}!`);
-        showMessage('✅ Questions and answers saved successfully!', 'success', 'adminMessage');
+        console.log(`✅ Questions saved successfully for ${dateInput}!`);
+        showMessage('✅ Questions saved successfully! Now go to Mark Correct Answers to set answers and weeks.', 'success', 'adminMessage');
         adminQuestions = [];
         renderAdminQuestions();
       } catch (err) {
@@ -1769,6 +1662,288 @@
         showMessage('Error saving questions: ' + err.message, 'error', 'adminMessage');
       }
     });
+
+    // === Mark Correct Answers ===
+    let questionsForAnswers = [];
+
+    document.getElementById('loadQuestionsForAnswersBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const dateInput = document.getElementById('markAnswersDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date', 'error', 'markAnswersMessage');
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('questions').where('date', '==', dateInput).get();
+        
+        if (snapshot.empty) {
+          showMessage('No questions found for this date', 'info', 'markAnswersMessage');
+          questionsForAnswers = [];
+          document.getElementById('answersList').innerHTML = '';
+          document.getElementById('saveCorrectAnswersBtn').style.display = 'none';
+          return;
+        }
+
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        questionsForAnswers = (data.items || []).map((q, idx) => ({
+          ...q,
+          questionId: idx,
+          docId: doc.id
+        }));
+
+        renderAnswersForm();
+        document.getElementById('saveCorrectAnswersBtn').style.display = 'block';
+        showMessage('Questions loaded successfully', 'success', 'markAnswersMessage');
+      } catch (err) {
+        console.error('Error loading questions:', err);
+        showMessage('Error loading questions', 'error', 'markAnswersMessage');
+      }
+    });
+
+    function renderAnswersForm() {
+      const container = document.getElementById('answersList');
+      
+      if (questionsForAnswers.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); text-align: center;">No questions to mark.</p>';
+        return;
+      }
+
+      container.innerHTML = questionsForAnswers.map((q, idx) => {
+        let answerInput = '';
+        const inputId = `answer_${idx}`;
+        
+        if (q.question_type === 'yes_no') {
+          answerInput = `
+            <div style="margin-top: 0.75rem; display: flex; gap: 2rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="${inputId}" value="Yes" class="answer-input-${idx}" /> 
+                <span style="font-weight: 500;">Yes</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="${inputId}" value="No" class="answer-input-${idx}" /> 
+                <span style="font-weight: 500;">No</span>
+              </label>
+            </div>
+          `;
+        } else if (q.question_type === 'multiple_choice') {
+          const options = q.options.split(',').map(opt => opt.trim());
+          answerInput = `
+            <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              ${options.map((opt, optIdx) => `
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 6px; transition: background 0.2s;">
+                  <input type="radio" name="${inputId}" value="${opt}" class="answer-input-${idx}" /> 
+                  <span>${opt}</span>
+                </label>
+              `).join('')}
+            </div>
+          `;
+        } else if (q.question_type === 'numeric') {
+          answerInput = `
+            <input type="number" name="${inputId}" class="form-input answer-input-${idx}" placeholder="Enter the correct number" style="margin-top: 0.75rem; max-width: 250px; padding: 0.6rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem;" />
+          `;
+        }
+
+        return `
+          <div class="answer-card-${idx}" style="border: 2px solid var(--border); padding: 1.25rem; margin-bottom: 1rem; border-radius: 12px; background: var(--white); transition: all 0.3s; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <div>
+                <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem;">${idx + 1}. ${q.question}</div>
+                <div style="color: var(--muted); font-size: 0.85rem;">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+              </div>
+              <span class="answer-indicator-${idx}" style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">⏳</span>
+            </div>
+            ${q.options ? `<div style="color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Options: ${q.options}</div>` : ''}
+            <div style="margin-top: 0.75rem; font-weight: 600; color: var(--ink);">Correct Answer:</div>
+            ${answerInput}
+            
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+              <label class="form-label">Weeks Span (comma separated):</label>
+              <input type="text" class="form-input weeks-input-${idx}" placeholder="e.g., 1, 2, 3 or leave blank for all weeks" style="margin-top: 0.5rem; max-width: 300px;" />
+              <small style="color: var(--muted); display: block; margin-top: 0.4rem;">Leave blank to include in all weeks</small>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      questionsForAnswers.forEach((q, idx) => {
+        const inputs = document.querySelectorAll(`.answer-input-${idx}`);
+        inputs.forEach(input => {
+          input.addEventListener('change', () => {
+            updateAnswerIndicator(idx);
+          });
+        });
+      });
+      
+      setupAnswerAutoSaveIndicator();
+    }
+
+    function updateAnswerIndicator(idx) {
+      const inputs = document.querySelectorAll(`.answer-input-${idx}`);
+      let isAnswered = false;
+      
+      for (let input of inputs) {
+        if (input.type === 'radio' && input.checked) {
+          isAnswered = true;
+          break;
+        } else if (input.type === 'number' && input.value) {
+          isAnswered = true;
+          break;
+        }
+      }
+
+      const indicator = document.querySelector(`.answer-indicator-${idx}`);
+      const card = document.querySelector(`.answer-card-${idx}`);
+      
+      if (isAnswered) {
+        indicator.innerHTML = '✅';
+        indicator.style.background = '#d1fae5';
+        indicator.style.color = '#065f46';
+        card.style.borderColor = '#10b981';
+        card.style.background = '#f0fdf4';
+      } else {
+        indicator.innerHTML = '⏳';
+        indicator.style.background = '#e5e7eb';
+        indicator.style.color = '#666';
+        card.style.borderColor = 'var(--border)';
+        card.style.background = 'var(--white)';
+      }
+    }
+
+    document.getElementById('saveCorrectAnswersBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const dateInput = document.getElementById('markAnswersDate').value;
+      
+      const correctAnswers = [];
+      let allAnswered = true;
+
+      questionsForAnswers.forEach((q, idx) => {
+        const inputs = document.querySelectorAll(`input[name="answer_${idx}"]`);
+        let answer = null;
+
+        for (let input of inputs) {
+          if (input.type === 'radio' && input.checked) {
+            answer = input.value;
+            break;
+          } else if (input.type === 'number' && input.value) {
+            answer = parseFloat(input.value);
+            break;
+          }
+        }
+
+        if (answer === null) {
+          allAnswered = false;
+        }
+
+        const weeksInput = document.querySelector(`.weeks-input-${idx}`).value.trim();
+        const weeks = weeksInput ? weeksInput.split(',').map(w => parseInt(w.trim())).filter(w => !isNaN(w)) : null;
+
+        correctAnswers.push({
+          questionId: idx,
+          question: q.question,
+          correctAnswer: answer,
+          weeks: weeks
+        });
+      });
+
+      if (!allAnswered) {
+        showMessage('Please enter correct answers for all questions', 'error', 'markAnswersMessage');
+        return;
+      }
+
+      try {
+        console.log(`📝 Saving answers for date: ${dateInput}`);
+        console.log(`📝 Answers being saved:`, correctAnswers);
+        
+        const existingAnswers = await db.collection('correctAnswers').where('date', '==', dateInput).get();
+        
+        let docRef;
+        if (!existingAnswers.empty) {
+          console.log(`📝 Found existing answer document for ${dateInput}. Updating it...`);
+          docRef = existingAnswers.docs[0].ref;
+          await docRef.set({
+            date: dateInput,
+            answers: correctAnswers,
+            createdAt: existingAnswers.docs[0].data().createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          console.log('✅ Correct answers UPDATED with ID:', docRef.id);
+        } else {
+          console.log(`📝 No existing answers found for ${dateInput}. Creating new document...`);
+          docRef = await db.collection('correctAnswers').add({
+            date: dateInput,
+            answers: correctAnswers,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          console.log('✅ Correct answers CREATED with ID:', docRef.id);
+        }
+        
+        showMessage('✅ Correct answers and weeks saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
+        
+        console.log('⏳ Waiting for Firestore replication with retry...');
+        
+        let leaderboardsLoaded = false;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          const waitTime = attempt === 1 ? 2000 : attempt === 2 ? 3000 : 5000;
+          console.log(`  🔄 Attempt ${attempt}/3: Waiting ${waitTime}ms before loading leaderboards...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          const verifySnapshot = await db.collection('correctAnswers').where('date', '==', dateInput).get();
+          console.log(`  ✓ Verification: Found ${verifySnapshot.size} answer document(s) for ${dateInput}`);
+          
+          if (verifySnapshot.empty) {
+            console.warn(`  ⚠️ Answers not yet replicated. Retrying...`);
+            continue;
+          }
+          
+          console.log(`🔄 Recalculating all leaderboards (attempt ${attempt}/3)...`);
+          try {
+            await Promise.all([
+              loadLeaderboard('daily'),
+              loadLeaderboard('weekly'),
+              loadLeaderboard('monthly')
+            ]);
+            console.log('✅ All leaderboards recalculated successfully');
+            leaderboardsLoaded = true;
+            break;
+          } catch (leaderboardErr) {
+            console.error(`❌ Error recalculating leaderboards on attempt ${attempt}:`, leaderboardErr);
+            if (attempt < 3) {
+              console.log('  ⏳ Will retry...');
+              continue;
+            }
+            showMessage('⚠️ Answers saved but leaderboard update failed. Check console for details.', 'error', 'markAnswersMessage');
+            return;
+          }
+        }
+        
+        if (leaderboardsLoaded) {
+          showMessage('✅ Leaderboards updated! Scores have been recalculated.', 'success', 'markAnswersMessage');
+        }
+      } catch (err) {
+        console.error('Error saving correct answers:', err);
+        console.error('Error code:', err.code);
+        console.error('Error details:', err.message);
+        showMessage('❌ Error: ' + (err.message || 'Failed to save answers'), 'error', 'markAnswersMessage');
+      }
+    });
+
+    function setupAnswerAutoSaveIndicator() {
+      if (questionsForAnswers.length === 0) return;
+      
+      questionsForAnswers.forEach((q, idx) => {
+        const inputs = document.querySelectorAll(`.answer-input-${idx}`);
+        inputs.forEach(input => {
+          input.addEventListener('change', () => {
+            console.log(`Answer ${idx} changed - Remember to click Save button to persist changes`);
+          });
+        });
+      });
+    }
 
     // === Lock Time Management ===
     // Update the visual indicator when lock time date changes
