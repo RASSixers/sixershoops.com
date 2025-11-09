@@ -3270,7 +3270,7 @@
     let currentMonthOffset = 0;
     const WEEKS_TO_SHOW = 5;
     const MONTHS_TO_SHOW = 4;
-    let selectedWeek = 0;
+    let selectedWeek = null;
     let selectedMonth = 0;
 
     function renderWeekSlider() {
@@ -3282,7 +3282,7 @@
           const startDate = new Date(w.startDate);
           const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][startDate.getMonth()];
           return {
-            value: idx,
+            value: w.weekNumber,
             label: `Week ${w.weekNumber}`,
             monthLabel: monthName,
             date: startDate,
@@ -3302,6 +3302,11 @@
             date: weekDate
           });
         }
+      }
+
+      // Initialize selectedWeek to first week if not set
+      if (selectedWeek === null && weeks.length > 0) {
+        selectedWeek = weeks[0].value;
       }
 
       const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
@@ -3530,20 +3535,18 @@
         } else if (period === 'weekly') {
           // Use database-defined weeks instead of calculated offsets
           if (weekOffset !== null && weekOffset !== undefined && allWeeks.length > 0) {
-            const targetWeekNum = weekOffset + 1;
-            const weekDef = allWeeks.find(w => w.weekNumber === targetWeekNum);
+            const weekDef = allWeeks.find(w => w.weekNumber === weekOffset);
             
             if (weekDef) {
               const [startYear, startMonth, startDay] = weekDef.startDate.split('-');
               const [endYear, endMonth, endDay] = weekDef.endDate.split('-');
               startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1, parseInt(startDay));
               endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDay));
-              console.log(`✅ Using database-defined Week ${targetWeekNum}: ${weekDef.startDate} to ${weekDef.endDate}`);
+              console.log(`✅ Using database-defined Week ${weekOffset}: ${weekDef.startDate} to ${weekDef.endDate}`);
             } else {
-              console.warn(`⚠️ Week ${targetWeekNum} not found in database. Using offset calculation as fallback.`);
-              const weeksFromNow = weekOffset;
+              console.warn(`⚠️ Week ${weekOffset} not found in database. Using offset calculation as fallback.`);
               startDate = new Date(now);
-              startDate.setDate(now.getDate() + (weeksFromNow * 7));
+              startDate.setDate(now.getDate() + (weekOffset * 7));
               endDate = new Date(startDate);
               endDate.setDate(startDate.getDate() + 6);
             }
