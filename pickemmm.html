@@ -3014,15 +3014,14 @@
       const now = new Date();
       const weeks = [];
 
-      // Generate 12 weeks starting from current week and going back
+      // Generate 12 weeks starting from week 1 into the future
       for (let i = 0; i < 12; i++) {
         const weekDate = new Date(now);
-        weekDate.setDate(weekDate.getDate() - (i * 7));
+        weekDate.setDate(weekDate.getDate() + (i * 7));
         const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][weekDate.getMonth()];
-        const weekLabel = i === 0 ? 'This Week' : `${i} week${i > 1 ? 's' : ''} ago`;
         weeks.push({
           value: i,
-          label: weekLabel,
+          label: `Week ${i + 1}`,
           monthLabel: monthName,
           date: weekDate
         });
@@ -3058,10 +3057,10 @@
       const months = [];
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-      // Generate 12 months starting from current month and going back
+      // Generate 12 months starting from current month going forward
       for (let i = 0; i < 12; i++) {
         const monthDate = new Date(now);
-        monthDate.setMonth(monthDate.getMonth() - i);
+        monthDate.setMonth(monthDate.getMonth() + i);
         const monthIdx = monthDate.getMonth();
         const year = monthDate.getFullYear();
         months.push({
@@ -3240,32 +3239,32 @@
           // Start of today
           startDate.setHours(0, 0, 0, 0);
         } else if (period === 'weekly') {
-          // Calculate based on week offset
+          // Calculate based on week offset (future weeks)
           if (weekOffset !== null && weekOffset !== undefined) {
-            const weeksAgo = weekOffset;
+            const weeksFromNow = weekOffset;
             startDate = new Date(now);
-            startDate.setDate(now.getDate() - (weeksAgo * 7));
+            startDate.setDate(now.getDate() + (weeksFromNow * 7));
             endDate = new Date(startDate);
             endDate.setDate(startDate.getDate() + 6);
           } else {
-            // 7 days ago
+            // Current week
             startDate = new Date(now);
-            startDate.setDate(now.getDate() - 7);
             endDate = new Date(now);
+            endDate.setDate(now.getDate() + 6);
           }
           startDate.setHours(0, 0, 0, 0);
           endDate.setHours(23, 59, 59, 999);
         } else if (period === 'monthly') {
-          // Calculate based on month offset
+          // Calculate based on month offset (future months)
           if (monthOffset !== null && monthOffset !== undefined) {
             const targetMonth = new Date(now);
-            targetMonth.setMonth(now.getMonth() - monthOffset);
+            targetMonth.setMonth(now.getMonth() + monthOffset);
             startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
             endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
           } else {
             // First day of current month
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
           }
         }
 
