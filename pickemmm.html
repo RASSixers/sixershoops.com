@@ -999,6 +999,11 @@
 
       <!-- Weekly Leaderboard Tab -->
       <div id="weekly-lb" class="tab-content">
+        <div class="date-slider-controls" style="margin-bottom: 15px;">
+          <button class="date-nav-btn" id="prevWeekBtn">‹</button>
+          <div id="weekPickerContainer" class="date-picker-container"></div>
+          <button class="date-nav-btn" id="nextWeekBtn">›</button>
+        </div>
         <div style="margin-bottom: 15px;">
           <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">🔄 Refresh</button>
         </div>
@@ -1017,6 +1022,11 @@
 
       <!-- Monthly Leaderboard Tab -->
       <div id="monthly-lb" class="tab-content">
+        <div class="date-slider-controls" style="margin-bottom: 15px;">
+          <button class="date-nav-btn" id="prevMonthBtn">‹</button>
+          <div id="monthPickerContainer" class="date-picker-container"></div>
+          <button class="date-nav-btn" id="nextMonthBtn">›</button>
+        </div>
         <div style="margin-bottom: 15px;">
           <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">🔄 Refresh</button>
         </div>
@@ -2991,6 +3001,130 @@
     console.log(`📅 Date slider rendered. Loading questions for: ${todayFormatted}`);
     loadQuestionsForDate(todayFormatted);
 
+    // === Week and Month Sliders ===
+    let currentWeekOffset = 0;
+    let currentMonthOffset = 0;
+    const WEEKS_TO_SHOW = 5;
+    const MONTHS_TO_SHOW = 4;
+    let selectedWeek = 0;
+    let selectedMonth = 0;
+
+    function renderWeekSlider() {
+      const container = document.getElementById('weekPickerContainer');
+      const now = new Date();
+      const weeks = [];
+
+      // Generate 12 weeks starting from current week and going back
+      for (let i = 0; i < 12; i++) {
+        const weekDate = new Date(now);
+        weekDate.setDate(weekDate.getDate() - (i * 7));
+        const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][weekDate.getMonth()];
+        const weekLabel = i === 0 ? 'This Week' : `${i} week${i > 1 ? 's' : ''} ago`;
+        weeks.push({
+          value: i,
+          label: weekLabel,
+          monthLabel: monthName,
+          date: weekDate
+        });
+      }
+
+      const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
+
+      container.innerHTML = visibleWeeks.map(w => {
+        const isActive = selectedWeek === w.value;
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${w.value}">
+            <div style="font-weight: 700; font-size: 12px;">${w.label}</div>
+            <div class="date-picker-date">${w.monthLabel}</div>
+          </button>
+        `;
+      }).join('');
+
+      document.getElementById('prevWeekBtn').disabled = currentWeekOffset === 0;
+      document.getElementById('nextWeekBtn').disabled = currentWeekOffset >= weeks.length - WEEKS_TO_SHOW;
+
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedWeek = parseInt(btn.dataset.week);
+          renderWeekSlider();
+          loadLeaderboard('weekly', selectedWeek);
+        });
+      });
+    }
+
+    function renderMonthSlider() {
+      const container = document.getElementById('monthPickerContainer');
+      const now = new Date();
+      const months = [];
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+      // Generate 12 months starting from current month and going back
+      for (let i = 0; i < 12; i++) {
+        const monthDate = new Date(now);
+        monthDate.setMonth(monthDate.getMonth() - i);
+        const monthIdx = monthDate.getMonth();
+        const year = monthDate.getFullYear();
+        months.push({
+          value: i,
+          label: monthNames[monthIdx],
+          shortLabel: monthNames[monthIdx].substring(0, 3),
+          year: year,
+          date: monthDate
+        });
+      }
+
+      const visibleMonths = months.slice(currentMonthOffset, currentMonthOffset + MONTHS_TO_SHOW);
+
+      container.innerHTML = visibleMonths.map(m => {
+        const isActive = selectedMonth === m.value;
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-month="${m.value}">
+            <div style="font-weight: 700; font-size: 12px;">${m.shortLabel}</div>
+            <div class="date-picker-date">${m.date.getFullYear()}</div>
+          </button>
+        `;
+      }).join('');
+
+      document.getElementById('prevMonthBtn').disabled = currentMonthOffset === 0;
+      document.getElementById('nextMonthBtn').disabled = currentMonthOffset >= months.length - MONTHS_TO_SHOW;
+
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedMonth = parseInt(btn.dataset.month);
+          renderMonthSlider();
+          loadLeaderboard('monthly', null, selectedMonth);
+        });
+      });
+    }
+
+    document.getElementById('prevWeekBtn').addEventListener('click', () => {
+      if (currentWeekOffset > 0) {
+        currentWeekOffset--;
+        renderWeekSlider();
+      }
+    });
+
+    document.getElementById('nextWeekBtn').addEventListener('click', () => {
+      if (currentWeekOffset < 12 - WEEKS_TO_SHOW) {
+        currentWeekOffset++;
+        renderWeekSlider();
+      }
+    });
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      if (currentMonthOffset > 0) {
+        currentMonthOffset--;
+        renderMonthSlider();
+      }
+    });
+
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      if (currentMonthOffset < 12 - MONTHS_TO_SHOW) {
+        currentMonthOffset++;
+        renderMonthSlider();
+      }
+    });
+
     // === Tabs ===
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3001,8 +3135,14 @@
         document.getElementById(tabName).classList.add('active');
         
         if (tabName === 'daily-lb') loadLeaderboard('daily');
-        if (tabName === 'weekly-lb') loadLeaderboard('weekly');
-        if (tabName === 'monthly-lb') loadLeaderboard('monthly');
+        if (tabName === 'weekly-lb') {
+          renderWeekSlider();
+          loadLeaderboard('weekly', selectedWeek);
+        }
+        if (tabName === 'monthly-lb') {
+          renderMonthSlider();
+          loadLeaderboard('monthly', null, selectedMonth);
+        }
       });
     });
 
@@ -3046,7 +3186,7 @@
         weeklyRefreshBtn.disabled = true;
         weeklyRefreshBtn.textContent = 'Loading...';
         try {
-          await loadLeaderboard('weekly');
+          await loadLeaderboard('weekly', selectedWeek);
           console.log('✅ Weekly leaderboard refreshed successfully');
           weeklyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
@@ -3070,7 +3210,7 @@
         monthlyRefreshBtn.disabled = true;
         monthlyRefreshBtn.textContent = 'Loading...';
         try {
-          await loadLeaderboard('monthly');
+          await loadLeaderboard('monthly', null, selectedMonth);
           console.log('✅ Monthly leaderboard refreshed successfully');
           monthlyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
@@ -3087,29 +3227,50 @@
       console.log('✅ Monthly refresh button listener attached');
     }
 
-    async function loadLeaderboard(period) {
+    async function loadLeaderboard(period, weekOffset = null, monthOffset = null) {
       try {
-        console.log(`loadLeaderboard called for period: ${period}`);
+        console.log(`loadLeaderboard called for period: ${period}, weekOffset: ${weekOffset}, monthOffset: ${monthOffset}`);
         
         // Calculate date range based on period
         const now = new Date();
         let startDate = new Date();
+        let endDate = new Date(now);
         
         if (period === 'daily') {
           // Start of today
           startDate.setHours(0, 0, 0, 0);
         } else if (period === 'weekly') {
-          // 7 days ago
-          startDate = new Date(now);
-          startDate.setDate(now.getDate() - 7);
+          // Calculate based on week offset
+          if (weekOffset !== null && weekOffset !== undefined) {
+            const weeksAgo = weekOffset;
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - (weeksAgo * 7));
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+          } else {
+            // 7 days ago
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 7);
+            endDate = new Date(now);
+          }
           startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
         } else if (period === 'monthly') {
-          // First day of current month
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          // Calculate based on month offset
+          if (monthOffset !== null && monthOffset !== undefined) {
+            const targetMonth = new Date(now);
+            targetMonth.setMonth(now.getMonth() - monthOffset);
+            startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+            endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+          } else {
+            // First day of current month
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now);
+          }
         }
 
         const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = now.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
         console.log(`📅 ${period.toUpperCase()} leaderboard: date range ${startDateStr} to ${endDateStr}`);
 
         // Get all dates in the range with picks
