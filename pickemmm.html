@@ -951,7 +951,7 @@
       <div id="picks" class="tab-content active">
         <div id="message" class="message"></div>
         
-        <div style="margin-bottom: 1.5rem;">
+        <div id="pickWeekSection" style="margin-bottom: 1.5rem; display: none;">
           <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em;">Select Week (Optional)</label>
           <div class="date-slider-controls">
             <button class="date-nav-btn" id="prevPickWeekBtn" style="display: none;">‹</button>
@@ -1389,8 +1389,10 @@
         document.getElementById('userBadge').style.background = '#fef3c7';
         document.getElementById('userBadge').style.color = '#92400e';
         document.getElementById('adminTabBtn').style.display = 'block';
+        document.getElementById('pickWeekSection').style.display = 'block';
       } else {
         document.getElementById('adminTabBtn').style.display = 'none';
+        document.getElementById('pickWeekSection').style.display = 'none';
       }
       loadTodayQuestions();
       
@@ -3490,7 +3492,7 @@
         });
       } else {
         const now = new Date();
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 20; i++) {
           const weekDate = new Date(now);
           weekDate.setDate(weekDate.getDate() + (i * 7));
           const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][weekDate.getMonth()];
@@ -3508,7 +3510,10 @@
         selectedWeek = weeks[0].value;
       }
 
-      container.innerHTML = weeks.map(w => {
+      // Show weeks with navigation if more than WEEKS_TO_SHOW
+      const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
+
+      container.innerHTML = visibleWeeks.map(w => {
         const isActive = selectedWeek === w.value;
         return `
           <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${w.value}">
@@ -3517,8 +3522,9 @@
         `;
       }).join('');
 
-      document.getElementById('prevWeekBtn').style.display = 'none';
-      document.getElementById('nextWeekBtn').style.display = 'none';
+      // Show/hide navigation buttons based on available weeks
+      document.getElementById('prevWeekBtn').style.display = currentWeekOffset > 0 ? 'flex' : 'none';
+      document.getElementById('nextWeekBtn').style.display = currentWeekOffset < weeks.length - WEEKS_TO_SHOW ? 'flex' : 'none';
 
       container.querySelectorAll('.date-picker-btn').forEach(btn => {
         btn.addEventListener('click', () => {
