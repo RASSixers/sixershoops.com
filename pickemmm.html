@@ -951,7 +951,7 @@
       <div id="picks" class="tab-content active">
         <div id="message" class="message"></div>
         
-        <div id="pickWeekSection" style="margin-bottom: 1.5rem; display: none;">
+        <div id="pickWeekSection" style="margin-bottom: 1.5rem;">
           <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em;">Select Week (Optional)</label>
           <div class="date-slider-controls">
             <button class="date-nav-btn" id="prevPickWeekBtn" style="display: none;">‹</button>
@@ -1389,11 +1389,10 @@
         document.getElementById('userBadge').style.background = '#fef3c7';
         document.getElementById('userBadge').style.color = '#92400e';
         document.getElementById('adminTabBtn').style.display = 'block';
-        document.getElementById('pickWeekSection').style.display = 'block';
       } else {
         document.getElementById('adminTabBtn').style.display = 'none';
-        document.getElementById('pickWeekSection').style.display = 'none';
       }
+      document.getElementById('pickWeekSection').style.display = 'block';
       loadTodayQuestions();
       
       loadWeeks().then(() => {
@@ -3478,7 +3477,7 @@
       }
       let weeks = [];
 
-      if (allWeeks.length > 0) {
+      if (allWeeks.length >= 20) {
         weeks = allWeeks.map((w, idx) => {
           const startDate = new Date(w.startDate);
           const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][startDate.getMonth()];
@@ -3540,6 +3539,8 @@
       }
     }
 
+    let currentPickWeekOffset = 0;
+    
     function renderPickWeekPicker() {
       console.log('📅 renderPickWeekPicker called with allWeeks:', allWeeks);
       const container = document.getElementById('pickWeekPickerContainer');
@@ -3549,7 +3550,7 @@
       }
       let weeks = [];
 
-      if (allWeeks.length > 0) {
+      if (allWeeks.length >= 20) {
         weeks = allWeeks.map((w, idx) => {
           const startDate = new Date(w.startDate);
           const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][startDate.getMonth()];
@@ -3563,7 +3564,7 @@
         });
       } else {
         const now = new Date();
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 20; i++) {
           const weekDate = new Date(now);
           weekDate.setDate(weekDate.getDate() + (i * 7));
           const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][weekDate.getMonth()];
@@ -3578,7 +3579,10 @@
 
       let selectedPickWeekValue = document.getElementById('selectedPickWeek').value ? parseInt(document.getElementById('selectedPickWeek').value) : null;
 
-      container.innerHTML = weeks.map(w => {
+      // Show weeks with pagination
+      const visibleWeeks = weeks.slice(currentPickWeekOffset, currentPickWeekOffset + WEEKS_TO_SHOW);
+
+      container.innerHTML = visibleWeeks.map(w => {
         const isActive = selectedPickWeekValue === w.value;
         return `
           <button class="date-picker-btn ${isActive ? 'active' : ''}" data-pick-week="${w.value}">
@@ -3587,8 +3591,9 @@
         `;
       }).join('');
 
-      document.getElementById('prevPickWeekBtn').style.display = 'none';
-      document.getElementById('nextPickWeekBtn').style.display = 'none';
+      // Show/hide navigation buttons
+      document.getElementById('prevPickWeekBtn').style.display = currentPickWeekOffset > 0 ? 'flex' : 'none';
+      document.getElementById('nextPickWeekBtn').style.display = currentPickWeekOffset < weeks.length - WEEKS_TO_SHOW ? 'flex' : 'none';
 
       container.querySelectorAll('.date-picker-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -3647,6 +3652,22 @@
       });
     }
 
+    document.getElementById('prevPickWeekBtn').addEventListener('click', () => {
+      if (currentPickWeekOffset > 0) {
+        currentPickWeekOffset--;
+        renderPickWeekPicker();
+      }
+    });
+
+    document.getElementById('nextPickWeekBtn').addEventListener('click', () => {
+      // Calculate total weeks from allWeeks or generated weeks
+      let totalPickWeeks = allWeeks.length > 0 ? allWeeks.length : 20;
+      if (currentPickWeekOffset < totalPickWeeks - WEEKS_TO_SHOW) {
+        currentPickWeekOffset++;
+        renderPickWeekPicker();
+      }
+    });
+
     document.getElementById('prevWeekBtn').addEventListener('click', () => {
       if (currentWeekOffset > 0) {
         currentWeekOffset--;
@@ -3655,7 +3676,9 @@
     });
 
     document.getElementById('nextWeekBtn').addEventListener('click', () => {
-      if (currentWeekOffset < 12 - WEEKS_TO_SHOW) {
+      // Calculate total weeks from allWeeks or generated weeks
+      let totalWeeks = allWeeks.length > 0 ? allWeeks.length : 20;
+      if (currentWeekOffset < totalWeeks - WEEKS_TO_SHOW) {
         currentWeekOffset++;
         renderWeekSlider();
       }
