@@ -1069,6 +1069,9 @@
 
             <!-- Add Questions Tab -->
             <div id="addQuestionTab" style="display: block;">
+              <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #92400e;">
+                <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">💡 Tip: Use Week Number and Day of Week to organize questions for better leaderboard grouping. These fields are optional.</p>
+              </div>
               <div class="admin-form">
                 <h3 style="margin-top: 0;">Add New Question</h3>
                 
@@ -1089,6 +1092,26 @@
                 <div class="form-group" id="optionsGroup" style="display: none;">
                   <label class="form-label">Options (comma separated)</label>
                   <input type="text" id="adminOptions" class="form-input" placeholder="e.g., Option 1, Option 2, Option 3" />
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Week Number (Optional)</label>
+                    <input type="number" id="adminQuestionWeek" class="form-input" placeholder="e.g., 1" min="1" />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Day of Week (Optional)</label>
+                    <select id="adminQuestionDay" class="form-input">
+                      <option value="">-- Select Day --</option>
+                      <option value="MON">Monday</option>
+                      <option value="TUE">Tuesday</option>
+                      <option value="WED">Wednesday</option>
+                      <option value="THU">Thursday</option>
+                      <option value="FRI">Friday</option>
+                      <option value="SAT">Saturday</option>
+                      <option value="SUN">Sunday</option>
+                    </select>
+                  </div>
                 </div>
 
                 <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
@@ -1623,6 +1646,8 @@
       const text = document.getElementById('adminQuestionText').value.trim();
       const type = document.getElementById('adminQuestionType').value;
       const options = document.getElementById('adminOptions').value.trim();
+      const weekNumber = document.getElementById('adminQuestionWeek').value.trim();
+      const dayOfWeek = document.getElementById('adminQuestionDay').value.trim();
 
       if (!text) {
         showMessage('Please enter a question', 'error', 'adminMessage');
@@ -1638,6 +1663,8 @@
         question: text,
         question_type: type,
         options: type === 'multiple_choice' ? options : null,
+        weekNumber: weekNumber ? parseInt(weekNumber) : null,
+        dayOfWeek: dayOfWeek || null,
         tempId: Date.now()
       };
 
@@ -1648,6 +1675,8 @@
       document.getElementById('adminQuestionText').value = '';
       document.getElementById('adminOptions').value = '';
       document.getElementById('adminQuestionType').value = 'yes_no';
+      document.getElementById('adminQuestionWeek').value = '';
+      document.getElementById('adminQuestionDay').value = '';
       document.getElementById('optionsGroup').style.display = 'none';
       
       showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
@@ -1674,6 +1703,7 @@
             <div class="admin-question-item-text">${index + 1}. ${q.question}</div>
             <div class="admin-question-item-type">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
             ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
+            ${q.weekNumber || q.dayOfWeek ? `<div class="admin-question-item-options" style="color: #3b82f6; margin-top: 0.5rem; font-weight: 600;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
           </div>
           <div class="admin-question-item-actions">
             <button class="admin-delete-btn" onclick="deleteAdminQuestion(${q.tempId})">Delete</button>
@@ -1703,7 +1733,9 @@
           const data = doc.data();
           adminQuestions = (data.items || []).map(q => ({
             ...q,
-            tempId: Date.now() + Math.random()
+            tempId: Date.now() + Math.random(),
+            weekNumber: q.weekNumber || null,
+            dayOfWeek: q.dayOfWeek || null
           }));
           showMessage('Questions loaded successfully', 'success', 'adminMessage');
         }
@@ -1806,7 +1838,9 @@
         questionsForAnswers = (data.items || []).map((q, idx) => ({
           ...q,
           questionId: idx,
-          docId: doc.id
+          docId: doc.id,
+          weekNumber: q.weekNumber || null,
+          dayOfWeek: q.dayOfWeek || null
         }));
 
         renderAnswersForm();
@@ -1867,6 +1901,7 @@
               <div>
                 <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem;">${idx + 1}. ${q.question}</div>
                 <div style="color: var(--muted); font-size: 0.85rem;">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+                ${q.weekNumber || q.dayOfWeek ? `<div style="color: #3b82f6; font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
               </div>
               <span class="answer-indicator-${idx}" style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">⏳</span>
             </div>
@@ -2221,7 +2256,9 @@
               adminQuestions.push({
                 ...q,
                 tempId: Date.now() + Math.random(),
-                date: data.date
+                date: data.date,
+                weekNumber: q.weekNumber || null,
+                dayOfWeek: q.dayOfWeek || null
               });
             });
           });
@@ -2294,6 +2331,8 @@
               ...answer,
               question_type: questionData.question_type,
               options: questionData.options,
+              weekNumber: questionData.weekNumber || null,
+              dayOfWeek: questionData.dayOfWeek || null,
               date: data.date,
               originalIndex: idx,
               docId: doc.id
