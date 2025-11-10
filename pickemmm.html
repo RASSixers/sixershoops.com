@@ -951,10 +951,23 @@
       <div id="picks" class="tab-content active">
         <div id="message" class="message"></div>
         
-        <div class="date-slider-controls">
-          <button class="date-nav-btn" id="prevDateBtn">‹</button>
-          <div id="datePickerContainer" class="date-picker-container"></div>
-          <button class="date-nav-btn" id="nextDateBtn">›</button>
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em;">Select Week (Optional)</label>
+          <div class="date-slider-controls">
+            <button class="date-nav-btn" id="prevPickWeekBtn" style="display: none;">‹</button>
+            <div id="pickWeekPickerContainer" class="date-picker-container"></div>
+            <button class="date-nav-btn" id="nextPickWeekBtn" style="display: none;">›</button>
+          </div>
+          <input type="hidden" id="selectedPickWeek" />
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em;">Select Date</label>
+          <div class="date-slider-controls">
+            <button class="date-nav-btn" id="prevDateBtn">‹</button>
+            <div id="datePickerContainer" class="date-picker-container"></div>
+            <button class="date-nav-btn" id="nextDateBtn">›</button>
+          </div>
         </div>
         <input type="hidden" id="pickDate" />
         
@@ -2631,9 +2644,9 @@
 
 
     // Calculate scores based on user picks and correct answers
-    async function calculateScoresForDate(date) {
+    async function calculateScoresForDate(date, weekNumberFilter = null) {
       try {
-        console.log(`📊 calculateScoresForDate called for date: ${date}`);
+        console.log(`📊 calculateScoresForDate called for date: ${date}${weekNumberFilter ? ` (Week filter: ${weekNumberFilter})` : ''}`);
         
         // Get questions for the date
         const questionsSnapshot = await db.collection('questions').where('date', '==', date).get();
@@ -2644,7 +2657,14 @@
         }
 
         const doc = questionsSnapshot.docs[0];
-        const questions = doc.data().items || [];
+        let questions = doc.data().items || [];
+        
+        // Filter by week number if specified (for weekly leaderboards)
+        if (weekNumberFilter !== null) {
+          questions = questions.filter(q => q.weekNumber === weekNumberFilter);
+          console.log(`  🔍 Filtered to ${questions.length} questions for Week ${weekNumberFilter}`);
+        }
+        
         console.log(`  ✅ Loaded ${questions.length} questions for date ${date}`);
 
         // Get correct answers
@@ -2657,8 +2677,16 @@
 
         const correctAnswersDoc = answersSnapshot.docs[0].data();
         const correctAnswersMap = {};
+        const questionMetadataMap = {};
+        
+        // Build map of question index to metadata (for week filtering)
+        questions.forEach((q, idx) => {
+          questionMetadataMap[idx] = { weekNumber: q.weekNumber };
+        });
+        
         if (correctAnswersDoc.answers && Array.isArray(correctAnswersDoc.answers)) {
           correctAnswersDoc.answers.forEach(a => {
+            // Store with original question ID, will validate against week filter later
             correctAnswersMap[a.questionId] = a.correctAnswer;
             console.log(`    Q${a.questionId}: ${a.correctAnswer}`);
           });
@@ -2678,6 +2706,19 @@
         }
         
         const userScores = {};
+        
+        // Get ALL questions for this date (unfiltered) to map original indices
+        const allQuestionsSnapshot = await db.collection('questions').where('date', '==', date).get();
+        const allQuestions = allQuestionsSnapshot.empty ? [] : allQuestionsSnapshot.docs[0].data().items || [];
+        
+        // Determine which question indices to count based on week filter
+        const questionIndicesToCount = weekNumberFilter !== null 
+          ? allQuestions.map((q, idx) => q.weekNumber === weekNumberFilter ? idx : -1).filter(idx => idx !== -1)
+          : allQuestions.map((q, idx) => idx);
+        
+        const totalQuestionsForScoring = questionIndicesToCount.length;
+        console.log(`  📊 Will score ${totalQuestionsForScoring} questions (${weekNumberFilter ? `Week ${weekNumberFilter} filter applied` : 'no week filter'})`);
+        
         picksSnapshot.forEach(pickDoc => {
           const pickData = pickDoc.data();
           const userId = pickData.userId;
@@ -2687,7 +2728,7 @@
             userScores[userId] = {
               username: username,
               correct: 0,
-              total: questions.length * 10
+              total: totalQuestionsForScoring * 10
             };
           }
 
@@ -2697,6 +2738,11 @@
           let userCorrectCount = 0;
           
           userAnswers.forEach((userPick, qIdx) => {
+            // Only count if this question index is in our list to count
+            if (!questionIndicesToCount.includes(qIdx)) {
+              return;
+            }
+            
             const correctAnswer = correctAnswersMap[qIdx];
             
             // Normalize comparison for numeric vs string types
@@ -2725,7 +2771,7 @@
                 userCorrectCount++;
               }
               
-              console.log(`Q${qIdx} - User: "${userPick}" (${typeof userPick}) → "${normalizedPick}", Correct: "${correctAnswer}" (${typeof correctAnswer}) → "${normalizedAnswer}", Match: ${isCorrect}`);
+              console.log(`Q${qIdx} - User: "${userPick}" → "${normalizedPick}", Correct: "${correctAnswer}" → "${normalizedAnswer}", Match: ${isCorrect} (counted: ${questionIndicesToCount.includes(qIdx)})`);
             }
           });
           
@@ -2952,10 +2998,10 @@
     }
 
     // === Questions & Picks ===
-    async function loadQuestionsForDate(dateStr) {
+    async function loadQuestionsForDate(dateStr, weekNumber = null) {
       if (!currentUser) return;
       try {
-        console.log(`📋 Loading questions for date: ${dateStr} (type: ${typeof dateStr})`);
+        console.log(`📋 Loading questions for date: ${dateStr} (type: ${typeof dateStr}), week: ${weekNumber || 'any'}`);
         selectedPickDate = dateStr;
         
         // Show loading state
@@ -2986,8 +3032,15 @@
         const docs = snapshot.docs;
         if (docs.length > 0) {
           const questionData = docs[0].data();
-          todayQuestions = questionData.items || [];
-          console.log(`✅ Loaded ${todayQuestions.length} questions for ${dateStr}:`, todayQuestions);
+          let allQuestions = questionData.items || [];
+          
+          if (weekNumber !== null) {
+            todayQuestions = allQuestions.filter(q => q.weekNumber === weekNumber);
+            console.log(`✅ Loaded ${todayQuestions.length}/${allQuestions.length} questions for ${dateStr} (Week ${weekNumber}):`, todayQuestions);
+          } else {
+            todayQuestions = allQuestions;
+            console.log(`✅ Loaded ${todayQuestions.length} questions for ${dateStr}:`, todayQuestions);
+          }
         }
         
         renderQuestions();
@@ -3280,9 +3333,10 @@
       container.querySelectorAll('.date-picker-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const dateValue = btn.dataset.date;
+          const selectedWeek = document.getElementById('selectedPickWeek').value ? parseInt(document.getElementById('selectedPickWeek').value) : null;
           document.getElementById('pickDate').value = dateValue;
           renderDateSlider();
-          loadQuestionsForDate(dateValue);
+          loadQuestionsForDate(dateValue, selectedWeek);
         });
       });
     }
@@ -3479,6 +3533,68 @@
         console.log(`📅 Auto-loading weekly leaderboard for Week ${selectedWeek}`);
         loadLeaderboard('weekly', selectedWeek);
       }
+    }
+
+    function renderPickWeekPicker() {
+      console.log('📅 renderPickWeekPicker called with allWeeks:', allWeeks);
+      const container = document.getElementById('pickWeekPickerContainer');
+      if (!container) {
+        console.error('❌ pickWeekPickerContainer not found!');
+        return;
+      }
+      let weeks = [];
+
+      if (allWeeks.length > 0) {
+        weeks = allWeeks.map((w, idx) => {
+          const startDate = new Date(w.startDate);
+          const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][startDate.getMonth()];
+          return {
+            value: w.weekNumber,
+            label: `Week ${w.weekNumber}`,
+            monthLabel: monthName,
+            date: startDate,
+            weekNumber: w.weekNumber
+          };
+        });
+      } else {
+        const now = new Date();
+        for (let i = 0; i < 12; i++) {
+          const weekDate = new Date(now);
+          weekDate.setDate(weekDate.getDate() + (i * 7));
+          const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][weekDate.getMonth()];
+          weeks.push({
+            value: i,
+            label: `Week ${i + 1}`,
+            monthLabel: monthName,
+            date: weekDate
+          });
+        }
+      }
+
+      let selectedPickWeekValue = document.getElementById('selectedPickWeek').value ? parseInt(document.getElementById('selectedPickWeek').value) : null;
+
+      container.innerHTML = weeks.map(w => {
+        const isActive = selectedPickWeekValue === w.value;
+        return `
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-pick-week="${w.value}">
+            <div style="font-weight: 700; font-size: 12px;">${w.label}</div>
+          </button>
+        `;
+      }).join('');
+
+      document.getElementById('prevPickWeekBtn').style.display = 'none';
+      document.getElementById('nextPickWeekBtn').style.display = 'none';
+
+      container.querySelectorAll('.date-picker-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedPickWeekValue = parseInt(btn.dataset.pickWeek);
+          document.getElementById('selectedPickWeek').value = selectedPickWeekValue;
+          renderPickWeekPicker();
+          if (selectedPickDate) {
+            loadQuestionsForDate(selectedPickDate, selectedPickWeekValue);
+          }
+        });
+      });
     }
 
     function renderMonthSlider() {
@@ -3773,7 +3889,9 @@
         const userScoresMap = {};
         for (const date of datesInRange) {
           console.log(`  🔄 Calculating scores for date: ${date}`);
-          const dailyScores = await calculateScoresForDate(date);
+          // For weekly leaderboards, pass the week number filter
+          const weekNumberFilter = period === 'weekly' ? weekOffset : null;
+          const dailyScores = await calculateScoresForDate(date, weekNumberFilter);
           console.log(`    ➡️ Got ${dailyScores.length} users with scores for ${date}`);
           
           dailyScores.forEach(dayScore => {
@@ -3853,6 +3971,12 @@
     // Initialize leaderboard pickers when app first shows
     function initializeLeaderboardPickers() {
       console.log('🚀 Initializing leaderboard pickers');
+      try {
+        console.log('📅 Rendering pick week picker');
+        renderPickWeekPicker();
+      } catch (err) {
+        console.error('❌ Error rendering pick week picker:', err);
+      }
       try {
         console.log('📅 Rendering daily date picker');
         renderDailyDatePicker();
