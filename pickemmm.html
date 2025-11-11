@@ -2138,6 +2138,22 @@
         console.log(`📝 Saving answers for date: ${dateInput}`);
         console.log(`📝 Answers being saved:`, correctAnswers);
         
+        // Also update questions to ensure week numbers are preserved
+        const questionsSnapshot = await db.collection('questions').where('date', '==', dateInput).get();
+        if (!questionsSnapshot.empty) {
+          const questionDoc = questionsSnapshot.docs[0];
+          const updatedItems = questionsForAnswers.map(q => {
+            const {questionId, docId, ...rest} = q;
+            return rest;
+          });
+          
+          await questionDoc.ref.update({
+            items: updatedItems,
+            updatedAt: new Date().toISOString()
+          });
+          console.log('✅ Questions collection updated with week numbers preserved');
+        }
+        
         const existingAnswers = await db.collection('correctAnswers').where('date', '==', dateInput).get();
         
         let docRef;
@@ -2771,8 +2787,10 @@
         
         // Filter by week number if specified (for weekly leaderboards)
         if (weekNumberFilter !== null) {
-          questions = questions.filter(q => q.weekNumber === weekNumberFilter);
-          console.log(`  🔍 Filtered to ${questions.length} questions for Week ${weekNumberFilter}`);
+          console.log(`  🔍 Week filter: ${weekNumberFilter} (type: ${typeof weekNumberFilter})`);
+          console.log(`  📋 All questions weekNumbers:`, questions.map(q => ({q: q.question.substring(0, 30), wn: q.weekNumber, type: typeof q.weekNumber})));
+          questions = questions.filter(q => q.weekNumber === weekNumberFilter || q.weekNumber == weekNumberFilter);
+          console.log(`  ✅ Filtered to ${questions.length} questions for Week ${weekNumberFilter}`);
         }
         
         console.log(`  ✅ Loaded ${questions.length} questions for date ${date}`);
