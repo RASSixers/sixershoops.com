@@ -989,15 +989,7 @@
       <div id="picks" class="tab-content active">
         <div id="message" class="message"></div>
         
-        <div id="pickWeekSection" style="margin-bottom: 1.5rem;">
-          <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em;">Select Week (Optional)</label>
-          <div class="date-slider-controls">
-            <button class="date-nav-btn" id="prevPickWeekBtn" style="display: none;">‹</button>
-            <div id="pickWeekPickerContainer" class="date-picker-container"></div>
-            <button class="date-nav-btn" id="nextPickWeekBtn" style="display: none;">›</button>
-          </div>
-          <input type="hidden" id="selectedPickWeek" />
-        </div>
+        <input type="hidden" id="selectedPickWeek" />
         
         <div style="margin-bottom: 1.5rem;">
           <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em;">Select Date</label>
@@ -3145,6 +3137,20 @@
       try {
         console.log(`💾 Submitting picks for date: ${selectedPickDate}, userId: ${auth.currentUser.uid}`);
         console.log(`   Answers: ${JSON.stringify(answers)}`);
+        
+        const existingPicksSnapshot = await db.collection('picks')
+          .where('userId', '==', auth.currentUser.uid)
+          .where('date', '==', selectedPickDate)
+          .get();
+        
+        if (!existingPicksSnapshot.empty) {
+          console.log(`⚠️ User already has a submission for this date - preventing duplicate`);
+          showMessage('⚠️ You have already submitted picks for this date!', 'error');
+          document.getElementById('submitBtn').disabled = true;
+          document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
+          return;
+        }
+        
         const pickRef = await db.collection('picks').add({
           userId: auth.currentUser.uid,
           username: currentUser,
