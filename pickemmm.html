@@ -2550,16 +2550,27 @@
       const today = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       
-      // Only check lock if it's the lock date
-      if (date === todayStr) {
-        // Convert 12-hour format to 24-hour for calculation
-        const time24 = convert12To24(lockTime);
-        const [lockHours, lockMinutes] = time24.split(':');
-        const lockDate = new Date(today);
-        lockDate.setHours(parseInt(lockHours), parseInt(lockMinutes), 0);
-        return now >= lockDate;
+      // Parse the date to compare
+      const [dateYear, dateMonth, dateDay] = date.split('-');
+      const dateObj = new Date(parseInt(dateYear), parseInt(dateMonth) - 1, parseInt(dateDay));
+      const todayObj = new Date(today);
+      
+      // Past dates are always locked
+      if (dateObj < todayObj) {
+        return true;
       }
-      return false;
+      
+      // Future dates are never locked
+      if (dateObj > todayObj) {
+        return false;
+      }
+      
+      // For today's date, check if current time is past lock time
+      const time24 = convert12To24(lockTime);
+      const [lockHours, lockMinutes] = time24.split(':');
+      const lockDate = new Date(today);
+      lockDate.setHours(parseInt(lockHours), parseInt(lockMinutes), 0);
+      return now >= lockDate;
     }
 
     // Get time until lock
@@ -3640,6 +3651,12 @@
       // Show weeks with navigation if more than WEEKS_TO_SHOW
       const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
 
+      // If selected week is not in visible weeks, select the first visible week
+      if (visibleWeeks.length > 0 && !visibleWeeks.some(w => w.value === selectedWeek)) {
+        selectedWeek = visibleWeeks[0].value;
+        console.log(`⚠️ Selected week not in visible range. Adjusted selectedWeek to ${selectedWeek}`);
+      }
+
       container.innerHTML = visibleWeeks.map(w => {
         const isActive = selectedWeek === w.value;
         return `
@@ -4012,7 +4029,14 @@
         weeklyRefreshBtn.disabled = true;
         weeklyRefreshBtn.textContent = 'Loading...';
         try {
-          await loadLeaderboard('weekly', selectedWeek);
+          // Get the currently selected week from the active button in the week picker
+          const activeWeekBtn = document.querySelector('#weekPickerContainer .date-picker-btn.active');
+          let currentWeek = selectedWeek;
+          if (activeWeekBtn) {
+            currentWeek = parseInt(activeWeekBtn.dataset.week);
+          }
+          console.log(`🔄 Refreshing weekly leaderboard for week: ${currentWeek}`);
+          await loadLeaderboard('weekly', currentWeek);
           console.log('✅ Weekly leaderboard refreshed successfully');
           weeklyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
