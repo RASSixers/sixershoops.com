@@ -1467,18 +1467,17 @@
       document.getElementById('appContainer').style.display = 'block';
       document.getElementById('currentUser').textContent = currentUser;
       
-      checkAdminStatus().then((isAdmin) => {
-        isCurrentUserAdmin = isAdmin;
-        if (isAdmin) {
-          document.getElementById('userBadge').textContent = 'Admin';
-          document.getElementById('userBadge').style.background = '#fef3c7';
-          document.getElementById('userBadge').style.color = '#92400e';
-          document.getElementById('adminTabBtn').style.display = 'block';
-          loadWinners();
-        } else {
-          document.getElementById('adminTabBtn').style.display = 'none';
-        }
-      });
+      const isAdmin = isUserAdmin();
+      isCurrentUserAdmin = isAdmin;
+      if (isAdmin) {
+        document.getElementById('userBadge').textContent = 'Admin';
+        document.getElementById('userBadge').style.background = '#fef3c7';
+        document.getElementById('userBadge').style.color = '#92400e';
+        document.getElementById('adminTabBtn').style.display = 'block';
+        loadWinners();
+      } else {
+        document.getElementById('adminTabBtn').style.display = 'none';
+      }
       document.getElementById('pickWeekSection').style.display = 'block';
       loadTodayQuestions();
       
@@ -1488,28 +1487,8 @@
       });
     }
 
-    async function checkAdminStatus() {
-      if (!auth.currentUser) return false;
-      
-      try {
-        const idTokenResult = await auth.currentUser.getIdTokenResult();
-        if (idTokenResult.claims.admin === true) {
-          return true;
-        }
-      } catch (error) {
-        console.log('Custom claims check skipped');
-      }
-      
-      try {
-        const adminSnapshot = await db.collection('admins').doc(auth.currentUser.uid).get();
-        if (adminSnapshot.exists) {
-          return true;
-        }
-      } catch (error) {
-        console.log('Admin collection check failed');
-      }
-      
-      return false;
+    function isUserAdmin() {
+      return currentUserEmail === 'rhatus13@gmail.com';
     }
 
     function checkAdminPermission() {
