@@ -1281,24 +1281,12 @@
 
               <!-- Responses View Tab -->
               <div id="responsesViewTab" style="display: block;">
-                <div style="overflow-x: auto;">
-                  <table id="responsesTable" style="width: 100%; border-collapse: collapse; display: none;">
-                    <thead>
-                      <tr style="background: #f8fafc; border-bottom: 2px solid var(--border);">
-                        <th style="padding: 14px; text-align: left; font-weight: 900; color: var(--brand);">User</th>
-                        <th style="padding: 14px; text-align: left; font-weight: 900; color: var(--brand);">Question</th>
-                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">User's Pick</th>
-                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">Correct Answer</th>
-                        <th style="padding: 14px; text-align: center; font-weight: 900; color: var(--brand);">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody id="responsesTableBody">
-                    </tbody>
-                  </table>
-                  <div id="noResponsesMessage" style="text-align: center; padding: 60px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
-                    <p style="font-size: 36px; margin-bottom: 10px;">📋</p>
-                    <p style="font-weight: 600; font-size: 1rem;">No responses found for this date</p>
-                  </div>
+                <div id="responsesContainer" style="display: none;">
+                  <!-- User cards will be inserted here -->
+                </div>
+                <div id="noResponsesMessage" style="text-align: center; padding: 60px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
+                  <p style="font-size: 36px; margin-bottom: 10px;">📋</p>
+                  <p style="font-weight: 600; font-size: 1rem;">No responses found for this date</p>
                 </div>
               </div>
 
@@ -1320,6 +1308,47 @@
                     <p style="font-size: 36px; margin-bottom: 10px;">📭</p>
                     <p style="font-weight: 600; font-size: 1rem;">No submissions found for this date</p>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leaderboard Override Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="leaderboard-override-section">
+            <h2>🔧 Leaderboard Override</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Manually adjust user scores if something goes wrong</p>
+            <div id="overrideMessage" class="message"></div>
+
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #92400e;">
+              <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">⚠️ Warning: This will override the calculated score for a specific user and date. Use only when necessary!</p>
+            </div>
+
+            <div class="admin-form">
+              <div class="form-group">
+                <label class="form-label">User Email</label>
+                <input type="email" id="overrideUserEmail" class="form-input" placeholder="user@example.com" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Date</label>
+                <input type="date" id="overrideDate" class="form-input" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">New Score</label>
+                <input type="number" id="overrideScore" class="form-input" placeholder="Enter score" min="0" />
+              </div>
+
+              <button class="btn btn-primary" id="applyOverrideBtn" style="width: 100%;">Apply Score Override</button>
+            </div>
+
+            <div style="margin-top: 2rem;">
+              <h3>Current Overrides</h3>
+              <div id="overridesList" style="margin-top: 1rem;">
+                <div style="text-align: center; padding: 40px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
+                  <p style="font-size: 24px; margin-bottom: 10px;">📝</p>
+                  <p style="font-weight: 600; font-size: 0.9rem;">No overrides set</p>
                 </div>
               </div>
             </div>
@@ -1450,6 +1479,7 @@
         document.getElementById('userBadge').style.color = '#92400e';
         document.getElementById('adminTabBtn').style.display = 'block';
         loadWinners();
+        loadOverrides();
       } else {
         document.getElementById('adminTabBtn').style.display = 'none';
       }
@@ -2664,15 +2694,41 @@
           console.log(`User ${username} scored ${userCorrectCount}/${userScores[userId].total}`);
         });
 
-        // Convert to array and sort by correct answers (descending)
-        return Object.values(userScores)
+        const overridesSnapshot = await db.collection('scoreOverrides').where('date', '==', date).get();
+        const overridesMap = {};
+        overridesSnapshot.forEach(doc => {
+          const data = doc.data();
+          overridesMap[data.userEmail] = data.score;
+        });
+        
+        const scoresArray = Object.entries(userScores).map(([userId, score]) => {
+          const userEmail = score.username;
+          if (overridesMap[userEmail] !== undefined) {
+            console.log(`  🔧 Override applied for ${userEmail}: ${score.correct} → ${overridesMap[userEmail]}`);
+            return {
+              username: score.username,
+              correct: overridesMap[userEmail],
+              total: score.total,
+              isOverridden: true
+            };
+          }
+          return {
+            username: score.username,
+            correct: score.correct,
+            total: score.total,
+            isOverridden: false
+          };
+        });
+        
+        return scoresArray
           .sort((a, b) => b.correct - a.correct)
           .map((score, idx) => ({
             rank: idx + 1,
             username: score.username,
             correct: score.correct,
             total: score.total,
-            percentage: score.total > 0 ? ((score.correct / score.total) * 100).toFixed(1) : 0
+            percentage: score.total > 0 ? ((score.correct / score.total) * 100).toFixed(1) : 0,
+            isOverridden: score.isOverridden
           }));
       } catch (err) {
         console.error('Error calculating scores:', err);
@@ -2833,45 +2889,71 @@
           return;
         }
 
-        // Build response table
-        const tbody = document.getElementById('responsesTableBody');
-        tbody.innerHTML = '';
+        const container = document.getElementById('responsesContainer');
+        container.innerHTML = '';
         
         picksSnapshot.docs.forEach(doc => {
           const pickData = doc.data();
-          questions.forEach((q, qIdx) => {
+          let correctCount = 0;
+          let totalAnswered = 0;
+          
+          const questionsHtml = questions.map((q, qIdx) => {
             const userPick = pickData.answers && pickData.answers[qIdx] !== undefined ? pickData.answers[qIdx] : '-';
             const correctAnswer = correctAnswers[qIdx] !== undefined ? correctAnswers[qIdx] : '(Not Set)';
             
-            // Normalize comparison to handle both string and number types
             let isCorrect = false;
             if (userPick !== '-' && correctAnswer !== '(Not Set)') {
-              // For numeric comparisons, convert both to strings then compare
               if (typeof userPick === 'number' || typeof correctAnswer === 'number') {
                 isCorrect = parseFloat(userPick) === parseFloat(correctAnswer);
               } else {
                 isCorrect = userPick === correctAnswer;
               }
+              if (isCorrect) correctCount++;
+              totalAnswered++;
             }
             
-            const status = correctAnswers[qIdx] === undefined ? '⏳ Pending' : (isCorrect ? '✅ Correct' : '❌ Wrong');
+            const status = correctAnswers[qIdx] === undefined ? '⏳' : (isCorrect ? '✅' : '❌');
             const statusColor = isCorrect ? '#27ae60' : (correctAnswers[qIdx] === undefined ? '#f39c12' : '#e74c3c');
+            const bgColor = isCorrect ? 'rgba(39, 174, 96, 0.1)' : (correctAnswers[qIdx] === undefined ? 'rgba(243, 156, 18, 0.1)' : 'rgba(231, 76, 60, 0.1)');
 
-            const row = document.createElement('tr');
-            row.style.borderBottom = '1px solid var(--border)';
-            row.style.background = document.querySelectorAll('#responsesTableBody tr').length % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)';
-            row.innerHTML = `
-              <td style="padding: 14px; font-weight: 600; color: var(--brand);">${pickData.userEmail || pickData.userId}</td>
-              <td style="padding: 14px; font-size: 0.95rem;">${qIdx + 1}. ${q.question}</td>
-              <td style="padding: 14px; text-align: center; font-weight: 600;">${userPick}</td>
-              <td style="padding: 14px; text-align: center; font-weight: 600;">${correctAnswer}</td>
-              <td style="padding: 14px; text-align: center; color: ${statusColor}; font-weight: 700;">${status}</td>
+            return `
+              <div style="background: ${bgColor}; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid ${statusColor};">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; color: var(--ink); margin-bottom: 4px;">Q${qIdx + 1}: ${q.question}</div>
+                    <div style="display: flex; gap: 2rem; margin-top: 8px; font-size: 0.9rem;">
+                      <div><span style="color: var(--muted);">User's Pick:</span> <strong>${userPick}</strong></div>
+                      <div><span style="color: var(--muted);">Correct:</span> <strong>${correctAnswer}</strong></div>
+                    </div>
+                  </div>
+                  <div style="font-size: 24px;">${status}</div>
+                </div>
+              </div>
             `;
-            tbody.appendChild(row);
-          });
+          }).join('');
+          
+          const scoreDisplay = totalAnswered > 0 ? `${correctCount}/${totalAnswered}` : 'No answers graded yet';
+          const scoreColor = totalAnswered > 0 ? (correctCount / totalAnswered >= 0.7 ? '#27ae60' : correctCount / totalAnswered >= 0.5 ? '#f39c12' : '#e74c3c') : '#64748b';
+          
+          const userCard = document.createElement('div');
+          userCard.style.cssText = 'background: white; border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);';
+          userCard.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border);">
+              <div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--brand);">${pickData.userEmail || pickData.username || pickData.userId}</div>
+                <div style="font-size: 0.85rem; color: var(--muted); margin-top: 4px;">Submitted: ${new Date(pickData.submittedAt).toLocaleString()}</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 4px;">Score</div>
+                <div style="font-size: 1.5rem; font-weight: 900; color: ${scoreColor};">${scoreDisplay}</div>
+              </div>
+            </div>
+            ${questionsHtml}
+          `;
+          container.appendChild(userCard);
         });
 
-        document.getElementById('responsesTable').style.display = 'table';
+        document.getElementById('responsesContainer').style.display = 'block';
         document.getElementById('noResponsesMessage').style.display = 'none';
         showMessage(`✅ Loaded ${picksSnapshot.size} user submissions`, 'success', 'submissionsMessage');
       } catch (err) {
@@ -3576,6 +3658,94 @@
       });
     });
 
+    // === Leaderboard Override ===
+    const applyOverrideBtn = document.getElementById('applyOverrideBtn');
+    if (applyOverrideBtn) {
+      applyOverrideBtn.addEventListener('click', async () => {
+        if (!checkAdminPermission()) return;
+        
+        const userEmail = document.getElementById('overrideUserEmail').value.trim();
+        const date = document.getElementById('overrideDate').value;
+        const score = document.getElementById('overrideScore').value;
+        
+        if (!userEmail || !date || score === '') {
+          showMessage('Please fill in all fields', 'error', 'overrideMessage');
+          return;
+        }
+        
+        try {
+          await db.collection('scoreOverrides').add({
+            userEmail: userEmail,
+            date: date,
+            score: parseInt(score),
+            timestamp: new Date(),
+            appliedBy: auth.currentUser.email
+          });
+          
+          document.getElementById('overrideUserEmail').value = '';
+          document.getElementById('overrideDate').value = '';
+          document.getElementById('overrideScore').value = '';
+          
+          showMessage('✅ Score override applied successfully!', 'success', 'overrideMessage');
+          loadOverrides();
+        } catch (err) {
+          console.error('Error applying override:', err);
+          showMessage('❌ Failed to apply override: ' + err.message, 'error', 'overrideMessage');
+        }
+      });
+    }
+
+    async function loadOverrides() {
+      try {
+        const overridesSnapshot = await db.collection('scoreOverrides').orderBy('timestamp', 'desc').get();
+        const overridesList = document.getElementById('overridesList');
+        
+        if (overridesSnapshot.empty) {
+          overridesList.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
+              <p style="font-size: 24px; margin-bottom: 10px;">📝</p>
+              <p style="font-weight: 600; font-size: 0.9rem;">No overrides set</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<div style="display: grid; gap: 1rem;">';
+        overridesSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          html += `
+            <div style="background: white; border: 2px solid var(--border); border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 700; color: var(--brand);">${data.userEmail}</div>
+                <div style="font-size: 0.85rem; color: var(--muted); margin-top: 4px;">
+                  Date: ${data.date} | Score: ${data.score} | Applied by: ${data.appliedBy}
+                </div>
+              </div>
+              <button class="btn btn-secondary" onclick="deleteOverride('${doc.id}')" style="background: #fee; color: #e74c3c; border: 1px solid #e74c3c;">Delete</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+        overridesList.innerHTML = html;
+      } catch (err) {
+        console.error('Error loading overrides:', err);
+      }
+    }
+
+    window.deleteOverride = async function(overrideId) {
+      if (!checkAdminPermission()) return;
+      if (!confirm('Are you sure you want to delete this override?')) return;
+      
+      try {
+        await db.collection('scoreOverrides').doc(overrideId).delete();
+        showMessage('✅ Override deleted successfully!', 'success', 'overrideMessage');
+        loadOverrides();
+      } catch (err) {
+        console.error('Error deleting override:', err);
+        showMessage('❌ Failed to delete override: ' + err.message, 'error', 'overrideMessage');
+      }
+    };
+
     // === Winners Management ===
     const adminAddWinnerBtn = document.getElementById('adminAddWinnerBtn');
     if (adminAddWinnerBtn) {
@@ -3789,7 +3959,8 @@
           const leaderboard = dailyScores.map(score => ({
             username: score.username,
             correct_count: score.correct,
-            total_count: score.total
+            total_count: score.total,
+            isOverridden: score.isOverridden
           }));
           
           console.log(`Daily leaderboard final: ${leaderboard.length} users, top score: ${leaderboard[0]?.correct_count || 0}`);
@@ -3945,11 +4116,12 @@
         if (idx < 3) {
           badge = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
         }
-        console.log(`  ${idx + 1}. ${entry.username}: ${entry.correct_count}`);
+        const overrideIndicator = entry.isOverridden ? ' <span style="color: #f39c12; font-size: 0.8rem;" title="Score manually adjusted">🔧</span>' : '';
+        console.log(`  ${idx + 1}. ${entry.username}: ${entry.correct_count}${entry.isOverridden ? ' (overridden)' : ''}`);
         return `
           <tr>
             <td>${badge}${idx + 1}</td>
-            <td>${entry.username}</td>
+            <td>${entry.username}${overrideIndicator}</td>
             <td><span class="score">${entry.correct_count}</span></td>
           </tr>
         `;
