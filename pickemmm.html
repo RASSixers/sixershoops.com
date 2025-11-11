@@ -981,6 +981,7 @@
         <button class="tab-btn" data-tab="daily-lb">Daily Leaderboard</button>
         <button class="tab-btn" data-tab="weekly-lb">Weekly Leaderboard</button>
         <button class="tab-btn" data-tab="monthly-lb">Monthly Leaderboard</button>
+        <button class="tab-btn" data-tab="winners">Winners</button>
         <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display: none;">Manage Questions</button>
       </div>
 
@@ -1097,6 +1098,30 @@
           </thead>
           <tbody id="monthlyLeaderboardBody"></tbody>
         </table>
+      </div>
+
+      <!-- Winners Tab -->
+      <div id="winners" class="tab-content">
+        <div style="margin-bottom: 2rem;">
+          <h2 style="color: var(--brand); margin-bottom: 1.5rem;">🏆 Weekly Winners</h2>
+          
+          <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+            <table class="leaderboard-table" style="margin-bottom: 0;">
+              <thead>
+                <tr>
+                  <th>Week</th>
+                  <th>Winner</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody id="publicWinnersTableBody">
+                <tr>
+                  <td colspan="3" style="text-align: center; padding: 3rem 2rem; color: var(--muted);">No winners yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Admin Panel Tab -->
@@ -1480,6 +1505,7 @@
       }
       document.getElementById('pickWeekSection').style.display = 'block';
       loadTodayQuestions();
+      loadPublicWinners();
       
       loadWeeks().then(() => {
         console.log('⏰ Weeks loaded, initializing leaderboard pickers');
@@ -3809,6 +3835,9 @@
           renderMonthSlider();
           loadLeaderboard('monthly', null, selectedMonth);
         }
+        if (tabName === 'winners') {
+          loadPublicWinners();
+        }
       });
     });
 
@@ -3841,6 +3870,7 @@
           
           showMessage('✅ Winner added successfully!', 'success', 'adminWinnersMessage');
           loadWinners();
+          loadPublicWinners();
         } catch (err) {
           console.error('Error adding winner:', err);
           showMessage('❌ Failed to add winner: ' + err.message, 'error', 'adminWinnersMessage');
@@ -3891,9 +3921,35 @@
         await db.collection('winners').doc(winnerId).delete();
         showMessage('✅ Winner deleted successfully!', 'success', 'adminWinnersMessage');
         loadWinners();
+        loadPublicWinners();
       } catch (err) {
         console.error('Error deleting winner:', err);
         showMessage('❌ Failed to delete winner: ' + err.message, 'error', 'adminWinnersMessage');
+      }
+    }
+
+    async function loadPublicWinners() {
+      try {
+        const winnersSnapshot = await db.collection('winners').orderBy('timestamp', 'desc').get();
+        const winnersBody = document.getElementById('publicWinnersTableBody');
+        
+        if (winnersSnapshot.empty) {
+          winnersBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 3rem 2rem; color: var(--muted);">No winners yet</td></tr>';
+          return;
+        }
+        
+        winnersBody.innerHTML = '';
+        winnersSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const row = winnersBody.insertRow();
+          row.innerHTML = `
+            <td style="padding: 14px; border-bottom: 1px solid var(--border);">${data.week}</td>
+            <td style="padding: 14px; border-bottom: 1px solid var(--border);">${data.username}</td>
+            <td style="padding: 14px; text-align: center; border-bottom: 1px solid var(--border);">${data.score}</td>
+          `;
+        });
+      } catch (err) {
+        console.error('Error loading public winners:', err);
       }
     }
 
