@@ -2458,13 +2458,25 @@
     // Check lock status for users
     async function checkAndDisplayLockStatus(date) {
       try {
+        if (!auth.currentUser) {
+          return;
+        }
+        
+        const userPicksSnapshot = await db.collection('picks')
+          .where('userId', '==', auth.currentUser.uid)
+          .where('date', '==', date)
+          .get();
+        
+        const hasSubmitted = !userPicksSnapshot.empty;
+        
         const snapshot = await db.collection('lockTimes').where('date', '==', date).get();
         
         if (snapshot.empty) {
-          // No lock time set
           document.getElementById('lockTimeStatus').style.display = 'none';
           document.getElementById('countdownTimer').style.display = 'none';
-          document.getElementById('submitBtn').disabled = false;
+          if (!hasSubmitted) {
+            document.getElementById('submitBtn').disabled = false;
+          }
           return;
         }
 
@@ -2472,30 +2484,30 @@
         const isLocked = areSubmissionsLocked(date, lockTime);
 
         if (isLocked) {
-          // Submissions are locked
           document.getElementById('lockTimeStatus').style.display = 'block';
           document.getElementById('countdownTimer').style.display = 'none';
           document.getElementById('lockTimeStatusMessage').textContent = `Submissions are closed. Lock time was ${lockTime} EST.`;
-          document.getElementById('submitBtn').disabled = true;
-          document.getElementById('submitBtn').textContent = 'Submissions Closed';
+          if (!hasSubmitted) {
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Submissions Closed';
+          }
         } else {
-          // Show countdown
           const timeUntil = getTimeUntilLock(date, lockTime);
           if (timeUntil && timeUntil.diff > 0) {
             document.getElementById('lockTimeStatus').style.display = 'none';
             document.getElementById('countdownTimer').style.display = 'block';
             document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(timeUntil)})`;
-            document.getElementById('submitBtn').disabled = false;
-            document.getElementById('submitBtn').textContent = 'Submit Picks';
+            if (!hasSubmitted) {
+              document.getElementById('submitBtn').disabled = false;
+              document.getElementById('submitBtn').textContent = 'Submit Picks';
+            }
 
-            // Update countdown every second
             clearInterval(window.countdownInterval);
             window.countdownInterval = setInterval(() => {
               const updated = getTimeUntilLock(date, lockTime);
               if (updated && updated.diff > 0) {
                 document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(updated)})`;
               } else {
-                // Time is up
                 checkAndDisplayLockStatus(date);
               }
             }, 1000);
