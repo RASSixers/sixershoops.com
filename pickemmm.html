@@ -3436,47 +3436,7 @@
     let currentPickWeekOffset = 0;
     
     function renderPickWeekPicker() {
-      console.log('📅 renderPickWeekPicker called');
-      const container = document.getElementById('pickWeekPickerContainer');
-      if (!container) {
-        console.error('❌ pickWeekPickerContainer not found!');
-        return;
-      }
-      
-      const weeks = [];
-      for (let i = 1; i <= 20; i++) {
-        weeks.push({
-          value: i,
-          label: `Week ${i}`
-        });
-      }
-
-      let selectedPickWeekValue = document.getElementById('selectedPickWeek').value ? parseInt(document.getElementById('selectedPickWeek').value) : null;
-
-      const visibleWeeks = weeks.slice(currentPickWeekOffset, currentPickWeekOffset + WEEKS_TO_SHOW);
-
-      container.innerHTML = visibleWeeks.map(w => {
-        const isActive = selectedPickWeekValue === w.value;
-        return `
-          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-pick-week="${w.value}">
-            <div style="font-weight: 700; font-size: 12px;">${w.label}</div>
-          </button>
-        `;
-      }).join('');
-
-      document.getElementById('prevPickWeekBtn').style.display = currentPickWeekOffset > 0 ? 'flex' : 'none';
-      document.getElementById('nextPickWeekBtn').style.display = currentPickWeekOffset < weeks.length - WEEKS_TO_SHOW ? 'flex' : 'none';
-
-      container.querySelectorAll('.date-picker-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          selectedPickWeekValue = parseInt(btn.dataset.pickWeek);
-          document.getElementById('selectedPickWeek').value = selectedPickWeekValue;
-          renderPickWeekPicker();
-          if (selectedPickDate) {
-            loadQuestionsForDate(selectedPickDate, selectedPickWeekValue);
-          }
-        });
-      });
+      return;
     }
 
     function renderMonthSlider() {
@@ -3524,19 +3484,25 @@
       });
     }
 
-    document.getElementById('prevPickWeekBtn').addEventListener('click', () => {
-      if (currentPickWeekOffset > 0) {
-        currentPickWeekOffset--;
-        renderPickWeekPicker();
-      }
-    });
+    const prevPickWeekBtn = document.getElementById('prevPickWeekBtn');
+    if (prevPickWeekBtn) {
+      prevPickWeekBtn.addEventListener('click', () => {
+        if (currentPickWeekOffset > 0) {
+          currentPickWeekOffset--;
+          renderPickWeekPicker();
+        }
+      });
+    }
 
-    document.getElementById('nextPickWeekBtn').addEventListener('click', () => {
-      if (currentPickWeekOffset < 20 - WEEKS_TO_SHOW) {
-        currentPickWeekOffset++;
-        renderPickWeekPicker();
-      }
-    });
+    const nextPickWeekBtn = document.getElementById('nextPickWeekBtn');
+    if (nextPickWeekBtn) {
+      nextPickWeekBtn.addEventListener('click', () => {
+        if (currentPickWeekOffset < 20 - WEEKS_TO_SHOW) {
+          currentPickWeekOffset++;
+          renderPickWeekPicker();
+        }
+      });
+    }
 
     document.getElementById('prevWeekBtn').addEventListener('click', () => {
       if (currentWeekOffset > 0) {
