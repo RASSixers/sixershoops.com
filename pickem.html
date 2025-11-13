@@ -2751,12 +2751,16 @@
           console.log(`  ✅ ${username}: ${userCorrectCount} correct out of ${questionsMatched} with answers (checked ${questionsChecked} questions)`);
         });
 
-        const overridesSnapshot = await db.collection('scoreOverrides').where('date', '==', date).get();
-        const overridesMap = {};
-        overridesSnapshot.forEach(doc => {
-          const data = doc.data();
-          overridesMap[data.userEmail] = data.score;
-        });
+        let overridesMap = {};
+        try {
+          const overridesSnapshot = await db.collection('scoreOverrides').where('date', '==', date).get();
+          overridesSnapshot.forEach(doc => {
+            const data = doc.data();
+            overridesMap[data.userEmail] = data.score;
+          });
+        } catch (overrideErr) {
+          console.warn(`  ⚠️ Could not fetch score overrides (permissions issue):`, overrideErr.message);
+        }
         
         const scoresArray = Object.entries(userScores).map(([userId, score]) => {
           const userEmail = score.username;
