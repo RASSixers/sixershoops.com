@@ -2704,6 +2704,8 @@
           const userAnswers = pickData.answers || [];
           console.log(`    👤 ${username}: ${userAnswers.length} answers`);
           let userCorrectCount = 0;
+          let questionsChecked = 0;
+          let questionsMatched = 0;
           
           userAnswers.forEach((userPick, qIdx) => {
             // Only count if this question index is in our list to count
@@ -2711,11 +2713,13 @@
               return;
             }
             
+            questionsChecked++;
             const correctAnswer = correctAnswersMap[qIdx];
             
             // Normalize comparison for numeric vs string types
             let isCorrect = false;
             if (userPick !== undefined && correctAnswer !== undefined) {
+              questionsMatched++;
               // Normalize values for comparison
               let normalizedPick = userPick;
               let normalizedAnswer = correctAnswer;
@@ -2738,13 +2742,13 @@
               if (isCorrect) {
                 userCorrectCount++;
               }
-              
-              console.log(`Q${qIdx} - User: "${userPick}" → "${normalizedPick}", Correct: "${correctAnswer}" → "${normalizedAnswer}", Match: ${isCorrect} (counted: ${questionIndicesToCount.includes(qIdx)})`);
+            } else {
+              console.warn(`Q${qIdx} MISSING: userPick=${userPick}, correctAnswer=${correctAnswer}`);
             }
           });
           
           userScores[userId].correct = userCorrectCount * 10;
-          console.log(`User ${username} scored ${userCorrectCount}/${userScores[userId].total}`);
+          console.log(`  ✅ ${username}: ${userCorrectCount} correct out of ${questionsMatched} with answers (checked ${questionsChecked} questions)`);
         });
 
         const overridesSnapshot = await db.collection('scoreOverrides').where('date', '==', date).get();
@@ -2756,6 +2760,7 @@
         
         const scoresArray = Object.entries(userScores).map(([userId, score]) => {
           const userEmail = score.username;
+          console.log(`  📊 FINAL: ${score.username} = ${score.correct}/${score.total}`);
           if (overridesMap[userEmail] !== undefined) {
             console.log(`  🔧 Override applied for ${userEmail}: ${score.correct} → ${overridesMap[userEmail]}`);
             return {
@@ -2773,7 +2778,7 @@
           };
         });
         
-        return scoresArray
+        const finalScores = scoresArray
           .sort((a, b) => b.correct - a.correct)
           .map((score, idx) => ({
             rank: idx + 1,
@@ -2783,6 +2788,9 @@
             percentage: score.total > 0 ? ((score.correct / score.total) * 100).toFixed(1) : 0,
             isOverridden: score.isOverridden
           }));
+        
+        console.log(`  ✅ Returning ${finalScores.length} final scores:`, finalScores);
+        return finalScores;
       } catch (err) {
         console.error('Error calculating scores:', err);
         return [];
@@ -4007,8 +4015,15 @@
         if (period === 'daily') {
           const dateToUse = selectedDate || formatDateForComparison(new Date());
           console.log(`📅 DAILY leaderboard for date: ${dateToUse}`);
+          console.log(`  🔍 [CHECK] Looking for questions, picks, and answers for this date...`);
+          
+          const chk1 = await db.collection('questions').where('date', '==', dateToUse).get();
+          const chk2 = await db.collection('picks').where('date', '==', dateToUse).get();
+          const chk3 = await db.collection('correctAnswers').where('date', '==', dateToUse).get();
+          console.log(`  📊 Questions: ${chk1.size}, Picks: ${chk2.size}, Answers: ${chk3.size}`);
           
           const dailyScores = await calculateScoresForDate(dateToUse, null);
+          console.log(`  🎯 Got ${dailyScores.length} scores from calculateScoresForDate:`, dailyScores);
           const leaderboard = dailyScores.map(score => ({
             username: score.username,
             correct_count: score.correct,
@@ -4016,7 +4031,7 @@
             isOverridden: score.isOverridden
           }));
           
-          console.log(`Daily leaderboard final: ${leaderboard.length} users, top score: ${leaderboard[0]?.correct_count || 0}`);
+          console.log(`  📊 Final leaderboard for daily: ${leaderboard.length} users`);
           renderLeaderboard(period, leaderboard);
           return;
         }
