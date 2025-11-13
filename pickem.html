@@ -2600,24 +2600,11 @@
       try {
         console.log(`📊 calculateScoresForDate called for date: ${date}${weekNumberFilter ? ` (Week filter: ${weekNumberFilter})` : ''}`);
         
-        // Debug: log all available dates in database
-        const allQuestionsSnapshot = await db.collection('questions').get();
-        const availableDates = new Set();
-        allQuestionsSnapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.date) availableDates.add(data.date);
-        });
-        console.log(`  📊 [DEBUG] All dates with questions in DB:`, Array.from(availableDates).sort());
-        
         // Get questions for the date
         const questionsSnapshot = await db.collection('questions').where('date', '==', date).get();
         console.log(`  📚 Found ${questionsSnapshot.size} question documents for date ${date}`);
         if (questionsSnapshot.empty) {
           console.warn(`  ⚠️ No questions found for date ${date} - cannot calculate scores`);
-          console.log(`  🔍 Checking if date exists in any collection...`);
-          const picksForDate = await db.collection('picks').where('date', '==', date).get();
-          const answersForDate = await db.collection('correctAnswers').where('date', '==', date).get();
-          console.log(`    Picks for date: ${picksForDate.size}, Answers for date: ${answersForDate.size}`);
           return [];
         }
 
@@ -4014,13 +4001,6 @@
         if (period === 'daily') {
           const dateToUse = selectedDate || formatDateForComparison(new Date());
           console.log(`📅 DAILY leaderboard for date: ${dateToUse}`);
-          console.log(`  🔍 Checking data availability...`);
-          
-          // Debug: check what data exists
-          const picksSnapshot = await db.collection('picks').where('date', '==', dateToUse).get();
-          const answersSnapshot = await db.collection('correctAnswers').where('date', '==', dateToUse).get();
-          const questionsSnapshot = await db.collection('questions').where('date', '==', dateToUse).get();
-          console.log(`    Questions: ${questionsSnapshot.size}, Picks: ${picksSnapshot.size}, Answers: ${answersSnapshot.size}`);
           
           const dailyScores = await calculateScoresForDate(dateToUse, null);
           const leaderboard = dailyScores.map(score => ({
@@ -4175,9 +4155,9 @@
     function renderLeaderboard(period, entries) {
       const bodyId = `${period}LeaderboardBody`;
       
-      console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries:`, entries);
+      console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries`);
       if (entries.length === 0) {
-        console.warn(`⚠️ ${period} leaderboard has 0 entries - no data to display`);
+        console.warn(`⚠️ ${period} leaderboard empty`);
       }
 
       const medals = ['🥇', '🥈', '🥉'];
