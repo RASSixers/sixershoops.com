@@ -2113,24 +2113,22 @@
           }
         }
 
-        if (answer === null) {
-          allAnswered = false;
+        if (answer !== null) {
+          correctAnswers.push({
+            questionId: idx,
+            question: q.question,
+            correctAnswer: answer
+          });
         }
-
-        correctAnswers.push({
-          questionId: idx,
-          question: q.question,
-          correctAnswer: answer
-        });
       });
 
-      if (!allAnswered) {
-        showMessage('Please enter correct answers for all questions', 'error', 'markAnswersMessage');
+      if (correctAnswers.length === 0) {
+        showMessage('Please enter at least one correct answer before saving', 'error', 'markAnswersMessage');
         return;
       }
 
       try {
-        console.log(`📝 Saving answers for date: ${dateInput}`);
+        console.log(`📝 Saving ${correctAnswers.length} answer(s) for date: ${dateInput}`);
         console.log(`📝 Answers being saved:`, correctAnswers);
         
         // Also update questions to ensure week numbers are preserved
@@ -2152,13 +2150,29 @@
         const existingAnswers = await db.collection('correctAnswers').where('date', '==', dateInput).get();
         
         let docRef;
+        let finalAnswers = correctAnswers;
+        
         if (!existingAnswers.empty) {
-          console.log(`📝 Found existing answer document for ${dateInput}. Updating it...`);
+          console.log(`📝 Found existing answer document for ${dateInput}. Merging answers...`);
           docRef = existingAnswers.docs[0].ref;
+          const existingData = existingAnswers.docs[0].data();
+          const existingAnswersArray = existingData.answers || [];
+          
+          const answerMap = {};
+          existingAnswersArray.forEach(a => {
+            answerMap[a.questionId] = a;
+          });
+          correctAnswers.forEach(a => {
+            answerMap[a.questionId] = a;
+          });
+          finalAnswers = Object.values(answerMap);
+          
+          console.log(`  ✅ Merged ${correctAnswers.length} new answer(s) with ${existingAnswersArray.length} existing answer(s), total: ${finalAnswers.length}`);
+          
           await docRef.set({
             date: dateInput,
-            answers: correctAnswers,
-            createdAt: existingAnswers.docs[0].data().createdAt || new Date().toISOString(),
+            answers: finalAnswers,
+            createdAt: existingData.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString()
           }, { merge: true });
           console.log('✅ Correct answers UPDATED with ID:', docRef.id);
@@ -2166,14 +2180,14 @@
           console.log(`📝 No existing answers found for ${dateInput}. Creating new document...`);
           docRef = await db.collection('correctAnswers').add({
             date: dateInput,
-            answers: correctAnswers,
+            answers: finalAnswers,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
           console.log('✅ Correct answers CREATED with ID:', docRef.id);
         }
         
-        showMessage('✅ Correct answers saved! Recalculating leaderboards...', 'success', 'markAnswersMessage');
+        showMessage(`✅ ${correctAnswers.length} answer(s) saved! Recalculating leaderboards...`, 'success', 'markAnswersMessage');
         
         console.log('⏳ Waiting for Firestore replication with retry...');
         
