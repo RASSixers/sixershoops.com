@@ -2185,10 +2185,8 @@
           console.log(`  ✅ Merged ${correctAnswers.length} new answer(s) with ${existingAnswersArray.length} existing, total: ${finalAnswers.length}`);
           console.log(`  📋 Final answers array:`, finalAnswers);
           
-          await docRef.set({
-            date: dateInput,
+          await docRef.update({
             answers: finalAnswers,
-            createdAt: existingData.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
           console.log('✅ Correct answers UPDATED with ID:', docRef.id);
@@ -2602,11 +2600,24 @@
       try {
         console.log(`📊 calculateScoresForDate called for date: ${date}${weekNumberFilter ? ` (Week filter: ${weekNumberFilter})` : ''}`);
         
+        // Debug: log all available dates in database
+        const allQuestionsSnapshot = await db.collection('questions').get();
+        const availableDates = new Set();
+        allQuestionsSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.date) availableDates.add(data.date);
+        });
+        console.log(`  📊 [DEBUG] All dates with questions in DB:`, Array.from(availableDates).sort());
+        
         // Get questions for the date
         const questionsSnapshot = await db.collection('questions').where('date', '==', date).get();
         console.log(`  📚 Found ${questionsSnapshot.size} question documents for date ${date}`);
         if (questionsSnapshot.empty) {
           console.warn(`  ⚠️ No questions found for date ${date} - cannot calculate scores`);
+          console.log(`  🔍 Checking if date exists in any collection...`);
+          const picksForDate = await db.collection('picks').where('date', '==', date).get();
+          const answersForDate = await db.collection('correctAnswers').where('date', '==', date).get();
+          console.log(`    Picks for date: ${picksForDate.size}, Answers for date: ${answersForDate.size}`);
           return [];
         }
 
@@ -2642,13 +2653,21 @@
         
         if (correctAnswersDoc.answers && Array.isArray(correctAnswersDoc.answers)) {
           correctAnswersDoc.answers.forEach(a => {
-            // Store with original question ID, will validate against week filter later
-            correctAnswersMap[a.questionId] = a.correctAnswer;
-            console.log(`    Q${a.questionId}: ${a.correctAnswer}`);
+            if (a && typeof a === 'object' && a.questionId !== undefined && a.correctAnswer !== undefined) {
+              correctAnswersMap[a.questionId] = a.correctAnswer;
+              console.log(`    Q${a.questionId}: ${a.correctAnswer}`);
+            }
           });
           console.log(`  ✅ Loaded ${Object.keys(correctAnswersMap).length} correct answers`);
+          
+          if (Object.keys(correctAnswersMap).length === 0) {
+            console.warn(`  ⚠️ Answer array exists but no valid answers found`);
+            console.log(`  📊 Raw answers doc:`, correctAnswersDoc);
+            return [];
+          }
         } else {
           console.warn(`  ⚠️ answers field is missing or not an array in correctAnswers doc`);
+          console.log(`  📊 Raw answers doc:`, correctAnswersDoc);
           return [];
         }
 
@@ -3995,6 +4014,13 @@
         if (period === 'daily') {
           const dateToUse = selectedDate || formatDateForComparison(new Date());
           console.log(`📅 DAILY leaderboard for date: ${dateToUse}`);
+          console.log(`  🔍 Checking data availability...`);
+          
+          // Debug: check what data exists
+          const picksSnapshot = await db.collection('picks').where('date', '==', dateToUse).get();
+          const answersSnapshot = await db.collection('correctAnswers').where('date', '==', dateToUse).get();
+          const questionsSnapshot = await db.collection('questions').where('date', '==', dateToUse).get();
+          console.log(`    Questions: ${questionsSnapshot.size}, Picks: ${picksSnapshot.size}, Answers: ${answersSnapshot.size}`);
           
           const dailyScores = await calculateScoresForDate(dateToUse, null);
           const leaderboard = dailyScores.map(score => ({
@@ -4150,6 +4176,9 @@
       const bodyId = `${period}LeaderboardBody`;
       
       console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries:`, entries);
+      if (entries.length === 0) {
+        console.warn(`⚠️ ${period} leaderboard has 0 entries - no data to display`);
+      }
 
       const medals = ['🥇', '🥈', '🥉'];
       const bodyHtml = entries.map((entry, idx) => {
