@@ -2661,9 +2661,15 @@
         // Get all picks for this date
         const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
         console.log(`  🗳️ Found ${picksSnapshot.size} pick documents for date ${date}`);
+        console.log(`  📊 [DEBUG] Checking all picks in database...`);
+        const allPicksSnapshot = await db.collection('picks').get();
+        console.log(`  📊 [DEBUG] Total picks in database: ${allPicksSnapshot.size}`);
+        if (allPicksSnapshot.size > 0) {
+          console.log(`  📊 [DEBUG] Sample dates from picks:`, allPicksSnapshot.docs.slice(0, 5).map(d => d.data().date));
+        }
         
         if (picksSnapshot.empty) {
-          console.warn(`  ⚠️ No user picks found for date ${date} - cannot calculate individual scores`);
+          console.warn(`  ⚠️ No user picks found for date ${date}`);
           return [];
         }
         
