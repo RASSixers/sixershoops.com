@@ -4198,6 +4198,36 @@
     // === Init ===
     // initAuth is now called from initializeFirebase() after Firebase is ready
     
+    // Debug function - call from console to check data
+    window.debugLeaderboardData = async function(dateStr) {
+      if (!dateStr) dateStr = formatDateForComparison(new Date());
+      console.log(`\n🔍 DEBUG LEADERBOARD DATA FOR: ${dateStr}\n`);
+      
+      const q = await db.collection('questions').where('date', '==', dateStr).get();
+      console.log(`Questions: ${q.size} docs`);
+      if (!q.empty) {
+        const items = q.docs[0].data().items || [];
+        console.log(`  - ${items.length} items in questions`);
+      }
+      
+      const a = await db.collection('correctAnswers').where('date', '==', dateStr).get();
+      console.log(`Correct Answers: ${a.size} docs`);
+      if (!a.empty) {
+        const answers = a.docs[0].data().answers || [];
+        console.log(`  - ${answers.length} answers`);
+        answers.forEach(ans => console.log(`    Q${ans.questionId}: ${ans.correctAnswer}`));
+      }
+      
+      const p = await db.collection('picks').where('date', '==', dateStr).get();
+      console.log(`User Picks: ${p.size} docs`);
+      p.forEach(doc => {
+        const picks = doc.data();
+        console.log(`  - User: ${picks.username}, ${picks.answers.length} answers`);
+      });
+      
+      console.log(`\n⚠️ If any of these is 0, leaderboard will be empty!\n`);
+    };
+    
     // Initialize leaderboard pickers when app first shows
     function initializeLeaderboardPickers() {
       console.log('🚀 Initializing leaderboard pickers');
