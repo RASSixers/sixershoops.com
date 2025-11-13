@@ -2156,35 +2156,58 @@
           console.log(`📝 Found existing answer document for ${dateInput}. Merging answers...`);
           docRef = existingAnswers.docs[0].ref;
           const existingData = existingAnswers.docs[0].data();
-          const existingAnswersArray = existingData.answers || [];
+          const existingAnswersArray = Array.isArray(existingData.answers) ? existingData.answers : [];
           
           const answerMap = {};
-          existingAnswersArray.forEach(a => {
-            answerMap[a.questionId] = a;
-          });
-          correctAnswers.forEach(a => {
-            answerMap[a.questionId] = a;
-          });
-          finalAnswers = Object.values(answerMap);
           
-          console.log(`  ✅ Merged ${correctAnswers.length} new answer(s) with ${existingAnswersArray.length} existing answer(s), total: ${finalAnswers.length}`);
+          existingAnswersArray.forEach(a => {
+            if (a && typeof a === 'object' && a.questionId !== undefined) {
+              answerMap[a.questionId] = {
+                questionId: a.questionId,
+                question: a.question || '',
+                correctAnswer: a.correctAnswer
+              };
+            }
+          });
+          
+          correctAnswers.forEach(a => {
+            if (a && typeof a === 'object' && a.questionId !== undefined) {
+              answerMap[a.questionId] = {
+                questionId: a.questionId,
+                question: a.question || '',
+                correctAnswer: a.correctAnswer
+              };
+            }
+          });
+          
+          finalAnswers = Object.keys(answerMap).map(qId => answerMap[qId]);
+          
+          console.log(`  ✅ Merged ${correctAnswers.length} new answer(s) with ${existingAnswersArray.length} existing, total: ${finalAnswers.length}`);
+          console.log(`  📋 Final answers array:`, finalAnswers);
           
           await docRef.set({
             date: dateInput,
             answers: finalAnswers,
             createdAt: existingData.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString()
-          }, { merge: true });
+          });
           console.log('✅ Correct answers UPDATED with ID:', docRef.id);
         } else {
           console.log(`📝 No existing answers found for ${dateInput}. Creating new document...`);
+          const cleanAnswers = correctAnswers.map(a => ({
+            questionId: a.questionId,
+            question: a.question || '',
+            correctAnswer: a.correctAnswer
+          }));
+          
           docRef = await db.collection('correctAnswers').add({
             date: dateInput,
-            answers: finalAnswers,
+            answers: cleanAnswers,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
           console.log('✅ Correct answers CREATED with ID:', docRef.id);
+          console.log(`  📋 Answers saved:`, cleanAnswers);
         }
         
         showMessage(`✅ ${correctAnswers.length} answer(s) saved! Recalculating leaderboards...`, 'success', 'markAnswersMessage');
@@ -2205,14 +2228,10 @@
             continue;
           }
           
-          console.log(`🔄 Recalculating all leaderboards (attempt ${attempt}/3)...`);
+          console.log(`🔄 Recalculating leaderboard for date: ${dateInput}`);
           try {
-            await Promise.all([
-              loadLeaderboard('daily'),
-              loadLeaderboard('weekly'),
-              loadLeaderboard('monthly')
-            ]);
-            console.log('✅ All leaderboards recalculated successfully');
+            await loadLeaderboard('daily', null, null, dateInput);
+            console.log('✅ Leaderboards recalculated successfully');
             leaderboardsLoaded = true;
             break;
           } catch (leaderboardErr) {
