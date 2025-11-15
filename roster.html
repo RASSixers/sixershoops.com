@@ -382,16 +382,55 @@
       margin-bottom: 1rem;
     }
 
+    .player-stats-toggle {
+      padding: 0.75rem 0;
+      border-top: 1px solid #e2e8f0;
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .player-stats-toggle-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .player-stats-toggle-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      transition: transform 0.3s;
+    }
+
+    .player-stats-toggle.expanded .player-stats-toggle-icon {
+      transform: rotate(180deg);
+    }
+
     .player-stats {
-      display: grid;
+      display: none;
       grid-template-columns: repeat(3, 1fr);
       gap: 0.75rem;
-      padding-top: 1rem;
-      border-top: 1px solid #e2e8f0;
+      padding-top: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .player-stats.expanded {
+      display: grid;
     }
 
     .player-stat {
+      background: #f8fafc;
+      padding: 0.75rem;
+      border-radius: 6px;
       text-align: center;
+      border: 1px solid #e2e8f0;
     }
 
     .player-stat-label {
@@ -401,39 +440,11 @@
       font-weight: 600;
       letter-spacing: 0.5px;
       display: block;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.35rem;
     }
 
     .player-stat-value {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .player-career-highs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-
-    .player-career-high {
-      background: #f8fafc;
-      padding: 0.5rem;
-      border-radius: 6px;
-      text-align: center;
-    }
-
-    .player-career-high-label {
-      font-size: 0.6rem;
-      color: #94a3b8;
-      text-transform: uppercase;
-      font-weight: 600;
-      display: block;
-    }
-
-    .player-career-high-value {
-      font-size: 0.85rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #3b82f6;
     }
@@ -1292,6 +1303,24 @@
         playersContainer.style.display = 'grid';
         emptyState.style.display = 'none';
         playersContainer.innerHTML = filteredPlayers.map(player => createPlayerCard(player)).join('');
+        
+        // Attach toggle listeners after rendering
+        attachStatsToggleListeners();
+      }
+
+      // Attach event listeners for stats toggles
+      function attachStatsToggleListeners() {
+        document.querySelectorAll('.player-stats-toggle').forEach(toggle => {
+          toggle.addEventListener('click', function() {
+            const cardId = this.getAttribute('data-card-id');
+            const statsDiv = document.getElementById(cardId);
+            
+            if (statsDiv) {
+              statsDiv.classList.toggle('expanded');
+              this.classList.toggle('expanded');
+            }
+          });
+        });
       }
 
       // Helper to build image path from player name (uses last name; handles Jr./Sr./II/III/etc.)
@@ -1351,6 +1380,7 @@
       // Create player card HTML - Blog style
       function createPlayerCard(player) {
         const initials = player.name.split(' ').map(n => n[0]).join('');
+        const cardId = 'card-' + player.name.replace(/\s+/g, '-').toLowerCase();
         
         return `
           <div class="player-card">
@@ -1370,33 +1400,27 @@
               <h3 class="player-name">${player.name}</h3>
               <p class="player-bio">${player.bio}</p>
               
-              <div class="player-stats">
-                <div class="player-stat">
-                  <span class="player-stat-label">Height</span>
-                  <span class="player-stat-value">${player.height}</span>
-                </div>
-                <div class="player-stat">
-                  <span class="player-stat-label">Weight</span>
-                  <span class="player-stat-value">${player.weight}</span>
-                </div>
-                <div class="player-stat">
-                  <span class="player-stat-label">College</span>
-                  <span class="player-stat-value" style="font-size: 0.8rem;">${player.college}</span>
-                </div>
+              <div class="player-stats-toggle" data-card-id="${cardId}">
+                <span class="player-stats-toggle-label">
+                  <svg class="player-stats-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                  Career Highs
+                </span>
               </div>
 
-              <div class="player-career-highs">
-                <div class="player-career-high">
-                  <span class="player-career-high-label">PPG</span>
-                  <span class="player-career-high-value">${player.careerHighs.points}</span>
+              <div class="player-stats" id="${cardId}">
+                <div class="player-stat">
+                  <span class="player-stat-label">Points</span>
+                  <span class="player-stat-value">${player.careerHighs.points}</span>
                 </div>
-                <div class="player-career-high">
-                  <span class="player-career-high-label">RPG</span>
-                  <span class="player-career-high-value">${player.careerHighs.rebounds}</span>
+                <div class="player-stat">
+                  <span class="player-stat-label">Rebounds</span>
+                  <span class="player-stat-value">${player.careerHighs.rebounds}</span>
                 </div>
-                <div class="player-career-high">
-                  <span class="player-career-high-label">APG</span>
-                  <span class="player-career-high-value">${player.careerHighs.assists}</span>
+                <div class="player-stat">
+                  <span class="player-stat-label">Assists</span>
+                  <span class="player-stat-value">${player.careerHighs.assists}</span>
                 </div>
               </div>
             </div>
