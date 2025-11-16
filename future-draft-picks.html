@@ -8,6 +8,15 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/favicon.ico" />
   <link rel="stylesheet" href="navbar-styles.css">
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T1V9Q0MNEM');
+  </script>
+
   <style>
     :root {
       --ink: #0f172a;
@@ -142,64 +151,52 @@
       .search { flex: 1 1 100%; min-width: 0; }
     }
 
-    /* Header Section - Consistent banner (from roster.html) */
-    .page-header {
-      text-align: center;
-      margin-bottom: 3rem;
-      padding: 3rem 0;
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      border-radius: 20px;
-      color: white;
-      position: relative;
-      overflow: hidden;
-    }
+    @keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
 
-    .page-header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-      animation: shimmer 3s ease-in-out infinite;
-    }
+.page-header {
+padding: 5rem 2rem;
+text-align: center;
+animation: fadeIn 0.5s ease-in;
+}
 
-    @keyframes shimmer {
-      0%, 100% { transform: translateX(-100%); }
-      50% { transform: translateX(100%); }
-    }
+.page-header-content {
+max-width: 56rem;
+margin: 0 auto;
+}
 
-    .page-title {
-      font-size: 3.5rem;
-      font-weight: 900;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #ffffff 0%, #3b82f6 50%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      position: relative;
-      z-index: 1;
-    }
+.page-title {
+font-size: clamp(2rem, 7vw, 4rem);
+font-weight: 700;
+margin-bottom: 1.5rem;
+line-height: 1.2;
+}
 
-    .page-subtitle {
-      font-size: 1.2rem;
-      color: #94a3b8;
-      font-weight: 500;
-      position: relative;
-      z-index: 1;
-    }
+.page-title .highlight {
+color: #3b82f6;
+}
+
+.page-subtitle {
+font-size: clamp(1rem, 2vw, 1.5rem);
+color: #64748b;
+max-width: 42rem;
+margin: 0 auto;
+}
   </style>
 </head>
 <body>
   <!-- navbar auto-injected by nav.js -->
 
-  <div class="main-container">
-    <div class="page-header">
-      <h1 class="page-title">Future Draft Picks</h1>
-      <p class="page-subtitle">Interactive, data-first overview of Philadelphia’s future draft capital with filters, search, sorting, and detailed notes.</p>
+  <section class="page-header">
+    <div class="page-header-content">
+      <h1 class="page-title">Future <span class="highlight">Draft Picks</span></h1>
+      <p class="page-subtitle">Interactive, data-first overview of Philadelphia's future draft capital with filters, search, sorting, and detailed notes.</p>
     </div>
+  </section>
 
+  <div class="main-container">
     <section class="controls" aria-label="Filters">
       <div class="chip-group" role="tablist" aria-label="Filter by type">
         <button class="chip" data-filter="all" aria-pressed="false">All</button>
@@ -314,7 +311,7 @@
         // filter
         let rows = PICKS.filter(p => {
           // Updated meaning for 'Own': picks the Sixers currently control (native or via other teams)
-          // We’ll treat 'own' and 'incoming' as controllable, while 'traded'/'none' are not controlled.
+          // We'll treat 'own' and 'incoming' as controllable, while 'traded'/'none' are not controlled.
           const controllable = (p.type === 'own' || p.type === 'incoming');
 
           const typeOk =
