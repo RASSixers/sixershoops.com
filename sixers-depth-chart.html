@@ -4,270 +4,479 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Sixers Depth Chart | SixersHoops</title>
-
-  <!-- Favicons -->
   <link rel="icon" href="/favicon.ico"/>
   <link rel="apple-touch-icon" href="/favicon.ico"/>
 
-  <!-- Stylesheets -->
   <link rel="stylesheet" href="styles.css"/>
   <link rel="stylesheet" href="navbar-styles.css"/>
 
-  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G1V9Q0MNEM');
+    gtag('config', 'G-T1V9Q0MNEM');
   </script>
 
   <style>
-    /* ----------------------------------------------------
-       All original styles (kept intact)
-    ---------------------------------------------------- */
-    *, *::before, *::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-      background:linear-gradient(135deg,#f8fafc 0,#e2e8f0 100%);color:#1e293b;padding-top:80px;min-height:100vh;}
-    .page-header{background:linear-gradient(135deg,#1e293b 0,#334155 100%);border-radius:20px;color:white;
-      margin-bottom:3rem;overflow:hidden;padding:3rem 0;text-align:center;position:relative;}
-    .page-header::before{content:"";background:linear-gradient(45deg,transparent,rgba(59,130,246,.1),transparent);
-      animation:shimmer 3s ease-in-out infinite;bottom:0;height:100%;left:0;position:absolute;right:0;top:0;}
-    @keyframes shimmer{0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)}}
-    .page-title{font-size:3.5rem;font-weight:900;margin-bottom:1rem;background:linear-gradient(135deg,#fff 0,#3b82f6 50%,#06b6d4 100%);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent;
-      position:relative;z-index:1;}
-    .page-subtitle{color:#94a3b8;font-size:1.2rem;font-weight:500;}
-    .main-container{max-width:1400px;margin:0 auto;padding:2rem;}
-    .content-wrapper{max-width:1400px;margin:0 auto;padding:0 20px;}
-    .depth-main-content{background:#fff;border-radius:20px;border-top:3px solid #3b82f6;
-      max-width:900px;margin:3rem auto 0;padding:2.5rem;}
-    .depth-controls{display:flex;gap:1rem;justify-content:center;margin-bottom:2rem;flex-wrap:wrap;}
-    .control-btn{background:#f8fafc;border:1px solid #e2e8f0;color:#475569;
-      cursor:pointer;font-weight:600;font-size:.95rem;letter-spacing:.3px;padding:.8rem 1.2rem;
-      border-radius:12px;position:relative;transition:all .3s;}
-    .control-btn::before{content:"";position:absolute;bottom:0;left:0;height:3px;width:0;transition:width .3s;}
-    .control-btn:hover,.control-btn.active{background:linear-gradient(135deg,#3b82f6 0,#1d4ed8 100%);
-      border-color:#3b82f8;color:#fff;transform:translateY(-2px);
-      box-shadow:0 6px 20px rgba(59,130,246,.3);}
-    .control-btn:hover::before,.control-btn.active::before{width:100%;}
-    .basketball-court{background:linear-gradient(135deg,#f1f5f9 0,#e2e8f0 100%);
-      border-radius:20px;margin:2rem 0;overflow:hidden;padding:2rem;position:relative;
-      box-shadow:0 8px 25px rgba(30,41,59,.08);border:1px solid rgba(59,130,246,.15);}
-    .basketball-court::before{content:"";background:radial-gradient(circle at 50% 10%,rgba(59,130,246,.1) 0,transparent 40%),
-      radial-gradient(circle at 50% 90%,rgba(59,130,246,.1) 0,transparent 40%);
-      position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;}
-    .position-group{background:#fff;border-radius:16px;padding:1.8rem;margin-bottom:1.5rem;
-      border-top:3px solid #3b82f6;box-shadow:0 4px 16px rgba(30,41,59,.08);transition:all .3s;position:relative;}
-    .position-group:hover{transform:translateY(-3px);
-      box-shadow:0 8px 25px rgba(30,41,59,.15);}
-    .position-header{display:flex;align-items:center;justify-content:space-between;
-      margin-bottom:1rem;padding-bottom:.8rem;border-bottom:2px solid rgba(59,130,246,.2);}
-    .position-title{font-size:1.5rem;font-weight:900;color:#1e293b;font-family:Georgia,serif;
-      display:flex;align-items:center;gap:.8rem;}
-    .position-icon{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#3b82f6 0,#1d4e d8 50%,#1e40af 100%);
-      color:#fff;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;}
-    .depth-count{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;color:#64748b;
-      font-size:.85rem;font-weight:600;padding:.4rem .8rem;}
-    .players-container{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;}
-    .player-card{background:linear-gradient(135deg,#f8fafc 0,#f1f5f9 100%);border:1px solid #e2e8f0;
-      border-radius:12px;color:#475569;cursor:pointer;font-size:1rem;font-weight:600;padding:.8rem 1.2rem;
-      position:relative;transition:all .3s;overflow:hidden;}
-    .player-card::before{content:"";background:linear-gradient(90deg,transparent,rgba(59,130,246,.3),transparent);
-      position:absolute;top:0;left:-100%;width:100%;height:100%;transition:left .5s;}
-    .player-card:hover{background:#fff;border-color:#3b82f6;color:#1e293b;
-      box-shadow:0 6px 20px rgba(59,130,246,.3);transform:scale(.97) translateY(-3px);}
-    .player-card.starter{background:linear-gradient(135deg,#059669 0,#10b981 100%);
-      border-radius:12px;border:2px solid #10b981;color:#fff;font-size:1.1rem;padding:1rem 1.4rem;}
-    .player-card.starter:hover{box-shadow:0 10px 30px rgba(16,185,129,.4);transform:scale(.97) translateY(-3px);}
-    .player-card.twoway{background:linear-gradient(135deg,#dc2626 0,#ef4444 100%);
-      border-radius:12px;color:#fff;box-shadow:0 4px 12px rgba(220,38,38,.3);position:relative;}
-    .player-card.twoway:hover{box-shadow:0 8px 25px rgba(220,38,38,.5);}
-    .player-card.twoway::after{content:"2‑WAY";background:#fff;color:#dc2626;font-size:.65rem;
-      padding:.3rem .5rem;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.2);position:absolute;
-      top:-8px;right:-8px;white-space:nowrap;}
+/* Reset to eliminate white gaps */
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+:root {
+--color-navy: #0a174e;
+--color-navy-soft: #122860;
+--color-sky: #3b82f6;
+--color-cyan: #06b6d4;
+--color-ice: #f8fafc;
+--color-white: #ffffff;
+--color-slate-900: #0f172a;
+--color-slate-700: #334155;
+--color-slate-500: #64748b;
+--color-gold: #f59e0b;
+--card-radius: 22px;
+--card-shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+--border-glow: 1px solid rgba(59, 130, 246, 0.25);
+--blur: blur(18px);
+--transition: all 0.35s ease;
+}
+
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+background: #f9fafb;
+color: #111827;
+line-height: 1.6;
+padding-top: 80px;
+margin: 0;
+position: relative;
+overflow-x: hidden;
+}
+
+    @keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+padding: 5rem 2rem;
+text-align: center;
+animation: fadeIn 0.5s ease-in;
+}
+
+.page-header-content {
+max-width: 56rem;
+margin: 0 auto;
+}
+
+.page-title {
+font-size: clamp(2rem, 7vw, 4rem);
+font-weight: 700;
+margin-bottom: 1.5rem;
+line-height: 1.2;
+}
+
+.page-title .highlight {
+color: #3b82f6;
+}
+
+.page-subtitle {
+font-size: clamp(1rem, 2vw, 1.5rem);
+color: #64748b;
+max-width: 42rem;
+margin: 0 auto;
+}
+
+    /* Content wrapper */
+    .content-wrapper{
+      max-width:1400px;
+      margin:0 auto;
+      padding:0 20px;
+    }
+
+    /* -------------- Main content -------------- */
+    .depth-main-content{
+      max-width:900px;
+      margin:3rem auto 0;
+      background: #ffffff;
+      border-radius:20px;
+      box-shadow:0 8px 32px rgba(30, 41, 59, 0.12), 0 0 0 1px rgba(59, 130, 246, 0.1);
+      padding:2.5rem;
+      border-top: 3px solid #3b82f6;
+    }
+
+    /* -------------- Controls -------------- */
+    .depth-controls{display:flex;justify-content:center;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;}
+    .control-btn{
+      background: #f8fafc;
+      border:1px solid #e2e8f0;
+      color:#475569;
+      padding:.8rem 1.2rem;border-radius:12px;cursor:pointer;
+      transition:all .3s ease;
+      font-weight:600;font-size:.95rem;
+      letter-spacing:0.3px;
+      position:relative;
+    }
+    .control-btn::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .control-btn:hover,.control-btn.active{
+      color:#ffffff;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      border-color: #3b82f6;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+    .control-btn:hover::before,.control-btn.active::before {
+      width: 100%;
+    }
+
+    /* -------------- Basketball court and players -------------- */
+    .basketball-court{
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      border-radius:20px;padding:2rem;margin:2rem 0;
+      position:relative;overflow:hidden;
+      box-shadow:0 8px 25px rgba(30, 41, 59, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+    }
+    .basketball-court::before{
+      content:"";
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      background:radial-gradient(circle at 50% 10%,rgba(59, 130, 246,.1) 0%,transparent 40%),
+                  radial-gradient(circle at 50% 90%,rgba(59, 130, 246,.1) 0%,transparent 40%);
+      pointer-events:none;
+    }
+    .position-group{
+      background: #ffffff;
+      border-radius:16px;
+      padding:1.8rem;margin-bottom:1.5rem;
+      box-shadow:0 4px 16px rgba(30, 41, 59, 0.08), 0 0 0 1px rgba(59, 130, 246, 0.1);
+      transition:all .3s ease;position:relative;
+      border-top: 3px solid #3b82f6;
+    }
+    .position-group:hover{
+      transform:translateY(-3px);
+      box-shadow:0 8px 25px rgba(30, 41, 59, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.3);
+      border-top-color: #1d4ed8;
+    }
+    .position-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:1rem;padding-bottom:.8rem;
+      border-bottom:2px solid rgba(59, 130, 246, 0.2);
+    }
+    .position-title{
+      font-size:1.5rem;font-weight:900;color:#1e293b;
+      font-family:Georgia,serif;display:flex;align-items:center;gap:.8rem;
+    }
+    .position-icon{
+      width:36px;height:36px;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%);
+      color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-size:.9rem;font-weight:700;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .depth-count{
+      background: #f1f5f9;color:#64748b;
+      padding:.4rem .8rem;border-radius:12px;font-size:.85rem;font-weight:600;
+      border: 1px solid #e2e8f0;
+    }
+    .players-container{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;}
+    .player-card{
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      color:#475569;padding:.8rem 1.2rem;border-radius:12px;font-weight:600;font-size:1rem;
+      box-shadow:0 2px 8px rgba(30, 41, 59, 0.08);
+      transition:all .3s ease;cursor:pointer;overflow:hidden;position:relative;
+      border: 1px solid #e2e8f0;
+    }
+    .player-card::before{
+      content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(59, 130, 246,.3),transparent);
+      transition:left .5s;
+    }
+    .player-card:hover::before{left:100%;}
+    .player-card:hover{
+      transform:translateY(-3px) scale(1.05);
+      box-shadow:0 6px 20px rgba(59, 130, 246,.3);
+      color:#1e293b;
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+    .player-card.starter{
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      color:#ffffff;
+      border:2px solid rgba(16, 185, 129, 0.5);font-size:1.1rem;padding:1rem 1.4rem;
+      box-shadow:0 6px 20px rgba(16, 185, 129,.3);
+    }
+    .player-card.starter:hover{
+      box-shadow:0 10px 30px rgba(16, 185, 129,.5);
+    }
+    .player-card.twoway{
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+      color:#ffffff;position:relative;
+      box-shadow:0 4px 12px rgba(220, 38, 38,.3);
+    }
+    .player-card.twoway:hover{
+      box-shadow:0 8px 25px rgba(220, 38, 38,.5);
+    }
+    .player-card.twoway::after{
+      content:"2‑WAY";position:absolute;top:-8px;right:-8px;
+      background:#ffffff;color:#dc2626;font-size:.65rem;padding:.3rem .5rem;border-radius:8px;
+      font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:10;white-space:nowrap;
+    }
     .depth-separator{color:#94a3b8;font-size:1.2rem;font-weight:300;margin:0 .5rem;}
-    .notes-section{background:#fff;border-radius:16px;padding:2rem;margin-top:2rem;
-      box-shadow:0 4px 16px rgba(30,41,59,.08);border-top:3px solid #3b82f6;}
-    .notes-title{color:#1e293b;font-weight:900;font-size:1.5rem;font-family:Georgia,serif;
-      margin-bottom:1.2rem;}
+
+    /* -------------- Notes section -------------- */
+    .notes-section{
+      background: #ffffff;
+      border-radius:16px;padding:2rem;margin-top:2rem;
+      box-shadow:0 4px 16px rgba(30, 41, 59, 0.08), 0 0 0 1px rgba(59, 130, 246, 0.1);
+      border-top: 3px solid #3b82f6;
+    }
+    .notes-title{
+      font-size:1.5rem;color:#1e293b;font-weight:900;margin-bottom:1.2rem;
+      font-family:Georgia,serif;
+    }
     .notes-list{list-style:none;padding:0;}
-    .notes-list li{border-bottom:1px solid rgba(59,130,246,.15);color:#475569;
-      display:flex;gap:1rem;padding:.8rem 0;}
+    .notes-list li{
+      padding:.8rem 0;border-bottom:1px solid rgba(59, 130, 246, 0.15);
+      display:flex;align-items:center;gap:1rem;
+      color:#475569;
+    }
     .notes-list li:last-child{border-bottom:none;}
-    .note-icon{width:24px;height:24px;border-radius:8px;display:flex;
-      align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#fff;
-      box-shadow:0 2px 6px rgba(0,0,0,.2);}
-    .note-icon.roster{background:linear-gradient(135deg,#059669,#10b981);}
-    .note-icon.twoway{background:linear-gradient(135deg,#dc2626,#ef4444);}
-    .note-icon.info{background:linear-gradient(135deg,#0ea5e9,#06b6d4);}
+    .note-icon{
+      width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+      font-size:.8rem;font-weight:700;color:#fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+    .note-icon.roster{background: linear-gradient(135deg, #059669, #10b981);}
+    .note-icon.twoway{background: linear-gradient(135deg, #dc2626, #ef4444);}
+    .note-icon.info{background: linear-gradient(135deg, #0ea5e9, #06b6d4);}
+
+    /* -------------- Export button & modal -------------- */
     .export-container{text-align:center;margin-bottom:2rem;}
-    .export-btn{background:linear-gradient(135deg,#3b82f6 0,#1d4ed8 50%,#1e40af 100%);
-      border:none;color:#fff;border-radius:12px;font-size:1.1rem;cursor:pointer;
-      transition:all .3s;box-shadow:0 6px 20px rgba(59,130,246,.4);padding:1rem 2rem;}
-    .export-btn:hover{transform:translateY(-3px);
-      box-shadow:0 10px 30px rgba(59,130,246,.6);}
-    .export-btn:disabled{cursor:not-allowed;opacity:.7;}
-    .export-modal{background:rgba(0,0,0,.9);position:fixed;top:0;left:0;width:100%;height:100%;
-      display:none;align-items:center;justify-content:center;z-index:2000;}
-    .export-modal-content{background:#fff;border-radius:20px;padding:2.5rem;
-      max-width:600px;width:90%;max-height:80vh;overflow-y:auto;text-align:center;
-      position:relative;box-shadow:0 20px 40px rgba(0,0,0,.3);border-top:3px solid #3b82f6;}
-    .export-preview{max-width:100%;height:auto;border-radius:12px;
-      box-shadow:0 8px 25px rgba(0,0,0,.4);margin-bottom:1.5rem;}
+    .export-btn{
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%);
+      color:#fff;border:none;padding:1rem 2rem;border-radius:12px;
+      font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .3s ease;
+      box-shadow:0 6px 20px rgba(59, 130, 246,.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      letter-spacing:0.3px;
+    }
+    .export-btn:hover{
+      transform:translateY(-3px);
+      box-shadow:0 10px 30px rgba(59, 130, 246,.6);
+    }
+    .export-btn:disabled{opacity:.7;cursor:not-allowed;transform:none;}
+
+    .export-modal{
+      display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(0,0,0,.9);z-index:2000;justify-content:center;align-items:center;
+    }
+    .export-modal-content{
+      background: #ffffff;
+      border-radius:20px;padding:2.5rem;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;
+      text-align:center;position:relative;
+      box-shadow:0 20px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(59, 130, 246, 0.2);
+      border-top: 3px solid #3b82f6;
+    }
+    .export-preview{
+      max-width:100%;height:auto;border-radius:12px;
+      box-shadow:0 8px 25px rgba(0,0,0,.4);margin-bottom:1.5rem;
+    }
     .export-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
-    .copy-btn,.download-btn,.close-btn{background:linear-gradient(135deg,#3b82f6,#1d4ed8);
-      border:none;border-radius:10px;color:#fff;font-weight:600;padding:.8rem 1.5rem;
-      transition:all .3s;font-size:.95rem;}
-    .download-btn{background:linear-gradient(135deg,#059669,#10b981);}
-    .close-btn{background:linear-gradient(135deg,#64748b,#475569);}
-    .copy-btn:hover,.download-btn:hover,.close-btn:hover{transform:translateY(-2px);}
+    .copy-btn,.download-btn,.close-btn{
+      padding:.8rem 1.5rem;border:none;border-radius:10px;font-weight:600;cursor:pointer;
+      transition:all .3s ease;font-size:.95rem;
+    }
+    .copy-btn{
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);color:#fff;
+      box-shadow:0 4px 12px rgba(59, 130, 246,.3);
+    }
+    .download-btn{
+      background: linear-gradient(135deg, #059669, #10b981);color:#fff;
+      box-shadow:0 4px 12px rgba(16, 185, 129,.3);
+    }
+    .close-btn{
+      background: linear-gradient(135deg, #64748b, #475569);color:#fff;
+      box-shadow:0 4px 12px rgba(100, 116, 139,.3);
+    }
+    .copy-btn:hover,.download-btn:hover,.close-btn:hover{
+      transform:translateY(-2px);
+    }
+
+    /* -------------- Back‑home button -------------- */
     .back-home{margin:3rem 0 0;text-align:center;}
-    .back-home-btn{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;color:#475569;
-      display:inline-block;font-size:1.1rem;font-weight:600;padding:1rem 2.5rem;text-decoration:none;
-      transition:all .3s;}
-    .back-home-btn:hover{background:linear-gradient(135deg,#3b82f6 0,#1d4ed8 100%);
-      color:#fff;transform:translateY(-2px);box-shadow:0 6px 20px rgba(59,130,246,.3);}
-    @media(max-width:1400px){.content-wrapper{padding:0 20px}}
-    @media(max-width:950px){.depth-main-content{padding:1.5rem}
-      .page-title{font-size:2.4rem}}
-    @media(max-width:900px){.depth-main-content{margin-left:1rem;margin-right:1rem;
-      padding:1.2rem} .basketball-court{padding:1rem}
-      .players-container{justify-content:center} .player-card{font-size:.9rem;padding:.6rem .8rem}}
-    @media(max-width:600px){.depth-controls{gap:.5rem}
-      .control-btn{font-size:.8rem;padding:.6rem 1rem}
-      .page-title{font-size:2rem}}
+    .back-home-btn{
+      display:inline-block;
+      background: #f8fafc;
+      color:#475569;padding:1rem 2.5rem;border-radius:12px;font-size:1.1rem;font-weight:600;
+      text-decoration:none;
+      box-shadow:0 4px 12px rgba(30, 41, 59,.1);
+      transition:all .3s ease;
+      border: 1px solid #e2e8f0;
+    }
+    .back-home-btn:hover{
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color:#ffffff;
+      transform:translateY(-2px);
+      box-shadow:0 6px 20px rgba(59, 130, 246,.3);
+    }
+
+    /* -------------- Responsive tweaks -------------- */
+    @media(max-width:1400px){ .content-wrapper{padding:0 20px;} }
+    @media(max-width:950px){
+      .depth-main-content{padding:1.5rem;}
+      .page-title{font-size:2.4rem;}
+    }
+    @media(max-width:900px){
+      .depth-main-content{padding:1.2rem;margin-left:1rem;margin-right:1rem;}
+      .basketball-court{padding:1rem;}
+      .players-container{justify-content:center;}
+      .player-card{font-size:.9rem;padding:.6rem .8rem;}
+      .page-title-section{padding:2rem 0 3rem;}
+    }
+    @media(max-width:600px){
+      .depth-controls{gap:.5rem;}
+      .control-btn{font-size:.8rem;padding:.6rem 1rem;}
+      .page-title{font-size:2rem;}
+      .page-title-section{padding:1.5rem 0 2.5rem;}
+    }
   </style>
 </head>
-
-<!-- =====================  YOUR AD SCRIPT ===================== -->
-<script>(function(d,z,s){s.src='https://'+d+'/400/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('vemtoutcheeg.com',9737890,document.createElement('script'))</script>
-<!-- =========================================================== -->
 
 <body>
   <!-- Navbar is injected by nav.js -->
   <script src="nav.js"></script>
 
-  <div class="main-container">
-    <div class="page-header">
-      <h1 class="page-title">Sixers Depth Chart</h1>
+  <!-- Hero Section -->
+  <section class="page-header">
+    <div class="page-header-content">
+      <h1 class="page-title">Sixers <span class="highlight">Depth Chart</span></h1>
       <p class="page-subtitle">Elite Basketball Intel</p>
     </div>
+  </section>
 
-    <div class="content-wrapper">
-      <main class="depth-main-content">
+  <div class="content-wrapper">
+    <!-- ================= Main content ================= -->
+    <main class="depth-main-content">
 
-        <div class="export-container">
-          <button class="export-btn" id="exportBtn">📸 Export for Social Media</button>
+      <!-- Export button -->
+      <div class="export-container">
+        <button class="export-btn" id="exportBtn">📸 Export for Social Media</button>
+      </div>
+
+      <!-- Controls -->
+      <div class="depth-controls">
+        <button class="control-btn active" data-view="all">All Players</button>
+        <button class="control-btn" data-view="starters">Starters Only</button>
+        <button class="control-btn" data-view="bench">Bench Players</button>
+        <button class="control-btn" data-view="twoway">Two‑Way Contracts</button>
+      </div>
+
+      <!-- Basketball court -->
+      <div class="basketball-court">
+        <!-- POINT GUARD -->
+        <div class="position-group" data-position="pg">
+          <div class="position-header">
+            <div class="position-title"><div class="position-icon">PG</div>Point Guard</div>
+            <div class="depth-count">4 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="maxey" data-type="starter">Maxey</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="mccain" data-type="bench">McCain</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="lowry" data-type="bench">Lowry</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card twoway" data-player="sallis" data-type="twoway">Sallis</div>
+          </div>
         </div>
-
-        <div class="depth-controls">
-          <button class="control-btn active" data-view="all">All Players</button>
-          <button class="control-btn" data-view="starters">Starters Only</button>
-          <button class="control-btn" data-view="bench">Bench Players</button>
-          <button class="control-btn" data-view="twoway">Two‑Way Contracts</button>
+        <!-- SHOOTING GUARD -->
+        <div class="position-group" data-position="sg">
+          <div class="position-header">
+            <div class="position-title"><div class="position-icon">SG</div>Shooting Guard</div>
+            <div class="depth-count">3 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="edgecombe" data-type="starter">Edgecombe</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="grimes" data-type="bench">Grimes</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="gordon" data-type="bench">Gordon</div>
+          </div>
         </div>
-
-        <div class="basketball-court">
-          <!-- Point Guard -->
-          <div class="position-group" data-position="pg">
-            <div class="position-header">
-              <div class="position-title"><div class="position-icon">PG</div>Point Guard</div>
-              <div class="depth-count">4 players</div>
-            </div>
-            <div class="players-container">
-              <div class="player-card starter" data-player="maxey" data-type="starter">Maxey</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="mccain" data-type="bench">McCain</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="lowry" data-type="bench">Lowry</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card twoway" data-player="sallis" data-type="twoway">Sallis</div>
-            </div>
+        <!-- SMALL FORWARD -->
+        <div class="position-group" data-position="sf">
+          <div class="position-header">
+            <div class="position-title"><div class="position-icon">SF</div>Small Forward</div>
+            <div class="depth-count">3 players</div>
           </div>
-
-          <!-- Shooting Guard -->
-          <div class="position-group" data-position="sg">
-            <div class="position-header">
-              <div class="position-title"><div class="position-icon">SG</div>Shooting Guard</div>
-              <div class="depth-count">3 players</div>
-            </div>
-            <div class="players-container">
-              <div class="player-card starter" data-player="grimes" data-type="starter">Grimes</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="edgecombe" data-type="bench">Edgecombe</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="gordon" data-type="bench">Gordon</div>
-            </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="george" data-type="starter">George</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="oubre" data-type="bench">Oubre</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="edwards" data-type="bench">Edwards</div>
           </div>
-
-          <!-- Small Forward -->
-          <div class="position-group" data-position="sf">
-            <div class="position-header">
-              <div class="position-title"><div class="position-icon">SF</div>Small Forward</div>
-              <div class="depth-count">3 players</div>
-            </div>
-            <div class="players-container">
-              <div class="player-card starter" data-player="george" data-type="starter">George</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="oubre" data-type="bench">Oubre</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="edwards" data-type="bench">Edwards</div>
-            </div>
-          </div>
-
-          <!-- Power Forward -->
-          <div class="position-group" data-position="pf">
-            <div class="position-header">
-              <div class="position-title"><div class="position-icon">PF</div>Power Forward</div>
-              <div class="depth-count">4 players</div>
-            </div>
-            <div class="players-container">
-              <div class="player-card starter" data-player="watford" data-type="starter">Watford</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="broome" data-type="bench">Broome</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card twoway" data-player="walker" data-type="twoway">Walker</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card twoway" data-player="barlow" data-type="twoway">Barlow</div>
-            </div>
-          </div>
-
-          <!-- Center -->
-          <div class="position-group" data-position="c">
-            <div class="position-header">
-              <div class="position-title"><div class="position-icon">C</div>Center</div>
-              <div class="depth-count">3 players</div>
-            </div>
-            <div class="players-container">
-              <div class="player-card starter" data-player="embiid" data-type="starter">Embied</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="bona" data-type="bench">Bona</div>
-              <div class="depth-separator">|</div>
-              <div class="player-card" data-player="drummond" data-type="bench">Drummond</div>
-            </div>
-          </div>
-        </div> <!-- .basketball-court -->
-
-        <div class="notes-section">
-          <h3 class="notes-title">Depth Chart Key & Notes</h3>
-          <ul class="notes-list">
-            <li><div class="note-icon roster">✓</div><span><strong>Green Cards:</strong> Starting lineup players</span></li>
-            <li><div class="note-icon">🔵</div><span><strong>Blue Cards:</strong> Regular roster players</span></li>
-            <li><div class="note-icon twoway">2</div><span><strong>Red Cards:</strong> Two‑Way contract players</span></li>
-            <li><div class="note-icon info">ℹ</div><span>Depth chart reflects based on performance, injuries, and coaching decisions.</span></li>
-            <li><div class="note-icon info">⚡</div><span>The backcourt chemistry between Maxey and McCain will be crucial for the team's defensive success.</span></li>
-          </ul>
         </div>
-
-        <div class="back-home">
-          <a href="/home" class="back-home-btn">← Back to Home</a>
+        <!-- POWER FORWARD -->
+        <div class="position-group" data-position="pf">
+          <div class="position-header">
+            <div class="position-title"><div class="position-icon">PF</div>Power Forward</div>
+            <div class="depth-count">4 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="watford" data-type="starter">Watford</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card twoway" data-player="barlow" data-type="twoway">Barlow</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="broome" data-type="bench">Broome</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card twoway" data-player="walker" data-type="twoway">Walker</div>
+          </div>
         </div>
-      </main>
-    </div> <!-- .content-wrapper -->
-  </div> <!-- .main-container -->
+        <!-- CENTER -->
+        <div class="position-group" data-position="c">
+          <div class="position-header">
+            <div class="position-title"><div class="position-icon">C</div>Center</div>
+            <div class="depth-count">3 players</div>
+          </div>
+          <div class="players-container">
+            <div class="player-card starter" data-player="embiid" data-type="starter">Embiid</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="bona" data-type="bench">Bona</div>
+            <div class="depth-separator">|</div>
+            <div class="player-card" data-player="drummond" data-type="bench">Drummond</div>
+          </div>
+        </div>
+      </div> <!-- .basketball-court -->
 
-  <!-- Export modal -->
+      <!-- Notes section -->
+      <div class="notes-section">
+        <h3 class="notes-title">Depth Chart Key & Notes</h3>
+        <ul class="notes-list">
+          <li><div class="note-icon roster">✓</div><span><strong>Green Cards:</strong> Starting lineup players</span></li>
+          <li><div class="note-icon">🔵</div><span><strong>Blue Cards:</strong> Regular roster players</span></li>
+          <li><div class="note-icon twoway">2</div><span><strong>Red Cards:</strong> Two‑Way contract players</span></li>
+          <li><div class="note-icon info">ℹ</div><span>Depth chart reflects based on performance, injuries, and coaching decisions.</span></li>
+          <li><div class="note-icon info">⚡</div><span>The backcourt chemistry between Maxey and McCain will be crucial for the team's defensive success.</span></li>
+        </ul>
+      </div>
+
+
+    </main>
+  </div> <!-- .content-wrapper -->
+
+  <!-- Export modal (hidden by default) -->
   <div id="exportModal" class="export-modal">
     <div class="export-modal-content">
       <h2 style="color:#1e293b;margin-bottom:1rem;">Export Depth Chart</h2>
@@ -282,18 +491,16 @@
     </div>
   </div>
 
-  <!-- Player modal (unused in this example) -->
   <div class="player-modal" id="playerModal">
     <div class="modal-content">
-      <button class="modal-close" onclick="closePlayerModal()">×</button>
+      <button class="modal-close" onclick="closePlayerModal()">&times;</button>
       <div id="modalContent"></div>
     </div>
   </div>
 
-  <!-- Page‑specific scripts -->
   <script>
-    /* --------- Controls & Export logic (unchanged) --------- */
     document.addEventListener('DOMContentLoaded', () => {
+      /* Controls */
       const controlBtns = document.querySelectorAll('.control-btn');
       const playerCards = document.querySelectorAll('.player-card');
       const positionGroups = document.querySelectorAll('.position-group');
@@ -309,20 +516,35 @@
       function filterPlayers(view) {
         playerCards.forEach(card => {
           const type = card.dataset.type;
-          card.style.opacity = (view === 'all' || type === view) ? 1 : 0.3;
+          let show = false;
+          switch(view){
+            case 'all':      show = true; break;
+            case 'starters': show = type === 'starter'; break;
+            case 'bench':    show = type === 'bench'; break;
+            case 'twoway':   show = type === 'twoway'; break;
+          }
+          card.style.opacity = show ? '1' : '0.3';
         });
         updateDepthCounts(view);
       }
 
-      function updateDepthCounts(view) {
+      function updateDepthCounts(view){
         positionGroups.forEach(group => {
-          const cards = group.querySelectorAll('.player-card');
-          const count = Array.from(cards).filter(c => view === 'all' || c.dataset.type === view).length;
-          group.querySelector('.depth-count').textContent = `${count} player${count !== 1 ? 's' : ''}`;
+          const cards = Array.from(group.querySelectorAll('.player-card'));
+          const count = cards.filter(c => {
+            const type = c.dataset.type;
+            switch(view){
+              case 'all':      return true;
+              case 'starters': return type==='starter';
+              case 'bench':    return type==='bench';
+              case 'twoway':   return type==='twoway';
+            }
+          }).length;
+          group.querySelector('.depth-count').textContent = `${count} player${count!==1?'s':''}`;
         });
       }
 
-      /* Export modal */
+      /* Export modal logic */
       const exportBtn    = document.getElementById('exportBtn');
       const exportModal  = document.getElementById('exportModal');
       const exportCanvas = document.getElementById('exportCanvas');
@@ -334,10 +556,12 @@
       exportBtn.addEventListener('click', async () => {
         exportBtn.disabled = true;
         exportBtn.textContent = '📸 Generating…';
-        try {
+        try{
           const html2canvas = await import('https://cdn.skypack.dev/html2canvas');
           const courtEl = document.querySelector('.basketball-court');
-          const canvas = await html2canvas.default(courtEl, {backgroundColor:'#f1f5f9',scale:2,useCORS:true,allowTaint:true});
+          const canvas = await html2canvas.default(courtEl, {
+            backgroundColor:'#f1f5f9', scale:2, useCORS:true, allowTaint:true
+          });
 
           const footerHeight = 120;
           const finalCanvas = document.createElement('canvas');
@@ -345,10 +569,11 @@
           finalCanvas.height = canvas.height + footerHeight;
           const ctx = finalCanvas.getContext('2d');
 
-          ctx.fillStyle = '#fff';
+          // Light background for professional look
+          ctx.fillStyle = '#ffffff';
           ctx.fillRect(0,0,finalCanvas.width,finalCanvas.height);
           ctx.strokeStyle = '#3b82f6';
-          ctx.lineWidth   = 4;
+          ctx.lineWidth = 4;
           ctx.strokeRect(20,20,finalCanvas.width-40,finalCanvas.height-40);
 
           ctx.drawImage(canvas,20,20);
@@ -356,18 +581,18 @@
           const y = finalCanvas.height - 60;
           ctx.fillStyle = '#1e293b';
           ctx.font = 'bold 28px Georgia,serif';
-         Align = 'center';
-          ctx.fillText('SixersHoops.com',finalCanvas.width/2,y);
+          ctx.textAlign = 'center';
+          ctx.fillText('SixersHoops.com', finalCanvas.width/2, y);
 
           ctx.fillStyle = '#3b82f6';
-          ctx.font = '18px Arial, sans-serif';
-          ctx.fillText('Philadelphia 76ers Depth Chart',finalCanvas.width/2,y+30);
+          ctx.font = '18px Arial,sans-serif';
+          ctx.fillText('Philadelphia 76ers Depth Chart', finalCanvas.width/2, y+30);
 
           ctx.strokeStyle = '#3b82f6';
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(finalCanvas.width/2-150,y);
-          ctx.lineTo(finalCanvas.width/2+150,y);
+          ctx.moveTo(finalCanvas.width/2-150, y-20);
+          ctx.lineTo(finalCanvas.width/2+150, y-20);
           ctx.stroke();
 
           exportModal.style.display = 'flex';
@@ -376,15 +601,20 @@
           exportCanvas.width  = finalCanvas.width;
           exportCanvas.height = finalCanvas.height;
           exportCanvas.getContext('2d').drawImage(finalCanvas,0,0);
-        } catch (err) { console.error(err); alert('Export failed – please try again.'); }
-        finally { exportBtn.disabled = false; exportBtn.textContent = '📸 Export for Social Media'; }
+        }catch(err){
+          console.error(err);
+          alert('Export failed – please try again.');
+        }finally{
+          exportBtn.disabled = false;
+          exportBtn.textContent = '📸 Export for Social Media';
+        }
       });
 
       copyBtn.addEventListener('click', async () => {
-        exportCanvas.toBlob(async blob => {
-          await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+        exportCanvas.toBlob(async blob=>{
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
           copyBtn.textContent = '✅ Copied!';
-          setTimeout(() => copyBtn.textContent = '📋 Copy to Clipboard',2000);
+          setTimeout(()=>copyBtn.textContent='📋 Copy to Clipboard',2000);
         });
       });
 
@@ -395,18 +625,15 @@
         a.click();
       });
 
-      closeModal.addEventListener('click', () => exportModal.style.display = 'none');
-      exportModal.addEventListener('click', e => { if(e.target === exportModal) exportModal.style.display = 'none'; });
-      document.addEventListener('keydown', e => {
-        if(e.key === 'Escape' && exportModal.style.display === 'flex')
-          exportModal.style.display = 'none';
-      });
+      closeModal.addEventListener('click',()=>exportModal.style.display='none');
+      exportModal.addEventListener('click',e=>{ if(e.target===exportModal) exportModal.style.display='none';});
+      document.addEventListener('keydown',e=>{ if(e.key==='Escape' && exportModal.style.display==='flex') exportModal.style.display='none';});
     });
 
-    function closePlayerModal() { document.getElementById('playerModal').style.display = 'none'; }
-    window.addEventListener('click', e => {
+    function closePlayerModal(){ document.getElementById('playerModal').style.display='none'; }
+    window.addEventListener('click',e=>{
       const m = document.getElementById('playerModal');
-      if(e.target === m) m.style.display = 'none';
+      if(e.target===m) m.style.display='none';
     });
   </script>
 </body>
