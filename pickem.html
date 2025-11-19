@@ -2041,10 +2041,18 @@
         // Pre-populate with existing correct answer if available
         if (q.correctAnswer !== undefined && q.correctAnswer !== null) {
           if (q.question_type === 'yes_no' || q.question_type === 'multiple_choice') {
-            const radio = document.querySelector(`input[name="answer_${idx}"][value="${q.correctAnswer}"]`);
-            if (radio) {
-              radio.checked = true;
-              updateAnswerIndicator(idx);
+            if (q.question_type === 'multiple_choice' && typeof q.correctAnswer === 'string' && q.correctAnswer.includes(',')) {
+              const answers = q.correctAnswer.split(',').map(a => a.trim());
+              answers.forEach(ans => {
+                const checkbox = document.querySelector(`input[name="answer_${idx}"][value="${ans}"]`);
+                if (checkbox) checkbox.checked = true;
+              });
+            } else {
+              const radio = document.querySelector(`input[name="answer_${idx}"][value="${q.correctAnswer}"]`);
+              if (radio) {
+                radio.checked = true;
+                updateAnswerIndicator(idx);
+              }
             }
           } else if (q.question_type === 'numeric') {
             const numInput = document.querySelector(`input[name="answer_${idx}"]`);
@@ -2104,9 +2112,13 @@
         let answer = null;
 
         for (let input of inputs) {
-          if (input.type === 'radio' && input.checked) {
-            answer = input.value;
-            break;
+          if ((input.type === 'radio' || input.type === 'checkbox') && input.checked) {
+            if (input.type === 'checkbox') {
+              answer = answer ? answer + ',' + input.value : input.value;
+            } else {
+              answer = input.value;
+              break;
+            }
           } else if (input.type === 'number' && input.value) {
             answer = parseFloat(input.value);
             break;
