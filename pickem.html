@@ -1138,10 +1138,7 @@
 
           <div style="margin-bottom: 2rem;">
             <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-              <div style="display: flex; gap: 12px; margin-bottom: 2rem;">
-                <button class="btn btn-secondary" id="addQuestionTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">➕ Add Questions</button>
-                <button class="btn btn-secondary" id="scheduleTabBtn" style="flex: 1; background: #fef2f2; color: var(--accent); border: 2px solid var(--accent);">⏰ Schedule Release</button>
-              </div>
+              <button class="btn btn-secondary" id="addQuestionTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">➕ Add Questions</button>
               <button class="btn btn-secondary" id="markAnswersTabBtn" style="flex: 1;">✅ Mark Correct Answers</button>
             </div>
 
@@ -1203,26 +1200,6 @@
             </div>
 
             <!-- Mark Answers Tab -->
-            <!-- Schedule Release Time Tab -->
-            <div id="scheduleTab" style="display: none;">
-              <div class="admin-form">
-                <div class="form-group">
-                  <label class="form-label">Select Date</label>
-                  <input type="date" id="scheduleReleaseDate" class="form-input" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Release Time</label>
-                  <input type="time" id="scheduleReleaseTime" class="form-input" />
-                </div>
-                <button class="btn btn-primary" id="saveReleaseTimeBtn" style="width: 100%;">⏰ Schedule Release</button>
-              </div>
-
-              <div class="admin-questions-list">
-                <h3>Scheduled Release Times</h3>
-                <div id="releaseTimesList" style="display: grid; gap: 12px;"></div>
-              </div>
-            </div>
-
             <div id="markAnswersTab" style="display: none;">
               <div class="admin-form">
                 <h3 style="margin-top: 0;">Mark Correct Answers</h3>
@@ -1781,124 +1758,6 @@
     });
 
     // Add question to admin list
-    // Schedule Tab Button Handler
-    document.getElementById('scheduleTabBtn').addEventListener('click', () => {
-      document.getElementById('addQuestionTab').style.display = 'none';
-      document.getElementById('scheduleTab').style.display = 'block';
-      document.getElementById('markAnswersTab').style.display = 'none';
-
-      document.getElementById('scheduleTabBtn').style.background = '#fef2f2';
-      document.getElementById('scheduleTabBtn').style.color = 'var(--accent)';
-      document.getElementById('scheduleTabBtn').style.border = '2px solid var(--accent)';
-
-      document.getElementById('addQuestionTabBtn').style.background = 'transparent';
-      document.getElementById('addQuestionTabBtn').style.color = 'var(--muted)';
-      document.getElementById('addQuestionTabBtn').style.border = 'none';
-
-      document.getElementById('markAnswersTabBtn').style.background = 'transparent';
-      document.getElementById('markAnswersTabBtn').style.color = 'var(--muted)';
-      document.getElementById('markAnswersTabBtn').style.border = 'none';
-
-      loadScheduledReleaseTimes();
-    });
-
-    // Save Release Time Handler
-    document.getElementById('saveReleaseTimeBtn').addEventListener('click', async () => {
-      if (!checkAdminPermission()) return;
-
-      const dateInput = document.getElementById('scheduleReleaseDate').value;
-      const timeInput = document.getElementById('scheduleReleaseTime').value;
-
-      if (!dateInput || !timeInput) {
-        showMessage('⚠️ Please select both date and time', 'error', 'releaseTimeStatus');
-        return;
-      }
-
-      try {
-        const combinedDateTime = new Date(`${dateInput}T${timeInput}`);
-        
-        await db.collection('releaseSchedules').doc(dateInput).set({
-          date: dateInput,
-          releaseTime: timeInput,
-          releaseDateTime: combinedDateTime,
-          createdAt: new Date(),
-          status: 'scheduled'
-        }, { merge: true });
-
-        showMessage(`✅ Release time set for ${dateInput} at ${timeInput}`, 'success', 'releaseTimeStatus');
-        document.getElementById('scheduleReleaseDate').value = '';
-        document.getElementById('scheduleReleaseTime').value = '';
-        loadScheduledReleaseTimes();
-      } catch (error) {
-        console.error('Error saving release time:', error);
-        showMessage(`❌ Error: ${error.message}`, 'error', 'releaseTimeStatus');
-      }
-    });
-
-    // Load Scheduled Release Times
-    async function loadScheduledReleaseTimes() {
-      try {
-        const snapshot = await db.collection('releaseSchedules').get();
-        const releasesList = document.getElementById('releaseTimesList');
-        releasesList.innerHTML = '';
-
-        if (snapshot.empty) {
-          releasesList.innerHTML = '<p style="color: var(--muted); text-align: center;">No scheduled releases yet</p>';
-          return;
-        }
-
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const dateStr = data.date;
-          const timeStr = data.releaseTime;
-          const releaseDateTime = new Date(`${dateStr}T${timeStr}`);
-          const nowTime = new Date();
-          const isLive = nowTime >= releaseDateTime;
-
-          const itemEl = document.createElement('div');
-          itemEl.style.cssText = `
-            background: ${isLive ? 'rgba(16, 185, 129, 0.05)' : 'rgba(0, 61, 166, 0.05)'};
-            border-left: 4px solid ${isLive ? 'var(--success)' : 'var(--brand)'};
-            padding: 1rem;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          `;
-          
-          itemEl.innerHTML = `
-            <div>
-              <strong style="font-size: 1rem;">${dateStr}</strong>
-              <div style="color: var(--muted); font-size: 0.9rem;">Release: ${timeStr}</div>
-              <div style="color: ${isLive ? 'var(--success)' : 'var(--brand)'}; font-weight: 600; font-size: 0.85rem; margin-top: 4px;">
-                ${isLive ? '🟢 LIVE' : '⏳ Scheduled'}
-              </div>
-            </div>
-            <button class="btn btn-secondary" onclick="deleteReleaseSchedule('${dateStr}')" style="background: var(--error); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px;">Delete</button>
-          `;
-          
-          releasesList.appendChild(itemEl);
-        });
-      } catch (error) {
-        console.error('Error loading release times:', error);
-      }
-    }
-
-    // Delete Release Schedule
-    window.deleteReleaseSchedule = async (dateStr) => {
-      if (!checkAdminPermission()) return;
-      if (!confirm(`Delete release schedule for ${dateStr}?`)) return;
-
-      try {
-        await db.collection('releaseSchedules').doc(dateStr).delete();
-        showMessage(`✅ Release schedule deleted`, 'success');
-        loadScheduledReleaseTimes();
-      } catch (error) {
-        console.error('Error deleting release schedule:', error);
-        showMessage(`❌ Error: ${error.message}`, 'error');
-      }
-    };
-
     document.getElementById('addQuestionBtn').addEventListener('click', () => {
       if (!checkAdminPermission()) return;
       
@@ -3198,8 +3057,7 @@
           console.warn(`  Searched for exact match: "${dateStr}"`);
           console.warn(`  Are there any questions saved at all? Check collection above.`);
           todayQuestions = [];
-          const shouldRender = await checkReleaseTimeAndRender();
-          if (shouldRender) renderQuestions();
+          renderQuestions();
           return;
         }
 
@@ -3217,8 +3075,7 @@
           }
         }
         
-        const shouldRender = await checkReleaseTimeAndRender();
-        if (shouldRender) renderQuestions();
+        renderQuestions();
         
         // Check if already submitted for this date
         await checkSubmissionForDate(dateStr);
@@ -3230,38 +3087,6 @@
         console.error('Error details:', err.message);
         showMessage('Could not load questions. Please try again.', 'error');
       }
-    }
-
-    // Check if questions should be displayed based on release schedule
-    async function checkReleaseTimeAndRender() {
-      if (currentDate) {
-        try {
-          const releaseDoc = await db.collection('releaseSchedules').doc(currentDate).get();
-          const container = document.getElementById('questionsContainer');
-          
-          if (releaseDoc.exists) {
-            const releaseData = releaseDoc.data();
-            const releaseDateTime = new Date(`${releaseData.date}T${releaseData.releaseTime}`);
-            const nowTime = new Date();
-            
-            if (nowTime < releaseDateTime) {
-              const minutesUntil = Math.ceil((releaseDateTime - nowTime) / 60000);
-              const hoursUntil = Math.ceil(minutesUntil / 60);
-              let timeStr = '';
-              if (hoursUntil > 0) {
-                timeStr = `${hoursUntil} hour${hoursUntil !== 1 ? 's' : ''}`;
-              } else {
-                timeStr = `${minutesUntil} minute${minutesUntil !== 1 ? 's' : ''}`;
-              }
-              container.innerHTML = `<div class="empty-state" style="background: linear-gradient(135deg, rgba(0, 61, 166, 0.08), rgba(225, 29, 72, 0.04)); border-left: 4px solid var(--brand);"><div style="font-size: 2rem; margin-bottom: 1rem;">⏰</div><h3 style="color: var(--brand); margin: 0 0 0.5rem 0;">Coming Soon!</h3><p style="margin: 0; color: var(--muted); margin-bottom: 0.5rem;">Questions will be released in approximately <strong>${timeStr}</strong></p><p style="margin: 0; color: var(--muted); font-size: 0.9rem;">Release time: ${releaseData.releaseTime}</p></div>`;
-              return false;
-            }
-          }
-        } catch (error) {
-          console.log('Release time check error (non-critical):', error);
-        }
-      }
-      return true;
     }
 
     function renderQuestions() {
