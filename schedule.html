@@ -1151,24 +1151,43 @@
       const container = document.getElementById('schedule-container');
       container.innerHTML = '';
 
-      // Group games by month (excluding preseason games)
-      const gamesByMonth = {};
-      scheduleData.forEach(game => {
-        // Skip preseason games
-        if (game.isPreseason) return;
-        
+      // Separate upcoming and completed games (excluding preseason)
+      const upcomingGames = scheduleData.filter(game => game.status === 'upcoming' && !game.isPreseason);
+      const completedGames = scheduleData.filter(game => game.status === 'completed' && !game.isPreseason);
+
+      // Group upcoming games by month
+      const upcomingByMonth = {};
+      upcomingGames.forEach(game => {
         const date = new Date(game.date);
         const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         
-        if (!gamesByMonth[monthYear]) {
-          gamesByMonth[monthYear] = [];
+        if (!upcomingByMonth[monthYear]) {
+          upcomingByMonth[monthYear] = [];
         }
-        gamesByMonth[monthYear].push(game);
+        upcomingByMonth[monthYear].push(game);
       });
 
-      // Render each month
-      Object.keys(gamesByMonth).forEach(monthYear => {
-        const monthSection = createMonthSection(monthYear, gamesByMonth[monthYear]);
+      // Render upcoming games first
+      Object.keys(upcomingByMonth).forEach(monthYear => {
+        const monthSection = createMonthSection(monthYear, upcomingByMonth[monthYear]);
+        container.appendChild(monthSection);
+      });
+
+      // Group completed games by month
+      const completedByMonth = {};
+      completedGames.forEach(game => {
+        const date = new Date(game.date);
+        const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
+        if (!completedByMonth[monthYear]) {
+          completedByMonth[monthYear] = [];
+        }
+        completedByMonth[monthYear].push(game);
+      });
+
+      // Render completed games (in reverse order - newest first)
+      Object.keys(completedByMonth).reverse().forEach(monthYear => {
+        const monthSection = createMonthSection(monthYear, completedByMonth[monthYear]);
         container.appendChild(monthSection);
       });
     }
@@ -1303,53 +1322,83 @@
     // Setup filters
     function setupFilters() {
       const filterButtons = document.querySelectorAll('.filter-btn');
-      const gameCards = document.querySelectorAll('.game-card');
-      const monthSections = document.querySelectorAll('.month-section');
 
       filterButtons.forEach(button => {
         button.addEventListener('click', function() {
-          // Remove active class from all buttons
           filterButtons.forEach(btn => btn.classList.remove('active'));
-          // Add active class to clicked button
           this.classList.add('active');
 
           const filter = this.getAttribute('data-filter');
+          
+          // Re-render with filter applied
+          const container = document.getElementById('schedule-container');
+          container.innerHTML = '';
 
-          // Show/hide game cards based on filter
-          gameCards.forEach(card => {
-            const cardType = card.getAttribute('data-type');
-            const cardMonth = card.getAttribute('data-month');
-            
-            let shouldShow = false;
+          // Filter games
+          let upcomingGames = scheduleData.filter(game => game.status === 'upcoming' && !game.isPreseason);
+          let completedGames = scheduleData.filter(game => game.status === 'completed' && !game.isPreseason);
 
-            if (filter === 'all') {
-              shouldShow = true;
-            } else if (filter === 'home' && cardType.includes('home')) {
-              shouldShow = true;
-            } else if (filter === 'away' && cardType.includes('away')) {
-              shouldShow = true;
-            } else if (filter === 'upcoming' && cardType.includes('upcoming')) {
-              shouldShow = true;
-            } else if (filter === 'completed' && cardType.includes('completed')) {
-              shouldShow = true;
-            } else if (cardMonth === filter) {
-              shouldShow = true;
+          // Apply filter
+          if (filter !== 'all') {
+            upcomingGames = upcomingGames.filter(game => matchesFilter(game, filter));
+            completedGames = completedGames.filter(game => matchesFilter(game, filter));
+          }
+
+          // Group upcoming games by month
+          const upcomingByMonth = {};
+          upcomingGames.forEach(game => {
+            const date = new Date(game.date);
+            const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            if (!upcomingByMonth[monthYear]) {
+              upcomingByMonth[monthYear] = [];
             }
-
-            card.style.display = shouldShow ? 'block' : 'none';
+            upcomingByMonth[monthYear].push(game);
           });
 
-          // Show/hide month sections if they have visible games
-          monthSections.forEach(section => {
-            const visibleGames = section.querySelectorAll('.game-card[style*="display: block"], .game-card:not([style*="display: none"])');
-            if (filter === 'all' || visibleGames.length > 0) {
-              section.style.display = 'block';
-            } else {
-              section.style.display = 'none';
-            }
+          // Render upcoming games first
+          Object.keys(upcomingByMonth).forEach(monthYear => {
+            const monthSection = createMonthSection(monthYear, upcomingByMonth[monthYear]);
+            container.appendChild(monthSection);
           });
+
+          // Group completed games by month
+          const completedByMonth = {};
+          completedGames.forEach(game => {
+            const date = new Date(game.date);
+            const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            if (!completedByMonth[monthYear]) {
+              completedByMonth[monthYear] = [];
+            }
+            completedByMonth[monthYear].push(game);
+          });
+
+          // Render completed games (newest first)
+          Object.keys(completedByMonth).reverse().forEach(monthYear => {
+            const monthSection = createMonthSection(monthYear, completedByMonth[monthYear]);
+            container.appendChild(monthSection);
+          });
+
+          if (upcomingGames.length === 0 && completedGames.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6b7280;">No games found matching the selected filter</div>';
+          }
         });
       });
+    }
+
+    // Helper function to check if game matches filter
+    function matchesFilter(game, filter) {
+      if (filter === 'all') return true;
+      
+      if (filter === 'home' && game.location === 'home') return true;
+      if (filter === 'away' && game.location === 'away') return true;
+      if (filter === 'upcoming' && game.status === 'upcoming') return true;
+      if (filter === 'completed' && game.status === 'completed') return true;
+      
+      const date = new Date(game.date);
+      const monthName = date.toLocaleDateString('en-US', { month: 'long' }).toLowerCase();
+      if (monthName === filter) return true;
+      
+      return false;
     }
 
     // Setup mobile menu
