@@ -1189,18 +1189,6 @@
                   </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                  <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Go-Live Date (Optional)</label>
-                    <input type="date" id="adminQuestionGoLiveDate" class="form-input" />
-                  </div>
-                  <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Go-Live Time (Optional)</label>
-                    <input type="time" id="adminQuestionGoLiveTime" class="form-input" />
-                  </div>
-                </div>
-                <small style="color: var(--muted); display: block; margin-bottom: 1.5rem;">💡 Set the date and time this question goes live (EST timezone). Leave empty for immediate display.</small>
-
                 <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
               </div>
 
@@ -1277,6 +1265,43 @@
             <div id="lockTimeDisplay" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--success); display: none;">
               <p style="margin: 0; font-weight: 700;">Current Lock Time:</p>
               <p id="lockTimeDisplayValue" style="margin: 0.5rem 0 0 0; font-size: 1.2rem; color: var(--success);"></p>
+            </div>
+          </div>
+
+          <!-- Schedule Questions Go-Live Section -->
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+          <div class="go-live-section">
+            <h2>🚀 Schedule Questions Go-Live</h2>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Set when all questions for a specific date become visible to users</p>
+            <div id="goLiveMessage" class="message"></div>
+
+            <div style="background: var(--chip); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Questions Date (when questions are for):</label>
+                <input type="date" id="goLiveQuestionsDate" class="form-input" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Go-Live Date:</label>
+                <input type="date" id="goLiveDate" class="form-input" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Go-Live Time (EST):</label>
+                <input type="time" id="goLiveTime" class="form-input" />
+              </div>
+
+              <small style="color: var(--muted); display: block; margin-bottom: 1.5rem;">💡 Example: Questions for 12/15 go live on 12/13 at 12:00 AM</small>
+
+              <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" id="saveGoLiveBtn">💾 Save Go-Live Schedule</button>
+                <button class="btn btn-secondary" id="loadGoLiveBtn">Load Current Schedule</button>
+              </div>
+            </div>
+
+            <div id="goLiveDisplay" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--success); display: none;">
+              <p style="margin: 0; font-weight: 700;">Current Go-Live Schedule:</p>
+              <p id="goLiveDisplayValue" style="margin: 0.5rem 0 0 0; font-size: 1rem; color: var(--success);"></p>
             </div>
           </div>
 
@@ -1778,8 +1803,6 @@
       const options = document.getElementById('adminOptions').value.trim();
       const weekNumber = document.getElementById('adminQuestionWeek').value.trim();
       const dayOfWeek = document.getElementById('adminQuestionDay').value.trim();
-      const goLiveDate = document.getElementById('adminQuestionGoLiveDate').value.trim();
-      const goLiveTime = document.getElementById('adminQuestionGoLiveTime').value.trim();
 
       if (!text) {
         showMessage('Please enter a question', 'error', 'adminMessage');
@@ -1791,22 +1814,12 @@
         return;
       }
 
-      let goLiveDateTime = null;
-      if (goLiveDate || goLiveTime) {
-        if (!goLiveDate || !goLiveTime) {
-          showMessage('Please set both date and time for go-live schedule', 'error', 'adminMessage');
-          return;
-        }
-        goLiveDateTime = `${goLiveDate}T${goLiveTime}`;
-      }
-
       const newQuestion = {
         question: text,
         question_type: type,
         options: type === 'multiple_choice' ? options : null,
         weekNumber: weekNumber ? parseInt(weekNumber) : null,
         dayOfWeek: dayOfWeek || null,
-        goLiveDateTime: goLiveDateTime,
         tempId: Date.now()
       };
 
@@ -1819,8 +1832,6 @@
       document.getElementById('adminQuestionType').value = 'multiple_choice';
       document.getElementById('adminQuestionWeek').value = '';
       document.getElementById('adminQuestionDay').value = '';
-      document.getElementById('adminQuestionGoLiveDate').value = '';
-      document.getElementById('adminQuestionGoLiveTime').value = '';
       document.getElementById('optionsGroup').style.display = 'none';
       
       showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
@@ -1841,27 +1852,19 @@
         return;
       }
 
-      container.innerHTML = adminQuestions.map((q, index) => {
-        let goLiveDisplay = '';
-        if (q.goLiveDateTime) {
-          const [date, time] = q.goLiveDateTime.split('T');
-          goLiveDisplay = `<div class="admin-question-item-options" style="color: #10b981; margin-top: 0.5rem; font-weight: 600;">🚀 Goes Live: ${date} at ${time}</div>`;
-        }
-        return `
+      container.innerHTML = adminQuestions.map((q, index) => `
         <div class="admin-question-item">
           <div class="admin-question-item-content">
             <div class="admin-question-item-text">${index + 1}. ${q.question}</div>
             <div class="admin-question-item-type">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
             ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
             ${q.weekNumber || q.dayOfWeek ? `<div class="admin-question-item-options" style="color: #3b82f6; margin-top: 0.5rem; font-weight: 600;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
-            ${goLiveDisplay}
           </div>
           <div class="admin-question-item-actions">
             <button class="admin-delete-btn" onclick="deleteAdminQuestion(${q.tempId})">Delete</button>
           </div>
         </div>
-      `;
-      }).join('');
+      `).join('');
     }
 
     // Load questions for a specific date
@@ -1887,8 +1890,7 @@
             ...q,
             tempId: Date.now() + Math.random(),
             weekNumber: q.weekNumber || null,
-            dayOfWeek: q.dayOfWeek || null,
-            goLiveDateTime: q.goLiveDateTime || null
+            dayOfWeek: q.dayOfWeek || null
           }));
           showMessage('Questions loaded successfully', 'success', 'adminMessage');
         }
@@ -2556,6 +2558,93 @@
         document.getElementById('lockTimeDisplay').style.display = 'none';
         
         showMessage(`📅 Lock time date automatically set to ${adminDate}`, 'info', 'lockTimeMessage');
+      }
+    });
+
+    // Save go-live schedule
+    document.getElementById('saveGoLiveBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const questionsDate = document.getElementById('goLiveQuestionsDate').value;
+      const goLiveDate = document.getElementById('goLiveDate').value;
+      const goLiveTime = document.getElementById('goLiveTime').value;
+      
+      if (!questionsDate) {
+        showMessage('Please select the questions date', 'error', 'goLiveMessage');
+        return;
+      }
+      
+      if (!goLiveDate) {
+        showMessage('Please select the go-live date', 'error', 'goLiveMessage');
+        return;
+      }
+      
+      if (!goLiveTime) {
+        showMessage('Please set the go-live time', 'error', 'goLiveMessage');
+        return;
+      }
+
+      try {
+        const goLiveDateTime = `${goLiveDate}T${goLiveTime}`;
+        const snapshot = await db.collection('questionSchedules').where('questionsDate', '==', questionsDate).get();
+        
+        if (!snapshot.empty) {
+          await snapshot.docs[0].ref.update({
+            questionsDate: questionsDate,
+            goLiveDate: goLiveDate,
+            goLiveTime: goLiveTime,
+            goLiveDateTime: goLiveDateTime,
+            updatedAt: new Date().toISOString()
+          });
+          console.log(`📝 Updated go-live schedule for ${questionsDate}`);
+        } else {
+          await db.collection('questionSchedules').add({
+            questionsDate: questionsDate,
+            goLiveDate: goLiveDate,
+            goLiveTime: goLiveTime,
+            goLiveDateTime: goLiveDateTime,
+            createdAt: new Date().toISOString()
+          });
+          console.log(`🆕 Created go-live schedule for ${questionsDate}: ${goLiveDate}T${goLiveTime}`);
+        }
+
+        document.getElementById('goLiveDisplayValue').textContent = `Questions for ${questionsDate} go live on ${goLiveDate} at ${goLiveTime} EST`;
+        document.getElementById('goLiveDisplay').style.display = 'block';
+        showMessage(`✅ Go-live schedule saved successfully!`, 'success', 'goLiveMessage');
+      } catch (err) {
+        console.error('Error saving go-live schedule:', err);
+        showMessage('Error saving go-live schedule: ' + err.message, 'error', 'goLiveMessage');
+      }
+    });
+
+    // Load go-live schedule
+    document.getElementById('loadGoLiveBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const questionsDate = document.getElementById('goLiveQuestionsDate').value;
+      
+      if (!questionsDate) {
+        showMessage('Please select the questions date first', 'error', 'goLiveMessage');
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('questionSchedules').where('questionsDate', '==', questionsDate).get();
+        
+        if (snapshot.empty) {
+          showMessage('No go-live schedule found for this date', 'info', 'goLiveMessage');
+          document.getElementById('goLiveDisplay').style.display = 'none';
+        } else {
+          const data = snapshot.docs[0].data();
+          document.getElementById('goLiveDate').value = data.goLiveDate;
+          document.getElementById('goLiveTime').value = data.goLiveTime;
+          document.getElementById('goLiveDisplayValue').textContent = `Questions for ${data.questionsDate} go live on ${data.goLiveDate} at ${data.goLiveTime} EST`;
+          document.getElementById('goLiveDisplay').style.display = 'block';
+          showMessage('Go-live schedule loaded successfully', 'success', 'goLiveMessage');
+        }
+      } catch (err) {
+        console.error('Error loading go-live schedule:', err);
+        showMessage('Error loading go-live schedule: ' + err.message, 'error', 'goLiveMessage');
       }
     });
 
