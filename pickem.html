@@ -1189,6 +1189,12 @@
                   </div>
                 </div>
 
+                <div class="form-group">
+                  <label class="form-label">Schedule Go-Live Time (Optional)</label>
+                  <input type="time" id="adminQuestionGoLiveTime" class="form-input" />
+                  <small style="color: var(--muted); display: block; margin-top: 0.5rem;">💡 Set the time this question goes live (EST timezone). Leave empty for immediate display.</small>
+                </div>
+
                 <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
               </div>
 
@@ -1766,6 +1772,7 @@
       const options = document.getElementById('adminOptions').value.trim();
       const weekNumber = document.getElementById('adminQuestionWeek').value.trim();
       const dayOfWeek = document.getElementById('adminQuestionDay').value.trim();
+      const goLiveTime = document.getElementById('adminQuestionGoLiveTime').value.trim();
 
       if (!text) {
         showMessage('Please enter a question', 'error', 'adminMessage');
@@ -1783,6 +1790,7 @@
         options: type === 'multiple_choice' ? options : null,
         weekNumber: weekNumber ? parseInt(weekNumber) : null,
         dayOfWeek: dayOfWeek || null,
+        goLiveTime: goLiveTime || null,
         tempId: Date.now()
       };
 
@@ -1795,6 +1803,7 @@
       document.getElementById('adminQuestionType').value = 'multiple_choice';
       document.getElementById('adminQuestionWeek').value = '';
       document.getElementById('adminQuestionDay').value = '';
+      document.getElementById('adminQuestionGoLiveTime').value = '';
       document.getElementById('optionsGroup').style.display = 'none';
       
       showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
@@ -1822,6 +1831,7 @@
             <div class="admin-question-item-type">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
             ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
             ${q.weekNumber || q.dayOfWeek ? `<div class="admin-question-item-options" style="color: #3b82f6; margin-top: 0.5rem; font-weight: 600;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
+            ${q.goLiveTime ? `<div class="admin-question-item-options" style="color: #10b981; margin-top: 0.5rem; font-weight: 600;">🚀 Goes Live: ${q.goLiveTime}</div>` : ''}
           </div>
           <div class="admin-question-item-actions">
             <button class="admin-delete-btn" onclick="deleteAdminQuestion(${q.tempId})">Delete</button>
@@ -1853,7 +1863,8 @@
             ...q,
             tempId: Date.now() + Math.random(),
             weekNumber: q.weekNumber || null,
-            dayOfWeek: q.dayOfWeek || null
+            dayOfWeek: q.dayOfWeek || null,
+            goLiveTime: q.goLiveTime || null
           }));
           showMessage('Questions loaded successfully', 'success', 'adminMessage');
         }
