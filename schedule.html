@@ -906,22 +906,12 @@
       </div>
     </section>
 
-    <!-- Schedule Filters -->
+    <!-- Schedule Actions -->
     <section class="schedule-filters">
-      <h2 class="filter-title">Filter Schedule</h2>
+      <h2 class="filter-title">Quick Actions</h2>
       <div class="filter-buttons">
-        <button class="filter-btn active" data-filter="all">All Games</button>
-        <button class="filter-btn" data-filter="home">Home Games</button>
-        <button class="filter-btn" data-filter="away">Away Games</button>
-        <button class="filter-btn" data-filter="upcoming">Upcoming</button>
-        <button class="filter-btn" data-filter="completed">Completed</button>
-        <button class="filter-btn" data-filter="october">October</button>
-        <button class="filter-btn" data-filter="november">November</button>
-        <button class="filter-btn" data-filter="december">December</button>
-        <button class="filter-btn" data-filter="january">January</button>
-        <button class="filter-btn" data-filter="february">February</button>
-        <button class="filter-btn" data-filter="march">March</button>
-        <button class="filter-btn" data-filter="april">April</button>
+        <button class="filter-btn" id="completedBtn" onclick="scrollToCompleted()">📜 Completed Games</button>
+        <button class="filter-btn" id="backToBackBtn" onclick="showBackToBack()">🔥 Back-to-Back Games</button>
       </div>
     </section>
 
@@ -1319,86 +1309,127 @@
       `;
     }
 
-    // Setup filters
+    // Setup filters (placeholder for compatibility)
     function setupFilters() {
-      const filterButtons = document.querySelectorAll('.filter-btn');
-
-      filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          filterButtons.forEach(btn => btn.classList.remove('active'));
-          this.classList.add('active');
-
-          const filter = this.getAttribute('data-filter');
-          
-          // Re-render with filter applied
-          const container = document.getElementById('schedule-container');
-          container.innerHTML = '';
-
-          // Filter games
-          let upcomingGames = scheduleData.filter(game => game.status === 'upcoming' && !game.isPreseason);
-          let completedGames = scheduleData.filter(game => game.status === 'completed' && !game.isPreseason);
-
-          // Apply filter
-          if (filter !== 'all') {
-            upcomingGames = upcomingGames.filter(game => matchesFilter(game, filter));
-            completedGames = completedGames.filter(game => matchesFilter(game, filter));
-          }
-
-          // Group upcoming games by month
-          const upcomingByMonth = {};
-          upcomingGames.forEach(game => {
-            const date = new Date(game.date);
-            const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            if (!upcomingByMonth[monthYear]) {
-              upcomingByMonth[monthYear] = [];
-            }
-            upcomingByMonth[monthYear].push(game);
-          });
-
-          // Render upcoming games first
-          Object.keys(upcomingByMonth).forEach(monthYear => {
-            const monthSection = createMonthSection(monthYear, upcomingByMonth[monthYear]);
-            container.appendChild(monthSection);
-          });
-
-          // Group completed games by month
-          const completedByMonth = {};
-          completedGames.forEach(game => {
-            const date = new Date(game.date);
-            const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            if (!completedByMonth[monthYear]) {
-              completedByMonth[monthYear] = [];
-            }
-            completedByMonth[monthYear].push(game);
-          });
-
-          // Render completed games (newest first)
-          Object.keys(completedByMonth).reverse().forEach(monthYear => {
-            const monthSection = createMonthSection(monthYear, completedByMonth[monthYear]);
-            container.appendChild(monthSection);
-          });
-
-          if (upcomingGames.length === 0 && completedGames.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6b7280;">No games found matching the selected filter</div>';
-          }
-        });
-      });
+      // Filters are now handled by onclick handlers in the buttons
     }
 
-    // Helper function to check if game matches filter
-    function matchesFilter(game, filter) {
-      if (filter === 'all') return true;
+    // Scroll to completed games section
+    function scrollToCompleted() {
+      const container = document.getElementById('schedule-container');
+      const monthSections = container.querySelectorAll('.month-section');
       
-      if (filter === 'home' && game.location === 'home') return true;
-      if (filter === 'away' && game.location === 'away') return true;
-      if (filter === 'upcoming' && game.status === 'upcoming') return true;
-      if (filter === 'completed' && game.status === 'completed') return true;
+      // Find the first completed games section (going backwards through months)
+      let completedSection = null;
+      for (let i = monthSections.length - 1; i >= 0; i--) {
+        const section = monthSections[i];
+        const gameCards = section.querySelectorAll('.game-card');
+        const hasCompleted = Array.from(gameCards).some(card => card.classList.contains('completed'));
+        if (hasCompleted) {
+          completedSection = section;
+          break;
+        }
+      }
       
-      const date = new Date(game.date);
-      const monthName = date.toLocaleDateString('en-US', { month: 'long' }).toLowerCase();
-      if (monthName === filter) return true;
+      if (completedSection) {
+        completedSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // Show back-to-back games
+    function showBackToBack() {
+      const container = document.getElementById('schedule-container');
+      const backToBackGames = findBackToBackGames();
       
-      return false;
+      if (backToBackGames.length === 0) {
+        alert('No back-to-back games remaining');
+        return;
+      }
+
+      // Clear container and show back-to-back games
+      container.innerHTML = '';
+      
+      // Group by pairs first
+      const pairs = [];
+      for (let i = 0; i < backToBackGames.length; i += 2) {
+        if (i + 1 < backToBackGames.length) {
+          pairs.push([backToBackGames[i], backToBackGames[i + 1]]);
+        }
+      }
+
+      const header = document.createElement('div');
+      header.style.cssText = 'padding: 2rem; text-align: center; background: white; border-radius: 12px; margin-bottom: 2rem; border: 1px solid #e5e7eb;';
+      header.innerHTML = `
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #1f2937; margin-bottom: 0.5rem;">🔥 Back-to-Back Games</h2>
+        <p style="color: #6b7280; margin: 0;">${pairs.length} back-to-back pair${pairs.length !== 1 ? 's' : ''} remaining (${backToBackGames.length} games)</p>
+      `;
+      container.appendChild(header);
+
+      pairs.forEach(pair => {
+        const pairSection = createBackToBackPair(pair);
+        container.appendChild(pairSection);
+      });
+
+      // Add a back button
+      const backBtn = document.createElement('div');
+      backBtn.style.cssText = 'text-align: center; padding: 2rem;';
+      backBtn.innerHTML = '<button onclick="location.reload()" style="background: #2563eb; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer;">← Back to Full Schedule</button>';
+      container.appendChild(backBtn);
+    }
+
+    // Find all back-to-back games remaining
+    function findBackToBackGames() {
+      const upcomingGames = scheduleData.filter(g => g.status === 'upcoming' && !g.isPreseason).sort((a, b) => new Date(a.date) - new Date(b.date));
+      const backToBack = [];
+
+      for (let i = 0; i < upcomingGames.length - 1; i++) {
+        const game1 = upcomingGames[i];
+        const game2 = upcomingGames[i + 1];
+        
+        const date1 = new Date(game1.date);
+        const date2 = new Date(game2.date);
+        
+        // Check if games are on consecutive days
+        const diffTime = Math.abs(date2 - date1);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          if (backToBack.length === 0 || backToBack[backToBack.length - 1] !== game1) {
+            backToBack.push(game1);
+          }
+          backToBack.push(game2);
+          i++; // Skip next game as it's already added
+        }
+      }
+
+      return backToBack;
+    }
+
+    // Create back-to-back pair section
+    function createBackToBackPair(pair) {
+      const container = document.createElement('div');
+      container.style.cssText = 'background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 2px solid #f59e0b; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);';
+      
+      const heading = document.createElement('div');
+      heading.style.cssText = 'font-weight: 700; color: #f59e0b; margin-bottom: 1rem; font-size: 1rem;';
+      heading.textContent = '⚡ Back-to-Back Pair';
+      container.appendChild(heading);
+
+      const gamesDiv = document.createElement('div');
+      gamesDiv.style.cssText = 'display: flex; gap: 1rem; flex-wrap: wrap;';
+      
+      pair.forEach(game => {
+        const gameCardHtml = createGameCard(game);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = gameCardHtml;
+        const gameCard = tempDiv.firstChild;
+        gameCard.style.flex = '1';
+        gameCard.style.minWidth = '280px';
+        gamesDiv.appendChild(gameCard);
+      });
+
+      container.appendChild(gamesDiv);
+      return container;
     }
 
     // Setup mobile menu
@@ -2331,6 +2362,8 @@
     window.openLiveGame = openLiveGame;
     window.closeLiveGame = closeLiveGame;
     window.switchTab = switchTab;
+    window.scrollToCompleted = scrollToCompleted;
+    window.showBackToBack = showBackToBack;
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
