@@ -1157,6 +1157,15 @@
           <div id="weekPickerContainer" class="date-picker-container"></div>
           <button class="date-nav-btn" id="nextWeekBtn">›</button>
         </div>
+        <div style="margin-bottom: 15px; padding: 12px; background: #f0f4f8; border-radius: 8px; border-left: 4px solid var(--brand); cursor: pointer;" id="weekScheduleToggle">
+          <div style="font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+            📅 Week Schedule
+            <span id="scheduleArrow" style="transition: transform 0.2s;">▼</span>
+          </div>
+        </div>
+        <div id="weekScheduleContainer" style="margin-bottom: 15px; padding: 12px; background: #fafafa; border-radius: 8px; border: 1px solid var(--border); display: none;">
+          <div id="weekScheduleContent" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; font-size: 12px;"></div>
+        </div>
         <div style="margin-bottom: 15px;">
           <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">🔄 Refresh</button>
         </div>
@@ -3820,7 +3829,7 @@
     const WEEKS_TO_SHOW = 5;
     const MONTHS_TO_SHOW = 4;
     let selectedWeek = null;
-    let selectedMonth = 0;
+    let selectedMonth = -1;
     
     // Initialize daily leaderboard date
     const todayForDailyLb = formatDateForComparison(new Date());
@@ -3886,14 +3895,52 @@
       return;
     }
 
+    function renderWeekSchedule() {
+      const container = document.getElementById('weekScheduleContent');
+      if (!container) return;
+
+      const scheduleHtml = [];
+      const now = new Date();
+      const decemberStart = new Date(now.getFullYear(), 11, 1);
+      const startOfWeek1 = decemberStart;
+
+      for (let i = 1; i <= 20; i++) {
+        const weekStart = new Date(startOfWeek1);
+        weekStart.setDate(weekStart.getDate() + (i - 1) * 7);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+
+        const startStr = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const endStr = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        scheduleHtml.push(`
+          <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--border); text-align: center;">
+            <div style="font-weight: 700; color: var(--brand); margin-bottom: 2px;">Week ${i}</div>
+            <div style="font-size: 11px; color: var(--muted);">${startStr} - ${endStr}</div>
+          </div>
+        `);
+      }
+
+      container.innerHTML = scheduleHtml.join('');
+    }
+
+    document.getElementById('weekScheduleToggle')?.addEventListener('click', () => {
+      const container = document.getElementById('weekScheduleContainer');
+      const arrow = document.getElementById('scheduleArrow');
+      const isVisible = container.style.display !== 'none';
+      container.style.display = isVisible ? 'none' : 'block';
+      arrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+      if (!isVisible) renderWeekSchedule();
+    });
+
     function renderMonthSlider() {
       const container = document.getElementById('monthPickerContainer');
       const now = new Date();
       const months = [];
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-      // Generate 12 months starting from current month going forward
-      for (let i = 0; i < 12; i++) {
+      // Generate 12 months starting from last month going forward
+      for (let i = -1; i < 11; i++) {
         const monthDate = new Date(now);
         monthDate.setMonth(monthDate.getMonth() + i);
         const monthIdx = monthDate.getMonth();
