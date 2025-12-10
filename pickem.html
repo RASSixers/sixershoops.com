@@ -1252,7 +1252,7 @@
                 <div class="form-group">
                   <label class="form-label">Question Type</label>
                   <select id="adminQuestionType" class="form-input">
-                    <option value="yes_no">Yes/No</option>
+                    <option value="over_under">Over/Under</option>
                     <option value="multiple_choice" selected>Multiple Choice</option>
                     <option value="numeric">Numeric</option>
                   </select>
@@ -1861,6 +1861,10 @@
       }
     });
 
+    if (document.getElementById('adminQuestionType').value === 'multiple_choice') {
+      document.getElementById('optionsGroup').style.display = 'block';
+    }
+
     // Tab switching for add questions and mark answers
     document.getElementById('addQuestionTabBtn').addEventListener('click', () => {
       document.getElementById('addQuestionTab').style.display = 'block';
@@ -1926,7 +1930,7 @@
       document.getElementById('adminQuestionType').value = 'multiple_choice';
       document.getElementById('adminQuestionWeek').value = '';
       document.getElementById('adminQuestionDay').value = '';
-      document.getElementById('optionsGroup').style.display = 'none';
+      document.getElementById('optionsGroup').style.display = 'block';
       
       showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
     });
@@ -1950,7 +1954,7 @@
         <div class="admin-question-item">
           <div class="admin-question-item-content">
             <div class="admin-question-item-text">${index + 1}. ${q.question}</div>
-            <div class="admin-question-item-type">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+            <div class="admin-question-item-type">${q.question_type === 'over_under' ? 'Over/Under' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
             ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
             ${q.weekNumber || q.dayOfWeek ? `<div class="admin-question-item-options" style="color: #3b82f6; margin-top: 0.5rem; font-weight: 600;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
           </div>
@@ -2113,16 +2117,16 @@
         let answerInput = '';
         const inputId = `answer_${idx}`;
         
-        if (q.question_type === 'yes_no') {
+        if (q.question_type === 'over_under') {
           answerInput = `
             <div style="margin-top: 0.75rem; display: flex; gap: 2rem;">
               <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="radio" name="${inputId}" value="Yes" class="answer-input-${idx}" /> 
-                <span style="font-weight: 500;">Yes</span>
+                <input type="radio" name="${inputId}" value="Over" class="answer-input-${idx}" /> 
+                <span style="font-weight: 500;">Over</span>
               </label>
               <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="radio" name="${inputId}" value="No" class="answer-input-${idx}" /> 
-                <span style="font-weight: 500;">No</span>
+                <input type="radio" name="${inputId}" value="Under" class="answer-input-${idx}" /> 
+                <span style="font-weight: 500;">Under</span>
               </label>
             </div>
           `;
@@ -2149,7 +2153,7 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
               <div>
                 <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem;">${idx + 1}. ${q.question}</div>
-                <div style="color: var(--muted); font-size: 0.85rem;">${q.question_type === 'yes_no' ? 'Yes/No' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+                <div style="color: var(--muted); font-size: 0.85rem;">${q.question_type === 'over_under' ? 'Over/Under' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
                 ${q.weekNumber || q.dayOfWeek ? `<div style="color: #3b82f6; font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
               </div>
               <span class="answer-indicator-${idx}" style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">⏳</span>
@@ -2171,7 +2175,7 @@
 
         // Pre-populate with existing correct answer if available
         if (q.correctAnswer !== undefined && q.correctAnswer !== null) {
-          if (q.question_type === 'yes_no' || q.question_type === 'multiple_choice') {
+          if (q.question_type === 'over_under' || q.question_type === 'multiple_choice') {
             const radio = document.querySelector(`input[name="answer_${idx}"][value="${q.correctAnswer}"]`);
             if (radio) {
               radio.checked = true;
@@ -3393,15 +3397,15 @@
       container.innerHTML = todayQuestions.map((q, i) => {
         let optionsHtml = '';
 
-        if (q.question_type === 'yes_no') {
+        if (q.question_type === 'over_under') {
           optionsHtml = `
             <label class="option radio-option">
-              <input type="radio" name="q${i}" value="Yes">
-              <span>Yes</span>
+              <input type="radio" name="q${i}" value="Over">
+              <span>Over</span>
             </label>
             <label class="option radio-option">
-              <input type="radio" name="q${i}" value="No">
-              <span>No</span>
+              <input type="radio" name="q${i}" value="Under">
+              <span>Under</span>
             </label>
           `;
         } else if (q.question_type === 'multiple_choice') {
@@ -3840,7 +3844,7 @@
       }
 
       if (selectedWeek === null && weeks.length > 0) {
-        selectedWeek = weeks[2].value;
+        selectedWeek = weeks[4].value;
       }
 
       const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
