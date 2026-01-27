@@ -162,8 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <!-- Profile Form -->
                 <form id="navProfileForm" style="display: none;">
                     <div class="auth-form-group">
-                        <label class="auth-label">Display Name</label>
-                        <input type="text" class="auth-input" id="navProfileName" required>
+                        <label class="auth-label">Display Name (Max 12 chars)</label>
+                        <input type="text" class="auth-input" id="navProfileName" required maxlength="12">
                     </div>
                     <div class="auth-form-group">
                         <label class="auth-label">Select Profile Icon</label>
@@ -190,8 +190,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <!-- Register Form -->
                 <form id="navRegisterForm" style="display: none;">
                     <div class="auth-form-group">
-                        <label class="auth-label">Username</label>
-                        <input type="text" class="auth-input" id="navRegisterUsername" required>
+                        <label class="auth-label">Username (Max 12 chars)</label>
+                        <input type="text" class="auth-input" id="navRegisterUsername" required maxlength="12">
                     </div>
                     <div class="auth-form-group">
                         <label class="auth-label">Email</label>
@@ -418,8 +418,17 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleGoogleAuth() {
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
-            await window.auth.signInWithPopup(provider);
-            closeAuthModal();
+            const result = await window.auth.signInWithPopup(provider);
+            const user = result.user;
+            const isNewUser = result.additionalUserInfo.isNewUser;
+
+            if (isNewUser) {
+                // If new user, open profile modal to force username selection
+                openProfileModal();
+                showNavMessage('Welcome! Please choose a display name.', 'success');
+            } else {
+                closeAuthModal();
+            }
         } catch (err) {
             showNavMessage(err.message, 'error');
         }
@@ -565,12 +574,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = document.getElementById('navProfileName').value;
         const photo = document.getElementById('navProfilePhoto').value;
         
+        if (name.length > 12) {
+            showNavMessage('Username must be 12 characters or less', 'error');
+            return;
+        }
+
         try {
             const user = window.auth.currentUser;
             await user.updateProfile({
                 displayName: name,
                 photoURL: photo
             });
+            
+            // Sync with Firestore
+            await window.db.collection('users').doc(user.uid).set({
+                username: name,
+                photoURL: photo,
+                updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+
             showNavMessage('Settings saved successfully!', 'success');
             setTimeout(closeAuthModal, 2000);
         } catch (err) {
