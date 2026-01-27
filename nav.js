@@ -166,10 +166,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="text" class="auth-input" id="navProfileName" required>
                     </div>
                     <div class="auth-form-group">
-                        <label class="auth-label">Profile Photo URL</label>
-                        <input type="url" class="auth-input" id="navProfilePhoto" placeholder="https://example.com/photo.jpg">
+                        <label class="auth-label">Select Profile Icon</label>
+                        <div class="avatar-selection-grid" id="avatarSelectionGrid">
+                            <img src="https://sixershoops.com/ImageFolder/avatar1.png" class="avatar-option" data-url="https://sixershoops.com/ImageFolder/avatar1.png">
+                            <img src="https://sixershoops.com/ImageFolder/avatar2.png" class="avatar-option" data-url="https://sixershoops.com/ImageFolder/avatar2.png">
+                            <img src="https://sixershoops.com/ImageFolder/avatar3.png" class="avatar-option" data-url="https://sixershoops.com/ImageFolder/avatar3.png">
+                            <img src="https://sixershoops.com/ImageFolder/avatar4.png" class="avatar-option" data-url="https://sixershoops.com/ImageFolder/avatar4.png">
+                            <img src="https://sixershoops.com/ImageFolder/avatar5.png" class="avatar-option" data-url="https://sixershoops.com/ImageFolder/avatar5.png">
+                            <img src="https://sixershoops.com/ImageFolder/avatar6.png" class="avatar-option" data-url="https://sixershoops.com/ImageFolder/avatar6.png">
+                        </div>
+                        <input type="hidden" id="navProfilePhoto">
                     </div>
-                    <button type="submit" class="auth-submit-btn">Update Profile</button>
+                    <button type="submit" class="auth-submit-btn">Save Changes</button>
+                    
+                    <div class="user-dropdown-divider" style="margin: 2rem 0 1rem;"></div>
+                    
+                    <div class="danger-zone">
+                        <h4 style="color: #ef4444; font-size: 0.85rem; margin-bottom: 0.5rem;">Danger Zone</h4>
+                        <button type="button" class="delete-account-btn" id="deleteAccountBtn">Delete My Account</button>
+                    </div>
                 </form>
 
                 <!-- Register Form -->
@@ -314,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="user-dropdown-divider"></div>
                             <button class="user-dropdown-item" id="navProfileBtn">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                Profile Settings
+                                Account Settings
                             </button>
                             <button class="user-dropdown-item" id="navLogoutBtnMain">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -335,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                                 <button class="logout-btn" id="navLogoutBtn">Logout</button>
                             </div>
-                            <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Edit Profile</button>
+                            <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Account Settings</button>
                         </div>
                     `;
                 }
@@ -427,12 +442,26 @@ document.addEventListener('DOMContentLoaded', function() {
         profileForm.style.display = 'block';
         
         tabs.forEach(t => t.style.display = 'none');
-        document.querySelector('.auth-modal-title').textContent = 'Profile Settings';
+        document.querySelector('.auth-modal-title').textContent = 'Account Settings';
 
         const user = window.auth.currentUser;
         if (user) {
             document.getElementById('navProfileName').value = user.displayName || '';
-            document.getElementById('navProfilePhoto').value = user.photoURL || '';
+            const currentPhoto = user.photoURL || '';
+            document.getElementById('navProfilePhoto').value = currentPhoto;
+            
+            // Highlight selected avatar
+            const options = document.querySelectorAll('.avatar-option');
+            options.forEach(opt => {
+                if (opt.dataset.url === currentPhoto) opt.classList.add('selected');
+                else opt.classList.remove('selected');
+                
+                opt.onclick = () => {
+                    options.forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    document.getElementById('navProfilePhoto').value = opt.dataset.url;
+                };
+            });
         }
     }
 
@@ -542,12 +571,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayName: name,
                 photoURL: photo
             });
-            showNavMessage('Profile updated successfully!', 'success');
+            showNavMessage('Settings saved successfully!', 'success');
             setTimeout(closeAuthModal, 2000);
         } catch (err) {
             showNavMessage(err.message, 'error');
         }
     });
+
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', async () => {
+            const user = window.auth.currentUser;
+            if (!user) return;
+
+            const confirmDelete = confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and you will lose all your Pick\'em progress.');
+            
+            if (confirmDelete) {
+                try {
+                    // Remove user data from Firestore first if exists
+                    await window.db.collection('users').doc(user.uid).delete().catch(() => {});
+                    
+                    await user.delete();
+                    showNavMessage('Account deleted successfully.', 'success');
+                    setTimeout(closeAuthModal, 2000);
+                } catch (err) {
+                    if (err.code === 'auth/requires-recent-login') {
+                        showNavMessage('For security, please sign out and sign back in before deleting your account.', 'error');
+                    } else {
+                        showNavMessage(err.message, 'error');
+                    }
+                }
+            }
+        });
+    }
 
     if(registerForm) registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
