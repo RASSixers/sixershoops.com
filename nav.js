@@ -159,6 +159,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </form>
 
+                <!-- Profile Form -->
+                <form id="navProfileForm" style="display: none;">
+                    <div class="auth-form-group">
+                        <label class="auth-label">Display Name</label>
+                        <input type="text" class="auth-input" id="navProfileName" required>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label">Profile Photo URL</label>
+                        <input type="url" class="auth-input" id="navProfilePhoto" placeholder="https://example.com/photo.jpg">
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Update Profile</button>
+                </form>
+
                 <!-- Register Form -->
                 <form id="navRegisterForm" style="display: none;">
                     <div class="auth-form-group">
@@ -278,11 +291,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (user) {
                 const displayName = user.displayName || user.email.split('@')[0];
                 const initial = displayName.charAt(0).toUpperCase();
+                const photoURL = user.photoURL;
+                
+                const avatarHTML = photoURL 
+                    ? `<img src="${photoURL}" class="user-avatar-img" alt="${displayName}">`
+                    : `<div class="user-avatar">${initial}</div>`;
                 
                 const userHTML = `
                     <div class="user-profile-wrapper">
                         <div class="user-profile-btn" id="userProfileBtn">
-                            <div class="user-avatar">${initial}</div>
+                            ${avatarHTML}
                             <span class="user-name">${displayName}</span>
                         </div>
                         <button class="nav-small-logout" id="navSmallLogout" title="Logout">
@@ -294,6 +312,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span>${user.email}</span>
                             </div>
                             <div class="user-dropdown-divider"></div>
+                            <button class="user-dropdown-item" id="navProfileBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                Profile Settings
+                            </button>
                             <button class="user-dropdown-item" id="navLogoutBtnMain">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                                 Logout
@@ -305,12 +327,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (authNav) authNav.innerHTML = userHTML;
                 if (mobileAuth) {
                     mobileAuth.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                            <div class="user-profile-btn">
-                                <div class="user-avatar">${initial}</div>
-                                <span class="user-name">${displayName}</span>
+                        <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="user-profile-btn">
+                                    ${avatarHTML}
+                                    <span class="user-name">${displayName}</span>
+                                </div>
+                                <button class="logout-btn" id="navLogoutBtn">Logout</button>
                             </div>
-                            <button class="logout-btn" id="navLogoutBtn">Logout</button>
+                            <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Edit Profile</button>
                         </div>
                     `;
                 }
@@ -319,6 +344,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userDropdown = document.getElementById('userDropdown');
                 const logoutBtnMain = document.getElementById('navLogoutBtnMain');
                 const smallLogoutBtn = document.getElementById('navSmallLogout');
+                const editProfileBtn = document.getElementById('navProfileBtn');
+                const mobileEditBtn = document.getElementById('mobileProfileBtn');
 
                 if (profileBtn && userDropdown) {
                     profileBtn.addEventListener('click', (e) => {
@@ -341,6 +368,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.auth.signOut();
                     });
                 }
+
+                if (editProfileBtn) editProfileBtn.addEventListener('click', openProfileModal);
+                if (mobileEditBtn) mobileEditBtn.addEventListener('click', openProfileModal);
             } else {
                 if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
                 if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
@@ -365,6 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('navLoginForm');
     const registerForm = document.getElementById('navRegisterForm');
     const forgotForm = document.getElementById('navForgotForm');
+    const profileForm = document.getElementById('navProfileForm');
     const authMessage = document.getElementById('navAuthMessage');
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
     const backToLoginLink = document.getElementById('backToLoginLink');
@@ -386,15 +417,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tabs[0]) tabs[0].click();
     }
 
+    function openProfileModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'none';
+        forgotForm.style.display = 'none';
+        profileForm.style.display = 'block';
+        
+        tabs.forEach(t => t.style.display = 'none');
+        document.querySelector('.auth-modal-title').textContent = 'Profile Settings';
+
+        const user = window.auth.currentUser;
+        if (user) {
+            document.getElementById('navProfileName').value = user.displayName || '';
+            document.getElementById('navProfilePhoto').value = user.photoURL || '';
+        }
+    }
+
     function closeAuthModal() {
         modal.classList.remove('active');
         document.body.style.overflow = '';
         authMessage.className = 'auth-message';
         authMessage.textContent = '';
+        document.querySelector('.auth-modal-title').textContent = 'Sixers Hoops';
+        tabs.forEach(t => t.style.display = 'block');
         // Reset forms
         if (loginForm) loginForm.reset();
         if (registerForm) registerForm.reset();
         if (forgotForm) forgotForm.reset();
+        if (profileForm) profileForm.reset();
     }
 
     if(closeBtn) closeBtn.addEventListener('click', closeAuthModal);
@@ -411,10 +464,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 loginForm.style.display = 'block';
                 registerForm.style.display = 'none';
                 forgotForm.style.display = 'none';
+                profileForm.style.display = 'none';
             } else {
                 loginForm.style.display = 'none';
                 registerForm.style.display = 'block';
                 forgotForm.style.display = 'none';
+                profileForm.style.display = 'none';
             }
         });
     });
@@ -425,6 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loginForm.style.display = 'none';
             registerForm.style.display = 'none';
             forgotForm.style.display = 'block';
+            profileForm.style.display = 'none';
             tabs.forEach(t => t.classList.remove('active'));
         });
     }
@@ -470,6 +526,24 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 if (tabs[0]) tabs[0].click();
             }, 3000);
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    });
+
+    if(profileForm) profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('navProfileName').value;
+        const photo = document.getElementById('navProfilePhoto').value;
+        
+        try {
+            const user = window.auth.currentUser;
+            await user.updateProfile({
+                displayName: name,
+                photoURL: photo
+            });
+            showNavMessage('Profile updated successfully!', 'success');
+            setTimeout(closeAuthModal, 2000);
         } catch (err) {
             showNavMessage(err.message, 'error');
         }
