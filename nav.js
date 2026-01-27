@@ -131,7 +131,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="auth-label">Password</label>
                         <input type="password" class="auth-input" id="navLoginPassword" required>
                     </div>
+                    <div style="text-align: right; margin-bottom: 1rem;">
+                        <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot Password?</a>
+                    </div>
                     <button type="submit" class="auth-submit-btn">Sign In</button>
+                </form>
+
+                <!-- Forgot Password Form -->
+                <form id="navForgotForm" style="display: none;">
+                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; text-align: center;">Enter your email address and we'll send you a link to reset your password.</p>
+                    <div class="auth-form-group">
+                        <label class="auth-label">Email Address</label>
+                        <input type="email" class="auth-input" id="navForgotEmail" required placeholder="name@example.com">
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Send Reset Link</button>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <a href="#" id="backToLoginLink" class="auth-back-link">Back to Login</a>
+                    </div>
                 </form>
 
                 <!-- Register Form -->
@@ -246,16 +262,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 const initial = displayName.charAt(0).toUpperCase();
                 
                 const userHTML = `
-                    <div class="user-profile-btn" id="userProfileBtn">
-                        <div class="user-avatar">${initial}</div>
-                        <span class="user-name">${displayName}</span>
+                    <div class="user-profile-wrapper">
+                        <div class="user-profile-btn" id="userProfileBtn">
+                            <div class="user-avatar">${initial}</div>
+                            <span class="user-name">${displayName}</span>
+                        </div>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="user-dropdown-header">
+                                <strong>${displayName}</strong>
+                                <span>${user.email}</span>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <button class="user-dropdown-item" id="navLogoutBtnMain">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                Logout
+                            </button>
+                        </div>
                     </div>
                 `;
                 
                 if (authNav) authNav.innerHTML = userHTML;
                 if (mobileAuth) {
                     mobileAuth.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div class="user-profile-btn">
                                 <div class="user-avatar">${initial}</div>
                                 <span class="user-name">${displayName}</span>
@@ -266,10 +295,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 const profileBtn = document.getElementById('userProfileBtn');
-                if (profileBtn) {
-                    profileBtn.addEventListener('click', () => {
-                        if(confirm('Logout?')) window.auth.signOut();
+                const userDropdown = document.getElementById('userDropdown');
+                const logoutBtnMain = document.getElementById('navLogoutBtnMain');
+
+                if (profileBtn && userDropdown) {
+                    profileBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        userDropdown.classList.toggle('active');
                     });
+
+                    document.addEventListener('click', () => {
+                        userDropdown.classList.remove('active');
+                    });
+                }
+
+                if (logoutBtnMain) {
+                    logoutBtnMain.addEventListener('click', () => window.auth.signOut());
                 }
             } else {
                 if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
@@ -294,11 +335,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.auth-modal-tab');
     const loginForm = document.getElementById('navLoginForm');
     const registerForm = document.getElementById('navRegisterForm');
+    const forgotForm = document.getElementById('navForgotForm');
     const authMessage = document.getElementById('navAuthMessage');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const backToLoginLink = document.getElementById('backToLoginLink');
 
     function openAuthModal() {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+        // Reset to login view when opening
+        if (tabs[0]) tabs[0].click();
     }
 
     function closeAuthModal() {
@@ -306,6 +352,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.overflow = '';
         authMessage.className = 'auth-message';
         authMessage.textContent = '';
+        // Reset forms
+        if (loginForm) loginForm.reset();
+        if (registerForm) registerForm.reset();
+        if (forgotForm) forgotForm.reset();
     }
 
     if(closeBtn) closeBtn.addEventListener('click', closeAuthModal);
@@ -321,12 +371,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tab.dataset.tab === 'login') {
                 loginForm.style.display = 'block';
                 registerForm.style.display = 'none';
+                forgotForm.style.display = 'none';
             } else {
                 loginForm.style.display = 'none';
                 registerForm.style.display = 'block';
+                forgotForm.style.display = 'none';
             }
         });
     });
+
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'none';
+            forgotForm.style.display = 'block';
+            tabs.forEach(t => t.classList.remove('active'));
+        });
+    }
+
+    if (backToLoginLink) {
+        backToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (tabs[0]) tabs[0].click();
+        });
+    }
 
     function showNavMessage(msg, type) {
         authMessage.textContent = msg;
@@ -341,6 +410,21 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             await auth.signInWithEmailAndPassword(email, password);
             closeAuthModal();
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    });
+
+    if(forgotForm) forgotForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('navForgotEmail').value;
+        
+        try {
+            await auth.sendPasswordResetEmail(email);
+            showNavMessage('Password reset email sent! Check your inbox.', 'success');
+            setTimeout(() => {
+                if (tabs[0]) tabs[0].click();
+            }, 3000);
         } catch (err) {
             showNavMessage(err.message, 'error');
         }
