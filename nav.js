@@ -1,5 +1,22 @@
 // Navbar Injection Script
 document.addEventListener('DOMContentLoaded', function() {
+    // Add Firebase SDKs if not present
+    if (!document.getElementById('firebase-app-sdk')) {
+        const scripts = [
+            { id: 'firebase-app-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js' },
+            { id: 'firebase-auth-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js' },
+            { id: 'firebase-firestore-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js' }
+        ];
+        
+        scripts.forEach(s => {
+            const script = document.createElement('script');
+            script.id = s.id;
+            script.src = s.src;
+            script.async = false; // Ensure they load in order
+            document.head.appendChild(script);
+        });
+    }
+
     const navbarHTML = `
     <nav class="navbar">
         <a href="/" class="nav-brand">
@@ -32,6 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
         </ul>
 
         <div class="nav-icons">
+            <div id="authNavContainer">
+                <button class="auth-nav-btn" id="navSignInBtn">Sign In</button>
+            </div>
             <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
                 <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="5"></circle>
@@ -58,6 +78,9 @@ document.addEventListener('DOMContentLoaded', function() {
     </nav>
 
     <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-nav-item" id="mobileAuthContainer" style="padding: 1rem; border-bottom: 1px solid rgba(0,0,0,0.1);">
+            <button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>
+        </div>
         <div class="mobile-nav-item">
             <a href="/" class="mobile-nav-link">Home</a>
         </div>
@@ -81,6 +104,57 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/contact" class="mobile-nav-link">Contact</a>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal-overlay" id="authModalOverlay">
+        <div class="auth-modal">
+            <button class="auth-modal-close" id="authModalClose">&times;</button>
+            <div class="auth-modal-header">
+                <h2 class="auth-modal-title">Sixers Hoops</h2>
+            </div>
+            <div class="auth-modal-tabs">
+                <button class="auth-modal-tab active" data-tab="login">Login</button>
+                <button class="auth-modal-tab" data-tab="register">Sign Up</button>
+            </div>
+            <div class="auth-modal-content">
+                <div id="navAuthMessage" class="auth-message"></div>
+                
+                <!-- Login Form -->
+                <form id="navLoginForm">
+                    <div class="auth-form-group">
+                        <label class="auth-label">Email</label>
+                        <input type="email" class="auth-input" id="navLoginEmail" required>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label">Password</label>
+                        <input type="password" class="auth-input" id="navLoginPassword" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Sign In</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="navRegisterForm" style="display: none;">
+                    <div class="auth-form-group">
+                        <label class="auth-label">Username</label>
+                        <input type="text" class="auth-input" id="navRegisterUsername" required>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label">Email</label>
+                        <input type="email" class="auth-input" id="navRegisterEmail" required>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label">Password</label>
+                        <input type="password" class="auth-input" id="navRegisterPassword" required>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label">Confirm Password</label>
+                        <input type="password" class="auth-input" id="navRegisterConfirm" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Create Account</button>
+                </form>
+            </div>
         </div>
     </div>
     `;
@@ -129,6 +203,175 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Insert footer at the end of body
     document.body.insertAdjacentHTML('beforeend', footerHTML);
+
+    // === Firebase Logic ===
+    const firebaseConfig = {
+        apiKey: "AIzaSyBzMlBV5gbZZlg_eTwNWrRDrhx-_ATIPS0",
+        authDomain: "pickem-1e12b.firebaseapp.com",
+        projectId: "pickem-1e12b",
+        storageBucket: "pickem-1e12b.firebasestorage.app",
+        messagingSenderId: "715626120695",
+        appId: "1:715626120695:web:4942646cf3d6ca7e181af2",
+        measurementId: "G-B22K71F01E"
+    };
+
+    // Make these globally accessible
+    window.auth = null;
+    window.db = null;
+    
+    function initFirebase() {
+        if (typeof firebase === 'undefined' || !firebase.apps.length) {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                window.auth = firebase.auth();
+                window.db = firebase.firestore();
+                setupAuthListeners();
+            } else {
+                setTimeout(initFirebase, 200);
+            }
+        } else {
+            window.auth = firebase.auth();
+            window.db = firebase.firestore();
+            setupAuthListeners();
+        }
+    }
+
+    function setupAuthListeners() {
+        window.auth.onAuthStateChanged(user => {
+            const authNav = document.getElementById('authNavContainer');
+            const mobileAuth = document.getElementById('mobileAuthContainer');
+            
+            if (user) {
+                const displayName = user.displayName || user.email.split('@')[0];
+                const initial = displayName.charAt(0).toUpperCase();
+                
+                const userHTML = `
+                    <div class="user-profile-btn" id="userProfileBtn">
+                        <div class="user-avatar">${initial}</div>
+                        <span class="user-name">${displayName}</span>
+                    </div>
+                `;
+                
+                if (authNav) authNav.innerHTML = userHTML;
+                if (mobileAuth) {
+                    mobileAuth.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="user-profile-btn">
+                                <div class="user-avatar">${initial}</div>
+                                <span class="user-name">${displayName}</span>
+                            </div>
+                            <button class="logout-btn" id="navLogoutBtn">Logout</button>
+                        </div>
+                    `;
+                }
+                
+                const profileBtn = document.getElementById('userProfileBtn');
+                if (profileBtn) {
+                    profileBtn.addEventListener('click', () => {
+                        if(confirm('Logout?')) window.auth.signOut();
+                    });
+                }
+            } else {
+                if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
+                if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
+                
+                const signInBtn = document.getElementById('navSignInBtn');
+                const mobileSignInBtn = document.getElementById('mobileSignInBtn');
+                if(signInBtn) signInBtn.addEventListener('click', openAuthModal);
+                if(mobileSignInBtn) mobileSignInBtn.addEventListener('click', openAuthModal);
+            }
+            
+            const mobileLogout = document.getElementById('navLogoutBtn');
+            if(mobileLogout) mobileLogout.addEventListener('click', () => window.auth.signOut());
+        });
+    }
+
+    initFirebase();
+
+    // === Modal Logic ===
+    const modal = document.getElementById('authModalOverlay');
+    const closeBtn = document.getElementById('authModalClose');
+    const tabs = document.querySelectorAll('.auth-modal-tab');
+    const loginForm = document.getElementById('navLoginForm');
+    const registerForm = document.getElementById('navRegisterForm');
+    const authMessage = document.getElementById('navAuthMessage');
+
+    function openAuthModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAuthModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        authMessage.className = 'auth-message';
+        authMessage.textContent = '';
+    }
+
+    if(closeBtn) closeBtn.addEventListener('click', closeAuthModal);
+    if(modal) modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeAuthModal();
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            if (tab.dataset.tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+        });
+    });
+
+    function showNavMessage(msg, type) {
+        authMessage.textContent = msg;
+        authMessage.className = `auth-message show ${type}`;
+    }
+
+    if(loginForm) loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('navLoginEmail').value;
+        const password = document.getElementById('navLoginPassword').value;
+        
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            closeAuthModal();
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    });
+
+    if(registerForm) registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('navRegisterUsername').value;
+        const email = document.getElementById('navRegisterEmail').value;
+        const password = document.getElementById('navRegisterPassword').value;
+        const confirm = document.getElementById('navRegisterConfirm').value;
+        
+        if (password !== confirm) {
+            showNavMessage('Passwords do not match', 'error');
+            return;
+        }
+        
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            await userCredential.user.updateProfile({ displayName: username });
+            await db.collection('users').doc(userCredential.user.uid).set({
+                username: username,
+                email: email,
+                createdAt: new Date().toISOString()
+            });
+            showNavMessage('Account created! Please sign in.', 'success');
+            setTimeout(() => tabs[0].click(), 1500);
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    });
 
     // Mobile Menu Toggle
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -195,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    themeToggle.addEventListener('click', function() {
+    if(themeToggle) themeToggle.addEventListener('click', function() {
         const isDark = htmlElement.classList.toggle('dark-mode');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         
