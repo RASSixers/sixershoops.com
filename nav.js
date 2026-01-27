@@ -135,6 +135,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot Password?</a>
                     </div>
                     <button type="submit" class="auth-submit-btn">Sign In</button>
+                    
+                    <div class="auth-divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <button type="button" class="google-auth-btn" id="googleSignInBtn">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                        Continue with Google
+                    </button>
                 </form>
 
                 <!-- Forgot Password Form -->
@@ -169,6 +178,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="password" class="auth-input" id="navRegisterConfirm" required>
                     </div>
                     <button type="submit" class="auth-submit-btn">Create Account</button>
+                    
+                    <div class="auth-divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <button type="button" class="google-auth-btn" id="googleSignUpBtn">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                        Sign Up with Google
+                    </button>
                 </form>
             </div>
         </div>
@@ -267,6 +285,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="user-avatar">${initial}</div>
                             <span class="user-name">${displayName}</span>
                         </div>
+                        <button class="nav-small-logout" id="navSmallLogout" title="Logout">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        </button>
                         <div class="user-dropdown" id="userDropdown">
                             <div class="user-dropdown-header">
                                 <strong>${displayName}</strong>
@@ -297,6 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const profileBtn = document.getElementById('userProfileBtn');
                 const userDropdown = document.getElementById('userDropdown');
                 const logoutBtnMain = document.getElementById('navLogoutBtnMain');
+                const smallLogoutBtn = document.getElementById('navSmallLogout');
 
                 if (profileBtn && userDropdown) {
                     profileBtn.addEventListener('click', (e) => {
@@ -311,6 +333,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (logoutBtnMain) {
                     logoutBtnMain.addEventListener('click', () => window.auth.signOut());
+                }
+                
+                if (smallLogoutBtn) {
+                    smallLogoutBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.auth.signOut();
+                    });
                 }
             } else {
                 if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
@@ -339,6 +368,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const authMessage = document.getElementById('navAuthMessage');
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
     const backToLoginLink = document.getElementById('backToLoginLink');
+
+    async function handleGoogleAuth() {
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            await window.auth.signInWithPopup(provider);
+            closeAuthModal();
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    }
 
     function openAuthModal() {
         modal.classList.add('active');
@@ -396,6 +435,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tabs[0]) tabs[0].click();
         });
     }
+
+    // Google Auth Listeners
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
+    const googleSignUpBtn = document.getElementById('googleSignUpBtn');
+    if (googleSignInBtn) googleSignInBtn.addEventListener('click', handleGoogleAuth);
+    if (googleSignUpBtn) googleSignUpBtn.addEventListener('click', handleGoogleAuth);
 
     function showNavMessage(msg, type) {
         authMessage.textContent = msg;
