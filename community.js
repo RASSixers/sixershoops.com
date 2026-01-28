@@ -10,18 +10,20 @@ const CommunityFeed = (() => {
     // No default posts - we want real data
     const defaultPosts = [];
 
+    let isInitialized = false;
+
     function init() {
+        if (isInitialized) return;
+        
         if (window.db) {
+            isInitialized = true;
             setupAuthListener();
-            setFilter('hot'); // This will call listenToPosts
+            setupEventListeners();
+            setFilter('hot'); 
         } else {
-            // Fallback to local storage if Firebase isn't ready
-            loadPosts();
-            renderFeed();
-            // Try to initialize Firebase listener later
-            setTimeout(init, 500);
+            // Try again soon
+            setTimeout(init, 200);
         }
-        setupEventListeners();
     }
 
     function setFilter(filter) {
@@ -51,13 +53,11 @@ const CommunityFeed = (() => {
 
         let query = window.db.collection(COLLECTION_NAME);
 
+        // Simplified queries to avoid complex index requirements initially
         if (currentFilter === 'new') {
             query = query.orderBy('createdAt', 'desc');
-        } else if (currentFilter === 'top') {
+        } else if (currentFilter === 'top' || currentFilter === 'hot') {
             query = query.orderBy('votes', 'desc');
-        } else {
-            // 'hot' - for now same as top, or could be a mix
-            query = query.orderBy('votes', 'desc').orderBy('createdAt', 'desc');
         }
 
         unsubscribe = query.limit(50).onSnapshot((snapshot) => {
@@ -77,7 +77,11 @@ const CommunityFeed = (() => {
                 }
             }
         }, (error) => {
-            console.error("Error listening to posts:", error);
+            console.error("Firestore Error:", error);
+            // If it's an index error, it will show a link in the console
+            if (error.message.includes('index')) {
+                alert("This filter requires a Firestore index. Check your browser console for the setup link.");
+            }
         });
     }
 
@@ -164,6 +168,19 @@ const CommunityFeed = (() => {
     function renderFeed() {
         const container = document.getElementById('feed-container');
         if (!container) return;
+
+        if (posts.length === 0) {
+            container.innerHTML = `
+                <div class="bg-white rounded-xl p-12 text-center border border-slate-200">
+                    <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">No posts yet</h3>
+                    <p class="text-slate-500">Be the first to start a conversation in the community!</p>
+                </div>
+            `;
+            return;
+        }
 
         container.innerHTML = '';
         posts.forEach(post => {
