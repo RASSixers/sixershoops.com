@@ -789,15 +789,22 @@ const CommunityFeed = (() => {
                     const currentPath = parentPath ? `${parentPath}-${rIdx}` : `${rIdx}`;
 
                     return `
-                    <div class="text-xs group">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="font-bold text-slate-900">${r.author}</span>
-                            <span class="text-slate-400">•</span>
-                            <span class="text-slate-400">${r.time || 'Just now'}</span>
-                        </div>
-                        <p class="text-slate-600 mb-2">${r.text}</p>
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center gap-1">
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                                        <span class="font-bold text-slate-900">${r.author}</span>
+                                        <span>•</span>
+                                        <span>${r.time || 'Just now'}</span>
+                                    </div>
+                                    ${user && r.authorId === user.uid ? `
+                                        <button class="delete-comment-btn text-red-400 hover:text-red-600 transition-colors p-1" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <p class="text-slate-600 mb-2">${r.text}</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-1">
                                 <button class="reply-vote-up p-0.5 hover:text-orange-600 transition-colors ${rUpvoted ? 'text-orange-600' : 'text-slate-400'}" 
                                         data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
@@ -897,10 +904,17 @@ const CommunityFeed = (() => {
 
                             return `
                             <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${idx}">
-                                <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
-                                    <span class="font-bold text-slate-900">${c.author}</span>
-                                    <span>•</span>
-                                    <span>${c.time || formatTimeAgo(c.createdAt)}</span>
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                                        <span class="font-bold text-slate-900">${c.author}</span>
+                                        <span>•</span>
+                                        <span>${c.time || formatTimeAgo(c.createdAt)}</span>
+                                    </div>
+                                    ${user && c.authorId === user.uid ? `
+                                        <button class="delete-comment-btn text-red-400 hover:text-red-600 transition-colors p-1" data-comment-idx="${idx}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        </button>
+                                    ` : ''}
                                 </div>
                                 <p class="text-sm text-slate-700 leading-normal mb-3">${c.text}</p>
                                 
@@ -1038,6 +1052,90 @@ const CommunityFeed = (() => {
                 handleReplyVote(postId, parseInt(cIdx), rPath);
             });
         });
+
+        // Comment/Reply Delete logic
+        contentContainer.querySelectorAll('.delete-comment-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cIdx = e.currentTarget.dataset.commentIdx;
+                const rPath = e.currentTarget.dataset.replyPath; // undefined for top-level comments
+                handleDeleteComment(postId, parseInt(cIdx), rPath);
+            });
+        });
+    }
+
+    async function handleDeleteComment(postId, commentIdx, replyPath) {
+        const confirmModal = document.getElementById('confirm-modal-overlay');
+        const submitBtn = document.getElementById('confirm-modal-submit');
+        const cancelBtn = document.getElementById('confirm-modal-cancel');
+        const modalTitle = confirmModal.querySelector('h3');
+        const modalText = confirmModal.querySelector('p');
+
+        if (!confirmModal || !submitBtn || !cancelBtn) return;
+
+        const originalTitle = modalTitle.innerText;
+        const originalText = modalText.innerText;
+
+        modalTitle.innerText = "Delete Comment?";
+        modalText.innerText = "Are you sure you want to delete this comment? This will also delete any replies it has.";
+        
+        confirmModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        const cleanup = () => {
+            confirmModal.classList.remove('active');
+            document.body.style.overflow = '';
+            modalTitle.innerText = originalTitle;
+            modalText.innerText = originalText;
+        };
+
+        const newSubmitBtn = submitBtn.cloneNode(true);
+        submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+        
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+        newCancelBtn.onclick = cleanup;
+
+        newSubmitBtn.onclick = async () => {
+            cleanup();
+
+            const postIndex = posts.findIndex(p => p.id === postId);
+            if (postIndex === -1) return;
+
+            const post = posts[postIndex];
+            const updatedComments = [...(post.comments || [])];
+
+            if (replyPath === undefined || replyPath === null) {
+                // Delete top-level comment
+                updatedComments.splice(commentIdx, 1);
+            } else {
+                // Delete nested reply
+                const path = String(replyPath).split('-').map(Number);
+                const comment = updatedComments[commentIdx];
+                let target = comment.replies;
+                
+                for (let i = 0; i < path.length - 1; i++) {
+                    target = target[path[i]].replies;
+                }
+                target.splice(path[path.length - 1], 1);
+            }
+
+            if (window.db && !['1', '2', '3'].includes(postId)) {
+                try {
+                    await window.db.collection(COLLECTION_NAME).doc(postId).update({
+                        comments: updatedComments
+                    });
+                } catch (error) {
+                    console.error("Error deleting comment:", error);
+                    showAlert("Error deleting comment: " + error.message, "Error");
+                }
+            } else {
+                post.comments = updatedComments;
+                savePosts();
+                openDetailedView(postId, true);
+                renderFeed();
+            }
+        };
     }
 
     async function handleCommentVote(postId, commentIdx) {
