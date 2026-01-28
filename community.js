@@ -92,12 +92,6 @@ const CommunityFeed = (() => {
                 // Fallback to avoid breaking the feed if the index isn't created yet
                 currentFilter = 'top'; 
                 listenToPosts();
-                
-                // Show link to user once to help them set it up
-                if (!window.indexAlertShown) {
-                    alert("Click the link in your browser's inspect console (F12) to create the Firestore index required for the 'Hot' filter.");
-                    window.indexAlertShown = true;
-                }
             }
         });
     }
@@ -276,25 +270,49 @@ const CommunityFeed = (() => {
     }
 
     async function handleDeletePost(postId) {
-        if (!confirm("Are you sure you want to delete this post?")) return;
+        const confirmModal = document.getElementById('confirm-modal-overlay');
+        const submitBtn = document.getElementById('confirm-modal-submit');
+        const cancelBtn = document.getElementById('confirm-modal-cancel');
 
-        if (window.db) {
-            try {
-                await window.db.collection(COLLECTION_NAME).doc(postId).delete();
-                closeModal();
-            } catch (error) {
-                console.error("Error deleting post:", error);
-                alert("Error deleting post: " + error.message);
+        if (!confirmModal || !submitBtn || !cancelBtn) return;
+
+        confirmModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Clean up previous listeners
+        const newSubmitBtn = submitBtn.cloneNode(true);
+        submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+        
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+        newCancelBtn.onclick = () => {
+            confirmModal.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        newSubmitBtn.onclick = async () => {
+            confirmModal.classList.remove('active');
+            document.body.style.overflow = '';
+
+            if (window.db) {
+                try {
+                    await window.db.collection(COLLECTION_NAME).doc(postId).delete();
+                    closeModal();
+                } catch (error) {
+                    console.error("Error deleting post:", error);
+                    showAlert("Error deleting post: " + error.message, "Error");
+                }
+            } else {
+                const index = posts.findIndex(p => p.id === postId);
+                if (index !== -1) {
+                    posts.splice(index, 1);
+                    savePosts();
+                    renderFeed();
+                    closeModal();
+                }
             }
-        } else {
-            const index = posts.findIndex(p => p.id === postId);
-            if (index !== -1) {
-                posts.splice(index, 1);
-                savePosts();
-                renderFeed();
-                closeModal();
-            }
-        }
+        };
     }
 
     function formatVotes(votes) {
@@ -360,6 +378,26 @@ const CommunityFeed = (() => {
                 if (e.target === createOverlay) closeCreateModal();
             });
         }
+
+        const confirmOverlay = document.getElementById('confirm-modal-overlay');
+        if (confirmOverlay) {
+            confirmOverlay.addEventListener('click', (e) => {
+                if (e.target === confirmOverlay) {
+                    confirmOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        const alertOverlay = document.getElementById('alert-modal-overlay');
+        if (alertOverlay) {
+            alertOverlay.addEventListener('click', (e) => {
+                if (e.target === alertOverlay) {
+                    alertOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
     }
 
     function openCreatePostModal() {
@@ -379,6 +417,28 @@ const CommunityFeed = (() => {
             document.getElementById('post-title-input').value = '';
             document.getElementById('post-content-input').value = '';
         }
+    }
+
+    function showAlert(message, title = 'Notice') {
+        const modal = document.getElementById('alert-modal-overlay');
+        const titleEl = document.getElementById('alert-modal-title');
+        const msgEl = document.getElementById('alert-modal-message');
+        const closeBtn = document.getElementById('alert-modal-close-btn');
+
+        if (!modal || !titleEl || !msgEl || !closeBtn) {
+            alert(message);
+            return;
+        }
+
+        titleEl.innerText = title;
+        msgEl.innerText = message;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        closeBtn.onclick = () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        };
     }
 
     async function handleVote(postId, direction) {
@@ -419,7 +479,7 @@ const CommunityFeed = (() => {
                 });
             } catch (error) {
                 console.error("Error updating vote:", error);
-                alert("Error voting: " + error.message);
+                showAlert("Error voting: " + error.message, "Error");
             }
         } else {
             post.votes = newVotes;
@@ -435,7 +495,7 @@ const CommunityFeed = (() => {
         if (signInBtn) {
             signInBtn.click();
         } else {
-            alert('Please log in to participate');
+            showAlert('Please log in to participate');
         }
     }
 
@@ -456,7 +516,7 @@ const CommunityFeed = (() => {
         const content = contentInput.value.trim();
 
         if (!title) {
-            alert('Please enter a title');
+            showAlert('Please enter a title');
             return;
         }
 
@@ -509,7 +569,7 @@ const CommunityFeed = (() => {
             }
         } catch (error) {
             console.error("Post Creation Error:", error);
-            alert("Error: " + error.message);
+            showAlert("Error: " + error.message, "Error");
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -702,7 +762,7 @@ const CommunityFeed = (() => {
                 });
             } catch (error) {
                 console.error("Error adding reply:", error);
-                alert("Error adding reply: " + error.message);
+                showAlert("Error adding reply: " + error.message, "Error");
             }
         } else {
             post.comments = updatedComments;
@@ -744,7 +804,7 @@ const CommunityFeed = (() => {
                 input.value = '';
             } catch (error) {
                 console.error("Error adding comment:", error);
-                alert("Error adding comment: " + error.message);
+                showAlert("Error adding comment: " + error.message, "Error");
             }
         } else {
             // Local fallback for default posts or if DB is missing
