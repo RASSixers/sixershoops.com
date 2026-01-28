@@ -629,33 +629,49 @@ const CommunityFeed = (() => {
             if (imageFile && storage) {
                 try {
                     console.log("Uploading image:", imageFile.name, "Size:", (imageFile.size / 1024 / 1024).toFixed(2), "MB");
+                    
+                    // Simple filename to avoid encoding issues
+                    const fileExt = imageFile.name.split('.').pop() || 'jpg';
+                    const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+                    
+                    // Get a clean reference
                     const storageRef = storage.ref();
-                    const safeName = (imageFile.name || 'image').replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-                    const fileName = `${Date.now()}_${safeName}`;
                     const fileRef = storageRef.child(`${COLLECTION_NAME}/${fileName}`);
                     
-                    const metadata = { 
-                        contentType: imageFile.type,
-                        customMetadata: {
-                            'originalName': imageFile.name,
-                            'uploadedBy': user.uid
-                        }
-                    };
-                    console.log("Starting upload task...");
+                    // Minimal metadata to avoid preflight issues
+                    const metadata = { contentType: imageFile.type };
+                    
+                    console.log("Starting upload task to bucket:", storage.app.options.storageBucket);
                     const uploadTask = fileRef.put(imageFile, metadata);
                     
+                    // Safety timeout for stuck uploads
+                    let stuckTimeout = setTimeout(() => {
+                        if (submitBtn && submitBtn.innerText.includes('(0%)')) {
+                            console.warn("Upload stuck at 0%. Attempting to notify user.");
+                            showAlert("The upload is stuck at 0%. This usually means the network is blocking the connection or the file is too large for your current connection. Try a smaller image or a different network.", "Upload Stuck");
+                        }
+                    }, 15000);
+
                     await new Promise((resolve, reject) => {
                         uploadTask.on('state_changed', 
                             (snapshot) => {
-                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                const total = snapshot.totalBytes || imageFile.size;
+                                const progress = (snapshot.bytesTransferred / total) * 100;
                                 if (submitBtn) submitBtn.innerText = `Posting (${Math.floor(progress)}%)...`;
-                                console.log(`Upload progress: ${progress.toFixed(2)}%`);
+                                console.log(`Upload progress: ${progress.toFixed(2)}% (${snapshot.bytesTransferred}/${total})`);
+                                
+                                // Reset timeout if we see progress
+                                if (snapshot.bytesTransferred > 0) {
+                                    clearTimeout(stuckTimeout);
+                                }
                             }, 
                             (error) => {
-                                console.error("Upload error listener:", error);
+                                clearTimeout(stuckTimeout);
+                                console.error("Upload task error:", error);
                                 reject(error);
                             }, 
                             () => {
+                                clearTimeout(stuckTimeout);
                                 console.log("Upload finished successfully");
                                 resolve();
                             }
