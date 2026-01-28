@@ -598,6 +598,8 @@ const CommunityFeed = (() => {
             submitBtn.innerText = 'Posting...';
         }
 
+        console.log("Starting post creation process...");
+
         const tagClasses = {
             'Discussion': 'bg-blue-100 text-blue-700',
             'Highlight': 'bg-orange-100 text-orange-700',
@@ -616,27 +618,33 @@ const CommunityFeed = (() => {
 
             // If storage is still not there, wait a second and try one more time
             if (imageFile && !storage) {
-                console.log("Storage not ready, waiting...");
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log("Storage not ready, waiting 2 seconds...");
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
             }
 
             if (imageFile && storage) {
                 try {
-                    console.log("Uploading image:", imageFile.name);
+                    console.log("Uploading image:", imageFile.name, "Size:", imageFile.size);
                     const storageRef = storage.ref();
                     const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
-                    const snapshot = await fileRef.put(imageFile);
+                    
+                    // Use put with metadata for better compatibility
+                    const metadata = { contentType: imageFile.type };
+                    console.log("Calling put()...");
+                    const snapshot = await fileRef.put(imageFile, metadata);
+                    
+                    console.log("Upload complete, fetching download URL...");
                     imageUrl = await snapshot.ref.getDownloadURL();
-                    console.log("Image uploaded, URL:", imageUrl);
+                    console.log("Image URL obtained successfully:", imageUrl);
                 } catch (uploadError) {
-                    console.error("Image upload failed:", uploadError);
-                    showAlert("Failed to upload image to server. High-resolution images must be uploaded to the server.", "Upload Error");
-                    throw uploadError; // Rethrow to stop post creation
+                    console.error("Detailed Image Upload Error:", uploadError);
+                    showAlert("Failed to upload image. Please check your internet connection and try again.", "Upload Error");
+                    throw uploadError;
                 }
             } else if (imageFile) {
-                console.error("Firebase Storage not initialized. window.storage:", !!window.storage, "window.firebase.storage:", !!(window.firebase && window.firebase.storage));
-                showAlert("The image upload service is still starting up. Please wait 5 seconds and try again.", "Service Starting");
+                console.error("Storage initialization failed. auth:", !!window.auth, "db:", !!window.db, "storage:", !!storage);
+                showAlert("The upload service is still connecting. Please wait 10 seconds and try again.", "Service Busy");
                 throw new Error("Storage not initialized");
             }
 
@@ -654,12 +662,14 @@ const CommunityFeed = (() => {
                 comments: []
             };
 
+            console.log("Saving post to database...");
             if (window.db) {
-                await window.db.collection(COLLECTION_NAME).add(newPost);
+                const docRef = await window.db.collection(COLLECTION_NAME).add(newPost);
+                console.log("Post saved with ID:", docRef.id);
                 closeCreateModal();
-                // Switch to 'New' filter so user sees their post immediately
                 setFilter('new');
             } else {
+                console.warn("Database not found, using local fallback");
                 // Local fallback
                 const localPost = {
                     ...newPost,
@@ -668,7 +678,6 @@ const CommunityFeed = (() => {
                     voted: 'up'
                 };
                 
-                // Clean up the imageUrl if it's just the placeholder
                 if (localPost.imageUrl === '#' || (localPost.imageUrl && localPost.imageUrl.includes(window.location.host) && localPost.imageUrl.endsWith('/#'))) {
                     localPost.imageUrl = null;
                 }
@@ -679,8 +688,8 @@ const CommunityFeed = (() => {
                 closeCreateModal();
             }
         } catch (error) {
-            console.error("Post Creation Error:", error);
-            showAlert("Error: " + error.message, "Error");
+            console.error("Final Post Creation Error:", error);
+            showAlert("Error creating post: " + error.message, "Error");
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -726,7 +735,7 @@ const CommunityFeed = (() => {
                         <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
                     </div>
                     ${isAuthor ? `
-                        <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors" title="Delete Post">
+                        <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors mr-8" title="Delete Post">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
                     ` : ''}
