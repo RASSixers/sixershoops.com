@@ -27,6 +27,7 @@ const CommunityFeed = (() => {
     function init() {
         if (window.db) {
             listenToPosts();
+            setupAuthListener();
         } else {
             // Fallback to local storage if Firebase isn't ready
             loadPosts();
@@ -35,6 +36,37 @@ const CommunityFeed = (() => {
             setTimeout(init, 500);
         }
         setupEventListeners();
+    }
+
+    function setupAuthListener() {
+        if (window.auth) {
+            window.auth.onAuthStateChanged(user => {
+                updateCreatePostUI(user);
+            });
+        }
+    }
+
+    function updateCreatePostUI(user) {
+        const avatarContainer = document.getElementById('create-post-avatar-container');
+        const triggerInput = document.getElementById('create-post-trigger');
+        
+        if (!avatarContainer || !triggerInput) return;
+
+        if (user) {
+            const displayName = user.displayName || user.email.split('@')[0];
+            const photoURL = user.photoURL;
+            
+            if (photoURL) {
+                avatarContainer.innerHTML = `<img src="${photoURL}" class="h-full w-full object-cover" alt="${displayName}">`;
+            } else {
+                const initial = displayName.charAt(0).toUpperCase();
+                avatarContainer.innerHTML = `<div class="h-full w-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">${initial}</div>`;
+            }
+            triggerInput.placeholder = `What's on your mind, ${displayName}?`;
+        } else {
+            avatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" id="create-post-default-avatar"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+            triggerInput.placeholder = "What's on your mind?";
+        }
     }
 
     function listenToPosts() {
@@ -349,7 +381,7 @@ const CommunityFeed = (() => {
         const newPost = {
             author: 'u/' + (user.displayName || user.email.split('@')[0]),
             authorId: user.uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : new Date(),
             tag: tag,
             tagClass: tagClasses[tag] || 'bg-slate-100 text-slate-700',
             title: title,
