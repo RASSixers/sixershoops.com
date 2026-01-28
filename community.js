@@ -621,15 +621,14 @@ const CommunityFeed = (() => {
                     imageUrl = await snapshot.ref.getDownloadURL();
                     console.log("Image uploaded, URL:", imageUrl);
                 } catch (uploadError) {
-                    console.error("Image upload failed, falling back to preview:", uploadError);
-                    // If storage fails, we can fallback to the data URL from the preview if it's not too large
-                    if (previewSrc && previewSrc.startsWith('data:')) {
-                        imageUrl = previewSrc;
-                    }
+                    console.error("Image upload failed:", uploadError);
+                    showAlert("Failed to upload image to server. High-resolution images must be uploaded to the server.", "Upload Error");
+                    throw uploadError; // Rethrow to stop post creation
                 }
-            } else if (imageFile && !window.storage && previewSrc && previewSrc.startsWith('data:')) {
-                console.warn("Firebase Storage not available, using preview data URL");
-                imageUrl = previewSrc;
+            } else if (imageFile && !window.storage) {
+                console.error("Firebase Storage not initialized");
+                showAlert("Image upload service is currently unavailable. Please try again later.", "Service Error");
+                throw new Error("Storage not initialized");
             }
 
             const newPost = {
