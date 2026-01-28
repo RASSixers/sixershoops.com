@@ -403,18 +403,20 @@ const CommunityFeed = (() => {
                 const previewImg = document.getElementById('image-preview');
 
                 if (file) {
-                    if (file.size > 10 * 1024 * 1024) {
-                        showAlert('This image is quite large (' + (file.size / 1024 / 1024).toFixed(1) + 'MB). It may take a moment to upload.', 'Large File');
+                    if (file.size > 20 * 1024 * 1024) {
+                        showAlert('This file is over 20MB. Please use a smaller image for best results.', 'File Too Large');
+                        imageInput.value = '';
+                        return;
                     }
                     filenameSpan.innerText = file.name;
                     removeBtn.classList.remove('hidden');
                     
-                    const reader = new FileReader();
-                    reader.onload = (re) => {
-                        previewImg.src = re.target.result;
-                        previewContainer.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
+                    const objectUrl = URL.createObjectURL(file);
+                    previewImg.src = objectUrl;
+                    previewContainer.classList.remove('hidden');
+                    
+                    // Cleanup object URL when image loads or is removed
+                    previewImg.onload = () => URL.revokeObjectURL(objectUrl);
                 }
             });
         }
@@ -634,59 +636,75 @@ const CommunityFeed = (() => {
 
             if (imageFile && storage) {
                 try {
-                    console.log("Uploading image:", imageFile.name, "Size:", (imageFile.size / 1024 / 1024).toFixed(2), "MB");
+                    console.log("OVERHAUL: Uploading image:", imageFile.name, "Size:", (imageFile.size / 1024 / 1024).toFixed(2), "MB");
                     
-                    // Simple filename to avoid encoding issues
-                    const fileExt = imageFile.name.split('.').pop() || 'jpg';
-                    const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+                    // 1. Better filename handling
+                    const fileExt = imageFile.name.split('.').pop().toLowerCase() || 'jpg';
+                    const fileName = `img_${Date.now()}_${Math.floor(Math.random() * 100000)}.${fileExt}`;
                     
-                    // Get a clean reference
-                    const storageRef = storage.ref();
-                    const fileRef = storageRef.child(`${COLLECTION_NAME}/${fileName}`);
+                    // 2. Explicit bucket reference if possible, otherwise use the default
+                    let fileRef;
+                    try {
+                        const bucketUrl = storage.app.options.storageBucket;
+                        console.log("Target bucket:", bucketUrl);
+                        // Try to be very explicit with the path
+                        fileRef = storage.ref().child(COLLECTION_NAME).child(fileName);
+                    } catch (e) {
+                        console.error("Ref error:", e);
+                        fileRef = storage.ref(`${COLLECTION_NAME}/${fileName}`);
+                    }
                     
-                    // Minimal metadata to avoid preflight issues
-                    const metadata = { contentType: imageFile.type };
+                    // 3. Optimized Metadata
+                    const metadata = { 
+                        contentType: imageFile.type,
+                        cacheControl: 'public,max-age=31536000'
+                    };
                     
-                    console.log("Starting upload task to bucket:", storage.app.options.storageBucket);
+                    // 4. Use put() but with a more robust monitor
+                    console.log("Starting put() task...");
                     const uploadTask = fileRef.put(imageFile, metadata);
                     
-                    // Safety timeout for stuck uploads
-                    let stuckTimeout = setTimeout(() => {
-                        if (submitBtn && submitBtn.innerText.includes('(0%)')) {
-                            console.warn("Upload stuck at 0%. Attempting to notify user.");
-                            showAlert("The upload is stuck at 0%. This usually means the network is blocking the connection or the file is too large for your current connection. Try a smaller image or a different network.", "Upload Stuck");
-                        }
-                    }, 15000);
+                    let lastProgress = 0;
+                    let stalledTime = 0;
+                    const STALL_LIMIT = 20; // 20 seconds without progress = stall
 
                     await new Promise((resolve, reject) => {
+                        const timer = setInterval(() => {
+                            stalledTime++;
+                            if (stalledTime >= STALL_LIMIT) {
+                                clearInterval(timer);
+                                uploadTask.cancel();
+                                reject(new Error("Upload stalled for too long. Please check your internet connection."));
+                            }
+                        }, 1000);
+
                         uploadTask.on('state_changed', 
                             (snapshot) => {
-                                const total = snapshot.totalBytes || imageFile.size;
-                                const progress = (snapshot.bytesTransferred / total) * 100;
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                                 if (submitBtn) submitBtn.innerText = `Posting (${Math.floor(progress)}%)...`;
-                                console.log(`Upload progress: ${progress.toFixed(2)}% (${snapshot.bytesTransferred}/${total})`);
+                                console.log(`Upload: ${Math.floor(progress)}% (${snapshot.bytesTransferred}/${snapshot.totalBytes} bytes)`);
                                 
-                                // Reset timeout if we see progress
-                                if (snapshot.bytesTransferred > 0) {
-                                    clearTimeout(stuckTimeout);
+                                if (snapshot.bytesTransferred > lastProgress) {
+                                    lastProgress = snapshot.bytesTransferred;
+                                    stalledTime = 0; // Reset stall timer
                                 }
                             }, 
                             (error) => {
-                                clearTimeout(stuckTimeout);
-                                console.error("Upload task error:", error);
+                                clearInterval(timer);
+                                console.error("Firebase Storage Error:", error.code, error.message);
                                 reject(error);
                             }, 
                             () => {
-                                clearTimeout(stuckTimeout);
-                                console.log("Upload finished successfully");
+                                clearInterval(timer);
+                                console.log("Upload SUCCESSFUL");
                                 resolve();
                             }
                         );
                     });
                     
-                    console.log("Fetching download URL...");
+                    console.log("Getting download URL...");
                     imageUrl = await fileRef.getDownloadURL();
-                    console.log("Image URL obtained successfully:", imageUrl);
+                    console.log("Final Image URL:", imageUrl);
                 } catch (uploadError) {
                     console.error("Detailed Image Upload Error:", uploadError);
                     let errorMsg = "Failed to upload image.";
@@ -754,6 +772,60 @@ const CommunityFeed = (() => {
                 submitBtn.innerText = 'Post';
             }
         }
+    }
+
+    function renderReplies(replies, commentIdx, parentPath = '') {
+        if (!replies || replies.length === 0) return '';
+        
+        const user = window.auth ? window.auth.currentUser : null;
+        
+        return `
+            <div class="pl-4 border-l-2 border-slate-200 space-y-4 mt-2">
+                ${replies.map((r, rIdx) => {
+                    const rVoters = r.voters || {};
+                    const rUserVote = user ? rVoters[user.uid] : null;
+                    const rUpvoted = rUserVote === 'up';
+                    const rVotes = r.votes || 0;
+                    const currentPath = parentPath ? `${parentPath}-${rIdx}` : `${rIdx}`;
+
+                    return `
+                    <div class="text-xs group">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-slate-900">${r.author}</span>
+                            <span class="text-slate-400">•</span>
+                            <span class="text-slate-400">${r.time || 'Just now'}</span>
+                        </div>
+                        <p class="text-slate-600 mb-2">${r.text}</p>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-1">
+                                <button class="reply-vote-up p-0.5 hover:text-orange-600 transition-colors ${rUpvoted ? 'text-orange-600' : 'text-slate-400'}" 
+                                        data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                </button>
+                                <span class="text-[10px] font-bold text-slate-500">${rVotes}</span>
+                            </div>
+                            <button class="text-[10px] font-bold text-slate-400 hover:text-blue-600 reply-to-reply-btn" 
+                                    data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
+                        </div>
+
+                        <!-- Nested Reply Input -->
+                        <div class="reply-input-container hidden mt-3" id="reply-input-${commentIdx}-${currentPath}">
+                            <textarea class="w-full p-2 border border-slate-200 rounded-lg text-[11px] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none" placeholder="Write a reply..." rows="2"></textarea>
+                            <div class="flex justify-end gap-2 mt-2">
+                                <button class="px-2 py-1 rounded-full text-[10px] font-bold text-slate-500 hover:bg-slate-200 cancel-nested-reply-btn" 
+                                        data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Cancel</button>
+                                <button class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-bold hover:bg-blue-700 submit-nested-reply-btn" 
+                                        data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
+                            </div>
+                        </div>
+
+                        <!-- Recursive Replies -->
+                        ${renderReplies(r.replies, commentIdx, currentPath)}
+                    </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
     }
 
     function openDetailedView(postId, keepState = false) {
@@ -852,34 +924,8 @@ const CommunityFeed = (() => {
                                         </div>
                                     </div>
 
-                                    <!-- Replies List -->
-                                    ${(c.replies && c.replies.length > 0) ? `
-                                        <div class="pl-4 border-l-2 border-slate-200 space-y-4 mt-2">
-                                            ${c.replies.map((r, rIdx) => {
-                                                const rVoters = r.voters || {};
-                                                const rUserVote = user ? rVoters[user.uid] : null;
-                                                const rUpvoted = rUserVote === 'up';
-                                                const rVotes = r.votes || 0;
-
-                                                return `
-                                                <div class="text-xs">
-                                                    <div class="flex items-center gap-2 mb-1">
-                                                        <span class="font-bold text-slate-900">${r.author}</span>
-                                                        <span class="text-slate-400">•</span>
-                                                        <span class="text-slate-400">${r.time || 'Just now'}</span>
-                                                    </div>
-                                                    <p class="text-slate-600 mb-2">${r.text}</p>
-                                                    <div class="flex items-center gap-1">
-                                                        <button class="reply-vote-up p-0.5 hover:text-orange-600 transition-colors ${rUpvoted ? 'text-orange-600' : 'text-slate-400'}" data-comment-idx="${idx}" data-reply-idx="${rIdx}">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-                                                        </button>
-                                                        <span class="text-[10px] font-bold text-slate-500">${rVotes}</span>
-                                                    </div>
-                                                </div>
-                                                `;
-                                            }).join('')}
-                                        </div>
-                                    ` : ''}
+                                    <!-- Recursive Replies List -->
+                                    ${renderReplies(c.replies, idx)}
                                 </div>
                             </div>
                             `;
@@ -946,6 +992,36 @@ const CommunityFeed = (() => {
             });
         });
 
+        // Reply to Reply logic
+        contentContainer.querySelectorAll('.reply-to-reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cIdx = e.target.dataset.commentIdx;
+                const rPath = e.target.dataset.replyPath;
+                document.getElementById(`reply-input-${cIdx}-${rPath}`).classList.remove('hidden');
+                e.target.classList.add('hidden');
+            });
+        });
+
+        contentContainer.querySelectorAll('.cancel-nested-reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cIdx = e.target.dataset.commentIdx;
+                const rPath = e.target.dataset.replyPath;
+                document.getElementById(`reply-input-${cIdx}-${rPath}`).classList.add('hidden');
+                contentContainer.querySelector(`.reply-to-reply-btn[data-comment-idx="${cIdx}"][data-reply-path="${rPath}"]`).classList.remove('hidden');
+            });
+        });
+
+        contentContainer.querySelectorAll('.submit-nested-reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cIdx = e.target.dataset.commentIdx;
+                const rPath = e.target.dataset.replyPath;
+                const textarea = document.querySelector(`#reply-input-${cIdx}-${rPath} textarea`);
+                if (textarea.value.trim()) {
+                    addNestedReply(postId, parseInt(cIdx), rPath, textarea.value.trim());
+                }
+            });
+        });
+
         // Comment Vote logic
         contentContainer.querySelectorAll('.comment-vote-up').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -958,8 +1034,8 @@ const CommunityFeed = (() => {
         contentContainer.querySelectorAll('.reply-vote-up').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const cIdx = e.currentTarget.dataset.commentIdx;
-                const rIdx = e.currentTarget.dataset.replyIdx;
-                handleReplyVote(postId, parseInt(cIdx), parseInt(rIdx));
+                const rPath = e.currentTarget.dataset.replyPath || e.currentTarget.dataset.replyIdx;
+                handleReplyVote(postId, parseInt(cIdx), rPath);
             });
         });
     }
@@ -1004,7 +1080,7 @@ const CommunityFeed = (() => {
         }
     }
 
-    async function handleReplyVote(postId, commentIdx, replyIdx) {
+    async function handleReplyVote(postId, commentIdx, replyPath) {
         const user = window.auth ? window.auth.currentUser : null;
         if (!user) {
             triggerLogin();
@@ -1019,7 +1095,21 @@ const CommunityFeed = (() => {
         const comment = updatedComments[commentIdx];
         if (!comment.replies) return;
         
-        const reply = comment.replies[replyIdx];
+        // Find reply by path (e.g., "0-1-2")
+        const path = String(replyPath).split('-').map(Number);
+        let target = comment.replies;
+        let reply = null;
+        
+        for (let i = 0; i < path.length; i++) {
+            const idx = path[i];
+            if (i === path.length - 1) {
+                reply = target[idx];
+            } else {
+                target = target[idx].replies;
+            }
+        }
+        
+        if (!reply) return;
         if (!reply.voters) reply.voters = {};
         if (reply.votes === undefined) reply.votes = 0;
 
@@ -1038,6 +1128,66 @@ const CommunityFeed = (() => {
                 });
             } catch (error) {
                 console.error("Error voting on reply:", error);
+            }
+        } else {
+            post.comments = updatedComments;
+            savePosts();
+            openDetailedView(postId, true);
+        }
+    }
+
+    async function addNestedReply(postId, commentIdx, replyPath, text) {
+        const user = window.auth ? window.auth.currentUser : null;
+        if (!user) {
+            triggerLogin();
+            return;
+        }
+
+        const postIndex = posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) return;
+
+        const post = posts[postIndex];
+        const updatedComments = [...(post.comments || [])];
+        const comment = updatedComments[commentIdx];
+        
+        // Find parent reply
+        const path = String(replyPath).split('-').map(Number);
+        let target = comment.replies;
+        let parentReply = null;
+        
+        for (let i = 0; i < path.length; i++) {
+            const idx = path[i];
+            if (i === path.length - 1) {
+                parentReply = target[idx];
+            } else {
+                target = target[idx].replies;
+            }
+        }
+        
+        if (!parentReply) return;
+        if (!parentReply.replies) parentReply.replies = [];
+        
+        const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        const newReply = {
+            author: 'u/' + authorName,
+            authorId: user.uid,
+            text: text,
+            time: 'Just now',
+            createdAt: new Date().toISOString(),
+            votes: 0,
+            voters: {},
+            replies: []
+        };
+
+        parentReply.replies.push(newReply);
+
+        if (window.db && !['1', '2', '3'].includes(postId)) {
+            try {
+                await window.db.collection(COLLECTION_NAME).doc(postId).update({
+                    comments: updatedComments
+                });
+            } catch (error) {
+                console.error("Error adding nested reply:", error);
             }
         } else {
             post.comments = updatedComments;
