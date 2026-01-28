@@ -224,6 +224,12 @@ const CommunityFeed = (() => {
         const isAuthor = user && post.authorId === user.uid;
 
         const twitterId = extractTwitterId(post.content);
+        
+        // Helper to check if imageUrl is valid and not just a placeholder
+        const hasValidImage = post.imageUrl && 
+                             post.imageUrl !== '#' && 
+                             !post.imageUrl.startsWith('window.') &&
+                             !(post.imageUrl.includes(window.location.host) && post.imageUrl.endsWith('/#'));
 
         div.innerHTML = `
             <!-- Vote Sidebar -->
@@ -254,7 +260,7 @@ const CommunityFeed = (() => {
                 <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">${post.title}</h3>
                 ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-3 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${post.content}</p></div>` : ''}
                 ${twitterId ? `<div class="mb-4 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
-                ${post.imageUrl ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block"></div>` : ''}
+                ${hasValidImage ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block" onerror="this.parentElement.style.display='none'"></div>` : ''}
                 <div class="flex gap-4">
                     <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm comment-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -603,13 +609,27 @@ const CommunityFeed = (() => {
         
         try {
             let imageUrl = null;
+            const previewImg = document.getElementById('image-preview');
+            const previewSrc = previewImg ? previewImg.src : null;
+
             if (imageFile && window.storage) {
-                console.log("Uploading image:", imageFile.name);
-                const storageRef = window.storage.ref();
-                const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
-                const snapshot = await fileRef.put(imageFile);
-                imageUrl = await snapshot.ref.getDownloadURL();
-                console.log("Image uploaded, URL:", imageUrl);
+                try {
+                    console.log("Uploading image:", imageFile.name);
+                    const storageRef = window.storage.ref();
+                    const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
+                    const snapshot = await fileRef.put(imageFile);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                    console.log("Image uploaded, URL:", imageUrl);
+                } catch (uploadError) {
+                    console.error("Image upload failed, falling back to preview:", uploadError);
+                    // If storage fails, we can fallback to the data URL from the preview if it's not too large
+                    if (previewSrc && previewSrc.startsWith('data:')) {
+                        imageUrl = previewSrc;
+                    }
+                }
+            } else if (imageFile && !window.storage && previewSrc && previewSrc.startsWith('data:')) {
+                console.warn("Firebase Storage not available, using preview data URL");
+                imageUrl = previewSrc;
             }
 
             const newPost = {
@@ -637,12 +657,14 @@ const CommunityFeed = (() => {
                     ...newPost,
                     id: Date.now().toString(),
                     time: 'Just now',
-                    voted: 'up',
-                    imageUrl: imageUrl || document.getElementById('image-preview').src
+                    voted: 'up'
                 };
-                if (localPost.imageUrl === '#' || localPost.imageUrl.startsWith('window.')) {
+                
+                // Clean up the imageUrl if it's just the placeholder
+                if (localPost.imageUrl === '#' || (localPost.imageUrl && localPost.imageUrl.includes(window.location.host) && localPost.imageUrl.endsWith('/#'))) {
                     localPost.imageUrl = null;
                 }
+                
                 posts.unshift(localPost);
                 savePosts();
                 renderFeed();
@@ -673,6 +695,12 @@ const CommunityFeed = (() => {
         modal.dataset.currentPostId = postId;
         const twitterId = extractTwitterId(post.content);
 
+        // Helper to check if imageUrl is valid and not just a placeholder
+        const hasValidImage = post.imageUrl && 
+                             post.imageUrl !== '#' && 
+                             !post.imageUrl.startsWith('window.') &&
+                             !(post.imageUrl.includes(window.location.host) && post.imageUrl.endsWith('/#'));
+
         // Store scroll position of comments if keepState is true
         let scrollPos = 0;
         const existingCommentsList = contentContainer.querySelector('.comments-list');
@@ -697,7 +725,7 @@ const CommunityFeed = (() => {
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
                 ${twitterId ? `<div class="mb-6 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
-                ${post.imageUrl ? `<div class="mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto object-contain bg-slate-100"></div>` : ''}
+                ${hasValidImage ? `<div class="mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto object-contain bg-slate-100" onerror="this.parentElement.style.display='none'"></div>` : ''}
                 <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${post.content}</div>
                 
                 <div class="border-t pt-6">
