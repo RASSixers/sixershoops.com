@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const scripts = [
             { id: 'firebase-app-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js' },
             { id: 'firebase-auth-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js' },
-            { id: 'firebase-firestore-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js' }
+            { id: 'firebase-firestore-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js' },
+            { id: 'firebase-storage-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js' }
         ];
         
         scripts.forEach(s => {
@@ -280,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make these globally accessible
     window.auth = null;
     window.db = null;
+    window.storage = null;
     
     function initFirebase() {
         if (typeof firebase === 'undefined' || !firebase.apps.length) {
@@ -287,6 +289,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 firebase.initializeApp(firebaseConfig);
                 window.auth = firebase.auth();
                 window.db = firebase.firestore();
+                // Ensure storage is initialized if the function exists
+                if (typeof firebase.storage === 'function') {
+                    window.storage = firebase.storage();
+                }
                 setupAuthListeners();
             } else {
                 setTimeout(initFirebase, 200);
@@ -294,7 +300,23 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             window.auth = firebase.auth();
             window.db = firebase.firestore();
+            if (typeof firebase.storage === 'function') {
+                window.storage = firebase.storage();
+            }
             setupAuthListeners();
+        }
+
+        // Keep checking for storage if it's not yet available (it might load after the base app)
+        if (!window.storage && typeof firebase !== 'undefined' && firebase.apps.length) {
+            const checkStorage = setInterval(() => {
+                if (typeof firebase.storage === 'function') {
+                    window.storage = firebase.storage();
+                    console.log("Firebase Storage initialized");
+                    clearInterval(checkStorage);
+                }
+            }, 500);
+            // Stop checking after 10 seconds
+            setTimeout(() => clearInterval(checkStorage), 10000);
         }
     }
 
