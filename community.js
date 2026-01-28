@@ -612,10 +612,18 @@ const CommunityFeed = (() => {
             const previewImg = document.getElementById('image-preview');
             const previewSrc = previewImg ? previewImg.src : null;
 
-            if (imageFile && (window.storage || (window.firebase && window.firebase.storage))) {
+            let storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
+
+            // If storage is still not there, wait a second and try one more time
+            if (imageFile && !storage) {
+                console.log("Storage not ready, waiting...");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
+            }
+
+            if (imageFile && storage) {
                 try {
                     console.log("Uploading image:", imageFile.name);
-                    const storage = window.storage || window.firebase.storage();
                     const storageRef = storage.ref();
                     const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
                     const snapshot = await fileRef.put(imageFile);
@@ -628,7 +636,7 @@ const CommunityFeed = (() => {
                 }
             } else if (imageFile) {
                 console.error("Firebase Storage not initialized. window.storage:", !!window.storage, "window.firebase.storage:", !!(window.firebase && window.firebase.storage));
-                showAlert("Image upload service is currently unavailable. Please try again later.", "Service Error");
+                showAlert("The image upload service is still starting up. Please wait 5 seconds and try again.", "Service Starting");
                 throw new Error("Storage not initialized");
             }
 
