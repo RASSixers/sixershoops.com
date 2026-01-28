@@ -2,32 +2,18 @@
 // Community Feed Logic
 const CommunityFeed = (() => {
     let posts = [];
+    let unsubscribe = null;
+    let currentFilter = 'hot';
     const STORAGE_KEY = 'sixers_hoops_posts';
     const COLLECTION_NAME = 'community_posts';
 
-    // Default posts if nothing in storage/database
-    const defaultPosts = [
-        {
-            id: '1',
-            author: 'u/TrustTheProcess',
-            time: '2h ago',
-            tag: 'Discussion',
-            tagClass: 'bg-blue-100 text-blue-700',
-            title: "Tyrese Maxey's development this season is actually insane. Is he already a top 3 SG in the league?",
-            content: "Looking at the stats over the last 10 games, Maxey is averaging 28/6/5 on 50/40/90 splits. His decision making in the clutch has taken a massive leap forward...",
-            votes: 1200,
-            voted: null, 
-            comments: [
-                { author: 'u/SixersFan1', text: 'Absolutely! His speed and finishing are elite now.', time: '1h ago' },
-                { author: 'u/ProcessTruster', text: 'Top 3 might be a stretch with Mitchell, Booker, and SGA (if he counts as SG), but he is close!', time: '45m ago' }
-            ]
-        }
-    ];
+    // No default posts - we want real data
+    const defaultPosts = [];
 
     function init() {
         if (window.db) {
-            listenToPosts();
             setupAuthListener();
+            setFilter('hot'); // This will call listenToPosts
         } else {
             // Fallback to local storage if Firebase isn't ready
             loadPosts();
@@ -36,6 +22,63 @@ const CommunityFeed = (() => {
             setTimeout(init, 500);
         }
         setupEventListeners();
+    }
+
+    function setFilter(filter) {
+        currentFilter = filter;
+        updateFilterUI();
+        listenToPosts();
+    }
+
+    function updateFilterUI() {
+        const filters = ['hot', 'new', 'top'];
+        filters.forEach(f => {
+            const btn = document.getElementById(`filter-${f}`);
+            if (btn) {
+                if (f === currentFilter) {
+                    btn.classList.add('bg-blue-50', 'text-blue-600', 'font-bold');
+                    btn.classList.remove('hover:bg-slate-50', 'text-slate-600', 'font-medium');
+                } else {
+                    btn.classList.remove('bg-blue-50', 'text-blue-600', 'font-bold');
+                    btn.classList.add('hover:bg-slate-50', 'text-slate-600', 'font-medium');
+                }
+            }
+        });
+    }
+
+    function listenToPosts() {
+        if (unsubscribe) unsubscribe();
+
+        let query = window.db.collection(COLLECTION_NAME);
+
+        if (currentFilter === 'new') {
+            query = query.orderBy('createdAt', 'desc');
+        } else if (currentFilter === 'top') {
+            query = query.orderBy('votes', 'desc');
+        } else {
+            // 'hot' - for now same as top, or could be a mix
+            query = query.orderBy('votes', 'desc').orderBy('createdAt', 'desc');
+        }
+
+        unsubscribe = query.limit(50).onSnapshot((snapshot) => {
+            posts = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                time: formatTimeAgo(doc.data().createdAt)
+            }));
+            
+            renderFeed();
+
+            const modal = document.getElementById('post-modal-overlay');
+            if (modal && modal.classList.contains('active')) {
+                const currentPostId = modal.dataset.currentPostId;
+                if (currentPostId) {
+                    openDetailedView(currentPostId, true);
+                }
+            }
+        }, (error) => {
+            console.error("Error listening to posts:", error);
+        });
     }
 
     function setupAuthListener() {
@@ -67,38 +110,6 @@ const CommunityFeed = (() => {
             avatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" id="create-post-default-avatar"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
             triggerInput.placeholder = "What's on your mind?";
         }
-    }
-
-    function listenToPosts() {
-        window.db.collection(COLLECTION_NAME)
-            .orderBy('createdAt', 'desc')
-            .onSnapshot((snapshot) => {
-                posts = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    // Convert Firestore timestamp to "time ago" string
-                    time: formatTimeAgo(doc.data().createdAt)
-                }));
-                
-                if (posts.length === 0) {
-                    posts = [...defaultPosts];
-                }
-                
-                renderFeed();
-
-                // If a detailed view is open, update its content
-                const modal = document.getElementById('post-modal-overlay');
-                if (modal && modal.classList.contains('active')) {
-                    const currentPostId = modal.dataset.currentPostId;
-                    if (currentPostId) {
-                        openDetailedView(currentPostId, true); // true means don't reset scroll or focus
-                    }
-                }
-            }, (error) => {
-                console.error("Error listening to posts:", error);
-                loadPosts(); // Fallback
-                renderFeed();
-            });
     }
 
     function formatTimeAgo(timestamp) {
@@ -228,6 +239,15 @@ const CommunityFeed = (() => {
         const createTrigger = document.getElementById('create-post-trigger');
         const createBtn = document.getElementById('create-post-btn');
         
+        // Filter button listeners
+        const filterHot = document.getElementById('filter-hot');
+        const filterNew = document.getElementById('filter-new');
+        const filterTop = document.getElementById('filter-top');
+
+        if (filterHot) filterHot.addEventListener('click', () => setFilter('hot'));
+        if (filterNew) filterNew.addEventListener('click', () => setFilter('new'));
+        if (filterTop) filterTop.addEventListener('click', () => setFilter('top'));
+
         const openModal = () => {
             const user = window.auth ? window.auth.currentUser : null;
             if (!user) {
