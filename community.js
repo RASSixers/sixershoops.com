@@ -324,7 +324,7 @@ const CommunityFeed = (() => {
             newVoters[user.uid] = direction;
         }
 
-        if (window.db) {
+        if (window.db && !['1', '2', '3'].includes(postId)) {
             try {
                 await window.db.collection(COLLECTION_NAME).doc(postId).update({
                     votes: newVotes,
@@ -332,6 +332,7 @@ const CommunityFeed = (() => {
                 });
             } catch (error) {
                 console.error("Error updating vote:", error);
+                alert("Error voting: " + error.message);
             }
         } else {
             post.votes = newVotes;
@@ -378,10 +379,12 @@ const CommunityFeed = (() => {
             'Question': 'bg-purple-100 text-purple-700'
         };
 
+        const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        
         const newPost = {
-            author: 'u/' + (user.displayName || user.email.split('@')[0]),
+            author: 'u/' + authorName,
             authorId: user.uid,
-            createdAt: (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : new Date(),
+            createdAt: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date(),
             tag: tag,
             tagClass: tagClasses[tag] || 'bg-slate-100 text-slate-700',
             title: title,
@@ -396,8 +399,8 @@ const CommunityFeed = (() => {
                 await window.db.collection(COLLECTION_NAME).add(newPost);
                 closeCreateModal();
             } catch (error) {
-                console.error("Error creating post:", error);
-                alert("Error creating post. Please try again.");
+                console.error("Error creating post in Firestore:", error);
+                alert("Error creating post: " + error.message);
             }
         } else {
             // Fallback for tests or local dev
@@ -507,35 +510,35 @@ const CommunityFeed = (() => {
         const postIndex = posts.findIndex(p => p.id === postId);
         if (postIndex === -1) return;
 
+        const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+
         const newComment = {
-            author: 'u/' + (user.displayName || user.email.split('@')[0]),
+            author: 'u/' + authorName,
             authorId: user.uid,
             text: text,
             time: 'Just now',
             createdAt: new Date().toISOString()
         };
 
-        if (window.db) {
+        if (window.db && !['1', '2', '3'].includes(postId)) {
             try {
                 const postRef = window.db.collection(COLLECTION_NAME).doc(postId);
                 await postRef.update({
-                    comments: firebase.firestore.FieldValue.arrayUnion(newComment)
+                    comments: window.firebase.firestore.FieldValue.arrayUnion(newComment)
                 });
-                // Snapshot listener will update the UI
                 input.value = '';
-                // Since onSnapshot will trigger a full render, we might need to reopen the modal or just wait
-                // For better UX, we can manually update the local modal content if needed, but onSnapshot is pretty fast.
-                // However, openDetailedView(postId) re-renders the whole modal, so we should call it again after the update if we want immediate feedback.
-                // But onSnapshot will trigger renderFeed, not openDetailedView.
-                // Let's modify onSnapshot to also update the modal if it's open.
             } catch (error) {
                 console.error("Error adding comment:", error);
+                alert("Error adding comment: " + error.message);
             }
         } else {
-            posts[postIndex].comments.unshift(newComment);
+            // Local fallback for default posts or if DB is missing
+            if (!posts[postIndex].comments) posts[postIndex].comments = [];
+            posts[postIndex].comments.push(newComment);
             savePosts();
-            openDetailedView(postId); // Refresh view
-            renderFeed(); // Update comment count in feed
+            openDetailedView(postId, true);
+            renderFeed();
+            if (input) input.value = '';
         }
     }
 
