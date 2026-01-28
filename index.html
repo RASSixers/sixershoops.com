@@ -115,7 +115,7 @@
         .blog-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 1.5rem;
+            gap: 2rem;
         }
 
         @media (min-width: 768px) {
@@ -124,30 +124,29 @@
             }
         }
 
-        @media (min-width: 1024px) {
-            .blog-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
         .blog-card {
             background: white;
-            border-radius: 0.5rem;
+            border-radius: 1rem;
             overflow: hidden;
             cursor: pointer;
-            transition: box-shadow 0.3s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             color: inherit;
-            display: block;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #f1f5f9;
+            height: 100%;
         }
 
         .blog-card:hover {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            border-color: #3b82f6;
         }
 
         .blog-image {
             position: relative;
-            height: 12rem;
+            height: 14rem;
             overflow: hidden;
         }
 
@@ -155,51 +154,64 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.3s;
+            transition: transform 0.5s ease;
         }
 
         .blog-card:hover .blog-image img {
-            transform: scale(1.05);
+            transform: scale(1.1);
         }
 
-        .blog-categories {
+        .blog-image::after {
+            content: '';
             position: absolute;
-            top: 0.75rem;
-            left: 0.75rem;
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 40%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .blog-card:hover .blog-image::after {
+            opacity: 1;
         }
 
         .category-badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.375rem;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.35rem 0.85rem;
+            border-radius: 0.5rem;
             text-transform: uppercase;
-            background: #2d3748;
+            letter-spacing: 0.05em;
+            background: #1e293b;
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
         .blog-content {
-            padding: 1.5rem;
+            padding: 1.75rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .blog-meta {
             display: flex;
-            gap: 1rem;
-            font-size: 0.75rem;
-            color: #718096;
-            margin-bottom: 0.75rem;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 1rem;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 500;
         }
 
         .blog-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
+            font-size: 1.4rem;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 1rem;
             transition: color 0.2s;
+            color: #0f172a;
         }
 
         .blog-card:hover .blog-title {
@@ -207,13 +219,347 @@
         }
 
         .blog-excerpt {
-            color: #718096;
-            font-size: 0.875rem;
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        /* Featured Article Styles */
+        .featured-article {
+            grid-column: 1 / -1;
+            margin-bottom: 2rem;
+        }
+
+        .featured-card {
+            display: grid;
+            grid-template-columns: 1fr;
+            background: white;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        @media (min-width: 1024px) {
+            .featured-card {
+                grid-template-columns: 1.5fr 1fr;
+            }
+        }
+
+        .featured-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+            border-color: #3b82f6;
+        }
+
+        .featured-image {
+            height: 24rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .featured-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s ease;
+        }
+
+        .featured-card:hover .featured-image img {
+            transform: scale(1.05);
+        }
+
+        .featured-content {
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .featured-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+            width: fit-content;
+        }
+
+        .featured-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+        }
+
+        .featured-excerpt {
+            font-size: 1.1rem;
+            color: #475569;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Sidebar Enhancements */
+        .sidebar-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        .headline-item {
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+
+        .headline-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .headline-item:hover {
+            transform: translateX(8px);
+        }
+
+        .headline-number {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
+        /* Community Feed Styles */
+        .feed-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .create-post-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            border: 1px solid #f1f5f9;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .create-post-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .create-post-input {
+            flex-grow: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .create-post-input:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 1rem;
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+            transition: border-color 0.2s;
+            display: flex;
+        }
+
+        .post-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .post-votes {
+            width: 48px;
+            background: #f8fafc;
+            padding: 1rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .vote-btn {
+            color: #64748b;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .vote-btn:hover {
+            background: #e2e8f0;
+            color: #ef4444;
+        }
+
+        .vote-count {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .post-main {
+            padding: 1.25rem;
+            flex-grow: 1;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .post-author {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .post-meta {
+            color: #64748b;
+        }
+
+        .post-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .post-content {
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .post-image {
+            width: 100%;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            max-height: 512px;
+        }
+
+        .post-tweet {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: #fff;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .post-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .post-action-btn:hover {
+            background: #f1f5f9;
+        }
+
+        /* Sidebar Story List */
+        .sidebar-stories {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .sidebar-story-card {
+            display: flex;
+            gap: 1rem;
+            text-decoration: none;
+            group;
+        }
+
+        .sidebar-story-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 0.75rem;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .sidebar-story-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .sidebar-story-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.4;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            transition: color 0.2s;
+        }
+
+        .sidebar-story-card:hover .sidebar-story-title {
+            color: #2563eb;
+        }
+
+        .sidebar-story-date {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
     </style>
     <!-- Google Analytics 4 (GA4) -->
@@ -232,661 +578,323 @@
     <div class="min-h-screen">
         <main>
             <!-- Hero Section -->
-            <section class="py-20 md:py-32 animate-fadeIn">
-                <div class="container mx-auto px-4">
-                    <div class="max-w-4xl mx-auto text-center">
-                        <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-                            Welcome to <span class="text-blue-600">Sixers Hoops</span>
+            <section class="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+                <div class="absolute inset-0 bg-slate-900 -z-10">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 to-transparent"></div>
+                </div>
+                
+                <div class="container mx-auto px-4 relative">
+                    <div class="max-w-4xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 animate-fadeIn">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                            </span>
+                            The Ultimate 76ers Resource
+                        </div>
+                        <h1 class="text-6xl md:text-8xl font-black text-white mb-8 leading-[0.9] tracking-tighter animate-fadeIn">
+                            PHILLY<br>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">HOOPS</span><br>
+                            REDEFINED.
                         </h1>
-                        <p class="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-                            Your ultimate source for Philadelphia 76ers analysis, player grades, and team insights!
+                        <p class="text-xl md:text-2xl text-slate-400 max-w-2xl mb-10 leading-relaxed animate-fadeIn" style="animation-delay: 0.1s">
+                            Elite analysis, real-time player grades, and the most dedicated community in the NBA.
                         </p>
+                        <div class="flex flex-wrap gap-4 animate-fadeIn" style="animation-delay: 0.2s">
+                            <a href="#community-feed-section" class="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all hover:scale-105 shadow-lg shadow-blue-600/25">
+                                Read Latest News
+                            </a>
+                            <a href="/pickem" class="px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all border border-white/10 backdrop-blur-sm">
+                                Play Pick'em
+                            </a>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- Quick Links -->
-            <section class="py-3 bg-secondary/30 border-b">
+            <section class="py-6 bg-white border-b border-slate-100">
                 <div class="container mx-auto px-4">
-                    <div class="hidden md:flex justify-center items-center gap-6 overflow-x-auto">
+                    <div class="flex items-center justify-center gap-2 md:gap-8 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                         <!-- News -->
-                        <a href="https://sixershoops.com/news" class="group flex items-center gap-2 px-3 py-2 hover:text-orange-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500 group-hover:scale-110 transition-transform">
-                                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path>
-                                <path d="M18 14h-8"></path>
-                                <path d="M15 18h-5"></path>
-                                <path d="M10 6h8v4h-8V6Z"></path>
-                            </svg>
-                            <span class="text-sm font-medium">News</span>
+                        <a href="https://sixershoops.com/news" class="flex flex-col items-center gap-2 min-w-[80px] group transition-all">
+                            <div class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-orange-600 group-hover:text-white transition-colors">
+                                    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path>
+                                    <path d="M18 14h-8"></path>
+                                    <path d="M15 18h-5"></path>
+                                    <path d="M10 6h8v4h-8V6Z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-orange-600">News</span>
                         </a>
 
                         <!-- Roster -->
-                        <a href="https://sixershoops.com/roster" class="group flex items-center gap-2 px-3 py-2 hover:text-purple-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-500 group-hover:scale-110 transition-transform">
-                                <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                                <rect width="20" height="14" x="2" y="6" rx="2"></rect>
-                            </svg>
-                            <span class="text-sm font-medium">Roster</span>
+                        <a href="https://sixershoops.com/roster" class="flex flex-col items-center gap-2 min-w-[80px] group transition-all">
+                            <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 group-hover:text-white transition-colors">
+                                    <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                    <rect width="20" height="14" x="2" y="6" rx="2"></rect>
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-purple-600">Roster</span>
                         </a>
 
                         <!-- Depth Chart -->
-                        <a href="https://sixershoops.com/sixers-depth-chart" class="group flex items-center gap-2 px-3 py-2 hover:text-red-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500 group-hover:scale-110 transition-transform">
-                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                                <polyline points="16 7 22 7 22 13"></polyline>
-                            </svg>
-                            <span class="text-sm font-medium">Depth Chart</span>
+                        <a href="https://sixershoops.com/sixers-depth-chart" class="flex flex-col items-center gap-2 min-w-[80px] group transition-all">
+                            <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center group-hover:bg-red-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-red-600 group-hover:text-white transition-colors">
+                                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                                    <polyline points="16 7 22 7 22 13"></polyline>
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-red-600">Depth</span>
                         </a>
 
                         <!-- Schedule -->
-                        <a href="https://sixershoops.com/schedule" class="group flex items-center gap-2 px-3 py-2 hover:text-blue-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500 group-hover:scale-110 transition-transform">
-                                <path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"></path>
-                            </svg>
-                            <span class="text-sm font-medium">Schedule</span>
+                        <a href="https://sixershoops.com/schedule" class="flex flex-col items-center gap-2 min-w-[80px] group transition-all">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 group-hover:text-white transition-colors">
+                                    <path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"></path>
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-blue-600">Schedule</span>
                         </a>
 
                         <!-- Salary Cap -->
-                        <a href="https://sixershoops.com/salary" class="group flex items-center gap-2 px-3 py-2 hover:text-green-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500 group-hover:scale-110 transition-transform">
-                                <line x1="12" x2="12" y1="2" y2="22"></line>
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                            </svg>
-                            <span class="text-sm font-medium">Salary Cap</span>
+                        <a href="https://sixershoops.com/salary" class="flex flex-col items-center gap-2 min-w-[80px] group transition-all">
+                            <div class="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-green-600 group-hover:text-white transition-colors">
+                                    <line x1="12" x2="12" y1="2" y2="22"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-green-600">Salary</span>
                         </a>
 
                         <!-- Pick'em -->
-                        <a href="/pickem" class="group flex items-center gap-2 px-3 py-2 hover:text-pink-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500 group-hover:scale-110 transition-transform">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                            <span class="text-sm font-medium">Pick'em</span>
+                        <a href="/pickem" class="flex flex-col items-center gap-2 min-w-[80px] group transition-all">
+                            <div class="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center group-hover:bg-pink-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-pink-600 group-hover:text-white transition-colors">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-pink-600">Pick'em</span>
                         </a>
                     </div>
                 </div>
             </section>
 
-            <!-- Blog Articles -->
-            <section id="latest-stories-section" class="py-16 md:py-20">
-                <div class="container mx-auto px-4 max-w-7xl">
-                    <div class="flex flex-col lg:flex-row gap-12">
-                        <!-- Left Column: Articles -->
-                        <div class="lg:w-2/3">
-                            <div class="flex items-center gap-4 mb-10">
-                                <h2 class="text-3xl font-black uppercase tracking-tighter">Latest Stories</h2>
-                                <div class="h-px bg-gray-200 flex-1"></div>
-                            </div>
-                            <div id="articles-container" class="blog-grid mb-8">
-                        <!-- Article 0 - Sixers vs Lakers (Newest) -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-lakers-dec-07-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvslakers12-07-25.png" alt="Sixers vs Lakers Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Dec 07, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Lakers Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Lakers. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-bucks-dec-05-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsbucks12-05-25.png" alt="Sixers vs Bucks Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Dec 05, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Bucks Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Bucks. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-warriors-dec-04-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvswarriors12-04-25.png" alt="Sixers vs Warriors Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Dec 04, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Warriors Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Warriors. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-wizards-dec-02-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvswizards12-02-25.png" alt="Sixers vs Wizards Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Dec 02, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Wizards Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Wizards. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-hawks-nov-30-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvshawks11-30-25.png" alt="Sixers vs Hawks Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 30, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Hawks Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Hawks. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-bucks-nov-29-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsbucks11-29-25.png" alt="Sixers vs Bucks Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 29, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Bucks Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Bucks. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-nets-nov-28-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsnets11-28-25.png" alt="Sixers vs Nets Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 28, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Nets Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Nets. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-magic-nov-25-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsmagic11-25-25.png" alt="Sixers vs Magic Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 25, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Magic Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Magic. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-heat-nov-23-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsheat11-23-25.png" alt="Sixers vs Heat Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 23, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Heat Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Heat. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 1 - Sixers vs Bucks -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-bucks-nov-20-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsbucks11-20-25.png" alt="Sixers vs Bucks Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 20, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Bucks Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Bucks. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 1 - Sixers vs Raptors -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-raptors-nov-19-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsraptors11-19-25.png" alt="Sixers vs Raptors Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 19, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Raptors Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Raptors. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 2 - Sixers vs Clippers -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-clippers-nov-17-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsclippers11-17-25.png" alt="Sixers vs Clippers Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 17, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Clippers Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Clippers. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 3 - Sixers vs Pistons -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-pistons-nov-14-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvspistons11-14-25.png" alt="Sixers vs Pistons Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 14, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Pistons Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Pistons. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 4 - Sixers vs Celtics -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-celtics-nov-11-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsceltics11-11-25.png" alt="Sixers vs Celtics Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 11, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Celtics Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Celtics. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 2 - Sixers vs Pistons -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-pistons-nov-9-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvspistons11-9-25.png" alt="Sixers vs Pistons Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 9, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Pistons Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Pistons. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 3 - Sixers vs Raptors -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-raptors-nov-7-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsraptors11-8-25.png" alt="Sixers vs Raptors Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 7, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Raptors Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Raptors. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 4 - Sixers vs Cavs -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-cavs-nov-5-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvscavs11-5-25.png" alt="Sixers vs Cavs Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 5, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Cavs Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Cavaliers. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 5 - Sixers vs Bulls -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-bulls-nov-4-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsbulls11-4-25.png" alt="Sixers vs Bulls Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 4, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Bulls Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Bulls. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 4 - Sixers vs Nets -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-nets-nov-2-2025" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsnets10-31-25.png" alt="Sixers vs Nets Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Nov 2, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Nets Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Nets. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 5 - Sixers vs Celtics -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-celtics-oct-31-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsceltics10-31-25.png" alt="Sixers vs Celtics Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Oct 31, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Celtics Player Grades</h3>
-                                    <p class="blog-excerpt">The big rivalry matchup analyzed. See which players rose to the occasion against Boston.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 6 - Sixers vs Wizards -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-wizards-oct-28-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvswizards10-28-25.png" alt="Sixers vs Wizards Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Oct 28, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Wizards Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Wizards. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 7 - Sixers vs Magic -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-magic-oct-27-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsmagic10-27-25.png" alt="Sixers vs Magic Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Oct 27, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Magic Player Grades</h3>
-                                    <p class="blog-excerpt">Breaking down individual performances as the Sixers take on the Magic. See who stood out and who needs to step up.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 8 - Sixers vs Hornets -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-hornets-oct-25-2025" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvshornets10-25-25.png" alt="Sixers vs Hornets Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Oct 25, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Hornets Player Grades</h3>
-                                    <p class="blog-excerpt">How did each Sixer perform against Charlotte? Full breakdown of individual grades and key takeaways.</p>
-                                </div>
-                            </a>
-                        </article>
-
-                        <!-- Article 9 - Sixers vs Celtics Oct 22 -->
-                        <article class="article-item active">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-celtics-oct-22-2025.html" class="blog-card">
-                                <div class="blog-image">
-                                    <img src="https://sixershoops.com/ImageFolder/sixersvsceltics10-22-25.png" alt="Sixers vs Celtics Player Grades">
-                                    <div class="blog-categories">
-                                        <span class="category-badge" style="background: #2d3748;">News</span>
-                                        <span class="category-badge" style="background: #2d3748;">Player Grades</span>
-                                    </div>
-                                </div>
-                                <div class="blog-content">
-                                    <div class="blog-meta">
-                                        <span>Sixers Hoops</span>
-                                        <span>•</span>
-                                        <span>Oct 22, 2025</span>
-                                    </div>
-                                    <h3 class="blog-title">Sixers vs Celtics Player Grades</h3>
-                                    <p class="blog-excerpt">Another intense battle with the Celtics. Comprehensive grades for every player on the court.</p>
-                                </div>
-                            </a>
-                        </article>
-
-
+    <section id="community-feed-section" class="py-12 bg-slate-50 min-h-screen">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Left Column: Community Feed -->
+                <div class="lg:w-2/3 space-y-6">
+                    <!-- Create Post -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex gap-4 items-center">
+                        <div class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <input type="text" placeholder="Create Post" class="flex-1 bg-slate-100 border-none rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all cursor-pointer">
+                        <div class="flex gap-2 text-slate-500">
+                            <button class="p-2 hover:bg-slate-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></button>
+                            <button class="p-2 hover:bg-slate-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+                        </div>
                     </div>
 
-                    <div class="pagination" id="pagination-controls"></div>
+                    <!-- Feed Filters -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex gap-4 items-center overflow-x-auto no-scrollbar">
+                        <button class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-sm font-bold">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                            Hot
+                        </button>
+                        <button class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 text-slate-600 rounded-full text-sm font-medium transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 7v5l3 3"/></svg>
+                            New
+                        </button>
+                        <button class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 text-slate-600 rounded-full text-sm font-medium transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4-4 4 4"/><path d="m7 12V4"/><path d="m21 8-4 4-4-4"/><path d="m17 12V4"/><path d="M3 20h18"/></svg>
+                            Top
+                        </button>
+                    </div>
+
+                    <!-- Post Feed -->
+                    <div id="feed-container" class="space-y-4">
+                        <!-- Post 1: Link/Tweet style -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex">
+                            <!-- Vote Sidebar -->
+                            <div class="w-12 bg-slate-50/50 p-2 flex flex-col items-center gap-1 border-r border-slate-100">
+                                <button class="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-orange-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                </button>
+                                <span class="text-xs font-bold text-slate-900">1.2k</span>
+                                <button class="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </button>
+                            </div>
+                            <!-- Content -->
+                            <div class="flex-1 p-4">
+                                <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                                    <span class="font-bold text-slate-900">u/TrustTheProcess</span>
+                                    <span>•</span>
+                                    <span>2h ago</span>
+                                    <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Discussion</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">Tyrese Maxey's development this season is actually insane. Is he already a top 3 SG in the league?</h3>
+                                <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-100">
+                                    <p class="text-sm text-slate-600 line-clamp-3">Looking at the stats over the last 10 games, Maxey is averaging 28/6/5 on 50/40/90 splits. His decision making in the clutch has taken a massive leap forward...</p>
+                                </div>
+                                <div class="flex gap-4">
+                                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        243 Comments
+                                    </button>
+                                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                                        Share
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Post 2: Image Post -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex">
+                            <div class="w-12 bg-slate-50/50 p-2 flex flex-col items-center gap-1 border-r border-slate-100">
+                                <button class="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-orange-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                </button>
+                                <span class="text-xs font-bold text-slate-900">856</span>
+                                <button class="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </button>
+                            </div>
+                            <div class="flex-1 p-4">
+                                <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                                    <span class="font-bold text-slate-900">u/SixersHistory</span>
+                                    <span>•</span>
+                                    <span>5h ago</span>
+                                    <span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">Highlight</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">Found this vintage AI photo from the 2001 Finals run. The energy in the city back then was unmatched.</h3>
+                                <div class="rounded-lg overflow-hidden mb-4 bg-slate-100 aspect-video">
+                                    <img src="https://sixershoops.com/ImageFolder/sixersvslakers12-07-25.png" alt="Allen Iverson 2001" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex gap-4">
+                                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        89 Comments
+                                    </button>
+                                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                                        Share
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Right Column: Vertical Headlines -->
-                <aside class="lg:w-1/3">
-                    <div class="sticky top-24">
-                        <div class="flex items-center gap-4 mb-10">
-                            <div class="flex items-center gap-2">
-                                <span class="relative flex h-3 w-3">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
-                                </span>
-                                <h2 class="text-2xl font-black uppercase tracking-tighter">Headlines</h2>
+                <!-- Right Column: Sidebar Articles -->
+                <aside class="lg:w-1/3 space-y-6">
+                    <!-- About Community -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="h-12 bg-blue-600"></div>
+                        <div class="p-4 pt-0 -mt-6">
+                            <div class="flex items-end gap-3 mb-4">
+                                <div class="h-16 w-16 rounded-xl bg-white p-1 shadow-md">
+                                    <div class="h-full w-full rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-2xl">76</div>
+                                </div>
+                                <h2 class="text-xl font-black text-slate-900 mb-1">Sixers Hoops</h2>
                             </div>
-                            <div class="h-px bg-gray-200 flex-1"></div>
+                            <p class="text-sm text-slate-600 mb-4 leading-relaxed">The premier destination for Philadelphia 76ers news, analysis, and community discussion. Join thousands of fans talking Sixers basketball.</p>
+                            <div class="flex gap-8 mb-6 border-y border-slate-100 py-4">
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900">45.2k</div>
+                                    <div class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Members</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900">842</div>
+                                    <div class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Online</div>
+                                </div>
+                            </div>
+                            <button class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors">Create Post</button>
                         </div>
-                        
-                        <div class="flex flex-col gap-8">
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-lakers-dec-07-2025.html" class="flex gap-4 group">
-                                <span class="text-4xl font-black text-gray-200 group-hover:text-blue-200 transition-colors leading-none">01</span>
-                                <div>
-                                    <h4 class="font-bold leading-tight group-hover:text-blue-600 transition-colors">Sixers vs Lakers Player Grades: Embiid and Davis Battle in LA</h4>
-                                    <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Player Grades</p>
+                    </div>
+
+                    <!-- Latest Stories List -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-black uppercase tracking-tighter text-slate-900">Latest Stories</h3>
+                            <a href="#" class="text-xs font-bold text-blue-600 hover:underline">View All</a>
+                        </div>
+                        <div class="space-y-4">
+                            <a href="https://sixershoops.com/player-grades/sixers-vs-lakers-dec-07-2025.html" class="flex gap-3 group">
+                                <div class="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img src="https://sixershoops.com/ImageFolder/sixersvslakers12-07-25.png" alt="Lakers" class="h-full w-full object-cover transition-transform group-hover:scale-110">
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">Sixers vs Lakers Player Grades: Embiid and Davis Battle in LA</h4>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[10px] text-blue-600 font-bold uppercase">Player Grades</span>
+                                        <span class="text-[10px] text-slate-400">Dec 07, 2025</span>
+                                    </div>
                                 </div>
                             </a>
-                            <a href="https://sixershoops.com/player-grades/sixers-vs-bucks-dec-05-2025.html" class="flex gap-4 group">
-                                <span class="text-4xl font-black text-gray-200 group-hover:text-blue-200 transition-colors leading-none">02</span>
-                                <div>
-                                    <h4 class="font-bold leading-tight group-hover:text-blue-600 transition-colors">Sixers vs Bucks: Giannis Stymied by Sixers Defensive Rotation</h4>
-                                    <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Game Analysis</p>
+                            <a href="https://sixershoops.com/player-grades/sixers-vs-bucks-dec-05-2025.html" class="flex gap-3 group">
+                                <div class="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img src="https://sixershoops.com/ImageFolder/sixersvsbucks12-05-25.png" alt="Bucks" class="h-full w-full object-cover transition-transform group-hover:scale-110">
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">Defensive Blueprint: How Sixers Neutralized Giannis</h4>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[10px] text-blue-600 font-bold uppercase">Game Analysis</span>
+                                        <span class="text-[10px] text-slate-400">Dec 05, 2025</span>
+                                    </div>
                                 </div>
                             </a>
-                            <a href="/pickem" class="flex gap-4 group">
-                                <span class="text-4xl font-black text-gray-200 group-hover:text-blue-200 transition-colors leading-none">03</span>
-                                <div>
-                                    <h4 class="font-bold leading-tight group-hover:text-blue-600 transition-colors">Daily Pick'em: Compete for the Top Spot on the Leaderboard</h4>
-                                    <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Community</p>
+                            <a href="https://sixershoops.com/player-grades/sixers-vs-warriors-dec-04-2025.html" class="flex gap-3 group">
+                                <div class="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img src="https://sixershoops.com/ImageFolder/sixersvswarriors12-04-25.png" alt="Warriors" class="h-full w-full object-cover transition-transform group-hover:scale-110">
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">Sixers vs Warriors Player Grades: Shooting Woes Continue</h4>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[10px] text-blue-600 font-bold uppercase">Player Grades</span>
+                                        <span class="text-[10px] text-slate-400">Dec 04, 2025</span>
+                                    </div>
                                 </div>
                             </a>
-                            <a href="https://sixershoops.com/schedule" class="flex gap-4 group">
-                                <span class="text-4xl font-black text-gray-200 group-hover:text-blue-200 transition-colors leading-none">04</span>
-                                <div>
-                                    <h4 class="font-bold leading-tight group-hover:text-blue-600 transition-colors">Sixers Schedule: Upcoming West Coast Road Trip Breakdown</h4>
-                                    <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Schedule</p>
+                        </div>
+                    </div>
+
+                    <!-- Trending Headlines (Moved from old sidebar) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                        <h3 class="font-black uppercase tracking-tighter text-slate-900 mb-4">Trending Headlines</h3>
+                        <div class="space-y-4">
+                            <a href="/pickem" class="block group">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="h-1 w-1 rounded-full bg-blue-600"></span>
+                                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Community</span>
                                 </div>
+                                <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Join the Community: Weekly Pick'em Leaderboard</h4>
                             </a>
-                            <a href="https://sixershoops.com/future-draft-picks" class="flex gap-4 group">
-                                <span class="text-4xl font-black text-gray-200 group-hover:text-blue-200 transition-colors leading-none">05</span>
-                                <div>
-                                    <h4 class="font-bold leading-tight group-hover:text-blue-600 transition-colors">Future Assets: A Complete Look at the Sixers Draft Picks</h4>
-                                    <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Front Office</p>
+                            <a href="https://sixershoops.com/schedule" class="block group">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="h-1 w-1 rounded-full bg-blue-600"></span>
+                                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Schedule</span>
                                 </div>
+                                <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">West Coast Swing: Full Trip Preview & Predictions</h4>
+                            </a>
+                            <a href="https://sixershoops.com/future-draft-picks" class="block group">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="h-1 w-1 rounded-full bg-blue-600"></span>
+                                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Front Office</span>
+                                </div>
+                                <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Draft Capital: Updated Look at Future Assets</h4>
                             </a>
                         </div>
                     </div>
@@ -898,69 +906,31 @@
     </div>
 
     <script>
-        const ARTICLES_PER_PAGE = 9;
-        let currentPage = 1;
-
-        function initPagination() {
-            const allArticles = document.querySelectorAll('.article-item');
-            const totalPages = Math.ceil(allArticles.length / ARTICLES_PER_PAGE);
-
-            // Render pagination controls
-            const paginationContainer = document.getElementById('pagination-controls');
-            paginationContainer.innerHTML = '';
-
-            // Previous button
-            const prevBtn = document.createElement('button');
-            prevBtn.textContent = '← Previous';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => goToPage(currentPage - 1);
-            paginationContainer.appendChild(prevBtn);
-
-            // Page buttons
-            for (let i = 1; i <= totalPages; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.textContent = i;
-                pageBtn.className = i === currentPage ? 'active' : '';
-                pageBtn.onclick = () => goToPage(i);
-                paginationContainer.appendChild(pageBtn);
-            }
-
-            // Next button
-            const nextBtn = document.createElement('button');
-            nextBtn.textContent = 'Next →';
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = () => goToPage(currentPage + 1);
-            paginationContainer.appendChild(nextBtn);
-
-            // Show/hide articles
-            allArticles.forEach((article, index) => {
-                const pageNumber = Math.floor(index / ARTICLES_PER_PAGE) + 1;
-                if (pageNumber === currentPage) {
-                    article.classList.add('active');
-                } else {
-                    article.classList.remove('active');
-                }
+        // Community Feed Interaction
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Community Feed Loaded');
+            
+            // Simple Vote Logic
+            const voteButtons = document.querySelectorAll('button[class*="hover:text-orange-600"], button[class*="hover:text-blue-600"]');
+            voteButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const post = e.target.closest('.flex.overflow-hidden');
+                    const scoreSpan = post.querySelector('span.text-xs.font-bold');
+                    let currentScore = scoreSpan.textContent;
+                    
+                    // Simple UI toggle for demo purposes
+                    if (btn.classList.contains('text-orange-600') || btn.classList.contains('text-blue-600')) {
+                        btn.classList.remove('text-orange-600', 'text-blue-600');
+                    } else {
+                        if (btn.querySelector('path[d*="m18 15"]')) {
+                            btn.classList.add('text-orange-600');
+                        } else {
+                            btn.classList.add('text-blue-600');
+                        }
+                    }
+                });
             });
-        }
-
-        function goToPage(page) {
-            const allArticles = document.querySelectorAll('.article-item');
-            const totalPages = Math.ceil(allArticles.length / ARTICLES_PER_PAGE);
-
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                initPagination();
-                // Scroll to articles section
-                document.getElementById('latest-stories-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
-        // Initialize on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initPagination);
-        } else {
-            initPagination();
-        }
+        });
     </script>
     <script src="nav.js"></script>
 </body>
