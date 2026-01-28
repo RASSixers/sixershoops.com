@@ -612,10 +612,11 @@ const CommunityFeed = (() => {
             const previewImg = document.getElementById('image-preview');
             const previewSrc = previewImg ? previewImg.src : null;
 
-            if (imageFile && window.storage) {
+            if (imageFile && (window.storage || (window.firebase && window.firebase.storage))) {
                 try {
                     console.log("Uploading image:", imageFile.name);
-                    const storageRef = window.storage.ref();
+                    const storage = window.storage || window.firebase.storage();
+                    const storageRef = storage.ref();
                     const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
                     const snapshot = await fileRef.put(imageFile);
                     imageUrl = await snapshot.ref.getDownloadURL();
@@ -625,8 +626,8 @@ const CommunityFeed = (() => {
                     showAlert("Failed to upload image to server. High-resolution images must be uploaded to the server.", "Upload Error");
                     throw uploadError; // Rethrow to stop post creation
                 }
-            } else if (imageFile && !window.storage) {
-                console.error("Firebase Storage not initialized");
+            } else if (imageFile) {
+                console.error("Firebase Storage not initialized. window.storage:", !!window.storage, "window.firebase.storage:", !!(window.firebase && window.firebase.storage));
                 showAlert("Image upload service is currently unavailable. Please try again later.", "Service Error");
                 throw new Error("Storage not initialized");
             }
