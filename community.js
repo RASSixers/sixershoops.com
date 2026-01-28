@@ -212,6 +212,12 @@ const CommunityFeed = (() => {
         }
     }
 
+    function formatTwitterContent(text) {
+        if (!text) return '';
+        const twitterRegex = /(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/(?:\w+)\/status\/(\d+)/g;
+        return text.replace(twitterRegex, '').trim();
+    }
+
     function createPostElement(post) {
         const div = document.createElement('div');
         div.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md';
@@ -258,7 +264,7 @@ const CommunityFeed = (() => {
                     ` : ''}
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">${post.title}</h3>
-                ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-3 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${post.content}</p></div>` : ''}
+                ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-3 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(post.content)}</p></div>` : ''}
                 ${twitterId ? `<div class="mb-4 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
                 ${hasValidImage ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block" onerror="this.parentElement.style.display='none'"></div>` : ''}
                 <div class="flex gap-4">
@@ -795,7 +801,7 @@ const CommunityFeed = (() => {
                 <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
                 ${twitterId ? `<div class="mb-6 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
                 ${hasValidImage ? `<div class="mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto object-contain bg-slate-100" onerror="this.parentElement.style.display='none'"></div>` : ''}
-                <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${post.content}</div>
+                <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${formatTwitterContent(post.content)}</div>
                 
                 <div class="border-t pt-6">
                     <h3 class="font-bold mb-4 text-lg">Comments (${(post.comments || []).length})</h3>
@@ -810,7 +816,14 @@ const CommunityFeed = (() => {
 
                     <!-- Comments List -->
                     <div class="comments-list space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        ${(post.comments && post.comments.length > 0) ? post.comments.map((c, idx) => `
+                        ${(post.comments && post.comments.length > 0) ? post.comments.map((c, idx) => {
+                            const user = window.auth ? window.auth.currentUser : null;
+                            const cVoters = c.voters || {};
+                            const userVote = user ? cVoters[user.uid] : null;
+                            const isUpvoted = userVote === 'up';
+                            const cVotes = c.votes || 0;
+
+                            return `
                             <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${idx}">
                                 <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
                                     <span class="font-bold text-slate-900">${c.author}</span>
@@ -821,6 +834,12 @@ const CommunityFeed = (() => {
                                 
                                 <div class="flex flex-col gap-3">
                                     <div class="flex items-center gap-4">
+                                        <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                                            <button class="comment-vote-up p-0.5 hover:text-orange-600 transition-colors ${isUpvoted ? 'text-orange-600' : 'text-slate-400'}" data-comment-idx="${idx}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                            </button>
+                                            <span class="text-[10px] font-bold min-w-[12px] text-center ${isUpvoted ? 'text-orange-600' : 'text-slate-600'}">${cVotes}</span>
+                                        </div>
                                         <button class="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors reply-btn" data-comment-idx="${idx}">Reply</button>
                                     </div>
                                     
@@ -835,22 +854,36 @@ const CommunityFeed = (() => {
 
                                     <!-- Replies List -->
                                     ${(c.replies && c.replies.length > 0) ? `
-                                        <div class="pl-4 border-l-2 border-slate-200 space-y-3 mt-2">
-                                            ${c.replies.map(r => `
+                                        <div class="pl-4 border-l-2 border-slate-200 space-y-4 mt-2">
+                                            ${c.replies.map((r, rIdx) => {
+                                                const rVoters = r.voters || {};
+                                                const rUserVote = user ? rVoters[user.uid] : null;
+                                                const rUpvoted = rUserVote === 'up';
+                                                const rVotes = r.votes || 0;
+
+                                                return `
                                                 <div class="text-xs">
                                                     <div class="flex items-center gap-2 mb-1">
                                                         <span class="font-bold text-slate-900">${r.author}</span>
                                                         <span class="text-slate-400">•</span>
                                                         <span class="text-slate-400">${r.time || 'Just now'}</span>
                                                     </div>
-                                                    <p class="text-slate-600">${r.text}</p>
+                                                    <p class="text-slate-600 mb-2">${r.text}</p>
+                                                    <div class="flex items-center gap-1">
+                                                        <button class="reply-vote-up p-0.5 hover:text-orange-600 transition-colors ${rUpvoted ? 'text-orange-600' : 'text-slate-400'}" data-comment-idx="${idx}" data-reply-idx="${rIdx}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                                        </button>
+                                                        <span class="text-[10px] font-bold text-slate-500">${rVotes}</span>
+                                                    </div>
                                                 </div>
-                                            `).join('')}
+                                                `;
+                                            }).join('')}
                                         </div>
                                     ` : ''}
                                 </div>
                             </div>
-                        `).reverse().join('') : `
+                            `;
+                        }).reverse().join('') : `
                             <div class="text-center py-8">
                                 <svg class="mx-auto h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -912,6 +945,105 @@ const CommunityFeed = (() => {
                 }
             });
         });
+
+        // Comment Vote logic
+        contentContainer.querySelectorAll('.comment-vote-up').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = e.currentTarget.dataset.commentIdx;
+                handleCommentVote(postId, parseInt(idx));
+            });
+        });
+
+        // Reply Vote logic
+        contentContainer.querySelectorAll('.reply-vote-up').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cIdx = e.currentTarget.dataset.commentIdx;
+                const rIdx = e.currentTarget.dataset.replyIdx;
+                handleReplyVote(postId, parseInt(cIdx), parseInt(rIdx));
+            });
+        });
+    }
+
+    async function handleCommentVote(postId, commentIdx) {
+        const user = window.auth ? window.auth.currentUser : null;
+        if (!user) {
+            triggerLogin();
+            return;
+        }
+
+        const postIndex = posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) return;
+
+        const post = posts[postIndex];
+        const updatedComments = [...(post.comments || [])];
+        const comment = updatedComments[commentIdx];
+        
+        if (!comment.voters) comment.voters = {};
+        if (comment.votes === undefined) comment.votes = 0;
+
+        if (comment.voters[user.uid] === 'up') {
+            comment.votes -= 1;
+            delete comment.voters[user.uid];
+        } else {
+            comment.votes += 1;
+            comment.voters[user.uid] = 'up';
+        }
+
+        if (window.db && !['1', '2', '3'].includes(postId)) {
+            try {
+                await window.db.collection(COLLECTION_NAME).doc(postId).update({
+                    comments: updatedComments
+                });
+            } catch (error) {
+                console.error("Error voting on comment:", error);
+            }
+        } else {
+            post.comments = updatedComments;
+            savePosts();
+            openDetailedView(postId, true);
+        }
+    }
+
+    async function handleReplyVote(postId, commentIdx, replyIdx) {
+        const user = window.auth ? window.auth.currentUser : null;
+        if (!user) {
+            triggerLogin();
+            return;
+        }
+
+        const postIndex = posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) return;
+
+        const post = posts[postIndex];
+        const updatedComments = [...(post.comments || [])];
+        const comment = updatedComments[commentIdx];
+        if (!comment.replies) return;
+        
+        const reply = comment.replies[replyIdx];
+        if (!reply.voters) reply.voters = {};
+        if (reply.votes === undefined) reply.votes = 0;
+
+        if (reply.voters[user.uid] === 'up') {
+            reply.votes -= 1;
+            delete reply.voters[user.uid];
+        } else {
+            reply.votes += 1;
+            reply.voters[user.uid] = 'up';
+        }
+
+        if (window.db && !['1', '2', '3'].includes(postId)) {
+            try {
+                await window.db.collection(COLLECTION_NAME).doc(postId).update({
+                    comments: updatedComments
+                });
+            } catch (error) {
+                console.error("Error voting on reply:", error);
+            }
+        } else {
+            post.comments = updatedComments;
+            savePosts();
+            openDetailedView(postId, true);
+        }
     }
 
     async function addReply(postId, commentIdx, text) {
@@ -936,7 +1068,9 @@ const CommunityFeed = (() => {
             authorId: user.uid,
             text: text,
             time: 'Just now',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            votes: 0,
+            voters: {}
         };
 
         comment.replies.push(newReply);
@@ -978,7 +1112,10 @@ const CommunityFeed = (() => {
             authorId: user.uid,
             text: text,
             time: 'Just now',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            votes: 0,
+            voters: {},
+            replies: []
         };
 
         if (window.db && !['1', '2', '3'].includes(postId)) {
