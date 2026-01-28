@@ -53,11 +53,18 @@ const CommunityFeed = (() => {
 
         let query = window.db.collection(COLLECTION_NAME);
 
-        // Simplified queries to avoid complex index requirements initially
+        // 'new' sorts strictly by date
         if (currentFilter === 'new') {
             query = query.orderBy('createdAt', 'desc');
-        } else if (currentFilter === 'top' || currentFilter === 'hot') {
+        } 
+        // 'top' sorts strictly by highest votes
+        else if (currentFilter === 'top') {
             query = query.orderBy('votes', 'desc');
+        }
+        // 'hot' attempts to show high-vote recent posts first
+        // Note: This requires a composite index in Firestore: votes (desc), createdAt (desc)
+        else {
+            query = query.orderBy('votes', 'desc').orderBy('createdAt', 'desc');
         }
 
         unsubscribe = query.limit(50).onSnapshot((snapshot) => {
@@ -78,9 +85,19 @@ const CommunityFeed = (() => {
             }
         }, (error) => {
             console.error("Firestore Error:", error);
-            // If it's an index error, it will show a link in the console
+            
+            // Handle index error automatically for the user
             if (error.message.includes('index')) {
-                alert("This filter requires a Firestore index. Check your browser console for the setup link.");
+                console.warn("Composite index missing for 'Hot' filter. Falling back to simple vote sort.");
+                // Fallback to avoid breaking the feed if the index isn't created yet
+                currentFilter = 'top'; 
+                listenToPosts();
+                
+                // Show link to user once to help them set it up
+                if (!window.indexAlertShown) {
+                    alert("Click the link in your browser's inspect console (F12) to create the Firestore index required for the 'Hot' filter.");
+                    window.indexAlertShown = true;
+                }
             }
         });
     }
@@ -198,6 +215,7 @@ const CommunityFeed = (() => {
         const userVote = (user && post.voters) ? post.voters[user.uid] : post.voted;
         const isUpvoted = userVote === 'up';
         const isDownvoted = userVote === 'down';
+        const isAuthor = user && post.authorId === user.uid;
 
         div.innerHTML = `
             <!-- Vote Sidebar -->
@@ -212,11 +230,18 @@ const CommunityFeed = (() => {
             </div>
             <!-- Content -->
             <div class="flex-1 p-4">
-                <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
-                    <span class="font-bold text-slate-900">${post.author}</span>
-                    <span>•</span>
-                    <span>${post.time}</span>
-                    <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span class="font-bold text-slate-900">${post.author}</span>
+                        <span>•</span>
+                        <span>${post.time}</span>
+                        <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
+                    </div>
+                    ${isAuthor ? `
+                        <button class="delete-post-btn p-1 text-slate-400 hover:text-red-600 transition-colors" title="Delete Post">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    ` : ''}
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">${post.title}</h3>
                 ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${post.content}</p></div>` : ''}
@@ -239,12 +264,37 @@ const CommunityFeed = (() => {
                 handleVote(post.id, 'up');
             } else if (e.target.closest('.vote-down')) {
                 handleVote(post.id, 'down');
+            } else if (e.target.closest('.delete-post-btn')) {
+                e.stopPropagation();
+                handleDeletePost(post.id);
             } else {
                 openDetailedView(post.id);
             }
         });
 
         return div;
+    }
+
+    async function handleDeletePost(postId) {
+        if (!confirm("Are you sure you want to delete this post?")) return;
+
+        if (window.db) {
+            try {
+                await window.db.collection(COLLECTION_NAME).doc(postId).delete();
+                closeModal();
+            } catch (error) {
+                console.error("Error deleting post:", error);
+                alert("Error deleting post: " + error.message);
+            }
+        } else {
+            const index = posts.findIndex(p => p.id === postId);
+            if (index !== -1) {
+                posts.splice(index, 1);
+                savePosts();
+                renderFeed();
+                closeModal();
+            }
+        }
     }
 
     function formatVotes(votes) {
@@ -399,6 +449,7 @@ const CommunityFeed = (() => {
         const titleInput = document.getElementById('post-title-input');
         const tagInput = document.getElementById('post-tag-input');
         const contentInput = document.getElementById('post-content-input');
+        const submitBtn = document.getElementById('submit-post-btn');
 
         const title = titleInput.value.trim();
         const tag = tagInput.value;
@@ -407,6 +458,12 @@ const CommunityFeed = (() => {
         if (!title) {
             alert('Please enter a title');
             return;
+        }
+
+        // Disable button to prevent double submission
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Posting...';
         }
 
         const tagClasses = {
@@ -418,39 +475,46 @@ const CommunityFeed = (() => {
 
         const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
         
-        const newPost = {
-            author: 'u/' + authorName,
-            authorId: user.uid,
-            createdAt: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date(),
-            tag: tag,
-            tagClass: tagClasses[tag] || 'bg-slate-100 text-slate-700',
-            title: title,
-            content: content,
-            votes: 1,
-            voters: { [user.uid]: 'up' },
-            comments: []
-        };
+        try {
+            const newPost = {
+                author: 'u/' + authorName,
+                authorId: user.uid,
+                createdAt: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date(),
+                tag: tag,
+                tagClass: tagClasses[tag] || 'bg-slate-100 text-slate-700',
+                title: title,
+                content: content,
+                votes: 1,
+                voters: { [user.uid]: 'up' },
+                comments: []
+            };
 
-        if (window.db) {
-            try {
+            if (window.db) {
                 await window.db.collection(COLLECTION_NAME).add(newPost);
                 closeCreateModal();
-            } catch (error) {
-                console.error("Error creating post in Firestore:", error);
-                alert("Error creating post: " + error.message);
+                // Switch to 'New' filter so user sees their post immediately
+                setFilter('new');
+            } else {
+                // Local fallback
+                const localPost = {
+                    ...newPost,
+                    id: Date.now().toString(),
+                    time: 'Just now',
+                    voted: 'up'
+                };
+                posts.unshift(localPost);
+                savePosts();
+                renderFeed();
+                closeCreateModal();
             }
-        } else {
-            // Fallback for tests or local dev
-            const localPost = {
-                ...newPost,
-                id: Date.now().toString(),
-                time: 'Just now',
-                voted: 'up'
-            };
-            posts.unshift(localPost);
-            savePosts();
-            renderFeed();
-            closeCreateModal();
+        } catch (error) {
+            console.error("Post Creation Error:", error);
+            alert("Error: " + error.message);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Post';
+            }
         }
     }
 
@@ -461,6 +525,9 @@ const CommunityFeed = (() => {
         const modal = document.getElementById('post-modal-overlay');
         const contentContainer = document.getElementById('post-modal-content');
         if (!modal || !contentContainer) return;
+
+        const user = window.auth ? window.auth.currentUser : null;
+        const isAuthor = user && post.authorId === user.uid;
 
         modal.dataset.currentPostId = postId;
 
@@ -473,11 +540,18 @@ const CommunityFeed = (() => {
 
         contentContainer.innerHTML = `
             <div class="space-y-6">
-                <div class="flex items-center gap-2 text-xs text-slate-500">
-                    <span class="font-bold text-slate-900">${post.author}</span>
-                    <span>•</span>
-                    <span>${post.time}</span>
-                    <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span class="font-bold text-slate-900">${post.author}</span>
+                        <span>•</span>
+                        <span>${post.time}</span>
+                        <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
+                    </div>
+                    ${isAuthor ? `
+                        <button class="modal-delete-post-btn text-slate-400 hover:text-red-600 transition-colors" title="Delete Post">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    ` : ''}
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
                 <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${post.content}</div>
@@ -495,14 +569,45 @@ const CommunityFeed = (() => {
 
                     <!-- Comments List -->
                     <div class="comments-list space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        ${(post.comments && post.comments.length > 0) ? post.comments.map(c => `
-                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        ${(post.comments && post.comments.length > 0) ? post.comments.map((c, idx) => `
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${idx}">
                                 <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
                                     <span class="font-bold text-slate-900">${c.author}</span>
                                     <span>•</span>
                                     <span>${c.time || formatTimeAgo(c.createdAt)}</span>
                                 </div>
-                                <p class="text-sm text-slate-700 leading-normal">${c.text}</p>
+                                <p class="text-sm text-slate-700 leading-normal mb-3">${c.text}</p>
+                                
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex items-center gap-4">
+                                        <button class="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors reply-btn" data-comment-idx="${idx}">Reply</button>
+                                    </div>
+                                    
+                                    <!-- Reply Input (hidden by default) -->
+                                    <div class="reply-input-container hidden" id="reply-input-${idx}">
+                                        <textarea class="w-full p-3 border border-slate-200 rounded-xl text-xs focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none" placeholder="Write a reply..." rows="2"></textarea>
+                                        <div class="flex justify-end gap-2 mt-2">
+                                            <button class="px-3 py-1 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-200 cancel-reply-btn" data-comment-idx="${idx}">Cancel</button>
+                                            <button class="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-bold hover:bg-blue-700 submit-reply-btn" data-comment-idx="${idx}">Reply</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Replies List -->
+                                    ${(c.replies && c.replies.length > 0) ? `
+                                        <div class="pl-4 border-l-2 border-slate-200 space-y-3 mt-2">
+                                            ${c.replies.map(r => `
+                                                <div class="text-xs">
+                                                    <div class="flex items-center gap-2 mb-1">
+                                                        <span class="font-bold text-slate-900">${r.author}</span>
+                                                        <span class="text-slate-400">•</span>
+                                                        <span class="text-slate-400">${r.time || 'Just now'}</span>
+                                                    </div>
+                                                    <p class="text-slate-600">${r.text}</p>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
                         `).reverse().join('') : `
                             <div class="text-center py-8">
@@ -524,12 +629,85 @@ const CommunityFeed = (() => {
             contentContainer.querySelector('.comments-list').scrollTop = scrollPos;
         }
 
-        // Setup comment submit
+        // Setup listeners for modal content
+        const deleteBtn = contentContainer.querySelector('.modal-delete-post-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => handleDeletePost(postId));
+        }
+
         const submitBtn = document.getElementById('submit-comment');
         if (submitBtn) {
-            submitBtn.addEventListener('click', () => {
-                addComment(postId);
+            submitBtn.addEventListener('click', () => addComment(postId));
+        }
+
+        // Reply logic
+        contentContainer.querySelectorAll('.reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = e.target.dataset.comment_idx || e.target.getAttribute('data-comment-idx');
+                document.getElementById(`reply-input-${idx}`).classList.remove('hidden');
+                e.target.classList.add('hidden');
             });
+        });
+
+        contentContainer.querySelectorAll('.cancel-reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = e.target.dataset.comment_idx || e.target.getAttribute('data-comment-idx');
+                document.getElementById(`reply-input-${idx}`).classList.add('hidden');
+                contentContainer.querySelector(`.reply-btn[data-comment-idx="${idx}"]`).classList.remove('hidden');
+            });
+        });
+
+        contentContainer.querySelectorAll('.submit-reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = e.target.dataset.comment_idx || e.target.getAttribute('data-comment-idx');
+                const textarea = document.querySelector(`#reply-input-${idx} textarea`);
+                if (textarea.value.trim()) {
+                    addReply(postId, parseInt(idx), textarea.value.trim());
+                }
+            });
+        });
+    }
+
+    async function addReply(postId, commentIdx, text) {
+        const user = window.auth ? window.auth.currentUser : null;
+        if (!user) {
+            triggerLogin();
+            return;
+        }
+
+        const postIndex = posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) return;
+
+        const post = posts[postIndex];
+        const updatedComments = [...(post.comments || [])];
+        const comment = updatedComments[commentIdx];
+        
+        if (!comment.replies) comment.replies = [];
+        
+        const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        const newReply = {
+            author: 'u/' + authorName,
+            authorId: user.uid,
+            text: text,
+            time: 'Just now',
+            createdAt: new Date().toISOString()
+        };
+
+        comment.replies.push(newReply);
+
+        if (window.db && !['1', '2', '3'].includes(postId)) {
+            try {
+                await window.db.collection(COLLECTION_NAME).doc(postId).update({
+                    comments: updatedComments
+                });
+            } catch (error) {
+                console.error("Error adding reply:", error);
+                alert("Error adding reply: " + error.message);
+            }
+        } else {
+            post.comments = updatedComments;
+            savePosts();
+            openDetailedView(postId, true);
         }
     }
 
