@@ -238,7 +238,8 @@ const CommunityFeed = (() => {
                     ` : ''}
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">${post.title}</h3>
-                ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${post.content}</p></div>` : ''}
+                ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-3 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${post.content}</p></div>` : ''}
+                ${post.imageUrl ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover" loading="lazy"></div>` : ''}
                 <div class="flex gap-4">
                     <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm comment-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -365,6 +366,44 @@ const CommunityFeed = (() => {
             submitPostBtn.addEventListener('click', handleCreatePost);
         }
 
+        const imageInput = document.getElementById('post-image-input');
+        if (imageInput) {
+            imageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                const filenameSpan = document.getElementById('image-filename');
+                const removeBtn = document.getElementById('remove-image-btn');
+                const previewContainer = document.getElementById('image-preview-container');
+                const previewImg = document.getElementById('image-preview');
+
+                if (file) {
+                    filenameSpan.innerText = file.name;
+                    removeBtn.classList.remove('hidden');
+                    
+                    const reader = new FileReader();
+                    reader.onload = (re) => {
+                        previewImg.src = re.target.result;
+                        previewContainer.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        const removeImageBtn = document.getElementById('remove-image-btn');
+        if (removeImageBtn) {
+            removeImageBtn.addEventListener('click', () => {
+                const imageInput = document.getElementById('post-image-input');
+                const filenameSpan = document.getElementById('image-filename');
+                const removeBtn = document.getElementById('remove-image-btn');
+                const previewContainer = document.getElementById('image-preview-container');
+                
+                imageInput.value = '';
+                filenameSpan.innerText = 'No file chosen';
+                removeBtn.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+            });
+        }
+
         const modalOverlay = document.getElementById('post-modal-overlay');
         if (modalOverlay) {
             modalOverlay.addEventListener('click', (e) => {
@@ -416,6 +455,16 @@ const CommunityFeed = (() => {
             // Clear inputs
             document.getElementById('post-title-input').value = '';
             document.getElementById('post-content-input').value = '';
+            
+            const imageInput = document.getElementById('post-image-input');
+            const filenameSpan = document.getElementById('image-filename');
+            const removeBtn = document.getElementById('remove-image-btn');
+            const previewContainer = document.getElementById('image-preview-container');
+            
+            if (imageInput) imageInput.value = '';
+            if (filenameSpan) filenameSpan.innerText = 'No file chosen';
+            if (removeBtn) removeBtn.classList.add('hidden');
+            if (previewContainer) previewContainer.classList.add('hidden');
         }
     }
 
@@ -509,11 +558,13 @@ const CommunityFeed = (() => {
         const titleInput = document.getElementById('post-title-input');
         const tagInput = document.getElementById('post-tag-input');
         const contentInput = document.getElementById('post-content-input');
+        const imageInput = document.getElementById('post-image-input');
         const submitBtn = document.getElementById('submit-post-btn');
 
         const title = titleInput.value.trim();
         const tag = tagInput.value;
         const content = contentInput.value.trim();
+        const imageFile = imageInput.files[0];
 
         if (!title) {
             showAlert('Please enter a title');
@@ -536,6 +587,14 @@ const CommunityFeed = (() => {
         const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
         
         try {
+            let imageUrl = null;
+            if (imageFile && window.storage) {
+                const storageRef = window.storage.ref();
+                const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
+                const snapshot = await fileRef.put(imageFile);
+                imageUrl = await snapshot.ref.getDownloadURL();
+            }
+
             const newPost = {
                 author: 'u/' + authorName,
                 authorId: user.uid,
@@ -544,6 +603,7 @@ const CommunityFeed = (() => {
                 tagClass: tagClasses[tag] || 'bg-slate-100 text-slate-700',
                 title: title,
                 content: content,
+                imageUrl: imageUrl,
                 votes: 1,
                 voters: { [user.uid]: 'up' },
                 comments: []
@@ -614,6 +674,7 @@ const CommunityFeed = (() => {
                     ` : ''}
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
+                ${post.imageUrl ? `<div class="mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto object-contain bg-slate-100"></div>` : ''}
                 <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${post.content}</div>
                 
                 <div class="border-t pt-6">
