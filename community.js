@@ -159,6 +159,13 @@ const CommunityFeed = (() => {
         return Math.floor(seconds) + "s ago";
     }
 
+    function extractTwitterId(text) {
+        if (!text) return null;
+        const twitterRegex = /(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/(?:\w+)\/status\/(\d+)/;
+        const match = text.match(twitterRegex);
+        return match ? match[1] : null;
+    }
+
     function loadPosts() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -198,6 +205,11 @@ const CommunityFeed = (() => {
             const postEl = createPostElement(post);
             container.appendChild(postEl);
         });
+
+        // Load Twitter widgets if any were added
+        if (window.twttr && window.twttr.widgets) {
+            window.twttr.widgets.load();
+        }
     }
 
     function createPostElement(post) {
@@ -210,6 +222,8 @@ const CommunityFeed = (() => {
         const isUpvoted = userVote === 'up';
         const isDownvoted = userVote === 'down';
         const isAuthor = user && post.authorId === user.uid;
+
+        const twitterId = extractTwitterId(post.content);
 
         div.innerHTML = `
             <!-- Vote Sidebar -->
@@ -239,7 +253,8 @@ const CommunityFeed = (() => {
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">${post.title}</h3>
                 ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-3 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${post.content}</p></div>` : ''}
-                ${post.imageUrl ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover" loading="lazy"></div>` : ''}
+                ${twitterId ? `<div class="mb-4 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
+                ${post.imageUrl ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block"></div>` : ''}
                 <div class="flex gap-4">
                     <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm comment-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -589,10 +604,12 @@ const CommunityFeed = (() => {
         try {
             let imageUrl = null;
             if (imageFile && window.storage) {
+                console.log("Uploading image:", imageFile.name);
                 const storageRef = window.storage.ref();
                 const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
                 const snapshot = await fileRef.put(imageFile);
                 imageUrl = await snapshot.ref.getDownloadURL();
+                console.log("Image uploaded, URL:", imageUrl);
             }
 
             const newPost = {
@@ -620,8 +637,12 @@ const CommunityFeed = (() => {
                     ...newPost,
                     id: Date.now().toString(),
                     time: 'Just now',
-                    voted: 'up'
+                    voted: 'up',
+                    imageUrl: imageUrl || document.getElementById('image-preview').src
                 };
+                if (localPost.imageUrl === '#' || localPost.imageUrl.startsWith('window.')) {
+                    localPost.imageUrl = null;
+                }
                 posts.unshift(localPost);
                 savePosts();
                 renderFeed();
@@ -650,6 +671,7 @@ const CommunityFeed = (() => {
         const isAuthor = user && post.authorId === user.uid;
 
         modal.dataset.currentPostId = postId;
+        const twitterId = extractTwitterId(post.content);
 
         // Store scroll position of comments if keepState is true
         let scrollPos = 0;
@@ -674,6 +696,7 @@ const CommunityFeed = (() => {
                     ` : ''}
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
+                ${twitterId ? `<div class="mb-6 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
                 ${post.imageUrl ? `<div class="mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto object-contain bg-slate-100"></div>` : ''}
                 <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${post.content}</div>
                 
@@ -748,6 +771,11 @@ const CommunityFeed = (() => {
             document.body.style.overflow = 'hidden';
         } else if (existingCommentsList) {
             contentContainer.querySelector('.comments-list').scrollTop = scrollPos;
+        }
+
+        // Load Twitter widgets if any were added to the modal
+        if (twitterId && window.twttr && window.twttr.widgets) {
+            window.twttr.widgets.load(contentContainer);
         }
 
         // Setup listeners for modal content
