@@ -397,6 +397,9 @@ const CommunityFeed = (() => {
                 const previewImg = document.getElementById('image-preview');
 
                 if (file) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        showAlert('This image is quite large (' + (file.size / 1024 / 1024).toFixed(1) + 'MB). It may take a moment to upload.', 'Large File');
+                    }
                     filenameSpan.innerText = file.name;
                     removeBtn.classList.remove('hidden');
                     
@@ -625,21 +628,54 @@ const CommunityFeed = (() => {
 
             if (imageFile && storage) {
                 try {
-                    console.log("Uploading image:", imageFile.name, "Size:", imageFile.size);
+                    console.log("Uploading image:", imageFile.name, "Size:", (imageFile.size / 1024 / 1024).toFixed(2), "MB");
                     const storageRef = storage.ref();
-                    const fileRef = storageRef.child(`${COLLECTION_NAME}/${Date.now()}_${imageFile.name}`);
+                    const safeName = (imageFile.name || 'image').replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+                    const fileName = `${Date.now()}_${safeName}`;
+                    const fileRef = storageRef.child(`${COLLECTION_NAME}/${fileName}`);
                     
-                    // Use put with metadata for better compatibility
-                    const metadata = { contentType: imageFile.type };
-                    console.log("Calling put()...");
-                    const snapshot = await fileRef.put(imageFile, metadata);
+                    const metadata = { 
+                        contentType: imageFile.type,
+                        customMetadata: {
+                            'originalName': imageFile.name,
+                            'uploadedBy': user.uid
+                        }
+                    };
+                    console.log("Starting upload task...");
+                    const uploadTask = fileRef.put(imageFile, metadata);
                     
-                    console.log("Upload complete, fetching download URL...");
-                    imageUrl = await snapshot.ref.getDownloadURL();
+                    await new Promise((resolve, reject) => {
+                        uploadTask.on('state_changed', 
+                            (snapshot) => {
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                if (submitBtn) submitBtn.innerText = `Posting (${Math.floor(progress)}%)...`;
+                                console.log(`Upload progress: ${progress.toFixed(2)}%`);
+                            }, 
+                            (error) => {
+                                console.error("Upload error listener:", error);
+                                reject(error);
+                            }, 
+                            () => {
+                                console.log("Upload finished successfully");
+                                resolve();
+                            }
+                        );
+                    });
+                    
+                    console.log("Fetching download URL...");
+                    imageUrl = await fileRef.getDownloadURL();
                     console.log("Image URL obtained successfully:", imageUrl);
                 } catch (uploadError) {
                     console.error("Detailed Image Upload Error:", uploadError);
-                    showAlert("Failed to upload image. Please check your internet connection and try again.", "Upload Error");
+                    let errorMsg = "Failed to upload image.";
+                    if (uploadError.code === 'storage/unauthorized') {
+                        errorMsg += " You don't have permission to upload.";
+                    } else if (uploadError.code === 'storage/canceled') {
+                        errorMsg += " Upload was canceled.";
+                    } else {
+                        errorMsg += " " + (uploadError.message || "Please check your internet connection.");
+                    }
+                    showAlert(errorMsg, "Upload Error");
                     throw uploadError;
                 }
             } else if (imageFile) {
@@ -735,7 +771,7 @@ const CommunityFeed = (() => {
                         <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
                     </div>
                     ${isAuthor ? `
-                        <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors mr-8" title="Delete Post">
+                        <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors mr-12" title="Delete Post">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
                     ` : ''}
