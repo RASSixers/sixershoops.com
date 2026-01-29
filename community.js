@@ -106,6 +106,12 @@ const CommunityFeed = (() => {
         }, (error) => {
             console.error("Firestore Error:", error);
             
+            // Handle permission denied (guests)
+            if (error.code === 'permission-denied') {
+                renderGuestFeed();
+                return;
+            }
+
             // Handle index error automatically for the user
             if (error.message.includes('index')) {
                 console.warn("Composite index missing for 'Hot' filter. Falling back to simple vote sort.");
@@ -114,6 +120,22 @@ const CommunityFeed = (() => {
                 listenToPosts();
             }
         });
+    }
+
+    function renderGuestFeed() {
+        const container = document.getElementById('feed-container');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="bg-white rounded-xl p-12 text-center border border-slate-200 shadow-sm">
+                <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Join the Sixers Community</h3>
+                <p class="text-slate-500 mb-8 max-w-md mx-auto">Sign in to view the latest discussions, share your thoughts, and vote on posts with other fans!</p>
+                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">Sign In to View Feed</button>
+            </div>
+        `;
     }
 
     function setupAuthListener() {
@@ -127,6 +149,7 @@ const CommunityFeed = (() => {
     function updateCreatePostUI(user) {
         const avatarContainer = document.getElementById('create-post-avatar-container');
         const triggerInput = document.getElementById('create-post-trigger');
+        const submitBtn = document.getElementById('create-post-btn');
         
         if (!avatarContainer || !triggerInput) return;
 
@@ -141,9 +164,11 @@ const CommunityFeed = (() => {
                 avatarContainer.innerHTML = `<div class="h-full w-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">${initial}</div>`;
             }
             triggerInput.placeholder = `What's on your mind, ${displayName}?`;
+            if (submitBtn) submitBtn.innerText = 'Post';
         } else {
             avatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" id="create-post-default-avatar"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-            triggerInput.placeholder = "What's on your mind?";
+            triggerInput.placeholder = "Log in to join the conversation...";
+            if (submitBtn) submitBtn.innerText = 'Sign In';
         }
     }
 
@@ -1553,6 +1578,7 @@ const CommunityFeed = (() => {
         handleReplyVote,
         handleSharePost,
         addComment,
+        triggerLogin,
         posts: () => posts,
         setPosts: (p) => { posts = p; }
     };
