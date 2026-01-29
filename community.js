@@ -23,7 +23,8 @@ const CommunityFeed = (() => {
 
     function isMod() {
         const user = window.auth ? window.auth.currentUser : null;
-        return user && user.email === MOD_EMAIL;
+        if (!user || !user.email) return false;
+        return user.email.toLowerCase() === MOD_EMAIL.toLowerCase();
     }
 
     // No default posts - we want real data
@@ -177,6 +178,7 @@ const CommunityFeed = (() => {
             if (sidebarArticles.length === 0) {
                 const defaults = [
                     {
+                        id: 'default-1',
                         title: "Sixers vs Lakers Player Grades: Embiid and Davis Battle in LA",
                         category: "Player Grades",
                         date: "Dec 07, 2025",
@@ -185,6 +187,7 @@ const CommunityFeed = (() => {
                         createdAt: new Date()
                     },
                     {
+                        id: 'default-2',
                         title: "Defensive Blueprint: How Sixers Neutralized Giannis",
                         category: "Game Analysis",
                         date: "Dec 05, 2025",
@@ -193,6 +196,7 @@ const CommunityFeed = (() => {
                         createdAt: new Date()
                     },
                     {
+                        id: 'default-3',
                         title: "Sixers vs Warriors Player Grades: Shooting Woes Continue",
                         category: "Player Grades",
                         date: "Dec 04, 2025",
@@ -207,6 +211,12 @@ const CommunityFeed = (() => {
             }
 
             renderSidebarArticles();
+            
+            // Also refresh articles modal if open
+            const articlesModal = document.getElementById('articles-modal-overlay');
+            if (articlesModal && articlesModal.classList.contains('active')) {
+                openArticlesModal();
+            }
         });
     }
 
@@ -248,7 +258,7 @@ const CommunityFeed = (() => {
     function updateModControls(user) {
         const modControls = document.getElementById('mod-article-controls');
         if (modControls) {
-            if (user && user.email === MOD_EMAIL) {
+            if (user && user.email && user.email.toLowerCase() === MOD_EMAIL.toLowerCase()) {
                 modControls.classList.remove('hidden');
             } else {
                 modControls.classList.add('hidden');
@@ -259,7 +269,17 @@ const CommunityFeed = (() => {
     function openArticlesModal() {
         const modal = document.getElementById('articles-modal-overlay');
         const list = document.getElementById('all-articles-list');
+        const addBtn = document.getElementById('modal-add-article-btn');
         if (!modal || !list) return;
+
+        if (addBtn) {
+            if (isMod()) {
+                addBtn.classList.remove('hidden');
+                addBtn.onclick = () => openArticleEditModal();
+            } else {
+                addBtn.classList.add('hidden');
+            }
+        }
 
         list.innerHTML = sidebarArticles.map(article => `
             <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 group relative">
@@ -358,7 +378,7 @@ const CommunityFeed = (() => {
 
         if (window.db) {
             try {
-                if (editingId) {
+                if (editingId && !editingId.startsWith('default-')) {
                     await window.db.collection(ARTICLE_COLLECTION).doc(editingId).update(articleData);
                 } else {
                     await window.db.collection(ARTICLE_COLLECTION).add(articleData);
@@ -399,6 +419,25 @@ const CommunityFeed = (() => {
         if (window.auth) {
             window.auth.onAuthStateChanged(user => {
                 updateCreatePostUI(user);
+                
+                // Refresh the feed to show/hide delete/pin buttons based on new auth state
+                renderFeed();
+                
+                // If a modal is open, refresh it too
+                const modal = document.getElementById('post-modal-overlay');
+                if (modal && modal.classList.contains('active')) {
+                    const currentPostId = modal.dataset.currentPostId;
+                    if (currentPostId) {
+                        openDetailedView(currentPostId, true);
+                    }
+                }
+
+                // Also update article controls
+                renderSidebarArticles();
+                const articlesModal = document.getElementById('articles-modal-overlay');
+                if (articlesModal && articlesModal.classList.contains('active')) {
+                    openArticlesModal();
+                }
             });
         }
     }
