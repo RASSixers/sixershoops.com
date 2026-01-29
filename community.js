@@ -587,6 +587,22 @@ const CommunityFeed = (() => {
                 }
             });
         }
+
+        window.addEventListener('popstate', (e) => {
+            const params = new URLSearchParams(window.location.search);
+            const postId = params.get('post');
+            if (postId) {
+                openDetailedView(postId, true);
+                const modal = document.getElementById('post-modal-overlay');
+                if (modal) modal.classList.add('active');
+            } else {
+                const modal = document.getElementById('post-modal-overlay');
+                if (modal && modal.classList.contains('active')) {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+        });
     }
 
     function openCreatePostModal() {
@@ -1096,6 +1112,13 @@ const CommunityFeed = (() => {
         if (!keepState) {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            // Update URL to include post ID
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('post') !== postId) {
+                url.searchParams.set('post', postId);
+                window.history.pushState({ postId }, '', url.toString());
+            }
         } else if (existingCommentsList) {
             contentContainer.querySelector('.comments-list').scrollTop = scrollPos;
         }
@@ -1564,6 +1587,13 @@ const CommunityFeed = (() => {
         if (modal) {
             modal.classList.remove('active');
             document.body.style.overflow = '';
+
+            // Remove post ID from URL
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('post')) {
+                url.searchParams.delete('post');
+                window.history.pushState({}, '', url.toString());
+            }
         }
     }
 
