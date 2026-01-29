@@ -1,6 +1,7 @@
 
 // Community Feed Logic
 const CommunityFeed = (() => {
+
     let posts = [];
     let unsubscribe = null;
     let currentFilter = 'hot';
@@ -448,6 +449,10 @@ const CommunityFeed = (() => {
         const triggerInput = document.getElementById('create-post-trigger');
         const submitBtn = document.getElementById('create-post-btn');
         
+        // Article creator elements
+        const articleTrigger = document.getElementById('create-article-trigger');
+        const articleSubmit = document.getElementById('add-article-btn-sidebar');
+        
         if (!avatarContainer || !triggerInput) return;
 
         if (user) {
@@ -462,10 +467,19 @@ const CommunityFeed = (() => {
             }
             triggerInput.placeholder = `What's on your mind, ${displayName}?`;
             if (submitBtn) submitBtn.innerText = 'Post';
+
+            // Also update article creator if it exists
+            if (articleTrigger) {
+                articleTrigger.placeholder = `Write a new article, ${displayName}...`;
+            }
         } else {
             avatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" id="create-post-default-avatar"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
             triggerInput.placeholder = "Log in to join the conversation...";
             if (submitBtn) submitBtn.innerText = 'Sign In';
+
+            if (articleTrigger) {
+                articleTrigger.placeholder = "Write a new article...";
+            }
         }
     }
 
@@ -936,6 +950,12 @@ const CommunityFeed = (() => {
             document.getElementById('articles-modal-overlay').classList.remove('active');
             document.body.style.overflow = '';
         });
+
+        // Sidebar Article Creation
+        const articleTrigger = document.getElementById('create-article-trigger');
+        const articleAddBtn = document.getElementById('add-article-btn-sidebar');
+        if (articleTrigger) articleTrigger.addEventListener('click', () => openArticleEditModal());
+        if (articleAddBtn) articleAddBtn.addEventListener('click', () => openArticleEditModal());
 
         const addArticleBtn = document.getElementById('add-article-btn');
         if (addArticleBtn) addArticleBtn.addEventListener('click', () => openArticleEditModal());
@@ -2008,10 +2028,15 @@ const CommunityFeed = (() => {
         handleSharePost,
         addComment,
         triggerLogin,
+        handleSaveArticle,
+        handleDeleteArticle,
+        openArticlesModal,
         posts: () => posts,
         setPosts: (p) => { posts = p; }
     };
 })();
+
+window.CommunityFeed = CommunityFeed;
 
 document.addEventListener('DOMContentLoaded', () => {
     CommunityFeed.init();
