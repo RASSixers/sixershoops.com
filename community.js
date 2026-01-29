@@ -6,6 +6,22 @@ const CommunityFeed = (() => {
     let currentFilter = 'hot';
     const STORAGE_KEY = 'sixers_hoops_posts';
     const COLLECTION_NAME = 'community_posts';
+    const MOD_EMAIL = 'rhatus13@gmail.com';
+
+    // Helper to generate URL-friendly slugs
+    function generateSlug(text) {
+        if (!text) return '';
+        return text
+            .toLowerCase()
+            .replace(/[^\w ]+/g, '')
+            .replace(/ +/g, '-')
+            .substring(0, 50);
+    }
+
+    function isMod() {
+        const user = window.auth ? window.auth.currentUser : null;
+        return user && user.email === MOD_EMAIL;
+    }
 
     // No default posts - we want real data
     const defaultPosts = [];
@@ -29,7 +45,13 @@ const CommunityFeed = (() => {
 
     function checkDeepLink() {
         const params = new URLSearchParams(window.location.search);
-        const postId = params.get('post');
+        let postId = params.get('post');
+        
+        // Extract ID from ID/slug format
+        if (postId && postId.includes('/')) {
+            postId = postId.split('/')[0];
+        }
+
         if (postId) {
             console.log("Deep link detected for post:", postId);
             // Wait for posts to load then open
@@ -246,7 +268,15 @@ const CommunityFeed = (() => {
         }
 
         container.innerHTML = '';
-        posts.forEach(post => {
+        
+        // Sort posts: pinned first, then by existing order
+        const sortedPosts = [...posts].sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return 0;
+        });
+
+        sortedPosts.forEach(post => {
             const postEl = createPostElement(post);
             container.appendChild(postEl);
         });
@@ -273,6 +303,8 @@ const CommunityFeed = (() => {
         const isUpvoted = userVote === 'up';
         const isDownvoted = userVote === 'down';
         const isAuthor = user && post.authorId === user.uid;
+        const canDelete = isAuthor || isMod();
+        const isAdmin = isMod();
 
         const twitterId = extractTwitterId(post.content);
         
@@ -297,16 +329,30 @@ const CommunityFeed = (() => {
             <div class="flex-1 p-4">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2 text-xs text-slate-500">
+                        ${post.isPinned ? `
+                            <span class="flex items-center gap-1 text-blue-600 font-bold">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="15"/><poly-line points="12 15 17 21 7 21 12 15"/><path d="M7 3h10"/></svg>
+                                Pinned
+                            </span>
+                            <span>•</span>
+                        ` : ''}
                         <span class="font-bold text-slate-900">${post.author}</span>
                         <span>•</span>
                         <span>${post.time}</span>
                         <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
                     </div>
-                    ${isAuthor ? `
-                        <button class="delete-post-btn p-1 text-red-500 hover:text-red-700 transition-colors" title="Delete Post">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        </button>
-                    ` : ''}
+                    <div class="flex items-center gap-1">
+                        ${isAdmin ? `
+                            <button class="pin-post-btn p-1 ${post.isPinned ? 'text-blue-600' : 'text-slate-400'} hover:text-blue-700 transition-colors" title="${post.isPinned ? 'Unpin Post' : 'Pin Post'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${post.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
+                            </button>
+                        ` : ''}
+                        ${canDelete ? `
+                            <button class="delete-post-btn p-1 text-red-500 hover:text-red-700 transition-colors" title="Delete Post">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">${post.title}</h3>
                 ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-3 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(post.content)}</p></div>` : ''}
@@ -331,6 +377,9 @@ const CommunityFeed = (() => {
                 handleVote(post.id, 'up');
             } else if (e.target.closest('.vote-down')) {
                 handleVote(post.id, 'down');
+            } else if (e.target.closest('.pin-post-btn')) {
+                e.stopPropagation();
+                handlePinPost(post.id, post.isPinned);
             } else if (e.target.closest('.delete-post-btn')) {
                 e.stopPropagation();
                 handleDeletePost(post.id);
@@ -343,6 +392,21 @@ const CommunityFeed = (() => {
         });
 
         return div;
+    }
+
+    async function handlePinPost(postId, isPinned) {
+        if (!isMod()) return;
+        
+        if (window.db) {
+            try {
+                await window.db.collection(COLLECTION_NAME).doc(postId).update({
+                    isPinned: !isPinned
+                });
+            } catch (error) {
+                console.error("Error pinning post:", error);
+                showAlert("Error pinning post: " + error.message, "Error");
+            }
+        }
     }
 
     async function handleDeletePost(postId) {
@@ -590,7 +654,13 @@ const CommunityFeed = (() => {
 
         window.addEventListener('popstate', (e) => {
             const params = new URLSearchParams(window.location.search);
-            const postId = params.get('post');
+            let postId = params.get('post');
+            
+            // Extract ID from ID/slug format
+            if (postId && postId.includes('/')) {
+                postId = postId.split('/')[0];
+            }
+
             if (postId) {
                 openDetailedView(postId, true);
                 const modal = document.getElementById('post-modal-overlay');
@@ -937,7 +1007,7 @@ const CommunityFeed = (() => {
                                         <span>•</span>
                                         <span>${r.time || 'Just now'}</span>
                                     </div>
-                                    ${user && r.authorId === user.uid ? `
+                                    ${(user && r.authorId === user.uid) || isMod() ? `
                                         <button class="delete-comment-btn text-red-400 hover:text-red-600 transition-colors p-1" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                         </button>
@@ -990,6 +1060,8 @@ const CommunityFeed = (() => {
 
         const user = window.auth ? window.auth.currentUser : null;
         const isAuthor = user && post.authorId === user.uid;
+        const canDelete = isAuthor || isMod();
+        const isAdmin = isMod();
 
         modal.dataset.currentPostId = postId;
         const twitterId = extractTwitterId(post.content);
@@ -1020,7 +1092,12 @@ const CommunityFeed = (() => {
                         <button class="modal-share-post-btn text-slate-500 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-slate-100" title="Share Post">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                         </button>
-                        ${isAuthor ? `
+                        ${isAdmin ? `
+                            <button class="modal-pin-post-btn ${post.isPinned ? 'text-blue-600' : 'text-slate-400'} hover:text-blue-700 transition-colors p-2 rounded-full hover:bg-blue-50" title="${post.isPinned ? 'Unpin Post' : 'Pin Post'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${post.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
+                            </button>
+                        ` : ''}
+                        ${canDelete ? `
                             <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50" title="Delete Post">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </button>
@@ -1060,7 +1137,7 @@ const CommunityFeed = (() => {
                                         <span>•</span>
                                         <span>${c.time || formatTimeAgo(c.createdAt)}</span>
                                     </div>
-                                    ${user && c.authorId === user.uid ? `
+                                    ${(user && c.authorId === user.uid) || isMod() ? `
                                         <button class="delete-comment-btn text-red-400 hover:text-red-600 transition-colors p-1" data-comment-idx="${idx}">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                         </button>
@@ -1113,10 +1190,13 @@ const CommunityFeed = (() => {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            // Update URL to include post ID
+            // Update URL to include post ID and title slug
             const url = new URL(window.location.href);
-            if (url.searchParams.get('post') !== postId) {
-                url.searchParams.set('post', postId);
+            const slug = generateSlug(post.title);
+            const postValue = slug ? `${postId}/${slug}` : postId;
+
+            if (url.searchParams.get('post') !== postValue) {
+                url.searchParams.set('post', postValue);
                 window.history.pushState({ postId }, '', url.toString());
             }
         } else if (existingCommentsList) {
@@ -1132,6 +1212,11 @@ const CommunityFeed = (() => {
         const shareBtn = contentContainer.querySelector('.modal-share-post-btn');
         if (shareBtn) {
             shareBtn.addEventListener('click', () => handleSharePost(postId, post.title));
+        }
+
+        const pinBtn = contentContainer.querySelector('.modal-pin-post-btn');
+        if (pinBtn) {
+            pinBtn.addEventListener('click', () => handlePinPost(postId, post.isPinned));
         }
 
         const deleteBtn = contentContainer.querySelector('.modal-delete-post-btn');
