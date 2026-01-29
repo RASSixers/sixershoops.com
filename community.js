@@ -369,21 +369,58 @@ const CommunityFeed = (() => {
     function handleSharePost(postId, postTitle) {
         const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
         
-        if (navigator.share) {
-            navigator.share({
-                title: postTitle,
-                url: shareUrl
-            }).then(() => {
-                console.log('Post shared successfully');
-            }).catch((error) => {
-                if (error.name !== 'AbortError') {
-                    console.error('Error sharing:', error);
-                    copyToClipboard(shareUrl);
-                }
-            });
-        } else {
-            copyToClipboard(shareUrl);
+        // Custom share popup instead of browser direct
+        showSharePopup(shareUrl);
+    }
+
+    function showSharePopup(url) {
+        const modal = document.getElementById('alert-modal-overlay');
+        const titleEl = document.getElementById('alert-modal-title');
+        const msgEl = document.getElementById('alert-modal-message');
+        const closeBtn = document.getElementById('alert-modal-close-btn');
+        const iconContainer = document.getElementById('alert-modal-icon');
+
+        if (!modal || !titleEl || !msgEl || !closeBtn) {
+            prompt("Copy this link to share:", url);
+            return;
         }
+
+        // Change icon to share icon
+        iconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>`;
+        iconContainer.className = "h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4";
+
+        titleEl.innerText = "Share Post";
+        msgEl.innerHTML = `
+            <div class="mt-4">
+                <p class="text-xs text-slate-500 mb-3">Copy the link below to share this conversation:</p>
+                <div class="flex gap-2">
+                    <input type="text" value="${url}" readonly class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-xs outline-none">
+                    <button id="copy-share-link" class="bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-700 transition-all">Copy</button>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        const copyBtn = document.getElementById('copy-share-link');
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(url).then(() => {
+                copyBtn.innerText = "Copied!";
+                copyBtn.classList.replace('bg-blue-600', 'bg-green-600');
+                setTimeout(() => {
+                    copyBtn.innerText = "Copy";
+                    copyBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                }, 2000);
+            });
+        };
+
+        closeBtn.onclick = () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            // Restore default icon for future alerts
+            iconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+        };
     }
 
     function copyToClipboard(text) {
@@ -847,6 +884,7 @@ const CommunityFeed = (() => {
                     const rVoters = r.voters || {};
                     const rUserVote = user ? rVoters[user.uid] : null;
                     const rUpvoted = rUserVote === 'up';
+                    const rDownvoted = rUserVote === 'down';
                     const rVotes = r.votes || 0;
                     const currentPath = parentPath ? `${parentPath}-${rIdx}` : `${rIdx}`;
 
@@ -866,16 +904,20 @@ const CommunityFeed = (() => {
                                 </div>
                                 <p class="text-slate-600 mb-2">${r.text}</p>
                                 <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-1">
-                                <button class="reply-vote-up p-0.5 hover:text-orange-600 transition-colors ${rUpvoted ? 'text-orange-600' : 'text-slate-400'}" 
-                                        data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-                                </button>
-                                <span class="text-[10px] font-bold text-slate-500">${rVotes}</span>
-                            </div>
-                            <button class="text-[10px] font-bold text-slate-400 hover:text-blue-600 reply-to-reply-btn" 
-                                    data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
-                        </div>
+                                    <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                                        <button class="reply-vote-up p-0.5 hover:text-orange-600 transition-colors ${rUpvoted ? 'text-orange-600' : 'text-slate-400'}" 
+                                                data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                        </button>
+                                        <span class="text-[10px] font-bold min-w-[12px] text-center ${rUpvoted ? 'text-orange-600' : (rDownvoted ? 'text-blue-600' : 'text-slate-600')}">${rVotes}</span>
+                                        <button class="reply-vote-down p-0.5 hover:text-blue-600 transition-colors ${rDownvoted ? 'text-blue-600' : 'text-slate-400'}" 
+                                                data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rDownvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                        </button>
+                                    </div>
+                                    <button class="text-[10px] font-bold text-slate-400 hover:text-blue-600 reply-to-reply-btn" 
+                                            data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
+                                </div>
 
                         <!-- Nested Reply Input -->
                         <div class="reply-input-container hidden mt-3" id="reply-input-${commentIdx}-${currentPath}">
@@ -991,7 +1033,10 @@ const CommunityFeed = (() => {
                                             <button class="comment-vote-up p-0.5 hover:text-orange-600 transition-colors ${isUpvoted ? 'text-orange-600' : 'text-slate-400'}" data-comment-idx="${idx}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                                             </button>
-                                            <span class="text-[10px] font-bold min-w-[12px] text-center ${isUpvoted ? 'text-orange-600' : 'text-slate-600'}">${cVotes}</span>
+                                            <span class="text-[10px] font-bold min-w-[12px] text-center ${isUpvoted ? 'text-orange-600' : (userVote === 'down' ? 'text-blue-600' : 'text-slate-600')}">${cVotes}</span>
+                                            <button class="comment-vote-down p-0.5 hover:text-blue-600 transition-colors ${userVote === 'down' ? 'text-blue-600' : 'text-slate-400'}" data-comment-idx="${idx}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${userVote === 'down' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                            </button>
                                         </div>
                                         <button class="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors reply-btn" data-comment-idx="${idx}">Reply</button>
                                     </div>
@@ -1112,7 +1157,14 @@ const CommunityFeed = (() => {
         contentContainer.querySelectorAll('.comment-vote-up').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = e.currentTarget.dataset.commentIdx;
-                handleCommentVote(postId, parseInt(idx));
+                handleCommentVote(postId, parseInt(idx), 'up');
+            });
+        });
+
+        contentContainer.querySelectorAll('.comment-vote-down').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = e.currentTarget.dataset.commentIdx;
+                handleCommentVote(postId, parseInt(idx), 'down');
             });
         });
 
@@ -1121,7 +1173,15 @@ const CommunityFeed = (() => {
             btn.addEventListener('click', (e) => {
                 const cIdx = e.currentTarget.dataset.commentIdx;
                 const rPath = e.currentTarget.dataset.replyPath || e.currentTarget.dataset.replyIdx;
-                handleReplyVote(postId, parseInt(cIdx), rPath);
+                handleReplyVote(postId, parseInt(cIdx), rPath, 'up');
+            });
+        });
+
+        contentContainer.querySelectorAll('.reply-vote-down').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cIdx = e.currentTarget.dataset.commentIdx;
+                const rPath = e.currentTarget.dataset.replyPath || e.currentTarget.dataset.replyIdx;
+                handleReplyVote(postId, parseInt(cIdx), rPath, 'down');
             });
         });
 
@@ -1210,7 +1270,7 @@ const CommunityFeed = (() => {
         };
     }
 
-    async function handleCommentVote(postId, commentIdx) {
+    async function handleCommentVote(postId, commentIdx, direction) {
         const user = window.auth ? window.auth.currentUser : null;
         if (!user) {
             triggerLogin();
@@ -1227,12 +1287,19 @@ const CommunityFeed = (() => {
         if (!comment.voters) comment.voters = {};
         if (comment.votes === undefined) comment.votes = 0;
 
-        if (comment.voters[user.uid] === 'up') {
-            comment.votes -= 1;
+        const currentVote = comment.voters[user.uid];
+
+        if (currentVote === direction) {
+            // Remove vote
+            comment.votes += (direction === 'up' ? -1 : 1);
             delete comment.voters[user.uid];
         } else {
-            comment.votes += 1;
-            comment.voters[user.uid] = 'up';
+            // Change or add vote
+            if (currentVote === 'up') comment.votes -= 1;
+            if (currentVote === 'down') comment.votes += 1;
+            
+            comment.votes += (direction === 'up' ? 1 : -1);
+            comment.voters[user.uid] = direction;
         }
 
         if (window.db && !['1', '2', '3'].includes(postId)) {
@@ -1250,7 +1317,7 @@ const CommunityFeed = (() => {
         }
     }
 
-    async function handleReplyVote(postId, commentIdx, replyPath) {
+    async function handleReplyVote(postId, commentIdx, replyPath, direction) {
         const user = window.auth ? window.auth.currentUser : null;
         if (!user) {
             triggerLogin();
@@ -1283,12 +1350,19 @@ const CommunityFeed = (() => {
         if (!reply.voters) reply.voters = {};
         if (reply.votes === undefined) reply.votes = 0;
 
-        if (reply.voters[user.uid] === 'up') {
-            reply.votes -= 1;
+        const currentVote = reply.voters[user.uid];
+
+        if (currentVote === direction) {
+            // Remove vote
+            reply.votes += (direction === 'up' ? -1 : 1);
             delete reply.voters[user.uid];
         } else {
-            reply.votes += 1;
-            reply.voters[user.uid] = 'up';
+            // Change or add vote
+            if (currentVote === 'up') reply.votes -= 1;
+            if (currentVote === 'down') reply.votes += 1;
+            
+            reply.votes += (direction === 'up' ? 1 : -1);
+            reply.voters[user.uid] = direction;
         }
 
         if (window.db && !['1', '2', '3'].includes(postId)) {
@@ -1472,11 +1546,15 @@ const CommunityFeed = (() => {
         init,
         loadPosts,
         renderFeed,
+        formatVotes,
         handleCreatePost,
         handleVote,
+        handleCommentVote,
+        handleReplyVote,
         handleSharePost,
         addComment,
-        posts: () => posts
+        posts: () => posts,
+        setPosts: (p) => { posts = p; }
     };
 })();
 
