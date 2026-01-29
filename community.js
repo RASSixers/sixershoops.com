@@ -20,9 +20,29 @@ const CommunityFeed = (() => {
             setupAuthListener();
             setupEventListeners();
             setFilter('hot'); 
+            checkDeepLink();
         } else {
             // Try again soon
             setTimeout(init, 200);
+        }
+    }
+
+    function checkDeepLink() {
+        const params = new URLSearchParams(window.location.search);
+        const postId = params.get('post');
+        if (postId) {
+            console.log("Deep link detected for post:", postId);
+            // Wait for posts to load then open
+            const interval = setInterval(() => {
+                if (posts.length > 0) {
+                    if (posts.some(p => p.id === postId)) {
+                        openDetailedView(postId);
+                        clearInterval(interval);
+                    }
+                }
+            }, 500);
+            // Timeout after 10 seconds
+            setTimeout(() => clearInterval(interval), 10000);
         }
     }
 
@@ -289,6 +309,9 @@ const CommunityFeed = (() => {
             } else if (e.target.closest('.delete-post-btn')) {
                 e.stopPropagation();
                 handleDeletePost(post.id);
+            } else if (e.target.closest('.share-btn')) {
+                e.stopPropagation();
+                handleSharePost(post.id, post.title);
             } else {
                 openDetailedView(post.id);
             }
@@ -341,6 +364,35 @@ const CommunityFeed = (() => {
                 }
             }
         };
+    }
+
+    function handleSharePost(postId, postTitle) {
+        const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: postTitle,
+                url: shareUrl
+            }).then(() => {
+                console.log('Post shared successfully');
+            }).catch((error) => {
+                if (error.name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                    copyToClipboard(shareUrl);
+                }
+            });
+        } else {
+            copyToClipboard(shareUrl);
+        }
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showAlert('Link copied to clipboard!', 'Shared');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            showAlert('Could not copy link to clipboard.', 'Error');
+        });
     }
 
     function formatVotes(votes) {
@@ -412,11 +464,15 @@ const CommunityFeed = (() => {
                     removeBtn.classList.remove('hidden');
                     
                     const objectUrl = URL.createObjectURL(file);
-                    previewImg.src = objectUrl;
-                    previewContainer.classList.remove('hidden');
                     
-                    // Cleanup object URL when image loads or is removed
-                    previewImg.onload = () => URL.revokeObjectURL(objectUrl);
+                    // Cleanup previous object URL to prevent memory leaks
+                    if (previewImg.dataset.objectUrl) {
+                        URL.revokeObjectURL(previewImg.dataset.objectUrl);
+                    }
+                    
+                    previewImg.src = objectUrl;
+                    previewImg.dataset.objectUrl = objectUrl;
+                    previewContainer.classList.remove('hidden');
                 }
             });
         }
@@ -492,11 +548,18 @@ const CommunityFeed = (() => {
             const filenameSpan = document.getElementById('image-filename');
             const removeBtn = document.getElementById('remove-image-btn');
             const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
             
             if (imageInput) imageInput.value = '';
             if (filenameSpan) filenameSpan.innerText = 'No file chosen';
             if (removeBtn) removeBtn.classList.add('hidden');
             if (previewContainer) previewContainer.classList.add('hidden');
+            
+            if (previewImg && previewImg.dataset.objectUrl) {
+                URL.revokeObjectURL(previewImg.dataset.objectUrl);
+                delete previewImg.dataset.objectUrl;
+                previewImg.src = '';
+            }
         }
     }
 
@@ -625,9 +688,10 @@ const CommunityFeed = (() => {
             const previewImg = document.getElementById('image-preview');
             const previewSrc = previewImg ? previewImg.src : null;
 
+            // Get storage reference
             let storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
 
-            // If storage is still not there, wait a second and try one more time
+            // If storage is still not there, wait a bit and try again
             if (imageFile && !storage) {
                 console.log("Storage not ready, waiting 2 seconds...");
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -638,19 +702,17 @@ const CommunityFeed = (() => {
                 try {
                     console.log("OVERHAUL: Uploading image:", imageFile.name, "Size:", (imageFile.size / 1024 / 1024).toFixed(2), "MB");
                     
-                    // 1. Better filename handling
                     const fileExt = imageFile.name.split('.').pop().toLowerCase() || 'jpg';
                     const fileName = `img_${Date.now()}_${Math.floor(Math.random() * 100000)}.${fileExt}`;
                     
-                    // 2. Explicit bucket reference if possible, otherwise use the default
                     let fileRef;
                     try {
-                        const bucketUrl = storage.app.options.storageBucket;
-                        console.log("Target bucket:", bucketUrl);
-                        // Try to be very explicit with the path
+                        // More robust reference creation
+                        const bucketUrl = (storage.app && storage.app.options) ? storage.app.options.storageBucket : 'default';
+                        console.log("Using storage bucket:", bucketUrl);
                         fileRef = storage.ref().child(COLLECTION_NAME).child(fileName);
                     } catch (e) {
-                        console.error("Ref error:", e);
+                        console.error("Ref creation error:", e);
                         fileRef = storage.ref(`${COLLECTION_NAME}/${fileName}`);
                     }
                     
@@ -871,11 +933,16 @@ const CommunityFeed = (() => {
                         <span>${post.time}</span>
                         <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
                     </div>
-                    ${isAuthor ? `
-                        <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors mr-12" title="Delete Post">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    <div class="flex items-center gap-2 mr-10">
+                        <button class="modal-share-post-btn text-slate-500 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-slate-100" title="Share Post">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                         </button>
-                    ` : ''}
+                        ${isAuthor ? `
+                            <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50" title="Delete Post">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
                 ${twitterId ? `<div class="mb-6 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
@@ -969,6 +1036,11 @@ const CommunityFeed = (() => {
         }
 
         // Setup listeners for modal content
+        const shareBtn = contentContainer.querySelector('.modal-share-post-btn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => handleSharePost(postId, post.title));
+        }
+
         const deleteBtn = contentContainer.querySelector('.modal-delete-post-btn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => handleDeletePost(postId));
@@ -1402,6 +1474,7 @@ const CommunityFeed = (() => {
         renderFeed,
         handleCreatePost,
         handleVote,
+        handleSharePost,
         addComment,
         posts: () => posts
     };
