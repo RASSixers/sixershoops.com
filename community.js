@@ -6,7 +6,10 @@ const CommunityFeed = (() => {
     let currentFilter = 'hot';
     const STORAGE_KEY = 'sixers_hoops_posts';
     const COLLECTION_NAME = 'community_posts';
+    const ARTICLE_COLLECTION = 'sidebar_articles';
     const MOD_EMAIL = 'rhatus13@gmail.com';
+
+    let sidebarArticles = [];
 
     // Helper to generate URL-friendly slugs
     function generateSlug(text) {
@@ -35,6 +38,7 @@ const CommunityFeed = (() => {
             isInitialized = true;
             setupAuthListener();
             setupEventListeners();
+            listenToArticles();
             setFilter('hot'); 
             checkDeepLink();
         } else {
@@ -160,6 +164,237 @@ const CommunityFeed = (() => {
         `;
     }
 
+    function listenToArticles() {
+        if (!window.db) return;
+
+        window.db.collection(ARTICLE_COLLECTION).orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+            sidebarArticles = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            // If empty, add default articles
+            if (sidebarArticles.length === 0) {
+                const defaults = [
+                    {
+                        title: "Sixers vs Lakers Player Grades: Embiid and Davis Battle in LA",
+                        category: "Player Grades",
+                        date: "Dec 07, 2025",
+                        url: "https://sixershoops.com/player-grades/sixers-vs-lakers-dec-07-2025.html",
+                        imageUrl: "https://sixershoops.com/ImageFolder/sixersvslakers12-07-25.png",
+                        createdAt: new Date()
+                    },
+                    {
+                        title: "Defensive Blueprint: How Sixers Neutralized Giannis",
+                        category: "Game Analysis",
+                        date: "Dec 05, 2025",
+                        url: "https://sixershoops.com/player-grades/sixers-vs-bucks-dec-05-2025.html",
+                        imageUrl: "https://sixershoops.com/ImageFolder/sixersvsbucks12-05-25.png",
+                        createdAt: new Date()
+                    },
+                    {
+                        title: "Sixers vs Warriors Player Grades: Shooting Woes Continue",
+                        category: "Player Grades",
+                        date: "Dec 04, 2025",
+                        url: "https://sixershoops.com/player-grades/sixers-vs-warriors-dec-04-2025.html",
+                        imageUrl: "https://sixershoops.com/ImageFolder/sixersvswarriors12-04-25.png",
+                        createdAt: new Date()
+                    }
+                ];
+                
+                // For the very first load/dev, we can just use these
+                sidebarArticles = defaults;
+            }
+
+            renderSidebarArticles();
+        });
+    }
+
+    function renderSidebarArticles() {
+        const container = document.getElementById('sidebar-articles-container');
+        if (!container) return;
+
+        const displayedArticles = sidebarArticles.slice(0, 3);
+        container.innerHTML = displayedArticles.map(article => `
+            <a href="${article.url}" class="flex gap-3 group relative">
+                <div class="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                    <img src="${article.imageUrl}" alt="Article" class="h-full w-full object-cover transition-transform group-hover:scale-110">
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">${article.title}</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] text-blue-600 font-bold uppercase">${article.category}</span>
+                        <span class="text-[10px] text-slate-400">${article.date}</span>
+                    </div>
+                </div>
+                ${isMod() ? `
+                    <button class="edit-article-mini absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" data-article-id="${article.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                ` : ''}
+            </a>
+        `).join('');
+
+        // Re-attach mini edit listeners
+        container.querySelectorAll('.edit-article-mini').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openArticleEditModal(e.currentTarget.dataset.articleId);
+            });
+        });
+    }
+
+    function updateModControls(user) {
+        const modControls = document.getElementById('mod-article-controls');
+        if (modControls) {
+            if (user && user.email === MOD_EMAIL) {
+                modControls.classList.remove('hidden');
+            } else {
+                modControls.classList.add('hidden');
+            }
+        }
+    }
+
+    function openArticlesModal() {
+        const modal = document.getElementById('articles-modal-overlay');
+        const list = document.getElementById('all-articles-list');
+        if (!modal || !list) return;
+
+        list.innerHTML = sidebarArticles.map(article => `
+            <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 group relative">
+                <div class="h-20 w-20 rounded-lg overflow-hidden flex-shrink-0">
+                    <img src="${article.imageUrl}" alt="Article" class="h-full w-full object-cover">
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] text-blue-600 font-bold uppercase">${article.category}</span>
+                        <span class="text-[10px] text-slate-400">${article.date}</span>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-900 leading-tight mb-2">${article.title}</h4>
+                    <a href="${article.url}" class="text-xs font-bold text-blue-600 hover:underline inline-flex items-center gap-1">
+                        Read Article
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </a>
+                </div>
+                ${isMod() ? `
+                    <div class="flex flex-col gap-2">
+                        <button class="edit-article-btn p-2 text-slate-400 hover:text-blue-600 transition-colors" data-article-id="${article.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button class="delete-article-btn p-2 text-slate-400 hover:text-red-500 transition-colors" data-article-id="${article.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Add listeners for edit/delete
+        list.querySelectorAll('.edit-article-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => openArticleEditModal(e.currentTarget.dataset.articleId));
+        });
+
+        list.querySelectorAll('.delete-article-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => handleDeleteArticle(e.currentTarget.dataset.articleId));
+        });
+    }
+
+    function openArticleEditModal(articleId = null) {
+        const modal = document.getElementById('edit-article-modal-overlay');
+        const titleEl = document.getElementById('article-edit-title');
+        const saveBtn = document.getElementById('save-article-btn');
+        if (!modal) return;
+
+        // Reset inputs
+        const inputs = ['title', 'category', 'date', 'url', 'image'];
+        inputs.forEach(id => document.getElementById(`article-${id}-input`).value = '');
+
+        if (articleId) {
+            const article = sidebarArticles.find(a => a.id === articleId);
+            if (article) {
+                titleEl.innerText = "Edit Article";
+                document.getElementById('article-title-input').value = article.title;
+                document.getElementById('article-category-input').value = article.category;
+                document.getElementById('article-date-input').value = article.date;
+                document.getElementById('article-url-input').value = article.url;
+                document.getElementById('article-image-input').value = article.imageUrl;
+                saveBtn.dataset.editingId = articleId;
+            }
+        } else {
+            titleEl.innerText = "Add New Article";
+            delete saveBtn.dataset.editingId;
+            // Set default date to today
+            const options = { year: 'numeric', month: 'short', day: '2-digit' };
+            document.getElementById('article-date-input').value = new Date().toLocaleDateString('en-US', options);
+        }
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    async function handleSaveArticle() {
+        if (!isMod()) return;
+
+        const title = document.getElementById('article-title-input').value.trim();
+        const category = document.getElementById('article-category-input').value.trim();
+        const date = document.getElementById('article-date-input').value.trim();
+        const url = document.getElementById('article-url-input').value.trim();
+        const imageUrl = document.getElementById('article-image-input').value.trim();
+        const editingId = document.getElementById('save-article-btn').dataset.editingId;
+
+        if (!title || !url) {
+            showAlert('Please enter at least a title and URL');
+            return;
+        }
+
+        const articleData = {
+            title, category, date, url, imageUrl,
+            createdAt: window.firebase ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date()
+        };
+
+        if (window.db) {
+            try {
+                if (editingId) {
+                    await window.db.collection(ARTICLE_COLLECTION).doc(editingId).update(articleData);
+                } else {
+                    await window.db.collection(ARTICLE_COLLECTION).add(articleData);
+                }
+                closeArticleEditModal();
+            } catch (error) {
+                console.error("Error saving article:", error);
+                showAlert("Error saving article: " + error.message, "Error");
+            }
+        }
+    }
+
+    async function handleDeleteArticle(articleId) {
+        if (!isMod()) return;
+        if (!confirm('Are you sure you want to delete this article?')) return;
+
+        if (window.db) {
+            try {
+                await window.db.collection(ARTICLE_COLLECTION).doc(articleId).delete();
+            } catch (error) {
+                console.error("Error deleting article:", error);
+                showAlert("Error deleting article: " + error.message, "Error");
+            }
+        }
+    }
+
+    function closeArticleEditModal() {
+        const modal = document.getElementById('edit-article-modal-overlay');
+        if (modal) {
+            modal.classList.remove('active');
+            if (!document.getElementById('articles-modal-overlay').classList.contains('active')) {
+                document.body.style.overflow = '';
+            }
+        }
+    }
+
     function setupAuthListener() {
         if (window.auth) {
             window.auth.onAuthStateChanged(user => {
@@ -169,6 +404,7 @@ const CommunityFeed = (() => {
     }
 
     function updateCreatePostUI(user) {
+        updateModControls(user);
         const avatarContainer = document.getElementById('create-post-avatar-container');
         const triggerInput = document.getElementById('create-post-trigger');
         const submitBtn = document.getElementById('create-post-btn');
@@ -649,6 +885,45 @@ const CommunityFeed = (() => {
                     alertOverlay.classList.remove('active');
                     document.body.style.overflow = '';
                 }
+            });
+        }
+
+        // Article Modal Listeners
+        const viewAllBtn = document.getElementById('view-all-articles');
+        if (viewAllBtn) viewAllBtn.addEventListener('click', openArticlesModal);
+
+        const articlesClose = document.getElementById('articles-modal-close');
+        if (articlesClose) articlesClose.addEventListener('click', () => {
+            document.getElementById('articles-modal-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        const addArticleBtn = document.getElementById('add-article-btn');
+        if (addArticleBtn) addArticleBtn.addEventListener('click', () => openArticleEditModal());
+
+        const editArticleClose = document.getElementById('edit-article-modal-close');
+        if (editArticleClose) editArticleClose.addEventListener('click', closeArticleEditModal);
+
+        const cancelArticleBtn = document.getElementById('cancel-article-btn');
+        if (cancelArticleBtn) cancelArticleBtn.addEventListener('click', closeArticleEditModal);
+
+        const saveArticleBtn = document.getElementById('save-article-btn');
+        if (saveArticleBtn) saveArticleBtn.addEventListener('click', handleSaveArticle);
+
+        const articlesOverlay = document.getElementById('articles-modal-overlay');
+        if (articlesOverlay) {
+            articlesOverlay.addEventListener('click', (e) => {
+                if (e.target === articlesOverlay) {
+                    articlesOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        const editArticleOverlay = document.getElementById('edit-article-modal-overlay');
+        if (editArticleOverlay) {
+            editArticleOverlay.addEventListener('click', (e) => {
+                if (e.target === editArticleOverlay) closeArticleEditModal();
             });
         }
 
