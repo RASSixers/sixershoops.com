@@ -213,9 +213,9 @@ const CommunityFeed = (() => {
 
         const displayed = trendingHeadlines.slice(0, 5);
         container.innerHTML = displayed.map(headline => `
-            <a href="${headline.url}" class="block group relative">
+            <a href="${headline.url}" class="block group relative p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-purple-100">
                 <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[10px] text-purple-600 font-bold uppercase">${headline.category}</span>
+                    <span class="text-[10px] text-purple-600 font-black uppercase tracking-wider bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">${headline.category}</span>
                 </div>
                 <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-purple-600 transition-colors">${headline.title}</h4>
                 ${isMod() ? `
@@ -251,23 +251,23 @@ const CommunityFeed = (() => {
         }
 
         list.innerHTML = trendingHeadlines.map(headline => `
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group">
-                <div class="flex-1">
+            <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 group relative shadow-sm hover:shadow-md transition-all">
+                <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] text-purple-600 font-bold uppercase">${headline.category}</span>
+                        <span class="text-[10px] text-purple-600 font-black uppercase tracking-wider bg-purple-50 px-2 py-0.5 rounded border border-purple-100">${headline.category}</span>
                     </div>
                     <h4 class="text-base font-bold text-slate-900 leading-tight mb-2">${headline.title}</h4>
-                    <a href="${headline.url}" class="text-xs font-bold text-blue-600 hover:underline inline-flex items-center gap-1">
-                        View Link
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    <a href="${headline.url}" class="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                        View Headline Link
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
                     </a>
                 </div>
                 ${isMod() ? `
-                    <div class="flex gap-2">
-                        <button class="edit-headline-btn p-2 text-slate-400 hover:text-purple-600 transition-colors" data-headline-id="${headline.id}">
+                    <div class="flex gap-1 ml-4">
+                        <button class="edit-headline-btn p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" data-headline-id="${headline.id}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button class="delete-headline-btn p-2 text-slate-400 hover:text-red-500 transition-colors" data-headline-id="${headline.id}">
+                        <button class="delete-headline-btn p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" data-headline-id="${headline.id}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
                     </div>
@@ -431,25 +431,34 @@ const CommunityFeed = (() => {
         if (!container) return;
 
         const displayedArticles = sidebarArticles.slice(0, 3);
-        container.innerHTML = displayedArticles.map(article => `
-            <a href="${article.url}" class="flex gap-3 group relative">
-                <div class="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+        container.innerHTML = displayedArticles.map(article => {
+            const isPlayerGrade = article.category && article.category.toLowerCase().includes('player grade');
+            const categoryClass = isPlayerGrade ? 'text-amber-600' : 'text-blue-600';
+            const bgClass = isPlayerGrade ? 'bg-amber-50' : 'bg-blue-50';
+            const borderClass = isPlayerGrade ? 'border-amber-100' : 'border-blue-100';
+            const accentBorder = isPlayerGrade ? 'border-l-4 border-l-amber-500 pl-3' : 'pl-2';
+            
+            return `
+            <a href="${article.url}" class="flex gap-3 group relative p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-all ${isPlayerGrade ? 'bg-amber-50/30' : ''}">
+                <div class="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-slate-100">
                     <img src="${article.imageUrl}" alt="Article" class="h-full w-full object-cover transition-transform group-hover:scale-110">
                 </div>
-                <div class="flex-1">
-                    <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">${article.title}</h4>
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="text-[10px] text-blue-600 font-bold uppercase">${article.category}</span>
-                        <span class="text-[10px] text-slate-400">${article.date}</span>
+                <div class="flex-1 min-w-0 ${accentBorder}">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${bgClass} ${categoryClass} border ${borderClass} tracking-tight">
+                            ${isPlayerGrade ? '★ ' : ''}${article.category}
+                        </span>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap">${article.date}</span>
                     </div>
+                    <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">${article.title}</h4>
                 </div>
                 ${isMod() ? `
-                    <button class="edit-article-mini absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" data-article-id="${article.id}">
+                    <button class="edit-article-mini absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10" data-article-id="${article.id}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                 ` : ''}
             </a>
-        `).join('');
+        `; }).join('');
 
         // Re-attach mini edit listeners
         container.querySelectorAll('.edit-article-mini').forEach(btn => {
@@ -498,34 +507,42 @@ const CommunityFeed = (() => {
             }
         }
 
-        list.innerHTML = sidebarArticles.map(article => `
-            <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 group relative">
-                <div class="h-20 w-20 rounded-lg overflow-hidden flex-shrink-0">
+        list.innerHTML = sidebarArticles.map(article => {
+            const isPlayerGrade = article.category && article.category.toLowerCase().includes('player grade');
+            const categoryClass = isPlayerGrade ? 'text-amber-600' : 'text-blue-600';
+            const bgClass = isPlayerGrade ? 'bg-amber-50' : 'bg-blue-50';
+            const borderClass = isPlayerGrade ? 'border-amber-100' : 'border-blue-100';
+
+            return `
+            <div class="flex gap-4 p-4 bg-white rounded-xl border border-slate-200 group relative shadow-sm hover:shadow-md transition-all">
+                <div class="h-20 w-20 rounded-lg overflow-hidden flex-shrink-0 border border-slate-100">
                     <img src="${article.imageUrl}" alt="Article" class="h-full w-full object-cover">
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] text-blue-600 font-bold uppercase">${article.category}</span>
-                        <span class="text-[10px] text-slate-400">${article.date}</span>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${bgClass} ${categoryClass} border ${borderClass}">
+                            ${isPlayerGrade ? '★ ' : ''}${article.category}
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-medium">${article.date}</span>
                     </div>
-                    <h4 class="text-base font-bold text-slate-900 leading-tight mb-2">${article.title}</h4>
-                    <a href="${article.url}" class="text-xs font-bold text-blue-600 hover:underline inline-flex items-center gap-1">
-                        Read Article
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    <h4 class="text-base font-bold text-slate-900 leading-tight mb-2 group-hover:text-blue-600 transition-colors">${article.title}</h4>
+                    <a href="${article.url}" class="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                        Read Full Article
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
                     </a>
                 </div>
                 ${isMod() ? `
-                    <div class="flex flex-col gap-2">
-                        <button class="edit-article-btn p-2 text-slate-400 hover:text-blue-600 transition-colors" data-article-id="${article.id}">
+                    <div class="flex flex-col gap-1">
+                        <button class="edit-article-btn p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" data-article-id="${article.id}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button class="delete-article-btn p-2 text-slate-400 hover:text-red-500 transition-colors" data-article-id="${article.id}">
+                        <button class="delete-article-btn p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" data-article-id="${article.id}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
                     </div>
                 ` : ''}
             </div>
-        `).join('');
+        `; }).join('');
 
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -806,8 +823,9 @@ const CommunityFeed = (() => {
     }
 
     function createPostElement(post) {
+        const isPlayerGrade = post.tag === 'Player Grade';
         const div = document.createElement('div');
-        div.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md';
+        div.className = `bg-white rounded-xl shadow-sm border ${isPlayerGrade ? 'border-amber-200 bg-gradient-to-br from-white to-amber-50/30' : 'border-slate-200'} overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md`;
         div.dataset.id = post.id;
         
         const user = window.auth ? window.auth.currentUser : null;
@@ -826,9 +844,11 @@ const CommunityFeed = (() => {
                              !post.imageUrl.startsWith('window.') &&
                              !(post.imageUrl.includes(window.location.host) && post.imageUrl.endsWith('/#'));
 
+        const tagClass = isPlayerGrade ? 'bg-amber-100 text-amber-700 border border-amber-200' : (post.tagClass || 'bg-slate-100 text-slate-700');
+
         div.innerHTML = `
             <!-- Vote Sidebar -->
-            <div class="w-12 bg-slate-50/50 p-2 flex flex-col items-center gap-1 border-r border-slate-100">
+            <div class="w-12 ${isPlayerGrade ? 'bg-amber-50/50' : 'bg-slate-50/50'} p-2 flex flex-col items-center gap-1 border-r ${isPlayerGrade ? 'border-amber-100' : 'border-slate-100'}">
                 <button class="p-1 hover:bg-slate-200 rounded transition-colors vote-up ${isUpvoted ? 'text-orange-600' : 'text-slate-400'}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                 </button>
@@ -851,7 +871,9 @@ const CommunityFeed = (() => {
                         <span class="font-bold text-slate-900">${post.author}</span>
                         <span>•</span>
                         <span>${post.time}</span>
-                        <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
+                        <span class="${tagClass} px-2 py-0.5 rounded-full font-black uppercase text-[9px] tracking-tight flex items-center gap-1">
+                            ${isPlayerGrade ? '★ ' : ''}${post.tag}
+                        </span>
                     </div>
                     <div class="flex items-center gap-1">
                         ${isAdmin ? `
@@ -866,10 +888,10 @@ const CommunityFeed = (() => {
                         ` : ''}
                     </div>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight">${post.title}</h3>
-                ${post.content ? `<div class="bg-slate-50 rounded-lg p-4 mb-3 border border-slate-100"><p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(post.content)}</p></div>` : ''}
+                <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">${post.title}</h3>
+                ${post.content ? `<div class="bg-white/50 backdrop-blur-sm rounded-lg p-4 mb-3 border border-slate-100 shadow-inner"><p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(post.content)}</p></div>` : ''}
                 ${twitterId ? `<div class="mb-4 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
-                ${hasValidImage ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block" onerror="this.parentElement.style.display='none'"></div>` : ''}
+                ${hasValidImage ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block" onerror="this.parentElement.style.display='none'"></div>` : ''}
                 <div class="flex gap-4">
                     <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm comment-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1426,7 +1448,8 @@ const CommunityFeed = (() => {
             'Discussion': 'bg-blue-100 text-blue-700',
             'Highlight': 'bg-orange-100 text-orange-700',
             'News': 'bg-green-100 text-green-700',
-            'Question': 'bg-purple-100 text-purple-700'
+            'Question': 'bg-purple-100 text-purple-700',
+            'Player Grade': 'bg-amber-100 text-amber-700'
         };
 
         const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
