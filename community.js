@@ -823,6 +823,11 @@ const CommunityFeed = (() => {
     }
 
     function createPostElement(post) {
+        // Handle specialized Player Grade post type
+        if (post.type === 'player-grade') {
+            return createPlayerGradeElement(post);
+        }
+        
         const isPlayerGrade = post.tag === 'Player Grade';
         const div = document.createElement('div');
         div.className = `bg-white rounded-xl shadow-sm border ${isPlayerGrade ? 'border-amber-200 bg-gradient-to-br from-white to-amber-50/30' : 'border-slate-200'} overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md`;
@@ -1055,9 +1060,114 @@ const CommunityFeed = (() => {
         });
     }
 
-    function formatVotes(votes) {
-        if (Math.abs(votes) >= 1000) return (votes / 1000).toFixed(1) + 'k';
-        return votes;
+    function createPlayerGradeElement(post) {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-2xl shadow-sm border-2 border-amber-200 overflow-hidden cursor-pointer hover:shadow-xl hover:border-amber-400 transition-all duration-300 transform hover:-translate-y-1';
+        div.dataset.id = post.id;
+
+        const user = window.auth ? window.auth.currentUser : null;
+        const userVote = (user && post.voters) ? post.voters[user.uid] : post.voted;
+        const isUpvoted = userVote === 'up';
+        const isDownvoted = userVote === 'down';
+        const canDelete = (user && post.authorId === user.uid) || isMod();
+
+        div.innerHTML = `
+            <div class="relative">
+                <!-- Header Gradient -->
+                <div class="h-32 bg-gradient-to-r from-blue-900 via-blue-800 to-red-900 relative">
+                    <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                    <div class="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+                        <span class="text-white text-[10px] font-bold uppercase tracking-widest">${post.opponent || 'Game Grade'}</span>
+                    </div>
+                </div>
+
+                <!-- Player Info & Image -->
+                <div class="px-6 -mt-16 relative flex items-end gap-6 mb-4">
+                    <div class="h-32 w-32 rounded-2xl border-4 border-white shadow-2xl overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img src="${post.imageUrl || 'https://via.placeholder.com/150'}" class="h-full w-full object-cover">
+                    </div>
+                    <div class="mb-2">
+                        <h2 class="text-3xl font-black text-white uppercase tracking-tighter drop-shadow-lg leading-none mb-1">${post.playerName || 'Player Name'}</h2>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded uppercase">Player Grade</span>
+                            <span class="text-white/80 text-xs font-bold">${post.time}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- THE GRADE -->
+                    <div class="ml-auto mb-2 flex flex-col items-center">
+                        <div class="h-20 w-20 rounded-full bg-white shadow-xl border-4 border-amber-400 flex items-center justify-center">
+                            <span class="text-4xl font-black text-slate-900">${post.grade || 'A'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="px-6 grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">PTS</div>
+                        <div class="text-xl font-black text-slate-900">${post.pts || '0'}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">REB</div>
+                        <div class="text-xl font-black text-slate-900">${post.reb || '0'}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">AST</div>
+                        <div class="text-xl font-black text-slate-900">${post.ast || '0'}</div>
+                    </div>
+                </div>
+
+                <!-- Analysis -->
+                <div class="px-6 pb-6">
+                    <div class="bg-amber-50/50 rounded-2xl p-5 border border-amber-100 relative">
+                        <svg class="absolute top-4 right-4 text-amber-200" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H16.017C14.9124 8 14.017 7.10457 14.017 6V3L14.017 3C14.017 1.89543 14.9124 1 16.017 1H19.017C20.1216 1 21.017 1.89543 21.017 3V15C21.017 18.3137 18.3241 21 15.0104 21L14.017 21ZM3 21L3 18C3 16.8954 3.89543 16 5 16H8C8.55228 16 9 15.5523 9 15V9C9 8.44772 8.55228 8 8 8H5C3.89543 8 3 7.10457 3 6V3L3 3C3 1.89543 3.89543 1 5 1H8C9.10457 1 10 1.89543 10 3V15C10 18.3137 7.31371 21 4 21L3 21Z"/></svg>
+                        <h4 class="text-xs font-black text-amber-600 uppercase mb-2 tracking-widest">Expert Analysis</h4>
+                        <p class="text-slate-700 text-sm leading-relaxed italic line-clamp-3">${post.content || 'No analysis provided.'}</p>
+                    </div>
+                </div>
+
+                <!-- Footer with Votes/Comments -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-1 bg-white rounded-full px-3 py-1 border border-slate-200 shadow-sm">
+                            <button class="p-1 hover:text-orange-600 transition-colors vote-up ${isUpvoted ? 'text-orange-600' : 'text-slate-400'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>
+                            </button>
+                            <span class="text-xs font-black min-w-[20px] text-center">${formatVotes(post.votes)}</span>
+                            <button class="p-1 hover:text-blue-600 transition-colors vote-down ${isDownvoted ? 'text-blue-600' : 'text-slate-400'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${isDownvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                        </div>
+                        <button class="text-slate-500 hover:text-blue-600 flex items-center gap-1.5 text-xs font-bold transition-colors comment-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            ${(post.comments || []).length}
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button class="share-btn p-2 text-slate-400 hover:text-blue-600 hover:bg-white rounded-full transition-all border border-transparent hover:border-slate-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                        </button>
+                        ${canDelete ? `
+                            <button class="delete-post-btn p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-full transition-all border border-transparent hover:border-slate-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        div.addEventListener('click', (e) => {
+            if (e.target.closest('.vote-up')) handleVote(post.id, 'up');
+            else if (e.target.closest('.vote-down')) handleVote(post.id, 'down');
+            else if (e.target.closest('.delete-post-btn')) { e.stopPropagation(); handleDeletePost(post.id); }
+            else if (e.target.closest('.share-btn')) { e.stopPropagation(); handleSharePost(post.id, post.playerName + ' Grade'); }
+            else openDetailedView(post.id);
+        });
+
+        return div;
     }
 
     function setupEventListeners() {
@@ -1197,10 +1307,26 @@ const CommunityFeed = (() => {
         });
 
         // Sidebar Article Creation
-        const articleTrigger = document.getElementById('create-article-trigger');
-        const articleAddBtn = document.getElementById('add-article-btn-sidebar');
-        if (articleTrigger) articleTrigger.addEventListener('click', () => openArticleEditModal());
-        if (articleAddBtn) articleAddBtn.addEventListener('click', () => openArticleEditModal());
+        const gradeTrigger = document.getElementById('create-grade-trigger');
+        const gradeAddBtn = document.getElementById('add-grade-btn-sidebar');
+        if (gradeTrigger) gradeTrigger.addEventListener('click', () => openGradeModal());
+        if (gradeAddBtn) gradeAddBtn.addEventListener('click', () => openGradeModal());
+
+        const cancelGradeBtn = document.getElementById('cancel-grade-btn');
+        if (cancelGradeBtn) cancelGradeBtn.addEventListener('click', closeGradeModal);
+
+        const gradeCloseBtn = document.getElementById('create-grade-modal-close');
+        if (gradeCloseBtn) gradeCloseBtn.addEventListener('click', closeGradeModal);
+
+        const submitGradeBtn = document.getElementById('submit-grade-btn');
+        if (submitGradeBtn) submitGradeBtn.addEventListener('click', handleCreateGrade);
+
+        const gradeOverlay = document.getElementById('create-grade-modal-overlay');
+        if (gradeOverlay) {
+            gradeOverlay.addEventListener('click', (e) => {
+                if (e.target === gradeOverlay) closeGradeModal();
+            });
+        }
 
         const addArticleBtn = document.getElementById('add-article-btn');
         if (addArticleBtn) addArticleBtn.addEventListener('click', () => openArticleEditModal());
@@ -1297,11 +1423,72 @@ const CommunityFeed = (() => {
         });
     }
 
-    function openCreatePostModal() {
-        const modal = document.getElementById('create-post-modal-overlay');
+    function openGradeModal() {
+        if (!isMod()) return;
+        const modal = document.getElementById('create-grade-modal-overlay');
         if (modal) {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeGradeModal() {
+        const modal = document.getElementById('create-grade-modal-overlay');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            // Reset fields
+            ['player', 'value', 'opp', 'pts', 'reb', 'ast', 'review', 'image'].forEach(f => {
+                const el = document.getElementById(`grade-${f}-input`);
+                if (el) el.value = '';
+            });
+        }
+    }
+
+    async function handleCreateGrade() {
+        if (!isMod()) return;
+        const player = document.getElementById('grade-player-input').value.trim();
+        const grade = document.getElementById('grade-value-input').value;
+        const opponent = document.getElementById('grade-opp-input').value.trim();
+        const pts = document.getElementById('grade-pts-input').value.trim();
+        const reb = document.getElementById('grade-reb-input').value.trim();
+        const ast = document.getElementById('grade-ast-input').value.trim();
+        const content = document.getElementById('grade-review-input').value.trim();
+        const imageUrl = document.getElementById('grade-image-input').value.trim();
+
+        if (!player) {
+            showAlert('Please enter a player name');
+            return;
+        }
+
+        const user = window.auth.currentUser;
+        const postData = {
+            type: 'player-grade',
+            playerName: player,
+            grade,
+            opponent,
+            pts,
+            reb,
+            ast,
+            content,
+            imageUrl,
+            author: user.displayName || user.email.split('@')[0],
+            authorId: user.uid,
+            createdAt: window.firebase ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date(),
+            votes: 1,
+            voters: { [user.uid]: 'up' },
+            tag: 'Player Grade',
+            tagClass: 'bg-amber-100 text-amber-700'
+        };
+
+        if (window.db) {
+            try {
+                await window.db.collection(COLLECTION_NAME).add(postData);
+                closeGradeModal();
+            } catch (error) {
+                console.error("Error creating grade:", error);
+                showAlert("Error saving grade", "Error");
+            }
         }
     }
 
