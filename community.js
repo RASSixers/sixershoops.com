@@ -8,9 +8,11 @@ const CommunityFeed = (() => {
     const STORAGE_KEY = 'sixers_hoops_posts';
     const COLLECTION_NAME = 'community_posts';
     const ARTICLE_COLLECTION = 'sidebar_articles';
+    const HEADLINE_COLLECTION = 'trending_headlines';
     const MOD_EMAIL = 'rhatus13@gmail.com';
 
     let sidebarArticles = [];
+    let trendingHeadlines = [];
 
     // Helper to generate URL-friendly slugs
     function generateSlug(text) {
@@ -41,6 +43,7 @@ const CommunityFeed = (() => {
             setupAuthListener();
             setupEventListeners();
             listenToArticles();
+            listenToHeadlines();
             setFilter('hot'); 
             checkDeepLink();
         } else {
@@ -166,6 +169,208 @@ const CommunityFeed = (() => {
         `;
     }
 
+    function listenToHeadlines() {
+        if (!window.db) return;
+
+        window.db.collection(HEADLINE_COLLECTION).orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+            trendingHeadlines = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            // If empty, add default headlines
+            if (trendingHeadlines.length === 0) {
+                trendingHeadlines = [
+                    {
+                        id: 'def-h-1',
+                        title: "Join our Community Discord!",
+                        category: "Community",
+                        url: "#",
+                        createdAt: new Date()
+                    },
+                    {
+                        id: 'def-h-2',
+                        title: "View the 2025-26 Sixers Schedule",
+                        category: "Schedule",
+                        url: "/schedule",
+                        createdAt: new Date()
+                    }
+                ];
+            }
+
+            renderTrendingHeadlines();
+            
+            const headlinesModal = document.getElementById('headlines-modal-overlay');
+            if (headlinesModal && headlinesModal.classList.contains('active')) {
+                openHeadlinesModal();
+            }
+        });
+    }
+
+    function renderTrendingHeadlines() {
+        const container = document.getElementById('sidebar-headlines-container');
+        if (!container) return;
+
+        const displayed = trendingHeadlines.slice(0, 5);
+        container.innerHTML = displayed.map(headline => `
+            <a href="${headline.url}" class="block group relative">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-[10px] text-purple-600 font-bold uppercase">${headline.category}</span>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-purple-600 transition-colors">${headline.title}</h4>
+                ${isMod() ? `
+                    <button class="edit-headline-mini absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" data-headline-id="${headline.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                ` : ''}
+            </a>
+        `).join('');
+
+        container.querySelectorAll('.edit-headline-mini').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openHeadlineEditModal(e.currentTarget.dataset.headlineId);
+            });
+        });
+    }
+
+    function openHeadlinesModal() {
+        const modal = document.getElementById('headlines-modal-overlay');
+        const list = document.getElementById('all-headlines-list');
+        const addBtn = document.getElementById('modal-add-headline-btn');
+        if (!modal || !list) return;
+
+        if (addBtn) {
+            if (isMod()) {
+                addBtn.classList.remove('hidden');
+                addBtn.onclick = () => openHeadlineEditModal();
+            } else {
+                addBtn.classList.add('hidden');
+            }
+        }
+
+        list.innerHTML = trendingHeadlines.map(headline => `
+            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] text-purple-600 font-bold uppercase">${headline.category}</span>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-900 leading-tight mb-2">${headline.title}</h4>
+                    <a href="${headline.url}" class="text-xs font-bold text-blue-600 hover:underline inline-flex items-center gap-1">
+                        View Link
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </a>
+                </div>
+                ${isMod() ? `
+                    <div class="flex gap-2">
+                        <button class="edit-headline-btn p-2 text-slate-400 hover:text-purple-600 transition-colors" data-headline-id="${headline.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button class="delete-headline-btn p-2 text-slate-400 hover:text-red-500 transition-colors" data-headline-id="${headline.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        list.querySelectorAll('.edit-headline-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => openHeadlineEditModal(e.currentTarget.dataset.headlineId));
+        });
+
+        list.querySelectorAll('.delete-headline-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => handleDeleteHeadline(e.currentTarget.dataset.headlineId));
+        });
+    }
+
+    function openHeadlineEditModal(headlineId = null) {
+        const modal = document.getElementById('edit-headline-modal-overlay');
+        const titleEl = document.getElementById('headline-edit-title');
+        const saveBtn = document.getElementById('save-headline-btn');
+        if (!modal) return;
+
+        // Reset
+        document.getElementById('headline-title-input').value = '';
+        document.getElementById('headline-category-input').value = '';
+        document.getElementById('headline-url-input').value = '';
+
+        if (headlineId) {
+            const h = trendingHeadlines.find(x => x.id === headlineId);
+            if (h) {
+                titleEl.innerText = "Edit Headline";
+                document.getElementById('headline-title-input').value = h.title;
+                document.getElementById('headline-category-input').value = h.category;
+                document.getElementById('headline-url-input').value = h.url;
+                saveBtn.dataset.editingId = headlineId;
+            }
+        } else {
+            titleEl.innerText = "Add New Headline";
+            delete saveBtn.dataset.editingId;
+        }
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeHeadlineEditModal() {
+        const modal = document.getElementById('edit-headline-modal-overlay');
+        if (modal) {
+            modal.classList.remove('active');
+            if (!document.getElementById('headlines-modal-overlay').classList.contains('active')) {
+                document.body.style.overflow = '';
+            }
+        }
+    }
+
+    async function handleSaveHeadline() {
+        if (!isMod()) return;
+        const title = document.getElementById('headline-title-input').value.trim();
+        const category = document.getElementById('headline-category-input').value.trim();
+        const url = document.getElementById('headline-url-input').value.trim();
+        const editingId = document.getElementById('save-headline-btn').dataset.editingId;
+
+        if (!title || !url) {
+            showAlert('Please enter a title and URL');
+            return;
+        }
+
+        const data = {
+            title, category, url,
+            createdAt: window.firebase ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date()
+        };
+
+        if (window.db) {
+            try {
+                if (editingId && !editingId.startsWith('def-')) {
+                    await window.db.collection(HEADLINE_COLLECTION).doc(editingId).update(data);
+                } else {
+                    await window.db.collection(HEADLINE_COLLECTION).add(data);
+                }
+                closeHeadlineEditModal();
+            } catch (error) {
+                console.error("Error saving headline:", error);
+                showAlert("Error saving headline: " + error.message, "Error");
+            }
+        }
+    }
+
+    async function handleDeleteHeadline(id) {
+        if (!isMod()) return;
+        if (!confirm('Delete this headline?')) return;
+        if (window.db && !id.startsWith('def-')) {
+            try {
+                await window.db.collection(HEADLINE_COLLECTION).doc(id).delete();
+            } catch (error) {
+                console.error("Error deleting headline:", error);
+                showAlert("Error deleting headline", "Error");
+            }
+        }
+    }
+
     function listenToArticles() {
         if (!window.db) return;
 
@@ -258,11 +463,22 @@ const CommunityFeed = (() => {
 
     function updateModControls(user) {
         const modControls = document.getElementById('mod-article-controls');
+        const headlineControls = document.getElementById('mod-headline-controls');
+        const isUserMod = user && user.email && user.email.toLowerCase() === MOD_EMAIL.toLowerCase();
+
         if (modControls) {
-            if (user && user.email && user.email.toLowerCase() === MOD_EMAIL.toLowerCase()) {
+            if (isUserMod) {
                 modControls.classList.remove('hidden');
             } else {
                 modControls.classList.add('hidden');
+            }
+        }
+
+        if (headlineControls) {
+            if (isUserMod) {
+                headlineControls.classList.remove('hidden');
+            } else {
+                headlineControls.classList.add('hidden');
             }
         }
     }
@@ -435,9 +651,16 @@ const CommunityFeed = (() => {
 
                 // Also update article controls
                 renderSidebarArticles();
+                renderTrendingHeadlines();
+                
                 const articlesModal = document.getElementById('articles-modal-overlay');
                 if (articlesModal && articlesModal.classList.contains('active')) {
                     openArticlesModal();
+                }
+
+                const headlinesModal = document.getElementById('headlines-modal-overlay');
+                if (headlinesModal && headlinesModal.classList.contains('active')) {
+                    openHeadlinesModal();
                 }
             });
         }
@@ -983,6 +1206,49 @@ const CommunityFeed = (() => {
         if (editArticleOverlay) {
             editArticleOverlay.addEventListener('click', (e) => {
                 if (e.target === editArticleOverlay) closeArticleEditModal();
+            });
+        }
+
+        // Headline Modal Listeners
+        const viewAllHeadlines = document.getElementById('view-all-headlines');
+        if (viewAllHeadlines) viewAllHeadlines.addEventListener('click', openHeadlinesModal);
+
+        const headlinesClose = document.getElementById('headlines-modal-close');
+        if (headlinesClose) {
+            headlinesClose.addEventListener('click', () => {
+                document.getElementById('headlines-modal-overlay').classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        const headlineTrigger = document.getElementById('create-headline-trigger');
+        const headlineAddBtn = document.getElementById('add-headline-btn-sidebar');
+        if (headlineTrigger) headlineTrigger.addEventListener('click', () => openHeadlineEditModal());
+        if (headlineAddBtn) headlineAddBtn.addEventListener('click', () => openHeadlineEditModal());
+
+        const editHeadlineClose = document.getElementById('edit-headline-modal-close');
+        if (editHeadlineClose) editHeadlineClose.addEventListener('click', closeHeadlineEditModal);
+
+        const cancelHeadlineBtn = document.getElementById('cancel-headline-btn');
+        if (cancelHeadlineBtn) cancelHeadlineBtn.addEventListener('click', closeHeadlineEditModal);
+
+        const saveHeadlineBtn = document.getElementById('save-headline-btn');
+        if (saveHeadlineBtn) saveHeadlineBtn.addEventListener('click', handleSaveHeadline);
+
+        const headlinesOverlay = document.getElementById('headlines-modal-overlay');
+        if (headlinesOverlay) {
+            headlinesOverlay.addEventListener('click', (e) => {
+                if (e.target === headlinesOverlay) {
+                    headlinesOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        const editHeadlineOverlay = document.getElementById('edit-headline-modal-overlay');
+        if (editHeadlineOverlay) {
+            editHeadlineOverlay.addEventListener('click', (e) => {
+                if (e.target === editHeadlineOverlay) closeHeadlineEditModal();
             });
         }
 
@@ -2030,7 +2296,10 @@ const CommunityFeed = (() => {
         triggerLogin,
         handleSaveArticle,
         handleDeleteArticle,
+        handleSaveHeadline,
+        handleDeleteHeadline,
         openArticlesModal,
+        openHeadlinesModal,
         posts: () => posts,
         setPosts: (p) => { posts = p; }
     };
