@@ -175,9 +175,7 @@
       transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
-      min-height: 140px;
-      position: relative;
-      overflow: hidden;
+      min-height: 120px;
     }
     .snapshot-card:hover { transform: translateY(-4px); }
     .snapshot-label {
@@ -197,14 +195,6 @@
       line-height: 1;
       margin: auto 0;
       transform: translateY(-5px);
-    }
-    .snapshot-note {
-      font-size: 0.65rem;
-      color: var(--muted);
-      font-weight: 600;
-      max-width: 200px;
-      margin-top: 0.5rem;
-      width: 100%;
     }
 
     @media (max-width: 760px) {
@@ -497,8 +487,7 @@ margin: 0 auto;
     </div>
     <div class="snapshot-card">
       <span class="snapshot-label">Tradable Seconds</span>
-      <span class="snapshot-value">8*</span>
-      <p class="snapshot-note">*Technically we have 9, but one is a conditional second round pick that is unlikely to convey.</p>
+      <span class="snapshot-value" style="transform: translate(6px, -5px);">8*</span>
     </div>
   </div>
 
@@ -533,6 +522,9 @@ margin: 0 auto;
         </thead>
         <tbody id="picksBody"></tbody>
       </table>
+    </div>
+    <div style="margin-top: 1.5rem; font-size: 0.85rem; color: #64748b; font-weight: 600; text-align: center;">
+      Note: Technically, we have 9 tradeable seconds, but one is a conditional second round pick that is unlikely to convey.
     </div>
   </div>
 
@@ -632,7 +624,7 @@ margin: 0 auto;
         // 2028
         { year: 2028, round: '1st', type: 'traded', from: "Philadelphia's own", protection: 'Top-8 protected', notes: 'Top-8: PHI keeps; 9-30 traded.' },
         { year: 2028, round: '1st', type: 'incoming', from: 'Via LA Clippers', protection: 'Unprotected', notes: '' },
-        { year: 2028, round: '2nd', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: 'we cannot trade it due to 2022 james harden trade' },
+        { year: 2028, round: '2nd', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: 'Ineligible to be traded due to James Harden trade to the Sixers' },
         { year: 2028, round: '2nd', type: 'incoming', from: 'Via Golden State', protection: 'Unprotected', notes: '' },
         { year: 2028, round: '2nd', type: 'conditional', from: 'Via Detroit', protection: 'Top-55 protected', notes: 'Conveys only if pick 56-60; otherwise expires.' },
         // 2029
@@ -835,8 +827,8 @@ margin: 0 auto;
           // Filter for owned/incoming picks only (no traded/none)
           const ownedPicks = PICKS.filter(p => p.type !== 'traded' && p.type !== 'none');
           
-          const firsts = ownedPicks.filter(p => p.round === '1st').slice(0, 8);
-          const seconds = ownedPicks.filter(p => p.round === '2nd').slice(0, 8);
+          const firsts = ownedPicks.filter(p => p.round === '1st');
+          const seconds = ownedPicks.filter(p => p.round === '2nd');
 
           socialFirstsBody.innerHTML = firsts.map(p => `
             <tr>
