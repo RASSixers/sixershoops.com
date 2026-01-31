@@ -35,47 +35,59 @@ const CommunityFeed = (() => {
      * This ensures large files upload quickly while maintaining quality.
      */
     async function optimizeImage(file) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
+            reader.onerror = () => reject(new Error("Failed to read file"));
             reader.onload = (event) => {
                 const img = new Image();
+                img.onerror = () => reject(new Error("Failed to load image"));
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
 
-                    // Maximum dimensions for high quality but reasonable size
-                    const MAX_WIDTH = 1200;
-                    const MAX_HEIGHT = 1200;
+                    // Lower resolution for faster upload - still looks great on mobile/web
+                    const MAX_SIZE = 1000; 
 
                     if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
                         }
                     } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
                         }
                     }
 
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Compress as JPEG with 0.7 quality (excellent balance of speed/quality)
+                    // Lower quality to 0.6 for significant size reduction with minimal visual loss
                     canvas.toBlob((blob) => {
-                        const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        });
-                        console.log(`Image optimized: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(optimizedFile.size / 1024 / 1024).toFixed(2)}MB`);
-                        resolve(optimizedFile);
-                    }, 'image/jpeg', 0.7);
+                        if (!blob) {
+                            reject(new Error("Canvas to Blob failed"));
+                            return;
+                        }
+                        // Convert Blob to ArrayBuffer - more reliable for some older SDK versions
+                        const blobReader = new FileReader();
+                        blobReader.onloadend = () => {
+                            const arrayBuffer = blobReader.result;
+                            // Add metadata to the buffer so we can still use it like a file
+                            arrayBuffer.type = 'image/jpeg';
+                            arrayBuffer.name = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                            console.log(`Optimization: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+                            resolve(blob); 
+                        };
+                        blobReader.readAsArrayBuffer(blob);
+                    }, 'image/jpeg', 0.6);
                 };
             };
         });
@@ -1545,12 +1557,12 @@ const CommunityFeed = (() => {
                     
                     // 3. Optimized Metadata
                     const metadata = { 
-                        contentType: finalImageFile.type,
+                        contentType: finalImageFile.type || 'image/jpeg',
                         cacheControl: 'public,max-age=31536000'
                     };
                     
                     // 4. Use put() but with a more robust monitor
-                    console.log("Starting put() task...");
+                    console.log("Starting put() task with file type:", metadata.contentType);
                     const uploadTask = fileRef.put(finalImageFile, metadata);
                     
                     let lastProgress = 0;
