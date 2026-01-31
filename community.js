@@ -2378,6 +2378,7 @@ const CommunityFeed = (() => {
         loadPosts,
         renderFeed,
         formatVotes,
+        optimizeImage,
         handleCreatePost,
         handleVote,
         handleCommentVote,
@@ -2391,6 +2392,11 @@ const CommunityFeed = (() => {
         handleDeleteHeadline,
         openArticlesModal,
         openHeadlinesModal,
+        openHeadlineEditModal,
+        generateSlug,
+        isMod,
+        setFilter,
+        updateFilterUI,
         posts: () => posts,
         setPosts: (p) => { posts = p; }
     };
