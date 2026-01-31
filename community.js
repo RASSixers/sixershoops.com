@@ -30,6 +30,57 @@ const CommunityFeed = (() => {
         return user.email.toLowerCase() === MOD_EMAIL.toLowerCase();
     }
 
+    /**
+     * Optimizes an image before upload by resizing and compressing it.
+     * This ensures large files upload quickly while maintaining quality.
+     */
+    async function optimizeImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Maximum dimensions for high quality but reasonable size
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress as JPEG with 0.7 quality (excellent balance of speed/quality)
+                    canvas.toBlob((blob) => {
+                        const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        console.log(`Image optimized: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(optimizedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                        resolve(optimizedFile);
+                    }, 'image/jpeg', 0.7);
+                };
+            };
+        });
+    }
+
     // No default posts - we want real data
     const defaultPosts = [];
 
@@ -1456,24 +1507,29 @@ const CommunityFeed = (() => {
         
         try {
             let imageUrl = null;
-            const previewImg = document.getElementById('image-preview');
-            const previewSrc = previewImg ? previewImg.src : null;
+            let finalImageFile = imageFile;
+
+            // Optimize image if it exists to make upload fast
+            if (imageFile) {
+                if (submitBtn) submitBtn.innerText = 'Optimizing Image...';
+                finalImageFile = await optimizeImage(imageFile);
+            }
 
             // Get storage reference
             let storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
 
             // If storage is still not there, wait a bit and try again
-            if (imageFile && !storage) {
+            if (finalImageFile && !storage) {
                 console.log("Storage not ready, waiting 2 seconds...");
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
             }
 
-            if (imageFile && storage) {
+            if (finalImageFile && storage) {
                 try {
-                    console.log("OVERHAUL: Uploading image:", imageFile.name, "Size:", (imageFile.size / 1024 / 1024).toFixed(2), "MB");
+                    console.log("OVERHAUL: Uploading image:", finalImageFile.name, "Size:", (finalImageFile.size / 1024 / 1024).toFixed(2), "MB");
                     
-                    const fileExt = imageFile.name.split('.').pop().toLowerCase() || 'jpg';
+                    const fileExt = finalImageFile.name.split('.').pop().toLowerCase() || 'jpg';
                     const fileName = `img_${Date.now()}_${Math.floor(Math.random() * 100000)}.${fileExt}`;
                     
                     let fileRef;
@@ -1489,13 +1545,13 @@ const CommunityFeed = (() => {
                     
                     // 3. Optimized Metadata
                     const metadata = { 
-                        contentType: imageFile.type,
+                        contentType: finalImageFile.type,
                         cacheControl: 'public,max-age=31536000'
                     };
                     
                     // 4. Use put() but with a more robust monitor
                     console.log("Starting put() task...");
-                    const uploadTask = fileRef.put(imageFile, metadata);
+                    const uploadTask = fileRef.put(finalImageFile, metadata);
                     
                     let lastProgress = 0;
                     let stalledTime = 0;
@@ -1551,7 +1607,7 @@ const CommunityFeed = (() => {
                     showAlert(errorMsg, "Upload Error");
                     throw uploadError;
                 }
-            } else if (imageFile) {
+            } else if (finalImageFile) {
                 console.error("Storage initialization failed. auth:", !!window.auth, "db:", !!window.db, "storage:", !!storage);
                 showAlert("The upload service is still connecting. Please wait 10 seconds and try again.", "Service Busy");
                 throw new Error("Storage not initialized");
