@@ -41,8 +41,6 @@ const CommunityFeed = (() => {
             reader.onerror = () => reject(new Error("Failed to read file"));
             reader.onload = (event) => {
                 const img = new Image();
-                img.onerror = () => reject(new Error("Failed to load image"));
-                img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
@@ -76,19 +74,20 @@ const CommunityFeed = (() => {
                             reject(new Error("Canvas to Blob failed"));
                             return;
                         }
-                        // Convert Blob to ArrayBuffer - more reliable for some older SDK versions
-                        const blobReader = new FileReader();
-                        blobReader.onloadend = () => {
-                            const arrayBuffer = blobReader.result;
-                            // Add metadata to the buffer so we can still use it like a file
-                            arrayBuffer.type = 'image/jpeg';
-                            arrayBuffer.name = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-                            console.log(`Optimization: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
-                            resolve(blob); 
-                        };
-                        blobReader.readAsArrayBuffer(blob);
+                        
+                        // Create a File object from the Blob so it has a name property
+                        const fileName = file.name ? file.name.replace(/\.[^/.]+$/, "") + ".jpg" : `image_${Date.now()}.jpg`;
+                        const optimizedFile = new File([blob], fileName, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+
+                        console.log(`Optimization: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(optimizedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                        resolve(optimizedFile);
                     }, 'image/jpeg', 0.6);
                 };
+                img.onerror = () => reject(new Error("Failed to load image"));
+                img.src = event.target.result;
             };
         });
     }
@@ -759,7 +758,7 @@ const CommunityFeed = (() => {
         if (!avatarContainer || !triggerInput) return;
 
         if (user) {
-            const displayName = user.displayName || user.email.split('@')[0];
+            const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             const photoURL = user.photoURL;
             
             if (photoURL) {
@@ -1541,7 +1540,8 @@ const CommunityFeed = (() => {
                 try {
                     console.log("OVERHAUL: Uploading image:", finalImageFile.name, "Size:", (finalImageFile.size / 1024 / 1024).toFixed(2), "MB");
                     
-                    const fileExt = finalImageFile.name.split('.').pop().toLowerCase() || 'jpg';
+                    const fileNameRaw = finalImageFile.name || "image.jpg";
+                    const fileExt = fileNameRaw.split('.').pop().toLowerCase() || 'jpg';
                     const fileName = `img_${Date.now()}_${Math.floor(Math.random() * 100000)}.${fileExt}`;
                     
                     let fileRef;
