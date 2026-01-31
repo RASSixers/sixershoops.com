@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const mobileAuth = document.getElementById('mobileAuthContainer');
             
             if (user) {
-                const displayName = user.displayName || user.email.split('@')[0];
+                const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
                 const initial = displayName.charAt(0).toUpperCase();
                 const photoURL = user.photoURL;
                 
