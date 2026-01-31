@@ -2536,56 +2536,98 @@ color: #0a174e;
 // Add header
 const header = document.createElement('div');
 header.innerHTML = `
-<div style="text-align: center; margin-bottom: 20px;">
-<h1 style="color: #0a174e; font-size: 32px; margin: 0; font-family: Georgia, serif;">SixersHoops</h1>
-<h2 style="color: #1e293b; font-size: 24px; margin: 5px 0; font-family: Georgia, serif;">Sixers Salary Breakdown</h2>
-<p style="color: #64748b; font-size: 16px; margin: 0;">2025-26 NBA Season</p>
+<div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<h1 style="color: #0a174e; font-size: 28px; margin: 0; font-family: Georgia, serif;">SixersHoops</h1>
+<div style="text-align: right;">
+<h2 style="color: #1e293b; font-size: 18px; margin: 0; font-family: Georgia, serif;">Salary Breakdown</h2>
+<p style="color: #64748b; font-size: 14px; margin: 0;">2025-26 NBA Season</p>
+</div>
+</div>
 </div>
 `;
 exportContainer.appendChild(header);
 // Add cap space information
+// Add cap space information
 const capInfo = document.createElement('div');
 capInfo.innerHTML = `
-<div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-<!-- Total Payroll centered at top -->
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #0a174e; margin-bottom: 15px;">
-<div style="font-size: 12px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">TOTAL PAYROLL</div>
-<div style="font-size: 16px; font-weight: bold; color: #0a174e;">$194,633,728</div>
+<div style="margin-bottom: 12px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+<div style="text-align: center; padding: 6px; background: white; border-radius: 6px; border-top: 3px solid #0a174e;">
+<div style="font-size: 9px; color: #6c757d; font-weight: 700;">PAYROLL</div>
+<div style="font-size: 12px; font-weight: bold; color: #0a174e;">$194.6M</div>
 </div>
-<!-- Other metrics in 2x2 grid -->
-<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #475569;">
-<div style="font-size: 12px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">CAP SPACE</div>
-<div style="font-size: 14px; font-weight: bold; color: #1e293b;">$39,986,728 over cap</div>
+<div style="text-align: center; padding: 6px; background: white; border-radius: 6px; border-top: 3px solid #475569;">
+<div style="font-size: 9px; color: #6c757d; font-weight: 700;">CAP</div>
+<div style="font-size: 12px; font-weight: bold; color: #1e293b;">$39.9M Over</div>
 </div>
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #475569;">
-<div style="font-size: 12px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">LUXURY TAX</div>
-<div style="font-size: 14px; font-weight: bold; color: #1e293b;">$1,262,331 above luxury tax</div>
+<div style="text-align: center; padding: 6px; background: white; border-radius: 6px; border-top: 3px solid #475569;">
+<div style="font-size: 9px; color: #6c757d; font-weight: 700;">1ST APRON</div>
+<div style="font-size: 12px; font-weight: bold; color: #1e293b;">$916K Below</div>
 </div>
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #475569;">
-<div style="font-size: 12px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">FIRST APRON</div>
-<div style="font-size: 14px; font-weight: bold; color: #1e293b;">$916,522 below 1st apron</div>
-</div>
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #475569;">
-<div style="font-size: 12px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">SECOND APRON</div>
-<div style="font-size: 14px; font-weight: bold; color: #1e293b;">$12,795,522 below 2nd apron</div>
+<div style="text-align: center; padding: 6px; background: white; border-radius: 6px; border-top: 3px solid #475569;">
+<div style="font-size: 9px; color: #6c757d; font-weight: 700;">2ND APRON</div>
+<div style="font-size: 12px; font-weight: bold; color: #1e293b;">$12.7M Below</div>
 </div>
 </div>
 </div>
 `;
 exportContainer.appendChild(capInfo);
 
-// Remove tax adjustment rows from tableClone for a cleaner image
-const adjustmentRows = tableClone.querySelectorAll('tr[data-status="tax-credit"], tr[data-status="tax-adjustment"], tr.tax-credit-header');
-adjustmentRows.forEach(row => row.remove());
+// Split roster into two columns for better social media format
+const tableRows = Array.from(tableClone.querySelectorAll('tbody tr'));
+const midPoint = Math.ceil(tableRows.length / 2);
+const leftRows = tableRows.slice(0, midPoint);
+const rightRows = tableRows.slice(midPoint);
 
-exportContainer.appendChild(tableClone);
+const gridContainer = document.createElement('div');
+gridContainer.style.cssText = `
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 15px;
+margin-top: 10px;
+`;
+
+const createColumnTable = (rows) => {
+const colTable = document.createElement('table');
+colTable.style.cssText = `
+width: 100%;
+border-collapse: collapse;
+font-size: 13px;
+`;
+const thead = document.createElement('thead');
+thead.innerHTML = `
+<tr style="background: #f8f9fa; border-bottom: 2px solid #e2e8f0;">
+<th style="padding: 6px 10px; text-align: left; color: #0a174e; font-weight: bold;">Player</th>
+<th style="padding: 6px 10px; text-align: right; color: #0a174e; font-weight: bold;">Salary</th>
+</tr>
+`;
+colTable.appendChild(thead);
+const tbody = document.createElement('tbody');
+rows.forEach(row => {
+const newRow = document.createElement('tr');
+newRow.style.borderBottom = '1px solid #f1f5f9';
+const nameCell = row.querySelector('.player-name').cloneNode(true);
+nameCell.style.padding = '6px 10px';
+const salaryCell = row.querySelector('.salary-amount').cloneNode(true);
+salaryCell.style.cssText = 'padding: 6px 10px; text-align: right; font-weight: 600; color: #1e293b;';
+newRow.appendChild(nameCell);
+newRow.appendChild(salaryCell);
+tbody.appendChild(newRow);
+});
+colTable.appendChild(tbody);
+return colTable;
+};
+
+gridContainer.appendChild(createColumnTable(leftRows));
+gridContainer.appendChild(createColumnTable(rightRows));
+exportContainer.appendChild(gridContainer);
 // Add footer
 const footer = document.createElement('div');
 footer.innerHTML = `
-<div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef;">
-<h3 style="color: #0a174e; font-size: 24px; margin: 0; font-family: Georgia, serif;">SixersHoops.com</h3>
-<p style="color: #1e293b; font-size: 14px; margin: 5px 0 0 0;">Your #1 Source for Philadelphia 76ers Analysis</p>
+<div style="text-align: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e9ecef;">
+<span style="color: #0a174e; font-size: 16px; font-weight: bold; font-family: Georgia, serif;">SixersHoops.com</span>
+<span style="color: #64748b; font-size: 12px; margin-left: 10px;">• Updated Jan 31, 2026</span>
 </div>
 `;
 exportContainer.appendChild(footer);
