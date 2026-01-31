@@ -1115,8 +1115,8 @@ const CommunityFeed = (() => {
                 const previewImg = document.getElementById('image-preview');
 
                 if (file) {
-                    if (file.size > 20 * 1024 * 1024) {
-                        showAlert('This file is over 20MB. Please use a smaller image for best results.', 'File Too Large');
+                    if (file.size > 50 * 1024 * 1024) {
+                        showAlert('This file is over 50MB. Please use a smaller image for best results.', 'File Too Large');
                         imageInput.value = '';
                         return;
                     }
@@ -1499,7 +1499,7 @@ const CommunityFeed = (() => {
                     
                     let lastProgress = 0;
                     let stalledTime = 0;
-                    const STALL_LIMIT = 20; // 20 seconds without progress = stall
+                    const STALL_LIMIT = 180; // 180 seconds without progress = stall
 
                     await new Promise((resolve, reject) => {
                         const timer = setInterval(() => {
@@ -1507,15 +1507,15 @@ const CommunityFeed = (() => {
                             if (stalledTime >= STALL_LIMIT) {
                                 clearInterval(timer);
                                 uploadTask.cancel();
-                                reject(new Error("Upload stalled for too long. Please check your internet connection."));
+                                reject(new Error(`Upload stalled for ${STALL_LIMIT}s. If your file is large (over 3MB), please try a faster connection or wait longer.`));
                             }
                         }, 1000);
 
                         uploadTask.on('state_changed', 
                             (snapshot) => {
                                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                if (submitBtn) submitBtn.innerText = `Posting (${Math.floor(progress)}%)...`;
-                                console.log(`Upload: ${Math.floor(progress)}% (${snapshot.bytesTransferred}/${snapshot.totalBytes} bytes)`);
+                                if (submitBtn) submitBtn.innerText = `Uploading (${Math.floor(progress)}%)...`;
+                                console.log(`Upload: ${Math.floor(progress)}% (${snapshot.bytesTransferred}/${snapshot.totalBytes} bytes) - Stalled Time: ${stalledTime}s`);
                                 
                                 if (snapshot.bytesTransferred > lastProgress) {
                                     lastProgress = snapshot.bytesTransferred;
