@@ -1,146 +1,164 @@
-// @vitest-environment jsdom
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+// NBA Standings Auto-Update Script
 
-describe('Auto-Update Logic in schedule.html', () => {
-    let scriptContent;
+let updateInterval = null;
 
-    beforeEach(() => {
-        // Reset DOM with necessary elements for all functions
-        document.body.innerHTML = `
-            <div id="standings-body"></div>
-            <div id="standings-updated"></div>
-            <div id="refreshIndicator"></div>
-            <div id="refreshCountdown"></div>
-            <div id="schedule-container"></div>
-            <div id="current-record"></div>
-            <div id="next-game"></div>
-            <div id="mobile-menu-btn"></div>
-            <div id="mobile-menu"></div>
-            <div id="navbar"></div>
-            <div id="liveGameModal">
-                <div id="modalGameTitle"></div>
-                <div id="play-by-play-tab"></div>
-                <div id="box-score-tab"></div>
-                <div id="game-stats-tab"></div>
-                <div id="awayTeamLogo"></div>
-                <div id="awayTeamName"></div>
-                <div id="awayScore"></div>
-                <div id="homeTeamLogo"></div>
-                <div id="homeTeamName"></div>
-                <div id="homeScore"></div>
-                <div id="gameStatusInfo"></div>
-                <div id="playByPlayContainer"></div>
-                <div id="boxScoreContainer"></div>
-                <div id="gameStatsContainer"></div>
+// DOM Elements
+const statusIndicator = document.getElementById('statusIndicator');
+const statusText = document.getElementById('statusText');
+const lastUpdateText = document.getElementById('lastUpdateText');
+const refreshButton = document.getElementById('refreshButton');
+const errorMessage = document.getElementById('errorMessage');
+const errorText = document.getElementById('errorText');
+const loadingContainer = document.getElementById('loadingContainer');
+const conferencesGrid = document.getElementById('conferencesGrid');
+const easternTable = document.getElementById('easternTable');
+const westernTable = document.getElementById('westernTable');
+const easternCount = document.getElementById('easternCount');
+const westernCount = document.getElementById('westernCount');
+
+// Fetch NBA Standings
+async function fetchStandings() {
+    try {
+        setLoadingState(true);
+        hideError();
+        
+        const response = await fetch('https://cdn.nba.com/static/json/liveData/standings/standings_all.json');
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch standings');
+        }
+        
+        const data = await response.json();
+        const teams = data?.standings?.teams || [];
+        
+        // Filter and sort teams by conference
+        const easternTeams = teams
+            .filter(team => team.conferenceName === 'Eastern')
+            .sort((a, b) => {
+                if (a.wins === b.wins) return a.losses - b.losses;
+                return b.wins - a.wins;
+            });
+        
+        const westernTeams = teams
+            .filter(team => team.conferenceName === 'Western')
+            .sort((a, b) => {
+                if (a.wins === b.wins) return a.losses - b.losses;
+                return b.wins - a.wins;
+            });
+        
+        // Render the standings
+        renderConference(easternTeams, easternTable, easternCount);
+        renderConference(westernTeams, westernTable, westernCount);
+        
+        setLoadingState(false);
+        updateLastUpdateTime();
+        
+    } catch (error) {
+        console.error('Error fetching standings:', error);
+        showError(error.message);
+        setLoadingState(false);
+    }
+}
+
+// Render conference table
+function renderConference(teams, tableElement, countElement) {
+    tableElement.innerHTML = '';
+    countElement.textContent = `${teams.length} TEAMS`;
+    
+    teams.forEach((team, index) => {
+        const winPct = (team.wins / (team.wins + team.losses)).toFixed(3);
+        const gamesBehind = index === 0 ? '-' : (team.gamesBehind?.toFixed(1) || '0.0');
+        
+        const row = document.createElement('div');
+        row.className = 'table-row';
+        row.style.animationDelay = `${index * 30}ms`;
+        
+        row.innerHTML = `
+            <div class="rank-col">${index + 1}</div>
+            <div class="team-col">
+                <span class="team-name">${team.teamCity} ${team.teamName}</span>
             </div>
+            <div class="stat-col wins">${team.wins}</div>
+            <div class="stat-col losses">${team.losses}</div>
+            <div class="stat-col">${winPct}</div>
+            <div class="stat-col">${gamesBehind}</div>
+            <div class="stat-col streak">${team.streak || '-'}</div>
         `;
         
-        vi.clearAllMocks();
-        vi.useFakeTimers();
-
-        // Mock fetch
-        global.fetch = vi.fn();
-
-        // Load script content
-        const htmlPath = resolve(__dirname, '../../schedule.html');
-        const htmlContent = readFileSync(htmlPath, 'utf8');
-        const scripts = htmlContent.match(/<script>([\s\S]*?)<\/script>/g);
-        scriptContent = scripts ? scripts[scripts.length - 1].replace(/<\/?script>/g, '') : '';
-
-        // Mock global objects
-        global.IntersectionObserver = vi.fn(() => ({
-            observe: vi.fn(),
-            unobserve: vi.fn(),
-            disconnect: vi.fn(),
-        }));
-
-        // Mock scrollTo
-        global.scrollTo = vi.fn();
-        
-        // Mock teamAbbreviations
-        global.teamAbbreviations = { 'Philadelphia 76ers': 'PHI' };
+        tableElement.appendChild(row);
     });
+}
 
-    it('should fetch real standings data and update the UI', async () => {
-        const mockStandingsResponse = {
-            success: true,
-            data: [
-                { pos: 1, team: 'Detroit Pistons', tricode: 'DET', w: 35, l: 12, pct: '.745', gb: '-', strk: 'W3', l10: '8-2' },
-                { pos: 6, team: 'Philadelphia 76ers', tricode: 'PHI', w: 26, l: 21, pct: '.553', gb: '9.0', strk: 'W1', l10: '5-5' }
-            ]
-        };
+// Set loading state
+function setLoadingState(isLoading) {
+    if (isLoading) {
+        statusIndicator.className = 'status-indicator loading';
+        statusText.textContent = 'Updating...';
+        refreshButton.disabled = true;
+    } else {
+        statusIndicator.className = 'status-indicator';
+        statusText.textContent = 'Live';
+        refreshButton.disabled = false;
+        loadingContainer.classList.add('hidden');
+        conferencesGrid.classList.remove('hidden');
+    }
+}
 
-        global.fetch.mockResolvedValueOnce({
-            ok: true,
-            json: async () => mockStandingsResponse
-        });
+// Show error message
+function showError(message) {
+    errorText.textContent = message;
+    errorMessage.classList.add('show');
+    statusIndicator.className = 'status-indicator error';
+    statusText.textContent = 'Connection Error';
+    conferencesGrid.classList.add('hidden');
+    loadingContainer.classList.add('hidden');
+}
 
-        try {
-            eval(scriptContent);
-        } catch (e) {
-            // console.log('Eval error:', e.message);
-        }
+// Hide error message
+function hideError() {
+    errorMessage.classList.remove('show');
+}
 
-        if (typeof fetchStandings === 'function') {
-            await fetchStandings();
-            
-            const standingsBody = document.getElementById('standings-body');
-            expect(standingsBody.innerHTML).toContain('Philadelphia 76ers');
-            expect(standingsBody.innerHTML).toContain('highlight-sixers');
-            expect(document.getElementById('standings-updated').textContent).toContain('Last updated:');
-        }
-    });
+// Update last update time
+function updateLastUpdateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    lastUpdateText.textContent = `Last Updated: ${timeString}`;
+}
 
-    it('should handle fetch errors by falling back to mock data', async () => {
-        global.fetch.mockRejectedValueOnce(new Error('Network error'));
+// Start auto-update interval
+function startAutoUpdate() {
+    // Clear existing interval if any
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+    
+    // Update every 5 minutes (300000 milliseconds)
+    updateInterval = setInterval(fetchStandings, 5 * 60 * 1000);
+}
 
-        try {
-            eval(scriptContent);
-        } catch (e) {}
+// Initialize
+function init() {
+    // Fetch standings on page load
+    fetchStandings();
+    
+    // Start auto-update
+    startAutoUpdate();
+    
+    // Add refresh button event listener
+    refreshButton.addEventListener('click', fetchStandings);
+}
 
-        if (typeof fetchStandings === 'function') {
-            await fetchStandings();
-            
-            const standingsBody = document.getElementById('standings-body');
-            // It should still have 76ers because of mock fallback
-            expect(standingsBody.innerHTML).toContain('Philadelphia 76ers');
-            expect(document.getElementById('standings-updated').textContent).toContain('Demo Mode');
-        }
-    });
+// Run on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 
-    it('should trigger auto-refresh on intervals', async () => {
-        try {
-            eval(scriptContent);
-        } catch (e) {}
-
-        // Trigger DOMContentLoaded
-        document.dispatchEvent(new Event('DOMContentLoaded'));
-
-        // Advance time by 5 minutes
-        vi.advanceTimersByTime(300000);
-        
-        expect(global.fetch).toHaveBeenCalled();
-    });
-
-    it('should start live game updates every 10 seconds for live games', async () => {
-        // Set up scheduleData with a live game
-        global.scheduleData = [
-            { date: '2025-01-01', opponent: 'Brooklyn Nets', location: 'away', nbaGameId: '12345', isLive: true }
-        ];
-
-        try {
-            eval(scriptContent);
-        } catch (e) {}
-
-        if (typeof startLiveGameUpdates === 'function') {
-            startLiveGameUpdates();
-            
-            // Advance time by 10 seconds
-            vi.advanceTimersByTime(10000);
-            
-            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('12345'), expect.anything());
-        }
-    });
+// Clean up interval on page unload
+window.addEventListener('beforeunload', () => {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
 });
