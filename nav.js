@@ -1,4 +1,4 @@
-// Navbar Injection Script
+/// Navbar Injection Script
 document.addEventListener('DOMContentLoaded', function() {
     // Add Firebase SDKs if not present
     if (!document.getElementById('firebase-app-sdk')) {
