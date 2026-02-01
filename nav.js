@@ -1,4 +1,4 @@
-/// Navbar Injection Script
+// Navbar Injection Script
 document.addEventListener('DOMContentLoaded', function() {
     // Add Firebase SDKs if not present
     if (!document.getElementById('firebase-app-sdk')) {
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // === Firebase Logic ===
     const firebaseConfig = {
         apiKey: "AIzaSyBzMlBV5gbZZlg_eTwNWrRDrhx-_ATIPS0",
-        authDomain: sixershoops.com",
+        authDomain: "pickem-1e12b.firebaseapp.com",
         projectId: "pickem-1e12b",
         storageBucket: "pickem-1e12b.appspot.com",
         messagingSenderId: "715626120695",
