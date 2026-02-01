@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // === Firebase Logic ===
     const firebaseConfig = {
         apiKey: "AIzaSyBzMlBV5gbZZlg_eTwNWrRDrhx-_ATIPS0",
-        authDomain: "pickem-1e12b.firebaseapp.com",
+        authDomain: sixershoops.com",
         projectId: "pickem-1e12b",
         storageBucket: "pickem-1e12b.appspot.com",
         messagingSenderId: "715626120695",
