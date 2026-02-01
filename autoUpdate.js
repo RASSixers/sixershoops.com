@@ -67,8 +67,8 @@ describe('Auto-Update Logic in schedule.html', () => {
         const mockStandingsResponse = {
             success: true,
             data: [
-                { pos: 1, team: 'Boston Celtics', tricode: 'BOS', w: 50, l: 10, pct: '.833', gb: '-', strk: 'W10', l10: '10-0' },
-                { pos: 5, team: 'Philadelphia 76ers', tricode: 'PHI', w: 40, l: 20, pct: '.667', gb: '10.0', strk: 'W5', l10: '8-2' }
+                { pos: 1, team: 'Detroit Pistons', tricode: 'DET', w: 35, l: 12, pct: '.745', gb: '-', strk: 'W3', l10: '8-2' },
+                { pos: 6, team: 'Philadelphia 76ers', tricode: 'PHI', w: 26, l: 21, pct: '.553', gb: '9.0', strk: 'W1', l10: '5-5' }
             ]
         };
 
