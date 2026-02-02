@@ -371,9 +371,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${avatarHTML}
                         <span class="user-name">${displayName}</span>
                     </div>
-                    <button class="nav-small-logout" id="navSmallLogout" title="Logout">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    </button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-header">
                             <div class="flex items-center justify-between">
@@ -383,20 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span>${user.email}</span>
                         </div>
                         <div class="user-dropdown-divider"></div>
-                        <button class="user-dropdown-item" id="navProfileBtn">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            Account Settings
-                        </button>
-                        <button class="user-dropdown-item" id="navLogoutBtnMain">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                            Logout
-                        </button>
-
-                        <div class="user-dropdown-divider"></div>
                         
                         <div class="inbox-section">
                             <div class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-100">
-                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notifications</span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Inbox</span>
                                 <button class="text-[10px] text-blue-600 font-bold hover:underline" id="markAllReadBtn">Mark all as read</button>
                             </div>
                             <div id="dropdown-notifications-list" class="max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -442,18 +429,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
             }
-
-            if (logoutBtnMain) logoutBtnMain.onclick = () => window.auth.signOut();
-            if (smallLogoutBtn) {
-                smallLogoutBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    window.auth.signOut();
-                };
-            }
-            if (mobileLogout) mobileLogout.onclick = () => window.auth.signOut();
-            
-            if (editProfileBtn) editProfileBtn.onclick = openProfileModal;
-            if (mobileEditBtn) mobileEditBtn.onclick = openProfileModal;
         } else {
             if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
             if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
@@ -571,17 +546,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Just now';
+        try {
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            if (isNaN(date.getTime())) return 'Just now';
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return "just now";
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + "y";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + "mo";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + "d";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + "h";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + "m";
+            return Math.floor(seconds) + "s";
+        } catch (e) {
+            return 'Just now';
+        }
+    }
+
     async function loadNotifications() {
         const list = document.getElementById('dropdown-notifications-list');
-        const user = window.auth.currentUser;
+        const user = (window.auth && window.auth.currentUser) ? window.auth.currentUser : null;
         if (!list || !user || !window.db) return;
 
         try {
-            const snapshot = await window.db.collection('notifications')
-                .where('recipientId', '==', user.uid)
-                .orderBy('createdAt', 'desc')
-                .limit(20)
-                .get();
+            let snapshot;
+            try {
+                // First try with ordering (requires index)
+                snapshot = await window.db.collection('notifications')
+                    .where('recipientId', '==', user.uid)
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+            } catch (qErr) {
+                console.warn("Ordered query failed, falling back to simple query", qErr);
+                // Fallback to simple query (no ordering) if index is missing
+                snapshot = await window.db.collection('notifications')
+                    .where('recipientId', '==', user.uid)
+                    .limit(20)
+                    .get();
+            }
 
             const markAllBtn = document.getElementById('markAllReadBtn');
             if (markAllBtn) {
@@ -609,9 +619,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            list.innerHTML = snapshot.docs.map(doc => {
+            const notificationsHTML = snapshot.docs.map(doc => {
                 const data = doc.data();
-                const time = data.createdAt ? formatTimeAgo(data.createdAt) : 'Just now';
+                const timeStr = formatTimeAgo(data.createdAt);
                 
                 return `
                     <div class="notification-item ${!data.read ? 'unread' : ''}" onclick="handleNotificationClick('${data.postId}', '${doc.id}', event)">
@@ -623,37 +633,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${data.type === 'reply' ? 'replied to your comment' : 'commented on your post'}
                                 </p>
                                 <p class="text-[11px] text-slate-500 italic mt-0.5 line-clamp-2">"${data.text || ''}"</p>
-                                <p class="text-[9px] text-slate-400 mt-1">${time}</p>
+                                <p class="text-[9px] text-slate-400 mt-1">${timeStr}</p>
                             </div>
                             ${!data.read ? '<div class="h-1.5 w-1.5 bg-blue-600 rounded-full mt-1 flex-shrink-0"></div>' : ''}
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            list.innerHTML = notificationsHTML;
         } catch (err) {
             console.error("Error loading notifications:", err);
-            list.innerHTML = '<div class="p-4 text-center text-xs text-red-500">Error loading notifications</div>';
+            list.innerHTML = `<div class="p-6 text-center text-[10px] text-slate-400">Unable to load notifications at this time.</div>`;
         }
-    }
-
-    // Helper for time formatting if not available
-    function formatTimeAgo(timestamp) {
-        if (!timestamp) return 'Just now';
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        const seconds = Math.floor((new Date() - date) / 1000);
-        
-        if (seconds < 60) return "just now";
-        let interval = seconds / 31536000;
-        if (interval > 1) return Math.floor(interval) + "y";
-        interval = seconds / 2592000;
-        if (interval > 1) return Math.floor(interval) + "mo";
-        interval = seconds / 86400;
-        if (interval > 1) return Math.floor(interval) + "d";
-        interval = seconds / 3600;
-        if (interval > 1) return Math.floor(interval) + "h";
-        interval = seconds / 60;
-        if (interval > 1) return Math.floor(interval) + "m";
-        return Math.floor(seconds) + "s";
     }
 
     // Exported globally so it can be called from notification clicks
