@@ -1782,11 +1782,16 @@ ANALYSIS: [Insert player performance analysis here...]
             let imageUrl = null;
             let finalImageFile = imageFile;
 
-            // Direct Upload
+            // Direct Upload (Non-blocking fallback for plan/rule restrictions)
             if (imageFile) {
-                const smallFile = await optimizeImage(imageFile);
-                const snapshot = await window.firebase.storage().ref().child('community_posts').child(`post_${Date.now()}.jpg`).put(smallFile);
-                imageUrl = await snapshot.ref.getDownloadURL();
+                try {
+                    const smallFile = await optimizeImage(imageFile);
+                    const snapshot = await window.firebase.storage().ref().child('community_posts').child(`post_${Date.now()}.jpg`).put(smallFile);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                } catch (imgErr) {
+                    console.warn("Image upload skipped due to plan or permission limits:", imgErr);
+                    // imageUrl remains null, allowing the post to proceed as text-only
+                }
             }
 
             const newPost = {
