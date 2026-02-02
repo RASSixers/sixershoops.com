@@ -212,57 +212,157 @@
         /* Player Grade Specific Styles */
         .player-card-render {
             background: white;
-            border: 2px solid #e5e7eb;
-            padding: 24px;
-            margin-bottom: 20px;
-            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-radius: 16px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            position: relative;
+            overflow: hidden;
+        }
+        .player-card-render::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #006BB6;
+            opacity: 0.8;
         }
         .player-card-render:hover {
             border-color: #006BB6;
-            box-shadow: 0 12px 32px rgba(0, 107, 182, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 107, 182, 0.12);
+            transform: translateY(-2px);
         }
         .player-header-render {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
+            align-items: center;
+            margin-bottom: 12px;
             gap: 16px;
         }
         .player-name-render {
             font-family: 'Playfair Display', serif;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 800;
-            color: #000;
+            color: #1e293b;
             line-height: 1.2;
         }
         .player-grade-render {
             font-family: 'Inter', sans-serif;
-            font-size: 1.2rem;
-            font-weight: 700;
-            padding: 6px 14px;
+            font-size: 1rem;
+            font-weight: 900;
+            padding: 4px 12px;
             color: white;
-            min-width: 60px;
+            min-width: 48px;
             text-align: center;
-            border-radius: 6px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .player-stats-render {
             font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #64748b;
-            font-weight: 600;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f1f5f9;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #e2e8f0;
             text-transform: uppercase;
-            letter-spacing: 0.025em;
+            letter-spacing: 0.05em;
         }
         .player-analysis-render {
             font-family: 'Inter', sans-serif;
-            color: #334155;
+            color: #475569;
             line-height: 1.6;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
+
+        /* Create Post Modal Styles */
+        .create-post-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .create-post-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .create-post-modal {
+            background: white;
+            width: 95%;
+            max-width: 750px;
+            max-height: 90vh;
+            border-radius: 1.5rem;
+            position: relative;
+            overflow-y: auto;
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .create-post-modal-overlay.active .create-post-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .create-post-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* Player Grade Pro Editor */
+        #player-grades-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .player-grade-entry {
+            background: #fffcf0;
+            border: 1px solid #fef3c7;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .player-grade-entry:hover {
+            border-color: #fcd34d;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .remove-player-entry {
+            position: absolute;
+            top: -0.5rem;
+            right: -0.5rem;
+            background: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            padding: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .player-grade-entry:hover .remove-player-entry {
+            opacity: 1;
+        }
+
+
 
         /* Grade Colors - Professional Palette matching the blog articles */
         .grade-a-plus { background: hsl(152, 69%, 31%); }
@@ -670,5 +770,97 @@
             </div>
         </div>
     </div>
+    <!-- Create Post Modal Overlay -->
+    <div class="create-post-modal-overlay" id="create-post-modal-overlay">
+        <div class="create-post-modal">
+            <button class="post-modal-close" id="create-post-modal-close">&times;</button>
+            <div class="create-post-header">
+                <h2 class="text-2xl font-bold text-slate-900">Create a Post</h2>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Title & Category -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Post Title</label>
+                        <input type="text" id="post-title-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-medium" placeholder="Give your post a title">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Category</label>
+                        <select id="post-tag-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-medium">
+                            <option value="Discussion">Discussion</option>
+                            <option value="Highlight">Highlight</option>
+                            <option value="News">News</option>
+                            <option value="Question">Question</option>
+                            <option value="Player Grade">Player Grade</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Admin Only Template Selection -->
+                <div id="player-grade-template-container" class="hidden">
+                    <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="h-8 w-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-amber-900">Player Grades Template</p>
+                                <p class="text-[10px] text-amber-700 font-medium">Use the Pro Editor to grade multiple players quickly.</p>
+                            </div>
+                        </div>
+                        <button id="apply-grade-template" class="bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-700 transition-all shadow-sm">
+                            Switch to Pro Editor
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Standard Editor -->
+                <div id="standard-content-editor" class="space-y-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Post Content</label>
+                    <textarea id="post-content-input" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none min-h-[200px]" placeholder="What are your thoughts?"></textarea>
+                </div>
+
+                <!-- Player Grade Pro Editor (Admin Only) -->
+                <div id="player-grade-editor" class="hidden space-y-4">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Player Grades</label>
+                        <button id="add-another-player" class="text-xs font-bold text-blue-600 hover:text-blue-700">+ Add Another Player</button>
+                    </div>
+                    <div id="player-grades-container" class="space-y-4">
+                        <!-- Entries added via JS -->
+                    </div>
+                </div>
+
+                <!-- Image Upload -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Add Image (Optional)</label>
+                        <button id="remove-image-btn" class="hidden text-xs font-bold text-red-500 hover:text-red-600">Remove Image</button>
+                    </div>
+                    <div id="image-upload-dropzone" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group">
+                        <input type="file" id="post-image-input" class="hidden" accept="image/*">
+                        <div id="image-upload-prompt" class="space-y-2">
+                            <div class="h-10 w-10 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto group-hover:bg-blue-100 group-hover:text-blue-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                            </div>
+                            <p class="text-sm font-bold text-slate-600" id="image-filename">Click to upload or drag and drop</p>
+                            <p class="text-xs text-slate-400">PNG, JPG or GIF up to 50MB</p>
+                        </div>
+                        <div id="image-preview-container" class="hidden mt-2">
+                            <img id="image-preview" src="" class="max-h-48 mx-auto rounded-lg shadow-sm border border-slate-200">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="flex gap-4 pt-6 border-t border-slate-100">
+                    <button id="cancel-post-btn" class="flex-1 px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all">Cancel</button>
+                    <button id="submit-post-btn" class="flex-[2] px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30">Post to Community</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>
