@@ -124,6 +124,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .notification-item.unread:hover {
                 background: #e0f2fe;
             }
+            #nav-notif-badge {
+                z-index: 50;
+                box-shadow: 0 0 0 2px #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+            }
         </style>
     </nav>
 
@@ -516,9 +524,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Global click listener for dropdowns
-    document.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
         const dropdown = document.getElementById('userDropdown');
-        if (dropdown) dropdown.classList.remove('active');
+        const profileBtn = document.getElementById('userProfileBtn');
+        
+        // If clicking outside dropdown AND outside the trigger button, close it
+        if (dropdown && !dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+            dropdown.classList.remove('active');
+        }
     });
 
     initFirebase();
@@ -613,8 +626,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = (window.auth && window.auth.currentUser) ? window.auth.currentUser : null;
         if (!list || !user) return;
 
-        // If DB not ready yet, try to wait a bit
+        // Ensure window.db is ready
         if (!window.db) {
+            console.warn("Firestore not initialized yet");
             setTimeout(loadNotifications, 500);
             return;
         }
@@ -622,20 +636,22 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             let snapshot;
             try {
-                // First try with ordering (requires index)
+                // Try fetching with ordering (best case)
                 snapshot = await window.db.collection('notifications')
                     .where('recipientId', '==', user.uid)
                     .orderBy('createdAt', 'desc')
                     .limit(20)
                     .get();
             } catch (qErr) {
-                console.warn("Ordered query failed, falling back to simple query", qErr);
-                // Fallback to simple query (no ordering) if index is missing
+                console.warn("Ordered notifications query failed, trying simple query", qErr);
+                // Simple query fallback (works without index)
                 snapshot = await window.db.collection('notifications')
                     .where('recipientId', '==', user.uid)
                     .limit(20)
                     .get();
             }
+
+            if (!snapshot) throw new Error("Failed to retrieve snapshot");
 
             const markAllBtn = document.getElementById('markAllReadBtn');
             if (markAllBtn) {
@@ -644,12 +660,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     const unreadDocs = snapshot.docs.filter(doc => !doc.data().read);
                     if (unreadDocs.length === 0) return;
                     
-                    const batch = window.db.batch();
-                    unreadDocs.forEach(doc => {
-                        batch.update(doc.ref, { read: true });
-                    });
-                    await batch.commit();
-                    loadNotifications();
+                    try {
+                        const batch = window.db.batch();
+                        unreadDocs.forEach(doc => {
+                            batch.update(doc.ref, { read: true });
+                        });
+                        await batch.commit();
+                        loadNotifications();
+                    } catch (batchErr) {
+                        console.error("Error marking all as read:", batchErr);
+                    }
                 };
             }
 
@@ -663,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Sort manually if we hit the fallback (simple query doesn't guarantee order)
+            // Always manually sort to ensure consistency if the database index is missing
             const docs = [...snapshot.docs];
             docs.sort((a, b) => {
                 const getVal = (doc) => {
@@ -671,12 +691,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!d) return 0;
                     if (d.toDate) return d.toDate().getTime();
                     if (d.seconds) return d.seconds * 1000;
-                    return new Date(d).getTime();
+                    try {
+                        const parsed = new Date(d).getTime();
+                        return isNaN(parsed) ? 0 : parsed;
+                    } catch(e) { return 0; }
                 };
                 return getVal(b) - getVal(a);
             });
 
-            const notificationsHTML = docs.map(doc => {
+            list.innerHTML = docs.map(doc => {
                 const data = doc.data();
                 const timeStr = formatTimeAgo(data.createdAt);
                 
@@ -698,10 +721,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }).join('');
             
-            list.innerHTML = notificationsHTML;
         } catch (err) {
-            console.error("Error loading notifications:", err);
-            list.innerHTML = `<div class="p-6 text-center text-[10px] text-slate-400">Unable to load notifications at this time.</div>`;
+            console.error("Detailed error loading notifications:", err);
+            list.innerHTML = `
+                <div class="p-6 text-center text-[10px] text-slate-400">
+                    <p>Unable to load notifications.</p>
+                    <p class="mt-1 opacity-50">${err.code || 'Check connection or permissions'}</p>
+                </div>
+            `;
         }
     }
 
