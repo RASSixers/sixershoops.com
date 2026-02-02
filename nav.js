@@ -109,6 +109,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 object-fit: cover;
                 border: 2px solid rgba(255,255,255,0.8);
             }
+            .notification-item {
+                padding: 12px 16px;
+                border-bottom: 1px solid #f1f5f9;
+                transition: background 0.2s;
+                cursor: pointer;
+            }
+            .notification-item:hover {
+                background: #f8fafc;
+            }
+            .notification-item.unread {
+                background: #eff6ff;
+            }
+            .notification-item.unread:hover {
+                background: #e0f2fe;
+            }
         </style>
     </nav>
 
@@ -152,21 +167,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="auth-modal-tabs">
                 <button class="auth-modal-tab active" data-tab="login">Login</button>
                 <button class="auth-modal-tab" data-tab="register">Sign Up</button>
-                <button class="auth-modal-tab" data-tab="inbox" id="navInboxTab" style="display: none;">Inbox</button>
                 <button class="auth-modal-tab" data-tab="profile" id="navProfileTab" style="display: none;">Profile</button>
             </div>
             <div class="auth-modal-content">
                 <div id="navAuthMessage" class="auth-message"></div>
                 
-                <!-- Inbox View -->
-                <div id="navInboxView" style="display: none;">
-                    <div id="inbox-notifications-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        <div class="text-center py-8 text-slate-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 opacity-20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                            <p>Your inbox is empty</p>
-                        </div>
-                    </div>
-                </div>
                 <!-- Login Form -->
                 <form id="navLoginForm">
                     <div class="auth-form-group">
@@ -386,6 +391,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                             Logout
                         </button>
+
+                        <div class="user-dropdown-divider"></div>
+                        
+                        <div class="inbox-section">
+                            <div class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-100">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notifications</span>
+                                <button class="text-[10px] text-blue-600 font-bold hover:underline" id="markAllReadBtn">Mark all as read</button>
+                            </div>
+                            <div id="dropdown-notifications-list" class="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                <div class="text-center py-8 text-slate-500 text-xs">
+                                    <p>Loading notifications...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -417,7 +436,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (profileBtn && userDropdown) {
                 profileBtn.onclick = (e) => {
                     e.stopPropagation();
-                    userDropdown.classList.toggle('active');
+                    const isActive = userDropdown.classList.toggle('active');
+                    if (isActive) {
+                        loadNotifications();
+                    }
                 };
             }
 
@@ -515,12 +537,9 @@ document.addEventListener('DOMContentLoaded', function() {
         registerForm.style.display = 'none';
         forgotForm.style.display = 'none';
         profileForm.style.display = 'block';
-        document.getElementById('navInboxView').style.display = 'none';
         
         tabs.forEach(t => t.style.display = 'none');
-        const inboxTab = document.getElementById('navInboxTab');
         const profileTab = document.getElementById('navProfileTab');
-        if (inboxTab) inboxTab.style.display = 'block';
         if (profileTab) profileTab.style.display = 'block';
         
         tabs.forEach(t => t.classList.remove('active'));
@@ -553,23 +572,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function loadNotifications() {
-        const list = document.getElementById('inbox-notifications-list');
+        const list = document.getElementById('dropdown-notifications-list');
         const user = window.auth.currentUser;
         if (!list || !user || !window.db) return;
 
         try {
-            // Fetch last 20 notifications for this user
             const snapshot = await window.db.collection('notifications')
                 .where('recipientId', '==', user.uid)
                 .orderBy('createdAt', 'desc')
                 .limit(20)
                 .get();
 
+            const markAllBtn = document.getElementById('markAllReadBtn');
+            if (markAllBtn) {
+                markAllBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    const unreadDocs = snapshot.docs.filter(doc => !doc.data().read);
+                    if (unreadDocs.length === 0) return;
+                    
+                    const batch = window.db.batch();
+                    unreadDocs.forEach(doc => {
+                        batch.update(doc.ref, { read: true });
+                    });
+                    await batch.commit();
+                    loadNotifications();
+                };
+            }
+
             if (snapshot.empty) {
                 list.innerHTML = `
-                    <div class="text-center py-8 text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 opacity-20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        <p>Your inbox is empty</p>
+                    <div class="text-center py-10 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 opacity-20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <p class="text-[11px]">Your inbox is empty</p>
                     </div>
                 `;
                 return;
@@ -577,38 +611,61 @@ document.addEventListener('DOMContentLoaded', function() {
 
             list.innerHTML = snapshot.docs.map(doc => {
                 const data = doc.data();
-                const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Just now';
+                const time = data.createdAt ? formatTimeAgo(data.createdAt) : 'Just now';
                 
                 return `
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer group" onclick="handleNotificationClick('${data.postId}', '${doc.id}')">
+                    <div class="notification-item ${!data.read ? 'unread' : ''}" onclick="handleNotificationClick('${data.postId}', '${doc.id}', event)">
                         <div class="flex gap-3">
-                            <img src="${data.senderPhoto || 'https://sixershoops.com/ImageFolder/avatar1.png'}" class="h-10 w-10 rounded-full object-cover border border-slate-200">
+                            <img src="${data.senderPhoto || 'https://sixershoops.com/ImageFolder/avatar1.png'}" class="h-8 w-8 rounded-full object-cover border border-slate-100 flex-shrink-0">
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm text-slate-900 leading-tight">
+                                <p class="text-[11px] text-slate-900 leading-tight">
                                     <span class="font-bold">${data.senderName || 'Someone'}</span> 
-                                    ${data.type === 'reply' ? 'replied to your comment' : 'commented on your post'}:
+                                    ${data.type === 'reply' ? 'replied to your comment' : 'commented on your post'}
                                 </p>
-                                <p class="text-sm text-slate-500 italic mt-1 line-clamp-2">"${data.text || ''}"</p>
-                                <p class="text-[10px] text-slate-400 mt-2 font-medium">${date}</p>
+                                <p class="text-[11px] text-slate-500 italic mt-0.5 line-clamp-2">"${data.text || ''}"</p>
+                                <p class="text-[9px] text-slate-400 mt-1">${time}</p>
                             </div>
-                            ${!data.read ? '<div class="h-2 w-2 bg-blue-600 rounded-full mt-1"></div>' : ''}
+                            ${!data.read ? '<div class="h-1.5 w-1.5 bg-blue-600 rounded-full mt-1 flex-shrink-0"></div>' : ''}
                         </div>
                     </div>
                 `;
             }).join('');
         } catch (err) {
             console.error("Error loading notifications:", err);
+            list.innerHTML = '<div class="p-4 text-center text-xs text-red-500">Error loading notifications</div>';
         }
     }
 
+    // Helper for time formatting if not available
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Just now';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        if (seconds < 60) return "just now";
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + "y";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + "mo";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + "d";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + "h";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + "m";
+        return Math.floor(seconds) + "s";
+    }
+
     // Exported globally so it can be called from notification clicks
-    window.handleNotificationClick = async (postId, notificationId) => {
+    window.handleNotificationClick = async (postId, notificationId, event) => {
+        if (event) event.stopPropagation();
         try {
             // Mark as read
             await window.db.collection('notifications').doc(notificationId).update({ read: true });
             
-            // Close modal
-            closeAuthModal();
+            // Close dropdown
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) dropdown.classList.remove('active');
 
             // Check if we are on community page
             if (window.location.pathname.includes('community') || document.getElementById('community-feed-section')) {
@@ -657,26 +714,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 registerForm.style.display = 'none';
                 forgotForm.style.display = 'none';
                 profileForm.style.display = 'none';
-                document.getElementById('navInboxView').style.display = 'none';
             } else if (tabName === 'register') {
                 loginForm.style.display = 'none';
                 registerForm.style.display = 'block';
                 forgotForm.style.display = 'none';
                 profileForm.style.display = 'none';
-                document.getElementById('navInboxView').style.display = 'none';
-            } else if (tabName === 'inbox') {
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'none';
-                forgotForm.style.display = 'none';
-                profileForm.style.display = 'none';
-                document.getElementById('navInboxView').style.display = 'block';
-                loadNotifications();
             } else if (tabName === 'profile') {
                 loginForm.style.display = 'none';
                 registerForm.style.display = 'none';
                 forgotForm.style.display = 'none';
                 profileForm.style.display = 'block';
-                document.getElementById('navInboxView').style.display = 'none';
             }
         });
     });
