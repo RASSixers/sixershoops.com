@@ -11,6 +11,14 @@ const CommunityFeed = (() => {
     const HEADLINE_COLLECTION = 'trending_headlines';
     const MOD_EMAIL = 'rhatus13@gmail.com';
 
+    const PLAYER_GRADE_TEMPLATE = `[Player Name]
+Grade: [A/B/C/D/F]
+Stats: [Points/Rebounds/Assists]
+
+Analysis:
+[Your analysis here]
+---`;
+
     let sidebarArticles = [];
     let trendingHeadlines = [];
 
@@ -884,6 +892,58 @@ const CommunityFeed = (() => {
         return text.replace(twitterRegex, '').trim();
     }
 
+    function renderPlayerGrades(content) {
+        if (!content) return '';
+        
+        // Split by the separator ---
+        const players = content.split('---').filter(p => p.trim());
+        if (players.length === 0) return `<p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(content)}</p>`;
+
+        return players.map(playerBlock => {
+            const lines = playerBlock.trim().split('\n');
+            let name = '', grade = '', stats = '', analysis = '';
+            
+            lines.forEach(line => {
+                if (line.toLowerCase().startsWith('[') || !line.includes(':')) {
+                    if (!name && line.trim()) name = line.replace(/[\[\]]/g, '').trim();
+                }
+                if (line.toLowerCase().includes('grade:')) grade = line.split(':')[1].trim();
+                if (line.toLowerCase().includes('stats:')) stats = line.split(':')[1].trim();
+                if (line.toLowerCase().includes('analysis:')) analysis = line.split(':')[1].trim();
+                
+                // Fallback for names without [ ]
+                if (!name && line.trim() && !line.includes(':')) name = line.trim();
+            });
+
+            if (!name && !grade && !stats) return `<p class="text-sm text-slate-600 mb-2">${formatTwitterContent(playerBlock)}</p>`;
+
+            const gradeClass = getGradeClass(grade);
+            
+            return `
+                <div class="player-grade-card bg-white border border-slate-200 rounded-xl p-4 mb-4 shadow-sm hover:border-amber-300 transition-all">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-slate-900">${name}</h4>
+                        <span class="px-3 py-1 rounded-lg text-white font-black text-sm ${gradeClass}">${grade || 'N/A'}</span>
+                    </div>
+                    ${stats ? `<div class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">${stats}</div>` : ''}
+                    ${analysis ? `<div class="text-sm text-slate-600 leading-relaxed">${analysis}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getGradeClass(grade) {
+        if (!grade) return 'bg-slate-400';
+        const g = grade.toUpperCase();
+        if (g.includes('A+')) return 'bg-emerald-600';
+        if (g.includes('A')) return 'bg-emerald-500';
+        if (g.includes('B')) return 'bg-blue-500';
+        if (g.includes('C')) return 'bg-amber-500';
+        if (g.includes('D')) return 'bg-orange-500';
+        if (g.includes('F')) return 'bg-red-500';
+        return 'bg-slate-400';
+    }
+
     function createPostElement(post) {
         const isPlayerGrade = post.tag === 'Player Grade';
         const div = document.createElement('div');
@@ -951,7 +1011,10 @@ const CommunityFeed = (() => {
                     </div>
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">${post.title}</h3>
-                ${post.content ? `<div class="bg-white/50 backdrop-blur-sm rounded-lg p-4 mb-3 border border-slate-100 shadow-inner"><p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(post.content)}</p></div>` : ''}
+                ${post.content ? `
+                    <div class="bg-white/50 backdrop-blur-sm rounded-lg p-4 mb-3 border border-slate-100 shadow-inner">
+                        ${isPlayerGrade ? renderPlayerGrades(post.content) : `<p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(post.content)}</p>`}
+                    </div>` : ''}
                 ${twitterId ? `<div class="mb-4 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
                 ${hasValidImage ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block" onerror="this.parentElement.style.display='none'"></div>` : ''}
                 <div class="flex gap-4">
@@ -1125,6 +1188,9 @@ const CommunityFeed = (() => {
     function setupEventListeners() {
         const createTrigger = document.getElementById('create-post-trigger');
         const createBtn = document.getElementById('create-post-btn');
+        const closeExpandedBtn = document.getElementById('close-expanded-post');
+        const postTagInput = document.getElementById('post-tag-input');
+        const applyTemplateBtn = document.getElementById('apply-grade-template');
         
         // Filter button listeners
         const filterHot = document.getElementById('filter-hot');
@@ -1146,6 +1212,29 @@ const CommunityFeed = (() => {
 
         if (createTrigger) createTrigger.addEventListener('click', openModal);
         if (createBtn) createBtn.addEventListener('click', openModal);
+        if (closeExpandedBtn) closeExpandedBtn.addEventListener('click', closeCreateModal);
+
+        if (postTagInput) {
+            postTagInput.addEventListener('change', () => {
+                const templateContainer = document.getElementById('player-grade-template-container');
+                if (postTagInput.value === 'Player Grade' && isMod()) {
+                    templateContainer.classList.remove('hidden');
+                } else {
+                    templateContainer.classList.add('hidden');
+                }
+            });
+        }
+
+        if (applyTemplateBtn) {
+            applyTemplateBtn.addEventListener('click', () => {
+                const contentInput = document.getElementById('post-content-input');
+                if (contentInput) {
+                    const separator = contentInput.value.trim() ? '\n\n' : '';
+                    contentInput.value += separator + PLAYER_GRADE_TEMPLATE;
+                    contentInput.focus();
+                }
+            });
+        }
 
         const closeBtn = document.getElementById('post-modal-close');
         if (closeBtn) {
@@ -1218,13 +1307,6 @@ const CommunityFeed = (() => {
         if (modalOverlay) {
             modalOverlay.addEventListener('click', (e) => {
                 if (e.target === modalOverlay) closeModal();
-            });
-        }
-
-        const createOverlay = document.getElementById('create-post-modal-overlay');
-        if (createOverlay) {
-            createOverlay.addEventListener('click', (e) => {
-                if (e.target === createOverlay) closeCreateModal();
             });
         }
 
@@ -1360,21 +1442,41 @@ const CommunityFeed = (() => {
     }
 
     function openCreatePostModal() {
-        const modal = document.getElementById('create-post-modal-overlay');
-        if (modal) {
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+        const collapsed = document.getElementById('create-post-collapsed');
+        const expanded = document.getElementById('create-post-expanded');
+        const createBox = document.getElementById('create-post-box');
+        
+        if (collapsed && expanded && createBox) {
+            collapsed.classList.add('hidden');
+            expanded.classList.remove('hidden');
+            createBox.classList.add('p-8', 'shadow-xl', 'border-blue-200');
+            createBox.classList.remove('p-6', 'hover:border-blue-400');
+            
+            // Check if mod for template button
+            const tagInput = document.getElementById('post-tag-input');
+            const templateContainer = document.getElementById('player-grade-template-container');
+            if (tagInput && tagInput.value === 'Player Grade' && isMod()) {
+                templateContainer.classList.remove('hidden');
+            }
         }
     }
 
     function closeCreateModal() {
-        const modal = document.getElementById('create-post-modal-overlay');
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
+        const collapsed = document.getElementById('create-post-collapsed');
+        const expanded = document.getElementById('create-post-expanded');
+        const createBox = document.getElementById('create-post-box');
+        
+        if (collapsed && expanded && createBox) {
+            collapsed.classList.remove('hidden');
+            expanded.classList.add('hidden');
+            createBox.classList.remove('p-8', 'shadow-xl', 'border-blue-200');
+            createBox.classList.add('p-6', 'hover:border-blue-400');
+            
             // Clear inputs
-            document.getElementById('post-title-input').value = '';
-            document.getElementById('post-content-input').value = '';
+            const titleInput = document.getElementById('post-title-input');
+            const contentInput = document.getElementById('post-content-input');
+            if (titleInput) titleInput.value = '';
+            if (contentInput) contentInput.value = '';
             
             const imageInput = document.getElementById('post-image-input');
             const filenameSpan = document.getElementById('image-filename');
@@ -2393,6 +2495,9 @@ const CommunityFeed = (() => {
         openArticlesModal,
         openHeadlinesModal,
         openHeadlineEditModal,
+        openCreatePostModal,
+        closeCreateModal,
+        createPostElement,
         generateSlug,
         isMod,
         setFilter,
