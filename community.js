@@ -207,9 +207,8 @@ ANALYSIS: [Insert player performance analysis here...]
             
             // Handle permission denied (guests or missing public access)
             if (error.code === 'permission-denied') {
-                console.warn("Permission denied for Firestore. If guests should see the feed, ensure 'read' is allowed for all users.");
-                // We show the guest interaction prompt instead of the full feed if read access is blocked
-                renderGuestFeed();
+                console.warn("Permission denied for Firestore. To allow guests to see the feed, ensure your Firestore rules allow 'read' for all users.");
+                // Don't block the UI with a sign-in prompt here; let renderFeed handle the empty state or existing posts
                 return;
             }
 
@@ -854,8 +853,9 @@ ANALYSIS: [Insert player performance analysis here...]
         const createPostBox = document.getElementById('create-post-box');
         if (!container) return;
 
-        // Hide create post box for guests
         const user = window.auth ? window.auth.currentUser : null;
+
+        // Hide create post box for guests
         if (createPostBox) {
             if (!user) {
                 createPostBox.classList.add('hidden');
@@ -865,15 +865,29 @@ ANALYSIS: [Insert player performance analysis here...]
         }
 
         if (posts.length === 0) {
-            container.innerHTML = `
-                <div class="bg-white rounded-xl p-12 text-center border border-slate-200">
-                    <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            // Check if we're likely in an unauthenticated state with strict rules
+            if (!user) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-xl p-12 text-center border border-slate-200 shadow-sm">
+                        <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-2">Welcome to the Community</h3>
+                        <p class="text-slate-500 mb-8 max-w-md mx-auto">Sign in to view the latest discussions, share your thoughts, and participate with other fans!</p>
+                        <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-all shadow-md">Sign In to View Feed</button>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">No posts yet</h3>
-                    <p class="text-slate-500">Be the first to start a conversation in the community!</p>
-                </div>
-            `;
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="bg-white rounded-xl p-12 text-center border border-slate-200">
+                        <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-2">No posts yet</h3>
+                        <p class="text-slate-500">Be the first to start a conversation in the community!</p>
+                    </div>
+                `;
+            }
             return;
         }
 
@@ -890,6 +904,18 @@ ANALYSIS: [Insert player performance analysis here...]
             const postEl = createPostElement(post);
             container.appendChild(postEl);
         });
+
+        // Add a "Sign in to participate" prompt at the bottom for guests
+        if (!user && sortedPosts.length > 0) {
+            const guestPrompt = document.createElement('div');
+            guestPrompt.className = 'mt-8 bg-white rounded-xl p-8 text-center border border-slate-200 shadow-sm';
+            guestPrompt.innerHTML = `
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Want to join the conversation?</h3>
+                <p class="text-slate-500 mb-4 text-sm">Sign in to vote, comment, and share your own thoughts with the community!</p>
+                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all text-sm">Sign In to Participate</button>
+            `;
+            container.appendChild(guestPrompt);
+        }
 
         // Load Twitter widgets if any were added
         if (window.twttr && window.twttr.widgets) {
