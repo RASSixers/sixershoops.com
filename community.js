@@ -1788,13 +1788,13 @@ ANALYSIS: [Insert player performance analysis here...]
             }
 
             // Get storage reference
-            let storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
+            let storage = window.storage || (typeof firebase !== 'undefined' && typeof firebase.storage === 'function' ? firebase.storage() : null);
 
             // If storage is still not there, wait a bit and try again
             if (finalImageFile && !storage) {
                 console.log("Storage not ready, waiting 2 seconds...");
                 await new Promise(resolve => setTimeout(resolve, 2000));
-                storage = window.storage || (window.firebase && typeof window.firebase.storage === 'function' ? window.firebase.storage() : null);
+                storage = window.storage || (typeof firebase !== 'undefined' && typeof firebase.storage === 'function' ? firebase.storage() : null);
             }
 
             if (finalImageFile && storage) {
@@ -1808,8 +1808,6 @@ ANALYSIS: [Insert player performance analysis here...]
                     let fileRef;
                     try {
                         // More robust reference creation
-                        const bucketUrl = (storage.app && storage.app.options) ? storage.app.options.storageBucket : 'default';
-                        console.log("Using storage bucket:", bucketUrl);
                         fileRef = storage.ref().child(COLLECTION_NAME).child(fileName);
                     } catch (e) {
                         console.error("Ref creation error:", e);
@@ -2607,6 +2605,7 @@ ANALYSIS: [Insert player performance analysis here...]
         if (postIndex === -1) return;
 
         const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        const post = posts[postIndex];
 
         const newComment = {
             author: 'u/' + authorName,
