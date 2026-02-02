@@ -1950,6 +1950,7 @@ ANALYSIS: [Insert player performance analysis here...]
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2 text-xs text-slate-500">
                                         <span class="font-bold text-slate-900">${r.author}</span>
+                                        ${r.replyingTo ? `<span>replying to <span class="text-blue-600 font-bold">${r.replyingTo}</span></span>` : ''}
                                         <span>•</span>
                                         <span>${r.time || 'Just now'}</span>
                                     </div>
@@ -2495,6 +2496,7 @@ ANALYSIS: [Insert player performance analysis here...]
             author: 'u/' + authorName,
             authorId: user.uid,
             text: text,
+            replyingTo: parentReply.author,
             time: 'Just now',
             createdAt: new Date().toISOString(),
             votes: 0,
@@ -2545,6 +2547,7 @@ ANALYSIS: [Insert player performance analysis here...]
             author: 'u/' + authorName,
             authorId: user.uid,
             text: text,
+            replyingTo: comment.author,
             time: 'Just now',
             createdAt: new Date().toISOString(),
             votes: 0,
