@@ -1330,6 +1330,12 @@ ANALYSIS: [Insert player performance analysis here...]
         }
 
         const imageInput = document.getElementById('post-image-input');
+        const imageDropzone = document.getElementById('image-upload-dropzone');
+
+        if (imageDropzone && imageInput) {
+            imageDropzone.addEventListener('click', () => imageInput.click());
+        }
+
         if (imageInput) {
             imageInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -2685,6 +2691,7 @@ ANALYSIS: [Insert player performance analysis here...]
         isMod,
         setFilter,
         updateFilterUI,
+        countTotalComments,
         posts: () => posts,
         setPosts: (p) => { posts = p; }
     };
