@@ -1950,7 +1950,7 @@ ANALYSIS: [Insert player performance analysis here...]
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2 text-xs text-slate-500">
                                         <span class="font-bold text-slate-900">${r.author}</span>
-                                        ${r.replyingTo ? `<span>replying to <span class="text-blue-600 font-bold">${r.replyingTo}</span></span>` : ''}
+                                        ${r.replyingTo ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-medium">replying to - <span class="font-bold">${r.replyingTo}</span></span>` : ''}
                                         <span>•</span>
                                         <span>${r.time || 'Just now'}</span>
                                     </div>
