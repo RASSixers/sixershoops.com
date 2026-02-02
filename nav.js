@@ -371,6 +371,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${avatarHTML}
                         <span class="user-name">${displayName}</span>
                     </div>
+                    <button class="nav-small-logout" id="navSmallLogout" title="Logout">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-header">
                             <div class="flex items-center justify-between">
@@ -379,6 +382,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <span>${user.email}</span>
                         </div>
+                        <div class="user-dropdown-divider"></div>
+                        
+                        <button class="user-dropdown-item" id="navProfileBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Account Settings
+                        </button>
+                        
                         <div class="user-dropdown-divider"></div>
                         
                         <div class="inbox-section">
@@ -429,6 +439,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
             }
+
+            if (smallLogoutBtn) {
+                smallLogoutBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.auth.signOut();
+                };
+            }
+            
+            if (editProfileBtn) editProfileBtn.onclick = openProfileModal;
+            if (mobileEditBtn) mobileEditBtn.onclick = openProfileModal;
+            if (mobileLogout) mobileLogout.onclick = () => window.auth.signOut();
         } else {
             if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
             if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
@@ -573,7 +594,13 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadNotifications() {
         const list = document.getElementById('dropdown-notifications-list');
         const user = (window.auth && window.auth.currentUser) ? window.auth.currentUser : null;
-        if (!list || !user || !window.db) return;
+        if (!list || !user) return;
+
+        // If DB not ready yet, try to wait a bit
+        if (!window.db) {
+            setTimeout(loadNotifications, 500);
+            return;
+        }
 
         try {
             let snapshot;
@@ -619,7 +646,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const notificationsHTML = snapshot.docs.map(doc => {
+            // Sort manually if we hit the fallback (simple query doesn't guarantee order)
+            const docs = [...snapshot.docs];
+            docs.sort((a, b) => {
+                const getVal = (doc) => {
+                    const d = doc.data().createdAt;
+                    if (!d) return 0;
+                    if (d.toDate) return d.toDate().getTime();
+                    if (d.seconds) return d.seconds * 1000;
+                    return new Date(d).getTime();
+                };
+                return getVal(b) - getVal(a);
+            });
+
+            const notificationsHTML = docs.map(doc => {
                 const data = doc.data();
                 const timeStr = formatTimeAgo(data.createdAt);
                 
