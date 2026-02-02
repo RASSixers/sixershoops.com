@@ -362,8 +362,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const photoURL = user.photoURL;
             
             const avatarHTML = photoURL 
-                ? `<div class="relative"><img src="${photoURL}" class="user-avatar-img" alt="${displayName}"><div id="nav-notif-badge" class="hidden absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></div></div>`
-                : `<div class="relative"><div class="user-avatar">${initial}</div><div id="nav-notif-badge" class="hidden absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></div></div>`;
+                ? `<div class="relative"><img src="${photoURL}" class="user-avatar-img" alt="${displayName}"><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`
+                : `<div class="relative"><div class="user-avatar">${initial}</div><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
             
             const userHTML = `
                 <div class="user-profile-wrapper">
@@ -393,7 +393,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         <div class="inbox-section">
                             <div class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-100">
-                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Inbox</span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                                    Inbox <span id="inbox-title-count" class="hidden text-blue-600">(0)</span>
+                                </span>
                                 <button class="text-[10px] text-blue-600 font-bold hover:underline" id="markAllReadBtn">Mark all as read</button>
                             </div>
                             <div id="dropdown-notifications-list" class="max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -474,10 +476,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const count = snapshot.size;
                 const badges = document.querySelectorAll('#nav-notif-badge');
                 const counts = document.querySelectorAll('#dropdown-notif-count');
+                const titleCounts = document.querySelectorAll('#inbox-title-count');
                 
                 badges.forEach(b => {
-                    if (count > 0) b.classList.remove('hidden');
-                    else b.classList.add('hidden');
+                    if (count > 0) {
+                        b.classList.remove('hidden');
+                        b.textContent = count;
+                    } else {
+                        b.classList.add('hidden');
+                        b.textContent = '';
+                    }
                 });
 
                 counts.forEach(c => {
@@ -486,6 +494,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         c.textContent = count > 9 ? '9+' : count;
                     } else {
                         c.classList.add('hidden');
+                    }
+                });
+
+                titleCounts.forEach(tc => {
+                    if (count > 0) {
+                        tc.classList.remove('hidden');
+                        tc.textContent = `(${count})`;
+                    } else {
+                        tc.classList.add('hidden');
                     }
                 });
             }, err => console.error("Notification listener error:", err));
