@@ -32,9 +32,9 @@ const CommunityFeed = (() => {
     }
 
     const PLAYER_GRADE_TEMPLATE = `PLAYER: [Name]
-GRADE: [A+]
-STATS: [30 PTS, 5 REB, 5 AST]
-ANALYSIS: [Insert player performance analysis here...]
+GRADE: [Grade]
+STATS: [Stats]
+ANALYSIS: [Analysis]
 ---`;
 
     let sidebarArticles = [];
@@ -878,9 +878,14 @@ ANALYSIS: [Insert player performance analysis here...]
     function renderPlayerGrades(content) {
         if (!content) return '';
         
+        // Strip out brackets helper
+        const stripBrackets = (str) => str ? str.replace(/[\[\]]/g, '').trim() : '';
+
         // Split by the separator ---
         const players = content.split('---').filter(p => p.trim());
-        if (players.length === 0) return `<p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(content)}</p>`;
+        if (players.length === 0 || !content.toLowerCase().includes('player:')) {
+            return `<p class="text-sm text-slate-600 mb-2">${formatTwitterContent(content)}</p>`;
+        }
 
         return players.map(playerBlock => {
             const lines = playerBlock.trim().split('\n');
@@ -888,18 +893,25 @@ ANALYSIS: [Insert player performance analysis here...]
             
             lines.forEach(line => {
                 const lowerLine = line.toLowerCase().trim();
-                if (lowerLine.startsWith('player:')) name = line.split(/player:/i)[1].trim();
-                else if (lowerLine.startsWith('grade:')) grade = line.split(/grade:/i)[1].trim();
-                else if (lowerLine.startsWith('stats:')) stats = line.split(/stats:/i)[1].trim();
-                else if (lowerLine.startsWith('analysis:')) analysis = line.split(/analysis:/i)[1].trim();
                 
-                // Flexible parsing fallback
+                if (lowerLine.startsWith('player:')) {
+                    name = stripBrackets(line.split(/player:/i)[1]);
+                } else if (lowerLine.startsWith('grade:')) {
+                    grade = stripBrackets(line.split(/grade:/i)[1]);
+                } else if (lowerLine.startsWith('stats:')) {
+                    stats = stripBrackets(line.split(/stats:/i)[1]);
+                } else if (lowerLine.startsWith('analysis:')) {
+                    analysis = stripBrackets(line.split(/analysis:/i)[1]);
+                }
+                // Fallback for name if it's the first non-empty line and doesn't have a colon
                 else if (!name && line.trim() && !line.includes(':')) {
-                     name = line.replace(/[\[\]]/g, '').trim();
+                    name = stripBrackets(line);
                 }
             });
 
-            if (!name && !grade && !stats) return `<p class="text-sm text-slate-600 mb-2">${formatTwitterContent(playerBlock)}</p>`;
+            if (!name && !grade && !stats) {
+                return `<p class="text-sm text-slate-600 mb-2">${formatTwitterContent(playerBlock)}</p>`;
+            }
 
             const gradeClass = getGradeClass(grade);
             
@@ -2450,7 +2462,9 @@ ANALYSIS: [Insert player performance analysis here...]
         updateFilterUI,
         countTotalComments,
         posts: () => posts,
-        setPosts: (p) => { posts = p; }
+        setPosts: (p) => { posts = p; },
+        renderPlayerGrades: renderPlayerGrades,
+        getGradeClass: getGradeClass
     };
 })();
 
