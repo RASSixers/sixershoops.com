@@ -1072,7 +1072,7 @@ ANALYSIS: [Insert player performance analysis here...]
                 <div class="flex gap-4">
                     <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm comment-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        ${(post.comments || []).length} Comments
+                        ${countTotalComments(post.comments)} Comments
                     </button>
                     <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm share-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
@@ -1997,6 +1997,15 @@ ANALYSIS: [Insert player performance analysis here...]
         `;
     }
 
+    function countTotalComments(comments) {
+        if (!comments || !Array.isArray(comments)) return 0;
+        let count = comments.length;
+        comments.forEach(c => {
+            if (c.replies) count += countTotalComments(c.replies);
+        });
+        return count;
+    }
+
     function openDetailedView(postId, keepState = false) {
         const post = posts.find(p => p.id === postId);
         if (!post) return;
@@ -2057,7 +2066,7 @@ ANALYSIS: [Insert player performance analysis here...]
                 <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${formatTwitterContent(post.content)}</div>
                 
                 <div class="border-t pt-6">
-                    <h3 class="font-bold mb-4 text-lg">Comments (${(post.comments || []).length})</h3>
+                    <h3 class="font-bold mb-4 text-lg">Comments (${countTotalComments(post.comments)})</h3>
                     
                     <!-- Add Comment -->
                     <div class="mb-8">
