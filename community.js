@@ -1586,42 +1586,34 @@ ANALYSIS: [Insert player performance analysis here...]
     }
 
     function openCreatePostModal() {
-        const collapsed = document.getElementById('create-post-collapsed');
-        const expanded = document.getElementById('create-post-expanded');
-        const createBox = document.getElementById('create-post-box');
-        
-        if (collapsed && expanded && createBox) {
-            collapsed.classList.add('hidden');
-            expanded.classList.remove('hidden');
-            createBox.classList.add('p-8', 'shadow-xl', 'border-blue-200');
-            createBox.classList.remove('p-6', 'hover:border-blue-400');
+        const modal = document.getElementById('create-post-modal-overlay');
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
             
-            // Check if mod for template button
+            // Initial state for admin
             const tagInput = document.getElementById('post-tag-input');
             const templateContainer = document.getElementById('player-grade-template-container');
             if (tagInput && tagInput.value === 'Player Grade' && isMod()) {
                 templateContainer.classList.remove('hidden');
+            } else if (templateContainer) {
+                templateContainer.classList.add('hidden');
             }
         }
     }
 
     function closeCreateModal() {
-        const collapsed = document.getElementById('create-post-collapsed');
-        const expanded = document.getElementById('create-post-expanded');
-        const createBox = document.getElementById('create-post-box');
-        
-        if (collapsed && expanded && createBox) {
-            collapsed.classList.remove('hidden');
-            expanded.classList.add('hidden');
-            createBox.classList.remove('p-8', 'shadow-xl', 'border-blue-200');
-            createBox.classList.add('p-6', 'hover:border-blue-400');
+        const modal = document.getElementById('create-post-modal-overlay');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
             
-            // Clear inputs
-            const titleInput = document.getElementById('post-title-input');
-            const contentInput = document.getElementById('post-content-input');
-            if (titleInput) titleInput.value = '';
-            if (contentInput) contentInput.value = '';
+            // Reset fields
+            document.getElementById('post-title-input').value = '';
+            document.getElementById('post-content-input').value = '';
+            document.getElementById('post-tag-input').value = 'Discussion';
             
+            // Reset image
             const imageInput = document.getElementById('post-image-input');
             const filenameSpan = document.getElementById('image-filename');
             const removeBtn = document.getElementById('remove-image-btn');
@@ -1632,12 +1624,19 @@ ANALYSIS: [Insert player performance analysis here...]
             if (filenameSpan) filenameSpan.innerText = 'No file chosen';
             if (removeBtn) removeBtn.classList.add('hidden');
             if (previewContainer) previewContainer.classList.add('hidden');
-            
             if (previewImg && previewImg.dataset.objectUrl) {
                 URL.revokeObjectURL(previewImg.dataset.objectUrl);
                 delete previewImg.dataset.objectUrl;
                 previewImg.src = '';
             }
+
+            // Reset Pro Editor
+            const proEditor = document.getElementById('player-grade-editor');
+            const standardEditor = document.getElementById('standard-content-editor');
+            const container = document.getElementById('player-grades-container');
+            if (proEditor) proEditor.classList.add('hidden');
+            if (standardEditor) standardEditor.classList.remove('hidden');
+            if (container) container.innerHTML = '';
         }
     }
 
