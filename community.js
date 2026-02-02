@@ -58,9 +58,14 @@ ANALYSIS: [Insert player performance analysis here...]
 
     /**
      * Optimizes an image before upload by resizing and compressing it.
-     * This ensures large files upload quickly while maintaining quality.
+     * This ensures files are under 1MB while maintaining quality.
      */
     async function optimizeImage(file) {
+        if (!file) return null;
+        
+        // If file is already small, just return it
+        if (file.size < 0.2 * 1024 * 1024) return file;
+
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -72,9 +77,8 @@ ANALYSIS: [Insert player performance analysis here...]
                     let width = img.width;
                     let height = img.height;
 
-                    // Lower resolution for faster upload - still looks great on mobile/web
-                    const MAX_SIZE = 1000; 
-
+                    // Standardize resolution for web/mobile
+                    const MAX_SIZE = 1200; 
                     if (width > height) {
                         if (width > MAX_SIZE) {
                             height *= MAX_SIZE / width;
@@ -90,29 +94,26 @@ ANALYSIS: [Insert player performance analysis here...]
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Lower quality to 0.6 for significant size reduction with minimal visual loss
+                    // Force JPEG and 0.6 quality to ensure < 1MB
                     canvas.toBlob((blob) => {
                         if (!blob) {
-                            reject(new Error("Canvas to Blob failed"));
+                            reject(new Error("Canvas processing failed"));
                             return;
                         }
                         
-                        // Create a File object from the Blob so it has a name property
-                        const fileName = file.name ? file.name.replace(/\.[^/.]+$/, "") + ".jpg" : `image_${Date.now()}.jpg`;
+                        const fileName = (file.name || 'image.jpg').replace(/\.[^/.]+$/, "") + ".jpg";
                         const optimizedFile = new File([blob], fileName, {
                             type: 'image/jpeg',
                             lastModified: Date.now()
                         });
 
-                        console.log(`Optimization: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(optimizedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                        console.log(`Image Optimized: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(optimizedFile.size / 1024 / 1024).toFixed(2)}MB`);
                         resolve(optimizedFile);
                     }, 'image/jpeg', 0.6);
                 };
-                img.onerror = () => reject(new Error("Failed to load image"));
+                img.onerror = () => reject(new Error("Failed to process image"));
                 img.src = event.target.result;
             };
         });
@@ -1781,85 +1782,69 @@ ANALYSIS: [Insert player performance analysis here...]
             let imageUrl = null;
             let finalImageFile = imageFile;
 
-            // Optimize image if it exists to make upload fast
+            // Image Upload System Remake
             if (imageFile) {
-                if (submitBtn) submitBtn.innerText = 'Optimizing Image...';
+                if (submitBtn) submitBtn.innerText = 'Preparing Photo...';
+                
+                // 1. Optimize
                 finalImageFile = await optimizeImage(imageFile);
-            }
-
-            // Get storage reference
-            let storage = window.storage || (typeof firebase !== 'undefined' && typeof firebase.storage === 'function' ? firebase.storage() : null);
-
-            // If storage is still not there, wait a bit and try again
-            if (finalImageFile && !storage) {
-                console.log("Storage not ready, waiting 2 seconds...");
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                storage = window.storage || (typeof firebase !== 'undefined' && typeof firebase.storage === 'function' ? firebase.storage() : null);
-            }
-
-            if (finalImageFile && storage) {
-                try {
-                    console.log("OVERHAUL: Uploading image:", finalImageFile.name, "Size:", (finalImageFile.size / 1024 / 1024).toFixed(2), "MB");
-                    
-                    const fileNameRaw = finalImageFile.name || "image.jpg";
-                    const fileExt = fileNameRaw.split('.').pop().toLowerCase() || 'jpg';
-                    const fileName = `img_${Date.now()}_${Math.floor(Math.random() * 100000)}.${fileExt}`;
-                    
-                    let fileRef;
-                    try {
-                        // More robust reference creation
-                        fileRef = storage.ref().child(COLLECTION_NAME).child(fileName);
-                    } catch (e) {
-                        console.error("Ref creation error:", e);
-                        fileRef = storage.ref(`${COLLECTION_NAME}/${fileName}`);
-                    }
-                    
-                    // 3. Optimized Metadata
-                    const metadata = { 
-                        contentType: finalImageFile.type || 'image/jpeg',
-                        cacheControl: 'public,max-age=31536000'
-                    };
-                    
-                    // 4. Use put() with a timeout
-                    console.log("Starting upload task...");
-                    if (submitBtn) submitBtn.innerText = 'Uploading Image...';
-                    
-                    try {
-                        const uploadTask = fileRef.put(finalImageFile, metadata);
-                        
-                        // Create a timeout promise
-                        const timeoutPromise = new Promise((_, reject) => 
-                            setTimeout(() => reject(new Error("Upload timed out (30s). This usually means Firebase Storage Rules are blocking the upload or your connection is slow.")), 30000)
-                        );
-
-                        // Wait for either the upload to finish or the timeout
-                        await Promise.race([uploadTask, timeoutPromise]);
-                        console.log("Upload SUCCESSFUL");
-                    } catch (uploadTaskError) {
-                        console.error("Upload task failed:", uploadTaskError);
-                        throw uploadTaskError;
-                    }
-                    
-                    console.log("Getting download URL...");
-                    imageUrl = await fileRef.getDownloadURL();
-                    console.log("Final Image URL:", imageUrl);
-                } catch (uploadError) {
-                    console.error("Detailed Image Upload Error:", uploadError);
-                    let errorMsg = "Failed to upload image.";
-                    if (uploadError.code === 'storage/unauthorized') {
-                        errorMsg += " You don't have permission to upload.";
-                    } else if (uploadError.code === 'storage/canceled') {
-                        errorMsg += " Upload was canceled.";
-                    } else {
-                        errorMsg += " " + (uploadError.message || "Please check your internet connection.");
-                    }
-                    showAlert(errorMsg, "Upload Error");
-                    throw uploadError;
+                
+                if (finalImageFile.size > 1024 * 1024) {
+                     throw new Error("The photo is still too large (over 1MB). Please try a smaller image.");
                 }
-            } else if (finalImageFile) {
-                console.error("Storage initialization failed. auth:", !!window.auth, "db:", !!window.db, "storage:", !!storage);
-                showAlert("The upload service is still connecting. Please wait 10 seconds and try again.", "Service Busy");
-                throw new Error("Storage not initialized");
+
+                // 2. Ensure Storage is ready
+                let storage = window.storage;
+                if (!storage && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
+                    storage = firebase.storage();
+                }
+
+                if (!storage) {
+                    // One last attempt to wait for background initialization
+                    if (submitBtn) submitBtn.innerText = 'Connecting...';
+                    await new Promise(r => setTimeout(r, 2000));
+                    storage = window.storage || (typeof firebase !== 'undefined' && typeof firebase.storage === 'function' ? firebase.storage() : null);
+                }
+
+                if (!storage) throw new Error("Could not connect to the photo storage service. Please refresh and try again.");
+
+                // 3. Upload with robust state tracking
+                if (submitBtn) submitBtn.innerText = 'Uploading Photo...';
+                
+                const fileName = `post_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+                const fileRef = storage.ref().child('community_posts').child(fileName);
+                
+                await new Promise((resolve, reject) => {
+                    const uploadTask = fileRef.put(finalImageFile, { contentType: 'image/jpeg' });
+                    
+                    // Simple timeout logic
+                    const timeout = setTimeout(() => {
+                        uploadTask.cancel();
+                        reject(new Error("Upload took too long. Check your internet connection."));
+                    }, 45000);
+
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            // We could show progress here, but user asked to remove "0%" things
+                            // Just logging for debug
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            console.log(`Upload progress: ${progress.toFixed(0)}%`);
+                        },
+                        (err) => {
+                            clearTimeout(timeout);
+                            reject(err);
+                        },
+                        async () => {
+                            clearTimeout(timeout);
+                            try {
+                                imageUrl = await fileRef.getDownloadURL();
+                                resolve();
+                            } catch (e) {
+                                reject(e);
+                            }
+                        }
+                    );
+                });
             }
 
             const newPost = {
