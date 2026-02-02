@@ -11,12 +11,10 @@ const CommunityFeed = (() => {
     const HEADLINE_COLLECTION = 'trending_headlines';
     const MOD_EMAIL = 'rhatus13@gmail.com';
 
-    const PLAYER_GRADE_TEMPLATE = `[Player Name]
-Grade: [A/B/C/D/F]
-Stats: [Points/Rebounds/Assists]
-
-Analysis:
-[Your analysis here]
+    const PLAYER_GRADE_TEMPLATE = `PLAYER: [Name]
+GRADE: [A+]
+STATS: [30 PTS, 5 REB, 5 AST]
+ANALYSIS: [Insert player performance analysis here...]
 ---`;
 
     let sidebarArticles = [];
@@ -207,8 +205,10 @@ Analysis:
         }, (error) => {
             console.error("Firestore Error:", error);
             
-            // Handle permission denied (guests)
+            // Handle permission denied (guests or missing public access)
             if (error.code === 'permission-denied') {
+                console.warn("Permission denied for Firestore. If guests should see the feed, ensure 'read' is allowed for all users.");
+                // We show the guest interaction prompt instead of the full feed if read access is blocked
                 renderGuestFeed();
                 return;
             }
@@ -233,8 +233,8 @@ Analysis:
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 </div>
                 <h3 class="text-xl font-bold text-slate-900 mb-2">Join the Sixers Community</h3>
-                <p class="text-slate-500 mb-8 max-w-md mx-auto">Sign in to view the latest discussions, share your thoughts, and vote on posts with other fans!</p>
-                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">Sign In to View Feed</button>
+                <p class="text-slate-500 mb-8 max-w-md mx-auto">Sign in to share your thoughts, vote on posts, and join the conversation with other fans!</p>
+                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">Sign In to Participate</button>
             </div>
         `;
     }
@@ -851,7 +851,18 @@ Analysis:
 
     function renderFeed() {
         const container = document.getElementById('feed-container');
+        const createPostBox = document.getElementById('create-post-box');
         if (!container) return;
+
+        // Hide create post box for guests
+        const user = window.auth ? window.auth.currentUser : null;
+        if (createPostBox) {
+            if (!user) {
+                createPostBox.classList.add('hidden');
+            } else {
+                createPostBox.classList.remove('hidden');
+            }
+        }
 
         if (posts.length === 0) {
             container.innerHTML = `
@@ -904,15 +915,16 @@ Analysis:
             let name = '', grade = '', stats = '', analysis = '';
             
             lines.forEach(line => {
-                if (line.toLowerCase().startsWith('[') || !line.includes(':')) {
-                    if (!name && line.trim()) name = line.replace(/[\[\]]/g, '').trim();
-                }
-                if (line.toLowerCase().includes('grade:')) grade = line.split(':')[1].trim();
-                if (line.toLowerCase().includes('stats:')) stats = line.split(':')[1].trim();
-                if (line.toLowerCase().includes('analysis:')) analysis = line.split(':')[1].trim();
+                const lowerLine = line.toLowerCase().trim();
+                if (lowerLine.startsWith('player:')) name = line.split(/player:/i)[1].trim();
+                else if (lowerLine.startsWith('grade:')) grade = line.split(/grade:/i)[1].trim();
+                else if (lowerLine.startsWith('stats:')) stats = line.split(/stats:/i)[1].trim();
+                else if (lowerLine.startsWith('analysis:')) analysis = line.split(/analysis:/i)[1].trim();
                 
-                // Fallback for names without [ ]
-                if (!name && line.trim() && !line.includes(':')) name = line.trim();
+                // Flexible parsing fallback
+                else if (!name && line.trim() && !line.includes(':')) {
+                     name = line.replace(/[\[\]]/g, '').trim();
+                }
             });
 
             if (!name && !grade && !stats) return `<p class="text-sm text-slate-600 mb-2">${formatTwitterContent(playerBlock)}</p>`;
@@ -920,13 +932,13 @@ Analysis:
             const gradeClass = getGradeClass(grade);
             
             return `
-                <div class="player-grade-card bg-white border border-slate-200 rounded-xl p-4 mb-4 shadow-sm hover:border-amber-300 transition-all">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-bold text-slate-900">${name}</h4>
-                        <span class="px-3 py-1 rounded-lg text-white font-black text-sm ${gradeClass}">${grade || 'N/A'}</span>
+                <div class="player-card-render">
+                    <div class="player-header-render">
+                        <div class="player-name-render">${name || 'Player'}</div>
+                        <div class="player-grade-render ${gradeClass}">${grade || 'N/A'}</div>
                     </div>
-                    ${stats ? `<div class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">${stats}</div>` : ''}
-                    ${analysis ? `<div class="text-sm text-slate-600 leading-relaxed">${analysis}</div>` : ''}
+                    ${stats ? `<div class="player-stats-render">${stats}</div>` : ''}
+                    ${analysis ? `<div class="player-analysis-render"><p>${analysis}</p></div>` : ''}
                 </div>
             `;
         }).join('');
@@ -934,13 +946,17 @@ Analysis:
 
     function getGradeClass(grade) {
         if (!grade) return 'bg-slate-400';
-        const g = grade.toUpperCase();
-        if (g.includes('A+')) return 'bg-emerald-600';
-        if (g.includes('A')) return 'bg-emerald-500';
-        if (g.includes('B')) return 'bg-blue-500';
-        if (g.includes('C')) return 'bg-amber-500';
-        if (g.includes('D')) return 'bg-orange-500';
-        if (g.includes('F')) return 'bg-red-500';
+        const g = grade.toUpperCase().trim().replace(/[\[\]]/g, '');
+        if (g.includes('A+')) return 'grade-a-plus';
+        if (g === 'A') return 'grade-a';
+        if (g.includes('A-')) return 'grade-a-minus';
+        if (g.includes('B+')) return 'grade-b-plus';
+        if (g === 'B') return 'grade-b';
+        if (g.includes('B-')) return 'grade-b-minus';
+        if (g.includes('C+')) return 'grade-c-plus';
+        if (g === 'C') return 'grade-c';
+        if (g.includes('D')) return 'grade-d';
+        if (g.includes('F')) return 'grade-f';
         return 'bg-slate-400';
     }
 
@@ -1217,11 +1233,32 @@ Analysis:
         if (postTagInput) {
             postTagInput.addEventListener('change', () => {
                 const templateContainer = document.getElementById('player-grade-template-container');
+                const standardEditor = document.getElementById('standard-content-editor');
+                const proEditor = document.getElementById('player-grade-editor');
+                
                 if (postTagInput.value === 'Player Grade' && isMod()) {
                     templateContainer.classList.remove('hidden');
+                    if (proEditor) proEditor.classList.remove('hidden');
+                    if (standardEditor) standardEditor.classList.add('hidden');
+                    
+                    // Add first player if empty
+                    const container = document.getElementById('player-grades-container');
+                    if (container && container.children.length === 0) {
+                        addPlayerGradeEntry();
+                    }
                 } else {
                     templateContainer.classList.add('hidden');
+                    if (proEditor) proEditor.classList.add('hidden');
+                    if (standardEditor) standardEditor.classList.remove('hidden');
                 }
+            });
+        }
+
+        const addPlayerBtn = document.getElementById('add-another-player');
+        if (addPlayerBtn) {
+            addPlayerBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                addPlayerGradeEntry();
             });
         }
 
@@ -1441,6 +1478,77 @@ Analysis:
         });
     }
 
+    function addPlayerGradeEntry() {
+        const container = document.getElementById('player-grades-container');
+        if (!container) return;
+
+        const entryId = Date.now();
+        const div = document.createElement('div');
+        div.className = 'player-grade-entry bg-white p-4 rounded-xl border border-amber-100 shadow-sm space-y-3 relative group';
+        div.dataset.entryId = entryId;
+
+        div.innerHTML = `
+            <button class="remove-player-entry absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Player Name</label>
+                    <input type="text" placeholder="e.g. Tyrese Maxey" class="player-name-input w-full p-2 border border-slate-100 rounded-lg text-sm focus:border-amber-400 outline-none">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Grade</label>
+                    <select class="player-grade-input w-full p-2 border border-slate-100 rounded-lg text-sm focus:border-amber-400 outline-none bg-white">
+                        <option value="A+">A+</option>
+                        <option value="A">A</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B">B</option>
+                        <option value="B-">B-</option>
+                        <option value="C+">C+</option>
+                        <option value="C">C</option>
+                        <option value="C-">C-</option>
+                        <option value="D+">D+</option>
+                        <option value="D">D</option>
+                        <option value="F">F</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Stats</label>
+                <input type="text" placeholder="e.g. 30 PTS, 5 REB, 5 AST" class="player-stats-input w-full p-2 border border-slate-100 rounded-lg text-sm focus:border-amber-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Analysis</label>
+                <textarea placeholder="How did they play?" class="player-analysis-input w-full p-2 border border-slate-100 rounded-lg text-sm focus:border-amber-400 outline-none resize-none" rows="2"></textarea>
+            </div>
+        `;
+
+        div.querySelector('.remove-player-entry').addEventListener('click', () => {
+            div.remove();
+        });
+
+        container.appendChild(div);
+    }
+
+    function syncProEditorToContent() {
+        const entries = document.querySelectorAll('.player-grade-entry');
+        const contentParts = [];
+
+        entries.forEach(entry => {
+            const name = entry.querySelector('.player-name-input').value.trim();
+            const grade = entry.querySelector('.player-grade-input').value;
+            const stats = entry.querySelector('.player-stats-input').value.trim();
+            const analysis = entry.querySelector('.player-analysis-input').value.trim();
+
+            if (name) {
+                contentParts.push(`PLAYER: ${name}\nGRADE: ${grade}\nSTATS: ${stats}\nANALYSIS: ${analysis}`);
+            }
+        });
+
+        return contentParts.join('\n---\n');
+    }
+
     function openCreatePostModal() {
         const collapsed = document.getElementById('create-post-collapsed');
         const expanded = document.getElementById('create-post-expanded');
@@ -1592,7 +1700,17 @@ Analysis:
 
         const title = titleInput.value.trim();
         const tag = tagInput.value;
-        const content = contentInput.value.trim();
+        let content = contentInput.value.trim();
+
+        // If it's a Player Grade and the Pro Editor is visible, use its content
+        if (tag === 'Player Grade' && isMod()) {
+            const proEditor = document.getElementById('player-grade-editor');
+            if (proEditor && !proEditor.classList.contains('hidden')) {
+                const proContent = syncProEditorToContent();
+                if (proContent) content = proContent;
+            }
+        }
+
         const imageFile = imageInput.files[0];
 
         if (!title) {
@@ -2497,6 +2615,8 @@ Analysis:
         openHeadlineEditModal,
         openCreatePostModal,
         closeCreateModal,
+        addPlayerGradeEntry,
+        syncProEditorToContent,
         createPostElement,
         generateSlug,
         isMod,
