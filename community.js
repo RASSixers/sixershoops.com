@@ -1330,59 +1330,6 @@ ANALYSIS: [Insert player performance analysis here...]
             submitPostBtn.addEventListener('click', handleCreatePost);
         }
 
-        const imageInput = document.getElementById('post-image-input');
-        const imageDropzone = document.getElementById('image-upload-dropzone');
-
-        if (imageDropzone && imageInput) {
-            imageDropzone.addEventListener('click', () => imageInput.click());
-        }
-
-        if (imageInput) {
-            imageInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                const filenameSpan = document.getElementById('image-filename');
-                const removeBtn = document.getElementById('remove-image-btn');
-                const previewContainer = document.getElementById('image-preview-container');
-                const previewImg = document.getElementById('image-preview');
-
-                if (file) {
-                    if (file.size > 1 * 1024 * 1024) {
-                        showAlert('This file is over 1MB. Please use a smaller image.', 'File Too Large');
-                        imageInput.value = '';
-                        return;
-                    }
-                    filenameSpan.innerText = file.name;
-                    removeBtn.classList.remove('hidden');
-                    
-                    const objectUrl = URL.createObjectURL(file);
-                    
-                    // Cleanup previous object URL to prevent memory leaks
-                    if (previewImg.dataset.objectUrl) {
-                        URL.revokeObjectURL(previewImg.dataset.objectUrl);
-                    }
-                    
-                    previewImg.src = objectUrl;
-                    previewImg.dataset.objectUrl = objectUrl;
-                    previewContainer.classList.remove('hidden');
-                }
-            });
-        }
-
-        const removeImageBtn = document.getElementById('remove-image-btn');
-        if (removeImageBtn) {
-            removeImageBtn.addEventListener('click', () => {
-                const imageInput = document.getElementById('post-image-input');
-                const filenameSpan = document.getElementById('image-filename');
-                const removeBtn = document.getElementById('remove-image-btn');
-                const previewContainer = document.getElementById('image-preview-container');
-                
-                imageInput.value = '';
-                filenameSpan.innerText = 'No file chosen';
-                removeBtn.classList.add('hidden');
-                previewContainer.classList.add('hidden');
-            });
-        }
-
         const modalOverlay = document.getElementById('post-modal-overlay');
         if (modalOverlay) {
             modalOverlay.addEventListener('click', (e) => {
@@ -1620,23 +1567,6 @@ ANALYSIS: [Insert player performance analysis here...]
             document.getElementById('post-content-input').value = '';
             document.getElementById('post-tag-input').value = 'Discussion';
             
-            // Reset image
-            const imageInput = document.getElementById('post-image-input');
-            const filenameSpan = document.getElementById('image-filename');
-            const removeBtn = document.getElementById('remove-image-btn');
-            const previewContainer = document.getElementById('image-preview-container');
-            const previewImg = document.getElementById('image-preview');
-            
-            if (imageInput) imageInput.value = '';
-            if (filenameSpan) filenameSpan.innerText = 'No file chosen';
-            if (removeBtn) removeBtn.classList.add('hidden');
-            if (previewContainer) previewContainer.classList.add('hidden');
-            if (previewImg && previewImg.dataset.objectUrl) {
-                URL.revokeObjectURL(previewImg.dataset.objectUrl);
-                delete previewImg.dataset.objectUrl;
-                previewImg.src = '';
-            }
-
             // Reset Pro Editor
             const proEditor = document.getElementById('player-grade-editor');
             const standardEditor = document.getElementById('standard-content-editor');
@@ -1737,7 +1667,6 @@ ANALYSIS: [Insert player performance analysis here...]
         const titleInput = document.getElementById('post-title-input');
         const tagInput = document.getElementById('post-tag-input');
         const contentInput = document.getElementById('post-content-input');
-        const imageInput = document.getElementById('post-image-input');
         const submitBtn = document.getElementById('submit-post-btn');
 
         const title = titleInput.value.trim();
@@ -1752,8 +1681,6 @@ ANALYSIS: [Insert player performance analysis here...]
                 if (proContent) content = proContent;
             }
         }
-
-        const imageFile = imageInput.files[0];
 
         if (!title) {
             showAlert('Please enter a title');
@@ -1779,25 +1706,8 @@ ANALYSIS: [Insert player performance analysis here...]
         const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
         
         try {
-            let imageUrl = null;
-            let finalImageFile = imageFile;
-
-            // Background Upload (Instant Posting)
-            let imageUploadTask = null;
-            if (imageFile) {
-                imageUploadTask = (async () => {
-                    try {
-                        const smallFile = await optimizeImage(imageFile);
-                        const fileName = `post_${Date.now()}.jpg`;
-                        const fileRef = window.firebase.storage().ref().child('community_posts').child(fileName);
-                        const snapshot = await fileRef.put(smallFile);
-                        return await snapshot.ref.getDownloadURL();
-                    } catch (e) {
-                        console.error("Background photo upload failed:", e);
-                        return null;
-                    }
-                })();
-            }
+            // No image logic - removed for now
+            const imageUrl = null;
 
             const newPost = {
                 author: 'u/' + authorName,
@@ -1807,7 +1717,7 @@ ANALYSIS: [Insert player performance analysis here...]
                 tagClass: tagClasses[tag] || 'bg-slate-100 text-slate-700',
                 title: title,
                 content: content,
-                imageUrl: null, // Start with no image
+                imageUrl: null,
                 votes: 1,
                 voters: { [user.uid]: 'up' },
                 comments: []
@@ -1818,15 +1728,6 @@ ANALYSIS: [Insert player performance analysis here...]
                 const docRef = await window.db.collection(COLLECTION_NAME).add(newPost);
                 closeCreateModal();
                 setFilter('new');
-
-                // Update with photo URL once background upload finishes
-                if (imageUploadTask) {
-                    imageUploadTask.then(async (url) => {
-                        if (url) {
-                            await window.db.collection(COLLECTION_NAME).doc(docRef.id).update({ imageUrl: url });
-                        }
-                    });
-                }
             } else {
                 console.warn("Database not found, using local fallback");
                 // Local fallback
