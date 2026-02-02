@@ -1782,69 +1782,26 @@ ANALYSIS: [Insert player performance analysis here...]
             let imageUrl = null;
             let finalImageFile = imageFile;
 
-            // Image Upload System Remake
+            // Absolute Minimal Photo Upload
             if (imageFile) {
-                if (submitBtn) submitBtn.innerText = 'Preparing Photo...';
+                if (submitBtn) submitBtn.innerText = 'Uploading...';
                 
-                // 1. Optimize
-                finalImageFile = await optimizeImage(imageFile);
-                
-                if (finalImageFile.size > 1024 * 1024) {
-                     throw new Error("The photo is still too large (over 1MB). Please try a smaller image.");
-                }
-
-                // 2. Ensure Storage is ready
-                let storage = window.storage;
-                if (!storage && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
-                    storage = firebase.storage();
-                }
-
-                if (!storage) {
-                    // One last attempt to wait for background initialization
-                    if (submitBtn) submitBtn.innerText = 'Connecting...';
-                    await new Promise(r => setTimeout(r, 2000));
-                    storage = window.storage || (typeof firebase !== 'undefined' && typeof firebase.storage === 'function' ? firebase.storage() : null);
-                }
-
-                if (!storage) throw new Error("Could not connect to the photo storage service. Please refresh and try again.");
-
-                // 3. Upload with robust state tracking
-                if (submitBtn) submitBtn.innerText = 'Uploading Photo...';
-                
-                const fileName = `post_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
-                const fileRef = storage.ref().child('community_posts').child(fileName);
-                
-                await new Promise((resolve, reject) => {
-                    const uploadTask = fileRef.put(finalImageFile, { contentType: 'image/jpeg' });
+                try {
+                    // 1. Quick Optimize
+                    const smallFile = await optimizeImage(imageFile);
                     
-                    // Simple timeout logic
-                    const timeout = setTimeout(() => {
-                        uploadTask.cancel();
-                        reject(new Error("Upload took too long. Check your internet connection."));
-                    }, 45000);
-
-                    uploadTask.on('state_changed', 
-                        (snapshot) => {
-                            // We could show progress here, but user asked to remove "0%" things
-                            // Just logging for debug
-                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            console.log(`Upload progress: ${progress.toFixed(0)}%`);
-                        },
-                        (err) => {
-                            clearTimeout(timeout);
-                            reject(err);
-                        },
-                        async () => {
-                            clearTimeout(timeout);
-                            try {
-                                imageUrl = await fileRef.getDownloadURL();
-                                resolve();
-                            } catch (e) {
-                                reject(e);
-                            }
-                        }
-                    );
-                });
+                    // 2. Direct Upload via Firebase Global
+                    const storage = window.firebase.storage();
+                    const fileName = `post_${Date.now()}.jpg`;
+                    const fileRef = storage.ref().child('community_posts').child(fileName);
+                    
+                    // Simple put() - This is the most reliable method
+                    const snapshot = await fileRef.put(smallFile);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                } catch (imgError) {
+                    console.error("Upload failed:", imgError);
+                    // Don't stop the whole process, just log it
+                }
             }
 
             const newPost = {
