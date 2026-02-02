@@ -1782,16 +1782,21 @@ ANALYSIS: [Insert player performance analysis here...]
             let imageUrl = null;
             let finalImageFile = imageFile;
 
-            // Direct Upload (Non-blocking fallback for plan/rule restrictions)
+            // Background Upload (Instant Posting)
+            let imageUploadTask = null;
             if (imageFile) {
-                try {
-                    const smallFile = await optimizeImage(imageFile);
-                    const snapshot = await window.firebase.storage().ref().child('community_posts').child(`post_${Date.now()}.jpg`).put(smallFile);
-                    imageUrl = await snapshot.ref.getDownloadURL();
-                } catch (imgErr) {
-                    console.warn("Image upload skipped due to plan or permission limits:", imgErr);
-                    // imageUrl remains null, allowing the post to proceed as text-only
-                }
+                imageUploadTask = (async () => {
+                    try {
+                        const smallFile = await optimizeImage(imageFile);
+                        const fileName = `post_${Date.now()}.jpg`;
+                        const fileRef = window.firebase.storage().ref().child('community_posts').child(fileName);
+                        const snapshot = await fileRef.put(smallFile);
+                        return await snapshot.ref.getDownloadURL();
+                    } catch (e) {
+                        console.error("Background photo upload failed:", e);
+                        return null;
+                    }
+                })();
             }
 
             const newPost = {
@@ -1802,7 +1807,7 @@ ANALYSIS: [Insert player performance analysis here...]
                 tagClass: tagClasses[tag] || 'bg-slate-100 text-slate-700',
                 title: title,
                 content: content,
-                imageUrl: imageUrl,
+                imageUrl: null, // Start with no image
                 votes: 1,
                 voters: { [user.uid]: 'up' },
                 comments: []
@@ -1811,9 +1816,17 @@ ANALYSIS: [Insert player performance analysis here...]
             console.log("Saving post to database...");
             if (window.db) {
                 const docRef = await window.db.collection(COLLECTION_NAME).add(newPost);
-                console.log("Post saved with ID:", docRef.id);
                 closeCreateModal();
                 setFilter('new');
+
+                // Update with photo URL once background upload finishes
+                if (imageUploadTask) {
+                    imageUploadTask.then(async (url) => {
+                        if (url) {
+                            await window.db.collection(COLLECTION_NAME).doc(docRef.id).update({ imageUrl: url });
+                        }
+                    });
+                }
             } else {
                 console.warn("Database not found, using local fallback");
                 // Local fallback
