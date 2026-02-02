@@ -1782,26 +1782,11 @@ ANALYSIS: [Insert player performance analysis here...]
             let imageUrl = null;
             let finalImageFile = imageFile;
 
-            // Absolute Minimal Photo Upload
+            // Direct Upload
             if (imageFile) {
-                if (submitBtn) submitBtn.innerText = 'Uploading...';
-                
-                try {
-                    // 1. Quick Optimize
-                    const smallFile = await optimizeImage(imageFile);
-                    
-                    // 2. Direct Upload via Firebase Global
-                    const storage = window.firebase.storage();
-                    const fileName = `post_${Date.now()}.jpg`;
-                    const fileRef = storage.ref().child('community_posts').child(fileName);
-                    
-                    // Simple put() - This is the most reliable method
-                    const snapshot = await fileRef.put(smallFile);
-                    imageUrl = await snapshot.ref.getDownloadURL();
-                } catch (imgError) {
-                    console.error("Upload failed:", imgError);
-                    // Don't stop the whole process, just log it
-                }
+                const smallFile = await optimizeImage(imageFile);
+                const snapshot = await window.firebase.storage().ref().child('community_posts').child(`post_${Date.now()}.jpg`).put(smallFile);
+                imageUrl = await snapshot.ref.getDownloadURL();
             }
 
             const newPost = {
