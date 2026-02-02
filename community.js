@@ -1820,16 +1820,23 @@ ANALYSIS: [Insert player performance analysis here...]
                         cacheControl: 'public,max-age=31536000'
                     };
                     
-                    // 4. Use put() which returns a promise-like UploadTask
+                    // 4. Use put() with a timeout
                     console.log("Starting upload task...");
                     if (submitBtn) submitBtn.innerText = 'Uploading Image...';
                     
                     try {
-                        // In Firebase v9 Compat, .put() returns an UploadTask which is a Promise
-                        await fileRef.put(finalImageFile, metadata);
+                        const uploadTask = fileRef.put(finalImageFile, metadata);
+                        
+                        // Create a timeout promise
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error("Upload timed out (30s). This usually means Firebase Storage Rules are blocking the upload or your connection is slow.")), 30000)
+                        );
+
+                        // Wait for either the upload to finish or the timeout
+                        await Promise.race([uploadTask, timeoutPromise]);
                         console.log("Upload SUCCESSFUL");
                     } catch (uploadTaskError) {
-                        console.error("UploadTask promise failed:", uploadTaskError);
+                        console.error("Upload task failed:", uploadTaskError);
                         throw uploadTaskError;
                     }
                     
