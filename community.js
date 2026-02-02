@@ -879,6 +879,21 @@ ANALYSIS: [Insert player performance analysis here...]
         }
 
         container.innerHTML = '';
+
+        // Add a "Sign in to participate" prompt at the TOP for guests
+        if (!user) {
+            const guestPrompt = document.createElement('div');
+            guestPrompt.className = 'mb-6 bg-white rounded-xl p-8 text-center border border-slate-200 shadow-sm transition-all hover:border-blue-200';
+            guestPrompt.innerHTML = `
+                <div class="h-12 w-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1">Want to join the conversation?</h3>
+                <p class="text-slate-500 mb-4 text-sm">Sign in to vote, comment, and share your own thoughts with the community!</p>
+                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-8 py-2.5 rounded-full font-bold hover:bg-blue-700 transition-all text-sm shadow-md hover:shadow-lg">Sign In to Participate</button>
+            `;
+            container.appendChild(guestPrompt);
+        }
         
         // Sort posts: pinned first, then by existing order
         const sortedPosts = [...posts].sort((a, b) => {
@@ -891,18 +906,6 @@ ANALYSIS: [Insert player performance analysis here...]
             const postEl = createPostElement(post);
             container.appendChild(postEl);
         });
-
-        // Add a "Sign in to participate" prompt at the bottom for guests
-        if (!user && sortedPosts.length > 0) {
-            const guestPrompt = document.createElement('div');
-            guestPrompt.className = 'mt-8 bg-white rounded-xl p-8 text-center border border-slate-200 shadow-sm';
-            guestPrompt.innerHTML = `
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Want to join the conversation?</h3>
-                <p class="text-slate-500 mb-4 text-sm">Sign in to vote, comment, and share your own thoughts with the community!</p>
-                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all text-sm">Sign In to Participate</button>
-            `;
-            container.appendChild(guestPrompt);
-        }
 
         // Load Twitter widgets if any were added
         if (window.twttr && window.twttr.widgets) {
