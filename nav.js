@@ -79,9 +79,13 @@ document.addEventListener('DOMContentLoaded', function() {
         <style>
             .avatar-option {
                 cursor: pointer;
-                border: 2px solid transparent;
-                border-radius: 8px;
+                border: 3px solid transparent;
+                border-radius: 12px;
                 transition: all 0.2s;
+                width: 100%;
+                aspect-ratio: 1;
+                object-fit: cover;
+                background: #f8fafc;
             }
             .avatar-option:hover {
                 transform: scale(1.05);
@@ -90,12 +94,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .avatar-option.selected {
                 border-color: #2563eb;
                 background: rgba(37, 99, 235, 0.1);
+                box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            }
+            .avatar-selection-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                margin: 12px 0;
             }
             .user-avatar-img {
                 width: 32px;
                 height: 32px;
                 border-radius: 50%;
                 object-fit: cover;
+                border: 2px solid rgba(255,255,255,0.8);
             }
         </style>
     </nav>
@@ -140,10 +152,21 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="auth-modal-tabs">
                 <button class="auth-modal-tab active" data-tab="login">Login</button>
                 <button class="auth-modal-tab" data-tab="register">Sign Up</button>
+                <button class="auth-modal-tab" data-tab="inbox" id="navInboxTab" style="display: none;">Inbox</button>
+                <button class="auth-modal-tab" data-tab="profile" id="navProfileTab" style="display: none;">Profile</button>
             </div>
             <div class="auth-modal-content">
                 <div id="navAuthMessage" class="auth-message"></div>
                 
+                <!-- Inbox View -->
+                <div id="navInboxView" style="display: none;">
+                    <div id="inbox-notifications-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="text-center py-8 text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 opacity-20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            <p>Your inbox is empty</p>
+                        </div>
+                    </div>
+                </div>
                 <!-- Login Form -->
                 <form id="navLoginForm">
                     <div class="auth-form-group">
@@ -334,8 +357,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const photoURL = user.photoURL;
             
             const avatarHTML = photoURL 
-                ? `<img src="${photoURL}" class="user-avatar-img" alt="${displayName}">`
-                : `<div class="user-avatar">${initial}</div>`;
+                ? `<div class="relative"><img src="${photoURL}" class="user-avatar-img" alt="${displayName}"><div id="nav-notif-badge" class="hidden absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></div></div>`
+                : `<div class="relative"><div class="user-avatar">${initial}</div><div id="nav-notif-badge" class="hidden absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></div></div>`;
             
             const userHTML = `
                 <div class="user-profile-wrapper">
@@ -348,7 +371,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-header">
-                            <strong>${displayName}</strong>
+                            <div class="flex items-center justify-between">
+                                <strong>${displayName}</strong>
+                                <span id="dropdown-notif-count" class="hidden bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                            </div>
                             <span>${user.email}</span>
                         </div>
                         <div class="user-dropdown-divider"></div>
@@ -417,9 +443,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    let notificationUnsubscribe = null;
+
+    function setupNotificationListener(user) {
+        if (notificationUnsubscribe) notificationUnsubscribe();
+        if (!user || !window.db) return;
+
+        notificationUnsubscribe = window.db.collection('notifications')
+            .where('recipientId', '==', user.uid)
+            .where('read', '==', false)
+            .onSnapshot(snapshot => {
+                const count = snapshot.size;
+                const badges = document.querySelectorAll('#nav-notif-badge');
+                const counts = document.querySelectorAll('#dropdown-notif-count');
+                
+                badges.forEach(b => {
+                    if (count > 0) b.classList.remove('hidden');
+                    else b.classList.add('hidden');
+                });
+
+                counts.forEach(c => {
+                    if (count > 0) {
+                        c.classList.remove('hidden');
+                        c.textContent = count > 9 ? '9+' : count;
+                    } else {
+                        c.classList.add('hidden');
+                    }
+                });
+            }, err => console.error("Notification listener error:", err));
+    }
+
     function setupAuthListeners() {
         window.auth.onAuthStateChanged(user => {
             renderUserNav(user);
+            setupNotificationListener(user);
         });
     }
 
@@ -458,8 +515,17 @@ document.addEventListener('DOMContentLoaded', function() {
         registerForm.style.display = 'none';
         forgotForm.style.display = 'none';
         profileForm.style.display = 'block';
+        document.getElementById('navInboxView').style.display = 'none';
         
         tabs.forEach(t => t.style.display = 'none');
+        const inboxTab = document.getElementById('navInboxTab');
+        const profileTab = document.getElementById('navProfileTab');
+        if (inboxTab) inboxTab.style.display = 'block';
+        if (profileTab) profileTab.style.display = 'block';
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        if (profileTab) profileTab.classList.add('active');
+
         document.querySelector('.auth-modal-title').textContent = 'Account Settings';
 
         const user = window.auth.currentUser;
@@ -480,8 +546,86 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('navProfilePhoto').value = opt.dataset.url;
                 };
             });
+
+            // Initial notification fetch
+            loadNotifications();
         }
     }
+
+    async function loadNotifications() {
+        const list = document.getElementById('inbox-notifications-list');
+        const user = window.auth.currentUser;
+        if (!list || !user || !window.db) return;
+
+        try {
+            // Fetch last 20 notifications for this user
+            const snapshot = await window.db.collection('notifications')
+                .where('recipientId', '==', user.uid)
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .get();
+
+            if (snapshot.empty) {
+                list.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 opacity-20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <p>Your inbox is empty</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = snapshot.docs.map(doc => {
+                const data = doc.data();
+                const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Just now';
+                
+                return `
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer group" onclick="handleNotificationClick('${data.postId}', '${doc.id}')">
+                        <div class="flex gap-3">
+                            <img src="${data.senderPhoto || 'https://sixershoops.com/ImageFolder/avatar1.png'}" class="h-10 w-10 rounded-full object-cover border border-slate-200">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-slate-900 leading-tight">
+                                    <span class="font-bold">${data.senderName || 'Someone'}</span> 
+                                    ${data.type === 'reply' ? 'replied to your comment' : 'commented on your post'}:
+                                </p>
+                                <p class="text-sm text-slate-500 italic mt-1 line-clamp-2">"${data.text || ''}"</p>
+                                <p class="text-[10px] text-slate-400 mt-2 font-medium">${date}</p>
+                            </div>
+                            ${!data.read ? '<div class="h-2 w-2 bg-blue-600 rounded-full mt-1"></div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            console.error("Error loading notifications:", err);
+        }
+    }
+
+    // Exported globally so it can be called from notification clicks
+    window.handleNotificationClick = async (postId, notificationId) => {
+        try {
+            // Mark as read
+            await window.db.collection('notifications').doc(notificationId).update({ read: true });
+            
+            // Close modal
+            closeAuthModal();
+
+            // Check if we are on community page
+            if (window.location.pathname.includes('community') || document.getElementById('community-feed-section')) {
+                // If CommunityFeed is available, open the post
+                if (window.CommunityFeed && typeof window.CommunityFeed.openDetailedView === 'function') {
+                    window.CommunityFeed.openDetailedView(postId);
+                } else {
+                    window.location.href = `/?post=${postId}`;
+                }
+            } else {
+                window.location.href = `/?post=${postId}`;
+            }
+        } catch (err) {
+            console.error("Error handling notification click:", err);
+            window.location.href = `/?post=${postId}`;
+        }
+    };
 
     function closeAuthModal() {
         modal.classList.remove('active');
@@ -507,16 +651,32 @@ document.addEventListener('DOMContentLoaded', function() {
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             
-            if (tab.dataset.tab === 'login') {
+            const tabName = tab.dataset.tab;
+            if (tabName === 'login') {
                 loginForm.style.display = 'block';
                 registerForm.style.display = 'none';
                 forgotForm.style.display = 'none';
                 profileForm.style.display = 'none';
-            } else {
+                document.getElementById('navInboxView').style.display = 'none';
+            } else if (tabName === 'register') {
                 loginForm.style.display = 'none';
                 registerForm.style.display = 'block';
                 forgotForm.style.display = 'none';
                 profileForm.style.display = 'none';
+                document.getElementById('navInboxView').style.display = 'none';
+            } else if (tabName === 'inbox') {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'none';
+                forgotForm.style.display = 'none';
+                profileForm.style.display = 'none';
+                document.getElementById('navInboxView').style.display = 'block';
+                loadNotifications();
+            } else if (tabName === 'profile') {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'none';
+                forgotForm.style.display = 'none';
+                profileForm.style.display = 'block';
+                document.getElementById('navInboxView').style.display = 'none';
             }
         });
     });
