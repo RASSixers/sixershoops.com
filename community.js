@@ -1805,9 +1805,9 @@ const CommunityFeed = (() => {
                     
                     <!-- Add Comment -->
                     <div class="mb-8">
-                        <textarea id="comment-input" class="w-full p-4 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none" placeholder="What are your thoughts?" rows="3"></textarea>
+                        <textarea id="comment-input" class="w-full p-4 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none" placeholder="What are your thoughts?" rows="5"></textarea>
                         <div class="flex justify-end mt-2">
-                            <button id="submit-comment" class="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">Post Comment</button>
+                            <button id="submit-comment" class="bg-blue-600 text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">Post Comment</button>
                         </div>
                     </div>
 
