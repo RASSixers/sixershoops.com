@@ -76,6 +76,28 @@ document.addEventListener('DOMContentLoaded', function() {
             <span></span>
             <span></span>
         </button>
+        <style>
+            .avatar-option {
+                cursor: pointer;
+                border: 2px solid transparent;
+                border-radius: 8px;
+                transition: all 0.2s;
+            }
+            .avatar-option:hover {
+                transform: scale(1.05);
+                border-color: #cbd5e1;
+            }
+            .avatar-option.selected {
+                border-color: #2563eb;
+                background: rgba(37, 99, 235, 0.1);
+            }
+            .user-avatar-img {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+        </style>
     </nav>
 
     <div class="mobile-menu" id="mobileMenu">
@@ -302,108 +324,110 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function setupAuthListeners() {
-        window.auth.onAuthStateChanged(user => {
-            const authNav = document.getElementById('authNavContainer');
-            const mobileAuth = document.getElementById('mobileAuthContainer');
+    function renderUserNav(user) {
+        const authNav = document.getElementById('authNavContainer');
+        const mobileAuth = document.getElementById('mobileAuthContainer');
+        
+        if (user) {
+            const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+            const initial = displayName.charAt(0).toUpperCase();
+            const photoURL = user.photoURL;
             
-            if (user) {
-                const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
-                const initial = displayName.charAt(0).toUpperCase();
-                const photoURL = user.photoURL;
-                
-                const avatarHTML = photoURL 
-                    ? `<img src="${photoURL}" class="user-avatar-img" alt="${displayName}">`
-                    : `<div class="user-avatar">${initial}</div>`;
-                
-                const userHTML = `
-                    <div class="user-profile-wrapper">
-                        <div class="user-profile-btn" id="userProfileBtn">
-                            ${avatarHTML}
-                            <span class="user-name">${displayName}</span>
+            const avatarHTML = photoURL 
+                ? `<img src="${photoURL}" class="user-avatar-img" alt="${displayName}">`
+                : `<div class="user-avatar">${initial}</div>`;
+            
+            const userHTML = `
+                <div class="user-profile-wrapper">
+                    <div class="user-profile-btn" id="userProfileBtn">
+                        ${avatarHTML}
+                        <span class="user-name">${displayName}</span>
+                    </div>
+                    <button class="nav-small-logout" id="navSmallLogout" title="Logout">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-header">
+                            <strong>${displayName}</strong>
+                            <span>${user.email}</span>
                         </div>
-                        <button class="nav-small-logout" id="navSmallLogout" title="Logout">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <div class="user-dropdown-divider"></div>
+                        <button class="user-dropdown-item" id="navProfileBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Account Settings
                         </button>
-                        <div class="user-dropdown" id="userDropdown">
-                            <div class="user-dropdown-header">
-                                <strong>${displayName}</strong>
-                                <span>${user.email}</span>
+                        <button class="user-dropdown-item" id="navLogoutBtnMain">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            if (authNav) authNav.innerHTML = userHTML;
+            if (mobileAuth) {
+                mobileAuth.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="user-profile-btn">
+                                ${avatarHTML}
+                                <span class="user-name">${displayName}</span>
                             </div>
-                            <div class="user-dropdown-divider"></div>
-                            <button class="user-dropdown-item" id="navProfileBtn">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                Account Settings
-                            </button>
-                            <button class="user-dropdown-item" id="navLogoutBtnMain">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                                Logout
-                            </button>
+                            <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
+                        <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Account Settings</button>
                     </div>
                 `;
-                
-                if (authNav) authNav.innerHTML = userHTML;
-                if (mobileAuth) {
-                    mobileAuth.innerHTML = `
-                        <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div class="user-profile-btn">
-                                    ${avatarHTML}
-                                    <span class="user-name">${displayName}</span>
-                                </div>
-                                <button class="logout-btn" id="navLogoutBtn">Logout</button>
-                            </div>
-                            <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Account Settings</button>
-                        </div>
-                    `;
-                }
-                
-                const profileBtn = document.getElementById('userProfileBtn');
-                const userDropdown = document.getElementById('userDropdown');
-                const logoutBtnMain = document.getElementById('navLogoutBtnMain');
-                const smallLogoutBtn = document.getElementById('navSmallLogout');
-                const editProfileBtn = document.getElementById('navProfileBtn');
-                const mobileEditBtn = document.getElementById('mobileProfileBtn');
-
-                if (profileBtn && userDropdown) {
-                    profileBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        userDropdown.classList.toggle('active');
-                    });
-
-                    document.addEventListener('click', () => {
-                        userDropdown.classList.remove('active');
-                    });
-                }
-
-                if (logoutBtnMain) {
-                    logoutBtnMain.addEventListener('click', () => window.auth.signOut());
-                }
-                
-                if (smallLogoutBtn) {
-                    smallLogoutBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        window.auth.signOut();
-                    });
-                }
-
-                if (editProfileBtn) editProfileBtn.addEventListener('click', openProfileModal);
-                if (mobileEditBtn) mobileEditBtn.addEventListener('click', openProfileModal);
-            } else {
-                if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
-                if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
-                
-                const signInBtn = document.getElementById('navSignInBtn');
-                const mobileSignInBtn = document.getElementById('mobileSignInBtn');
-                if(signInBtn) signInBtn.addEventListener('click', openAuthModal);
-                if(mobileSignInBtn) mobileSignInBtn.addEventListener('click', openAuthModal);
             }
             
+            const profileBtn = document.getElementById('userProfileBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            const logoutBtnMain = document.getElementById('navLogoutBtnMain');
+            const smallLogoutBtn = document.getElementById('navSmallLogout');
+            const editProfileBtn = document.getElementById('navProfileBtn');
+            const mobileEditBtn = document.getElementById('mobileProfileBtn');
             const mobileLogout = document.getElementById('navLogoutBtn');
-            if(mobileLogout) mobileLogout.addEventListener('click', () => window.auth.signOut());
+
+            if (profileBtn && userDropdown) {
+                profileBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('active');
+                };
+            }
+
+            if (logoutBtnMain) logoutBtnMain.onclick = () => window.auth.signOut();
+            if (smallLogoutBtn) {
+                smallLogoutBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.auth.signOut();
+                };
+            }
+            if (mobileLogout) mobileLogout.onclick = () => window.auth.signOut();
+            
+            if (editProfileBtn) editProfileBtn.onclick = openProfileModal;
+            if (mobileEditBtn) mobileEditBtn.onclick = openProfileModal;
+        } else {
+            if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
+            if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
+            
+            const signInBtn = document.getElementById('navSignInBtn');
+            const mobileSignInBtn = document.getElementById('mobileSignInBtn');
+            if(signInBtn) signInBtn.onclick = openAuthModal;
+            if(mobileSignInBtn) mobileSignInBtn.onclick = openAuthModal;
+        }
+    }
+
+    function setupAuthListeners() {
+        window.auth.onAuthStateChanged(user => {
+            renderUserNav(user);
         });
     }
+
+    // Global click listener for dropdowns
+    document.addEventListener('click', () => {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) dropdown.classList.remove('active');
+    });
 
     initFirebase();
 
@@ -570,7 +594,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 username: name,
                 photoURL: photo,
                 updatedAt: new Date().toISOString()
-            }, { merge: true }).catch(() => {});
+            }, { merge: true }).catch(err => console.error("Firestore sync error:", err));
+
+            // Reload user and refresh UI
+            await user.reload();
+            renderUserNav(window.auth.currentUser);
 
             showNavMessage('Settings saved successfully!', 'success');
             setTimeout(closeAuthModal, 2000);
@@ -620,14 +648,21 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            await userCredential.user.updateProfile({ displayName: username });
-            await db.collection('users').doc(userCredential.user.uid).set({
+            const user = userCredential.user;
+            await user.updateProfile({ displayName: username });
+            
+            await db.collection('users').doc(user.uid).set({
                 username: username,
                 email: email,
                 createdAt: new Date().toISOString()
             });
-            showNavMessage('Account created! Please sign in.', 'success');
-            setTimeout(() => tabs[0].click(), 1500);
+
+            // Refresh user and UI
+            await user.reload();
+            renderUserNav(window.auth.currentUser);
+
+            showNavMessage('Account created! Settings updated.', 'success');
+            setTimeout(closeAuthModal, 1500);
         } catch (err) {
             showNavMessage(err.message, 'error');
         }
