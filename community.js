@@ -1824,38 +1824,16 @@ ANALYSIS: [Insert player performance analysis here...]
                     console.log("Starting put() task with file type:", metadata.contentType);
                     const uploadTask = fileRef.put(finalImageFile, metadata);
                     
-                    let lastProgress = 0;
-                    let stalledTime = 0;
-                    const STALL_LIMIT = 180; // 180 seconds without progress = stall
+                    if (submitBtn) submitBtn.innerText = 'Uploading Image...';
 
                     await new Promise((resolve, reject) => {
-                        const timer = setInterval(() => {
-                            stalledTime++;
-                            if (stalledTime >= STALL_LIMIT) {
-                                clearInterval(timer);
-                                uploadTask.cancel();
-                                reject(new Error(`Upload stalled for ${STALL_LIMIT}s. If your file is large (over 3MB), please try a faster connection or wait longer.`));
-                            }
-                        }, 1000);
-
                         uploadTask.on('state_changed', 
-                            (snapshot) => {
-                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                if (submitBtn) submitBtn.innerText = `Uploading (${Math.floor(progress)}%)...`;
-                                console.log(`Upload: ${Math.floor(progress)}% (${snapshot.bytesTransferred}/${snapshot.totalBytes} bytes) - Stalled Time: ${stalledTime}s`);
-                                
-                                if (snapshot.bytesTransferred > lastProgress) {
-                                    lastProgress = snapshot.bytesTransferred;
-                                    stalledTime = 0; // Reset stall timer
-                                }
-                            }, 
+                            null, 
                             (error) => {
-                                clearInterval(timer);
                                 console.error("Firebase Storage Error:", error.code, error.message);
                                 reject(error);
                             }, 
                             () => {
-                                clearInterval(timer);
                                 console.log("Upload SUCCESSFUL");
                                 resolve();
                             }
