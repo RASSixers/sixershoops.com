@@ -56,69 +56,6 @@ ANALYSIS: [Insert player performance analysis here...]
         return user.email.toLowerCase() === MOD_EMAIL.toLowerCase();
     }
 
-    /**
-     * Optimizes an image before upload by resizing and compressing it.
-     * This ensures files are under 1MB while maintaining quality.
-     */
-    async function optimizeImage(file) {
-        if (!file) return null;
-        
-        // If file is already small, just return it
-        if (file.size < 0.2 * 1024 * 1024) return file;
-
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onerror = () => reject(new Error("Failed to read file"));
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-
-                    // Standardize resolution for web/mobile
-                    const MAX_SIZE = 1200; 
-                    if (width > height) {
-                        if (width > MAX_SIZE) {
-                            height *= MAX_SIZE / width;
-                            width = MAX_SIZE;
-                        }
-                    } else {
-                        if (height > MAX_SIZE) {
-                            width *= MAX_SIZE / height;
-                            height = MAX_SIZE;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // Force JPEG and 0.6 quality to ensure < 1MB
-                    canvas.toBlob((blob) => {
-                        if (!blob) {
-                            reject(new Error("Canvas processing failed"));
-                            return;
-                        }
-                        
-                        const fileName = (file.name || 'image.jpg').replace(/\.[^/.]+$/, "") + ".jpg";
-                        const optimizedFile = new File([blob], fileName, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        });
-
-                        console.log(`Image Optimized: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(optimizedFile.size / 1024 / 1024).toFixed(2)}MB`);
-                        resolve(optimizedFile);
-                    }, 'image/jpeg', 0.6);
-                };
-                img.onerror = () => reject(new Error("Failed to process image"));
-                img.src = event.target.result;
-            };
-        });
-    }
-
     // No default posts - we want real data
     const defaultPosts = [];
 
@@ -654,7 +591,7 @@ ANALYSIS: [Insert player performance analysis here...]
         if (!modal) return;
 
         // Reset inputs
-        const inputs = ['title', 'category', 'date', 'url', 'image'];
+        const inputs = ['title', 'category', 'date', 'url'];
         inputs.forEach(id => document.getElementById(`article-${id}-input`).value = '');
 
         if (articleId) {
@@ -665,7 +602,6 @@ ANALYSIS: [Insert player performance analysis here...]
                 document.getElementById('article-category-input').value = article.category;
                 document.getElementById('article-date-input').value = article.date;
                 document.getElementById('article-url-input').value = article.url;
-                document.getElementById('article-image-input').value = article.imageUrl;
                 saveBtn.dataset.editingId = articleId;
             }
         } else {
@@ -687,7 +623,6 @@ ANALYSIS: [Insert player performance analysis here...]
         const category = document.getElementById('article-category-input').value.trim();
         const date = document.getElementById('article-date-input').value.trim();
         const url = document.getElementById('article-url-input').value.trim();
-        const imageUrl = document.getElementById('article-image-input').value.trim();
         const editingId = document.getElementById('save-article-btn').dataset.editingId;
 
         if (!title || !url) {
@@ -696,7 +631,7 @@ ANALYSIS: [Insert player performance analysis here...]
         }
 
         const articleData = {
-            title, category, date, url, imageUrl,
+            title, category, date, url,
             createdAt: window.firebase ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date()
         };
 
@@ -2490,7 +2425,6 @@ ANALYSIS: [Insert player performance analysis here...]
         loadPosts,
         renderFeed,
         formatVotes,
-        optimizeImage,
         handleCreatePost,
         handleVote,
         handleCommentVote,
