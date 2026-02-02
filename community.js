@@ -1345,8 +1345,8 @@ ANALYSIS: [Insert player performance analysis here...]
                 const previewImg = document.getElementById('image-preview');
 
                 if (file) {
-                    if (file.size > 50 * 1024 * 1024) {
-                        showAlert('This file is over 50MB. Please use a smaller image for best results.', 'File Too Large');
+                    if (file.size > 1 * 1024 * 1024) {
+                        showAlert('This file is over 1MB. Please use a smaller image.', 'File Too Large');
                         imageInput.value = '';
                         return;
                     }
