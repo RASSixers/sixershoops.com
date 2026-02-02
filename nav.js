@@ -326,6 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function initFirebase() {
         if (typeof firebase === 'undefined' || !firebase.apps.length) {
             if (typeof firebase !== 'undefined') {
+                window.firebase = firebase;
                 firebase.initializeApp(firebaseConfig);
                 window.auth = firebase.auth();
                 window.db = firebase.firestore();
@@ -338,6 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(initFirebase, 200);
             }
         } else {
+            window.firebase = firebase;
             window.auth = firebase.auth();
             window.db = firebase.firestore();
             if (typeof firebase.storage === 'function') {
