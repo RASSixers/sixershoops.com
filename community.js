@@ -1820,25 +1820,18 @@ ANALYSIS: [Insert player performance analysis here...]
                         cacheControl: 'public,max-age=31536000'
                     };
                     
-                    // 4. Use put() but with a more robust monitor
-                    console.log("Starting put() task with file type:", metadata.contentType);
-                    const uploadTask = fileRef.put(finalImageFile, metadata);
-                    
+                    // 4. Use put() which returns a promise-like UploadTask
+                    console.log("Starting upload task...");
                     if (submitBtn) submitBtn.innerText = 'Uploading Image...';
-
-                    await new Promise((resolve, reject) => {
-                        uploadTask.on('state_changed', 
-                            null, 
-                            (error) => {
-                                console.error("Firebase Storage Error:", error.code, error.message);
-                                reject(error);
-                            }, 
-                            () => {
-                                console.log("Upload SUCCESSFUL");
-                                resolve();
-                            }
-                        );
-                    });
+                    
+                    try {
+                        // In Firebase v9 Compat, .put() returns an UploadTask which is a Promise
+                        await fileRef.put(finalImageFile, metadata);
+                        console.log("Upload SUCCESSFUL");
+                    } catch (uploadTaskError) {
+                        console.error("UploadTask promise failed:", uploadTaskError);
+                        throw uploadTaskError;
+                    }
                     
                     console.log("Getting download URL...");
                     imageUrl = await fileRef.getDownloadURL();
