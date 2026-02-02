@@ -11,6 +11,26 @@ const CommunityFeed = (() => {
     const HEADLINE_COLLECTION = 'trending_headlines';
     const MOD_EMAIL = 'rhatus13@gmail.com';
 
+    async function createNotification(recipientId, type, text, postId, sender) {
+        if (!recipientId || !window.db || recipientId === sender.uid) return;
+
+        try {
+            await window.db.collection('notifications').add({
+                recipientId: recipientId,
+                senderId: sender.uid,
+                senderName: sender.displayName || (sender.email ? sender.email.split('@')[0] : 'User'),
+                senderPhoto: sender.photoURL || '',
+                type: type, // 'comment' or 'reply'
+                text: text.substring(0, 100), // Snippet of the comment
+                postId: postId,
+                read: false,
+                createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (err) {
+            console.error("Error creating notification:", err);
+        }
+    }
+
     const PLAYER_GRADE_TEMPLATE = `PLAYER: [Name]
 GRADE: [A+]
 STATS: [30 PTS, 5 REB, 5 AST]
@@ -2490,6 +2510,11 @@ ANALYSIS: [Insert player performance analysis here...]
                 await window.db.collection(COLLECTION_NAME).doc(postId).update({
                     comments: updatedComments
                 });
+
+                // Create notification for reply author
+                if (parentReply.authorId && parentReply.authorId !== user.uid) {
+                    createNotification(parentReply.authorId, 'reply', text, postId, user);
+                }
             } catch (error) {
                 console.error("Error adding nested reply:", error);
             }
@@ -2534,6 +2559,11 @@ ANALYSIS: [Insert player performance analysis here...]
                 await window.db.collection(COLLECTION_NAME).doc(postId).update({
                     comments: updatedComments
                 });
+
+                // Create notification for comment author
+                if (comment.authorId && comment.authorId !== user.uid) {
+                    createNotification(comment.authorId, 'reply', text, postId, user);
+                }
             } catch (error) {
                 console.error("Error adding reply:", error);
                 showAlert("Error adding reply: " + error.message, "Error");
@@ -2578,6 +2608,12 @@ ANALYSIS: [Insert player performance analysis here...]
                 await postRef.update({
                     comments: window.firebase.firestore.FieldValue.arrayUnion(newComment)
                 });
+                
+                // Create notification for post author
+                if (post.authorId && post.authorId !== user.uid) {
+                    createNotification(post.authorId, 'comment', text, postId, user);
+                }
+                
                 input.value = '';
             } catch (error) {
                 console.error("Error adding comment:", error);
