@@ -136,15 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot Password?</a>
                     </div>
                     <button type="submit" class="auth-submit-btn">Sign In</button>
-                    
-                    <div class="auth-divider">
-                        <span>OR</span>
-                    </div>
-                    
-                    <button type="button" class="google-auth-btn" id="googleSignInBtn">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-                        Continue with Google
-                    </button>
                 </form>
 
                 <!-- Forgot Password Form -->
@@ -207,15 +198,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="password" class="auth-input" id="navRegisterConfirm" required>
                     </div>
                     <button type="submit" class="auth-submit-btn">Create Account</button>
-                    
-                    <div class="auth-divider">
-                        <span>OR</span>
-                    </div>
-                    
-                    <button type="button" class="google-auth-btn" id="googleSignUpBtn">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-                        Sign Up with Google
-                    </button>
                 </form>
             </div>
         </div>
@@ -437,25 +419,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
     const backToLoginLink = document.getElementById('backToLoginLink');
 
-    async function handleGoogleAuth() {
-        try {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            const result = await window.auth.signInWithPopup(provider);
-            const user = result.user;
-            const isNewUser = result.additionalUserInfo.isNewUser;
-
-            if (isNewUser) {
-                // If new user, open profile modal to force username selection
-                openProfileModal();
-                showNavMessage('Welcome! Please choose a display name.', 'success');
-            } else {
-                closeAuthModal();
-            }
-        } catch (err) {
-            showNavMessage(err.message, 'error');
-        }
-    }
-
     function openAuthModal() {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -551,12 +514,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tabs[0]) tabs[0].click();
         });
     }
-
-    // Google Auth Listeners
-    const googleSignInBtn = document.getElementById('googleSignInBtn');
-    const googleSignUpBtn = document.getElementById('googleSignUpBtn');
-    if (googleSignInBtn) googleSignInBtn.addEventListener('click', handleGoogleAuth);
-    if (googleSignUpBtn) googleSignUpBtn.addEventListener('click', handleGoogleAuth);
 
     function showNavMessage(msg, type) {
         authMessage.textContent = msg;
