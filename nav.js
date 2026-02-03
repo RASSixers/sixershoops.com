@@ -9,6 +9,82 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(link);
     }
 
+    // Add Google Fonts if not present
+    if (!document.getElementById('nav-google-fonts')) {
+        const link = document.createElement('link');
+        link.id = 'nav-google-fonts';
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@400;500;600;700&display=swap';
+        document.head.appendChild(link);
+    }
+
+    // Add Tailwind CSS if not present
+    if (typeof tailwind === 'undefined' && !document.getElementById('nav-tailwind-cdn')) {
+        const script = document.createElement('script');
+        script.id = 'nav-tailwind-cdn';
+        script.src = 'https://cdn.tailwindcss.com';
+        script.onload = () => {
+            // Configure Tailwind if it just loaded
+            if (window.tailwind) {
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                border: "hsl(214.3 31.8% 91.4%)",
+                                input: "hsl(214.3 31.8% 91.4%)",
+                                ring: "hsl(222.2 84% 4.9%)",
+                                background: "hsl(0 0% 100%)",
+                                foreground: "hsl(222.2 84% 4.9%)",
+                                primary: {
+                                    DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                                    foreground: "hsl(210 40% 98%)",
+                                },
+                                secondary: {
+                                    DEFAULT: "hsl(210 40% 96.1%)",
+                                    foreground: "hsl(222.2 47.4% 11.2%)",
+                                },
+                                muted: {
+                                    DEFAULT: "hsl(210 40% 96.1%)",
+                                    foreground: "hsl(215.4 16.3% 46.9%)",
+                                },
+                                accent: {
+                                    DEFAULT: "hsl(210 40% 96.1%)",
+                                    foreground: "hsl(222.2 47.4% 11.2%)",
+                                },
+                                card: {
+                                    DEFAULT: "hsl(0 0% 100%)",
+                                    foreground: "hsl(222.2 84% 4.9%)",
+                                },
+                            }
+                        }
+                    }
+                };
+            }
+        };
+        document.head.appendChild(script);
+    } else if (window.tailwind && !tailwind.config?.theme?.extend?.colors?.primary) {
+        // Extend existing config if Tailwind is already there but missing our colors
+        const existingConfig = tailwind.config || {};
+        tailwind.config = {
+            ...existingConfig,
+            theme: {
+                ...(existingConfig.theme || {}),
+                extend: {
+                    ...(existingConfig.theme?.extend || {}),
+                    colors: {
+                        ...(existingConfig.theme?.extend?.colors || {}),
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        primary: {
+                            DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        // Add other necessary colors
+                    }
+                }
+            }
+        };
+    }
+
     // Add Firebase SDKs if not present
     if (!document.getElementById('firebase-app-sdk')) {
         const scripts = [
