@@ -1793,6 +1793,7 @@ ANALYSIS: [Analysis]
         const isAuthor = user && post.authorId === user.uid;
         const canDelete = isAuthor || isMod();
         const isAdmin = isMod();
+        const isPlayerGrade = post.tag === 'Player Grade';
 
         modal.dataset.currentPostId = postId;
         const twitterId = extractTwitterId(post.content);
@@ -1838,7 +1839,9 @@ ANALYSIS: [Analysis]
                 <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
                 ${twitterId ? `<div class="mb-6 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
                 ${hasValidImage ? `<div class="mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto object-contain bg-slate-100" onerror="this.parentElement.style.display='none'"></div>` : ''}
-                <div class="text-slate-700 leading-relaxed whitespace-pre-wrap">${formatTwitterContent(post.content)}</div>
+                <div class="${isPlayerGrade ? '' : 'text-slate-700 leading-relaxed whitespace-pre-wrap'}">
+                    ${isPlayerGrade ? renderPlayerGrades(post.content) : formatTwitterContent(post.content)}
+                </div>
                 
                 <div class="border-t pt-6">
                     <h3 class="font-bold mb-4 text-lg">Comments (${countTotalComments(post.comments)})</h3>
@@ -2461,6 +2464,7 @@ ANALYSIS: [Analysis]
         setFilter,
         updateFilterUI,
         countTotalComments,
+        openDetailedView,
         posts: () => posts,
         setPosts: (p) => { posts = p; },
         renderPlayerGrades: renderPlayerGrades,
