@@ -1,5 +1,14 @@
 // Navbar Injection Script
 document.addEventListener('DOMContentLoaded', function() {
+    // Add Navbar Styles if not present
+    if (!document.getElementById('navbar-styles')) {
+        const link = document.createElement('link');
+        link.id = 'navbar-styles';
+        link.rel = 'stylesheet';
+        link.href = '/navbar-styles.css';
+        document.head.appendChild(link);
+    }
+
     // Add Firebase SDKs if not present
     if (!document.getElementById('firebase-app-sdk')) {
         const scripts = [
