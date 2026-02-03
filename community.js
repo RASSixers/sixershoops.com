@@ -409,38 +409,7 @@ ANALYSIS: [Analysis]
 
             // If empty, add default articles
             if (sidebarArticles.length === 0) {
-                const defaults = [
-                    {
-                        id: 'default-1',
-                        title: "Sixers vs Lakers Player Grades: Embiid and Davis Battle in LA",
-                        category: "Player Grades",
-                        date: "Dec 07, 2025",
-                        url: "https://sixershoops.com/player-grades/sixers-vs-lakers-dec-07-2025.html",
-                        imageUrl: "https://sixershoops.com/ImageFolder/sixersvslakers12-07-25.png",
-                        createdAt: new Date()
-                    },
-                    {
-                        id: 'default-2',
-                        title: "Defensive Blueprint: How Sixers Neutralized Giannis",
-                        category: "Game Analysis",
-                        date: "Dec 05, 2025",
-                        url: "https://sixershoops.com/player-grades/sixers-vs-bucks-dec-05-2025.html",
-                        imageUrl: "https://sixershoops.com/ImageFolder/sixersvsbucks12-05-25.png",
-                        createdAt: new Date()
-                    },
-                    {
-                        id: 'default-3',
-                        title: "Sixers vs Warriors Player Grades: Shooting Woes Continue",
-                        category: "Player Grades",
-                        date: "Dec 04, 2025",
-                        url: "https://sixershoops.com/player-grades/sixers-vs-warriors-dec-04-2025.html",
-                        imageUrl: "https://sixershoops.com/ImageFolder/sixersvswarriors12-04-25.png",
-                        createdAt: new Date()
-                    }
-                ];
-                
-                // For the very first load/dev, we can just use these
-                sidebarArticles = defaults;
+                sidebarArticles = [];
             }
 
             renderSidebarArticles();
@@ -467,9 +436,6 @@ ANALYSIS: [Analysis]
             
             return `
             <a href="${article.url}" class="flex gap-3 group relative p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-all ${isPlayerGrade ? 'bg-amber-50/30' : ''}">
-                <div class="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-slate-100">
-                    <img src="${article.imageUrl}" alt="Article" class="h-full w-full object-cover transition-transform group-hover:scale-110">
-                </div>
                 <div class="flex-1 min-w-0 ${accentBorder}">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${bgClass} ${categoryClass} border ${borderClass} tracking-tight">
