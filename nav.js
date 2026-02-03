@@ -218,12 +218,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="auth-form-group">
                         <label class="auth-label">Select Profile Icon</label>
                         <div class="avatar-selection-grid" id="avatarSelectionGrid">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="avatar-option" data-url="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" class="avatar-option" data-url="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=George" class="avatar-option" data-url="https://api.dicebear.com/7.x/avataaars/svg?seed=George">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie" class="avatar-option" data-url="https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=James" class="avatar-option" data-url="https://api.dicebear.com/7.x/avataaars/svg?seed=James">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Lily" class="avatar-option" data-url="https://api.dicebear.com/7.x/avataaars/svg?seed=Lily">
+                            <img src="https://api.dicebear.com/9.x/icons/svg?seed=Felix" class="avatar-option" data-url="https://api.dicebear.com/9.x/icons/svg?seed=Felix">
+                            <img src="https://api.dicebear.com/9.x/icons/svg?seed=Aneka" class="avatar-option" data-url="https://api.dicebear.com/9.x/icons/svg?seed=Aneka">
+                            <img src="https://api.dicebear.com/9.x/icons/svg?seed=George" class="avatar-option" data-url="https://api.dicebear.com/9.x/icons/svg?seed=George">
+                            <img src="https://api.dicebear.com/9.x/icons/svg?seed=Sophie" class="avatar-option" data-url="https://api.dicebear.com/9.x/icons/svg?seed=Sophie">
+                            <img src="https://api.dicebear.com/9.x/icons/svg?seed=James" class="avatar-option" data-url="https://api.dicebear.com/9.x/icons/svg?seed=James">
+                            <img src="https://api.dicebear.com/9.x/icons/svg?seed=Lily" class="avatar-option" data-url="https://api.dicebear.com/9.x/icons/svg?seed=Lily">
                         </div>
                         <input type="hidden" id="navProfilePhoto">
                     </div>
@@ -708,7 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return `
                     <div class="notification-item ${!data.read ? 'unread' : ''}" onclick="handleNotificationClick('${data.postId}', '${doc.id}', event)">
                         <div class="flex gap-3">
-                            <img src="${data.senderPhoto || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'}" class="h-8 w-8 rounded-full object-cover border border-slate-100 flex-shrink-0">
+                            <img src="${data.senderPhoto || 'https://api.dicebear.com/9.x/icons/svg?seed=Felix'}" class="h-8 w-8 rounded-full object-cover border border-slate-100 flex-shrink-0">
                             <div class="flex-1 min-w-0">
                                 <p class="text-[11px] text-slate-900 leading-tight">
                                     <span class="font-bold">${data.senderName || 'Someone'}</span> 
