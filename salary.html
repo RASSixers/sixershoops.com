@@ -2457,142 +2457,137 @@ try {
 // Get the current active season content
 const activeSeasonContent = document.querySelector('.season-content.active');
 const salaryTable = activeSeasonContent.querySelector('.salary-table');
-// Create a temporary container for export
-const exportContainer = document.createElement('div');
-exportContainer.style.cssText = `
-position: absolute;
-top: -9999px;
-left: -9999px;
-width: 800px;
-background: white;
-padding: 30px 40px 20px 40px;
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-/* Improved Status Badges for Export */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    white-space: nowrap;
-    text-align: center;
-    min-width: 80px;
-}
-.status-badge.player-option {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-.status-badge.guaranteed {
-    background: #d4edda;
-    color: #155724;
-}
-.status-badge.twoway {
-    background: #f8d7da;
-    color: #721c24;
-}
-`;
-// Clone and style the table for export
-const tableClone = salaryTable.cloneNode(true);
-// Ensure status badges don't distort
-const cloneBadges = tableClone.querySelectorAll('.status-badge');
-cloneBadges.forEach(badge => {
-    badge.style.cssText += `
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        white-space: nowrap;
-        min-width: 90px;
-    `;
-});
-// Remove notes toggle buttons from the cloned table
-const notesToggleButtons = tableClone.querySelectorAll('.notes-toggle');
-notesToggleButtons.forEach(button => button.remove());
-tableClone.style.cssText = `
-width: 100%;
-border-collapse: collapse;
-margin: 20px 0;
-font-size: 16px;
-`;
-// Style table cells for better export
-const cells = tableClone.querySelectorAll('th, td');
-cells.forEach(cell => {
-cell.style.cssText += `
-padding: 10px 15px;
-border: 1px solid #e9ecef;
-text-align: left;
-`;
-});
-// Style table headers
-const headers = tableClone.querySelectorAll('th');
-headers.forEach(header => {
-header.style.cssText += `
-background: #f8f9fa;
-font-weight: bold;
-color: #0a174e;
-`;
-});
-// Add header
-const header = document.createElement('div');
-header.innerHTML = `
-<div style="text-align: center; margin-bottom: 20px;">
-<h1 style="color: #0a174e; font-size: 32px; margin: 0; font-family: Georgia, serif;">SixersHoops</h1>
-<h2 style="color: #1e293b; font-size: 24px; margin: 5px 0; font-family: Georgia, serif;">Sixers Salary Breakdown</h2>
-<p style="color: #64748b; font-size: 16px; margin: 0;">2025-26 NBA Season</p>
-</div>
-`;
-exportContainer.appendChild(header);
-// Add cap space information
-const capInfo = document.createElement('div');
-capInfo.innerHTML = `
-<div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-<!-- Total Payroll centered at top -->
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #0a174e; margin-bottom: 15px;">
-<div style="font-size: 12px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">TOTAL PAYROLL</div>
-<div style="font-size: 16px; font-weight: bold; color: #0a174e;">$190,412,368</div>
-</div>
-<!-- Other metrics in 3-column grid -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #16a34a;">
-<div style="font-size: 11px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">DISTANCE FROM TAX</div>
-<div style="font-size: 12px; font-weight: bold; color: #16a34a;">$2,959,029 Below</div>
-</div>
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b;">
-<div style="font-size: 11px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">1ST APRON</div>
-<div style="font-size: 12px; font-weight: bold; color: #1e293b;">$5,137,882 Below</div>
-</div>
-<div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #3b82f6;">
-<div style="font-size: 11px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">2ND APRON</div>
-<div style="font-size: 12px; font-weight: bold; color: #1e293b;">$17,016,882 Below</div>
-</div>
-</div>
-</div>
-`;
-exportContainer.appendChild(capInfo);
+    // Create a temporary container for export
+    const exportContainer = document.createElement('div');
+    const activeSeason = document.querySelector('.season-tab.active').dataset.season;
+    const seasonInfo = seasonData[activeSeason];
 
-exportContainer.appendChild(tableClone);
-// Add footer
-const footer = document.createElement('div');
-footer.innerHTML = `
-<div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef;">
-<h3 style="color: #0a174e; font-size: 24px; margin: 0; font-family: Georgia, serif;">SixersHoops.com</h3>
-<p style="color: #1e293b; font-size: 14px; margin: 5px 0 0 0;">Your #1 Source for Philadelphia 76ers Analysis</p>
-</div>
-`;
-exportContainer.appendChild(footer);
-document.body.appendChild(exportContainer);
-// Use html2canvas to capture the content
-const canvas = await html2canvas(exportContainer, {
-backgroundColor: '#ffffff',
-scale: 2,
-useCORS: true,
-allowTaint: true,
-width: 800
-});
+    exportContainer.style.cssText = `
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        width: 800px;
+        background: white;
+        padding: 30px 40px 20px 40px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+
+    // Add explicit styles for the export
+    const exportStyles = document.createElement('style');
+    exportStyles.textContent = `
+        .export-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .export-table th, .export-table td {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .export-table th {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: #0f172a;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.05em;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            white-space: nowrap;
+            text-align: center;
+            min-width: 100px;
+        }
+        .status-badge.guaranteed { background: #dcfce7; color: #166534; }
+        .status-badge.non-guaranteed { background: #fef9c3; color: #854d0e; }
+        .status-badge.twoway { background: #fee2e2; color: #991b1b; }
+        .status-badge.player-option { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .status-badge.team-option { background: #dbeafe; color: #1e40af; }
+        .status-badge.other { background: #f1f5f9; color: #475569; }
+        .player-name strong { color: #0f172a; display: block; }
+        .player-position { color: #64748b; font-size: 11px; font-weight: 600; }
+        .salary-amount { font-weight: 700; color: #0f172a; }
+        .cap-percentage { color: #3b82f6; font-weight: 600; }
+    `;
+    exportContainer.appendChild(exportStyles);
+
+    // Clone and style the table for export
+    const tableClone = salaryTable.cloneNode(true);
+    tableClone.classList.add('export-table');
+    tableClone.removeAttribute('id');
+    
+    // Clean up clone
+    tableClone.querySelectorAll('.notes-toggle, .sort-arrow').forEach(el => el.remove());
+    
+    // Add header
+    const header = document.createElement('div');
+    header.innerHTML = `
+        <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #3b82f6; padding-bottom: 15px;">
+            <h1 style="color: #0a174e; font-size: 32px; margin: 0; font-family: Georgia, serif;">SixersHoops</h1>
+            <h2 style="color: #1e293b; font-size: 22px; margin: 5px 0; font-family: Georgia, serif;">${activeSeason} Salary Breakdown</h2>
+            <p style="color: #64748b; font-size: 14px; margin: 0; text-transform: uppercase; letter-spacing: 0.1em;">Philadelphia 76ers Payroll Analysis</p>
+        </div>
+    `;
+    exportContainer.appendChild(header);
+
+    // Add cap space information
+    const capInfo = document.createElement('div');
+    const formatCurr = (val) => '$' + Math.abs(val).toLocaleString();
+    const getStatus = (val) => val >= 0 ? 'Below' : 'Over';
+    const getStatusColor = (val) => val >= 0 ? '#16a34a' : '#dc3545';
+
+    capInfo.innerHTML = `
+        <div style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="text-align: center; padding: 12px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 4px solid #0a174e; margin-bottom: 15px;">
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 700; text-transform: uppercase;">Total Payroll</div>
+                <div style="font-size: 20px; font-weight: 800; color: #0a174e;">${formatCurr(seasonInfo.totalPayroll)}</div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <div style="flex: 1; text-align: center; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 3px solid ${getStatusColor(seasonInfo.taxSpace)};">
+                    <div style="font-size: 9px; color: #64748b; margin-bottom: 3px; font-weight: 700; text-transform: uppercase;">Luxury Tax</div>
+                    <div style="font-size: 11px; font-weight: 700; color: ${getStatusColor(seasonInfo.taxSpace)};">${formatCurr(seasonInfo.taxSpace)} ${getStatus(seasonInfo.taxSpace)}</div>
+                </div>
+                <div style="flex: 1; text-align: center; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 3px solid #f59e0b;">
+                    <div style="font-size: 9px; color: #64748b; margin-bottom: 3px; font-weight: 700; text-transform: uppercase;">1st Apron</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #1e293b;">${formatCurr(seasonInfo.firstApronSpace)} ${getStatus(seasonInfo.firstApronSpace)}</div>
+                </div>
+                <div style="flex: 1; text-align: center; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 3px solid #3b82f6;">
+                    <div style="font-size: 9px; color: #64748b; margin-bottom: 3px; font-weight: 700; text-transform: uppercase;">2nd Apron</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #1e293b;">${formatCurr(seasonInfo.secondApronSpace)} ${getStatus(seasonInfo.secondApronSpace)}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    exportContainer.appendChild(capInfo);
+    exportContainer.appendChild(tableClone);
+
+    // Add footer
+    const footer = document.createElement('div');
+    footer.innerHTML = `
+        <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #e2e8f0;">
+            <h3 style="color: #0a174e; font-size: 22px; margin: 0; font-family: Georgia, serif;">SixersHoops.com</h3>
+            <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0; font-weight: 500;">Your #1 Source for Philadelphia 76ers Salary & Analysis</p>
+        </div>
+    `;
+    exportContainer.appendChild(footer);
+    document.body.appendChild(exportContainer);
+
+    // Use html2canvas to capture the content
+    const canvas = await html2canvas(exportContainer, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        width: 800,
+        logging: false
+    });
 // Clean up
 document.body.removeChild(exportContainer);
 // Store canvas for download/copy
