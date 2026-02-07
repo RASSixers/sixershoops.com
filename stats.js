@@ -88,7 +88,13 @@ function renderTeamStats(data) {
         </thead>
         <tbody>`;
 
-  const mainStats = data.splits?.categories?.[0]?.stats || [];
+  // Look for stats in all categories
+  const allCategories = data.splits?.categories || [];
+  let allStats = [];
+  allCategories.forEach(cat => {
+    if (cat.stats) allStats = allStats.concat(cat.stats);
+  });
+
   const keys = [
     { key: "points", label: "Points Per Game" },
     { key: "rebounds", label: "Rebounds Per Game" },
@@ -97,11 +103,13 @@ function renderTeamStats(data) {
     { key: "threePointPct", label: "3-Point %" },
     { key: "freeThrowsPct", label: "Free Throw %" },
     { key: "blocks", label: "Blocks Per Game" },
-    { key: "steals", label: "Steals Per Game" }
+    { key: "steals", label: "Steals Per Game" },
+    { key: "offensiveRating", label: "Offensive Rating" },
+    { key: "defensiveRating", label: "Defensive Rating" }
   ];
 
   keys.forEach(item => {
-    const stat = mainStats.find(s => s.name === item.key);
+    const stat = allStats.find(s => s.name === item.key);
     if (stat) {
       const rank = stat.rank ? `#${stat.rank}` : "-";
       html += `
