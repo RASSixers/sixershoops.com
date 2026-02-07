@@ -115,7 +115,9 @@ function renderTeamStats(data) {
     { key: "blocks", label: "Blocks Per Game" },
     { key: "steals", label: "Steals Per Game" },
     { key: "paceFactor", label: "Pace" },
-    { key: "offensiveReboundRate", label: "Off. Rebound Rate" }
+    { key: "offensiveReboundRate", label: "Off. Rebound Rate" },
+    { key: "offensiveRating", label: "Offensive Rating" },
+    { key: "defensiveRating", label: "Defensive Rating" }
   ];
 
   let hasRows = false;
