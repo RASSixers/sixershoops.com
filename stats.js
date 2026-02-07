@@ -1,12 +1,32 @@
-const SIXERS_TEAM_ID = "20";
-const CACHE_KEY = "sixers-espn-cache";
+const CACHE_KEY = "sixers-custom-stats-cache";
 const CACHE_MINUTES = 10;
+
+// Custom Roster based on user request
+const CUSTOM_ROSTER = [
+  { id: "4431678", name: "Tyrese Maxey", no: "0" },
+  { id: "3059318", name: "Joel Embiid", no: "21" },
+  { id: "4251", name: "Paul George", no: "8" },
+  { id: "4870562", name: "Dominick Barlow", no: "25" },
+  { id: "5124612", name: "VJ Edgecombe", no: "77" },
+  { id: "3033", name: "Kyle Lowry", no: "7" },
+  { id: "4397116", name: "Quentin Grimes", no: "5" },
+  { id: "3133603", name: "Kelly Oubre Jr.", no: "9" },
+  { id: "4433246", name: "Patrick Baldwin Jr.", no: "PBJ" },
+  { id: "6589", name: "Andre Drummond", no: "1" },
+  { id: "4431675", name: "Trendon Watford", no: "12" },
+  { id: "4397886", name: "Charles Bassey", no: "28" },
+  { id: "4432179", name: "MarJon Beauchamp", no: "16" },
+  { id: "5105637", name: "Adem Bona", no: "30" },
+  { id: "4432832", name: "Johni Broome", no: "22" },
+  { id: "4683011", name: "Justin Edwards", no: "11" },
+  { id: "4432168", name: "Jabari Walker", no: "33" }
+];
 
 const endpoints = {
   scoreboard: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
-  standings:  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/standings",
-  teamStats:  `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${SIXERS_TEAM_ID}/statistics`,
-  playerStats: `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=false&limit=50&team=${SIXERS_TEAM_ID}`
+  teamStats:  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics",
+  // Fetch a larger set of athletes to find our custom roster
+  allPlayerStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=true&limit=1000"
 };
 
 function getCache() {
@@ -141,37 +161,38 @@ function renderLeaders(athletes) {
 function renderPlayerStats(data) {
   if (!data || !data.athletes) return "";
 
+  // Filter athletes based on our custom roster IDs
+  const rosterIds = CUSTOM_ROSTER.map(p => p.id);
   const athletes = data.athletes
-    .filter(a => {
-      const general = a.categories.find(c => c.name === "general");
-      return general && parseFloat(general.totals[0]) > 0;
-    })
+    .filter(a => rosterIds.includes(a.athlete.id))
     .sort((a, b) => {
+      // Sort by points, or by our custom order if needed. Let's stick with PPG.
       const aOff = a.categories.find(c => c.name === "offensive");
       const bOff = b.categories.find(c => c.name === "offensive");
-      return parseFloat(bOff.totals[0]) - parseFloat(aOff.totals[0]);
+      return (parseFloat(bOff?.totals?.[0]) || 0) - (parseFloat(aOff?.totals?.[0]) || 0);
     });
+
+  // If some players from custom roster are missing from NBA stats (like rookies or different league), 
+  // we could potentially fetch them from college API, but for now we'll just show who we found.
 
   let html = renderLeaders(athletes);
 
   html += `<section class="stats-section">
-    <h2 class="stats-title">Player Season Averages</h2>
+    <h2 class="stats-title">Roster Season Averages</h2>
     <div class="table-responsive">
       <table class="player-stats-table">
         <thead>
           <tr>
             <th>Player</th>
+            <th>#</th>
             <th>POS</th>
             <th>GP</th>
-            <th>MIN</th>
             <th>PTS</th>
             <th>REB</th>
             <th>AST</th>
-            <th>TO</th>
             <th>STL</th>
             <th>BLK</th>
             <th>FG%</th>
-            <th>3P%</th>
           </tr>
         </thead>
         <tbody>`;
@@ -180,6 +201,7 @@ function renderPlayerStats(data) {
     const general = a.categories.find(c => c.name === "general");
     const offensive = a.categories.find(c => c.name === "offensive");
     const defensive = a.categories.find(c => c.name === "defensive");
+    const rosterInfo = CUSTOM_ROSTER.find(p => p.id === a.athlete.id);
 
     html += `
       <tr>
@@ -187,17 +209,15 @@ function renderPlayerStats(data) {
           <img src="${a.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="player-thumb" alt="${a.athlete.displayName}">
           <span class="player-name">${a.athlete.displayName}</span>
         </td>
+        <td style="font-weight:900; color:var(--color-navy)">${rosterInfo?.no || '-'}</td>
         <td class="pos-tag">${a.athlete.position.abbreviation}</td>
-        <td>${general.totals[0]}</td>
-        <td>${general.totals[1]}</td>
-        <td class="stat-highlight">${offensive.totals[0]}</td>
-        <td>${general.totals[11]}</td>
-        <td>${offensive.totals[10]}</td>
-        <td>${offensive.totals[11]}</td>
-        <td>${defensive.totals[0]}</td>
-        <td>${defensive.totals[1]}</td>
-        <td>${offensive.totals[3]}</td>
-        <td>${offensive.totals[6]}</td>
+        <td>${general?.totals?.[0] || '-'}</td>
+        <td class="stat-highlight">${offensive?.totals?.[0] || '-'}</td>
+        <td>${general?.totals?.[11] || '-'}</td>
+        <td>${offensive?.totals?.[10] || '-'}</td>
+        <td>${defensive?.totals?.[0] || '-'}</td>
+        <td>${defensive?.totals?.[1] || '-'}</td>
+        <td>${offensive?.totals?.[3] || '-'}</td>
       </tr>`;
   });
 
@@ -219,9 +239,10 @@ function renderPlayerStats(data) {
 async function renderBoxScore() {
   try {
     const sb = await fetchWithUA(endpoints.scoreboard);
+    // Still look for "Sixers" games for the box score
     const sixersGame = sb.events
       .filter(e => e.status.type.completed)
-      .find(e => e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID));
+      .find(e => e.competitions[0].competitors.some(c => c.team.id === "20"));
 
     if (!sixersGame) return "";
 
@@ -277,15 +298,15 @@ async function loadAllData(force = false) {
       data = {
         scoreboard: await fetchWithUA(endpoints.scoreboard),
         teamStats:  await fetchWithUA(endpoints.teamStats),
-        playerStats: await fetchWithUA(endpoints.playerStats)
+        allPlayerStats: await fetchWithUA(endpoints.allPlayerStats)
       };
       setCache(data);
     }
 
     let finalHtml = "";
-    finalHtml += renderScoreboard(data.scoreboard.events.filter(e => e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID)));
+    finalHtml += renderScoreboard(data.scoreboard.events.filter(e => e.competitions[0].competitors.some(c => c.team.id === "20")));
     finalHtml += renderTeamStats(data.teamStats);
-    finalHtml += renderPlayerStats(data.playerStats);
+    finalHtml += renderPlayerStats(data.allPlayerStats);
     finalHtml += await renderBoxScore();
 
     container.innerHTML = finalHtml;
@@ -297,17 +318,15 @@ async function loadAllData(force = false) {
 async function generateSocialImage(mode) {
   const container = document.getElementById("social-export-container");
   const data = getCache();
-  if (!data || !data.playerStats) return;
+  if (!data || !data.allPlayerStats) return;
 
-  const athletes = data.playerStats.athletes
-    .filter(a => {
-      const general = a.categories.find(c => c.name === "general");
-      return general && parseFloat(general.totals[0]) > 0;
-    })
+  const rosterIds = CUSTOM_ROSTER.map(p => p.id);
+  const athletes = data.allPlayerStats.athletes
+    .filter(a => rosterIds.includes(a.athlete.id))
     .sort((a, b) => {
       const aOff = a.categories.find(c => c.name === "offensive");
       const bOff = b.categories.find(c => c.name === "offensive");
-      return parseFloat(bOff.totals[0]) - parseFloat(aOff.totals[0]);
+      return (parseFloat(bOff?.totals?.[0]) || 0) - (parseFloat(aOff?.totals?.[0]) || 0);
     })
     .slice(0, 10); // Top 10 for image
 
