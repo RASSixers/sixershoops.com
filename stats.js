@@ -1,5 +1,6 @@
 const CACHE_KEY = "sixers-roster-stats-v2";
 const CACHE_MINUTES = 10;
+const SIXERS_TEAM_ID = "20";
 
 // Custom Roster based on user request - Verified IDs for 2025-26
 const CUSTOM_ROSTER = [
@@ -22,38 +23,43 @@ const CUSTOM_ROSTER = [
   { id: "4432168", name: "Jabari Walker", no: "33" }
 ];
 
-const rosterIds = CUSTOM_ROSTER.map(p => p.id).join(",");
-
 const endpoints = {
   scoreboard: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
   teamSeasonStats: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics",
-  // Fetch a large chunk of the league to ensure all custom roster players are found
   leagueStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=true&limit=1000",
-  // Also fetch team specific stats as a primary source
   teamRosterStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=false&limit=100&team=20"
 };
 
 function getCache() {
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (!cached) return null;
-  const data = JSON.parse(cached);
-  if (Date.now() - data.timestamp > CACHE_MINUTES * 60 * 1000) {
-    localStorage.removeItem(CACHE_KEY);
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    const data = JSON.parse(cached);
+    if (Date.now() - data.timestamp > CACHE_MINUTES * 60 * 1000) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return data.content;
+  } catch (err) {
+    console.error("Cache error:", err);
     return null;
   }
-  return data.content;
 }
 
 function setCache(content) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify({
-    timestamp: Date.now(),
-    content
-  }));
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      timestamp: Date.now(),
+      content
+    }));
+  } catch (err) {
+    console.error("Set cache error:", err);
+  }
 }
 
 async function fetchWithUA(url) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   return res.json();
 }
 
@@ -130,10 +136,19 @@ function renderLeaders(athletes) {
   if (!athletes || athletes.length === 0) return "";
 
   // Get top 3 scorers
-  const topScorers = [...athletes].sort((a, b) => 
-    parseFloat(b.categories.find(c => c.name === "offensive").totals[0]) - 
-    parseFloat(a.categories.find(c => c.name === "offensive").totals[0])
-  ).slice(0, 3);
+  const topScorers = [...athletes]
+    .filter(a => {
+      const off = a.categories.find(c => c.name === "offensive");
+      return off && off.totals && off.totals[0];
+    })
+    .sort((a, b) => {
+      const aOff = a.categories.find(c => c.name === "offensive");
+      const bOff = b.categories.find(c => c.name === "offensive");
+      return parseFloat(bOff.totals[0] || 0) - parseFloat(aOff.totals[0] || 0);
+    })
+    .slice(0, 3);
+
+  if (topScorers.length === 0) return "";
 
   let html = `<section class="stats-section">
     <h2 class="stats-title">Season Leaders</h2>
@@ -142,17 +157,20 @@ function renderLeaders(athletes) {
   topScorers.forEach((a, idx) => {
     const off = a.categories.find(c => c.name === "offensive");
     const gen = a.categories.find(c => c.name === "general");
+    const ppg = off?.totals?.[0] || "0.0";
+    const rpg = gen?.totals?.[11] || "0.0";
+    
     html += `
       <div class="leader-card ${idx === 0 ? 'primary' : ''}">
         <div class="leader-rank">#${idx + 1}</div>
-        <img src="${a.athlete.headshot?.href}" class="leader-img" alt="${a.athlete.displayName}">
+        <img src="${a.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="leader-img" alt="${a.athlete.displayName}">
         <div class="leader-info">
           <div class="leader-name">${a.athlete.displayName}</div>
-          <div class="leader-pos">${a.athlete.position.displayName}</div>
+          <div class="leader-pos">${a.athlete.position?.displayName || 'N/A'}</div>
           <div class="leader-stats">
-            <span class="leader-val">${off.totals[0]}</span> <span class="leader-unit">PPG</span>
+            <span class="leader-val">${ppg}</span> <span class="leader-unit">PPG</span>
             <span class="leader-divider">|</span>
-            <span class="leader-val">${gen.totals[11]}</span> <span class="leader-unit">RPG</span>
+            <span class="leader-val">${rpg}</span> <span class="leader-unit">RPG</span>
           </div>
         </div>
       </div>`;
@@ -165,7 +183,7 @@ function renderLeaders(athletes) {
 function renderPlayerStats(allAthletes) {
   if (!allAthletes || allAthletes.length === 0) return "";
 
-  // Map athletes by ID for quick access - Force ID to string for matching
+  // Map athletes by ID for quick access
   const athleteMap = new Map();
   allAthletes.forEach(a => {
     if (a.athlete && a.athlete.id) {
@@ -225,7 +243,7 @@ function renderPlayerStats(allAthletes) {
           <span class="player-name">${player.name}</span>
         </td>
         <td style="font-weight:900; color:var(--color-navy)">${player.no}</td>
-        <td class="pos-tag">${stats?.athlete.position.abbreviation || 'N/A'}</td>
+        <td class="pos-tag">${stats?.athlete.position?.abbreviation || 'N/A'}</td>
         <td>${general?.totals?.[0] || '0'}</td>
         <td class="stat-highlight">${offensive?.totals?.[0] || '0.0'}</td>
         <td>${general?.totals?.[11] || '0.0'}</td>
@@ -254,17 +272,20 @@ function renderPlayerStats(allAthletes) {
 async function renderBoxScore() {
   try {
     const sb = await fetchWithUA(endpoints.scoreboard);
-    // Still look for "Sixers" games for the box score
-    const sixersGame = sb.events
+    const sixersGames = sb.events
       .filter(e => e.status.type.completed)
-      .find(e => e.competitions[0].competitors.some(c => c.team.id === "20"));
+      .filter(e => e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID));
 
-    if (!sixersGame) return "";
+    if (sixersGames.length === 0) return "";
 
+    const sixersGame = sixersGames[0];
     const box = await fetchWithUA(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${sixersGame.id}`);
+    
+    if (!box.boxscore || !box.boxscore.players) return "";
+    
     const sixersBox = box.boxscore.players.find(p => p.team.id === SIXERS_TEAM_ID);
     
-    if (!sixersBox) return "";
+    if (!sixersBox || !sixersBox.statistics || !sixersBox.statistics[0]) return "";
 
     let html = `<section class="stats-section">
       <h2 class="stats-title">Latest Game Box Score</h2>
@@ -284,15 +305,23 @@ async function renderBoxScore() {
 
     sixersBox.statistics[0].athletes.forEach(p => {
       if (p.didNotPlay || !p.active) return;
-      const stats = p.stats;
+      const stats = p.stats || [];
+      
+      // ESPN box score stats array typically: [MIN, FG, 3PT, FT, OREB, DREB, REB, AST, STL, BLK, TO, PF, +/-, PTS]
+      const minutes = stats[0] || '-';
+      const fg = stats[1] || '-';
+      const reb = stats[6] || '-';
+      const ast = stats[7] || '-';
+      const pts = stats[stats.length - 1] || '-';
+      
       html += `
         <tr>
           <td class="player-name">${p.athlete.displayName}</td>
-          <td>${stats[0] || '-'}</td>
-          <td>${stats[stats.length-1] || '-'}</td>
-          <td>${stats[stats.length-2] || '-'}</td>
-          <td>${stats[stats.length-3] || '-'}</td>
-          <td>${stats[1] || '-'}</td>
+          <td>${minutes}</td>
+          <td>${pts}</td>
+          <td>${reb}</td>
+          <td>${ast}</td>
+          <td>${fg}</td>
         </tr>`;
     });
 
@@ -307,9 +336,18 @@ async function renderBoxScore() {
 async function loadAllData(force = false) {
   const container = document.getElementById("stats-app");
   
+  if (!container) {
+    console.error("Stats container not found");
+    return;
+  }
+
+  container.innerHTML = '<p style="text-align:center; padding: 2rem;">Loading stats...</p>';
+  
   try {
     let data = getCache();
     if (!data || force) {
+      console.log("Fetching fresh data...");
+      
       // Fetch scoreboard and team stats
       const [sb, ts] = await Promise.all([
         fetchWithUA(endpoints.scoreboard),
@@ -317,11 +355,13 @@ async function loadAllData(force = false) {
       ]);
       
       // Fetch individual stats for EVERY player in our custom roster in parallel
-      // This ensures we get their specific headshots, info and stats even if they aren't on the official Sixers roster yet
       const playerStatsPromises = CUSTOM_ROSTER.map(player => 
         fetch(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${player.id}/statistics`)
           .then(res => res.ok ? res.json() : null)
-          .catch(() => null)
+          .catch(err => {
+            console.warn(`Failed to fetch stats for ${player.name}:`, err);
+            return null;
+          })
       );
       
       const individualResults = await Promise.all(playerStatsPromises);
@@ -331,8 +371,9 @@ async function loadAllData(force = false) {
         const customPlayer = CUSTOM_ROSTER[idx];
         if (res && res.athlete) {
           // Find the Regular Season stats for 2025-26 (or most recent)
-          const statsEntry = res.statistics?.find(s => s.season.year === 2026) || 
-                            res.statistics?.find(s => s.season.year === 2025) || 
+          const statsEntry = res.statistics?.find(s => s.season?.year === 2026) || 
+                            res.statistics?.find(s => s.season?.year === 2025) ||
+                            res.statistics?.[0] || 
                             { categories: [] };
 
           return {
@@ -340,8 +381,8 @@ async function loadAllData(force = false) {
               id: res.athlete.id,
               displayName: res.athlete.displayName,
               headshot: res.athlete.headshot,
-              position: res.athlete.position,
-              displayOrder: idx // Keep original list order
+              position: res.athlete.position || { abbreviation: "N/A", displayName: "Unknown" },
+              displayOrder: idx
             },
             categories: statsEntry.categories || []
           };
@@ -366,24 +407,49 @@ async function loadAllData(force = false) {
         allPlayerStats: allAthletes
       };
       setCache(data);
+      console.log("Data fetched and cached successfully");
+    } else {
+      console.log("Using cached data");
     }
 
     let finalHtml = "";
-    finalHtml += renderScoreboard(data.scoreboard.events.filter(e => e.competitions[0].competitors.some(c => c.team.id === "20")));
+    
+    // Filter for Sixers games
+    const sixersGames = data.scoreboard.events.filter(e => 
+      e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID)
+    );
+    
+    finalHtml += renderScoreboard(sixersGames);
     finalHtml += renderTeamStats(data.teamStats);
     finalHtml += renderPlayerStats(data.allPlayerStats);
     finalHtml += await renderBoxScore();
 
     container.innerHTML = finalHtml;
+    console.log("Stats rendered successfully");
   } catch (err) {
+    console.error("Load data error:", err);
     container.innerHTML = `<p style="color:red; text-align:center; padding: 2rem;">Error loading stats: ${err.message}</p>`;
   }
 }
 
 async function generateSocialImage(mode) {
+  // Check if html2canvas is loaded
+  if (typeof html2canvas === 'undefined') {
+    alert("Image export library not loaded. Please add html2canvas to your HTML.");
+    return;
+  }
+
   const container = document.getElementById("social-export-container");
+  if (!container) {
+    alert("Export container not found");
+    return;
+  }
+
   const data = getCache();
-  if (!data || !data.allPlayerStats) return;
+  if (!data || !data.allPlayerStats) {
+    alert("No stats data available");
+    return;
+  }
 
   const athleteMap = new Map();
   data.allPlayerStats.forEach(a => {
@@ -393,12 +459,21 @@ async function generateSocialImage(mode) {
   const athletes = CUSTOM_ROSTER
     .map(p => athleteMap.get(p.id))
     .filter(Boolean)
+    .filter(a => {
+      const off = a.categories.find(c => c.name === "offensive");
+      return off && off.totals && off.totals[0];
+    })
     .sort((a, b) => {
       const aOff = a.categories.find(c => c.name === "offensive");
       const bOff = b.categories.find(c => c.name === "offensive");
       return (parseFloat(bOff?.totals?.[0]) || 0) - (parseFloat(aOff?.totals?.[0]) || 0);
     })
     .slice(0, 10); // Top 10 for image
+
+  if (athletes.length === 0) {
+    alert("No player stats available for export");
+    return;
+  }
 
   let html = `
     <div class="social-header">
@@ -430,15 +505,15 @@ async function generateSocialImage(mode) {
       <tr>
         <td>
           <div class="social-player">
-            <img src="${a.athlete.headshot?.href}" class="social-logo">
+            <img src="${a.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="social-logo">
             <span>${a.athlete.displayName}</span>
           </div>
         </td>
-        <td style="text-align:center">${gen.totals[0]}</td>
-        <td style="text-align:center; color:#003da6">${off.totals[0]}</td>
-        <td style="text-align:center">${gen.totals[11]}</td>
-        <td style="text-align:center">${off.totals[10]}</td>
-        <td style="text-align:center">${off.totals[3]}</td>
+        <td style="text-align:center">${gen?.totals?.[0] || '0'}</td>
+        <td style="text-align:center; color:#003da6">${off?.totals?.[0] || '0.0'}</td>
+        <td style="text-align:center">${gen?.totals?.[11] || '0.0'}</td>
+        <td style="text-align:center">${off?.totals?.[10] || '0.0'}</td>
+        <td style="text-align:center">${off?.totals?.[3] || '0.0'}</td>
       </tr>`;
   });
 
@@ -452,23 +527,29 @@ async function generateSocialImage(mode) {
   try {
     const canvas = await html2canvas(container, {
       useCORS: true,
+      allowTaint: true,
       scale: 2,
-      backgroundColor: "#f8fafc"
+      backgroundColor: "#f8fafc",
+      logging: false
     });
 
     const imgData = canvas.toDataURL("image/png");
     const preview = document.getElementById("exportPreview");
-    preview.src = imgData;
-
     const downloadBtn = document.getElementById("downloadBtn");
-    downloadBtn.onclick = () => {
-      const link = document.createElement("a");
-      link.download = `Sixers-Roster-Stats-${new Date().toISOString().split('T')[0]}.png`;
-      link.href = imgData;
-      link.click();
-    };
+    const modal = document.getElementById("exportModal");
 
-    document.getElementById("exportModal").style.display = "flex";
+    if (preview) preview.src = imgData;
+    
+    if (downloadBtn) {
+      downloadBtn.onclick = () => {
+        const link = document.createElement("a");
+        link.download = `Sixers-Roster-Stats-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = imgData;
+        link.click();
+      };
+    }
+
+    if (modal) modal.style.display = "flex";
   } catch (err) {
     console.error("Export error:", err);
     alert("Error generating image. Please try again.");
@@ -476,10 +557,17 @@ async function generateSocialImage(mode) {
 }
 
 function closeExportModal() {
-  document.getElementById("exportModal").style.display = "none";
+  const modal = document.getElementById("exportModal");
+  if (modal) modal.style.display = "none";
 }
 
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("Initializing Sixers Stats App");
   loadAllData();
-  setInterval(() => loadAllData(true), 10 * 60 * 1000);
+  // Auto-refresh every 10 minutes
+  setInterval(() => {
+    console.log("Auto-refreshing stats...");
+    loadAllData(true);
+  }, 10 * 60 * 1000);
 });
