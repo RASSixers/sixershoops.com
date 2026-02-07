@@ -75,6 +75,13 @@ function findStat(categories, name) {
 
 
 function renderTeamStats(data) {
+  if (!data || !data.splits) {
+    return `<section class="stats-section">
+      <h2 class="stats-title">Team Season Averages</h2>
+      <p style="text-align:center; padding: 1rem;">Stats currently unavailable</p>
+    </section>`;
+  }
+
   let html = `<section class="stats-section">
     <h2 class="stats-title">Team Season Averages</h2>
     <div class="table-responsive">
@@ -92,34 +99,43 @@ function renderTeamStats(data) {
   const allCategories = data.splits?.categories || [];
   let allStats = [];
   allCategories.forEach(cat => {
-    if (cat.stats) allStats = allStats.concat(cat.stats);
+    if (cat.stats) {
+      allStats = allStats.concat(cat.stats);
+    }
   });
 
   const keys = [
-    { key: "points", label: "Points Per Game" },
-    { key: "rebounds", label: "Rebounds Per Game" },
-    { key: "assists", label: "Assists Per Game" },
-    { key: "fieldGoalsPct", label: "Field Goal %" },
-    { key: "threePointPct", label: "3-Point %" },
-    { key: "freeThrowsPct", label: "Free Throw %" },
-    { key: "blocks", label: "Blocks Per Game" },
-    { key: "steals", label: "Steals Per Game" },
+    { key: "avgPoints", label: "Points Per Game" },
+    { key: "avgRebounds", label: "Rebounds Per Game" },
+    { key: "avgAssists", label: "Assists Per Game" },
+    { key: "fieldGoalPct", label: "Field Goal %" },
+    { key: "threePointFieldGoalPct", label: "3-Point %" },
+    { key: "freeThrowPct", label: "Free Throw %" },
+    { key: "avgBlocks", label: "Blocks Per Game" },
+    { key: "avgSteals", label: "Steals Per Game" },
     { key: "offensiveRating", label: "Offensive Rating" },
     { key: "defensiveRating", label: "Defensive Rating" }
   ];
 
+  let hasRows = false;
   keys.forEach(item => {
-    const stat = allStats.find(s => s.name === item.key);
+    // Check both name and abbreviation as Core API vs V2 API can differ
+    const stat = allStats.find(s => s.name === item.key || s.abbreviation?.toLowerCase() === item.key.toLowerCase());
     if (stat) {
+      hasRows = true;
       const rank = stat.rank ? `#${stat.rank}` : "-";
       html += `
         <tr>
           <td class="stat-label">${item.label}</td>
-          <td class="stat-value" style="text-align: right; font-weight: 800;">${stat.displayValue}</td>
+          <td class="stat-value" style="text-align: right; font-weight: 800;">${stat.displayValue || stat.value || "0.0"}</td>
           <td class="stat-rank" style="text-align: right; color: var(--color-sky); font-weight: 900;">${rank}</td>
         </tr>`;
     }
   });
+
+  if (!hasRows) {
+    html += `<tr><td colspan="3" style="text-align:center; padding: 2rem; color: var(--color-slate-500);">Awaiting 2025-26 Season Data</td></tr>`;
+  }
 
   html += `</tbody></table></div></section>`;
   return html;
