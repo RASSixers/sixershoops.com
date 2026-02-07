@@ -38,6 +38,13 @@ async function getNBAStandings() {
               <tbody>`;
 
       const entries = conf.standings?.entries || [];
+      
+      // Sort entries by win percentage (descending)
+      entries.sort((a, b) => {
+        const getStat = (entry, name) => entry.stats.find(s => s.name === name)?.value || 0;
+        return getStat(b, 'winPercent') - getStat(a, 'winPercent');
+      });
+
       entries.forEach((t, idx) => {
         // Flatten stats for easier access
         const stats = {};
