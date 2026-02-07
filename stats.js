@@ -165,17 +165,17 @@ function renderLeaders(athletes) {
 function renderPlayerStats(allAthletes) {
   if (!allAthletes || allAthletes.length === 0) return "";
 
-  // Map athletes by ID for quick access
+  // Map athletes by ID for quick access - Force ID to string for matching
   const athleteMap = new Map();
   allAthletes.forEach(a => {
     if (a.athlete && a.athlete.id) {
-      athleteMap.set(a.athlete.id, a);
+      athleteMap.set(String(a.athlete.id), a);
     }
   });
 
   // Prepare full roster display based on CUSTOM_ROSTER
   const rosterData = CUSTOM_ROSTER.map(player => {
-    const stats = athleteMap.get(player.id);
+    const stats = athleteMap.get(String(player.id));
     return { player, stats };
   });
 
@@ -310,16 +310,55 @@ async function loadAllData(force = false) {
   try {
     let data = getCache();
     if (!data || force) {
-      // Fetch scoreboard, team stats, league-wide stats (1000 players), and team roster stats
-      const [sb, ts, ls, trs] = await Promise.all([
+      // Fetch scoreboard and team stats
+      const [sb, ts] = await Promise.all([
         fetchWithUA(endpoints.scoreboard),
-        fetchWithUA(endpoints.teamSeasonStats),
-        fetchWithUA(endpoints.leagueStats),
-        fetchWithUA(endpoints.teamRosterStats)
+        fetchWithUA(endpoints.teamSeasonStats)
       ]);
       
-      // Merge athletes from both league-wide and team-specific results
-      const allAthletes = [...(trs.athletes || []), ...(ls.athletes || [])];
+      // Fetch individual stats for EVERY player in our custom roster in parallel
+      // This ensures we get their specific headshots, info and stats even if they aren't on the official Sixers roster yet
+      const playerStatsPromises = CUSTOM_ROSTER.map(player => 
+        fetch(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${player.id}/statistics`)
+          .then(res => res.ok ? res.json() : null)
+          .catch(() => null)
+      );
+      
+      const individualResults = await Promise.all(playerStatsPromises);
+      
+      // Merge results with our custom roster info
+      const allAthletes = individualResults.map((res, idx) => {
+        const customPlayer = CUSTOM_ROSTER[idx];
+        if (res && res.athlete) {
+          // Find the Regular Season stats for 2025-26 (or most recent)
+          const statsEntry = res.statistics?.find(s => s.season.year === 2026) || 
+                            res.statistics?.find(s => s.season.year === 2025) || 
+                            { categories: [] };
+
+          return {
+            athlete: {
+              id: res.athlete.id,
+              displayName: res.athlete.displayName,
+              headshot: res.athlete.headshot,
+              position: res.athlete.position,
+              displayOrder: idx // Keep original list order
+            },
+            categories: statsEntry.categories || []
+          };
+        } else {
+          // Fallback if athlete not found in API
+          return {
+            athlete: {
+              id: customPlayer.id,
+              displayName: customPlayer.name,
+              headshot: { href: `https://a.espncdn.com/i/headshots/nba/players/full/${customPlayer.id}.png` },
+              position: { abbreviation: "N/A", displayName: "Unknown" },
+              displayOrder: idx
+            },
+            categories: []
+          };
+        }
+      });
       
       data = {
         scoreboard: sb,
