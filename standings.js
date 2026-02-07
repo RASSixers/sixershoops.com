@@ -193,13 +193,13 @@ function initExport() {
           content.classList.add('mode-east');
           if (eastDiv) eastDiv.style.display = 'block';
           if (westDiv) westDiv.style.display = 'none';
-          titleH1.textContent = 'Eastern Conference';
+          titleH1.textContent = 'Eastern Conference Standings';
         } else if (mode === 'west') {
           grid.style.width = '700px';
           content.classList.add('mode-west');
           if (eastDiv) eastDiv.style.display = 'none';
           if (westDiv) westDiv.style.display = 'block';
-          titleH1.textContent = 'Western Conference';
+          titleH1.textContent = 'Western Conference Standings';
         } else {
           grid.style.width = '1200px';
           if (eastDiv) eastDiv.style.display = 'block';
