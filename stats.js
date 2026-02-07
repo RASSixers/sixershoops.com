@@ -72,34 +72,7 @@ function findStat(categories, name) {
   return null;
 }
 
-function renderScoreboard(events = []) {
-  let html = `<section class="stats-section">
-    <h2 class="stats-title">Recent Games</h2>`;
-  
-  if (events.length === 0) {
-    html += "<p>No recent games found</p>";
-  } else {
-    events.slice(0, 5).forEach(game => {
-      const comp = game.competitions[0];
-      const home = comp.competitors.find(c => c.homeAway === "home");
-      const away = comp.competitors.find(c => c.homeAway === "away");
-      const status = game.status.type.completed ? "Final" : game.status.displayClock || game.status.type.shortDetail;
-      const score = game.status.type.completed ? `${away.score} - ${home.score}` : "TBD";
-      const matchup = `${away.team.abbreviation} @ ${home.team.abbreviation}`;
 
-      html += `
-        <div class="game-card">
-          <div class="game-info">
-            <div class="game-matchup">${matchup}</div>
-            <div class="game-status">${status}</div>
-          </div>
-          <div class="game-score">${score}</div>
-        </div>`;
-    });
-  }
-  html += `</section>`;
-  return html;
-}
 
 function renderTeamStats(data) {
   let html = `<section class="stats-section">
@@ -387,11 +360,7 @@ async function loadAllData(force = false) {
     }
 
     let finalHtml = "";
-    const sixersGames = data.scoreboard.events.filter(e => 
-      e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID)
-    );
     
-    finalHtml += renderScoreboard(sixersGames);
     finalHtml += renderTeamStats(data.teamStats);
     finalHtml += renderPlayerStats(data.players);
     finalHtml += await renderBoxScore();
