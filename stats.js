@@ -83,6 +83,7 @@ function renderTeamStats(data) {
           <tr>
             <th>Category</th>
             <th style="text-align: right;">Value</th>
+            <th style="text-align: right;">NBA Rank</th>
           </tr>
         </thead>
         <tbody>`;
@@ -102,10 +103,12 @@ function renderTeamStats(data) {
   keys.forEach(item => {
     const stat = mainStats.find(s => s.name === item.key);
     if (stat) {
+      const rank = stat.rank ? `#${stat.rank}` : "-";
       html += `
         <tr>
           <td class="stat-label">${item.label}</td>
-          <td class="stat-value">${stat.displayValue}</td>
+          <td class="stat-value" style="text-align: right; font-weight: 800;">${stat.displayValue}</td>
+          <td class="stat-rank" style="text-align: right; color: var(--color-sky); font-weight: 900;">${rank}</td>
         </tr>`;
     }
   });
