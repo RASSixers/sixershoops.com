@@ -9,18 +9,18 @@ const CUSTOM_ROSTER = [
   { id: "4251", name: "Paul George", no: "8" },
   { id: "4870562", name: "Dominick Barlow", no: "25" },
   { id: "5124612", name: "VJ Edgecombe", no: "77" },
-  { id: "3033", name: "Kyle Lowry", no: "7" },
-  { id: "4397116", name: "Quentin Grimes", no: "5" },
+  { id: "3012", name: "Kyle Lowry", no: "7" },
+  { id: "4397014", name: "Quentin Grimes", no: "5" },
   { id: "3133603", name: "Kelly Oubre Jr.", no: "9" },
   { id: "4433246", name: "Patrick Baldwin Jr.", no: "PBJ" },
-  { id: "6589", name: "Andre Drummond", no: "1" },
+  { id: "6585", name: "Andre Drummond", no: "1" },
   { id: "4431675", name: "Trendon Watford", no: "12" },
   { id: "4397886", name: "Charles Bassey", no: "28" },
   { id: "4432179", name: "MarJon Beauchamp", no: "16" },
   { id: "5105637", name: "Adem Bona", no: "30" },
-  { id: "4432832", name: "Johni Broome", no: "22" },
-  { id: "4683011", name: "Justin Edwards", no: "11" },
-  { id: "4432168", name: "Jabari Walker", no: "33" }
+  { id: "4433569", name: "Johni Broome", no: "22" },
+  { id: "4711297", name: "Justin Edwards", no: "11" },
+  { id: "4432446", name: "Jabari Walker", no: "33" }
 ];
 
 function getCache() {
@@ -28,7 +28,11 @@ function getCache() {
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) return null;
     const data = JSON.parse(cached);
-    if (Date.now() - data.timestamp > CACHE_MINUTES * 60 * 1000) {
+    // Cache for 10 minutes unless empty players
+    const isStale = Date.now() - data.timestamp > CACHE_MINUTES * 60 * 1000;
+    const hasData = data.content && data.content.players && data.content.players.some(p => p.gp > 0);
+    
+    if (isStale && hasData) {
       localStorage.removeItem(CACHE_KEY);
       return null;
     }
@@ -54,6 +58,18 @@ async function fetchWithUA(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
+}
+
+// Helper to find a stat in the nested categories structure
+function findStat(categories, name) {
+  if (!categories) return null;
+  for (const cat of categories) {
+    if (cat.stats) {
+      const stat = cat.stats.find(s => s.name === name);
+      if (stat) return stat;
+    }
+  }
+  return null;
 }
 
 function renderScoreboard(events = []) {
@@ -288,11 +304,7 @@ async function renderBoxScore() {
 
 async function loadAllData(force = false) {
   const container = document.getElementById("stats-app");
-  
-  if (!container) {
-    console.error("Stats container #stats-app not found!");
-    return;
-  }
+  if (!container) return;
 
   container.innerHTML = '<p style="text-align:center; padding: 2rem;">Loading stats...</p>';
   
@@ -300,77 +312,81 @@ async function loadAllData(force = false) {
     let data = getCache();
     
     if (!data || force) {
-      console.log("Fetching fresh data from ESPN...");
+      console.log("Fetching fresh data from ESPN Core API...");
       
-      // Fetch scoreboard, team stats, and individual player stats for the current season
-      const [sb, ts, playerStatsData] = await Promise.all([
+      const [sb, ts, rosterData] = await Promise.all([
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"),
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics"),
-        fetchWithUA("https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isQualified=false&limit=50&team=20")
+        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster")
       ]);
       
-      console.log("Player stats response:", playerStatsData);
+      const athletes = rosterData.team?.athletes || [];
       
-      // Extract stats only for players in our CUSTOM_ROSTER
-      const players = CUSTOM_ROSTER.map(rosterPlayer => {
-        const item = playerStatsData.athletes?.find(a => a.athlete.id === rosterPlayer.id);
+      // We'll fetch stats for everyone in the roster + our CUSTOM_ROSTER IDs
+      const allIds = [...new Set([
+        ...athletes.map(a => a.id),
+        ...CUSTOM_ROSTER.map(c => c.id)
+      ])];
+
+      console.log(`Fetching stats for ${allIds.length} players...`);
+
+      // Parallel fetch from Core API
+      const statsResults = await Promise.all(
+        allIds.map(id => 
+          fetchWithUA(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/athletes/${id}/statistics`)
+            .catch(() => null)
+        )
+      );
+
+      const players = [];
+      allIds.forEach((id, index) => {
+        const statData = statsResults[index];
+        const athleteInfo = athletes.find(a => a.id === id);
+        const customInfo = CUSTOM_ROSTER.find(c => c.id === id);
         
-        if (item) {
-          const athlete = item.athlete;
-          const general = item.categories.find(c => c.name === "general") || { totals: [] };
-          const offensive = item.categories.find(c => c.name === "offensive") || { totals: [] };
-          
-          return {
-            id: athlete.id,
-            name: athlete.displayName,
-            jersey: rosterPlayer.no,
-            position: athlete.position?.abbreviation || 'N/A',
-            headshot: athlete.headshot?.href || `https://a.espncdn.com/i/headshots/nba/players/full/${athlete.id}.png`,
-            gp: parseInt(general.totals[0]) || 0,
-            mpg: general.totals[1] || '0.0',
-            ppg: offensive.totals[0] || '0.0',
-            rpg: general.totals[11] || '0.0',
-            apg: offensive.totals[10] || '0.0',
-            fgPct: offensive.totals[3] || '0.0',
-            fg3Pct: offensive.totals[6] || '0.0'
-          };
-        } else {
-          // Fallback for players with no active stats yet
-          return {
-            id: rosterPlayer.id,
-            name: rosterPlayer.name,
-            jersey: rosterPlayer.no,
-            position: 'N/A',
-            headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${rosterPlayer.id}.png`,
-            gp: 0,
-            mpg: '0.0',
-            ppg: '0.0',
-            rpg: '0.0',
-            apg: '0.0',
-            fgPct: '0.0',
-            fg3Pct: '0.0'
-          };
-        }
+        if (!athleteInfo && !customInfo) return;
+
+        const categories = statData?.splits?.categories || [];
+        
+        // Find specific stats
+        const gp = findStat(categories, "gamesPlayed")?.value || 0;
+        const ppg = findStat(categories, "avgPoints")?.displayValue || "0.0";
+        const rpg = findStat(categories, "avgRebounds")?.displayValue || "0.0";
+        const apg = findStat(categories, "avgAssists")?.displayValue || "0.0";
+        const mpg = findStat(categories, "avgMinutes")?.displayValue || "0.0";
+        const fgPct = findStat(categories, "fieldGoalPct")?.displayValue || "0.0";
+        const fg3Pct = findStat(categories, "threePointPct")?.displayValue || "0.0";
+
+        players.push({
+          id,
+          name: athleteInfo?.displayName || customInfo?.name || "Unknown",
+          jersey: athleteInfo?.jersey || customInfo?.no || "-",
+          position: athleteInfo?.position?.abbreviation || "N/A",
+          headshot: athleteInfo?.headshot?.href || `https://a.espncdn.com/i/headshots/nba/players/full/${id}.png`,
+          gp,
+          mpg,
+          ppg,
+          rpg,
+          apg,
+          fgPct,
+          fg3Pct
+        });
       });
-      
-      console.log("Extracted players:", players);
-      console.log("Players with games played > 0:", players.filter(p => p.gp > 0).length);
-      
+
+      // Filter to only show our target 17 players
+      const customIds = CUSTOM_ROSTER.map(c => c.id);
+      const filteredPlayers = players.filter(p => customIds.includes(p.id));
+
       data = {
         scoreboard: sb,
         teamStats: ts,
-        players: players
+        players: filteredPlayers
       };
       
       setCache(data);
-      console.log("Data cached successfully");
-    } else {
-      console.log("Using cached data");
     }
 
     let finalHtml = "";
-    
-    // Filter for Sixers games
     const sixersGames = data.scoreboard.events.filter(e => 
       e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID)
     );
@@ -381,17 +397,14 @@ async function loadAllData(force = false) {
     finalHtml += await renderBoxScore();
 
     container.innerHTML = finalHtml;
-    console.log("Stats rendered successfully!");
-    
   } catch (err) {
     console.error("Load error:", err);
     container.innerHTML = `
       <div style="color:red; text-align:center; padding: 2rem;">
         <h3>Error loading stats</h3>
         <p>${err.message}</p>
-        <p><small>Check browser console (F12) for details</small></p>
         <button onclick="localStorage.clear(); location.reload();" style="margin-top:1rem; padding:0.5rem 1rem; cursor:pointer;">
-          Clear Cache & Retry
+          Retry
         </button>
       </div>`;
   }
