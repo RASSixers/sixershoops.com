@@ -9,6 +9,10 @@
 
   <link rel="stylesheet" href="styles.css"/>
   <link rel="stylesheet" href="navbar-styles.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- html2canvas for image generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Google Tag Manager -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
@@ -261,6 +265,255 @@
       white-space: nowrap;
     }
 
+    /* Season Leaders Grid */
+    .leaders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .leader-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .leader-card.primary {
+      background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+      border: 2px solid var(--color-sky);
+    }
+
+    .leader-rank {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: rgba(10, 23, 78, 0.1);
+    }
+
+    .leader-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      object-fit: cover;
+    }
+
+    .leader-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--color-navy);
+      margin-bottom: 0.25rem;
+    }
+
+    .leader-pos {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--color-slate-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+    }
+
+    .leader-stats {
+      font-weight: 800;
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .leader-val {
+      font-size: 1.5rem;
+      color: var(--color-sky);
+    }
+
+    .leader-unit {
+      font-size: 0.75rem;
+      color: var(--color-slate-500);
+      text-transform: uppercase;
+    }
+
+    .leader-divider {
+      color: #e2e8f0;
+      margin: 0 0.5rem;
+    }
+
+    .pos-tag {
+      font-size: 0.7rem;
+      font-weight: 900;
+      background: #f1f5f9;
+      color: var(--color-slate-700);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Export Container */
+    .export-container {
+      text-align: center;
+      margin-top: 3rem;
+      padding: 2rem;
+      background: #f8fafc;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .export-btns-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .export-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1.8rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 15px rgba(40, 167, 69, 0.2);
+    }
+
+    .export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+    }
+
+    /* Social Export Styling (Hidden) */
+    #social-export-container {
+      position: fixed;
+      left: -9999px;
+      top: -9999px;
+      width: 1200px;
+      background: #f8fafc;
+      padding: 50px;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .social-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 4px solid #003da6;
+      padding-bottom: 20px;
+    }
+
+    .social-title-box h1 {
+      font-size: 56px;
+      margin: 0;
+      font-weight: 900;
+      color: #003da6;
+      letter-spacing: -2px;
+    }
+
+    .social-branding .domain {
+      font-size: 32px;
+      font-weight: 900;
+      color: #e11d48;
+    }
+
+    .social-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .social-table th {
+      background: #f1f5f9;
+      padding: 15px;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: #64748b;
+      text-align: left;
+    }
+
+    .social-table td {
+      padding: 15px;
+      font-size: 18px;
+      font-weight: 700;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .social-player {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .social-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .export-modal-content {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 2.5rem;
+      max-width: 1000px;
+      width: 95%;
+      text-align: center;
+    }
+
+    .export-preview {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .action-btn {
+      padding: 0.8rem 2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .btn-download { background: #059669; color: #fff; }
+    .btn-close { background: #64748b; color: #fff; }
+
     @media (max-width: 768px) {
       .page-header { padding: 3rem 1rem; }
       .stats-container { padding: 1.5rem; }
@@ -285,6 +538,19 @@
         <p>Loading analytics...</p>
       </div>
     </main>
+  </div>
+
+  <div id="social-export-container"></div>
+
+  <div id="exportModal" class="export-modal">
+    <div class="export-modal-content">
+      <h2 style="margin-bottom: 1.5rem; color: var(--color-navy); font-weight: 800;">Export Successful</h2>
+      <img id="exportPreview" class="export-preview" src="" alt="Preview">
+      <div class="modal-actions">
+        <button id="downloadBtn" class="action-btn btn-download">Download Image</button>
+        <button onclick="closeExportModal()" class="action-btn btn-close">Close</button>
+      </div>
+    </div>
   </div>
 
   <script src="stats.js"></script>
