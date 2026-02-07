@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>NBA Standings | SixersHoops</title>
+  <link rel="icon" href="/favicon.ico"/>
+  <link rel="apple-touch-icon" href="/favicon.ico"/>
+
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="navbar-styles.css"/>
+
+  <!-- Google Tag Manager -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T1V9Q0MNEM');
+  </script>
+
+  <style>
+    :root {
+      --color-navy: #0a174e;
+      --color-navy-soft: #122860;
+      --color-sky: #3b82f6;
+      --color-cyan: #06b6d4;
+      --color-ice: #f8fafc;
+      --color-white: #ffffff;
+      --color-slate-900: #0f172a;
+      --color-slate-700: #334155;
+      --color-slate-500: #64748b;
+      --color-gold: #f59e0b;
+      --card-radius: 22px;
+      --card-shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+      --border-glow: 1px solid rgba(59, 130, 246, 0.25);
+      --blur: blur(18px);
+      --transition: all 0.35s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      line-height: 1.6;
+      padding-top: 80px;
+      margin: 0;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header {
+      padding: 5rem 2rem;
+      text-align: center;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    .page-header-content {
+      max-width: 56rem;
+      margin: 0 auto;
+    }
+
+    .page-title {
+      font-size: clamp(2.5rem, 7vw, 4rem);
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+      color: var(--color-navy);
+    }
+
+    .page-title .highlight {
+      color: var(--color-sky);
+    }
+
+    .page-subtitle {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--color-slate-500);
+      max-width: 42rem;
+      margin: 0 auto;
+      font-weight: 500;
+    }
+
+    .content-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .standings-container {
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 24px 45px rgba(15, 23, 42, 0.12);
+      padding: clamp(1.5rem, 3vw, 3rem);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      margin-bottom: 8rem;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .conference-section {
+      margin-bottom: 4rem;
+    }
+
+    .conference-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .conference-title {
+      font-size: 1.75rem;
+      color: var(--color-navy);
+      font-weight: 800;
+      margin-bottom: 2rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid var(--color-sky);
+      display: inline-block;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--color-slate-700);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--color-slate-900);
+      font-weight: 500;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #f0f7ff;
+    }
+
+    .team-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+    }
+
+    .team-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    .sixers-highlight {
+      background: #fffbeb !important;
+    }
+
+    .sixers-highlight td {
+      color: var(--color-navy);
+      font-weight: 700;
+    }
+
+    .rank {
+      color: var(--color-slate-500);
+      font-weight: 700;
+      width: 30px;
+      display: inline-block;
+    }
+
+    .pct, .gb {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .streak-w { background: #dcfce7; color: #166534; }
+    .streak-l { background: #fee2e2; color: #991b1b; }
+
+    .loader {
+      text-align: center;
+      padding: 4rem;
+    }
+
+    .loader-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--color-sky);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .page-header { padding: 3rem 1rem; }
+      .standings-container { padding: 1rem; }
+      th, td { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <script src="nav.js"></script>
+
+  <section class="page-header">
+    <div class="page-header-content">
+      <h1 class="page-title">NBA <span class="highlight">Standings</span></h1>
+      <p class="page-subtitle">Real-time Eastern & Western Conference Rankings</p>
+    </div>
+  </section>
+
+  <div class="content-wrapper">
+    <main class="standings-container" id="standings">
+      <div class="loader">
+        <div class="loader-spinner"></div>
+        <p>Fetching latest standings...</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    async function getNBAStandings() {
+      const url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/standings";
+      const container = document.getElementById("standings");
+      
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        let html = "";
+
+        ["Eastern", "Western"].forEach(confName => {
+          const conf = data.standings.find(s => s.name?.toLowerCase().includes(confName.toLowerCase()));
+          if (!conf) return;
+
+          html += `
+            <div class="conference-section">
+              <h2 class="conference-title">${conf.name || confName + " Conference"}</h2>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Team</th>
+                      <th>W</th>
+                      <th>L</th>
+                      <th>PCT</th>
+                      <th>GB</th>
+                      <th>HOME</th>
+                      <th>AWAY</th>
+                      <th>L10</th>
+                      <th>STRK</th>
+                    </tr>
+                  </thead>
+                  <tbody>`;
+
+          conf.entries.forEach((t, idx) => {
+            const stats = t.stats.reduce((acc, s) => {
+              acc[s.name] = s.value;
+              return acc;
+            }, {});
+
+            const isSixers = t.team.abbreviation === "PHI";
+            const rowClass = isSixers ? 'sixers-highlight' : '';
+            
+            // Format stats based on user's logic
+            const wins = stats.wins ?? "-";
+            const losses = stats.losses ?? "-";
+            const pct = stats.winPercent != null ? stats.winPercent.toFixed(3) : (stats.winpercent != null ? stats.winpercent.toFixed(3) : "-");
+            const gb = stats.gamesBehind ?? "-";
+            const home = (stats.homeWins != null && stats.homeLosses != null) ? `${stats.homeWins}-${stats.homeLosses}` : "-";
+            const away = (stats.awayWins != null && stats.awayLosses != null) ? `${stats.awayWins}-${stats.awayLosses}` : "-";
+            const l10 = (stats.lastTenWins != null && stats.lastTenLosses != null) ? `${stats.lastTenWins}-${stats.lastTenLosses}` : "-";
+            const streakValue = t.note ? t.note.rank : (stats.streak ?? "-");
+
+            let streakClass = "";
+            if (String(streakValue).startsWith('W')) streakClass = "streak-w";
+            if (String(streakValue).startsWith('L')) streakClass = "streak-l";
+
+            html += `
+              <tr class="${rowClass}">
+                <td>
+                  <div class="team-info">
+                    <span class="rank">${idx + 1}</span>
+                    <img src="${t.team.logos[0].href}" alt="${t.team.abbreviation}" class="team-logo">
+                    <span>${t.team.displayName}</span>
+                  </div>
+                </td>
+                <td>${wins}</td>
+                <td>${losses}</td>
+                <td class="pct">${pct}</td>
+                <td class="gb">${gb}</td>
+                <td>${home}</td>
+                <td>${away}</td>
+                <td>${l10}</td>
+                <td><span class="status-badge ${streakClass}">${streakValue}</span></td>
+              </tr>`;
+          });
+
+          html += `
+                  </tbody>
+                </table>
+              </div>
+            </div>`;
+        });
+
+        container.innerHTML = html || "<p>No standings data available right now.</p>";
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p style="color:red; text-align:center; padding: 2rem;">Error loading standings. Please try again later.</p>`;
+      }
+    }
+
+    // Load immediately and refresh every 5 minutes
+    getNBAStandings();
+    setInterval(getNBAStandings, 300000);
+  </script>
+</body>
+</html>
