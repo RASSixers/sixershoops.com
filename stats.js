@@ -75,8 +75,8 @@ function findStat(categories, name) {
 
 
 function renderTeamStats(data) {
-  // Handle both site API (results.stats) and Core API (splits) structures
-  const categories = data?.splits?.categories || data?.results?.stats?.categories;
+  // Use results.stats for reliable 2025-26 values and ranks from site API
+  const categories = data?.results?.stats?.categories;
   
   if (!categories) {
     return `<section class="stats-section">
@@ -120,10 +120,17 @@ function renderTeamStats(data) {
 
   let hasRows = false;
   keys.forEach(item => {
-    const stat = allStats.find(s => s.name === item.key || s.abbreviation?.toLowerCase() === item.key.toLowerCase());
+    // Match by name or abbreviation (e.g., PPG for avgPoints)
+    const stat = allStats.find(s => 
+      s.name === item.key || 
+      s.abbreviation?.toLowerCase() === item.key.toLowerCase() ||
+      (item.key === "avgPoints" && s.abbreviation === "PPG") ||
+      (item.key === "avgRebounds" && s.abbreviation === "RPG") ||
+      (item.key === "avgAssists" && s.abbreviation === "APG")
+    );
+
     if (stat) {
       hasRows = true;
-      // Core API uses rankDisplayValue, but site API might just have rank
       const rank = stat.rankDisplayValue || (stat.rank ? `#${stat.rank}` : "-");
       const val = stat.displayValue || stat.value || "0.0";
       
@@ -319,7 +326,7 @@ async function loadAllData(force = false) {
       
       const [sb, ts, rosterData] = await Promise.all([
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"),
-        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics"),
+        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics?season=2026"),
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster")
       ]);
       
