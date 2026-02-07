@@ -74,9 +74,8 @@ function findStat(categories, name) {
 
 
 
-function renderTeamStats(data) {
-  // Use splits.categories from Core API for rankings
-  const categories = data?.splits?.categories || data?.results?.stats?.categories;
+function renderTeamStats(data, standings) {
+  const categories = data?.splits?.categories;
   
   if (!categories) {
     return `<section class="stats-section">
@@ -84,6 +83,38 @@ function renderTeamStats(data) {
       <p style="text-align:center; padding: 1rem; color: var(--color-slate-500);">Team stats currently unavailable</p>
     </section>`;
   }
+
+  // Calculate NBA Ranks from Standings
+  const nbaTeams = [];
+  if (standings && standings.children) {
+    standings.children.forEach(conf => {
+      if (conf.standings && conf.standings.entries) {
+        conf.standings.entries.forEach(entry => {
+          const stats = entry.stats || [];
+          const getStat = (name) => stats.find(s => s.name === name)?.value || 0;
+          nbaTeams.push({
+            id: entry.team.id,
+            winPct: getStat('winPercent'),
+            ppg: getStat('avgPointsFor'),
+            oppPpg: getStat('avgPointsAgainst'),
+            diff: getStat('differential')
+          });
+        });
+      }
+    });
+  }
+
+  const getNBARank = (teamId, statKey, higherIsBetter = true) => {
+    if (nbaTeams.length === 0) return "-";
+    const sorted = [...nbaTeams].sort((a, b) => higherIsBetter ? b[statKey] - a[statKey] : a[statKey] - b[statKey]);
+    const rank = sorted.findIndex(t => t.id === teamId) + 1;
+    return rank > 0 ? `#${rank}` : "-";
+  };
+
+  const sixersRankWinPct = getNBARank(SIXERS_TEAM_ID, 'winPct');
+  const sixersRankPPG = getNBARank(SIXERS_TEAM_ID, 'ppg');
+  const sixersRankOppPpg = getNBARank(SIXERS_TEAM_ID, 'oppPpg', false);
+  const sixersRankDiff = getNBARank(SIXERS_TEAM_ID, 'diff');
 
   let html = `<section class="stats-section">
     <h2 class="stats-title">Team Season Averages</h2>
@@ -100,35 +131,29 @@ function renderTeamStats(data) {
 
   let allStats = [];
   categories.forEach(cat => {
-    if (cat.stats) {
-      allStats = allStats.concat(cat.stats);
-    }
+    if (cat.stats) allStats = allStats.concat(cat.stats);
   });
 
-  // Map our display keys to the Core API names
-  // Many ranks are on the base stat name (e.g., 'points' instead of 'avgPoints')
   const keys = [
-    { key: "avgPoints", rankKey: "points", label: "Points Per Game" },
+    { key: "avgPoints", rankOverride: sixersRankPPG, label: "Points Per Game" },
+    { key: "avgOppPoints", rankOverride: sixersRankOppPpg, label: "Opponent PPG" },
+    { key: "winPercent", rankOverride: sixersRankWinPct, label: "Win Percentage" },
     { key: "avgRebounds", rankKey: "rebounds", label: "Rebounds Per Game" },
     { key: "avgAssists", rankKey: "assists", label: "Assists Per Game" },
     { key: "fieldGoalPct", rankKey: "fieldGoalPct", label: "Field Goal %" },
     { key: "threePointPct", rankKey: "threePointPct", label: "3-Point %" },
-    { key: "freeThrowPct", rankKey: "freeThrowPct", label: "Free Throw %" },
     { key: "avgBlocks", rankKey: "blocks", label: "Blocks Per Game" },
     { key: "avgSteals", rankKey: "steals", label: "Steals Per Game" },
-    { key: "paceFactor", rankKey: "paceFactor", label: "Pace" },
-    { key: "offReboundRate", rankKey: "offReboundRate", label: "Off. Rebound Rate" }
+    { key: "turnoverRatio", rankKey: "turnoverRatio", label: "Turnover Ratio" }
   ];
 
-  let hasRows = false;
   keys.forEach(item => {
     const valStat = allStats.find(s => s.name === item.key);
-    const rankStat = allStats.find(s => s.name === item.rankKey);
+    const rankStat = allStats.find(s => s.name === (item.rankKey || item.key));
     
-    if (valStat || rankStat) {
-      hasRows = true;
-      const rank = rankStat?.rankDisplayValue || (rankStat?.rank ? `#${rankStat.rank}` : "-");
-      const val = valStat?.displayValue || valStat?.value || rankStat?.perGameDisplayValue || "0.0";
+    if (valStat || rankStat || item.rankOverride) {
+      const rank = item.rankOverride || rankStat?.rankDisplayValue || (rankStat?.rank ? `#${rankStat.rank}` : "-");
+      const val = valStat?.displayValue || valStat?.value || rankStat?.displayValue || "-";
       
       html += `
         <tr>
@@ -138,10 +163,6 @@ function renderTeamStats(data) {
         </tr>`;
     }
   });
-
-  if (!hasRows) {
-    html += `<tr><td colspan="3" style="text-align:center; padding: 2rem; color: var(--color-slate-500);">Awaiting 2025-26 Season Data</td></tr>`;
-  }
 
   html += `</tbody></table></div></section>`;
   return html;
@@ -251,63 +272,6 @@ function renderPlayerStats(players) {
   return html;
 }
 
-async function renderBoxScore() {
-  try {
-    const sb = await fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard");
-    const sixersGames = sb.events
-      .filter(e => e.status.type.completed)
-      .filter(e => e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID));
-
-    if (sixersGames.length === 0) return "";
-
-    const sixersGame = sixersGames[0];
-    const box = await fetchWithUA(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${sixersGame.id}`);
-    
-    if (!box.boxscore || !box.boxscore.players) return "";
-    
-    const sixersBox = box.boxscore.players.find(p => p.team.id === SIXERS_TEAM_ID);
-    
-    if (!sixersBox || !sixersBox.statistics || !sixersBox.statistics[0]) return "";
-
-    let html = `<section class="stats-section">
-      <h2 class="stats-title">Latest Game Box Score</h2>
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>MIN</th>
-              <th>PTS</th>
-              <th>REB</th>
-              <th>AST</th>
-              <th>FG</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-    sixersBox.statistics[0].athletes.forEach(p => {
-      if (p.didNotPlay || !p.active) return;
-      const stats = p.stats || [];
-      
-      html += `
-        <tr>
-          <td class="player-name">${p.athlete.displayName}</td>
-          <td>${stats[0] || '-'}</td>
-          <td>${stats[stats.length - 1] || '-'}</td>
-          <td>${stats[6] || '-'}</td>
-          <td>${stats[7] || '-'}</td>
-          <td>${stats[1] || '-'}</td>
-        </tr>`;
-    });
-
-    html += `</tbody></table></div></section>`;
-    return html;
-  } catch (err) {
-    console.error("Box score error:", err);
-    return "";
-  }
-}
-
 async function loadAllData(force = false) {
   const container = document.getElementById("stats-app");
   if (!container) return;
@@ -320,10 +284,10 @@ async function loadAllData(force = false) {
     if (!data || force) {
       console.log("Fetching fresh data from ESPN API...");
       
-      const [sb, ts, rosterData] = await Promise.all([
-        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"),
+      const [ts, rosterData, leagueStandings] = await Promise.all([
         fetchWithUA("https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/teams/20/statistics"),
-        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster")
+        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster"),
+        fetchWithUA("https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?type=0")
       ]);
       
       const athletes = rosterData.team?.athletes || [];
@@ -384,8 +348,8 @@ async function loadAllData(force = false) {
       const filteredPlayers = players.filter(p => customIds.includes(p.id));
 
       data = {
-        scoreboard: sb,
         teamStats: ts,
+        standings: leagueStandings,
         players: filteredPlayers
       };
       
@@ -394,9 +358,8 @@ async function loadAllData(force = false) {
 
     let finalHtml = "";
     
-    finalHtml += renderTeamStats(data.teamStats);
+    finalHtml += renderTeamStats(data.teamStats, data.standings);
     finalHtml += renderPlayerStats(data.players);
-    finalHtml += await renderBoxScore();
 
     container.innerHTML = finalHtml;
   } catch (err) {
