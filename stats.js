@@ -75,8 +75,8 @@ function findStat(categories, name) {
 
 
 function renderTeamStats(data) {
-  // Use results.stats for reliable 2025-26 values and ranks from site API
-  const categories = data?.results?.stats?.categories;
+  // Use splits.categories from Core API for rankings
+  const categories = data?.splits?.categories || data?.results?.stats?.categories;
   
   if (!categories) {
     return `<section class="stats-section">
@@ -105,34 +105,30 @@ function renderTeamStats(data) {
     }
   });
 
+  // Map our display keys to the Core API names
+  // Many ranks are on the base stat name (e.g., 'points' instead of 'avgPoints')
   const keys = [
-    { key: "avgPoints", label: "Points Per Game" },
-    { key: "avgRebounds", label: "Rebounds Per Game" },
-    { key: "avgAssists", label: "Assists Per Game" },
-    { key: "fieldGoalPct", label: "Field Goal %" },
-    { key: "threePointPct", label: "3-Point %" },
-    { key: "freeThrowPct", label: "Free Throw %" },
-    { key: "avgBlocks", label: "Blocks Per Game" },
-    { key: "avgSteals", label: "Steals Per Game" },
-    { key: "paceFactor", label: "Pace" },
-    { key: "offensiveReboundRate", label: "Off. Rebound Rate" }
+    { key: "avgPoints", rankKey: "points", label: "Points Per Game" },
+    { key: "avgRebounds", rankKey: "rebounds", label: "Rebounds Per Game" },
+    { key: "avgAssists", rankKey: "assists", label: "Assists Per Game" },
+    { key: "fieldGoalPct", rankKey: "fieldGoalPct", label: "Field Goal %" },
+    { key: "threePointPct", rankKey: "threePointPct", label: "3-Point %" },
+    { key: "freeThrowPct", rankKey: "freeThrowPct", label: "Free Throw %" },
+    { key: "avgBlocks", rankKey: "blocks", label: "Blocks Per Game" },
+    { key: "avgSteals", rankKey: "steals", label: "Steals Per Game" },
+    { key: "paceFactor", rankKey: "paceFactor", label: "Pace" },
+    { key: "offReboundRate", rankKey: "offReboundRate", label: "Off. Rebound Rate" }
   ];
 
   let hasRows = false;
   keys.forEach(item => {
-    // Match by name or abbreviation (e.g., PPG for avgPoints)
-    const stat = allStats.find(s => 
-      s.name === item.key || 
-      s.abbreviation?.toLowerCase() === item.key.toLowerCase() ||
-      (item.key === "avgPoints" && s.abbreviation === "PPG") ||
-      (item.key === "avgRebounds" && s.abbreviation === "RPG") ||
-      (item.key === "avgAssists" && s.abbreviation === "APG")
-    );
-
-    if (stat) {
+    const valStat = allStats.find(s => s.name === item.key);
+    const rankStat = allStats.find(s => s.name === item.rankKey);
+    
+    if (valStat || rankStat) {
       hasRows = true;
-      const rank = stat.rankDisplayValue || (stat.rank ? `#${stat.rank}` : "-");
-      const val = stat.displayValue || stat.value || "0.0";
+      const rank = rankStat?.rankDisplayValue || (rankStat?.rank ? `#${rankStat.rank}` : "-");
+      const val = valStat?.displayValue || valStat?.value || rankStat?.perGameDisplayValue || "0.0";
       
       html += `
         <tr>
@@ -326,7 +322,7 @@ async function loadAllData(force = false) {
       
       const [sb, ts, rosterData] = await Promise.all([
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"),
-        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics?season=2026"),
+        fetchWithUA("https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/teams/20/statistics"),
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster")
       ]);
       
