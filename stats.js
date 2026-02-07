@@ -311,19 +311,19 @@ async function loadAllData(force = false) {
       
       console.log("Player stats response:", playerStatsData);
       
-      // Extract players with their season averages
-      const players = [];
-      
-      if (playerStatsData.athletes) {
-        playerStatsData.athletes.forEach(item => {
+      // Extract stats only for players in our CUSTOM_ROSTER
+      const players = CUSTOM_ROSTER.map(rosterPlayer => {
+        const item = playerStatsData.athletes?.find(a => a.athlete.id === rosterPlayer.id);
+        
+        if (item) {
           const athlete = item.athlete;
           const general = item.categories.find(c => c.name === "general") || { totals: [] };
           const offensive = item.categories.find(c => c.name === "offensive") || { totals: [] };
           
-          players.push({
+          return {
             id: athlete.id,
             name: athlete.displayName,
-            jersey: athlete.jersey,
+            jersey: rosterPlayer.no,
             position: athlete.position?.abbreviation || 'N/A',
             headshot: athlete.headshot?.href || `https://a.espncdn.com/i/headshots/nba/players/full/${athlete.id}.png`,
             gp: parseInt(general.totals[0]) || 0,
@@ -333,9 +333,25 @@ async function loadAllData(force = false) {
             apg: offensive.totals[10] || '0.0',
             fgPct: offensive.totals[3] || '0.0',
             fg3Pct: offensive.totals[6] || '0.0'
-          });
-        });
-      }
+          };
+        } else {
+          // Fallback for players with no active stats yet
+          return {
+            id: rosterPlayer.id,
+            name: rosterPlayer.name,
+            jersey: rosterPlayer.no,
+            position: 'N/A',
+            headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${rosterPlayer.id}.png`,
+            gp: 0,
+            mpg: '0.0',
+            ppg: '0.0',
+            rpg: '0.0',
+            apg: '0.0',
+            fgPct: '0.0',
+            fg3Pct: '0.0'
+          };
+        }
+      });
       
       console.log("Extracted players:", players);
       console.log("Players with games played > 0:", players.filter(p => p.gp > 0).length);
