@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <a href="https://sixershoops.com/salary" class="dropdown-item">Salary Breakdown</a>
                     <a href="https://sixershoops.com/sixers-depth-chart" class="dropdown-item">Depth Chart</a>
                     <a href="https://sixershoops.com/future-draft-picks" class="dropdown-item">Draft Picks</a>
+                    <a href="https://sixershoops.com/standings" class="dropdown-item">NBA Standings</a>
                 </div>
             </li>
             <li class="nav-item">
@@ -241,6 +242,9 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/future-draft-picks" class="mobile-nav-link">Draft Picks</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/standings" class="mobile-nav-link">NBA Standings</a>
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/schedule" class="mobile-nav-link">Schedule</a>
