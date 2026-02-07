@@ -26,9 +26,7 @@ const CUSTOM_ROSTER = [
 const endpoints = {
   scoreboard: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
   teamSeasonStats: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics",
-  // Use team roster which should have all current Sixers
   teamRoster: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/roster",
-  // League-wide stats
   leagueStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&limit=500"
 };
 
@@ -137,7 +135,6 @@ function renderTeamStats(data) {
 function renderLeaders(athletes) {
   if (!athletes || athletes.length === 0) return "";
 
-  // Get top 3 scorers
   const topScorers = [...athletes]
     .filter(a => a.stats && a.stats.ppg && parseFloat(a.stats.ppg) > 0)
     .sort((a, b) => parseFloat(b.stats.ppg) - parseFloat(a.stats.ppg))
@@ -178,7 +175,6 @@ function renderPlayerStats(allAthletes) {
     </section>`;
   }
 
-  // Map athletes by ID for quick access
   const athleteMap = new Map();
   allAthletes.forEach(a => {
     if (a.id) {
@@ -186,16 +182,11 @@ function renderPlayerStats(allAthletes) {
     }
   });
 
-  console.log("Athlete map size:", athleteMap.size);
-  console.log("Sample athlete data:", allAthletes[0]);
-
-  // Prepare full roster display based on CUSTOM_ROSTER
   const rosterData = CUSTOM_ROSTER.map(player => {
     const stats = athleteMap.get(String(player.id));
     return { player, stats };
   });
 
-  // Sort: Players with stats first, then by PPG
   rosterData.sort((a, b) => {
     if (!a.stats && !b.stats) return 0;
     if (!a.stats) return 1;
@@ -205,7 +196,6 @@ function renderPlayerStats(allAthletes) {
     return bPPG - aPPG;
   });
 
-  // Render Leaders
   const leaders = rosterData.filter(d => d.stats).map(d => d.stats);
   let html = renderLeaders(leaders);
 
@@ -255,7 +245,6 @@ function renderPlayerStats(allAthletes) {
 
   html += `</tbody></table></div></section>`;
   
-  // Add Social Export section
   html += `
     <div class="export-container">
       <div class="export-btns-group">
@@ -331,71 +320,6 @@ async function renderBoxScore() {
   }
 }
 
-// Parse player statistics from various ESPN API formats
-function parsePlayerStats(athleteData) {
-  const stats = {
-    gp: '0',
-    ppg: '0.0',
-    rpg: '0.0',
-    apg: '0.0',
-    spg: '0.0',
-    bpg: '0.0',
-    fgPct: '0.0'
-  };
-
-  if (!athleteData) return stats;
-
-  // Try to extract from statistics array format
-  if (athleteData.statistics && Array.isArray(athleteData.statistics)) {
-    const currentSeason = athleteData.statistics.find(s => 
-      s.season?.year === 2026 || s.season?.year === 2025 || s.type === 'total'
-    ) || athleteData.statistics[0];
-
-    if (currentSeason && currentSeason.categories) {
-      const general = currentSeason.categories.find(c => c.name === 'general');
-      const offensive = currentSeason.categories.find(c => c.name === 'offensive');
-      const defensive = currentSeason.categories.find(c => c.name === 'defensive');
-
-      if (general?.totals) {
-        stats.gp = general.totals[0] || '0';
-        stats.rpg = general.totals[11] || '0.0';
-      }
-      if (offensive?.totals) {
-        stats.ppg = offensive.totals[0] || '0.0';
-        stats.apg = offensive.totals[10] || '0.0';
-        stats.fgPct = offensive.totals[3] || '0.0';
-      }
-      if (defensive?.totals) {
-        stats.spg = defensive.totals[0] || '0.0';
-        stats.bpg = defensive.totals[1] || '0.0';
-      }
-    }
-  }
-
-  // Try to extract from athlete.statistics format (league stats endpoint)
-  if (athleteData.categories && Array.isArray(athleteData.categories)) {
-    const general = athleteData.categories.find(c => c.name === 'general');
-    const offensive = athleteData.categories.find(c => c.name === 'offensive');
-    const defensive = athleteData.categories.find(c => c.name === 'defensive');
-
-    if (general?.totals) {
-      stats.gp = general.totals[0] || stats.gp;
-      stats.rpg = general.totals[11] || stats.rpg;
-    }
-    if (offensive?.totals) {
-      stats.ppg = offensive.totals[0] || stats.ppg;
-      stats.apg = offensive.totals[10] || stats.apg;
-      stats.fgPct = offensive.totals[3] || stats.fgPct;
-    }
-    if (defensive?.totals) {
-      stats.spg = defensive.totals[0] || stats.spg;
-      stats.bpg = defensive.totals[1] || stats.bpg;
-    }
-  }
-
-  return stats;
-}
-
 async function loadAllData(force = false) {
   const container = document.getElementById("stats-app");
   
@@ -409,98 +333,123 @@ async function loadAllData(force = false) {
   try {
     let data = getCache();
     if (!data || force) {
-      console.log("Fetching fresh data...");
+      console.log("🔍 Fetching fresh data...");
       
-      // Fetch scoreboard, team stats, and roster
-      const [sb, ts, roster] = await Promise.all([
+      const [sb, ts] = await Promise.all([
         fetchWithUA(endpoints.scoreboard),
-        fetchWithUA(endpoints.teamSeasonStats),
-        fetchWithUA(endpoints.teamRoster).catch(() => ({ athletes: [] }))
+        fetchWithUA(endpoints.teamSeasonStats)
       ]);
 
-      console.log("Roster data:", roster);
+      console.log("📊 Testing with Tyrese Maxey (ID: 4431678)...");
       
-      // Fetch league stats to get player statistics
-      const leagueStats = await fetchWithUA(endpoints.leagueStats).catch(err => {
-        console.error("League stats error:", err);
-        return { athletes: [] };
-      });
-
-      console.log("League stats fetched, athletes count:", leagueStats.athletes?.length || 0);
-
-      // Create a map of all players with stats from league data
-      const leagueStatsMap = new Map();
-      if (leagueStats.athletes) {
-        leagueStats.athletes.forEach(athlete => {
-          if (athlete.athlete && athlete.athlete.id) {
-            leagueStatsMap.set(String(athlete.athlete.id), athlete);
+      // Test fetching Maxey's stats with the individual endpoint
+      const testUrl = `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4431678/statistics`;
+      console.log("🔗 Test URL:", testUrl);
+      
+      const testResponse = await fetch(testUrl);
+      const testData = await testResponse.json();
+      
+      console.log("📦 FULL API RESPONSE FOR MAXEY:");
+      console.log(JSON.stringify(testData, null, 2));
+      
+      // Let's see the structure
+      if (testData.statistics) {
+        console.log("✅ Statistics array found, length:", testData.statistics.length);
+        testData.statistics.forEach((stat, i) => {
+          console.log(`  Season ${i}:`, stat.season, stat.type);
+          if (stat.categories) {
+            stat.categories.forEach(cat => {
+              console.log(`    - ${cat.name}:`, cat.totals);
+            });
           }
         });
       }
 
-      console.log("League stats map size:", leagueStatsMap.size);
-
-      // Build our custom roster with stats
+      // Now fetch ALL players
+      console.log("\n🏀 Fetching all custom roster players...");
       const allAthletes = [];
       
-      for (const customPlayer of CUSTOM_ROSTER) {
-        // Check if player is in league stats
-        const leagueData = leagueStatsMap.get(String(customPlayer.id));
-        
-        if (leagueData) {
-          console.log(`Found stats for ${customPlayer.name}:`, leagueData);
+      for (const player of CUSTOM_ROSTER) {
+        try {
+          const url = `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${player.id}/statistics`;
+          const response = await fetch(url);
           
-          allAthletes.push({
-            id: customPlayer.id,
-            name: leagueData.athlete.displayName,
-            headshot: leagueData.athlete.headshot?.href,
-            position: leagueData.athlete.position?.abbreviation || 'N/A',
-            stats: parsePlayerStats(leagueData)
-          });
-        } else {
-          // Try fetching individual player stats
-          console.log(`Fetching individual stats for ${customPlayer.name} (${customPlayer.id})`);
-          
-          try {
-            const individualStats = await fetch(
-              `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${customPlayer.id}/statistics`
-            ).then(res => res.ok ? res.json() : null);
-
-            if (individualStats && individualStats.athlete) {
-              console.log(`Individual stats found for ${customPlayer.name}:`, individualStats);
-              
-              allAthletes.push({
-                id: customPlayer.id,
-                name: individualStats.athlete.displayName,
-                headshot: individualStats.athlete.headshot?.href,
-                position: individualStats.athlete.position?.abbreviation || 'N/A',
-                stats: parsePlayerStats(individualStats)
-              });
-            } else {
-              // Fallback - no stats available
-              console.log(`No stats found for ${customPlayer.name}`);
-              allAthletes.push({
-                id: customPlayer.id,
-                name: customPlayer.name,
-                headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${customPlayer.id}.png`,
-                position: 'N/A',
-                stats: null
-              });
-            }
-          } catch (err) {
-            console.error(`Error fetching stats for ${customPlayer.name}:`, err);
+          if (!response.ok) {
+            console.log(`❌ ${player.name}: HTTP ${response.status}`);
             allAthletes.push({
-              id: customPlayer.id,
-              name: customPlayer.name,
-              headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${customPlayer.id}.png`,
+              id: player.id,
+              name: player.name,
+              headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`,
               position: 'N/A',
               stats: null
             });
+            continue;
           }
+          
+          const playerData = await response.json();
+          
+          // Find current season stats
+          let currentStats = null;
+          if (playerData.statistics && playerData.statistics.length > 0) {
+            // Look for 2025-26 season or most recent
+            currentStats = playerData.statistics.find(s => s.season?.year === 2026) ||
+                          playerData.statistics.find(s => s.season?.year === 2025) ||
+                          playerData.statistics[0];
+          }
+          
+          if (currentStats && currentStats.categories) {
+            const general = currentStats.categories.find(c => c.name === 'general');
+            const offensive = currentStats.categories.find(c => c.name === 'offensive');
+            const defensive = currentStats.categories.find(c => c.name === 'defensive');
+            
+            const stats = {
+              gp: general?.totals?.[0] || '0',
+              ppg: offensive?.totals?.[0] || '0.0',
+              rpg: general?.totals?.[11] || '0.0',
+              apg: offensive?.totals?.[10] || '0.0',
+              spg: defensive?.totals?.[0] || '0.0',
+              bpg: defensive?.totals?.[1] || '0.0',
+              fgPct: offensive?.totals?.[3] || '0.0'
+            };
+            
+            console.log(`✅ ${player.name}: ${stats.ppg} PPG, ${stats.rpg} RPG, ${stats.apg} APG`);
+            
+            allAthletes.push({
+              id: player.id,
+              name: playerData.athlete?.displayName || player.name,
+              headshot: playerData.athlete?.headshot?.href || `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`,
+              position: playerData.athlete?.position?.abbreviation || 'N/A',
+              stats: stats
+            });
+          } else {
+            console.log(`⚠️ ${player.name}: No stats found in response`);
+            allAthletes.push({
+              id: player.id,
+              name: playerData.athlete?.displayName || player.name,
+              headshot: playerData.athlete?.headshot?.href || `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`,
+              position: playerData.athlete?.position?.abbreviation || 'N/A',
+              stats: null
+            });
+          }
+          
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+        } catch (err) {
+          console.error(`❌ ${player.name} error:`, err);
+          allAthletes.push({
+            id: player.id,
+            name: player.name,
+            headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`,
+            position: 'N/A',
+            stats: null
+          });
         }
       }
       
-      console.log("Final athlete data:", allAthletes);
+      console.log("\n📋 Final athlete data summary:");
+      console.log(`Total players: ${allAthletes.length}`);
+      console.log(`Players with stats: ${allAthletes.filter(a => a.stats).length}`);
       
       data = {
         scoreboard: sb,
@@ -508,14 +457,13 @@ async function loadAllData(force = false) {
         allPlayerStats: allAthletes
       };
       setCache(data);
-      console.log("Data fetched and cached successfully");
+      console.log("✅ Data cached successfully");
     } else {
-      console.log("Using cached data");
+      console.log("💾 Using cached data");
     }
 
     let finalHtml = "";
     
-    // Filter for Sixers games
     const sixersGames = data.scoreboard.events.filter(e => 
       e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID)
     );
@@ -526,9 +474,9 @@ async function loadAllData(force = false) {
     finalHtml += await renderBoxScore();
 
     container.innerHTML = finalHtml;
-    console.log("Stats rendered successfully");
+    console.log("✅ Stats rendered successfully");
   } catch (err) {
-    console.error("Load data error:", err);
+    console.error("❌ Load data error:", err);
     container.innerHTML = `<p style="color:red; text-align:center; padding: 2rem;">Error loading stats: ${err.message}<br><small>Check console for details</small></p>`;
   }
 }
@@ -645,13 +593,11 @@ function closeExportModal() {
   if (modal) modal.style.display = "none";
 }
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-  console.log("Initializing Sixers Stats App");
+  console.log("🏀 Initializing Sixers Stats App with DEBUG MODE");
   loadAllData();
-  // Auto-refresh every 10 minutes
   setInterval(() => {
-    console.log("Auto-refreshing stats...");
+    console.log("🔄 Auto-refreshing stats...");
     loadAllData(true);
   }, 10 * 60 * 1000);
 });
