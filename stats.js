@@ -302,36 +302,37 @@ async function loadAllData(force = false) {
     if (!data || force) {
       console.log("Fetching fresh data from ESPN...");
       
-      // Fetch scoreboard and team stats
-      const [sb, ts, roster] = await Promise.all([
+      // Fetch scoreboard, team stats, and individual player stats for the current season
+      const [sb, ts, playerStatsData] = await Promise.all([
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"),
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics"),
-        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster")
+        fetchWithUA("https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isQualified=false&limit=50&team=20")
       ]);
       
-      console.log("Roster response:", roster);
+      console.log("Player stats response:", playerStatsData);
       
-      // Extract players from roster with stats
+      // Extract players with their season averages
       const players = [];
       
-      if (roster.team && roster.team.athletes) {
-        roster.team.athletes.forEach(athlete => {
-          // Get stats from the athlete object
-          const stats = athlete.statistics || {};
+      if (playerStatsData.athletes) {
+        playerStatsData.athletes.forEach(item => {
+          const athlete = item.athlete;
+          const general = item.categories.find(c => c.name === "general") || { totals: [] };
+          const offensive = item.categories.find(c => c.name === "offensive") || { totals: [] };
           
           players.push({
             id: athlete.id,
-            name: athlete.displayName || athlete.fullName,
+            name: athlete.displayName,
             jersey: athlete.jersey,
             position: athlete.position?.abbreviation || 'N/A',
             headshot: athlete.headshot?.href || `https://a.espncdn.com/i/headshots/nba/players/full/${athlete.id}.png`,
-            gp: stats.gamesPlayed || 0,
-            mpg: stats.avgMinutes || '0.0',
-            ppg: stats.avgPoints || '0.0',
-            rpg: stats.avgRebounds || '0.0',
-            apg: stats.avgAssists || '0.0',
-            fgPct: stats.fieldGoalPct ? (stats.fieldGoalPct * 100).toFixed(1) : '0.0',
-            fg3Pct: stats.threePointPct ? (stats.threePointPct * 100).toFixed(1) : '0.0'
+            gp: parseInt(general.totals[0]) || 0,
+            mpg: general.totals[1] || '0.0',
+            ppg: offensive.totals[0] || '0.0',
+            rpg: general.totals[11] || '0.0',
+            apg: offensive.totals[10] || '0.0',
+            fgPct: offensive.totals[3] || '0.0',
+            fg3Pct: offensive.totals[6] || '0.0'
           });
         });
       }
@@ -412,7 +413,7 @@ async function generateSocialImage(mode) {
     <div class="social-header">
       <div class="social-title-box">
         <h1>SIXERS ROSTER STATS</h1>
-        <p>2024-25 Regular Season • Season Leaders</p>
+        <p>2025-26 Regular Season • Season Leaders</p>
       </div>
       <div class="social-branding">
         <span class="domain">SIXERSHOOPS.COM</span>
