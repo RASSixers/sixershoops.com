@@ -74,47 +74,72 @@ function findStat(categories, name) {
 
 
 
-function renderTeamStats(data, standings) {
+function renderTeamStats(data, standings, leagueStats) {
   const categories = data?.splits?.categories;
   
-  if (!categories) {
+  if (!categories || !leagueStats || leagueStats.length === 0) {
     return `<section class="stats-section">
       <h2 class="stats-title">Team Season Averages</h2>
       <p style="text-align:center; padding: 1rem; color: var(--color-slate-500);">Team stats currently unavailable</p>
     </section>`;
   }
 
-  // Calculate NBA Ranks from Standings
-  const nbaTeams = [];
+  const getStatValue = (teamData, statName) => {
+    const cats = teamData?.splits?.categories || [];
+    for (const cat of cats) {
+      const s = cat.stats?.find(st => st.name === statName);
+      if (s) return s.value;
+    }
+    return 0;
+  };
+
+  // Combine Standings (PPG, Opp PPG, Win%) and League Stats (Advanced)
+  const nbaTeamsCombined = [];
   if (standings && standings.children) {
     standings.children.forEach(conf => {
-      if (conf.standings && conf.standings.entries) {
-        conf.standings.entries.forEach(entry => {
-          const stats = entry.stats || [];
-          const getStat = (name) => stats.find(s => s.name === name)?.value || 0;
-          nbaTeams.push({
-            id: entry.team.id,
-            winPct: getStat('winPercent'),
-            ppg: getStat('avgPointsFor'),
-            oppPpg: getStat('avgPointsAgainst'),
-            diff: getStat('differential')
-          });
+      conf.standings?.entries?.forEach(entry => {
+        const teamId = entry.team.id;
+        const sStats = entry.stats || [];
+        const getSStat = (name) => sStats.find(s => s.name === name)?.value || 0;
+        
+        const lStat = leagueStats.find(ls => {
+           const ref = ls.team?.$ref || "";
+           return ref.split('/').pop()?.split('?')[0] === teamId;
         });
-      }
+
+        const pace = getStatValue(lStat, 'paceFactor') || 100;
+        const ppg = getSStat('avgPointsFor');
+        const oppPpg = getSStat('avgPointsAgainst');
+
+        nbaTeamsCombined.push({
+          id: teamId,
+          winPct: getSStat('winPercent'),
+          ppg: ppg,
+          oppPpg: oppPpg,
+          offRtg: (ppg / pace) * 100,
+          defRtg: (oppPpg / pace) * 100,
+          rpg: getStatValue(lStat, 'avgRebounds'),
+          apg: getStatValue(lStat, 'avgAssists'),
+          bpg: getStatValue(lStat, 'avgBlocks'),
+          spg: getStatValue(lStat, 'avgSteals'),
+          to: getStatValue(lStat, 'avgTurnovers'),
+          toRatio: getStatValue(lStat, 'turnoverRatio'),
+          fgPct: getStatValue(lStat, 'fieldGoalPct'),
+          fg3Pct: getStatValue(lStat, 'threePointPct'),
+          pace: pace
+        });
+      });
     });
   }
 
-  const getNBARank = (teamId, statKey, higherIsBetter = true) => {
-    if (nbaTeams.length === 0) return "-";
-    const sorted = [...nbaTeams].sort((a, b) => higherIsBetter ? b[statKey] - a[statKey] : a[statKey] - b[statKey]);
+  const getNBARankCombined = (teamId, field, higherIsBetter = true) => {
+    if (nbaTeamsCombined.length === 0) return "-";
+    const sorted = [...nbaTeamsCombined].sort((a, b) => higherIsBetter ? b[field] - a[field] : a[field] - b[field]);
     const rank = sorted.findIndex(t => t.id === teamId) + 1;
     return rank > 0 ? `#${rank}` : "-";
   };
 
-  const sixersRankWinPct = getNBARank(SIXERS_TEAM_ID, 'winPct');
-  const sixersRankPPG = getNBARank(SIXERS_TEAM_ID, 'ppg');
-  const sixersRankOppPpg = getNBARank(SIXERS_TEAM_ID, 'oppPpg', false);
-  const sixersRankDiff = getNBARank(SIXERS_TEAM_ID, 'diff');
+  const sixers = nbaTeamsCombined.find(t => t.id === SIXERS_TEAM_ID) || {};
 
   let html = `<section class="stats-section">
     <h2 class="stats-title">Team Season Averages</h2>
@@ -129,39 +154,28 @@ function renderTeamStats(data, standings) {
         </thead>
         <tbody>`;
 
-  let allStats = [];
-  categories.forEach(cat => {
-    if (cat.stats) allStats = allStats.concat(cat.stats);
-  });
-
-  const keys = [
-    { key: "avgPoints", rankOverride: sixersRankPPG, label: "Points Per Game" },
-    { key: "avgOppPoints", rankOverride: sixersRankOppPpg, label: "Opponent PPG" },
-    { key: "winPercent", rankOverride: sixersRankWinPct, label: "Win Percentage" },
-    { key: "avgRebounds", rankKey: "rebounds", label: "Rebounds Per Game" },
-    { key: "avgAssists", rankKey: "assists", label: "Assists Per Game" },
-    { key: "fieldGoalPct", rankKey: "fieldGoalPct", label: "Field Goal %" },
-    { key: "threePointPct", rankKey: "threePointPct", label: "3-Point %" },
-    { key: "avgBlocks", rankKey: "blocks", label: "Blocks Per Game" },
-    { key: "avgSteals", rankKey: "steals", label: "Steals Per Game" },
-    { key: "turnoverRatio", rankKey: "turnoverRatio", label: "Turnover Ratio" }
+  const rows = [
+    { label: "Points Per Game", val: sixers.ppg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ppg') },
+    { label: "Opponent PPG", val: sixers.oppPpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'oppPpg', false) },
+    { label: "Offensive Rating", val: sixers.offRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'offRtg') },
+    { label: "Defensive Rating", val: sixers.defRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'defRtg', false) },
+    { label: "Win Percentage", val: sixers.winPct?.toFixed(3), rank: getNBARankCombined(SIXERS_TEAM_ID, 'winPct') },
+    { label: "Rebounds Per Game", val: sixers.rpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'rpg') },
+    { label: "Assists Per Game", val: sixers.apg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'apg') },
+    { label: "Blocks Per Game", val: sixers.bpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'bpg') },
+    { label: "Steals Per Game", val: sixers.spg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'spg') },
+    { label: "Turnover Ratio", val: sixers.toRatio?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'toRatio', false) },
+    { label: "Field Goal %", val: sixers.fgPct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fgPct') },
+    { label: "3-Point %", val: sixers.fg3Pct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3Pct') }
   ];
 
-  keys.forEach(item => {
-    const valStat = allStats.find(s => s.name === item.key);
-    const rankStat = allStats.find(s => s.name === (item.rankKey || item.key));
-    
-    if (valStat || rankStat || item.rankOverride) {
-      const rank = item.rankOverride || rankStat?.rankDisplayValue || (rankStat?.rank ? `#${rankStat.rank}` : "-");
-      const val = valStat?.displayValue || valStat?.value || rankStat?.displayValue || "-";
-      
-      html += `
-        <tr>
-          <td class="stat-label">${item.label}</td>
-          <td class="stat-value" style="text-align: right; font-weight: 800;">${val}</td>
-          <td class="stat-rank" style="text-align: right; color: var(--color-sky); font-weight: 900;">${rank}</td>
-        </tr>`;
-    }
+  rows.forEach(row => {
+    html += `
+      <tr>
+        <td class="stat-label">${row.label}</td>
+        <td class="stat-value" style="text-align: right; font-weight: 800;">${row.val || '-'}</td>
+        <td class="stat-rank" style="text-align: right; color: var(--color-sky); font-weight: 900;">${row.rank}</td>
+      </tr>`;
   });
 
   html += `</tbody></table></div></section>`;
@@ -289,6 +303,15 @@ async function loadAllData(force = false) {
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster"),
         fetchWithUA("https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?type=0")
       ]);
+
+      // Fetch all team stats for accurate ranking
+      console.log("Fetching league-wide team stats for accurate ranking...");
+      const allTeamStats = await Promise.all(
+        Array.from({ length: 30 }, (_, i) => 
+          fetchWithUA(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/teams/${i + 1}/statistics`)
+            .catch(() => null)
+        )
+      );
       
       const athletes = rosterData.team?.athletes || [];
       
@@ -350,6 +373,7 @@ async function loadAllData(force = false) {
       data = {
         teamStats: ts,
         standings: leagueStandings,
+        leagueStats: allTeamStats.filter(s => s !== null),
         players: filteredPlayers
       };
       
@@ -358,7 +382,7 @@ async function loadAllData(force = false) {
 
     let finalHtml = "";
     
-    finalHtml += renderTeamStats(data.teamStats, data.standings);
+    finalHtml += renderTeamStats(data.teamStats, data.standings, data.leagueStats);
     finalHtml += renderPlayerStats(data.players);
 
     container.innerHTML = finalHtml;
