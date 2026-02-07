@@ -26,8 +26,10 @@ const CUSTOM_ROSTER = [
 const endpoints = {
   scoreboard: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
   teamSeasonStats: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics",
-  leagueStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=true&limit=1000",
-  teamRosterStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=false&limit=100&team=20"
+  // Use team roster which should have all current Sixers
+  teamRoster: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/roster",
+  // League-wide stats
+  leagueStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&limit=500"
 };
 
 function getCache() {
@@ -137,15 +139,8 @@ function renderLeaders(athletes) {
 
   // Get top 3 scorers
   const topScorers = [...athletes]
-    .filter(a => {
-      const off = a.categories.find(c => c.name === "offensive");
-      return off && off.totals && off.totals[0];
-    })
-    .sort((a, b) => {
-      const aOff = a.categories.find(c => c.name === "offensive");
-      const bOff = b.categories.find(c => c.name === "offensive");
-      return parseFloat(bOff.totals[0] || 0) - parseFloat(aOff.totals[0] || 0);
-    })
+    .filter(a => a.stats && a.stats.ppg && parseFloat(a.stats.ppg) > 0)
+    .sort((a, b) => parseFloat(b.stats.ppg) - parseFloat(a.stats.ppg))
     .slice(0, 3);
 
   if (topScorers.length === 0) return "";
@@ -155,22 +150,17 @@ function renderLeaders(athletes) {
     <div class="leaders-grid">`;
 
   topScorers.forEach((a, idx) => {
-    const off = a.categories.find(c => c.name === "offensive");
-    const gen = a.categories.find(c => c.name === "general");
-    const ppg = off?.totals?.[0] || "0.0";
-    const rpg = gen?.totals?.[11] || "0.0";
-    
     html += `
       <div class="leader-card ${idx === 0 ? 'primary' : ''}">
         <div class="leader-rank">#${idx + 1}</div>
-        <img src="${a.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="leader-img" alt="${a.athlete.displayName}">
+        <img src="${a.headshot || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="leader-img" alt="${a.name}">
         <div class="leader-info">
-          <div class="leader-name">${a.athlete.displayName}</div>
-          <div class="leader-pos">${a.athlete.position?.displayName || 'N/A'}</div>
+          <div class="leader-name">${a.name}</div>
+          <div class="leader-pos">${a.position || 'N/A'}</div>
           <div class="leader-stats">
-            <span class="leader-val">${ppg}</span> <span class="leader-unit">PPG</span>
+            <span class="leader-val">${a.stats.ppg}</span> <span class="leader-unit">PPG</span>
             <span class="leader-divider">|</span>
-            <span class="leader-val">${rpg}</span> <span class="leader-unit">RPG</span>
+            <span class="leader-val">${a.stats.rpg}</span> <span class="leader-unit">RPG</span>
           </div>
         </div>
       </div>`;
@@ -181,15 +171,23 @@ function renderLeaders(athletes) {
 }
 
 function renderPlayerStats(allAthletes) {
-  if (!allAthletes || allAthletes.length === 0) return "";
+  if (!allAthletes || allAthletes.length === 0) {
+    return `<section class="stats-section">
+      <h2 class="stats-title">Roster Season Averages</h2>
+      <p>No player stats available. The season may not have started yet or data is loading.</p>
+    </section>`;
+  }
 
   // Map athletes by ID for quick access
   const athleteMap = new Map();
   allAthletes.forEach(a => {
-    if (a.athlete && a.athlete.id) {
-      athleteMap.set(String(a.athlete.id), a);
+    if (a.id) {
+      athleteMap.set(String(a.id), a);
     }
   });
+
+  console.log("Athlete map size:", athleteMap.size);
+  console.log("Sample athlete data:", allAthletes[0]);
 
   // Prepare full roster display based on CUSTOM_ROSTER
   const rosterData = CUSTOM_ROSTER.map(player => {
@@ -202,12 +200,12 @@ function renderPlayerStats(allAthletes) {
     if (!a.stats && !b.stats) return 0;
     if (!a.stats) return 1;
     if (!b.stats) return -1;
-    const aPPG = parseFloat(a.stats.categories.find(c => c.name === "offensive")?.totals?.[0] || 0);
-    const bPPG = parseFloat(b.stats.categories.find(c => c.name === "offensive")?.totals?.[0] || 0);
+    const aPPG = parseFloat(a.stats.stats?.ppg || 0);
+    const bPPG = parseFloat(b.stats.stats?.ppg || 0);
     return bPPG - aPPG;
   });
 
-  // Render Leaders (only if they have stats)
+  // Render Leaders
   const leaders = rosterData.filter(d => d.stats).map(d => d.stats);
   let html = renderLeaders(leaders);
 
@@ -232,25 +230,26 @@ function renderPlayerStats(allAthletes) {
         <tbody>`;
 
   rosterData.forEach(({ player, stats }) => {
-    const general = stats?.categories.find(c => c.name === "general");
-    const offensive = stats?.categories.find(c => c.name === "offensive");
-    const defensive = stats?.categories.find(c => c.name === "defensive");
-
+    const s = stats?.stats || {};
+    
     html += `
       <tr ${!stats ? 'style="opacity: 0.6;"' : ''}>
         <td class="player-name-cell">
-          <img src="${stats?.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="player-thumb" alt="${player.name}">
+          <img src="${stats?.headshot || 'https://a.espncdn.com/i/headshots/nba/players/full/' + player.id + '.png'}" 
+               class="player-thumb" 
+               alt="${player.name}"
+               onerror="this.src='https://a.espncdn.com/i/headshots/nba/players/full/0.png'">
           <span class="player-name">${player.name}</span>
         </td>
         <td style="font-weight:900; color:var(--color-navy)">${player.no}</td>
-        <td class="pos-tag">${stats?.athlete.position?.abbreviation || 'N/A'}</td>
-        <td>${general?.totals?.[0] || '0'}</td>
-        <td class="stat-highlight">${offensive?.totals?.[0] || '0.0'}</td>
-        <td>${general?.totals?.[11] || '0.0'}</td>
-        <td>${offensive?.totals?.[10] || '0.0'}</td>
-        <td>${defensive?.totals?.[0] || '0.0'}</td>
-        <td>${defensive?.totals?.[1] || '0.0'}</td>
-        <td>${offensive?.totals?.[3] || '0.0'}</td>
+        <td class="pos-tag">${stats?.position || 'N/A'}</td>
+        <td>${s.gp || '0'}</td>
+        <td class="stat-highlight">${s.ppg || '0.0'}</td>
+        <td>${s.rpg || '0.0'}</td>
+        <td>${s.apg || '0.0'}</td>
+        <td>${s.spg || '0.0'}</td>
+        <td>${s.bpg || '0.0'}</td>
+        <td>${s.fgPct || '0.0'}</td>
       </tr>`;
   });
 
@@ -307,7 +306,6 @@ async function renderBoxScore() {
       if (p.didNotPlay || !p.active) return;
       const stats = p.stats || [];
       
-      // ESPN box score stats array typically: [MIN, FG, 3PT, FT, OREB, DREB, REB, AST, STL, BLK, TO, PF, +/-, PTS]
       const minutes = stats[0] || '-';
       const fg = stats[1] || '-';
       const reb = stats[6] || '-';
@@ -333,6 +331,71 @@ async function renderBoxScore() {
   }
 }
 
+// Parse player statistics from various ESPN API formats
+function parsePlayerStats(athleteData) {
+  const stats = {
+    gp: '0',
+    ppg: '0.0',
+    rpg: '0.0',
+    apg: '0.0',
+    spg: '0.0',
+    bpg: '0.0',
+    fgPct: '0.0'
+  };
+
+  if (!athleteData) return stats;
+
+  // Try to extract from statistics array format
+  if (athleteData.statistics && Array.isArray(athleteData.statistics)) {
+    const currentSeason = athleteData.statistics.find(s => 
+      s.season?.year === 2026 || s.season?.year === 2025 || s.type === 'total'
+    ) || athleteData.statistics[0];
+
+    if (currentSeason && currentSeason.categories) {
+      const general = currentSeason.categories.find(c => c.name === 'general');
+      const offensive = currentSeason.categories.find(c => c.name === 'offensive');
+      const defensive = currentSeason.categories.find(c => c.name === 'defensive');
+
+      if (general?.totals) {
+        stats.gp = general.totals[0] || '0';
+        stats.rpg = general.totals[11] || '0.0';
+      }
+      if (offensive?.totals) {
+        stats.ppg = offensive.totals[0] || '0.0';
+        stats.apg = offensive.totals[10] || '0.0';
+        stats.fgPct = offensive.totals[3] || '0.0';
+      }
+      if (defensive?.totals) {
+        stats.spg = defensive.totals[0] || '0.0';
+        stats.bpg = defensive.totals[1] || '0.0';
+      }
+    }
+  }
+
+  // Try to extract from athlete.statistics format (league stats endpoint)
+  if (athleteData.categories && Array.isArray(athleteData.categories)) {
+    const general = athleteData.categories.find(c => c.name === 'general');
+    const offensive = athleteData.categories.find(c => c.name === 'offensive');
+    const defensive = athleteData.categories.find(c => c.name === 'defensive');
+
+    if (general?.totals) {
+      stats.gp = general.totals[0] || stats.gp;
+      stats.rpg = general.totals[11] || stats.rpg;
+    }
+    if (offensive?.totals) {
+      stats.ppg = offensive.totals[0] || stats.ppg;
+      stats.apg = offensive.totals[10] || stats.apg;
+      stats.fgPct = offensive.totals[3] || stats.fgPct;
+    }
+    if (defensive?.totals) {
+      stats.spg = defensive.totals[0] || stats.spg;
+      stats.bpg = defensive.totals[1] || stats.bpg;
+    }
+  }
+
+  return stats;
+}
+
 async function loadAllData(force = false) {
   const container = document.getElementById("stats-app");
   
@@ -348,58 +411,96 @@ async function loadAllData(force = false) {
     if (!data || force) {
       console.log("Fetching fresh data...");
       
-      // Fetch scoreboard and team stats
-      const [sb, ts] = await Promise.all([
+      // Fetch scoreboard, team stats, and roster
+      const [sb, ts, roster] = await Promise.all([
         fetchWithUA(endpoints.scoreboard),
-        fetchWithUA(endpoints.teamSeasonStats)
+        fetchWithUA(endpoints.teamSeasonStats),
+        fetchWithUA(endpoints.teamRoster).catch(() => ({ athletes: [] }))
       ]);
-      
-      // Fetch individual stats for EVERY player in our custom roster in parallel
-      const playerStatsPromises = CUSTOM_ROSTER.map(player => 
-        fetch(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${player.id}/statistics`)
-          .then(res => res.ok ? res.json() : null)
-          .catch(err => {
-            console.warn(`Failed to fetch stats for ${player.name}:`, err);
-            return null;
-          })
-      );
-      
-      const individualResults = await Promise.all(playerStatsPromises);
-      
-      // Merge results with our custom roster info
-      const allAthletes = individualResults.map((res, idx) => {
-        const customPlayer = CUSTOM_ROSTER[idx];
-        if (res && res.athlete) {
-          // Find the Regular Season stats for 2025-26 (or most recent)
-          const statsEntry = res.statistics?.find(s => s.season?.year === 2026) || 
-                            res.statistics?.find(s => s.season?.year === 2025) ||
-                            res.statistics?.[0] || 
-                            { categories: [] };
 
-          return {
-            athlete: {
-              id: res.athlete.id,
-              displayName: res.athlete.displayName,
-              headshot: res.athlete.headshot,
-              position: res.athlete.position || { abbreviation: "N/A", displayName: "Unknown" },
-              displayOrder: idx
-            },
-            categories: statsEntry.categories || []
-          };
-        } else {
-          // Fallback if athlete not found in API
-          return {
-            athlete: {
-              id: customPlayer.id,
-              displayName: customPlayer.name,
-              headshot: { href: `https://a.espncdn.com/i/headshots/nba/players/full/${customPlayer.id}.png` },
-              position: { abbreviation: "N/A", displayName: "Unknown" },
-              displayOrder: idx
-            },
-            categories: []
-          };
-        }
+      console.log("Roster data:", roster);
+      
+      // Fetch league stats to get player statistics
+      const leagueStats = await fetchWithUA(endpoints.leagueStats).catch(err => {
+        console.error("League stats error:", err);
+        return { athletes: [] };
       });
+
+      console.log("League stats fetched, athletes count:", leagueStats.athletes?.length || 0);
+
+      // Create a map of all players with stats from league data
+      const leagueStatsMap = new Map();
+      if (leagueStats.athletes) {
+        leagueStats.athletes.forEach(athlete => {
+          if (athlete.athlete && athlete.athlete.id) {
+            leagueStatsMap.set(String(athlete.athlete.id), athlete);
+          }
+        });
+      }
+
+      console.log("League stats map size:", leagueStatsMap.size);
+
+      // Build our custom roster with stats
+      const allAthletes = [];
+      
+      for (const customPlayer of CUSTOM_ROSTER) {
+        // Check if player is in league stats
+        const leagueData = leagueStatsMap.get(String(customPlayer.id));
+        
+        if (leagueData) {
+          console.log(`Found stats for ${customPlayer.name}:`, leagueData);
+          
+          allAthletes.push({
+            id: customPlayer.id,
+            name: leagueData.athlete.displayName,
+            headshot: leagueData.athlete.headshot?.href,
+            position: leagueData.athlete.position?.abbreviation || 'N/A',
+            stats: parsePlayerStats(leagueData)
+          });
+        } else {
+          // Try fetching individual player stats
+          console.log(`Fetching individual stats for ${customPlayer.name} (${customPlayer.id})`);
+          
+          try {
+            const individualStats = await fetch(
+              `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${customPlayer.id}/statistics`
+            ).then(res => res.ok ? res.json() : null);
+
+            if (individualStats && individualStats.athlete) {
+              console.log(`Individual stats found for ${customPlayer.name}:`, individualStats);
+              
+              allAthletes.push({
+                id: customPlayer.id,
+                name: individualStats.athlete.displayName,
+                headshot: individualStats.athlete.headshot?.href,
+                position: individualStats.athlete.position?.abbreviation || 'N/A',
+                stats: parsePlayerStats(individualStats)
+              });
+            } else {
+              // Fallback - no stats available
+              console.log(`No stats found for ${customPlayer.name}`);
+              allAthletes.push({
+                id: customPlayer.id,
+                name: customPlayer.name,
+                headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${customPlayer.id}.png`,
+                position: 'N/A',
+                stats: null
+              });
+            }
+          } catch (err) {
+            console.error(`Error fetching stats for ${customPlayer.name}:`, err);
+            allAthletes.push({
+              id: customPlayer.id,
+              name: customPlayer.name,
+              headshot: `https://a.espncdn.com/i/headshots/nba/players/full/${customPlayer.id}.png`,
+              position: 'N/A',
+              stats: null
+            });
+          }
+        }
+      }
+      
+      console.log("Final athlete data:", allAthletes);
       
       data = {
         scoreboard: sb,
@@ -428,12 +529,11 @@ async function loadAllData(force = false) {
     console.log("Stats rendered successfully");
   } catch (err) {
     console.error("Load data error:", err);
-    container.innerHTML = `<p style="color:red; text-align:center; padding: 2rem;">Error loading stats: ${err.message}</p>`;
+    container.innerHTML = `<p style="color:red; text-align:center; padding: 2rem;">Error loading stats: ${err.message}<br><small>Check console for details</small></p>`;
   }
 }
 
 async function generateSocialImage(mode) {
-  // Check if html2canvas is loaded
   if (typeof html2canvas === 'undefined') {
     alert("Image export library not loaded. Please add html2canvas to your HTML.");
     return;
@@ -451,24 +551,10 @@ async function generateSocialImage(mode) {
     return;
   }
 
-  const athleteMap = new Map();
-  data.allPlayerStats.forEach(a => {
-    if (a.athlete && a.athlete.id) athleteMap.set(a.athlete.id, a);
-  });
-
-  const athletes = CUSTOM_ROSTER
-    .map(p => athleteMap.get(p.id))
-    .filter(Boolean)
-    .filter(a => {
-      const off = a.categories.find(c => c.name === "offensive");
-      return off && off.totals && off.totals[0];
-    })
-    .sort((a, b) => {
-      const aOff = a.categories.find(c => c.name === "offensive");
-      const bOff = b.categories.find(c => c.name === "offensive");
-      return (parseFloat(bOff?.totals?.[0]) || 0) - (parseFloat(aOff?.totals?.[0]) || 0);
-    })
-    .slice(0, 10); // Top 10 for image
+  const athletes = data.allPlayerStats
+    .filter(a => a.stats && a.stats.ppg && parseFloat(a.stats.ppg) > 0)
+    .sort((a, b) => parseFloat(b.stats.ppg) - parseFloat(a.stats.ppg))
+    .slice(0, 10);
 
   if (athletes.length === 0) {
     alert("No player stats available for export");
@@ -499,21 +585,19 @@ async function generateSocialImage(mode) {
       <tbody>`;
 
   athletes.forEach(a => {
-    const off = a.categories.find(c => c.name === "offensive");
-    const gen = a.categories.find(c => c.name === "general");
     html += `
       <tr>
         <td>
           <div class="social-player">
-            <img src="${a.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="social-logo">
-            <span>${a.athlete.displayName}</span>
+            <img src="${a.headshot || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="social-logo">
+            <span>${a.name}</span>
           </div>
         </td>
-        <td style="text-align:center">${gen?.totals?.[0] || '0'}</td>
-        <td style="text-align:center; color:#003da6">${off?.totals?.[0] || '0.0'}</td>
-        <td style="text-align:center">${gen?.totals?.[11] || '0.0'}</td>
-        <td style="text-align:center">${off?.totals?.[10] || '0.0'}</td>
-        <td style="text-align:center">${off?.totals?.[3] || '0.0'}</td>
+        <td style="text-align:center">${a.stats.gp}</td>
+        <td style="text-align:center; color:#003da6">${a.stats.ppg}</td>
+        <td style="text-align:center">${a.stats.rpg}</td>
+        <td style="text-align:center">${a.stats.apg}</td>
+        <td style="text-align:center">${a.stats.fgPct}</td>
       </tr>`;
   });
 
