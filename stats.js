@@ -1,7 +1,7 @@
 const CACHE_KEY = "sixers-roster-stats-v2";
 const CACHE_MINUTES = 10;
 
-// Custom Roster based on user request
+// Custom Roster based on user request - Verified IDs for 2025-26
 const CUSTOM_ROSTER = [
   { id: "4431678", name: "Tyrese Maxey", no: "0" },
   { id: "3059318", name: "Joel Embiid", no: "21" },
@@ -22,13 +22,15 @@ const CUSTOM_ROSTER = [
   { id: "4432168", name: "Jabari Walker", no: "33" }
 ];
 
+const rosterIds = CUSTOM_ROSTER.map(p => p.id).join(",");
+
 const endpoints = {
   scoreboard: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
   teamSeasonStats: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics",
-  // Fetch by team ID to get the bulk of the roster
-  teamRosterStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=false&limit=100&team=20",
-  // Fetch league stats as backup for players on other teams
-  leagueStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=true&limit=500"
+  // Fetch a large chunk of the league to ensure all custom roster players are found
+  leagueStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=true&limit=1000",
+  // Also fetch team specific stats as a primary source
+  teamRosterStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=false&limit=100&team=20"
 };
 
 function getCache() {
@@ -308,15 +310,15 @@ async function loadAllData(force = false) {
   try {
     let data = getCache();
     if (!data || force) {
-      // Fetch both team and league to be safe
-      const [sb, ts, trs, ls] = await Promise.all([
+      // Fetch scoreboard, team stats, league-wide stats (1000 players), and team roster stats
+      const [sb, ts, ls, trs] = await Promise.all([
         fetchWithUA(endpoints.scoreboard),
         fetchWithUA(endpoints.teamSeasonStats),
-        fetchWithUA(endpoints.teamRosterStats),
-        fetchWithUA(endpoints.leagueStats)
+        fetchWithUA(endpoints.leagueStats),
+        fetchWithUA(endpoints.teamRosterStats)
       ]);
-
-      // Combine athletes from both sources
+      
+      // Merge athletes from both league-wide and team-specific results
       const allAthletes = [...(trs.athletes || []), ...(ls.athletes || [])];
       
       data = {
