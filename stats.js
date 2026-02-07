@@ -106,18 +106,16 @@ function renderTeamStats(data) {
   });
 
   const keys = [
-    { key: "points", label: "Points Per Game" },
-    { key: "rebounds", label: "Rebounds Per Game" },
-    { key: "assists", label: "Assists Per Game" },
+    { key: "avgPoints", label: "Points Per Game" },
+    { key: "avgRebounds", label: "Rebounds Per Game" },
+    { key: "avgAssists", label: "Assists Per Game" },
     { key: "fieldGoalPct", label: "Field Goal %" },
     { key: "threePointPct", label: "3-Point %" },
     { key: "freeThrowPct", label: "Free Throw %" },
-    { key: "blocks", label: "Blocks Per Game" },
-    { key: "steals", label: "Steals Per Game" },
+    { key: "avgBlocks", label: "Blocks Per Game" },
+    { key: "avgSteals", label: "Steals Per Game" },
     { key: "paceFactor", label: "Pace" },
-    { key: "offensiveReboundRate", label: "Off. Rebound Rate" },
-    { key: "offensiveRating", label: "Offensive Rating" },
-    { key: "defensiveRating", label: "Defensive Rating" }
+    { key: "offensiveReboundRate", label: "Off. Rebound Rate" }
   ];
 
   let hasRows = false;
@@ -125,9 +123,9 @@ function renderTeamStats(data) {
     const stat = allStats.find(s => s.name === item.key || s.abbreviation?.toLowerCase() === item.key.toLowerCase());
     if (stat) {
       hasRows = true;
+      // Core API uses rankDisplayValue, but site API might just have rank
       const rank = stat.rankDisplayValue || (stat.rank ? `#${stat.rank}` : "-");
-      // Use perGameDisplayValue if available, otherwise displayValue
-      const val = stat.perGameDisplayValue || stat.displayValue || stat.value || "0.0";
+      const val = stat.displayValue || stat.value || "0.0";
       
       html += `
         <tr>
@@ -321,7 +319,7 @@ async function loadAllData(force = false) {
       
       const [sb, ts, rosterData] = await Promise.all([
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"),
-        fetchWithUA("https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/teams/20/statistics"),
+        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics"),
         fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster")
       ]);
       
