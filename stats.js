@@ -1,4 +1,4 @@
-const CACHE_KEY = "sixers-custom-stats-cache";
+const CACHE_KEY = "sixers-roster-stats-v2";
 const CACHE_MINUTES = 10;
 
 // Custom Roster based on user request
@@ -24,9 +24,11 @@ const CUSTOM_ROSTER = [
 
 const endpoints = {
   scoreboard: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
-  teamStats:  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics",
-  // Fetch a larger set of athletes to find our custom roster
-  allPlayerStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=true&limit=1000"
+  teamSeasonStats: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/statistics",
+  // Fetch by team ID to get the bulk of the roster
+  teamRosterStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=false&limit=100&team=20",
+  // Fetch league stats as backup for players on other teams
+  leagueStats: "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=true&limit=500"
 };
 
 function getCache() {
@@ -158,24 +160,36 @@ function renderLeaders(athletes) {
   return html;
 }
 
-function renderPlayerStats(data) {
-  if (!data || !data.athletes) return "";
+function renderPlayerStats(allAthletes) {
+  if (!allAthletes || allAthletes.length === 0) return "";
 
-  // Filter athletes based on our custom roster IDs
-  const rosterIds = CUSTOM_ROSTER.map(p => p.id);
-  const athletes = data.athletes
-    .filter(a => rosterIds.includes(a.athlete.id))
-    .sort((a, b) => {
-      // Sort by points, or by our custom order if needed. Let's stick with PPG.
-      const aOff = a.categories.find(c => c.name === "offensive");
-      const bOff = b.categories.find(c => c.name === "offensive");
-      return (parseFloat(bOff?.totals?.[0]) || 0) - (parseFloat(aOff?.totals?.[0]) || 0);
-    });
+  // Map athletes by ID for quick access
+  const athleteMap = new Map();
+  allAthletes.forEach(a => {
+    if (a.athlete && a.athlete.id) {
+      athleteMap.set(a.athlete.id, a);
+    }
+  });
 
-  // If some players from custom roster are missing from NBA stats (like rookies or different league), 
-  // we could potentially fetch them from college API, but for now we'll just show who we found.
+  // Prepare full roster display based on CUSTOM_ROSTER
+  const rosterData = CUSTOM_ROSTER.map(player => {
+    const stats = athleteMap.get(player.id);
+    return { player, stats };
+  });
 
-  let html = renderLeaders(athletes);
+  // Sort: Players with stats first, then by PPG
+  rosterData.sort((a, b) => {
+    if (!a.stats && !b.stats) return 0;
+    if (!a.stats) return 1;
+    if (!b.stats) return -1;
+    const aPPG = parseFloat(a.stats.categories.find(c => c.name === "offensive")?.totals?.[0] || 0);
+    const bPPG = parseFloat(b.stats.categories.find(c => c.name === "offensive")?.totals?.[0] || 0);
+    return bPPG - aPPG;
+  });
+
+  // Render Leaders (only if they have stats)
+  const leaders = rosterData.filter(d => d.stats).map(d => d.stats);
+  let html = renderLeaders(leaders);
 
   html += `<section class="stats-section">
     <h2 class="stats-title">Roster Season Averages</h2>
@@ -197,27 +211,26 @@ function renderPlayerStats(data) {
         </thead>
         <tbody>`;
 
-  athletes.forEach(a => {
-    const general = a.categories.find(c => c.name === "general");
-    const offensive = a.categories.find(c => c.name === "offensive");
-    const defensive = a.categories.find(c => c.name === "defensive");
-    const rosterInfo = CUSTOM_ROSTER.find(p => p.id === a.athlete.id);
+  rosterData.forEach(({ player, stats }) => {
+    const general = stats?.categories.find(c => c.name === "general");
+    const offensive = stats?.categories.find(c => c.name === "offensive");
+    const defensive = stats?.categories.find(c => c.name === "defensive");
 
     html += `
-      <tr>
+      <tr ${!stats ? 'style="opacity: 0.6;"' : ''}>
         <td class="player-name-cell">
-          <img src="${a.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="player-thumb" alt="${a.athlete.displayName}">
-          <span class="player-name">${a.athlete.displayName}</span>
+          <img src="${stats?.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="player-thumb" alt="${player.name}">
+          <span class="player-name">${player.name}</span>
         </td>
-        <td style="font-weight:900; color:var(--color-navy)">${rosterInfo?.no || '-'}</td>
-        <td class="pos-tag">${a.athlete.position.abbreviation}</td>
-        <td>${general?.totals?.[0] || '-'}</td>
-        <td class="stat-highlight">${offensive?.totals?.[0] || '-'}</td>
-        <td>${general?.totals?.[11] || '-'}</td>
-        <td>${offensive?.totals?.[10] || '-'}</td>
-        <td>${defensive?.totals?.[0] || '-'}</td>
-        <td>${defensive?.totals?.[1] || '-'}</td>
-        <td>${offensive?.totals?.[3] || '-'}</td>
+        <td style="font-weight:900; color:var(--color-navy)">${player.no}</td>
+        <td class="pos-tag">${stats?.athlete.position.abbreviation || 'N/A'}</td>
+        <td>${general?.totals?.[0] || '0'}</td>
+        <td class="stat-highlight">${offensive?.totals?.[0] || '0.0'}</td>
+        <td>${general?.totals?.[11] || '0.0'}</td>
+        <td>${offensive?.totals?.[10] || '0.0'}</td>
+        <td>${defensive?.totals?.[0] || '0.0'}</td>
+        <td>${defensive?.totals?.[1] || '0.0'}</td>
+        <td>${offensive?.totals?.[3] || '0.0'}</td>
       </tr>`;
   });
 
@@ -295,10 +308,21 @@ async function loadAllData(force = false) {
   try {
     let data = getCache();
     if (!data || force) {
+      // Fetch both team and league to be safe
+      const [sb, ts, trs, ls] = await Promise.all([
+        fetchWithUA(endpoints.scoreboard),
+        fetchWithUA(endpoints.teamSeasonStats),
+        fetchWithUA(endpoints.teamRosterStats),
+        fetchWithUA(endpoints.leagueStats)
+      ]);
+
+      // Combine athletes from both sources
+      const allAthletes = [...(trs.athletes || []), ...(ls.athletes || [])];
+      
       data = {
-        scoreboard: await fetchWithUA(endpoints.scoreboard),
-        teamStats:  await fetchWithUA(endpoints.teamStats),
-        allPlayerStats: await fetchWithUA(endpoints.allPlayerStats)
+        scoreboard: sb,
+        teamStats: ts,
+        allPlayerStats: allAthletes
       };
       setCache(data);
     }
@@ -320,9 +344,14 @@ async function generateSocialImage(mode) {
   const data = getCache();
   if (!data || !data.allPlayerStats) return;
 
-  const rosterIds = CUSTOM_ROSTER.map(p => p.id);
-  const athletes = data.allPlayerStats.athletes
-    .filter(a => rosterIds.includes(a.athlete.id))
+  const athleteMap = new Map();
+  data.allPlayerStats.forEach(a => {
+    if (a.athlete && a.athlete.id) athleteMap.set(a.athlete.id, a);
+  });
+
+  const athletes = CUSTOM_ROSTER
+    .map(p => athleteMap.get(p.id))
+    .filter(Boolean)
     .sort((a, b) => {
       const aOff = a.categories.find(c => c.name === "offensive");
       const bOff = b.categories.find(c => c.name === "offensive");
