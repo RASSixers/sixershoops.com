@@ -6,6 +6,7 @@ const endpoints = {
   scoreboard: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
   standings:  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/standings",
   teamStats:  `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${SIXERS_TEAM_ID}/statistics`,
+  playerStats: `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isLeague=false&limit=50&team=${SIXERS_TEAM_ID}`
 };
 
 function getCache() {
@@ -101,6 +102,65 @@ function renderTeamStats(data) {
   return html;
 }
 
+function renderPlayerStats(data) {
+  if (!data || !data.athletes) return "";
+
+  let html = `<section class="stats-section">
+    <h2 class="stats-title">Player Season Averages</h2>
+    <div class="table-responsive">
+      <table class="player-stats-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>GP</th>
+            <th>PTS</th>
+            <th>REB</th>
+            <th>AST</th>
+            <th>STL</th>
+            <th>BLK</th>
+            <th>FG%</th>
+            <th>3P%</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+  const athletes = data.athletes
+    .filter(a => {
+      const general = a.categories.find(c => c.name === "general");
+      return general && parseFloat(general.totals[0]) > 0;
+    })
+    .sort((a, b) => {
+      const aOff = a.categories.find(c => c.name === "offensive");
+      const bOff = b.categories.find(c => c.name === "offensive");
+      return parseFloat(bOff.totals[0]) - parseFloat(aOff.totals[0]);
+    });
+
+  athletes.forEach(a => {
+    const general = a.categories.find(c => c.name === "general");
+    const offensive = a.categories.find(c => c.name === "offensive");
+    const defensive = a.categories.find(c => c.name === "defensive");
+
+    html += `
+      <tr>
+        <td class="player-name-cell">
+          <img src="${a.athlete.headshot?.href || 'https://a.espncdn.com/i/headshots/nba/players/full/0.png'}" class="player-thumb" alt="${a.athlete.displayName}">
+          <span class="player-name">${a.athlete.displayName}</span>
+        </td>
+        <td>${general.totals[0]}</td>
+        <td class="stat-highlight">${offensive.totals[0]}</td>
+        <td>${general.totals[11]}</td>
+        <td>${offensive.totals[10]}</td>
+        <td>${defensive.totals[0]}</td>
+        <td>${defensive.totals[1]}</td>
+        <td>${offensive.totals[3]}</td>
+        <td>${offensive.totals[6]}</td>
+      </tr>`;
+  });
+
+  html += `</tbody></table></div></section>`;
+  return html;
+}
+
 async function renderBoxScore() {
   try {
     const sb = await fetchWithUA(endpoints.scoreboard);
@@ -161,7 +221,8 @@ async function loadAllData(force = false) {
     if (!data || force) {
       data = {
         scoreboard: await fetchWithUA(endpoints.scoreboard),
-        teamStats:  await fetchWithUA(endpoints.teamStats)
+        teamStats:  await fetchWithUA(endpoints.teamStats),
+        playerStats: await fetchWithUA(endpoints.playerStats)
       };
       setCache(data);
     }
@@ -169,6 +230,7 @@ async function loadAllData(force = false) {
     let finalHtml = "";
     finalHtml += renderScoreboard(data.scoreboard.events.filter(e => e.competitions[0].competitors.some(c => c.team.id === SIXERS_TEAM_ID)));
     finalHtml += renderTeamStats(data.teamStats);
+    finalHtml += renderPlayerStats(data.playerStats);
     finalHtml += await renderBoxScore();
 
     container.innerHTML = finalHtml;
