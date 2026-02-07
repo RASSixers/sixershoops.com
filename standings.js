@@ -46,8 +46,9 @@ async function getNBAStandings() {
               <tbody>`;
 
       // Social Media HTML
+      const confKey = conf.name.toLowerCase().includes('east') ? 'east' : 'west';
       socialHtml += `
-        <div class="social-conference">
+        <div class="social-conference" data-conf="${confKey}">
           <h2 class="social-conf-title">${conf.name}</h2>
           <table class="social-table">
             <thead>
@@ -161,65 +162,91 @@ async function getNBAStandings() {
 }
 
 function initExport() {
-  const exportBtn = document.getElementById('exportBtn');
+  const exportBtns = document.querySelectorAll('[data-export-mode]');
   const modal = document.getElementById('exportModal');
   const preview = document.getElementById('exportPreview');
   const closeModal = document.getElementById('closeModal');
   const downloadBtn = document.getElementById('downloadBtn');
   const copyBtn = document.getElementById('copyBtn');
 
-  if (!exportBtn || !modal) return;
+  if (exportBtns.length === 0 || !modal) return;
 
-  // Use a named function to prevent multiple bindings if called multiple times
-  const handleExport = async () => {
-    exportBtn.textContent = 'Generating...';
-    exportBtn.disabled = true;
-    
-    try {
-      const grid = document.getElementById('social-export-container');
-      const canvas = await html2canvas(grid, {
-        backgroundColor: '#f8fafc',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false
-      });
-      preview.src = canvas.toDataURL('image/png');
-      modal.style.display = 'flex';
+  exportBtns.forEach(btn => {
+    btn.onclick = async () => {
+      const mode = btn.dataset.exportMode;
+      const originalText = btn.textContent;
+      btn.textContent = 'Generating...';
+      btn.disabled = true;
+      
+      try {
+        const grid = document.getElementById('social-export-container');
+        const content = document.getElementById('social-export-content');
+        const titleH1 = grid.querySelector('.social-title-box h1');
+        
+        // Reset classes and visibility
+        content.classList.remove('mode-east', 'mode-west');
+        const eastDiv = content.querySelector('[data-conf="east"]');
+        const westDiv = content.querySelector('[data-conf="west"]');
+        
+        if (mode === 'east') {
+          grid.style.width = '700px';
+          content.classList.add('mode-east');
+          if (eastDiv) eastDiv.style.display = 'block';
+          if (westDiv) westDiv.style.display = 'none';
+          titleH1.textContent = 'Eastern Conference';
+        } else if (mode === 'west') {
+          grid.style.width = '700px';
+          content.classList.add('mode-west');
+          if (eastDiv) eastDiv.style.display = 'none';
+          if (westDiv) westDiv.style.display = 'block';
+          titleH1.textContent = 'Western Conference';
+        } else {
+          grid.style.width = '1200px';
+          if (eastDiv) eastDiv.style.display = 'block';
+          if (westDiv) westDiv.style.display = 'block';
+          titleH1.textContent = 'NBA Standings';
+        }
 
-      downloadBtn.onclick = () => {
-        const link = document.createElement('a');
-        link.download = `nba-standings-${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      };
-
-      copyBtn.onclick = () => {
-        canvas.toBlob(blob => {
-          const item = new ClipboardItem({ 'image/png': blob });
-          navigator.clipboard.write([item]).then(() => {
-            copyBtn.textContent = 'Copied!';
-            copyBtn.style.background = '#059669';
-            setTimeout(() => {
-              copyBtn.textContent = 'Copy to Clipboard';
-              copyBtn.style.background = '#3b82f6';
-            }, 2000);
-          });
+        const canvas = await html2canvas(grid, {
+          backgroundColor: '#f8fafc',
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false
         });
-      };
-    } catch (err) {
-      console.error("Export Error:", err);
-      alert("Failed to generate image. Please try again.");
-    } finally {
-      exportBtn.textContent = '📸 Export for Social Media';
-      exportBtn.disabled = false;
-    }
-  };
+        
+        preview.src = canvas.toDataURL('image/png');
+        modal.style.display = 'flex';
 
-  // Replace button to clear old listeners
-  const newBtn = exportBtn.cloneNode(true);
-  exportBtn.parentNode.replaceChild(newBtn, exportBtn);
-  newBtn.addEventListener('click', handleExport);
+        downloadBtn.onclick = () => {
+          const link = document.createElement('a');
+          link.download = `nba-${mode}-standings-${new Date().toISOString().split('T')[0]}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        };
+
+        copyBtn.onclick = () => {
+          canvas.toBlob(blob => {
+            const item = new ClipboardItem({ 'image/png': blob });
+            navigator.clipboard.write([item]).then(() => {
+              copyBtn.textContent = 'Copied!';
+              copyBtn.style.background = '#059669';
+              setTimeout(() => {
+                copyBtn.textContent = 'Copy to Clipboard';
+                copyBtn.style.background = '#3b82f6';
+              }, 2000);
+            });
+          });
+        };
+      } catch (err) {
+        console.error("Export Error:", err);
+        alert("Failed to generate image. Please try again.");
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    };
+  });
 
   closeModal.onclick = () => {
     modal.style.display = 'none';
