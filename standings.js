@@ -1,12 +1,19 @@
 async function getNBAStandings() {
   const url = "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings";
   const container = document.getElementById("standings");
+  const socialContainer = document.getElementById("social-export-content");
+  const exportDate = document.getElementById("export-date");
   
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
     let html = "";
+    let socialHtml = "";
+
+    // Set export date
+    const now = new Date();
+    if (exportDate) exportDate.textContent = `Updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
 
     // ESPN API structure uses 'children' for conferences
     const conferences = data.children || [];
@@ -17,6 +24,7 @@ async function getNBAStandings() {
     }
 
     conferences.forEach(conf => {
+      // Main table HTML
       html += `
         <div class="conference-section">
           <h2 class="conference-title">${conf.name}</h2>
@@ -36,6 +44,21 @@ async function getNBAStandings() {
                 </tr>
               </thead>
               <tbody>`;
+
+      // Social Media HTML
+      socialHtml += `
+        <div class="social-conference">
+          <h2 class="social-conf-title">${conf.name}</h2>
+          <table class="social-table">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>W-L</th>
+                <th>PCT</th>
+                <th>STRK</th>
+              </tr>
+            </thead>
+            <tbody>`;
 
       const entries = conf.standings?.entries || [];
       
@@ -71,6 +94,7 @@ async function getNBAStandings() {
 
         const logoUrl = t.team.logos?.[0]?.href || '';
 
+        // Add to main table
         html += `
           <tr class="${rowClass}">
             <td>
@@ -89,6 +113,21 @@ async function getNBAStandings() {
             <td>${l10}</td>
             <td><span class="status-badge ${streakClass}">${streakValue}</span></td>
           </tr>`;
+
+        // Add to social table (simplified)
+        socialHtml += `
+          <tr>
+            <td>
+              <div class="social-team">
+                <span style="width: 20px; font-size: 12px; color: #64748b;">${idx + 1}</span>
+                <img src="${logoUrl}" class="social-logo">
+                <span>${t.team.displayName}</span>
+              </div>
+            </td>
+            <td>${wins}-${losses}</td>
+            <td>${pct}</td>
+            <td><span class="status-badge ${streakClass}" style="font-size: 10px; padding: 1px 4px;">${streakValue}</span></td>
+          </tr>`;
       });
 
       html += `
@@ -96,9 +135,19 @@ async function getNBAStandings() {
             </table>
           </div>
         </div>`;
+
+      socialHtml += `
+            </tbody>
+          </table>
+        </div>`;
     });
 
     container.innerHTML = html;
+    if (socialContainer) socialContainer.innerHTML = socialHtml;
+
+    // Initialize export logic
+    initExport();
+
   } catch (err) {
     console.error("Standings Load Error:", err);
     container.innerHTML = `
@@ -109,6 +158,78 @@ async function getNBAStandings() {
       </div>
     `;
   }
+}
+
+function initExport() {
+  const exportBtn = document.getElementById('exportBtn');
+  const modal = document.getElementById('exportModal');
+  const preview = document.getElementById('exportPreview');
+  const closeModal = document.getElementById('closeModal');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const copyBtn = document.getElementById('copyBtn');
+
+  if (!exportBtn || !modal) return;
+
+  // Use a named function to prevent multiple bindings if called multiple times
+  const handleExport = async () => {
+    exportBtn.textContent = 'Generating...';
+    exportBtn.disabled = true;
+    
+    try {
+      const grid = document.getElementById('social-export-container');
+      const canvas = await html2canvas(grid, {
+        backgroundColor: '#f8fafc',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      });
+      preview.src = canvas.toDataURL('image/png');
+      modal.style.display = 'flex';
+
+      downloadBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.download = `nba-standings-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+
+      copyBtn.onclick = () => {
+        canvas.toBlob(blob => {
+          const item = new ClipboardItem({ 'image/png': blob });
+          navigator.clipboard.write([item]).then(() => {
+            copyBtn.textContent = 'Copied!';
+            copyBtn.style.background = '#059669';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy to Clipboard';
+              copyBtn.style.background = '#3b82f6';
+            }, 2000);
+          });
+        });
+      };
+    } catch (err) {
+      console.error("Export Error:", err);
+      alert("Failed to generate image. Please try again.");
+    } finally {
+      exportBtn.textContent = '📸 Export for Social Media';
+      exportBtn.disabled = false;
+    }
+  };
+
+  // Replace button to clear old listeners
+  const newBtn = exportBtn.cloneNode(true);
+  exportBtn.parentNode.replaceChild(newBtn, exportBtn);
+  newBtn.addEventListener('click', handleExport);
+
+  closeModal.onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  window.onclick = (event) => {
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  };
 }
 
 // Initial load
