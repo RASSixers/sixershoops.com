@@ -232,8 +232,10 @@ window.toggleTeamStats = function(btn) {
 function renderLeaders(players) {
   if (!players || players.length === 0) return "";
 
+  const excludedIds = ["5124612", "3133603"]; // VJ Edgecombe, Kelly Oubre Jr.
+
   const topScorers = [...players]
-    .filter(p => p.gp > 0)
+    .filter(p => p.gp > 0 && !excludedIds.includes(p.id))
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
     .slice(0, 5);
 
@@ -666,14 +668,14 @@ function populateSocialContainer(data) {
   };
 
   const categories = [
-    { label: "Points Per Game", name: "avgPointsFor" },
+    { label: "Points", name: "avgPointsFor" },
     { label: "Field Goal %", name: "fieldGoalPct" },
     { label: "3-Point %", name: "threePointPct" },
     { label: "Free Throw %", name: "freeThrowPct" },
-    { label: "Rebounds PG", name: "avgRebounds" },
-    { label: "Assists PG", name: "avgAssists" },
-    { label: "Steals PG", name: "avgSteals" },
-    { label: "Blocks PG", name: "avgBlocks" }
+    { label: "Rebounds", name: "avgRebounds" },
+    { label: "Assists", name: "avgAssists" },
+    { label: "Steals", name: "avgSteals" },
+    { label: "Blocks", name: "avgBlocks" }
   ];
 
   teamStatsContainer.innerHTML = `
