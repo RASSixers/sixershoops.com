@@ -79,6 +79,7 @@ async function getNBAStandings() {
 
         const isSixers = t.team.abbreviation === "PHI";
         const rowClass = isSixers ? 'sixers-highlight' : '';
+        const socialRowClass = isSixers ? 'social-sixers-row' : '';
         
         const wins = stats.wins?.displayValue || "-";
         const losses = stats.losses?.displayValue || "-";
@@ -117,7 +118,7 @@ async function getNBAStandings() {
 
         // Add to social table (simplified)
         socialHtml += `
-          <tr>
+          <tr class="${socialRowClass}">
             <td>
               <div class="social-team">
                 <span style="width: 20px; font-size: 12px; color: #64748b;">${idx + 1}</span>
