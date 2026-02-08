@@ -232,12 +232,11 @@ window.toggleTeamStats = function(btn) {
 function renderLeaders(players) {
   if (!players || players.length === 0) return "";
 
-  const excludedIds = ["5124612", "3133603"]; // VJ Edgecombe, Kelly Oubre Jr.
+  const includedIds = ["3059318", "4431678", "4251"]; // Embiid, Maxey, PG
 
   const topScorers = [...players]
-    .filter(p => p.gp > 0 && !excludedIds.includes(p.id))
-    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 5);
+    .filter(p => p.gp > 0 && includedIds.includes(p.id))
+    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg));
 
   if (topScorers.length === 0) return "";
 
