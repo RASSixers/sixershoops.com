@@ -603,9 +603,6 @@ function populateSocialContainer(data) {
   leadersContainer.innerHTML = topScorers.map((p, idx) => `
     <div style="display: flex; align-items: center; gap: 24px; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; overflow: hidden;">
       ${idx === 0 ? '<div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(0, 61, 166, 0.05); border-radius: 50%;"></div>' : ''}
-      <div style="position: relative; z-index: 1;">
-        <img src="${p.headshot}" style="width: 110px; height: 110px; border-radius: 50%; background: #f8fafc; object-fit: cover; border: 4px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
-      </div>
       <div style="flex: 1; z-index: 1;">
         <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin-bottom: 4px;">${p.name}</div>
         <div style="font-size: 14px; font-weight: 800; color: #e11d48; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
