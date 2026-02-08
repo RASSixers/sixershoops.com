@@ -189,13 +189,13 @@ function initExport() {
         const westDiv = content.querySelector('[data-conf="west"]');
         
         if (mode === 'east') {
-          grid.style.width = '700px';
+          grid.style.width = '800px';
           content.classList.add('mode-east');
           if (eastDiv) eastDiv.style.display = 'block';
           if (westDiv) westDiv.style.display = 'none';
           titleH1.textContent = 'Eastern Conference Standings';
         } else if (mode === 'west') {
-          grid.style.width = '700px';
+          grid.style.width = '800px';
           content.classList.add('mode-west');
           if (eastDiv) eastDiv.style.display = 'none';
           if (westDiv) westDiv.style.display = 'block';
