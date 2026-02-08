@@ -249,14 +249,15 @@ function renderLeaders(players) {
     html += `
       <div class="leader-card ${idx === 0 ? 'primary' : ''}">
         <div class="leader-rank">#${idx + 1}</div>
-        <img src="${p.headshot}" class="leader-img" alt="${p.name}">
         <div class="leader-info">
           <div class="leader-name">${p.name}</div>
           <div class="leader-pos">${p.position}</div>
-          <div class="leader-stats">
-            <span class="leader-val">${p.ppg}</span> <span class="leader-unit">PPG</span>
-            <span class="leader-divider">|</span>
-            <span class="leader-val">${p.rpg}</span> <span class="leader-unit">RPG</span>
+          <div class="leader-stats" style="flex-wrap: wrap; gap: 1rem;">
+            <div><span class="leader-val">${p.ppg}</span> <span class="leader-unit">PPG</span></div>
+            <div><span class="leader-val">${p.rpg}</span> <span class="leader-unit">RPG</span></div>
+            <div><span class="leader-val">${p.apg}</span> <span class="leader-unit">AST</span></div>
+            <div><span class="leader-val">${p.blk}</span> <span class="leader-unit">BLK</span></div>
+            <div><span class="leader-val">${p.stl}</span> <span class="leader-unit">STL</span></div>
           </div>
         </div>
       </div>`;
@@ -311,10 +312,6 @@ function renderPlayerStats(players) {
     html += `
       <tr>
         <td class="player-name-cell">
-          <img src="${p.headshot}" 
-               class="player-thumb" 
-               alt="${p.name}"
-               onerror="this.src='https://a.espncdn.com/i/headshots/nba/players/full/0.png'">
           <span class="player-name">${p.name}</span>
         </td>
         <td>${p.gp}</td>
@@ -606,7 +603,7 @@ function populateSocialContainer(data) {
       <div style="flex: 1; z-index: 1;">
         <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin-bottom: 4px;">${p.name}</div>
         <div style="font-size: 14px; font-weight: 800; color: #e11d48; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
-        <div style="display: flex; gap: 30px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+        <div style="display: flex; gap: 20px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; flex-wrap: wrap;">
           <div>
             <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">PPG</div>
             <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.ppg}</div>
@@ -616,8 +613,16 @@ function populateSocialContainer(data) {
             <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.rpg}</div>
           </div>
           <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">APG</div>
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">AST</div>
             <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.apg}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">BLK</div>
+            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.blk}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">STL</div>
+            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.stl}</div>
           </div>
         </div>
       </div>
