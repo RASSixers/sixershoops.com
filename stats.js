@@ -358,7 +358,7 @@ function renderPlayerStats(players) {
           <span class="player-name">${p.name}</span>
         </td>
         <td>${p.gp}</td>
-        <td class="stat-highlight">${p.ppg}</td>
+        <td>${p.ppg}</td>
         <td>${p.fgPct}</td>
         <td>${p.fg3m}</td>
         <td>${p.fg3a}</td>
@@ -518,6 +518,7 @@ async function loadAllData(force = false) {
     }
 
     currentStatsData = data;
+    populateSocialContainer(data); // Automatically update hidden container for graphic
     let finalHtml = "";
     
     finalHtml += renderPlayerStats(data.players);
