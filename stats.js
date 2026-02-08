@@ -107,17 +107,30 @@ function renderTeamStats(data, standings, leagueStats) {
            return ref.split('/').pop()?.split('?')[0] === teamId;
         });
 
-        const pace = getStatValue(lStat, 'paceFactor') || 100;
-        const ppg = getSStat('avgPointsFor');
-        const oppPpg = getSStat('avgPointsAgainst');
+        const fga = getStatValue(lStat, 'fieldGoalsAttempted') || 0;
+        const fta = getStatValue(lStat, 'freeThrowsAttempted') || 0;
+        const to = getStatValue(lStat, 'turnovers') || 0;
+        const oreb = getStatValue(lStat, 'offensiveRebounds') || 0;
+        const gp = getStatValue(lStat, 'gamesPlayed') || 1;
+
+        // NBA Offensive Rating Possessions Formula: 
+        // 0.96 * (FGA + TO + 0.44 * FTA - OREB)
+        const teamPoss = 0.96 * (fga + to + (0.44 * fta) - oreb);
+        
+        // Total points scored and allowed from standings
+        const totalPtsFor = getSStat('pointsFor');
+        const totalPtsAgainst = getSStat('pointsAgainst');
+
+        const offRtg = teamPoss > 0 ? (totalPtsFor / teamPoss) * 100 : 0;
+        const defRtg = teamPoss > 0 ? (totalPtsAgainst / teamPoss) * 100 : 0;
 
         nbaTeamsCombined.push({
           id: teamId,
           winPct: getSStat('winPercent'),
-          ppg: ppg,
-          oppPpg: oppPpg,
-          offRtg: (ppg / pace) * 100,
-          defRtg: (oppPpg / pace) * 100,
+          ppg: getSStat('avgPointsFor'),
+          oppPpg: getSStat('avgPointsAgainst'),
+          offRtg: offRtg,
+          defRtg: defRtg,
           rpg: getStatValue(lStat, 'avgRebounds'),
           apg: getStatValue(lStat, 'avgAssists'),
           bpg: getStatValue(lStat, 'avgBlocks'),
@@ -134,7 +147,7 @@ function renderTeamStats(data, standings, leagueStats) {
           oreb: getStatValue(lStat, 'avgOffensiveRebounds'),
           dreb: getStatValue(lStat, 'avgDefensiveRebounds'),
           pf: getStatValue(lStat, 'avgFouls'),
-          pace: pace
+          pace: getStatValue(lStat, 'paceFactor') || 100
         });
       });
     });
