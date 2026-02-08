@@ -1,692 +1,725 @@
-const CACHE_KEY = "sixers-roster-stats-v3";
-const CACHE_MINUTES = 10;
-const SIXERS_TEAM_ID = "20";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sixers Team Stats | SixersHoops</title>
+  <link rel="icon" href="/favicon.ico"/>
+  <link rel="apple-touch-icon" href="/favicon.ico"/>
 
-// Custom Roster - we'll try to match these with ESPN's roster
-const CUSTOM_ROSTER = [
-  { id: "4431678", name: "Tyrese Maxey", no: "0" },
-  { id: "3059318", name: "Joel Embiid", no: "21" },
-  { id: "4251", name: "Paul George", no: "8" },
-  { id: "4870562", name: "Dominick Barlow", no: "25" },
-  { id: "5124612", name: "VJ Edgecombe", no: "77" },
-  { id: "3012", name: "Kyle Lowry", no: "7" },
-  { id: "4397014", name: "Quentin Grimes", no: "5" },
-  { id: "3133603", name: "Kelly Oubre Jr.", no: "9" },
-  { id: "4433246", name: "Patrick Baldwin Jr.", no: "PBJ" },
-  { id: "6585", name: "Andre Drummond", no: "1" },
-  { id: "4431675", name: "Trendon Watford", no: "12" },
-  { id: "4397886", name: "Charles Bassey", no: "28" },
-  { id: "4432179", name: "MarJon Beauchamp", no: "16" },
-  { id: "5105637", name: "Adem Bona", no: "30" },
-  { id: "4433569", name: "Johni Broome", no: "22" },
-  { id: "4711297", name: "Justin Edwards", no: "11" },
-  { id: "4432446", name: "Jabari Walker", no: "33" }
-];
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="navbar-styles.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-function getCache() {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return null;
-    const data = JSON.parse(cached);
-    // Cache for 10 minutes unless empty players
-    const isStale = Date.now() - data.timestamp > CACHE_MINUTES * 60 * 1000;
-    const hasData = data.content && data.content.players && data.content.players.some(p => p.gp > 0);
-    
-    if (isStale && hasData) {
-      localStorage.removeItem(CACHE_KEY);
-      return null;
-    }
-    return data.content;
-  } catch (err) {
-    console.error("Cache error:", err);
-    return null;
-  }
-}
+  <!-- html2canvas for image generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-function setCache(content) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      content
-    }));
-  } catch (err) {
-    console.error("Set cache error:", err);
-  }
-}
+  <!-- Google Tag Manager -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T1V9Q0MNEM');
+  </script>
 
-async function fetchWithUA(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-// Helper to find a stat in the nested categories structure
-function findStat(categories, name) {
-  if (!categories) return null;
-  for (const cat of categories) {
-    if (cat.stats) {
-      const stat = cat.stats.find(s => s.name === name);
-      if (stat) return stat;
-    }
-  }
-  return null;
-}
-
-
-
-function renderTeamStats(data, standings, leagueStats) {
-  const categories = data?.splits?.categories;
-  
-  if (!categories || !leagueStats || leagueStats.length === 0) {
-    return `<section class="stats-section">
-      <h2 class="stats-title">Team Season Averages</h2>
-      <p style="text-align:center; padding: 1rem; color: var(--color-slate-500);">Team stats currently unavailable</p>
-    </section>`;
-  }
-
-  const getStatValue = (teamData, statName) => {
-    const cats = teamData?.splits?.categories || [];
-    for (const cat of cats) {
-      const s = cat.stats?.find(st => st.name === statName);
-      if (s) return s.value;
-    }
-    return 0;
-  };
-
-  // Combine Standings (PPG, Opp PPG, Win%) and League Stats (Advanced)
-  const nbaTeamsCombined = [];
-  if (standings && standings.children) {
-    standings.children.forEach(conf => {
-      conf.standings?.entries?.forEach(entry => {
-        const teamId = entry.team.id;
-        const sStats = entry.stats || [];
-        const getSStat = (name) => sStats.find(s => s.name === name)?.value || 0;
-        
-        const lStat = leagueStats.find(ls => {
-           const ref = ls.team?.$ref || "";
-           return ref.split('/').pop()?.split('?')[0] === teamId;
-        });
-
-        const fga = getStatValue(lStat, 'fieldGoalsAttempted') || 0;
-        const fta = getStatValue(lStat, 'freeThrowsAttempted') || 0;
-        const to = getStatValue(lStat, 'turnovers') || 0;
-        const oreb = getStatValue(lStat, 'offensiveRebounds') || 0;
-        const gp = getStatValue(lStat, 'gamesPlayed') || 1;
-
-        // NBA Offensive Rating Possessions Formula: 
-        // 0.96 * (FGA + TO + 0.44 * FTA - OREB)
-        const teamPoss = 0.96 * (fga + to + (0.44 * fta) - oreb);
-        
-        // Total points scored and allowed from standings
-        const totalPtsFor = getSStat('pointsFor');
-        const totalPtsAgainst = getSStat('pointsAgainst');
-
-        const offRtg = teamPoss > 0 ? (totalPtsFor / teamPoss) * 100 : 0;
-        const defRtg = teamPoss > 0 ? (totalPtsAgainst / teamPoss) * 100 : 0;
-
-        nbaTeamsCombined.push({
-          id: teamId,
-          winPct: getSStat('winPercent'),
-          ppg: getSStat('avgPointsFor'),
-          oppPpg: getSStat('avgPointsAgainst'),
-          offRtg: offRtg,
-          defRtg: defRtg,
-          rpg: getStatValue(lStat, 'avgRebounds'),
-          apg: getStatValue(lStat, 'avgAssists'),
-          bpg: getStatValue(lStat, 'avgBlocks'),
-          spg: getStatValue(lStat, 'avgSteals'),
-          to: getStatValue(lStat, 'avgTurnovers'),
-          toRatio: getStatValue(lStat, 'turnoverRatio'),
-          fgPct: getStatValue(lStat, 'fieldGoalPct'),
-          fg3Pct: getStatValue(lStat, 'threePointPct'),
-          fg3m: getStatValue(lStat, 'avgThreePointFieldGoalsMade'),
-          fg3a: getStatValue(lStat, 'avgThreePointFieldGoalsAttempted'),
-          ftm: getStatValue(lStat, 'avgFreeThrowsMade'),
-          fta: getStatValue(lStat, 'avgFreeThrowsAttempted'),
-          ftPct: getStatValue(lStat, 'freeThrowPct'),
-          oreb: getStatValue(lStat, 'avgOffensiveRebounds'),
-          dreb: getStatValue(lStat, 'avgDefensiveRebounds'),
-          pf: getStatValue(lStat, 'avgFouls'),
-          pace: getStatValue(lStat, 'paceFactor') || 100
-        });
-      });
-    });
-  }
-
-  const getNBARankCombined = (teamId, field, higherIsBetter = true) => {
-    if (nbaTeamsCombined.length === 0) return "-";
-    const sorted = [...nbaTeamsCombined].sort((a, b) => higherIsBetter ? b[field] - a[field] : a[field] - b[field]);
-    const rank = sorted.findIndex(t => t.id === teamId) + 1;
-    return rank > 0 ? `#${rank}` : "-";
-  };
-
-  const sixers = nbaTeamsCombined.find(t => t.id === SIXERS_TEAM_ID) || {};
-
-  let html = `<section class="stats-section">
-    <h2 class="stats-title">Team Season Averages</h2>
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th style="text-align: right;">Value</th>
-            <th style="text-align: right;">NBA Rank</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-  const rows = [
-    { label: "Points Per Game", val: sixers.ppg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ppg') },
-    { label: "Field Goal %", val: sixers.fgPct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fgPct') },
-    { label: "3-Point Made", val: sixers.fg3m?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3m') },
-    { label: "3-Point Attempted", val: sixers.fg3a?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3a') },
-    { label: "3-Point %", val: sixers.fg3Pct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3Pct') },
-    { label: "Free Throws Made", val: sixers.ftm?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ftm') },
-    { label: "Free Throws Attempted", val: sixers.fta?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fta') },
-    { label: "Free Throw %", val: sixers.ftPct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ftPct') },
-    { label: "Offensive Rebounds", val: sixers.oreb?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'oreb') },
-    { label: "Defensive Rebounds", val: sixers.dreb?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'dreb') },
-    { label: "Total Rebounds", val: sixers.rpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'rpg') },
-    { label: "Assists Per Game", val: sixers.apg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'apg') },
-    { label: "Turnovers Per Game", val: sixers.to?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'to', false) },
-    { label: "Steals Per Game", val: sixers.spg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'spg') },
-    { label: "Blocks Per Game", val: sixers.bpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'bpg') },
-    { label: "Personal Fouls", val: sixers.pf?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'pf', false) }
-  ];
-
-  rows.forEach((row, index) => {
-    const isHidden = index >= 7;
-    html += `
-      <tr class="${isHidden ? 'team-stat-extra' : ''}" style="${isHidden ? 'display: none;' : ''}">
-        <td class="stat-label">${row.label}</td>
-        <td class="stat-value" style="text-align: right; font-weight: 800;">${row.val || '-'}</td>
-        <td class="stat-rank" style="text-align: right; color: var(--color-sky); font-weight: 900;">${row.rank}</td>
-      </tr>`;
-  });
-
-  if (rows.length > 7) {
-    html += `
-      <tr>
-        <td colspan="3" style="text-align: center; padding: 1.5rem;">
-          <button onclick="toggleTeamStats(this)" class="export-btn" style="padding: 0.6rem 1.5rem; font-size: 0.9rem; background: var(--color-sky);">
-            Show All Stats
-          </button>
-        </td>
-      </tr>`;
-  }
-
-  html += `</tbody></table></div></section>`;
-  return html;
-}
-
-// Global toggle function
-window.toggleTeamStats = function(btn) {
-  const extras = document.querySelectorAll('.team-stat-extra');
-  const isHidden = extras[0].style.display === 'none';
-  
-  extras.forEach(tr => {
-    tr.style.display = isHidden ? 'table-row' : 'none';
-  });
-  
-  btn.innerText = isHidden ? 'Show Less' : 'Show All Stats';
-};
-
-function renderLeaders(players) {
-  if (!players || players.length === 0) return "";
-
-  const topScorers = [...players]
-    .filter(p => p.gp > 0)
-    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 3);
-
-  if (topScorers.length === 0) return "";
-
-  let html = `<section class="stats-section">
-    <h2 class="stats-title">Season Leaders</h2>
-    <div class="leaders-grid">`;
-
-  topScorers.forEach((p, idx) => {
-    html += `
-      <div class="leader-card ${idx === 0 ? 'primary' : ''}">
-        <div class="leader-rank">#${idx + 1}</div>
-        <img src="${p.headshot}" class="leader-img" alt="${p.name}">
-        <div class="leader-info">
-          <div class="leader-name">${p.name}</div>
-          <div class="leader-pos">${p.position}</div>
-          <div class="leader-stats">
-            <span class="leader-val">${p.ppg}</span> <span class="leader-unit">PPG</span>
-            <span class="leader-divider">|</span>
-            <span class="leader-val">${p.rpg}</span> <span class="leader-unit">RPG</span>
-          </div>
-        </div>
-      </div>`;
-  });
-
-  html += `</div></section>`;
-  return html;
-}
-
-function renderPlayerStats(players) {
-  if (!players || players.length === 0) {
-    return `<section class="stats-section">
-      <h2 class="stats-title">Roster Season Averages</h2>
-      <p>No player stats available. Season may not have started yet.</p>
-    </section>`;
-  }
-
-  // Sort by PPG
-  const sortedPlayers = [...players].sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg));
-  
-  let html = renderLeaders(sortedPlayers);
-
-  html += `<section class="stats-section">
-    <h2 class="stats-title">Roster Season Averages</h2>
-    <div class="table-responsive">
-      <table class="player-stats-table">
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>GP</th>
-            <th>PTS</th>
-            <th>FG%</th>
-            <th>3PM</th>
-            <th>3PA</th>
-            <th>3P%</th>
-            <th>FTM</th>
-            <th>FTA</th>
-            <th>FT%</th>
-            <th>OREB</th>
-            <th>DREB</th>
-            <th>REB</th>
-            <th>AST</th>
-            <th>TOV</th>
-            <th>STL</th>
-            <th>BLK</th>
-            <th>PF</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-  sortedPlayers.forEach(p => {
-    html += `
-      <tr>
-        <td class="player-name-cell">
-          <img src="${p.headshot}" 
-               class="player-thumb" 
-               alt="${p.name}"
-               onerror="this.src='https://a.espncdn.com/i/headshots/nba/players/full/0.png'">
-          <span class="player-name">${p.name}</span>
-        </td>
-        <td>${p.gp}</td>
-        <td class="stat-highlight">${p.ppg}</td>
-        <td>${p.fgPct}</td>
-        <td>${p.fg3m}</td>
-        <td>${p.fg3a}</td>
-        <td>${p.fg3Pct}</td>
-        <td>${p.ftm}</td>
-        <td>${p.fta}</td>
-        <td>${p.ftPct}</td>
-        <td>${p.oreb}</td>
-        <td>${p.dreb}</td>
-        <td>${p.rpg}</td>
-        <td>${p.apg}</td>
-        <td>${p.tov}</td>
-        <td>${p.stl}</td>
-        <td>${p.blk}</td>
-        <td>${p.pf}</td>
-      </tr>`;
-  });
-
-  html += `</tbody></table></div></section>`;
-
-  return html;
-}
-
-// Global state for export
-let currentStatsData = null;
-
-async function loadAllData(force = false) {
-  const container = document.getElementById("stats-app");
-  if (!container) return;
-
-  container.innerHTML = '<p style="text-align:center; padding: 2rem;">Loading stats...</p>';
-  
-  try {
-    let data = getCache();
-    
-    if (!data || force) {
-      console.log("Fetching fresh data from ESPN API...");
-      
-      const [ts, rosterData, leagueStandings] = await Promise.all([
-        fetchWithUA("https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/teams/20/statistics"),
-        fetchWithUA("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20?enable=roster"),
-        fetchWithUA("https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?type=0")
-      ]);
-
-      // Fetch all team stats for accurate ranking
-      console.log("Fetching league-wide team stats for accurate ranking...");
-      const allTeamStats = await Promise.all(
-        Array.from({ length: 30 }, (_, i) => 
-          fetchWithUA(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/teams/${i + 1}/statistics`)
-            .catch(() => null)
-        )
-      );
-      
-      const athletes = rosterData.team?.athletes || [];
-      
-      // We'll fetch stats for everyone in the roster + our CUSTOM_ROSTER IDs
-      const allIds = [...new Set([
-        ...athletes.map(a => a.id),
-        ...CUSTOM_ROSTER.map(c => c.id)
-      ])];
-
-      console.log(`Fetching stats for ${allIds.length} players...`);
-
-      // Parallel fetch from Core API
-      const statsResults = await Promise.all(
-        allIds.map(id => 
-          fetchWithUA(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/2/athletes/${id}/statistics`)
-            .catch(() => null)
-        )
-      );
-
-      const players = [];
-      allIds.forEach((id, index) => {
-        const statData = statsResults[index];
-        const athleteInfo = athletes.find(a => a.id === id);
-        const customInfo = CUSTOM_ROSTER.find(c => c.id === id);
-        
-        if (!athleteInfo && !customInfo) return;
-
-        const categories = statData?.splits?.categories || [];
-        
-        // Find specific stats
-        const gp = findStat(categories, "gamesPlayed")?.value || 0;
-        const ppg = findStat(categories, "avgPoints")?.displayValue || "0.0";
-        const rpg = findStat(categories, "avgRebounds")?.displayValue || "0.0";
-        const apg = findStat(categories, "avgAssists")?.displayValue || "0.0";
-        const mpg = findStat(categories, "avgMinutes")?.displayValue || "0.0";
-        const fgPct = findStat(categories, "fieldGoalPct")?.displayValue || "0.0";
-        const fg3Pct = findStat(categories, "threePointPct")?.displayValue || "0.0";
-        const fg3m = findStat(categories, "avgThreePointFieldGoalsMade")?.displayValue || "0.0";
-        const fg3a = findStat(categories, "avgThreePointFieldGoalsAttempted")?.displayValue || "0.0";
-        const ftm = findStat(categories, "avgFreeThrowsMade")?.displayValue || "0.0";
-        const fta = findStat(categories, "avgFreeThrowsAttempted")?.displayValue || "0.0";
-        const ftPct = findStat(categories, "freeThrowPct")?.displayValue || "0.0";
-        const oreb = findStat(categories, "avgOffensiveRebounds")?.displayValue || "0.0";
-        const dreb = findStat(categories, "avgDefensiveRebounds")?.displayValue || "0.0";
-        const tov = findStat(categories, "avgTurnovers")?.displayValue || "0.0";
-        const stl = findStat(categories, "avgSteals")?.displayValue || "0.0";
-        const blk = findStat(categories, "avgBlocks")?.displayValue || "0.0";
-        const pf = findStat(categories, "avgFouls")?.displayValue || "0.0";
-
-        players.push({
-          id,
-          name: athleteInfo?.displayName || customInfo?.name || "Unknown",
-          jersey: athleteInfo?.jersey || customInfo?.no || "-",
-          position: athleteInfo?.position?.abbreviation || "N/A",
-          headshot: athleteInfo?.headshot?.href || `https://a.espncdn.com/i/headshots/nba/players/full/${id}.png`,
-          gp,
-          mpg,
-          ppg,
-          rpg,
-          apg,
-          fgPct,
-          fg3Pct,
-          fg3m,
-          fg3a,
-          ftm,
-          fta,
-          ftPct,
-          oreb,
-          dreb,
-          tov,
-          stl,
-          blk,
-          pf
-        });
-      });
-
-      // Filter to only show our target 17 players
-      const customIds = CUSTOM_ROSTER.map(c => c.id);
-      const filteredPlayers = players.filter(p => customIds.includes(p.id));
-
-      data = {
-        teamStats: ts,
-        standings: leagueStandings,
-        leagueStats: allTeamStats.filter(s => s !== null),
-        players: filteredPlayers
-      };
-      
-      setCache(data);
+  <style>
+    :root {
+      --color-navy: #0a174e;
+      --color-navy-dark: #060d33;
+      --color-sky: #3b82f6;
+      --color-sky-light: #60a5fa;
+      --color-cyan: #06b6d4;
+      --color-ice: #f8fafc;
+      --color-white: #ffffff;
+      --color-slate-900: #0f172a;
+      --color-slate-800: #1e293b;
+      --color-slate-700: #334155;
+      --color-slate-500: #64748b;
+      --color-gold: #f59e0b;
+      --color-sixers-red: #ef4444;
+      --card-radius: 24px;
+      --card-shadow: 0 20px 50px rgba(10, 23, 78, 0.1);
+      --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    currentStatsData = data;
-    let finalHtml = "";
-    
-    finalHtml += renderPlayerStats(data.players);
-    finalHtml += renderTeamStats(data.teamStats, data.standings, data.leagueStats);
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    container.innerHTML = finalHtml;
-  } catch (err) {
-    console.error("Load error:", err);
-    container.innerHTML = `
-      <div style="color:red; text-align:center; padding: 2rem;">
-        <h3>Error loading stats</h3>
-        <p>${err.message}</p>
-        <button onclick="localStorage.clear(); location.reload();" style="margin-top:1rem; padding:0.5rem 1rem; cursor:pointer;">
-          Retry
+    body {
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+      color: var(--color-slate-900);
+      line-height: 1.6;
+      padding-top: 80px;
+      overflow-x: hidden;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header {
+      padding: 6rem 2rem;
+      background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-dark) 100%);
+      color: white;
+      clip-path: ellipse(150% 100% at 50% 0%);
+      margin-bottom: -4rem;
+      text-align: center;
+    }
+
+    .page-title {
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-weight: 900;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .page-title .highlight {
+      background: linear-gradient(to right, var(--color-sky-light), var(--color-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .page-subtitle {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+
+    .content-wrapper {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .stats-container {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 32px;
+      padding: clamp(1.5rem, 5vw, 4rem);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+      margin-bottom: 6rem;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    .stats-section {
+      margin-bottom: 5rem;
+    }
+
+    .stats-title {
+      font-size: 2.25rem;
+      font-weight: 900;
+      color: var(--color-navy);
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .stats-title::before {
+      content: "";
+      width: 6px;
+      height: 36px;
+      background: var(--color-sky);
+      border-radius: 10px;
+    }
+
+    /* Modern Table Styles */
+    .table-responsive {
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      background: white;
+      margin-bottom: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--color-slate-500);
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      padding: 1.25rem 1rem;
+      text-align: left;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    td {
+      padding: 1.25rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-slate-800);
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Leader Cards - Redesigned */
+    .leaders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .leader-card {
+      background: white;
+      border-radius: 28px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .leader-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 30px 60px rgba(10, 23, 78, 0.15);
+    }
+
+    .leader-card.primary {
+      background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 100%);
+      border: 2px solid var(--color-sky);
+    }
+
+    .leader-rank {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      width: 40px;
+      height: 40px;
+      background: var(--color-ice);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: var(--color-sky);
+      font-size: 1.2rem;
+    }
+
+    .leader-img {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      margin-bottom: 1.5rem;
+      border: 4px solid white;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      object-fit: cover;
+    }
+
+    .leader-name {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--color-navy);
+      margin-bottom: 0.25rem;
+    }
+
+    .leader-pos {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--color-slate-500);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .leader-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #f1f5f9;
+      width: 100%;
+    }
+
+    .leader-val {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: var(--color-sky);
+    }
+
+    .leader-unit {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--color-slate-400);
+      text-transform: uppercase;
+    }
+
+
+
+    /* Player Cells */
+    .player-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .player-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: #f1f5f9;
+      border: 2px solid white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      object-fit: cover;
+    }
+
+    .player-name {
+      font-weight: 800;
+      color: var(--color-navy);
+    }
+
+    .stat-highlight {
+      color: var(--color-sky) !important;
+      font-weight: 900 !important;
+      font-size: 1.1rem;
+    }
+
+    .pos-tag {
+      font-size: 0.75rem;
+      font-weight: 800;
+      background: var(--color-ice);
+      color: var(--color-slate-600);
+      padding: 4px 10px;
+      border-radius: 8px;
+      text-transform: uppercase;
+    }
+
+    /* Export Button - Polished */
+    .export-container {
+      text-align: center;
+      margin-top: 4rem;
+      padding: 3rem;
+      background: var(--color-ice);
+      border-radius: 24px;
+    }
+
+    .export-btn {
+      background: var(--color-navy);
+      padding: 1.2rem 2.5rem;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      color: white;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      transition: var(--transition);
+      box-shadow: 0 15px 35px rgba(10, 23, 78, 0.2);
+    }
+
+    .export-btn:hover {
+      background: var(--color-sky);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+    }
+
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .export-modal-content {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 2.5rem;
+      max-width: 1000px;
+      width: 95%;
+      text-align: center;
+    }
+
+    .export-preview {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .action-btn {
+      padding: 0.8rem 2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .btn-download { background: #059669; color: #fff; }
+    .btn-close { background: #64748b; color: #fff; }
+
+    /* Social Media Export Styling */
+    #social-export-container {
+      position: fixed;
+      left: -9999px;
+      top: -9999px;
+      width: 1200px;
+      background: #f8fafc;
+      padding: 50px;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #social-export-container * {
+      box-sizing: border-box;
+    }
+    .social-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      border-bottom: 3px solid #003da6;
+      padding-bottom: 25px;
+    }
+    .social-title-box h1 {
+      font-size: 48px;
+      margin: 0;
+      font-weight: 800;
+      color: #003da6;
+      letter-spacing: -1.5px;
+    }
+    .social-title-box p {
+      font-size: 22px;
+      color: #475569;
+      margin: 8px 0 0;
+      font-weight: 600;
+    }
+    .social-branding {
+      text-align: right;
+    }
+    .social-branding .domain {
+      font-size: 28px;
+      font-weight: 900;
+      color: #e11d48;
+    }
+    .social-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    .social-stat-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .social-stat-label {
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .social-stat-value {
+      font-size: 64px;
+      font-weight: 900;
+      color: #003da6;
+    }
+    .social-table {
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      border-collapse: collapse;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border: 1px solid #e2e8f0;
+    }
+    .social-table th {
+      background: #f1f5f9;
+      padding: 18px;
+      text-align: center;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: #475569;
+      font-weight: 900;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .social-table td {
+      padding: 18px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: center;
+    }
+    .social-footer-note {
+      margin-top: 25px;
+      font-size: 16px;
+      color: #64748b;
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    .export-btn-container {
+      text-align: center;
+      margin: 2rem 0;
+    }
+    .export-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    .export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+      background: linear-gradient(135deg, #218838 0%, #17a673 100%);
+    }
+
+    /* Modal Styles */
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .export-modal.active {
+      display: flex;
+    }
+    .export-modal-content {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .export-modal-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .export-modal-subtitle {
+      font-size: 16px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .export-preview-container {
+      margin-bottom: 24px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border: 1px solid #e2e8f0;
+    }
+    .export-preview-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .export-modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .modal-btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      border: none;
+    }
+    .modal-btn.download {
+      background: #003da6;
+      color: white;
+    }
+    .modal-btn.close {
+      background: transparent;
+      color: #64748b;
+    }
+    .modal-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* Loader */
+    .loader-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--color-sky);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .page-header { padding: 3rem 1rem; }
+      .stats-container { padding: 1.5rem; }
+      th, td { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <script src="nav.js"></script>
+
+  <section class="page-header">
+    <div class="page-header-content">
+      <h1 class="page-title">Sixers <span class="highlight">Stats Central</span></h1>
+      <p class="page-subtitle">Roster-specific analytics, performance metrics, and team leaders.</p>
+    </div>
+  </section>
+
+  <div class="content-wrapper">
+    <div class="export-btn-container">
+      <button onclick="openExportModal()" class="export-btn">
+        <i class="fa-solid fa-camera"></i> Generate Social Graphic
+      </button>
+    </div>
+    <main class="stats-container" id="stats-app">
+      <div class="loader">
+        <div class="loader-spinner"></div>
+        <p>Loading analytics...</p>
+      </div>
+    </main>
+    <div class="export-container">
+      <h3 style="margin-bottom: 1.5rem; font-weight: 800; color: var(--color-navy);">Share these stats</h3>
+      <button onclick="openExportModal()" class="export-btn">
+        <i class="fa-solid fa-camera"></i> Generate Social Graphic
+      </button>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="export-modal" class="export-modal">
+    <div class="export-modal-content">
+      <h2 style="margin-bottom: 1rem; color: var(--color-navy);">Your Social Graphic</h2>
+      <p style="margin-bottom: 2rem; color: var(--color-slate-500);">Ready for Instagram, Twitter, or Facebook</p>
+      
+      <div id="export-preview-container">
+        <!-- Canvas/Image will be inserted here -->
+        <p>Generating preview...</p>
+      </div>
+
+      <div class="modal-actions">
+        <button onclick="downloadSocialImage()" class="action-btn btn-download">
+          <i class="fa-solid fa-download"></i> Download Image
         </button>
-      </div>`;
-  }
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  console.log("🏀 Sixers Stats App Starting...");
-  loadAllData();
-  
-  // Auto-refresh every 10 minutes
-  setInterval(() => {
-    console.log("🔄 Auto-refreshing...");
-    loadAllData(true);
-  }, 10 * 60 * 1000);
-});
-
-// Social Export Functions
-window.openExportModal = function() {
-  const modal = document.getElementById('export-modal');
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  generateSocialImage();
-};
-
-window.closeExportModal = function() {
-  const modal = document.getElementById('export-modal');
-  modal.style.display = 'none';
-  document.body.style.overflow = 'auto';
-};
-
-async function generateSocialImage() {
-  const previewContainer = document.getElementById('export-preview-container');
-  previewContainer.innerHTML = '<div class="loader-spinner" style="margin: 2rem auto;"></div><p>Generating high-quality graphic...</p>';
-
-  if (!currentStatsData) {
-    previewContainer.innerHTML = '<p style="color:red;">No data available to generate image.</p>';
-    return;
-  }
-
-  // Populate hidden container
-  populateSocialContainer(currentStatsData);
-
-  try {
-    const socialContainer = document.getElementById('social-export-container');
-    
-    // Wait for images to load
-    const images = socialContainer.getElementsByTagName('img');
-    const imagePromises = Array.from(images).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
-    });
-    await Promise.all(imagePromises);
-
-    // Short delay for fonts and layout
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const canvas = await html2canvas(socialContainer, {
-      scale: 2, // High DPI
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff'
-    });
-
-    previewContainer.innerHTML = '';
-    const img = new Image();
-    img.src = canvas.toDataURL('image/png');
-    img.className = 'export-preview';
-    img.style.maxWidth = '100%';
-    img.style.height = 'auto';
-    img.style.borderRadius = '12px';
-    img.style.boxShadow = '0 20px 40px rgba(0,0,0,0.2)';
-    previewContainer.appendChild(img);
-    
-    // Store canvas for download
-    window.lastExportCanvas = canvas;
-  } catch (err) {
-    console.error("Image generation error:", err);
-    previewContainer.innerHTML = `<p style="color:red;">Error generating image: ${err.message}</p>`;
-  }
-}
-
-function populateSocialContainer(data) {
-  const snapshotsContainer = document.getElementById('social-snapshots');
-  const leadersContainer = document.getElementById('social-leaders');
-  const teamStatsContainer = document.getElementById('social-team-stats');
-
-  if (!leadersContainer || !teamStatsContainer || !snapshotsContainer) return;
-
-  // 1. Populate Snapshots (Top Cards)
-  const sixersSummary = data.standings.children[0].standings.entries.find(e => e.team.id === SIXERS_TEAM_ID);
-  const record = sixersSummary?.stats.find(s => s.name === 'summary')?.displayValue || "0-0";
-  const winPct = sixersSummary?.stats.find(s => s.name === 'winPercent')?.displayValue || ".000";
-  const ppg = sixersSummary?.stats.find(s => s.name === 'avgPointsFor')?.displayValue || "0.0";
-  const oppPpg = sixersSummary?.stats.find(s => s.name === 'avgPointsAgainst')?.displayValue || "0.0";
-
-  snapshotsContainer.innerHTML = `
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Season Record</div>
-      <div class="social-stat-value" style="color: #003da6;">${record}</div>
-    </div>
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Points Per Game</div>
-      <div class="social-stat-value" style="color: #e11d48;">${ppg}</div>
-    </div>
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Opponent PPG</div>
-      <div class="social-stat-value" style="color: #64748b;">${oppPpg}</div>
-    </div>
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Win Percentage</div>
-      <div class="social-stat-value" style="color: #003da6;">${winPct}</div>
-    </div>
-  `;
-
-  // 2. Populate Leaders (Top 5 Scorers)
-  const topScorers = [...data.players]
-    .filter(p => p.gp > 0)
-    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 5);
-
-  leadersContainer.innerHTML = topScorers.map((p, idx) => `
-    <div style="display: flex; align-items: center; gap: 24px; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; overflow: hidden;">
-      ${idx === 0 ? '<div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(0, 61, 166, 0.05); border-radius: 50%;"></div>' : ''}
-      <div style="position: relative; z-index: 1;">
-        <img src="${p.headshot}" style="width: 110px; height: 110px; border-radius: 50%; background: #f8fafc; object-fit: cover; border: 4px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
+        <button onclick="copySocialImage()" class="action-btn" style="background: #3b82f6; color: #fff;">
+          <i class="fa-solid fa-copy"></i> Copy to Clipboard
+        </button>
+        <button onclick="closeExportModal()" class="action-btn btn-close">
+          Close
+        </button>
       </div>
-      <div style="flex: 1; z-index: 1;">
-        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin-bottom: 4px;">${p.name}</div>
-        <div style="font-size: 14px; font-weight: 800; color: #e11d48; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
-        <div style="display: flex; gap: 30px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">PPG</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.ppg}</div>
-          </div>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">RPG</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.rpg}</div>
-          </div>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">APG</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.apg}</div>
-          </div>
+    </div>
+  </div>
+
+  <!-- Hidden container for image generation -->
+  <div id="social-export-container" style="position: absolute; left: -9999px; top: -9999px; width: 1200px; background: #f8fafc; padding: 50px; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div class="social-header">
+      <div class="social-title-box">
+        <h1>SIXERS <span style="color: #003da6;">TEAM STATS</span></h1>
+        <p>2025-26 Season Analytics & Leaders</p>
+      </div>
+      <div class="social-branding">
+        <div class="domain" style="font-size: 32px; font-weight: 900; color: #e11d48;">SixersHoops</div>
+        <div style="font-size: 18px; font-weight: 700; color: #64748b;">sixershoops.com</div>
+      </div>
+    </div>
+
+    <!-- Snapshot Stats (Top Cards) -->
+    <div id="social-snapshots" style="display: flex; gap: 30px; justify-content: center; margin-bottom: 40px;">
+      <!-- Populated by JS -->
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;">
+      <div>
+        <h2 style="font-size: 24px; font-weight: 900; color: #003da6; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 12px;">
+          Season Leaders
+        </h2>
+        <div id="social-leaders" style="display: grid; gap: 20px;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      
+      <div>
+        <h2 style="font-size: 24px; font-weight: 900; color: #003da6; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 12px;">
+          Team Averages
+        </h2>
+        <div id="social-team-stats" style="background: white; border-radius: 16px; padding: 30px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+          <!-- Populated by JS -->
         </div>
       </div>
     </div>
-  `).join('');
 
-  // 3. Populate Team Stats (Top 8 categories)
-  const sixers = data.leagueStats.find(t => {
-    const ref = t.team?.$ref || "";
-    return ref.split('/').pop()?.split('?')[0] === SIXERS_TEAM_ID;
-  });
-
-  const getStat = (teamData, name) => {
-    const cats = teamData?.splits?.categories || [];
-    for (const cat of cats) {
-      const s = cat.stats?.find(st => st.name === name);
-      if (s) return s;
-    }
-    return { value: 0, displayValue: "0.0" };
-  };
-
-  const categories = [
-    { label: "Field Goal %", name: "fieldGoalPct" },
-    { label: "3-Point %", name: "threePointPct" },
-    { label: "Free Throw %", name: "freeThrowPct" },
-    { label: "Rebounds PG", name: "avgRebounds" },
-    { label: "Assists PG", name: "avgAssists" },
-    { label: "Steals PG", name: "avgSteals" },
-    { label: "Blocks PG", name: "avgBlocks" },
-    { label: "Turnovers PG", name: "avgTurnovers" }
-  ];
-
-  teamStatsContainer.innerHTML = `
-    <div style="display: grid; gap: 12px;">
-      ${categories.map(cat => {
-        const stat = getStat(sixers, cat.name);
-        return `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
-            <span style="font-weight: 700; color: #475569; font-size: 15px;">${cat.label}</span>
-            <span style="font-size: 22px; font-weight: 900; color: #003da6;">${stat.displayValue}</span>
-          </div>
-        `;
-      }).join('')}
+    <div class="social-footer-note" style="text-align: center; margin-top: 40px;">
+      Official Sixers Analytics • sixershoops.com
     </div>
-  `;
-}
+  </div>
 
-window.downloadSocialImage = function() {
-  if (!window.lastExportCanvas) return;
-  
-  const link = document.createElement('a');
-  link.download = `sixers-stats-${new Date().toISOString().split('T')[0]}.png`;
-  link.href = window.lastExportCanvas.toDataURL('image/png');
-  link.click();
-};
-
-window.copySocialImage = async function() {
-  if (!window.lastExportCanvas) return;
-  
-  try {
-    const blob = await new Promise(resolve => window.lastExportCanvas.toBlob(resolve, 'image/png'));
-    const item = new ClipboardItem({ 'image/png': blob });
-    await navigator.clipboard.write([item]);
-    alert('Image copied to clipboard!');
-  } catch (err) {
-    console.error('Failed to copy image:', err);
-    alert('Failed to copy image. Your browser may not support this feature.');
-  }
-};
+  <script src="stats.js"></script>
+</body>
+</html>
