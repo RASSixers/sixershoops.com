@@ -126,6 +126,14 @@ function renderTeamStats(data, standings, leagueStats) {
           toRatio: getStatValue(lStat, 'turnoverRatio'),
           fgPct: getStatValue(lStat, 'fieldGoalPct'),
           fg3Pct: getStatValue(lStat, 'threePointPct'),
+          fg3m: getStatValue(lStat, 'avgThreePointFieldGoalsMade'),
+          fg3a: getStatValue(lStat, 'avgThreePointFieldGoalsAttempted'),
+          ftm: getStatValue(lStat, 'avgFreeThrowsMade'),
+          fta: getStatValue(lStat, 'avgFreeThrowsAttempted'),
+          ftPct: getStatValue(lStat, 'freeThrowPct'),
+          oreb: getStatValue(lStat, 'avgOffensiveRebounds'),
+          dreb: getStatValue(lStat, 'avgDefensiveRebounds'),
+          pf: getStatValue(lStat, 'avgFouls'),
           pace: pace
         });
       });
@@ -156,17 +164,21 @@ function renderTeamStats(data, standings, leagueStats) {
 
   const rows = [
     { label: "Points Per Game", val: sixers.ppg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ppg') },
-    { label: "Opponent PPG", val: sixers.oppPpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'oppPpg', false) },
-    { label: "Offensive Rating", val: sixers.offRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'offRtg') },
-    { label: "Defensive Rating", val: sixers.defRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'defRtg', false) },
-    { label: "Win Percentage", val: sixers.winPct?.toFixed(3), rank: getNBARankCombined(SIXERS_TEAM_ID, 'winPct') },
-    { label: "Rebounds Per Game", val: sixers.rpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'rpg') },
-    { label: "Assists Per Game", val: sixers.apg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'apg') },
-    { label: "Blocks Per Game", val: sixers.bpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'bpg') },
-    { label: "Steals Per Game", val: sixers.spg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'spg') },
-    { label: "Turnover Ratio", val: sixers.toRatio?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'toRatio', false) },
     { label: "Field Goal %", val: sixers.fgPct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fgPct') },
-    { label: "3-Point %", val: sixers.fg3Pct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3Pct') }
+    { label: "3-Point Made", val: sixers.fg3m?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3m') },
+    { label: "3-Point Attempted", val: sixers.fg3a?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3a') },
+    { label: "3-Point %", val: sixers.fg3Pct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3Pct') },
+    { label: "Free Throws Made", val: sixers.ftm?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ftm') },
+    { label: "Free Throws Attempted", val: sixers.fta?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fta') },
+    { label: "Free Throw %", val: sixers.ftPct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ftPct') },
+    { label: "Offensive Rebounds", val: sixers.oreb?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'oreb') },
+    { label: "Defensive Rebounds", val: sixers.dreb?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'dreb') },
+    { label: "Total Rebounds", val: sixers.rpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'rpg') },
+    { label: "Assists Per Game", val: sixers.apg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'apg') },
+    { label: "Turnovers Per Game", val: sixers.to?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'to', false) },
+    { label: "Steals Per Game", val: sixers.spg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'spg') },
+    { label: "Blocks Per Game", val: sixers.bpg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'bpg') },
+    { label: "Personal Fouls", val: sixers.pf?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'pf', false) }
   ];
 
   rows.forEach(row => {
@@ -237,15 +249,23 @@ function renderPlayerStats(players) {
         <thead>
           <tr>
             <th>Player</th>
-            <th>#</th>
-            <th>POS</th>
             <th>GP</th>
-            <th>MIN</th>
             <th>PTS</th>
+            <th>FG%</th>
+            <th>3PM</th>
+            <th>3PA</th>
+            <th>3P%</th>
+            <th>FTM</th>
+            <th>FTA</th>
+            <th>FT%</th>
+            <th>OREB</th>
+            <th>DREB</th>
             <th>REB</th>
             <th>AST</th>
-            <th>FG%</th>
-            <th>3P%</th>
+            <th>TOV</th>
+            <th>STL</th>
+            <th>BLK</th>
+            <th>PF</th>
           </tr>
         </thead>
         <tbody>`;
@@ -260,15 +280,23 @@ function renderPlayerStats(players) {
                onerror="this.src='https://a.espncdn.com/i/headshots/nba/players/full/0.png'">
           <span class="player-name">${p.name}</span>
         </td>
-        <td style="font-weight:900; color:var(--color-navy)">${p.jersey || '-'}</td>
-        <td class="pos-tag">${p.position}</td>
         <td>${p.gp}</td>
-        <td>${p.mpg}</td>
         <td class="stat-highlight">${p.ppg}</td>
+        <td>${p.fgPct}</td>
+        <td>${p.fg3m}</td>
+        <td>${p.fg3a}</td>
+        <td>${p.fg3Pct}</td>
+        <td>${p.ftm}</td>
+        <td>${p.fta}</td>
+        <td>${p.ftPct}</td>
+        <td>${p.oreb}</td>
+        <td>${p.dreb}</td>
         <td>${p.rpg}</td>
         <td>${p.apg}</td>
-        <td>${p.fgPct}</td>
-        <td>${p.fg3Pct}</td>
+        <td>${p.tov}</td>
+        <td>${p.stl}</td>
+        <td>${p.blk}</td>
+        <td>${p.pf}</td>
       </tr>`;
   });
 
@@ -349,6 +377,17 @@ async function loadAllData(force = false) {
         const mpg = findStat(categories, "avgMinutes")?.displayValue || "0.0";
         const fgPct = findStat(categories, "fieldGoalPct")?.displayValue || "0.0";
         const fg3Pct = findStat(categories, "threePointPct")?.displayValue || "0.0";
+        const fg3m = findStat(categories, "avgThreePointFieldGoalsMade")?.displayValue || "0.0";
+        const fg3a = findStat(categories, "avgThreePointFieldGoalsAttempted")?.displayValue || "0.0";
+        const ftm = findStat(categories, "avgFreeThrowsMade")?.displayValue || "0.0";
+        const fta = findStat(categories, "avgFreeThrowsAttempted")?.displayValue || "0.0";
+        const ftPct = findStat(categories, "freeThrowPct")?.displayValue || "0.0";
+        const oreb = findStat(categories, "avgOffensiveRebounds")?.displayValue || "0.0";
+        const dreb = findStat(categories, "avgDefensiveRebounds")?.displayValue || "0.0";
+        const tov = findStat(categories, "avgTurnovers")?.displayValue || "0.0";
+        const stl = findStat(categories, "avgSteals")?.displayValue || "0.0";
+        const blk = findStat(categories, "avgBlocks")?.displayValue || "0.0";
+        const pf = findStat(categories, "avgFouls")?.displayValue || "0.0";
 
         players.push({
           id,
@@ -362,7 +401,18 @@ async function loadAllData(force = false) {
           rpg,
           apg,
           fgPct,
-          fg3Pct
+          fg3Pct,
+          fg3m,
+          fg3a,
+          ftm,
+          fta,
+          ftPct,
+          oreb,
+          dreb,
+          tov,
+          stl,
+          blk,
+          pf
         });
       });
 
