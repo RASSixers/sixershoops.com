@@ -611,33 +611,40 @@ function populateSocialContainer(data) {
 
   if (!leadersContainer || !teamStatsContainer) return;
 
-  // 1. Populate Leaders (Top 10 Scorers)
-  const topScorers = [...data.players]
+  // 1. Populate Roster (All Players)
+  const allPlayers = [...data.players]
     .filter(p => p.gp > 0)
-    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 10);
+    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg));
 
-  leadersContainer.innerHTML = topScorers.map((p, idx) => `
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; background: ${idx % 2 === 0 ? '#ffffff' : '#fafafa'};">
-      <div style="display: flex; align-items: center; gap: 15px;">
-        <div style="font-size: 14px; font-weight: 800; color: #94a3b8; width: 25px;">${(idx + 1).toString().padStart(2, '0')}</div>
+  leadersContainer.innerHTML = allPlayers.map((p, idx) => `
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #f1f5f9; background: ${idx % 2 === 0 ? '#ffffff' : '#fafafa'};">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 12px; font-weight: 800; color: #94a3b8; width: 20px;">${(idx + 1).toString().padStart(2, '0')}</div>
         <div>
-          <div style="font-size: 18px; font-weight: 800; color: #0f172a;">${p.name}</div>
-          <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
+          <div style="font-size: 16px; font-weight: 800; color: #0f172a;">${p.name}</div>
+          <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">${p.position} • #${p.jersey}</div>
         </div>
       </div>
-      <div style="display: flex; gap: 25px; text-align: right;">
-        <div style="min-width: 45px;">
-          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px;">PTS</div>
-          <div style="font-size: 18px; font-weight: 900; color: #003da6;">${p.ppg}</div>
+      <div style="display: flex; gap: 18px; text-align: right;">
+        <div style="min-width: 40px;">
+          <div style="font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">PPG</div>
+          <div style="font-size: 16px; font-weight: 900; color: #003da6;">${p.ppg}</div>
         </div>
-        <div style="min-width: 45px;">
-          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px;">REB</div>
-          <div style="font-size: 18px; font-weight: 900; color: #003da6;">${p.rpg}</div>
+        <div style="min-width: 40px;">
+          <div style="font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">RPG</div>
+          <div style="font-size: 16px; font-weight: 900; color: #003da6;">${p.rpg}</div>
         </div>
-        <div style="min-width: 45px;">
-          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px;">AST</div>
-          <div style="font-size: 18px; font-weight: 900; color: #003da6;">${p.apg}</div>
+        <div style="min-width: 40px;">
+          <div style="font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">AST</div>
+          <div style="font-size: 16px; font-weight: 900; color: #003da6;">${p.apg}</div>
+        </div>
+        <div style="min-width: 40px;">
+          <div style="font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">BLK</div>
+          <div style="font-size: 16px; font-weight: 900; color: #003da6;">${p.blk}</div>
+        </div>
+        <div style="min-width: 40px;">
+          <div style="font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">STL</div>
+          <div style="font-size: 16px; font-weight: 900; color: #003da6;">${p.stl}</div>
         </div>
       </div>
     </div>
