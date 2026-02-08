@@ -72,8 +72,6 @@ function findStat(categories, name) {
   return null;
 }
 
-
-
 function renderTeamStats(data, standings, leagueStats) {
   const categories = data?.splits?.categories;
   
@@ -237,7 +235,7 @@ function renderLeaders(players) {
   const topScorers = [...players]
     .filter(p => p.gp > 0)
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (topScorers.length === 0) return "";
 
@@ -248,7 +246,6 @@ function renderLeaders(players) {
   topScorers.forEach((p, idx) => {
     html += `
       <div class="leader-card ${idx === 0 ? 'primary' : ''}">
-        <div class="leader-rank">#${idx + 1}</div>
         <div class="leader-info">
           <div class="leader-name">${p.name}</div>
           <div class="leader-pos">${p.position}</div>
@@ -561,17 +558,6 @@ async function generateSocialImage() {
   try {
     const socialContainer = document.getElementById('social-export-container');
     
-    // Wait for images to load
-    const images = socialContainer.getElementsByTagName('img');
-    const imagePromises = Array.from(images).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
-    });
-    await Promise.all(imagePromises);
-
     // Short delay for fonts and layout
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -601,77 +587,49 @@ async function generateSocialImage() {
 }
 
 function populateSocialContainer(data) {
-  const snapshotsContainer = document.getElementById('social-snapshots');
   const leadersContainer = document.getElementById('social-leaders');
   const teamStatsContainer = document.getElementById('social-team-stats');
 
-  if (!leadersContainer || !teamStatsContainer || !snapshotsContainer) return;
+  if (!leadersContainer || !teamStatsContainer) return;
 
-  // 1. Populate Snapshots (Top Cards)
-  const sixersSummary = data.standings.children[0].standings.entries.find(e => e.team.id === SIXERS_TEAM_ID);
-  const record = sixersSummary?.stats.find(s => s.name === 'summary')?.displayValue || "0-0";
-  const winPct = sixersSummary?.stats.find(s => s.name === 'winPercent')?.displayValue || ".000";
-  const ppg = sixersSummary?.stats.find(s => s.name === 'avgPointsFor')?.displayValue || "0.0";
-  const oppPpg = sixersSummary?.stats.find(s => s.name === 'avgPointsAgainst')?.displayValue || "0.0";
-
-  snapshotsContainer.innerHTML = `
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Season Record</div>
-      <div class="social-stat-value" style="color: #003da6;">${record}</div>
-    </div>
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Points Per Game</div>
-      <div class="social-stat-value" style="color: #e11d48;">${ppg}</div>
-    </div>
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Opponent PPG</div>
-      <div class="social-stat-value" style="color: #64748b;">${oppPpg}</div>
-    </div>
-    <div class="social-stat-card" style="flex: 1;">
-      <div class="social-stat-label">Win Percentage</div>
-      <div class="social-stat-value" style="color: #003da6;">${winPct}</div>
-    </div>
-  `;
-
-  // 2. Populate Leaders (Top 5 Scorers)
+  // 1. Populate Leaders (Top 10 Scorers - Expanded for graphic)
   const topScorers = [...data.players]
     .filter(p => p.gp > 0)
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 5);
+    .slice(0, 10);
 
   leadersContainer.innerHTML = topScorers.map((p, idx) => `
     <div style="display: flex; align-items: center; gap: 24px; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; overflow: hidden;">
-      ${idx === 0 ? '<div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(0, 61, 166, 0.05); border-radius: 50%;"></div>' : ''}
       <div style="flex: 1; z-index: 1;">
         <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin-bottom: 4px;">${p.name}</div>
-        <div style="font-size: 14px; font-weight: 800; color: #e11d48; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
+        <div style="font-size: 14px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
         <div style="display: flex; gap: 20px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; flex-wrap: wrap;">
           <div>
             <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">PPG</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.ppg}</div>
+            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.ppg}</div>
           </div>
           <div>
             <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">RPG</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.rpg}</div>
+            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.rpg}</div>
           </div>
           <div>
             <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">AST</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.apg}</div>
+            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.apg}</div>
           </div>
           <div>
             <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">BLK</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.blk}</div>
+            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.blk}</div>
           </div>
           <div>
             <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">STL</div>
-            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.stl}</div>
+            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.stl}</div>
           </div>
         </div>
       </div>
     </div>
   `).join('');
 
-  // 3. Populate Team Stats (Top 8 categories)
+  // 2. Populate Team Stats
   const sixers = data.leagueStats.find(t => {
     const ref = t.team?.$ref || "";
     return ref.split('/').pop()?.split('?')[0] === SIXERS_TEAM_ID;
@@ -687,6 +645,7 @@ function populateSocialContainer(data) {
   };
 
   const categories = [
+    { label: "Points Per Game", name: "avgPointsFor" },
     { label: "Field Goal %", name: "fieldGoalPct" },
     { label: "3-Point %", name: "threePointPct" },
     { label: "Free Throw %", name: "freeThrowPct" },
@@ -704,7 +663,7 @@ function populateSocialContainer(data) {
         return `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
             <span style="font-weight: 700; color: #475569; font-size: 15px;">${cat.label}</span>
-            <span style="font-size: 22px; font-weight: 900; color: #003da6;">${stat.displayValue}</span>
+            <span style="font-size: 22px; font-weight: 900; color: #0a174e;">${stat.displayValue}</span>
           </div>
         `;
       }).join('')}
