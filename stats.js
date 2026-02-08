@@ -163,6 +163,8 @@ function renderTeamStats(data, standings, leagueStats) {
         <tbody>`;
 
   const rows = [
+    { label: "Offensive Rating", val: sixers.offRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'offRtg') },
+    { label: "Defensive Rating", val: sixers.defRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'defRtg', false) },
     { label: "Points Per Game", val: sixers.ppg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ppg') },
     { label: "Field Goal %", val: sixers.fgPct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fgPct') },
     { label: "3-Point Made", val: sixers.fg3m?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3m') },
@@ -181,18 +183,42 @@ function renderTeamStats(data, standings, leagueStats) {
     { label: "Personal Fouls", val: sixers.pf?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'pf', false) }
   ];
 
-  rows.forEach(row => {
+  rows.forEach((row, index) => {
+    const isHidden = index >= 7;
     html += `
-      <tr>
+      <tr class="${isHidden ? 'team-stat-extra' : ''}" style="${isHidden ? 'display: none;' : ''}">
         <td class="stat-label">${row.label}</td>
         <td class="stat-value" style="text-align: right; font-weight: 800;">${row.val || '-'}</td>
         <td class="stat-rank" style="text-align: right; color: var(--color-sky); font-weight: 900;">${row.rank}</td>
       </tr>`;
   });
 
+  if (rows.length > 7) {
+    html += `
+      <tr>
+        <td colspan="3" style="text-align: center; padding: 1.5rem;">
+          <button onclick="toggleTeamStats(this)" class="export-btn" style="padding: 0.6rem 1.5rem; font-size: 0.9rem; background: var(--color-sky);">
+            Show All Stats
+          </button>
+        </td>
+      </tr>`;
+  }
+
   html += `</tbody></table></div></section>`;
   return html;
 }
+
+// Global toggle function
+window.toggleTeamStats = function(btn) {
+  const extras = document.querySelectorAll('.team-stat-extra');
+  const isHidden = extras[0].style.display === 'none';
+  
+  extras.forEach(tr => {
+    tr.style.display = isHidden ? 'table-row' : 'none';
+  });
+  
+  btn.innerText = isHidden ? 'Show Less' : 'Show All Stats';
+};
 
 function renderLeaders(players) {
   if (!players || players.length === 0) return "";
