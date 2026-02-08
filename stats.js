@@ -594,18 +594,17 @@ function populateSocialContainer(data) {
     </div>
   `;
 
-  // 2. Populate Leaders (Top 3 Scorers)
+  // 2. Populate Leaders (Top 5 Scorers)
   const topScorers = [...data.players]
     .filter(p => p.gp > 0)
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 3);
+    .slice(0, 5);
 
   leadersContainer.innerHTML = topScorers.map((p, idx) => `
     <div style="display: flex; align-items: center; gap: 24px; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; overflow: hidden;">
       ${idx === 0 ? '<div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(0, 61, 166, 0.05); border-radius: 50%;"></div>' : ''}
       <div style="position: relative; z-index: 1;">
         <img src="${p.headshot}" style="width: 110px; height: 110px; border-radius: 50%; background: #f8fafc; object-fit: cover; border: 4px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
-        <div style="position: absolute; top: -8px; left: -8px; width: 36px; height: 36px; background: ${idx === 0 ? '#003da6' : '#64748b'}; color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; border: 2px solid #fff;">${idx + 1}</div>
       </div>
       <div style="flex: 1; z-index: 1;">
         <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin-bottom: 4px;">${p.name}</div>
@@ -676,4 +675,18 @@ window.downloadSocialImage = function() {
   link.download = `sixers-stats-${new Date().toISOString().split('T')[0]}.png`;
   link.href = window.lastExportCanvas.toDataURL('image/png');
   link.click();
+};
+
+window.copySocialImage = async function() {
+  if (!window.lastExportCanvas) return;
+  
+  try {
+    const blob = await new Promise(resolve => window.lastExportCanvas.toBlob(resolve, 'image/png'));
+    const item = new ClipboardItem({ 'image/png': blob });
+    await navigator.clipboard.write([item]);
+    alert('Image copied to clipboard!');
+  } catch (err) {
+    console.error('Failed to copy image:', err);
+    alert('Failed to copy image. Your browser may not support this feature.');
+  }
 };
