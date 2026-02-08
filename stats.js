@@ -464,8 +464,8 @@ async function loadAllData(force = false) {
     currentStatsData = data;
     let finalHtml = "";
     
-    finalHtml += renderTeamStats(data.teamStats, data.standings, data.leagueStats);
     finalHtml += renderPlayerStats(data.players);
+    finalHtml += renderTeamStats(data.teamStats, data.standings, data.leagueStats);
 
     container.innerHTML = finalHtml;
   } catch (err) {
@@ -562,36 +562,73 @@ async function generateSocialImage() {
 }
 
 function populateSocialContainer(data) {
+  const snapshotsContainer = document.getElementById('social-snapshots');
   const leadersContainer = document.getElementById('social-leaders');
   const teamStatsContainer = document.getElementById('social-team-stats');
 
-  if (!leadersContainer || !teamStatsContainer) return;
+  if (!leadersContainer || !teamStatsContainer || !snapshotsContainer) return;
 
-  // 1. Populate Leaders (Top 3 Scorers)
+  // 1. Populate Snapshots (Top Cards)
+  const sixersSummary = data.standings.children[0].standings.entries.find(e => e.team.id === SIXERS_TEAM_ID);
+  const record = sixersSummary?.stats.find(s => s.name === 'summary')?.displayValue || "0-0";
+  const winPct = sixersSummary?.stats.find(s => s.name === 'winPercent')?.displayValue || ".000";
+  const ppg = sixersSummary?.stats.find(s => s.name === 'avgPointsFor')?.displayValue || "0.0";
+  const oppPpg = sixersSummary?.stats.find(s => s.name === 'avgPointsAgainst')?.displayValue || "0.0";
+
+  snapshotsContainer.innerHTML = `
+    <div class="social-stat-card" style="flex: 1;">
+      <div class="social-stat-label">Season Record</div>
+      <div class="social-stat-value" style="color: #003da6;">${record}</div>
+    </div>
+    <div class="social-stat-card" style="flex: 1;">
+      <div class="social-stat-label">Points Per Game</div>
+      <div class="social-stat-value" style="color: #e11d48;">${ppg}</div>
+    </div>
+    <div class="social-stat-card" style="flex: 1;">
+      <div class="social-stat-label">Opponent PPG</div>
+      <div class="social-stat-value" style="color: #64748b;">${oppPpg}</div>
+    </div>
+    <div class="social-stat-card" style="flex: 1;">
+      <div class="social-stat-label">Win Percentage</div>
+      <div class="social-stat-value" style="color: #003da6;">${winPct}</div>
+    </div>
+  `;
+
+  // 2. Populate Leaders (Top 3 Scorers)
   const topScorers = [...data.players]
     .filter(p => p.gp > 0)
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
     .slice(0, 3);
 
   leadersContainer.innerHTML = topScorers.map((p, idx) => `
-    <div style="display: flex; align-items: center; gap: 20px; background: white; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; ${idx === 0 ? 'border: 2px solid #3b82f6;' : ''}">
-      <div style="position: relative;">
-        <img src="${p.headshot}" style="width: 100px; height: 100px; border-radius: 50%; background: #f1f5f9; object-fit: cover; border: 3px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-        <div style="position: absolute; top: -5px; left: -5px; width: 32px; height: 32px; background: ${idx === 0 ? '#3b82f6' : '#64748b'}; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">#${idx + 1}</div>
+    <div style="display: flex; align-items: center; gap: 24px; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; overflow: hidden;">
+      ${idx === 0 ? '<div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(0, 61, 166, 0.05); border-radius: 50%;"></div>' : ''}
+      <div style="position: relative; z-index: 1;">
+        <img src="${p.headshot}" style="width: 110px; height: 110px; border-radius: 50%; background: #f8fafc; object-fit: cover; border: 4px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
+        <div style="position: absolute; top: -8px; left: -8px; width: 36px; height: 36px; background: ${idx === 0 ? '#003da6' : '#64748b'}; color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; border: 2px solid #fff;">${idx + 1}</div>
       </div>
-      <div>
-        <div style="font-size: 24px; font-weight: 900; color: #0a174e;">${p.name}</div>
-        <div style="font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase;">${p.position} • #${p.jersey}</div>
-        <div style="display: flex; gap: 20px; margin-top: 10px;">
-          <div><span style="font-size: 22px; font-weight: 900; color: #3b82f6;">${p.ppg}</span> <span style="font-size: 12px; font-weight: 800; color: #94a3b8;">PPG</span></div>
-          <div><span style="font-size: 22px; font-weight: 900; color: #3b82f6;">${p.rpg}</span> <span style="font-size: 12px; font-weight: 800; color: #94a3b8;">RPG</span></div>
-          <div><span style="font-size: 22px; font-weight: 900; color: #3b82f6;">${p.apg}</span> <span style="font-size: 12px; font-weight: 800; color: #94a3b8;">APG</span></div>
+      <div style="flex: 1; z-index: 1;">
+        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin-bottom: 4px;">${p.name}</div>
+        <div style="font-size: 14px; font-weight: 800; color: #e11d48; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
+        <div style="display: flex; gap: 30px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">PPG</div>
+            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.ppg}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">RPG</div>
+            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.rpg}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">APG</div>
+            <div style="font-size: 22px; font-weight: 900; color: #003da6;">${p.apg}</div>
+          </div>
         </div>
       </div>
     </div>
   `).join('');
 
-  // 2. Populate Team Stats (Top 6 categories)
+  // 3. Populate Team Stats (Top 8 categories)
   const sixers = data.leagueStats.find(t => {
     const ref = t.team?.$ref || "";
     return ref.split('/').pop()?.split('?')[0] === SIXERS_TEAM_ID;
@@ -607,31 +644,27 @@ function populateSocialContainer(data) {
   };
 
   const categories = [
-    { label: "Points Per Game", name: "avgPoints" },
-    { label: "Rebounds PG", name: "avgRebounds" },
-    { label: "Assists PG", name: "avgAssists" },
     { label: "Field Goal %", name: "fieldGoalPct" },
     { label: "3-Point %", name: "threePointPct" },
-    { label: "Defensive Rating", name: "defensiveRating" }
+    { label: "Free Throw %", name: "freeThrowPct" },
+    { label: "Rebounds PG", name: "avgRebounds" },
+    { label: "Assists PG", name: "avgAssists" },
+    { label: "Steals PG", name: "avgSteals" },
+    { label: "Blocks PG", name: "avgBlocks" },
+    { label: "Turnovers PG", name: "avgTurnovers" }
   ];
 
   teamStatsContainer.innerHTML = `
-    <div style="display: grid; gap: 15px;">
+    <div style="display: grid; gap: 12px;">
       ${categories.map(cat => {
         const stat = getStat(sixers, cat.name);
         return `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-            <span style="font-weight: 700; color: #475569;">${cat.label}</span>
-            <span style="font-size: 20px; font-weight: 900; color: #0a174e;">${stat.displayValue}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+            <span style="font-weight: 700; color: #475569; font-size: 15px;">${cat.label}</span>
+            <span style="font-size: 22px; font-weight: 900; color: #003da6;">${stat.displayValue}</span>
           </div>
         `;
       }).join('')}
-    </div>
-    <div style="margin-top: 25px; padding: 15px; background: #eef2ff; border-radius: 12px; text-align: center;">
-      <div style="font-size: 12px; font-weight: 800; color: #3b82f6; text-transform: uppercase; margin-bottom: 4px;">Record</div>
-      <div style="font-size: 24px; font-weight: 900; color: #0a174e;">
-        ${data.standings.children[0].standings.entries.find(e => e.team.id === SIXERS_TEAM_ID)?.stats.find(s => s.name === 'summary')?.displayValue || "0-0"}
-      </div>
     </div>
   `;
 }
