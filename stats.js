@@ -342,6 +342,9 @@ function renderPlayerStats(players) {
   return html;
 }
 
+// Global state for export
+let currentStatsData = null;
+
 async function loadAllData(force = false) {
   const container = document.getElementById("stats-app");
   if (!container) return;
@@ -458,16 +461,8 @@ async function loadAllData(force = false) {
       setCache(data);
     }
 
-    let finalHtml = `
-      <div class="export-btn-container">
-        <div style="margin-bottom: 1.5rem;">
-          <h3 style="color: var(--color-navy); font-weight: 800; margin-bottom: 0.5rem;">Share Season Performance</h3>
-          <p style="color: var(--color-slate-500); font-size: 0.95rem;">Generate an editorial-style graphic of the current team leaders for social media.</p>
-        </div>
-        <button onclick="generateSocialImage('full')" class="export-btn">
-          <i class="fas fa-camera"></i> Generate Season Leaders Graphic
-        </button>
-      </div>`;
+    currentStatsData = data;
+    let finalHtml = "";
     
     finalHtml += renderTeamStats(data.teamStats, data.standings, data.leagueStats);
     finalHtml += renderPlayerStats(data.players);
@@ -486,182 +481,6 @@ async function loadAllData(force = false) {
   }
 }
 
-async function generateSocialImage(mode) {
-  if (typeof html2canvas === 'undefined') {
-    alert("html2canvas library not loaded");
-    return;
-  }
-
-  const container = document.getElementById("social-export-container");
-  if (!container) return;
-
-  const data = getCache();
-  if (!data || !data.players) return;
-
-  // 1. Get Top 4 Players
-  const topPlayers = data.players
-    .filter(p => p.gp > 0)
-    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 4);
-
-  // 2. Calculate Team Stats & Ranks
-  const getStatValue = (teamData, statName) => {
-    const cats = teamData?.splits?.categories || [];
-    for (const cat of cats) {
-      const s = cat.stats?.find(st => st.name === statName);
-      if (s) return s.value;
-    }
-    return 0;
-  };
-
-  const nbaTeamsCombined = [];
-  if (data.standings && data.standings.children) {
-    data.standings.children.forEach(conf => {
-      conf.standings?.entries?.forEach(entry => {
-        const teamId = entry.team.id;
-        const sStats = entry.stats || [];
-        const getSStat = (name) => sStats.find(s => s.name === name)?.value || 0;
-        
-        const lStat = data.leagueStats.find(ls => {
-           const ref = ls.team?.$ref || "";
-           return ref.split('/').pop()?.split('?')[0] === teamId;
-        });
-
-        const fga = getStatValue(lStat, 'fieldGoalsAttempted') || 0;
-        const fta = getStatValue(lStat, 'freeThrowsAttempted') || 0;
-        const to = getStatValue(lStat, 'turnovers') || 0;
-        const oreb = getStatValue(lStat, 'offensiveRebounds') || 0;
-
-        const teamPoss = 0.96 * (fga + to + (0.44 * fta) - oreb);
-        const offRtg = teamPoss > 0 ? (getSStat('pointsFor') / teamPoss) * 100 : 0;
-        const defRtg = teamPoss > 0 ? (getSStat('pointsAgainst') / teamPoss) * 100 : 0;
-
-        nbaTeamsCombined.push({
-          id: teamId,
-          ppg: getSStat('avgPointsFor'),
-          offRtg: offRtg,
-          defRtg: defRtg,
-          fg3Pct: getStatValue(lStat, 'threePointPct')
-        });
-      });
-    });
-  }
-
-  const getNBARank = (field, higherIsBetter = true) => {
-    if (nbaTeamsCombined.length === 0) return "-";
-    const sorted = [...nbaTeamsCombined].sort((a, b) => higherIsBetter ? b[field] - a[field] : a[field] - b[field]);
-    const rank = sorted.findIndex(t => t.id === SIXERS_TEAM_ID) + 1;
-    return rank > 0 ? `#${rank}` : "-";
-  };
-
-  const sixers = nbaTeamsCombined.find(t => t.id === SIXERS_TEAM_ID) || {};
-
-  // 3. Build HTML (Draft Picks Style)
-  let html = `
-    <div style="background: #f8fafc; padding: 50px; width: 1200px; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-      <div class="social-header">
-        <div class="social-title-box">
-          <h1>ROSTER STATS</h1>
-          <p>2025-26 Regular Season • Official Team Feed</p>
-        </div>
-        <div class="social-branding">
-          <div class="domain">SIXERSHOOPS.COM</div>
-        </div>
-      </div>
-
-      <!-- Player Highlights at Top -->
-      <div class="social-summary-grid">`;
-
-  topPlayers.forEach((p, idx) => {
-    html += `
-        <div class="social-stat-card">
-          <div class="social-stat-label">${p.name} • #${p.jersey}</div>
-          <div class="social-stat-value">${p.ppg}</div>
-          <div style="font-size: 14px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: -5px; letter-spacing: 1px;">Points Per Game</div>
-        </div>`;
-  });
-
-  html += `
-      </div>
-
-      <!-- Team Stats at Bottom -->
-      <table class="social-table">
-        <thead>
-          <tr>
-            <th>Team Category</th>
-            <th>Season Average</th>
-            <th>NBA Rank</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Points Per Game</td>
-            <td>${sixers.ppg?.toFixed(1) || "-"}</td>
-            <td><span class="social-badge rank">${getNBARank('ppg')}</span></td>
-          </tr>
-          <tr>
-            <td>Offensive Rating</td>
-            <td>${sixers.offRtg?.toFixed(1) || "-"}</td>
-            <td><span class="social-badge rank">${getNBARank('offRtg')}</span></td>
-          </tr>
-          <tr>
-            <td>Defensive Rating</td>
-            <td>${sixers.defRtg?.toFixed(1) || "-"}</td>
-            <td><span class="social-badge rank">${getNBARank('defRtg', false)}</span></td>
-          </tr>
-          <tr>
-            <td>3-Point Shooting %</td>
-            <td>${sixers.fg3Pct?.toFixed(1) || "-"}%</td>
-            <td><span class="social-badge rank">${getNBARank('fg3Pct')}</span></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="social-footer-note">
-        Generated on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • Data sourced from Official Team Feed
-      </div>
-    </div>`;
-
-  container.innerHTML = html;
-
-  try {
-    await new Promise(r => setTimeout(r, 150));
-    
-    const canvas = await html2canvas(container, {
-      useCORS: true,
-      allowTaint: true,
-      scale: 2,
-      backgroundColor: "#f8fafc",
-      logging: false
-    });
-
-    const imgData = canvas.toDataURL("image/png");
-    const preview = document.getElementById("exportPreview");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const modal = document.getElementById("exportModal");
-
-    if (preview) preview.src = imgData;
-    
-    if (downloadBtn) {
-      downloadBtn.onclick = () => {
-        const link = document.createElement("a");
-        link.download = `Sixers-Roster-Intel-${new Date().toISOString().split('T')[0]}.png`;
-        link.href = imgData;
-        link.click();
-      };
-    }
-
-    if (modal) modal.style.display = "flex";
-  } catch (err) {
-    console.error("Export error:", err);
-    alert("Error generating graphic");
-  }
-}
-function closeExportModal() {
-  const modal = document.getElementById("exportModal");
-  if (modal) modal.style.display = "none";
-}
-
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   console.log("🏀 Sixers Stats App Starting...");
@@ -673,3 +492,155 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAllData(true);
   }, 10 * 60 * 1000);
 });
+
+// Social Export Functions
+window.openExportModal = function() {
+  const modal = document.getElementById('export-modal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  generateSocialImage();
+};
+
+window.closeExportModal = function() {
+  const modal = document.getElementById('export-modal');
+  modal.style.display = 'none';
+  document.body.style.overflow = 'auto';
+};
+
+async function generateSocialImage() {
+  const previewContainer = document.getElementById('export-preview-container');
+  previewContainer.innerHTML = '<div class="loader-spinner" style="margin: 2rem auto;"></div><p>Generating high-quality graphic...</p>';
+
+  if (!currentStatsData) {
+    previewContainer.innerHTML = '<p style="color:red;">No data available to generate image.</p>';
+    return;
+  }
+
+  // Populate hidden container
+  populateSocialContainer(currentStatsData);
+
+  try {
+    const socialContainer = document.getElementById('social-export-container');
+    
+    // Wait for images to load
+    const images = socialContainer.getElementsByTagName('img');
+    const imagePromises = Array.from(images).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    });
+    await Promise.all(imagePromises);
+
+    // Short delay for fonts and layout
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const canvas = await html2canvas(socialContainer, {
+      scale: 2, // High DPI
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
+    });
+
+    previewContainer.innerHTML = '';
+    const img = new Image();
+    img.src = canvas.toDataURL('image/png');
+    img.className = 'export-preview';
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+    img.style.borderRadius = '12px';
+    img.style.boxShadow = '0 20px 40px rgba(0,0,0,0.2)';
+    previewContainer.appendChild(img);
+    
+    // Store canvas for download
+    window.lastExportCanvas = canvas;
+  } catch (err) {
+    console.error("Image generation error:", err);
+    previewContainer.innerHTML = `<p style="color:red;">Error generating image: ${err.message}</p>`;
+  }
+}
+
+function populateSocialContainer(data) {
+  const leadersContainer = document.getElementById('social-leaders');
+  const teamStatsContainer = document.getElementById('social-team-stats');
+
+  if (!leadersContainer || !teamStatsContainer) return;
+
+  // 1. Populate Leaders (Top 3 Scorers)
+  const topScorers = [...data.players]
+    .filter(p => p.gp > 0)
+    .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
+    .slice(0, 3);
+
+  leadersContainer.innerHTML = topScorers.map((p, idx) => `
+    <div style="display: flex; align-items: center; gap: 20px; background: white; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; ${idx === 0 ? 'border: 2px solid #3b82f6;' : ''}">
+      <div style="position: relative;">
+        <img src="${p.headshot}" style="width: 100px; height: 100px; border-radius: 50%; background: #f1f5f9; object-fit: cover; border: 3px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+        <div style="position: absolute; top: -5px; left: -5px; width: 32px; height: 32px; background: ${idx === 0 ? '#3b82f6' : '#64748b'}; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">#${idx + 1}</div>
+      </div>
+      <div>
+        <div style="font-size: 24px; font-weight: 900; color: #0a174e;">${p.name}</div>
+        <div style="font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase;">${p.position} • #${p.jersey}</div>
+        <div style="display: flex; gap: 20px; margin-top: 10px;">
+          <div><span style="font-size: 22px; font-weight: 900; color: #3b82f6;">${p.ppg}</span> <span style="font-size: 12px; font-weight: 800; color: #94a3b8;">PPG</span></div>
+          <div><span style="font-size: 22px; font-weight: 900; color: #3b82f6;">${p.rpg}</span> <span style="font-size: 12px; font-weight: 800; color: #94a3b8;">RPG</span></div>
+          <div><span style="font-size: 22px; font-weight: 900; color: #3b82f6;">${p.apg}</span> <span style="font-size: 12px; font-weight: 800; color: #94a3b8;">APG</span></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // 2. Populate Team Stats (Top 6 categories)
+  const sixers = data.leagueStats.find(t => {
+    const ref = t.team?.$ref || "";
+    return ref.split('/').pop()?.split('?')[0] === SIXERS_TEAM_ID;
+  });
+
+  const getStat = (teamData, name) => {
+    const cats = teamData?.splits?.categories || [];
+    for (const cat of cats) {
+      const s = cat.stats?.find(st => st.name === name);
+      if (s) return s;
+    }
+    return { value: 0, displayValue: "0.0" };
+  };
+
+  const categories = [
+    { label: "Points Per Game", name: "avgPoints" },
+    { label: "Rebounds PG", name: "avgRebounds" },
+    { label: "Assists PG", name: "avgAssists" },
+    { label: "Field Goal %", name: "fieldGoalPct" },
+    { label: "3-Point %", name: "threePointPct" },
+    { label: "Defensive Rating", name: "defensiveRating" }
+  ];
+
+  teamStatsContainer.innerHTML = `
+    <div style="display: grid; gap: 15px;">
+      ${categories.map(cat => {
+        const stat = getStat(sixers, cat.name);
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+            <span style="font-weight: 700; color: #475569;">${cat.label}</span>
+            <span style="font-size: 20px; font-weight: 900; color: #0a174e;">${stat.displayValue}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div style="margin-top: 25px; padding: 15px; background: #eef2ff; border-radius: 12px; text-align: center;">
+      <div style="font-size: 12px; font-weight: 800; color: #3b82f6; text-transform: uppercase; margin-bottom: 4px;">Record</div>
+      <div style="font-size: 24px; font-weight: 900; color: #0a174e;">
+        ${data.standings.children[0].standings.entries.find(e => e.team.id === SIXERS_TEAM_ID)?.stats.find(s => s.name === 'summary')?.displayValue || "0-0"}
+      </div>
+    </div>
+  `;
+}
+
+window.downloadSocialImage = function() {
+  if (!window.lastExportCanvas) return;
+  
+  const link = document.createElement('a');
+  link.download = `sixers-stats-${new Date().toISOString().split('T')[0]}.png`;
+  link.href = window.lastExportCanvas.toDataURL('image/png');
+  link.click();
+};
