@@ -594,7 +594,8 @@ async function generateSocialImage() {
     img.src = canvas.toDataURL('image/png');
     img.className = 'export-preview';
     img.style.maxWidth = '100%';
-    img.style.height = 'auto';
+    img.style.maxHeight = '65vh';
+    img.style.objectFit = 'contain';
     img.style.borderRadius = '12px';
     img.style.boxShadow = '0 20px 40px rgba(0,0,0,0.2)';
     previewContainer.appendChild(img);
