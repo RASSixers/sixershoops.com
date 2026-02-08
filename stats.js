@@ -279,15 +279,6 @@ function renderPlayerStats(players) {
   
   let html = renderLeaders(sortedPlayers);
 
-  html += `
-    <div class="export-container" style="margin-top: 0; margin-bottom: 2rem;">
-      <div class="export-btns-group">
-        <button onclick="generateSocialImage('full')" class="export-btn primary" style="width: 100%; justify-content: center;">
-          <i class="fas fa-camera"></i> Generate Season Stats Graphic
-        </button>
-      </div>
-    </div>`;
-
   html += `<section class="stats-section">
     <h2 class="stats-title">Roster Season Averages</h2>
     <div class="table-responsive">
@@ -467,7 +458,16 @@ async function loadAllData(force = false) {
       setCache(data);
     }
 
-    let finalHtml = "";
+    let finalHtml = `
+      <div class="export-container" style="margin-top: 0; margin-bottom: 3rem; background: rgba(10, 23, 78, 0.03); padding: 2rem; border-radius: 24px; border: 1px dashed rgba(10, 23, 78, 0.1);">
+        <div style="margin-bottom: 1.5rem;">
+          <h3 style="color: var(--color-navy); font-weight: 800; margin-bottom: 0.5rem;">Share Season Performance</h3>
+          <p style="color: var(--color-slate-500); font-size: 0.95rem;">Generate an editorial-style graphic of the current team leaders for social media.</p>
+        </div>
+        <button onclick="generateSocialImage('full')" class="export-btn" style="width: 100%; justify-content: center; background: var(--color-navy); box-shadow: 0 10px 25px rgba(10, 23, 78, 0.2);">
+          <i class="fas fa-camera"></i> Generate Season Leaders Graphic
+        </button>
+      </div>`;
     
     finalHtml += renderTeamStats(data.teamStats, data.standings, data.leagueStats);
     finalHtml += renderPlayerStats(data.players);
@@ -498,72 +498,146 @@ async function generateSocialImage(mode) {
   const data = getCache();
   if (!data || !data.players) return;
 
+  // 1. Get Top 4 Players
   const topPlayers = data.players
     .filter(p => p.gp > 0)
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 8);
+    .slice(0, 4);
 
-  // High-end graphic styling
+  // 2. Calculate Team Stats & Ranks (consistent with renderTeamStats)
+  const getStatValue = (teamData, statName) => {
+    const cats = teamData?.splits?.categories || [];
+    for (const cat of cats) {
+      const s = cat.stats?.find(st => st.name === statName);
+      if (s) return s.value;
+    }
+    return 0;
+  };
+
+  const nbaTeamsCombined = [];
+  if (data.standings && data.standings.children) {
+    data.standings.children.forEach(conf => {
+      conf.standings?.entries?.forEach(entry => {
+        const teamId = entry.team.id;
+        const sStats = entry.stats || [];
+        const getSStat = (name) => sStats.find(s => s.name === name)?.value || 0;
+        
+        const lStat = data.leagueStats.find(ls => {
+           const ref = ls.team?.$ref || "";
+           return ref.split('/').pop()?.split('?')[0] === teamId;
+        });
+
+        const fga = getStatValue(lStat, 'fieldGoalsAttempted') || 0;
+        const fta = getStatValue(lStat, 'freeThrowsAttempted') || 0;
+        const to = getStatValue(lStat, 'turnovers') || 0;
+        const oreb = getStatValue(lStat, 'offensiveRebounds') || 0;
+
+        const teamPoss = 0.96 * (fga + to + (0.44 * fta) - oreb);
+        const offRtg = teamPoss > 0 ? (getSStat('pointsFor') / teamPoss) * 100 : 0;
+        const defRtg = teamPoss > 0 ? (getSStat('pointsAgainst') / teamPoss) * 100 : 0;
+
+        nbaTeamsCombined.push({
+          id: teamId,
+          ppg: getSStat('avgPointsFor'),
+          offRtg: offRtg,
+          defRtg: defRtg,
+          rpg: getStatValue(lStat, 'avgRebounds'),
+          apg: getStatValue(lStat, 'avgAssists'),
+          fg3Pct: getStatValue(lStat, 'threePointPct')
+        });
+      });
+    });
+  }
+
+  const getNBARank = (field, higherIsBetter = true) => {
+    if (nbaTeamsCombined.length === 0) return "-";
+    const sorted = [...nbaTeamsCombined].sort((a, b) => higherIsBetter ? b[field] - a[field] : a[field] - b[field]);
+    const rank = sorted.findIndex(t => t.id === SIXERS_TEAM_ID) + 1;
+    return rank > 0 ? `#${rank}` : "-";
+  };
+
+  const sixers = nbaTeamsCombined.find(t => t.id === SIXERS_TEAM_ID) || {};
+
+  // 3. Build HTML
   let html = `
-    <div style="background: linear-gradient(135deg, #002B5C 0%, #000000 100%); padding: 60px; color: white; border: 10px solid #ED174C;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 50px; border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 30px;">
-        <div>
-          <h1 style="font-size: 72px; margin: 0; font-weight: 900; letter-spacing: -2px; color: #white;">SIXERS <span style="color: #ED174C;">HOOPS</span></h1>
-          <p style="font-size: 24px; margin: 5px 0 0 0; opacity: 0.8; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">2025-26 Regular Season • Player Stats</p>
+    <div id="social-graphic" style="background: #f8fafc; padding: 50px; width: 1200px; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div class="social-header">
+        <div class="social-title-box">
+          <h1>SIXERS PERFORMANCE</h1>
+          <p>2025-26 Regular Season • Official Team Analytics</p>
         </div>
-        <div style="text-align: right;">
-          <div style="font-size: 36px; font-weight: 900; color: #ED174C;">SEASON STATS</div>
-          <div style="font-size: 18px; font-weight: 700; opacity: 0.6;">PHI STATISTICS CENTRAL</div>
+        <div class="social-branding">
+          <div class="domain">SIXERSHOOPS.COM</div>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">`;
+      <!-- Player Stats at Top -->
+      <div class="social-summary-grid">`;
 
   topPlayers.forEach((p, idx) => {
     html += `
-      <div style="background: rgba(255,255,255,0.05); border-radius: 24px; padding: 25px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden;">
-        <div style="position: absolute; top: 10px; right: 20px; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.05); z-index: 0;">#${idx + 1}</div>
-        <img src="${p.headshot}" style="width: 120px; height: 120px; border-radius: 50%; background: #f1f5f9; border: 4px solid #ED174C; margin-right: 25px; position: relative; z-index: 1;">
-        <div style="position: relative; z-index: 1; flex-grow: 1;">
-          <div style="font-size: 28px; font-weight: 900; margin-bottom: 5px;">${p.name}</div>
-          <div style="display: flex; gap: 20px;">
-            <div>
-              <div style="font-size: 12px; font-weight: 800; color: #ED174C; text-transform: uppercase;">Points</div>
-              <div style="font-size: 24px; font-weight: 900;">${p.ppg}</div>
-            </div>
-            <div>
-              <div style="font-size: 12px; font-weight: 800; color: #006BB6; text-transform: uppercase;">Rebounds</div>
-              <div style="font-size: 24px; font-weight: 900;">${p.rpg}</div>
-            </div>
-            <div>
-              <div style="font-size: 12px; font-weight: 800; color: #006BB6; text-transform: uppercase;">Assists</div>
-              <div style="font-size: 24px; font-weight: 900;">${p.apg}</div>
-            </div>
+        <div class="social-stat-card">
+          <img src="${p.headshot}" class="social-stat-img" alt="${p.name}">
+          <div class="social-stat-info">
+            <div class="social-stat-label">Season Leader #${idx + 1}</div>
+            <div class="social-stat-name">${p.name}</div>
+            <div class="social-stat-value">${p.ppg} <span style="font-size: 16px; color: #64748b;">PPG</span></div>
           </div>
-          <div style="display: flex; gap: 15px; margin-top: 10px; font-size: 14px; font-weight: 700; opacity: 0.7;">
-            <span>FG: ${p.fgPct}%</span>
-            <span>3P: ${p.fg3Pct}%</span>
-            <span>FT: ${p.ftPct}%</span>
-          </div>
-        </div>
-      </div>`;
+        </div>`;
   });
 
-  html += `</div>
-      <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); pt: 30px;">
-        <div style="font-size: 18px; font-weight: 700; font-style: italic; color: rgba(255,255,255,0.5);">Generated by SixersHoops.com • ${new Date().toLocaleDateString()}</div>
-        <div style="background: #ED174C; color: white; padding: 10px 25px; border-radius: 100px; font-weight: 900; font-size: 14px; letter-spacing: 1px;">POWERED BY ESPN</div>
+  html += `
+      </div>
+
+      <!-- Team Stats at Bottom -->
+      <table class="social-table">
+        <thead>
+          <tr>
+            <th>Team Category</th>
+            <th>Value</th>
+            <th>NBA Rank</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Points Per Game</td>
+            <td>${sixers.ppg?.toFixed(1) || "-"}</td>
+            <td><span class="social-badge rank">${getNBARank('ppg')}</span></td>
+          </tr>
+          <tr>
+            <td>Offensive Rating</td>
+            <td>${sixers.offRtg?.toFixed(1) || "-"}</td>
+            <td><span class="social-badge rank">${getNBARank('offRtg')}</span></td>
+          </tr>
+          <tr>
+            <td>Defensive Rating</td>
+            <td>${sixers.defRtg?.toFixed(1) || "-"}</td>
+            <td><span class="social-badge rank">${getNBARank('defRtg', false)}</span></td>
+          </tr>
+          <tr>
+            <td>3-Point Percentage</td>
+            <td>${sixers.fg3Pct?.toFixed(1) || "-"}%</td>
+            <td><span class="social-badge rank">${getNBARank('fg3Pct')}</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="social-footer-note">
+        Generated on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • Data provided by Official Team Feed
       </div>
     </div>`;
 
   container.innerHTML = html;
 
   try {
+    // Wait a tiny bit for images to be ready
+    await new Promise(r => setTimeout(r, 100));
+    
     const canvas = await html2canvas(container, {
       useCORS: true,
       allowTaint: true,
       scale: 2,
-      backgroundColor: "#002B5C",
+      backgroundColor: "#f8fafc",
       logging: false
     });
 
@@ -577,7 +651,7 @@ async function generateSocialImage(mode) {
     if (downloadBtn) {
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
-        link.download = `Sixers-Season-Graphic-${new Date().toISOString().split('T')[0]}.png`;
+        link.download = `Sixers-Performance-Graphic-${new Date().toISOString().split('T')[0]}.png`;
         link.href = imgData;
         link.click();
       };
@@ -589,7 +663,6 @@ async function generateSocialImage(mode) {
     alert("Error generating graphic");
   }
 }
-
 function closeExportModal() {
   const modal = document.getElementById("exportModal");
   if (modal) modal.style.display = "none";
