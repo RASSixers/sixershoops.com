@@ -13,7 +13,7 @@ async function getNBAStandings() {
 
     // Set export date
     const now = new Date();
-    if (exportDate) exportDate.textContent = `Updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+    // if (exportDate) exportDate.textContent = `Updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
 
     // ESPN API structure uses 'children' for conferences
     const conferences = data.children || [];
