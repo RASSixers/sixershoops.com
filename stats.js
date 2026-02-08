@@ -267,6 +267,10 @@ function renderLeaders(players) {
   return html;
 }
 
+// Global state for sorting
+let playerSortField = 'ppg';
+let playerSortOrder = 'desc';
+
 function renderPlayerStats(players) {
   if (!players || players.length === 0) {
     return `<section class="stats-section">
@@ -275,10 +279,32 @@ function renderPlayerStats(players) {
     </section>`;
   }
 
-  // Sort by PPG
-  const sortedPlayers = [...players].sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg));
+  // Sorting logic
+  const sortedPlayers = [...players].sort((a, b) => {
+    let valA = a[playerSortField];
+    let valB = b[playerSortField];
+
+    // Convert to number for numeric fields
+    const numericFields = ['gp', 'ppg', 'fgPct', 'fg3m', 'fg3a', 'fg3Pct', 'ftm', 'fta', 'ftPct', 'oreb', 'dreb', 'rpg', 'apg', 'tov', 'stl', 'blk', 'pf'];
+    if (numericFields.includes(playerSortField)) {
+      valA = parseFloat(valA) || 0;
+      valB = parseFloat(valB) || 0;
+    } else {
+      valA = (valA || '').toString().toLowerCase();
+      valB = (valB || '').toString().toLowerCase();
+    }
+
+    if (valA < valB) return playerSortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return playerSortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
   
-  let html = renderLeaders(sortedPlayers);
+  let html = renderLeaders(players); // Leaders always show top PPG regardless of table sort
+
+  const getSortClass = (field) => {
+    if (playerSortField !== field) return 'sortable';
+    return `sortable ${playerSortOrder}`;
+  };
 
   html += `<section class="stats-section">
     <h2 class="stats-title">Roster Season Averages</h2>
@@ -286,24 +312,24 @@ function renderPlayerStats(players) {
       <table class="player-stats-table">
         <thead>
           <tr>
-            <th>Player</th>
-            <th>GP</th>
-            <th>PTS</th>
-            <th>FG%</th>
-            <th>3PM</th>
-            <th>3PA</th>
-            <th>3P%</th>
-            <th>FTM</th>
-            <th>FTA</th>
-            <th>FT%</th>
-            <th>OREB</th>
-            <th>DREB</th>
-            <th>REB</th>
-            <th>AST</th>
-            <th>TOV</th>
-            <th>STL</th>
-            <th>BLK</th>
-            <th>PF</th>
+            <th class="${getSortClass('name')}" onclick="handlePlayerSort('name')">Player</th>
+            <th class="${getSortClass('gp')}" onclick="handlePlayerSort('gp')">GP</th>
+            <th class="${getSortClass('ppg')}" onclick="handlePlayerSort('ppg')">PTS</th>
+            <th class="${getSortClass('fgPct')}" onclick="handlePlayerSort('fgPct')">FG%</th>
+            <th class="${getSortClass('fg3m')}" onclick="handlePlayerSort('fg3m')">3PM</th>
+            <th class="${getSortClass('fg3a')}" onclick="handlePlayerSort('fg3a')">3PA</th>
+            <th class="${getSortClass('fg3Pct')}" onclick="handlePlayerSort('fg3Pct')">3P%</th>
+            <th class="${getSortClass('ftm')}" onclick="handlePlayerSort('ftm')">FTM</th>
+            <th class="${getSortClass('fta')}" onclick="handlePlayerSort('fta')">FTA</th>
+            <th class="${getSortClass('ftPct')}" onclick="handlePlayerSort('ftPct')">FT%</th>
+            <th class="${getSortClass('oreb')}" onclick="handlePlayerSort('oreb')">OREB</th>
+            <th class="${getSortClass('dreb')}" onclick="handlePlayerSort('dreb')">DREB</th>
+            <th class="${getSortClass('rpg')}" onclick="handlePlayerSort('rpg')">REB</th>
+            <th class="${getSortClass('apg')}" onclick="handlePlayerSort('apg')">AST</th>
+            <th class="${getSortClass('tov')}" onclick="handlePlayerSort('tov')">TOV</th>
+            <th class="${getSortClass('stl')}" onclick="handlePlayerSort('stl')">STL</th>
+            <th class="${getSortClass('blk')}" onclick="handlePlayerSort('blk')">BLK</th>
+            <th class="${getSortClass('pf')}" onclick="handlePlayerSort('pf')">PF</th>
           </tr>
         </thead>
         <tbody>`;
@@ -338,6 +364,22 @@ function renderPlayerStats(players) {
 
   return html;
 }
+
+window.handlePlayerSort = function(field) {
+  if (playerSortField === field) {
+    playerSortOrder = playerSortOrder === 'desc' ? 'asc' : 'desc';
+  } else {
+    playerSortField = field;
+    playerSortOrder = 'desc'; // Default to desc for stats
+  }
+  
+  if (currentStatsData) {
+    const container = document.getElementById("stats-app");
+    let finalHtml = renderPlayerStats(currentStatsData.players);
+    finalHtml += renderTeamStats(currentStatsData.teamStats, currentStatsData.standings, currentStatsData.leagueStats);
+    container.innerHTML = finalHtml;
+  }
+};
 
 // Global state for export
 let currentStatsData = null;
