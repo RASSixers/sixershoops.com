@@ -615,38 +615,100 @@
       100% { transform: rotate(360deg); }
     }
 
-    th.sortable {
-      cursor: pointer;
-      position: relative;
-      padding-right: 1.5rem !important;
-      transition: background 0.2s;
+    @media (max-width: 768px) {
+      .page-header { padding: 3rem 1rem; }
+      .stats-container { padding: 1.5rem; }
+      th, td { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
     }
+  </style>
+</head>
+<body>
+  <script src="nav.js"></script>
 
-    th.sortable:hover {
-      background: #f1f5f9;
-      color: var(--color-sky);
-    }
+  <section class="page-header">
+    <div class="page-header-content">
+      <h1 class="page-title">Sixers <span class="highlight">Stats Central</span></h1>
+      <p class="page-subtitle">Roster-specific analytics, performance metrics, and team leaders.</p>
+    </div>
+  </section>
 
-    th.sortable::after {
-      content: "\f0dc";
-      font-family: "Font Awesome 6 Free";
-      font-weight: 900;
-      position: absolute;
-      right: 0.5rem;
-      opacity: 0.3;
-      font-size: 0.7rem;
-    }
+  <div class="content-wrapper">
+    <main class="stats-container" id="stats-app">
+      <div class="loader">
+        <div class="loader-spinner"></div>
+        <p>Loading analytics...</p>
+      </div>
+    </main>
+    <div class="export-container">
+      <h3 style="margin-bottom: 1.5rem; font-weight: 800; color: var(--color-navy);">Share these stats</h3>
+      <button onclick="openExportModal()" class="export-btn">
+        <i class="fa-solid fa-camera"></i> Generate Social Graphic
+      </button>
+    </div>
+  </div>
 
-    th.sortable.asc::after {
-      content: "\f0de";
-      opacity: 1;
-      color: var(--color-sky);
-    }
+  <!-- Export Modal -->
+  <div id="export-modal" class="export-modal">
+    <div class="export-modal-content">
+      <h2 style="margin-bottom: 1rem; color: var(--color-navy);">Your Social Graphic</h2>
+      <p style="margin-bottom: 2rem; color: var(--color-slate-500);">Ready for Instagram, Twitter, or Facebook</p>
+      
+      <div id="export-preview-container">
+        <!-- Canvas/Image will be inserted here -->
+        <p>Generating preview...</p>
+      </div>
 
-    th.sortable.desc::after {
-      content: "\f0dd";
-      opacity: 1;
-      color: var(--color-sky);
-    }
+      <div class="modal-actions">
+        <button onclick="downloadSocialImage()" class="action-btn btn-download">
+          <i class="fa-solid fa-download"></i> Download Image
+        </button>
+        <button onclick="closeExportModal()" class="action-btn btn-close">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
 
-    /* Social Media Export Styling */
+  <!-- Hidden container for image generation -->
+  <div id="social-export-container" style="position: absolute; left: -9999px; top: -9999px; width: 1200px; background: white; padding: 60px; color: #0a174e; font-family: 'Inter', sans-serif;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #3b82f6; padding-bottom: 30px; margin-bottom: 40px;">
+      <div>
+        <h1 style="font-size: 56px; font-weight: 900; margin: 0; letter-spacing: -2px;">SIXERS <span style="color: #3b82f6;">TEAM STATS</span></h1>
+        <p style="font-size: 24px; color: #64748b; font-weight: 700; margin-top: 10px;">2025-26 Season Analytics</p>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 32px; font-weight: 900; color: #ef4444;">SixersHoops</div>
+        <div style="font-size: 18px; font-weight: 700; color: #64748b;">sixershoops.com</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;">
+      <div>
+        <h2 style="font-size: 28px; font-weight: 900; color: #0a174e; margin-bottom: 25px; display: flex; align-items: center; gap: 15px;">
+          <span style="width: 8px; height: 32px; background: #3b82f6; border-radius: 4px;"></span>
+          Season Leaders
+        </h2>
+        <div id="social-leaders" style="display: grid; gap: 20px;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      
+      <div>
+        <h2 style="font-size: 28px; font-weight: 900; color: #0a174e; margin-bottom: 25px; display: flex; align-items: center; gap: 15px;">
+          <span style="width: 8px; height: 32px; background: #ef4444; border-radius: 4px;"></span>
+          Team Averages
+        </h2>
+        <div id="social-team-stats" style="background: #f8fafc; border-radius: 24px; padding: 30px; border: 1px solid #e2e8f0;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 50px; text-align: center; color: #94a3b8; font-weight: 700; font-size: 16px;">
+      Data provided by ESPN API • Generated at SixersHoops.com
+    </div>
+  </div>
+
+  <script src="stats.js"></script>
+</body>
+</html>
