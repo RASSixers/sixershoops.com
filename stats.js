@@ -279,6 +279,15 @@ function renderPlayerStats(players) {
   
   let html = renderLeaders(sortedPlayers);
 
+  html += `
+    <div class="export-container" style="margin-top: 0; margin-bottom: 2rem;">
+      <div class="export-btns-group">
+        <button onclick="generateSocialImage('full')" class="export-btn primary" style="width: 100%; justify-content: center;">
+          <i class="fas fa-camera"></i> Generate Season Stats Graphic
+        </button>
+      </div>
+    </div>`;
+
   html += `<section class="stats-section">
     <h2 class="stats-title">Roster Season Averages</h2>
     <div class="table-responsive">
@@ -338,15 +347,6 @@ function renderPlayerStats(players) {
   });
 
   html += `</tbody></table></div></section>`;
-  
-  html += `
-    <div class="export-container">
-      <div class="export-btns-group">
-        <button onclick="generateSocialImage('full')" class="export-btn primary">
-          <i class="fas fa-camera"></i> Save Roster Stats Image
-        </button>
-      </div>
-    </div>`;
 
   return html;
 }
@@ -493,70 +493,67 @@ async function generateSocialImage(mode) {
   }
 
   const container = document.getElementById("social-export-container");
-  if (!container) {
-    alert("Export container not found");
-    return;
-  }
+  if (!container) return;
 
   const data = getCache();
-  if (!data || !data.players) {
-    alert("No stats data available");
-    return;
-  }
+  if (!data || !data.players) return;
 
   const topPlayers = data.players
     .filter(p => p.gp > 0)
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
-    .slice(0, 10);
+    .slice(0, 8);
 
-  if (topPlayers.length === 0) {
-    alert("No player stats available for export");
-    return;
-  }
-
+  // High-end graphic styling
   let html = `
-    <div class="social-header">
-      <div class="social-title-box">
-        <h1>SIXERS ROSTER STATS</h1>
-        <p>2025-26 Regular Season • Season Leaders</p>
+    <div style="background: linear-gradient(135deg, #002B5C 0%, #000000 100%); padding: 60px; color: white; border: 10px solid #ED174C;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 50px; border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 30px;">
+        <div>
+          <h1 style="font-size: 72px; margin: 0; font-weight: 900; letter-spacing: -2px; color: #white;">SIXERS <span style="color: #ED174C;">HOOPS</span></h1>
+          <p style="font-size: 24px; margin: 5px 0 0 0; opacity: 0.8; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">2025-26 Regular Season • Player Stats</p>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 36px; font-weight: 900; color: #ED174C;">SEASON STATS</div>
+          <div style="font-size: 18px; font-weight: 700; opacity: 0.6;">PHI STATISTICS CENTRAL</div>
+        </div>
       </div>
-      <div class="social-branding">
-        <span class="domain">SIXERSHOOPS.COM</span>
-      </div>
-    </div>
-    <table class="social-table">
-      <thead>
-        <tr>
-          <th>PLAYER</th>
-          <th style="text-align:center">GP</th>
-          <th style="text-align:center">PPG</th>
-          <th style="text-align:center">RPG</th>
-          <th style="text-align:center">APG</th>
-          <th style="text-align:center">FG%</th>
-        </tr>
-      </thead>
-      <tbody>`;
 
-  topPlayers.forEach(p => {
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">`;
+
+  topPlayers.forEach((p, idx) => {
     html += `
-      <tr>
-        <td>
-          <div class="social-player">
-            <img src="${p.headshot}" class="social-logo">
-            <span>${p.name}</span>
+      <div style="background: rgba(255,255,255,0.05); border-radius: 24px; padding: 25px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 10px; right: 20px; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.05); z-index: 0;">#${idx + 1}</div>
+        <img src="${p.headshot}" style="width: 120px; height: 120px; border-radius: 50%; background: #f1f5f9; border: 4px solid #ED174C; margin-right: 25px; position: relative; z-index: 1;">
+        <div style="position: relative; z-index: 1; flex-grow: 1;">
+          <div style="font-size: 28px; font-weight: 900; margin-bottom: 5px;">${p.name}</div>
+          <div style="display: flex; gap: 20px;">
+            <div>
+              <div style="font-size: 12px; font-weight: 800; color: #ED174C; text-transform: uppercase;">Points</div>
+              <div style="font-size: 24px; font-weight: 900;">${p.ppg}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; font-weight: 800; color: #006BB6; text-transform: uppercase;">Rebounds</div>
+              <div style="font-size: 24px; font-weight: 900;">${p.rpg}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; font-weight: 800; color: #006BB6; text-transform: uppercase;">Assists</div>
+              <div style="font-size: 24px; font-weight: 900;">${p.apg}</div>
+            </div>
           </div>
-        </td>
-        <td style="text-align:center">${p.gp}</td>
-        <td style="text-align:center; color:#003da6">${p.ppg}</td>
-        <td style="text-align:center">${p.rpg}</td>
-        <td style="text-align:center">${p.apg}</td>
-        <td style="text-align:center">${p.fgPct}%</td>
-      </tr>`;
+          <div style="display: flex; gap: 15px; margin-top: 10px; font-size: 14px; font-weight: 700; opacity: 0.7;">
+            <span>FG: ${p.fgPct}%</span>
+            <span>3P: ${p.fg3Pct}%</span>
+            <span>FT: ${p.ftPct}%</span>
+          </div>
+        </div>
+      </div>`;
   });
 
-  html += `</tbody></table>
-    <div style="margin-top: 30px; text-align: center; font-size: 18px; color: #64748b; font-weight: 700; font-style: italic;">
-      Real-time data powered by ESPN • Generated on ${new Date().toLocaleDateString()}
+  html += `</div>
+      <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); pt: 30px;">
+        <div style="font-size: 18px; font-weight: 700; font-style: italic; color: rgba(255,255,255,0.5);">Generated by SixersHoops.com • ${new Date().toLocaleDateString()}</div>
+        <div style="background: #ED174C; color: white; padding: 10px 25px; border-radius: 100px; font-weight: 900; font-size: 14px; letter-spacing: 1px;">POWERED BY ESPN</div>
+      </div>
     </div>`;
 
   container.innerHTML = html;
@@ -566,7 +563,7 @@ async function generateSocialImage(mode) {
       useCORS: true,
       allowTaint: true,
       scale: 2,
-      backgroundColor: "#f8fafc",
+      backgroundColor: "#002B5C",
       logging: false
     });
 
@@ -580,7 +577,7 @@ async function generateSocialImage(mode) {
     if (downloadBtn) {
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
-        link.download = `Sixers-Roster-Stats-${new Date().toISOString().split('T')[0]}.png`;
+        link.download = `Sixers-Season-Graphic-${new Date().toISOString().split('T')[0]}.png`;
         link.href = imgData;
         link.click();
       };
@@ -589,7 +586,7 @@ async function generateSocialImage(mode) {
     if (modal) modal.style.display = "flex";
   } catch (err) {
     console.error("Export error:", err);
-    alert("Error generating image");
+    alert("Error generating graphic");
   }
 }
 
