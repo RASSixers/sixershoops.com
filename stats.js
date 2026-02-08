@@ -249,12 +249,31 @@ function renderLeaders(players) {
         <div class="leader-info">
           <div class="leader-name">${p.name}</div>
           <div class="leader-pos">${p.position}</div>
-          <div class="leader-stats" style="flex-wrap: wrap; gap: 1rem;">
-            <div><span class="leader-val">${p.ppg}</span> <span class="leader-unit">PPG</span></div>
-            <div><span class="leader-val">${p.rpg}</span> <span class="leader-unit">RPG</span></div>
-            <div><span class="leader-val">${p.apg}</span> <span class="leader-unit">AST</span></div>
-            <div><span class="leader-val">${p.blk}</span> <span class="leader-unit">BLK</span></div>
-            <div><span class="leader-val">${p.stl}</span> <span class="leader-unit">STL</span></div>
+          <div class="leader-stats">
+            <div class="leader-stat-item">
+              <span class="leader-val">${p.ppg}</span>
+              <span class="leader-unit">PPG</span>
+            </div>
+            <div class="leader-stat-item">
+              <span class="leader-val">${p.rpg}</span>
+              <span class="leader-unit">RPG</span>
+            </div>
+            <div class="leader-stat-item">
+              <span class="leader-val">${p.apg}</span>
+              <span class="leader-unit">AST</span>
+            </div>
+            <div class="leader-stat-item">
+              <span class="leader-val">${p.blk}</span>
+              <span class="leader-unit">BLK</span>
+            </div>
+            <div class="leader-stat-item">
+              <span class="leader-val">${p.stl}</span>
+              <span class="leader-unit">STL</span>
+            </div>
+            <div class="leader-stat-item">
+              <span class="leader-val">${p.fgPct}</span>
+              <span class="leader-unit">FG%</span>
+            </div>
           </div>
         </div>
       </div>`;
@@ -592,38 +611,33 @@ function populateSocialContainer(data) {
 
   if (!leadersContainer || !teamStatsContainer) return;
 
-  // 1. Populate Leaders (Top 10 Scorers - Expanded for graphic)
+  // 1. Populate Leaders (Top 10 Scorers)
   const topScorers = [...data.players]
     .filter(p => p.gp > 0)
     .sort((a, b) => parseFloat(b.ppg) - parseFloat(a.ppg))
     .slice(0, 10);
 
   leadersContainer.innerHTML = topScorers.map((p, idx) => `
-    <div style="display: flex; align-items: center; gap: 24px; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; overflow: hidden;">
-      <div style="flex: 1; z-index: 1;">
-        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin-bottom: 4px;">${p.name}</div>
-        <div style="font-size: 14px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
-        <div style="display: flex; gap: 20px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; flex-wrap: wrap;">
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">PPG</div>
-            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.ppg}</div>
-          </div>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">RPG</div>
-            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.rpg}</div>
-          </div>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">AST</div>
-            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.apg}</div>
-          </div>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">BLK</div>
-            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.blk}</div>
-          </div>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">STL</div>
-            <div style="font-size: 22px; font-weight: 900; color: #0a174e;">${p.stl}</div>
-          </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; background: ${idx % 2 === 0 ? '#ffffff' : '#fafafa'};">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="font-size: 14px; font-weight: 800; color: #94a3b8; width: 25px;">${(idx + 1).toString().padStart(2, '0')}</div>
+        <div>
+          <div style="font-size: 18px; font-weight: 800; color: #0f172a;">${p.name}</div>
+          <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">${p.position} • #${p.jersey}</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 25px; text-align: right;">
+        <div style="min-width: 45px;">
+          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px;">PTS</div>
+          <div style="font-size: 18px; font-weight: 900; color: #003da6;">${p.ppg}</div>
+        </div>
+        <div style="min-width: 45px;">
+          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px;">REB</div>
+          <div style="font-size: 18px; font-weight: 900; color: #003da6;">${p.rpg}</div>
+        </div>
+        <div style="min-width: 45px;">
+          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px;">AST</div>
+          <div style="font-size: 18px; font-weight: 900; color: #003da6;">${p.apg}</div>
         </div>
       </div>
     </div>
@@ -652,18 +666,17 @@ function populateSocialContainer(data) {
     { label: "Rebounds PG", name: "avgRebounds" },
     { label: "Assists PG", name: "avgAssists" },
     { label: "Steals PG", name: "avgSteals" },
-    { label: "Blocks PG", name: "avgBlocks" },
-    { label: "Turnovers PG", name: "avgTurnovers" }
+    { label: "Blocks PG", name: "avgBlocks" }
   ];
 
   teamStatsContainer.innerHTML = `
-    <div style="display: grid; gap: 12px;">
+    <div style="display: grid; gap: 15px;">
       ${categories.map(cat => {
         const stat = getStat(sixers, cat.name);
         return `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
-            <span style="font-weight: 700; color: #475569; font-size: 15px;">${cat.label}</span>
-            <span style="font-size: 22px; font-weight: 900; color: #0a174e;">${stat.displayValue}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+            <span style="font-weight: 700; color: #475569; font-size: 14px;">${cat.label}</span>
+            <span style="font-size: 20px; font-weight: 900; color: #003da6;">${stat.displayValue}</span>
           </div>
         `;
       }).join('')}
