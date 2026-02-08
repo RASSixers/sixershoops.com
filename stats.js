@@ -176,8 +176,6 @@ function renderTeamStats(data, standings, leagueStats) {
         <tbody>`;
 
   const rows = [
-    { label: "Offensive Rating", val: sixers.offRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'offRtg') },
-    { label: "Defensive Rating", val: sixers.defRtg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'defRtg', false) },
     { label: "Points Per Game", val: sixers.ppg?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'ppg') },
     { label: "Field Goal %", val: sixers.fgPct?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fgPct') },
     { label: "3-Point Made", val: sixers.fg3m?.toFixed(1), rank: getNBARankCombined(SIXERS_TEAM_ID, 'fg3m') },
