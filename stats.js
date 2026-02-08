@@ -459,12 +459,12 @@ async function loadAllData(force = false) {
     }
 
     let finalHtml = `
-      <div class="export-container" style="margin-top: 0; margin-bottom: 3rem; background: rgba(10, 23, 78, 0.03); padding: 2rem; border-radius: 24px; border: 1px dashed rgba(10, 23, 78, 0.1);">
+      <div class="export-btn-container">
         <div style="margin-bottom: 1.5rem;">
           <h3 style="color: var(--color-navy); font-weight: 800; margin-bottom: 0.5rem;">Share Season Performance</h3>
           <p style="color: var(--color-slate-500); font-size: 0.95rem;">Generate an editorial-style graphic of the current team leaders for social media.</p>
         </div>
-        <button onclick="generateSocialImage('full')" class="export-btn" style="width: 100%; justify-content: center; background: var(--color-navy); box-shadow: 0 10px 25px rgba(10, 23, 78, 0.2);">
+        <button onclick="generateSocialImage('full')" class="export-btn">
           <i class="fas fa-camera"></i> Generate Season Leaders Graphic
         </button>
       </div>`;
@@ -556,106 +556,82 @@ async function generateSocialImage(mode) {
 
   const sixers = nbaTeamsCombined.find(t => t.id === SIXERS_TEAM_ID) || {};
 
-  // 3. Build HTML with new Premium Classes
+  // 3. Build HTML (Draft Picks Style)
   let html = `
-    <div class="social-canvas">
+    <div style="background: #f8fafc; padding: 50px; width: 1200px; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
       <div class="social-header">
         <div class="social-title-box">
-          <h1>ROSTER INTEL</h1>
-          <p>2025-26 Regular Season • Statistical Leaders</p>
+          <h1>ROSTER STATS</h1>
+          <p>2025-26 Regular Season • Official Team Feed</p>
         </div>
         <div class="social-branding">
           <div class="domain">SIXERSHOOPS.COM</div>
-          <div class="tagline">Official Analytics Hub</div>
         </div>
       </div>
 
+      <!-- Player Highlights at Top -->
       <div class="social-summary-grid">`;
 
   topPlayers.forEach((p, idx) => {
     html += `
         <div class="social-stat-card">
-          <div class="social-stat-img-wrap">
-            <img src="${p.headshot}" class="social-stat-img" alt="${p.name}">
-            <div class="social-stat-rank">${idx + 1}</div>
-          </div>
-          <div class="social-stat-info">
-            <div class="social-stat-meta">${p.position} • #${p.jersey}</div>
-            <div class="social-stat-name">${p.name}</div>
-            <div class="social-stat-metrics">
-              <div class="metric-item">
-                <span class="metric-label">PTS</span>
-                <span class="metric-value">${p.ppg}</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">REB</span>
-                <span class="metric-value">${p.rpg}</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">AST</span>
-                <span class="metric-value">${p.apg}</span>
-              </div>
-            </div>
-          </div>
+          <div class="social-stat-label">${p.name} • #${p.jersey}</div>
+          <div class="social-stat-value">${p.ppg}</div>
+          <div style="font-size: 14px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: -5px; letter-spacing: 1px;">Points Per Game</div>
         </div>`;
   });
 
   html += `
       </div>
 
-      <div class="social-table-wrap">
-        <table class="social-table">
-          <thead>
-            <tr>
-              <th>Advanced Team Category</th>
-              <th style="text-align: center;">Season Avg</th>
-              <th style="text-align: center;">NBA Efficiency Rank</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Points Per Game</td>
-              <td style="text-align: center;">${sixers.ppg?.toFixed(1) || "-"}</td>
-              <td style="text-align: center;"><span class="social-badge-rank">${getNBARank('ppg')}</span></td>
-            </tr>
-            <tr>
-              <td>Offensive Rating</td>
-              <td style="text-align: center;">${sixers.offRtg?.toFixed(1) || "-"}</td>
-              <td style="text-align: center;"><span class="social-badge-rank">${getNBARank('offRtg')}</span></td>
-            </tr>
-            <tr>
-              <td>Defensive Rating</td>
-              <td style="text-align: center;">${sixers.defRtg?.toFixed(1) || "-"}</td>
-              <td style="text-align: center;"><span class="social-badge-rank">${getNBARank('defRtg', false)}</span></td>
-            </tr>
-            <tr>
-              <td>3-Point Shooting %</td>
-              <td style="text-align: center;">${sixers.fg3Pct?.toFixed(1) || "-"}%</td>
-              <td style="text-align: center;"><span class="social-badge-rank">${getNBARank('fg3Pct')}</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- Team Stats at Bottom -->
+      <table class="social-table">
+        <thead>
+          <tr>
+            <th>Team Category</th>
+            <th>Season Average</th>
+            <th>NBA Rank</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Points Per Game</td>
+            <td>${sixers.ppg?.toFixed(1) || "-"}</td>
+            <td><span class="social-badge rank">${getNBARank('ppg')}</span></td>
+          </tr>
+          <tr>
+            <td>Offensive Rating</td>
+            <td>${sixers.offRtg?.toFixed(1) || "-"}</td>
+            <td><span class="social-badge rank">${getNBARank('offRtg')}</span></td>
+          </tr>
+          <tr>
+            <td>Defensive Rating</td>
+            <td>${sixers.defRtg?.toFixed(1) || "-"}</td>
+            <td><span class="social-badge rank">${getNBARank('defRtg', false)}</span></td>
+          </tr>
+          <tr>
+            <td>3-Point Shooting %</td>
+            <td>${sixers.fg3Pct?.toFixed(1) || "-"}%</td>
+            <td><span class="social-badge rank">${getNBARank('fg3Pct')}</span></td>
+          </tr>
+        </tbody>
+      </table>
 
-      <div class="social-footer">
-        <div class="social-footer-note">
-          Generated on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-        </div>
-        <div class="social-footer-pill">Premium Analytics Data Feed</div>
+      <div class="social-footer-note">
+        Generated on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • Data sourced from Official Team Feed
       </div>
     </div>`;
 
   container.innerHTML = html;
 
   try {
-    // Wait for images to render
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 150));
     
     const canvas = await html2canvas(container, {
       useCORS: true,
       allowTaint: true,
       scale: 2,
-      backgroundColor: "#ffffff",
+      backgroundColor: "#f8fafc",
       logging: false
     });
 
@@ -669,7 +645,7 @@ async function generateSocialImage(mode) {
     if (downloadBtn) {
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
-        link.download = `Sixers-Intel-Graphic-${new Date().toISOString().split('T')[0]}.png`;
+        link.download = `Sixers-Roster-Intel-${new Date().toISOString().split('T')[0]}.png`;
         link.href = imgData;
         link.click();
       };
