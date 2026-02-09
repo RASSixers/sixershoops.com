@@ -94,15 +94,12 @@ async function getNBAStandings() {
         if (streakValue.startsWith('W')) streakClass = "streak-w";
         if (streakValue.startsWith('L')) streakClass = "streak-l";
 
-        const logoUrl = t.team.logos?.[0]?.href || '';
-
         // Add to main table
         html += `
           <tr class="${rowClass}">
             <td>
               <div class="team-info">
                 <span class="rank">${idx + 1}</span>
-                <img src="${logoUrl}" alt="${t.team.abbreviation}" class="team-logo" onerror="this.style.display='none'">
                 <span>${t.team.displayName}</span>
               </div>
             </td>
@@ -122,7 +119,6 @@ async function getNBAStandings() {
             <td>
               <div class="social-team">
                 <span style="width: 20px; font-size: 12px; color: #64748b;">${idx + 1}</span>
-                <img src="${logoUrl}" class="social-logo">
                 <span>${t.team.displayName}</span>
               </div>
             </td>
