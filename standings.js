@@ -124,7 +124,7 @@ async function getNBAStandings() {
             </td>
             <td>${wins}-${losses}</td>
             <td>${pct}</td>
-            <td><span class="status-badge ${streakClass}" style="font-size: 10px; padding: 1px 4px;">${streakValue}</span></td>
+            <td><span class="status-badge ${streakClass}" style="width: 32px; height: 16px; font-size: 10px;">${streakValue}</span></td>
           </tr>`;
       });
 
