@@ -91,10 +91,17 @@ async function getNBAStandings() {
         const streakValue = stats.streak?.displayValue || "-";
 
         let streakClass = "";
-        if (streakValue.startsWith('W')) streakClass = "streak-w";
-        if (streakValue.startsWith('L')) streakClass = "streak-l";
+        let socialStreakClass = "";
+        if (streakValue.startsWith('W')) {
+          streakClass = "streak-w";
+          socialStreakClass = "social-streak-w";
+        }
+        if (streakValue.startsWith('L')) {
+          streakClass = "streak-l";
+          socialStreakClass = "social-streak-l";
+        }
 
-        // Add to main table
+        // Add to main table - NO inline styles, use CSS classes only
         html += `
           <tr class="${rowClass}">
             <td>
@@ -113,7 +120,7 @@ async function getNBAStandings() {
             <td><span class="status-badge ${streakClass}">${streakValue}</span></td>
           </tr>`;
 
-        // Add to social table (simplified)
+        // Add to social table - use proper social-streak-badge class
         socialHtml += `
           <tr class="${socialRowClass}">
             <td>
@@ -124,7 +131,7 @@ async function getNBAStandings() {
             </td>
             <td>${wins}-${losses}</td>
             <td>${pct}</td>
-            <td><span class="status-badge ${streakClass}" style="width: 32px; height: 16px; font-size: 10px; line-height: 1; padding-bottom: 4px;">${streakValue}</span></td>
+            <td><span class="social-streak-badge ${socialStreakClass}">${streakValue}</span></td>
           </tr>`;
       });
 
