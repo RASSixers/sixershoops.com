@@ -120,18 +120,28 @@ async function getNBAStandings() {
             <td><span class="status-badge ${streakClass}">${streakValue}</span></td>
           </tr>`;
 
-        // Add to social table - simple text without circles
+        // Add to social table - wrap ALL content in cell-content divs
         socialHtml += `
           <tr class="${socialRowClass}">
             <td>
-              <div class="social-team">
-                <span class="social-team-rank">${idx + 1}</span>
-                <span class="social-team-name">${t.team.displayName}</span>
+              <div class="cell-content">
+                <div class="social-team">
+                  <span class="social-team-rank">${idx + 1}</span>
+                  <span class="social-team-name">${t.team.displayName}</span>
+                </div>
               </div>
             </td>
-            <td>${wins}-${losses}</td>
-            <td>${pct}</td>
-            <td><span class="social-streak-badge ${socialStreakClass}">${streakValue}</span></td>
+            <td>
+              <div class="cell-content">${wins}-${losses}</div>
+            </td>
+            <td>
+              <div class="cell-content">${pct}</div>
+            </td>
+            <td>
+              <div class="cell-content">
+                <span class="social-streak-badge ${socialStreakClass}">${streakValue}</span>
+              </div>
+            </td>
           </tr>`;
       });
 
