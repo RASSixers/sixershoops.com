@@ -120,7 +120,7 @@ async function getNBAStandings() {
             <td><span class="status-badge ${streakClass}">${streakValue}</span></td>
           </tr>`;
 
-        // Add to social table - wrap all content in divs for alignment
+        // Add to social table - simple text without circles
         socialHtml += `
           <tr class="${socialRowClass}">
             <td>
@@ -129,9 +129,9 @@ async function getNBAStandings() {
                 <span class="social-team-name">${t.team.displayName}</span>
               </div>
             </td>
-            <td><div>${wins}-${losses}</div></td>
-            <td><div>${pct}</div></td>
-            <td><div><span class="social-streak-badge ${socialStreakClass}">${streakValue}</span></div></td>
+            <td>${wins}-${losses}</td>
+            <td>${pct}</td>
+            <td><span class="social-streak-badge ${socialStreakClass}">${streakValue}</span></td>
           </tr>`;
       });
 
