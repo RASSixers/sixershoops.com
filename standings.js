@@ -186,21 +186,25 @@ function initExport() {
         const grid = document.getElementById('social-export-container');
         const content = document.getElementById('social-export-content');
         const titleH1 = grid.querySelector('.social-title-box h1');
+        const header = grid.querySelector('.social-header');
         
         // Reset classes and visibility
         content.classList.remove('mode-east', 'mode-west');
+        header.classList.remove('single-conf-mode');
         const eastDiv = content.querySelector('[data-conf="east"]');
         const westDiv = content.querySelector('[data-conf="west"]');
         
         if (mode === 'east') {
           grid.style.width = '800px';
           content.classList.add('mode-east');
+          header.classList.add('single-conf-mode');
           if (eastDiv) eastDiv.style.display = 'block';
           if (westDiv) westDiv.style.display = 'none';
           titleH1.textContent = 'Eastern Conference Standings';
         } else if (mode === 'west') {
           grid.style.width = '800px';
           content.classList.add('mode-west');
+          header.classList.add('single-conf-mode');
           if (eastDiv) eastDiv.style.display = 'none';
           if (westDiv) westDiv.style.display = 'block';
           titleH1.textContent = 'Western Conference Standings';
