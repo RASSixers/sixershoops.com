@@ -164,38 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <span></span>
         </button>
         <style>
-            .avatar-option {
-                cursor: pointer;
-                border: 3px solid transparent;
-                border-radius: 12px;
-                transition: all 0.2s;
-                width: 100%;
-                aspect-ratio: 1;
-                object-fit: cover;
-                background: #f8fafc;
-            }
-            .avatar-option:hover {
-                transform: scale(1.05);
-                border-color: #cbd5e1;
-            }
-            .avatar-option.selected {
-                border-color: #2563eb;
-                background: rgba(37, 99, 235, 0.1);
-                box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-            }
-            .avatar-selection-grid {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 16px;
-                margin: 12px 0;
-            }
-            .user-avatar-img {
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                object-fit: cover;
-                border: 2px solid rgba(255,255,255,0.8);
-            }
             .notification-item {
                 padding: 12px 16px;
                 border-bottom: 1px solid #f1f5f9;
@@ -308,18 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="auth-label">Display Name (Max 12 chars)</label>
                         <input type="text" class="auth-input" id="navProfileName" required maxlength="12">
                     </div>
-                    <div class="auth-form-group">
-                        <label class="auth-label">Select Profile Icon</label>
-                        <div class="avatar-selection-grid" id="avatarSelectionGrid">
-                            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=Felix" class="avatar-option" data-url="https://api.dicebear.com/9.x/thumbs/svg?seed=Felix">
-                            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=Aneka" class="avatar-option" data-url="https://api.dicebear.com/9.x/thumbs/svg?seed=Aneka">
-                            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=George" class="avatar-option" data-url="https://api.dicebear.com/9.x/thumbs/svg?seed=George">
-                            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=Sophie" class="avatar-option" data-url="https://api.dicebear.com/9.x/thumbs/svg?seed=Sophie">
-                            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=James" class="avatar-option" data-url="https://api.dicebear.com/9.x/thumbs/svg?seed=James">
-                            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=Lily" class="avatar-option" data-url="https://api.dicebear.com/9.x/thumbs/svg?seed=Lily">
-                        </div>
-                        <input type="hidden" id="navProfilePhoto">
-                    </div>
+                    
                     <button type="submit" class="auth-submit-btn">Save Changes</button>
                     
                     <div class="user-dropdown-divider" style="margin: 2rem 0 1rem;"></div>
@@ -462,11 +419,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user) {
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             const initial = displayName.charAt(0).toUpperCase();
-            const photoURL = user.photoURL;
             
-            const avatarHTML = photoURL 
-                ? `<div class="relative"><img src="${photoURL}" class="user-avatar-img" alt="${displayName}"><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`
-                : `<div class="relative"><div class="user-avatar">${initial}</div><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
+            
+            const avatarHTML = `<div class="relative"><div class="user-avatar">${initial}</div><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
             
             const userHTML = `
                 <div class="user-profile-wrapper">
@@ -671,21 +626,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = window.auth.currentUser;
         if (user) {
             document.getElementById('navProfileName').value = user.displayName || '';
-            const currentPhoto = user.photoURL || '';
-            document.getElementById('navProfilePhoto').value = currentPhoto;
             
-            // Highlight selected avatar
-            const options = document.querySelectorAll('.avatar-option');
-            options.forEach(opt => {
-                if (opt.dataset.url === currentPhoto) opt.classList.add('selected');
-                else opt.classList.remove('selected');
-                
-                opt.onclick = () => {
-                    options.forEach(o => o.classList.remove('selected'));
-                    opt.classList.add('selected');
-                    document.getElementById('navProfilePhoto').value = opt.dataset.url;
-                };
-            });
 
             // Initial notification fetch
             loadNotifications();
@@ -801,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return `
                     <div class="notification-item ${!data.read ? 'unread' : ''}" onclick="handleNotificationClick('${data.postId}', '${doc.id}', event)">
                         <div class="flex gap-3">
-                            <img src="${data.senderPhoto || 'https://api.dicebear.com/9.x/thumbs/svg?seed=Felix'}" class="h-8 w-8 rounded-full object-cover border border-slate-100 flex-shrink-0">
+                            <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 flex-shrink-0">${(data.senderName || 'S').charAt(0).toUpperCase()}</div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-[11px] text-slate-900 leading-tight">
                                     <span class="font-bold">${data.senderName || 'Someone'}</span> 
@@ -953,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(profileForm) profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('navProfileName').value;
-        const photo = document.getElementById('navProfilePhoto').value;
+        
         
         if (name.length > 12) {
             showNavMessage('Username must be 12 characters or less', 'error');
@@ -964,13 +905,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const user = window.auth.currentUser;
             await user.updateProfile({
                 displayName: name,
-                photoURL: photo
+                
             });
             
             // Sync with Firestore
             await window.db.collection('users').doc(user.uid).set({
                 username: name,
-                photoURL: photo,
+                
                 updatedAt: new Date().toISOString()
             }, { merge: true }).catch(err => console.error("Firestore sync error:", err));
 
@@ -1126,3 +1067,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
