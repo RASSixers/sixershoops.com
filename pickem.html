@@ -978,6 +978,27 @@
       color: white;
       border-color: var(--brand);
     }
+
+    .distribution-bar-container {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .distribution-bar-fill {
+      height: 100%;
+      background: var(--brand);
+      transition: width 0.3s ease;
+    }
+
+    .lock-toggle-active {
+      background: var(--error) !important;
+      color: white !important;
+      border-color: var(--error) !important;
+    }
   </style>
 </head>
 <body>
@@ -1318,6 +1339,13 @@
                   <button class="btn btn-secondary" id="loadQuestionsForAnswersBtn">Load Questions</button>
                 </div>
 
+                <div id="distributionContainer" style="display: none; background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                  <h4 style="margin: 0 0 1rem 0; color: var(--brand); display: flex; align-items: center; gap: 0.5rem;">📊 Pick Distribution <span id="distCountBadge" class="user-badge" style="background: var(--brand); color: white;">0 Submissions</span></h4>
+                  <div id="distributionList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <!-- Distribution items will be loaded here -->
+                  </div>
+                </div>
+
                 <div class="answers-list" id="answersList" style="margin-top: 1.5rem;">
                   <!-- Questions will be loaded here with answer input fields -->
                 </div>
@@ -1369,9 +1397,10 @@
                 <small style="color: var(--muted); display: block; margin-top: 0.5rem;">Example: 19:00 for 7:00 PM (displays as 7:00 PM)</small>
               </div>
 
-              <div style="display: flex; gap: 10px;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="saveLockTimeBtn">💾 Save Lock Time for Selected Date</button>
                 <button class="btn btn-secondary" id="loadLockTimeBtn">Load Current Lock Time</button>
+                <button class="btn btn-secondary" id="immediateLockToggleBtn" style="border-color: var(--error); color: var(--error);">🔒 Immediate Lock: OFF</button>
               </div>
             </div>
 
@@ -1432,9 +1461,12 @@
             </div>
 
             <div id="submissionSearchContainer" style="margin-top: 1.5rem; display: none;">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label">Search Users</label>
-                <input type="text" id="submissionSearchInput" class="form-input" placeholder="Search by email or username..." />
+              <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                  <label class="form-label">Search Users</label>
+                  <input type="text" id="submissionSearchInput" class="form-input" placeholder="Search by email or username..." />
+                </div>
+                <button class="btn btn-secondary" id="exportCsvBtn" style="padding: 10px 16px;">📥 Export CSV</button>
               </div>
             </div>
 
@@ -1939,6 +1971,7 @@
         }));
 
         renderAnswersForm();
+        renderPickDistribution(dateInput);
         document.getElementById('saveCorrectAnswersBtn').style.display = 'block';
         showMessage('Questions loaded successfully', 'success', 'markAnswersMessage');
       } catch (err) {
@@ -2034,6 +2067,64 @@
       });
       
       setupAnswerAutoSaveIndicator();
+    }
+
+    async function renderPickDistribution(date) {
+      const container = document.getElementById('distributionContainer');
+      const list = document.getElementById('distributionList');
+      const badge = document.getElementById('distCountBadge');
+      
+      try {
+        const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
+        if (picksSnapshot.empty) {
+          container.style.display = 'none';
+          return;
+        }
+
+        const stats = {}; // { qIdx: { option: count } }
+        let totalSubmissions = picksSnapshot.size;
+        badge.textContent = `${totalSubmissions} Submission${totalSubmissions !== 1 ? 's' : ''}`;
+
+        picksSnapshot.docs.forEach(doc => {
+          const answers = doc.data().answers || [];
+          answers.forEach((ans, qIdx) => {
+            if (!stats[qIdx]) stats[qIdx] = {};
+            stats[qIdx][ans] = (stats[qIdx][ans] || 0) + 1;
+          });
+        });
+
+        list.innerHTML = questionsForAnswers.map((q, idx) => {
+          const qStats = stats[idx] || {};
+          const options = Object.entries(qStats).sort((a, b) => b[1] - a[1]);
+          
+          const barsHtml = options.map(([option, count]) => {
+            const percent = ((count / totalSubmissions) * 100).toFixed(1);
+            return `
+              <div style="margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 2px;">
+                  <span style="font-weight: 700;">${option}</span>
+                  <span style="color: var(--muted);">${count} (${percent}%)</span>
+                </div>
+                <div class="distribution-bar-container">
+                  <div class="distribution-bar-fill" style="width: ${percent}%;"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-weight: 800; font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--ink);">Q${idx + 1}: ${q.question}</div>
+              ${barsHtml || '<div style="font-size: 0.8rem; color: var(--muted);">No picks recorded</div>'}
+            </div>
+          `;
+        }).join('');
+
+        container.style.display = 'block';
+      } catch (err) {
+        console.error('Error loading distribution:', err);
+        container.style.display = 'none';
+      }
     }
 
     function updateAnswerIndicator(idx) {
@@ -2297,6 +2388,7 @@
     // Convert 12-hour format (7:00 PM) to 24-hour format (19:00)
     function convert12To24(time12) {
       if (!time12) return null;
+      if (time12.includes(':') && !time12.includes(' ')) return time12; // Already 24h
       const parts = time12.trim().split(' ');
       const timePart = parts[0];
       const ampm = parts[1];
@@ -2312,6 +2404,71 @@
       return `${String(hour).padStart(2, '0')}:${minutes}`;
     }
 
+    // Check if a date is immediately locked
+    async function getImmediateLockStatus(date) {
+      try {
+        const snapshot = await db.collection('lockTimes').where('date', '==', date).get();
+        if (snapshot.empty) return false;
+        return snapshot.docs[0].data().immediateLock === true;
+      } catch (err) {
+        console.error('Error getting immediate lock status:', err);
+        return false;
+      }
+    }
+
+    // Toggle immediate lock
+    document.getElementById('immediateLockToggleBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+      
+      const dateInput = document.getElementById('lockTimeDate').value;
+      if (!dateInput) {
+        showMessage('Please select a date first', 'error', 'lockTimeMessage');
+        return;
+      }
+
+      const btn = document.getElementById('immediateLockToggleBtn');
+      const isCurrentlyLocked = btn.classList.contains('lock-toggle-active');
+      const newStatus = !isCurrentlyLocked;
+
+      try {
+        const snapshot = await db.collection('lockTimes').where('date', '==', dateInput).get();
+        
+        if (!snapshot.empty) {
+          await snapshot.docs[0].ref.update({
+            immediateLock: newStatus,
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          await db.collection('lockTimes').add({
+            date: dateInput,
+            lockTime: '12:00 AM', // Default if not set
+            immediateLock: newStatus,
+            createdAt: new Date().toISOString()
+          });
+        }
+
+        updateImmediateLockBtnUI(newStatus);
+        showMessage(`✅ Immediate lock ${newStatus ? 'ENABLED' : 'DISABLED'} for ${dateInput}`, 'success', 'lockTimeMessage');
+        
+        // Refresh lock status on page
+        checkAndDisplayLockStatus(selectedPickDate);
+      } catch (err) {
+        console.error('Error toggling immediate lock:', err);
+        showMessage('Error toggling immediate lock: ' + err.message, 'error', 'lockTimeMessage');
+      }
+    });
+
+    function updateImmediateLockBtnUI(isLocked) {
+      const btn = document.getElementById('immediateLockToggleBtn');
+      if (isLocked) {
+        btn.classList.add('lock-toggle-active');
+        btn.innerHTML = '🔓 Immediate Lock: ON';
+      } else {
+        btn.classList.remove('lock-toggle-active');
+        btn.innerHTML = '🔒 Immediate Lock: OFF';
+      }
+    }
+
     // Get current time in EST
     function getESTNow() {
       const now = new Date();
@@ -2320,8 +2477,11 @@
     }
 
     // Check if submissions are locked for a given date and time
-    function areSubmissionsLocked(date, lockTime) {
+    async function areSubmissionsLocked(date, lockTime) {
       if (!lockTime) return false; // No lock time set
+      
+      const isImmediatelyLocked = await getImmediateLockStatus(date);
+      if (isImmediatelyLocked) return true;
       
       const now = getESTNow();
       const today = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -2415,11 +2575,13 @@
           showMessage(`ℹ️ No lock time set for ${dateInput}. You can create one now.`, 'info', 'lockTimeMessage');
         } else {
           const lockTime = snapshot.docs[0].data().lockTime;
+          const isImmediatelyLocked = snapshot.docs[0].data().immediateLock === true;
           // Convert stored 12-hour format back to 24-hour for input field
           const time24 = convert12To24(lockTime);
           document.getElementById('lockTimeInput').value = time24;
           document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST (for ${dateInput})`;
           document.getElementById('lockTimeDisplay').style.display = 'block';
+          updateImmediateLockBtnUI(isImmediatelyLocked);
           showMessage(`✅ Loaded lock time for ${dateInput}`, 'success', 'lockTimeMessage');
         }
       } catch (err) {
@@ -2470,6 +2632,7 @@
           await db.collection('lockTimes').add({
             date: dateInput,
             lockTime: lockTime12,
+            immediateLock: false,
             createdAt: new Date().toISOString()
           });
           console.log(`🆕 Created lock time for ${dateInput}: ${lockTime12}`);
@@ -2493,7 +2656,7 @@
     });
 
     // Update lock time date when admin loads a date
-    document.getElementById('loadDateBtn').addEventListener('click', function() {
+    document.getElementById('loadDateBtn').addEventListener('click', async function() {
       const adminDate = document.getElementById('adminDate').value;
       if (adminDate) {
         // Auto-populate lock time date when loading questions
@@ -2503,6 +2666,10 @@
         // Clear lock time inputs when switching dates to prevent mistakes
         document.getElementById('lockTimeInput').value = '';
         document.getElementById('lockTimeDisplay').style.display = 'none';
+        
+        // Load existing lock status
+        const isLocked = await getImmediateLockStatus(adminDate);
+        updateImmediateLockBtnUI(isLocked);
         
         showMessage(`📅 Lock time date automatically set to ${adminDate}`, 'info', 'lockTimeMessage');
       }
@@ -2640,12 +2807,14 @@
         }
 
         const lockTime = snapshot.docs[0].data().lockTime;
-        const isLocked = areSubmissionsLocked(date, lockTime);
+        const isImmediatelyLocked = snapshot.docs[0].data().immediateLock === true;
+        const isLocked = await areSubmissionsLocked(date, lockTime);
 
         if (isLocked) {
           document.getElementById('lockTimeStatus').style.display = 'block';
           document.getElementById('countdownTimer').style.display = 'none';
-          document.getElementById('lockTimeStatusMessage').textContent = `Submissions are closed. Lock time was ${lockTime} EST.`;
+          const lockReason = isImmediatelyLocked ? 'Submissions have been manually closed by an admin.' : `Submissions are closed. Lock time was ${lockTime} EST.`;
+          document.getElementById('lockTimeStatusMessage').textContent = lockReason;
           if (!hasSubmitted) {
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('submitBtn').textContent = 'Submissions Closed';
@@ -3043,6 +3212,54 @@
       });
     });
 
+    // Export submissions to CSV
+    document.getElementById('exportCsvBtn').addEventListener('click', async () => {
+      const dateInput = document.getElementById('submissionsDate').value;
+      if (!dateInput) return;
+
+      try {
+        const picksSnapshot = await db.collection('picks').where('date', '==', dateInput).get();
+        if (picksSnapshot.empty) {
+          showMessage('No data to export', 'error', 'submissionsMessage');
+          return;
+        }
+
+        // Get questions to map answer indices to questions
+        const questionsSnapshot = await db.collection('questions').where('date', '==', dateInput).get();
+        const questions = !questionsSnapshot.empty ? (questionsSnapshot.docs[0].data().items || []) : [];
+
+        let csv = 'User,Submitted At,';
+        csv += questions.map((q, i) => `Q${i+1}: ${q.question.replace(/,/g, '')}`).join(',') + '\n';
+
+        picksSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const user = data.userEmail || data.username || data.userId;
+          const submittedAt = new Date(data.submittedAt).toLocaleString();
+          const answers = data.answers || [];
+          
+          csv += `"${user}","${submittedAt}",`;
+          csv += questions.map((_, i) => {
+            const ans = answers[i] !== undefined ? answers[i] : '-';
+            return `"${String(ans).replace(/"/g, '""')}"`;
+          }).join(',') + '\n';
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `pickem_submissions_${dateInput}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showMessage('✅ CSV exported successfully', 'success', 'submissionsMessage');
+      } catch (err) {
+        console.error('Error exporting CSV:', err);
+        showMessage('Error exporting CSV: ' + err.message, 'error', 'submissionsMessage');
+      }
+    });
+
     // Load User Responses
     async function loadUserResponses(dateInput) {
       if (!checkAdminPermission()) return;
@@ -3369,7 +3586,7 @@
         
         if (!lockSnapshot.empty) {
           lockTime = lockSnapshot.docs[0].data().lockTime;
-          isLocked = areSubmissionsLocked(dateStr, lockTime);
+          isLocked = await areSubmissionsLocked(dateStr, lockTime);
           console.log(`🔒 Lock time found: ${lockTime}, isLocked: ${isLocked}`);
         }
         
@@ -3427,7 +3644,7 @@
         const lockSnapshot = await db.collection('lockTimes').where('date', '==', selectedPickDate).get();
         if (!lockSnapshot.empty) {
           const lockTime = lockSnapshot.docs[0].data().lockTime;
-          const isLocked = areSubmissionsLocked(selectedPickDate, lockTime);
+          const isLocked = await areSubmissionsLocked(selectedPickDate, lockTime);
           console.log(`🔒 Lock time found: ${lockTime}, isLocked: ${isLocked}`);
           if (isLocked) {
             console.log(`❌ Submissions BLOCKED - date is locked`);
