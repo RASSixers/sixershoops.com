@@ -8,10 +8,6 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/favicon.ico" />
   <link rel="stylesheet" href="navbar-styles.css">
-  <!-- Firebase SDK (Compat version for better compatibility) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8055761449140377"
        crossorigin="anonymous"></script>
@@ -965,6 +961,23 @@
       .leaderboard-table tbody td { padding: 12px 16px; }
       .auth-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
     }
+
+    .preset-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--brand);
+      transition: all 0.2s;
+    }
+    .preset-btn:hover {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
   </style>
 </head>
 <body>
@@ -1347,6 +1360,12 @@
               <div class="form-group" style="margin-bottom: 1rem;">
                 <label class="form-label">Lock Time (EST):</label>
                 <input type="time" id="lockTimeInput" class="form-input" />
+                <div style="display: flex; gap: 8px; margin-top: 0.5rem; flex-wrap: wrap;">
+                  <button type="button" class="preset-btn" data-time="19:00">7:00 PM</button>
+                  <button type="button" class="preset-btn" data-time="19:30">7:30 PM</button>
+                  <button type="button" class="preset-btn" data-time="20:00">8:00 PM</button>
+                  <button type="button" class="preset-btn" data-time="22:00">10:00 PM</button>
+                </div>
                 <small style="color: var(--muted); display: block; margin-top: 0.5rem;">Example: 19:00 for 7:00 PM (displays as 7:00 PM)</small>
               </div>
 
@@ -1410,6 +1429,13 @@
               <label>Select Date:</label>
               <input type="date" id="submissionsDate" />
               <button class="btn btn-secondary" id="loadSubmissionsBtn">Load Submissions</button>
+            </div>
+
+            <div id="submissionSearchContainer" style="margin-top: 1.5rem; display: none;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Search Users</label>
+                <input type="text" id="submissionSearchInput" class="form-input" placeholder="Search by email or username..." />
+              </div>
             </div>
 
             <div style="margin-top: 2rem;">
@@ -1546,34 +1572,22 @@
 
   <script src="nav.js"></script>
   <script>
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBzMlBV5gbZZlg_eTwNWrRDrhx-_ATIPS0",
-      authDomain: "pickem-1e12b.firebaseapp.com",
-      projectId: "pickem-1e12b",
-      storageBucket: "pickem-1e12b.firebasestorage.app",
-      messagingSenderId: "715626120695",
-      appId: "1:715626120695:web:4942646cf3d6ca7e181af2",
-      measurementId: "G-B22K71F01E"
-    };
-
-    // Wait for Firebase SDK to load before initializing
+    // Firebase Logic (Unified with Navbar)
     let auth, db;
     let firebaseReady = false;
     
     function initializeFirebase() {
-      if (typeof firebase === 'undefined') {
+      if (typeof window.auth === 'undefined' || window.auth === null) {
         setTimeout(initializeFirebase, 100);
         return;
       }
-      firebase.initializeApp(firebaseConfig);
-      auth = firebase.auth();
-      db = firebase.firestore();
+      auth = window.auth;
+      db = window.db;
       firebaseReady = true;
       initAuth();
     }
     
-    // Start Firebase initialization
+    // Start Firebase synchronization
     initializeFirebase();
 
     let currentUser = null;
@@ -1603,6 +1617,16 @@
     function showAuth() {
       document.getElementById('authContainer').style.display = 'block';
       document.getElementById('appContainer').style.display = 'none';
+      
+      // Simplify the auth container to just a message since we're using the navbar now
+      const authContainer = document.getElementById('authContainer');
+      authContainer.innerHTML = `
+        <div class="auth-header-section">
+          <h2 class="auth-title">Sign In Required</h2>
+          <p class="auth-subtitle">Please sign in using the button in the top right corner to access Pick'em.</p>
+          <button class="btn btn-primary" onclick="document.getElementById('navSignInBtn').click()" style="margin-top: 1.5rem; width: auto; padding: 0.8rem 2rem;">Sign In Now</button>
+        </div>
+      `;
     }
 
     function showApp() {
@@ -1655,188 +1679,6 @@
     function clearErrors() {
       document.querySelectorAll('.error-text').forEach(el => el.textContent = '');
     }
-
-    // Clear form input values
-    function clearLoginForm() {
-      document.getElementById('loginUsername').value = '';
-      document.getElementById('loginPassword').value = '';
-      clearErrors();
-    }
-
-    function clearRegisterForm() {
-      document.getElementById('registerUsername').value = '';
-      document.getElementById('registerEmail').value = '';
-      document.getElementById('registerPassword').value = '';
-      document.getElementById('registerConfirmPassword').value = '';
-      clearErrors();
-    }
-
-    // Auth Tab Switching
-    document.querySelectorAll('.auth-tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const tab = btn.dataset.authTab;
-        document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.auth-form-content').forEach(f => f.classList.add('hidden'));
-        document.querySelectorAll('.message').forEach(m => m.classList.remove('show'));
-        btn.classList.add('active');
-        document.getElementById(tab + 'Form').classList.remove('hidden');
-        clearErrors();
-      });
-    });
-
-    // Login Form Validation
-    function validateLoginForm(username, password) {
-      const errors = {};
-      if (!username.trim()) {
-        errors.username = 'Username or email is required';
-      }
-      if (!password) {
-        errors.password = 'Password is required';
-      }
-      return errors;
-    }
-
-    // Register Form Validation
-    function validateRegisterForm(formData) {
-      const errors = {};
-      const { username, email, password, confirmPassword } = formData;
-
-      // Username validation
-      if (!username.trim()) {
-        errors.username = 'Username is required';
-      } else if (username.length < 3) {
-        errors.username = 'Username must be at least 3 characters';
-      }
-
-      // Email validation
-      if (!email.trim()) {
-        errors.email = 'Email is required';
-      } else if (!/\S+@\S+\.\S+/.test(email)) {
-        errors.email = 'Email is invalid';
-      }
-
-      // Password validation
-      if (!password) {
-        errors.password = 'Password is required';
-      } else if (password.length < 6) {
-        errors.password = 'Password must be at least 6 characters';
-      }
-
-      // Confirm password validation
-      if (password !== confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match';
-      }
-
-      return errors;
-    }
-
-    // Display form errors
-    function displayErrors(errors, formType) {
-      clearErrors();
-      if (formType === 'login') {
-        if (errors.username) {
-          document.getElementById('loginUsernameError').textContent = errors.username;
-        }
-        if (errors.password) {
-          document.getElementById('loginPasswordError').textContent = errors.password;
-        }
-      } else if (formType === 'register') {
-        if (errors.username) {
-          document.getElementById('registerUsernameError').textContent = errors.username;
-        }
-        if (errors.email) {
-          document.getElementById('registerEmailError').textContent = errors.email;
-        }
-        if (errors.password) {
-          document.getElementById('registerPasswordError').textContent = errors.password;
-        }
-        if (errors.confirmPassword) {
-          document.getElementById('registerConfirmPasswordError').textContent = errors.confirmPassword;
-        }
-      }
-    }
-
-    // Login Form
-    document.getElementById('loginFormEl').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('loginUsername').value;
-      const password = document.getElementById('loginPassword').value;
-
-      // Validate
-      const errors = validateLoginForm(email, password);
-      if (Object.keys(errors).length > 0) {
-        displayErrors(errors, 'login');
-        return;
-      }
-
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-        showMessage('Login successful!', 'success', 'authMessage');
-        setTimeout(() => {
-          document.getElementById('loginFormEl').reset();
-          showApp();
-        }, 500);
-      } catch (err) {
-        showMessage(err.message || 'Login failed', 'error', 'authMessage');
-      }
-    });
-
-    // Register Form
-    document.getElementById('registerFormEl').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('registerUsername').value;
-      const email = document.getElementById('registerEmail').value;
-      const password = document.getElementById('registerPassword').value;
-      const confirmPassword = document.getElementById('registerConfirmPassword').value;
-
-      // Validate
-      const errors = validateRegisterForm({ username, email, password, confirmPassword });
-      if (Object.keys(errors).length > 0) {
-        displayErrors(errors, 'register');
-        return;
-      }
-
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        await userCredential.user.updateProfile({ displayName: username });
-        
-        // Save user profile to Firestore
-        await db.collection('users').doc(userCredential.user.uid).set({
-          username: username,
-          email: email,
-          createdAt: new Date().toISOString()
-        });
-
-        showMessage('✅ Account created! Please log in with your new credentials.', 'success', 'authMessage2');
-        setTimeout(() => {
-          clearRegisterForm();
-          document.querySelectorAll('.auth-tab-btn')[0].click();
-          document.getElementById('loginUsername').value = email;
-          document.getElementById('loginPassword').focus();
-          auth.signOut();
-        }, 500);
-      } catch (err) {
-        showMessage(err.message || 'Registration failed', 'error', 'authMessage2');
-      }
-    });
-
-    // Forgot Password Button
-    document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => {
-      e.preventDefault();
-      showMessage('Password reset functionality coming soon!', 'error', 'authMessage');
-    });
-
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      try {
-        await auth.signOut();
-        document.getElementById('loginFormEl').reset();
-        document.getElementById('registerFormEl').reset();
-        showAuth();
-      } catch (err) {
-        showMessage('Error logging out', 'error');
-      }
-    });
 
     // === Admin Panel ===
     // Set today's date by default using timezone-safe formatting
@@ -2643,6 +2485,13 @@
       }
     });
 
+    // Lock time presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('lockTimeInput').value = btn.dataset.time;
+      });
+    });
+
     // Update lock time date when admin loads a date
     document.getElementById('loadDateBtn').addEventListener('click', function() {
       const adminDate = document.getElementById('adminDate').value;
@@ -3154,6 +3003,44 @@
       } else {
         await loadSubmissionsForDelete(dateInput);
       }
+
+      // Show search container and reset search input
+      document.getElementById('submissionSearchContainer').style.display = 'block';
+      document.getElementById('submissionSearchInput').value = '';
+    });
+
+    // Filter submissions by search term
+    document.getElementById('submissionSearchInput').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      
+      // Filter responses view (cards)
+      const cards = document.querySelectorAll('#responsesContainer > div');
+      cards.forEach(card => {
+        // Find the email/username div - it's the first child of the first div in the card
+        const userDiv = card.querySelector('div div:first-child div');
+        if (userDiv) {
+          const userText = userDiv.textContent.toLowerCase();
+          if (userText.includes(searchTerm)) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        }
+      });
+      
+      // Filter delete view (table rows)
+      const rows = document.querySelectorAll('#deleteSubmissionsTableBody tr');
+      rows.forEach(row => {
+        const userCell = row.querySelector('td');
+        if (userCell) {
+          const userText = userCell.textContent.toLowerCase();
+          if (userText.includes(searchTerm)) {
+            row.style.display = 'table-row';
+          } else {
+            row.style.display = 'none';
+          }
+        }
+      });
     });
 
     // Load User Responses
