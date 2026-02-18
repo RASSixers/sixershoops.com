@@ -710,7 +710,15 @@
     }
 
     .leaderboard-table tbody tr:hover td {
-      background: #fafcff;
+      background: #f1f5f9;
+    }
+
+    .leaderboard-table tbody tr.top-player {
+      background: rgba(0, 61, 166, 0.02);
+    }
+
+    .leaderboard-table tbody tr.top-player:hover td {
+      background: rgba(0, 61, 166, 0.05);
     }
 
     .rank {
@@ -1127,7 +1135,7 @@
     }
 
     .tie-breaker-card::after {
-      content: '🏆 TIE-BREAKER';
+      content: ' TIE-BREAKER';
       position: absolute;
       top: -12px;
       right: 20px;
@@ -1224,7 +1232,7 @@
       <!-- MVP of the Week Section -->
       <div id="mvpSection" style="display: none;">
         <div class="mvp-card">
-          <div class="mvp-avatar">🏆</div>
+          <div class="mvp-avatar">MVP</div>
           <div class="mvp-info">
             <h3>Previous Week's MVP</h3>
             <div class="mvp-name" id="mvpName">---</div>
@@ -1275,6 +1283,7 @@
         <button class="tab-btn" data-tab="daily-lb">Daily Leaderboard</button>
         <button class="tab-btn" data-tab="weekly-lb">Weekly Leaderboard</button>
         <button class="tab-btn" data-tab="monthly-lb">Monthly Leaderboard</button>
+        <button class="tab-btn" data-tab="season-lb">Season Leaderboard</button>
         <button class="tab-btn" data-tab="winners">Winners</button>
         <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display: none;">Manage Questions</button>
       </div>
@@ -1303,13 +1312,13 @@
         
         <!-- Lock Time Status Display -->
         <div id="lockTimeStatus" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; border-left: 4px solid var(--error); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));">
-          <p style="margin: 0 0 0.5rem 0; font-weight: 700; color: var(--error);">⏰ Submissions Closed</p>
+          <p style="margin: 0 0 0.5rem 0; font-weight: 700; color: var(--error);">Submissions Closed</p>
           <p id="lockTimeStatusMessage" style="margin: 0; color: var(--ink); font-size: 0.95rem;"></p>
         </div>
 
         <!-- Countdown Timer Display -->
         <div id="countdownTimer" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; border-left: 4px solid var(--brand); background: linear-gradient(135deg, rgba(0, 61, 166, 0.1), rgba(0, 61, 166, 0.05));">
-          <p style="margin: 0 0 0.5rem 0; font-weight: 700; color: var(--brand);">⏱️ Time Until Submissions Close</p>
+          <p style="margin: 0 0 0.5rem 0; font-weight: 700; color: var(--brand);">Time Until Submissions Close</p>
           <p id="countdownText" style="margin: 0; color: var(--ink); font-size: 1.1rem; font-weight: 700;"></p>
         </div>
         
@@ -1327,8 +1336,11 @@
           <button class="date-nav-btn" id="nextDailyDateBtn">›</button>
         </div>
         <input type="hidden" id="dailyLbDate" />
-        <div style="margin-bottom: 15px;">
-          <button type="button" class="btn btn-secondary" id="refreshDailyBtn">🔄 Refresh</button>
+        <div style="margin-bottom: 15px; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" id="refreshDailyBtn">Refresh</button>
+          <div style="flex: 1; min-width: 250px;">
+            <input type="text" id="dailyLbSearch" class="form-input" style="padding: 8px 16px; font-size: 14px;" placeholder="Search player..." />
+          </div>
         </div>
         <table class="leaderboard-table">
           <thead>
@@ -1337,6 +1349,7 @@
               <th>Player</th>
               <th style="text-align: center;">Correct</th>
               <th style="text-align: center;">Total</th>
+              <th style="text-align: center;">TB Diff</th>
               <th style="text-align: center;">Accuracy (%)</th>
             </tr>
           </thead>
@@ -1351,8 +1364,11 @@
           <div id="weekPickerContainer" class="date-picker-container"></div>
           <button class="date-nav-btn" id="nextWeekBtn">›</button>
         </div>
-        <div style="margin-bottom: 15px;">
-          <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">🔄 Refresh</button>
+        <div style="margin-bottom: 15px; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" id="refreshWeeklyBtn">Refresh</button>
+          <div style="flex: 1; min-width: 250px;">
+            <input type="text" id="weeklyLbSearch" class="form-input" style="padding: 8px 16px; font-size: 14px;" placeholder="Search player..." />
+          </div>
         </div>
         <table class="leaderboard-table">
           <thead>
@@ -1361,6 +1377,7 @@
               <th>Player</th>
               <th style="text-align: center;">Correct</th>
               <th style="text-align: center;">Total</th>
+              <th style="text-align: center;">Avg TB Diff</th>
               <th style="text-align: center;">Accuracy (%)</th>
             </tr>
           </thead>
@@ -1375,8 +1392,11 @@
           <div id="monthPickerContainer" class="date-picker-container"></div>
           <button class="date-nav-btn" id="nextMonthBtn">›</button>
         </div>
-        <div style="margin-bottom: 15px;">
-          <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">🔄 Refresh</button>
+        <div style="margin-bottom: 15px; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">Refresh</button>
+          <div style="flex: 1; min-width: 250px;">
+            <input type="text" id="monthlyLbSearch" class="form-input" style="padding: 8px 16px; font-size: 14px;" placeholder="Search player..." />
+          </div>
         </div>
         <table class="leaderboard-table">
           <thead>
@@ -1385,6 +1405,7 @@
               <th>Player</th>
               <th style="text-align: center;">Correct</th>
               <th style="text-align: center;">Total</th>
+              <th style="text-align: center;">Avg TB Diff</th>
               <th style="text-align: center;">Accuracy (%)</th>
             </tr>
           </thead>
@@ -1392,10 +1413,37 @@
         </table>
       </div>
 
+      <!-- Season Leaderboard Tab -->
+      <div id="season-lb" class="tab-content">
+        <div style="margin-bottom: 2rem; background: var(--white); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
+          <h2 style="color: var(--brand); margin-top: 0;">Season Standings</h2>
+          <p style="color: var(--muted); margin-bottom: 0; font-size: 0.95rem;">Cumulative performance across all dates and weeks.</p>
+        </div>
+        <div style="margin-bottom: 15px; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" id="refreshSeasonBtn">Refresh</button>
+          <div style="flex: 1; min-width: 250px;">
+            <input type="text" id="seasonLbSearch" class="form-input" style="padding: 8px 16px; font-size: 14px;" placeholder="Search player..." />
+          </div>
+        </div>
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th style="text-align: center;">Correct</th>
+              <th style="text-align: center;">Total</th>
+              <th style="text-align: center;">Avg TB Diff</th>
+              <th style="text-align: center;">Accuracy (%)</th>
+            </tr>
+          </thead>
+          <tbody id="seasonLeaderboardBody"></tbody>
+        </table>
+      </div>
+
       <!-- Winners Tab -->
       <div id="winners" class="tab-content">
         <div style="margin-bottom: 2rem;">
-          <h2 style="color: var(--brand); margin-bottom: 1.5rem;">🏆 Weekly Winners</h2>
+          <h2 style="color: var(--brand); margin-bottom: 1.5rem;">Weekly Winners</h2>
           
           <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
             <table class="leaderboard-table" style="margin-bottom: 0;">
@@ -1430,9 +1478,9 @@
 
           <div style="margin-bottom: 2rem;">
             <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-              <button class="btn btn-secondary" id="addQuestionTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">➕ Add Questions</button>
-              <button class="btn btn-secondary" id="markAnswersTabBtn" style="flex: 1;">✅ Mark Correct Answers</button>
-              <button class="btn btn-secondary" id="editLeaderboardTabBtn" style="flex: 1;">📊 Edit Leaderboard</button>
+              <button class="btn btn-secondary" id="addQuestionTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">Add Questions</button>
+              <button class="btn btn-secondary" id="markAnswersTabBtn" style="flex: 1;">Mark Correct Answers</button>
+              <button class="btn btn-secondary" id="editLeaderboardTabBtn" style="flex: 1;">Edit Leaderboard</button>
             </div>
 
             <!-- Add Questions Tab -->
@@ -1485,7 +1533,7 @@
                 <div class="form-group">
                   <label class="checkbox-option" style="cursor: pointer; background: var(--chip); padding: 10px; border-radius: 8px;">
                     <input type="checkbox" id="adminIsTieBreaker" />
-                    <span style="font-weight: 700; font-size: 13px; color: var(--brand);">🏆 Set as Tie-Breaker Question</span>
+                    <span style="font-weight: 700; font-size: 13px; color: var(--brand);"> Set as Tie-Breaker Question</span>
                   </label>
                   <small style="display: block; color: var(--muted); margin-top: 4px;">Tie-breakers are used to rank players with the same score based on how close their answer is to the correct value.</small>
                 </div>
@@ -1570,13 +1618,13 @@
                 <h3>System Utilities</h3>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                   <button class="btn btn-secondary" style="border-color: var(--error); color: var(--error);" 
-                          onclick="deleteAllSubmissionsForDate()">🗑️ Delete All Submissions for Date</button>
+                          onclick="deleteAllSubmissionsForDate()"> Delete All Submissions for Date</button>
                   <button class="btn btn-secondary" style="border-color: var(--error); color: var(--error); background: #fff1f2;" 
-                          onclick="resetAllScoresForDate()">🔄 Reset All Manual Adjustments for Date</button>
+                          onclick="resetAllScoresForDate()"> Reset All Manual Adjustments for Date</button>
                   <button class="btn btn-secondary" style="border-color: var(--brand); color: var(--brand);" 
-                          onclick="recalculateAllScores()">🔄 Force Recalculate All Scores</button>
+                          onclick="recalculateAllScores()"> Force Recalculate All Scores</button>
                   <button class="btn btn-secondary" style="border-color: #10b981; color: #10b981; background: #ecfdf5;" 
-                          onclick="exportLeaderboardToCsv()">📥 Export to CSV</button>
+                          onclick="exportLeaderboardToCsv()"> Export to CSV</button>
                 </div>
               </div>
             </div>
@@ -1587,9 +1635,9 @@
           <!-- Weekly Leaderboard Info -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <div class="weekly-info-section">
-            <h2>📅 Weekly Leaderboard System</h2>
+            <h2>Weekly Leaderboard System</h2>
             <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--success);">
-              <p style="margin: 0 0 1rem 0; font-weight: 700; color: var(--ink);">✅ Simplified Weekly Leaderboards</p>
+              <p style="margin: 0 0 1rem 0; font-weight: 700; color: var(--ink);"> Simplified Weekly Leaderboards</p>
               <p style="margin: 0; color: var(--muted); line-height: 1.6;">
                 The weekly leaderboard now works automatically based on the <strong>Week Number</strong> field you assign to each question. 
                 Simply set the Week Number when adding questions (e.g., Week 1, Week 2, etc.), and the weekly leaderboard will automatically 
@@ -1601,7 +1649,7 @@
           <!-- Set Submission Lock Time Section -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <div class="lock-time-section">
-            <h2>⏰ Set Submission Lock Time</h2>
+            <h2>Set Submission Lock Time</h2>
             <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Set the time when submissions lock for this date (EST timezone)</p>
             <div id="lockTimeMessage" class="message"></div>
 
@@ -1693,14 +1741,14 @@
                   <label class="form-label">Search Users</label>
                   <input type="text" id="submissionSearchInput" class="form-input" placeholder="Search by email or username..." />
                 </div>
-                <button class="btn btn-secondary" id="exportCsvBtn" style="padding: 10px 16px;">📥 Export CSV</button>
+                <button class="btn btn-secondary" id="exportCsvBtn" style="padding: 10px 16px;"> Export CSV</button>
               </div>
             </div>
 
             <div style="margin-top: 2rem;">
               <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
                 <button class="btn btn-secondary" id="viewResponsesTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">📋 View Responses</button>
-                <button class="btn btn-secondary" id="deleteSubmissionsTabBtn" style="flex: 1;">🗑️ Delete Submissions</button>
+                <button class="btn btn-secondary" id="deleteSubmissionsTabBtn" style="flex: 1;"> Delete Submissions</button>
               </div>
 
               <!-- Responses View Tab -->
@@ -1745,7 +1793,7 @@
             <div id="overrideMessage" class="message"></div>
 
             <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #92400e;">
-              <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">⚠️ Warning: This will override the calculated score for a specific user and date. Use only when necessary!</p>
+              <p style="margin: 0; font-weight: 600; font-size: 0.9rem;"> Warning: This will override the calculated score for a specific user and date. Use only when necessary!</p>
             </div>
 
             <div class="admin-form">
@@ -1771,7 +1819,7 @@
               <h3>Current Overrides</h3>
               <div id="overridesList" style="margin-top: 1rem;">
                 <div style="text-align: center; padding: 40px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
-                  <p style="font-size: 24px; margin-bottom: 10px;">📝</p>
+                  <p style="font-size: 24px; margin-bottom: 10px;"></p>
                   <p style="font-weight: 600; font-size: 0.9rem;">No overrides set</p>
                 </div>
               </div>
@@ -1819,7 +1867,7 @@
                 </tbody>
               </table>
               <div id="noWinnersMessage" style="text-align: center; padding: 60px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
-                <p style="font-size: 36px; margin-bottom: 10px;">🏆</p>
+                <p style="font-size: 36px; margin-bottom: 10px;"></p>
                 <p style="font-weight: 600; font-size: 1rem;">No winners added yet</p>
               </div>
             </div>
@@ -1855,6 +1903,10 @@
     let adminQuestions = [];
     let selectedPickDate = null;
     let isCurrentUserAdmin = false;
+    let dailyLbData = [];
+    let weeklyLbData = [];
+    let monthlyLbData = [];
+    let seasonLbData = [];
 
     // === Authentication ===
     function initAuth() {
@@ -1908,7 +1960,7 @@
       document.getElementById('pickWeekSection').style.display = 'block';
       
       const currentDate = formatDateForComparison(new Date());
-      console.log(`🔄 User authenticated. Reloading questions for ${currentDate} to check submissions`);
+      console.log(` User authenticated. Reloading questions for ${currentDate} to check submissions`);
       selectedPickDate = currentDate;
       document.getElementById('pickDate').value = currentDate;
       renderDateSlider();
@@ -1951,7 +2003,7 @@
     const todayDateStr = `${year}-${month}-${day}`;
     adminDateInput.value = todayDateStr;
     lockTimeDateInput.value = todayDateStr;
-    console.log(`📅 Admin date initialized to: ${adminDateInput.value}`);
+    console.log(` Admin date initialized to: ${adminDateInput.value}`);
 
     // Toggle options field based on question type
     document.getElementById('adminQuestionType').addEventListener('change', (e) => {
@@ -2081,7 +2133,7 @@
             manualScore: parseInt(newScore),
             updatedAt: new Date().toISOString()
           });
-          showMessage(`✅ Directly updated score for ${userEmail}`, 'success', 'editLbMessage');
+          showMessage(` Directly updated score for ${userEmail}`, 'success', 'editLbMessage');
         } else {
           // Fallback to scoreOverrides if pick doc not found
           const existing = await db.collection('scoreOverrides')
@@ -2104,14 +2156,14 @@
               appliedBy: auth.currentUser.email
             });
           }
-          showMessage(`✅ Saved override for ${userEmail} (pick doc not found)`, 'success', 'editLbMessage');
+          showMessage(` Saved override for ${userEmail} (pick doc not found)`, 'success', 'editLbMessage');
         }
         
         // Refresh the leaderboard to show changes
         await loadLeaderboard('daily', null, null, date);
       } catch (err) {
         console.error('Error saving override:', err);
-        showMessage('❌ Failed to save update', 'error', 'editLbMessage');
+        showMessage(' Failed to save update', 'error', 'editLbMessage');
       }
     };
 
@@ -2152,11 +2204,11 @@
           await batch.commit();
         }
 
-        showMessage(`✅ Reset score for ${userEmail}`, 'success', 'editLbMessage');
+        showMessage(` Reset score for ${userEmail}`, 'success', 'editLbMessage');
         await loadLeaderboard('daily', null, null, date);
       } catch (err) {
         console.error('Error resetting score:', err);
-        showMessage('❌ Failed to reset', 'error', 'editLbMessage');
+        showMessage(' Failed to reset', 'error', 'editLbMessage');
       }
     };
 
@@ -2165,17 +2217,17 @@
       const date = document.getElementById('editLbDate').value;
       if (!date) return showMessage('Please select a date first', 'error', 'editLbMessage');
       
-      if (!confirm(`⚠️ WARNING: Are you sure you want to delete ALL submissions for ${date}? This cannot be undone.`)) return;
+      if (!confirm(` WARNING: Are you sure you want to delete ALL submissions for ${date}? This cannot be undone.`)) return;
 
       try {
         const snapshot = await db.collection('picks').where('date', '==', date).get();
         const batch = db.batch();
         snapshot.docs.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
-        showMessage(`✅ Deleted ${snapshot.size} submissions`, 'success', 'editLbMessage');
+        showMessage(` Deleted ${snapshot.size} submissions`, 'success', 'editLbMessage');
       } catch (err) {
         console.error('Error deleting submissions:', err);
-        showMessage('❌ Deletion failed', 'error', 'editLbMessage');
+        showMessage(' Deletion failed', 'error', 'editLbMessage');
       }
     };
 
@@ -2184,7 +2236,7 @@
       const date = document.getElementById('editLbDate').value;
       if (!date) return showMessage('Please select a date first', 'error', 'editLbMessage');
 
-      if (!confirm(`⚠️ WARNING: Are you sure you want to RESET ALL manual score adjustments for ${date}? This will revert everyone to their calculated score.`)) return;
+      if (!confirm(` WARNING: Are you sure you want to RESET ALL manual score adjustments for ${date}? This will revert everyone to their calculated score.`)) return;
 
       try {
         showMessage('Resetting all scores...', 'info', 'editLbMessage');
@@ -2210,7 +2262,7 @@
 
         if (totalCount > 0) {
           await batch.commit();
-          showMessage(`✅ Successfully reset adjustments for ${totalCount} entries`, 'success', 'editLbMessage');
+          showMessage(` Successfully reset adjustments for ${totalCount} entries`, 'success', 'editLbMessage');
         } else {
           showMessage('ℹ️ No manual adjustments found to reset', 'info', 'editLbMessage');
         }
@@ -2220,7 +2272,7 @@
         document.getElementById('loadLbForEditBtn').click();
       } catch (err) {
         console.error('Error resetting scores:', err);
-        showMessage('❌ Reset failed', 'error', 'editLbMessage');
+        showMessage(' Reset failed', 'error', 'editLbMessage');
       }
     };
 
@@ -2247,7 +2299,7 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      showMessage('✅ Exported to CSV', 'success', 'editLbMessage');
+      showMessage(' Exported to CSV', 'success', 'editLbMessage');
     };
 
     window.recalculateAllScores = async function() {
@@ -2259,10 +2311,10 @@
         showMessage('Recalculating...', 'info', 'editLbMessage');
         // We'll just trigger a leaderboard load which recalculates everything
         await loadLeaderboard('daily', null, null, date);
-        showMessage('✅ Recalculated daily leaderboard', 'success', 'editLbMessage');
+        showMessage(' Recalculated daily leaderboard', 'success', 'editLbMessage');
       } catch (err) {
         console.error('Error recalculating:', err);
-        showMessage('❌ Recalculation failed', 'error', 'editLbMessage');
+        showMessage(' Recalculation failed', 'error', 'editLbMessage');
       }
     };
 
@@ -2332,9 +2384,9 @@
           <div class="admin-question-item-content">
             <div class="admin-question-item-text">${index + 1}. ${q.question}</div>
             <div class="admin-question-item-type">${q.question_type === 'over_under' ? 'Over/Under' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
-            ${q.isTieBreaker ? `<div style="display: inline-block; background: var(--brand); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-top: 4px;">🏆 TIE-BREAKER</div>` : ''}
+            ${q.isTieBreaker ? `<div style="display: inline-block; background: var(--brand); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-top: 4px;"> TIE-BREAKER</div>` : ''}
             ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
-            ${q.weekNumber || q.dayOfWeek ? `<div class="admin-question-item-options" style="color: #3b82f6; margin-top: 0.5rem; font-weight: 600;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
+            ${q.weekNumber || q.dayOfWeek ? `<div class="admin-question-item-options" style="color: #3b82f6; margin-top: 0.5rem; font-weight: 600;"> Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
           </div>
           <div class="admin-question-item-actions">
             <button class="admin-delete-btn" onclick="deleteAdminQuestion(${q.tempId})">Delete</button>
@@ -2392,7 +2444,7 @@
       try {
         // Validate date format is correct (should be YYYY-MM-DD)
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-          console.warn(`⚠️ Invalid date format: "${dateInput}" - expected YYYY-MM-DD`);
+          console.warn(` Invalid date format: "${dateInput}" - expected YYYY-MM-DD`);
           showMessage('Invalid date format. Please use date picker.', 'error', 'adminMessage');
           return;
         }
@@ -2407,7 +2459,7 @@
           return rest;
         });
         
-        console.log('📝 Questions to save:', questionsToSave);
+        console.log(' Questions to save:', questionsToSave);
 
         // Check if document exists for this date
         const snapshot = await db.collection('questions').where('date', '==', dateInput).get();
@@ -2430,8 +2482,8 @@
           console.log(`   New doc ID: ${docRef.id}`);
         }
 
-        console.log(`✅ Questions saved successfully for ${dateInput}!`);
-        showMessage('✅ Questions saved successfully! Now go to Mark Correct Answers to set answers and weeks.', 'success', 'adminMessage');
+        console.log(` Questions saved successfully for ${dateInput}!`);
+        showMessage(' Questions saved successfully! Now go to Mark Correct Answers to set answers and weeks.', 'success', 'adminMessage');
         adminQuestions = [];
         renderAdminQuestions();
       } catch (err) {
@@ -2497,7 +2549,7 @@
           }
         }
       });
-      showMessage(`✅ Marked ${count} Over/Under questions as ${val}`, 'success', 'markAnswersMessage');
+      showMessage(` Marked ${count} Over/Under questions as ${val}`, 'success', 'markAnswersMessage');
     };
 
     function renderAnswersForm() {
@@ -2549,10 +2601,10 @@
               <div>
                 <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem;">${idx + 1}. ${q.question}</div>
                 <div style="color: var(--muted); font-size: 0.85rem;">${q.question_type === 'over_under' ? 'Over/Under' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
-                ${q.isTieBreaker ? `<div style="display: inline-block; background: var(--brand); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-top: 4px;">🏆 TIE-BREAKER</div>` : ''}
-                ${q.weekNumber || q.dayOfWeek ? `<div style="color: #3b82f6; font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
+                ${q.isTieBreaker ? `<div style="display: inline-block; background: var(--brand); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-top: 4px;">TIE-BREAKER</div>` : ''}
+                ${q.weekNumber || q.dayOfWeek ? `<div style="color: #3b82f6; font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;"> Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
               </div>
-              <span class="answer-indicator-${idx}" style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">⏳</span>
+              <span class="answer-indicator-${idx}" style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;"></span>
             </div>
             ${q.options ? `<div style="color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Options: ${q.options}</div>` : ''}
             <div style="margin-top: 0.75rem; font-weight: 600; color: var(--ink);">Correct Answer:</div>
@@ -2666,13 +2718,13 @@
       const card = document.querySelector(`.answer-card-${idx}`);
       
       if (isAnswered) {
-        indicator.innerHTML = '✅';
+        indicator.innerHTML = '';
         indicator.style.background = '#d1fae5';
         indicator.style.color = '#065f46';
         card.style.borderColor = '#10b981';
         card.style.background = '#f0fdf4';
       } else {
-        indicator.innerHTML = '⏳';
+        indicator.innerHTML = '';
         indicator.style.background = '#e5e7eb';
         indicator.style.color = '#666';
         card.style.borderColor = 'var(--border)';
@@ -2717,8 +2769,8 @@
       }
 
       try {
-        console.log(`📝 Saving ${correctAnswers.length} answer(s) for date: ${dateInput}`);
-        console.log(`📝 Answers being saved:`, correctAnswers);
+        console.log('Saving correct answers...');
+        console.log(` Answers being saved:`, correctAnswers);
         
         // Also update questions to ensure week numbers are preserved
         const questionsSnapshot = await db.collection('questions').where('date', '==', dateInput).get();
@@ -2733,7 +2785,7 @@
             items: updatedItems,
             updatedAt: new Date().toISOString()
           });
-          console.log('✅ Questions collection updated with week numbers preserved');
+          console.log(' Questions collection updated with week numbers preserved');
         }
         
         const existingAnswers = await db.collection('correctAnswers').where('date', '==', dateInput).get();
@@ -2742,7 +2794,7 @@
         let finalAnswers = correctAnswers;
         
         if (!existingAnswers.empty) {
-          console.log(`📝 Found existing answer document for ${dateInput}. Merging answers...`);
+          console.log(` Found existing answer document for ${dateInput}. Merging answers...`);
           docRef = existingAnswers.docs[0].ref;
           const existingData = existingAnswers.docs[0].data();
           const existingAnswersArray = Array.isArray(existingData.answers) ? existingData.answers : [];
@@ -2771,16 +2823,16 @@
           
           finalAnswers = Object.keys(answerMap).map(qId => answerMap[qId]);
           
-          console.log(`  ✅ Merged ${correctAnswers.length} new answer(s) with ${existingAnswersArray.length} existing, total: ${finalAnswers.length}`);
+          console.log(`   Merged ${correctAnswers.length} new answer(s) with ${existingAnswersArray.length} existing, total: ${finalAnswers.length}`);
           console.log(`  📋 Final answers array:`, finalAnswers);
           
           await docRef.update({
             answers: finalAnswers,
             updatedAt: new Date().toISOString()
           });
-          console.log('✅ Correct answers UPDATED with ID:', docRef.id);
+          console.log(' Correct answers UPDATED with ID:', docRef.id);
         } else {
-          console.log(`📝 No existing answers found for ${dateInput}. Creating new document...`);
+          console.log(` No existing answers found for ${dateInput}. Creating new document...`);
           const cleanAnswers = correctAnswers.map(a => ({
             questionId: a.questionId,
             question: a.question || '',
@@ -2793,53 +2845,53 @@
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
-          console.log('✅ Correct answers CREATED with ID:', docRef.id);
+          console.log(' Correct answers CREATED with ID:', docRef.id);
           console.log(`  📋 Answers saved:`, cleanAnswers);
         }
         
-        showMessage(`✅ ${correctAnswers.length} answer(s) saved! Recalculating leaderboards...`, 'success', 'markAnswersMessage');
+        showMessage(` ${correctAnswers.length} answer(s) saved! Recalculating leaderboards...`, 'success', 'markAnswersMessage');
         
-        console.log('⏳ Waiting for Firestore replication with retry...');
+        console.log(' Waiting for Firestore replication with retry...');
         
         let leaderboardsLoaded = false;
         for (let attempt = 1; attempt <= 3; attempt++) {
           const waitTime = attempt === 1 ? 2000 : attempt === 2 ? 3000 : 5000;
-          console.log(`  🔄 Attempt ${attempt}/3: Waiting ${waitTime}ms before loading leaderboards...`);
+          console.log(`   Attempt ${attempt}/3: Waiting ${waitTime}ms before loading leaderboards...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           
           const verifySnapshot = await db.collection('correctAnswers').where('date', '==', dateInput).get();
           console.log(`  ✓ Verification: Found ${verifySnapshot.size} answer document(s) for ${dateInput}`);
           
           if (verifySnapshot.empty) {
-            console.warn(`  ⚠️ Answers not yet replicated. Retrying...`);
+            console.warn(`   Answers not yet replicated. Retrying...`);
             continue;
           }
           
-          console.log(`🔄 Recalculating leaderboard for date: ${dateInput}`);
+          console.log(` Recalculating leaderboard for date: ${dateInput}`);
           try {
             await loadLeaderboard('daily', null, null, dateInput);
-            console.log('✅ Leaderboards recalculated successfully');
+            console.log(' Leaderboards recalculated successfully');
             leaderboardsLoaded = true;
             break;
           } catch (leaderboardErr) {
-            console.error(`❌ Error recalculating leaderboards on attempt ${attempt}:`, leaderboardErr);
+            console.error(` Error recalculating leaderboards on attempt ${attempt}:`, leaderboardErr);
             if (attempt < 3) {
-              console.log('  ⏳ Will retry...');
+              console.log('   Will retry...');
               continue;
             }
-            showMessage('⚠️ Answers saved but leaderboard update failed. Check console for details.', 'error', 'markAnswersMessage');
+            showMessage(' Answers saved but leaderboard update failed. Check console for details.', 'error', 'markAnswersMessage');
             return;
           }
         }
         
         if (leaderboardsLoaded) {
-          showMessage('✅ Leaderboards updated! Scores have been recalculated.', 'success', 'markAnswersMessage');
+          showMessage(' Leaderboards updated! Scores have been recalculated.', 'success', 'markAnswersMessage');
         }
       } catch (err) {
         console.error('Error saving correct answers:', err);
         console.error('Error code:', err.code);
         console.error('Error details:', err.message);
-        showMessage('❌ Error: ' + (err.message || 'Failed to save answers'), 'error', 'markAnswersMessage');
+        showMessage(' Error: ' + (err.message || 'Failed to save answers'), 'error', 'markAnswersMessage');
       }
     });
 
@@ -2860,16 +2912,16 @@
     let allWeeks = [];
 
     async function loadWeeks() {
-      console.log('⚠️ loadWeeks called but week management is deprecated');
+      console.log(' loadWeeks called but week management is deprecated');
       allWeeks = [];
     }
 
     function renderWeeks() {
-      console.log('⚠️ renderWeeks called but week management is deprecated');
+      console.log(' renderWeeks called but week management is deprecated');
     }
 
     async function deleteWeek(docId) {
-      console.log('⚠️ deleteWeek called but week management is deprecated');
+      console.log(' deleteWeek called but week management is deprecated');
     }
 
     loadWeeks();
@@ -2969,7 +3021,7 @@
         }
 
         updateImmediateLockBtnUI(newStatus);
-        showMessage(`✅ Immediate lock ${newStatus ? 'ENABLED' : 'DISABLED'} for ${dateInput}`, 'success', 'lockTimeMessage');
+        showMessage(` Immediate lock ${newStatus ? 'ENABLED' : 'DISABLED'} for ${dateInput}`, 'success', 'lockTimeMessage');
         
         // Refresh lock status on page
         checkAndDisplayLockStatus(selectedPickDate);
@@ -3079,7 +3131,7 @@
       
       const dateInput = document.getElementById('lockTimeDate').value;
       if (!dateInput) {
-        showMessage('❌ Please select a date first using the date picker.', 'error', 'lockTimeMessage');
+        showMessage(' Please select a date first using the date picker.', 'error', 'lockTimeMessage');
         document.getElementById('lockTimeDate').focus();
         document.getElementById('lockTimeDate').style.borderColor = 'var(--error)';
         return;
@@ -3103,7 +3155,7 @@
           document.getElementById('lockTimeDisplayValue').textContent = `${lockTime} EST (for ${dateInput})`;
           document.getElementById('lockTimeDisplay').style.display = 'block';
           updateImmediateLockBtnUI(isImmediatelyLocked);
-          showMessage(`✅ Loaded lock time for ${dateInput}`, 'success', 'lockTimeMessage');
+          showMessage(` Loaded lock time for ${dateInput}`, 'success', 'lockTimeMessage');
         }
       } catch (err) {
         console.error('Error loading lock time:', err);
@@ -3119,7 +3171,7 @@
       const lockTime24 = document.getElementById('lockTimeInput').value;
       
       if (!dateInput) {
-        showMessage('❌ Please select a date first. Use the date picker above.', 'error', 'lockTimeMessage');
+        showMessage(' Please select a date first. Use the date picker above.', 'error', 'lockTimeMessage');
         document.getElementById('lockTimeDate').focus();
         document.getElementById('lockTimeDate').style.borderColor = 'var(--error)';
         return;
@@ -3132,7 +3184,7 @@
 
       // Validate that the date is actually a valid date format (YYYY-MM-DD)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-        showMessage('❌ Invalid date format. Please use the date picker.', 'error', 'lockTimeMessage');
+        showMessage(' Invalid date format. Please use the date picker.', 'error', 'lockTimeMessage');
         return;
       }
 
@@ -3148,7 +3200,7 @@
             lockTime: lockTime12,
             updatedAt: new Date().toISOString()
           });
-          console.log(`📝 Updated lock time for ${dateInput} to ${lockTime12}`);
+          console.log(` Updated lock time for ${dateInput} to ${lockTime12}`);
         } else {
           await db.collection('lockTimes').add({
             date: dateInput,
@@ -3162,7 +3214,7 @@
         document.getElementById('lockTimeDisplayValue').textContent = `${lockTime12} EST (for ${dateInput})`;
         document.getElementById('lockTimeDisplay').style.display = 'block';
         document.getElementById('lockTimeDate').style.borderColor = '';  // Remove error highlight
-        showMessage(`✅ Lock time saved successfully for ${dateInput}!`, 'success', 'lockTimeMessage');
+        showMessage(` Lock time saved successfully for ${dateInput}!`, 'success', 'lockTimeMessage');
       } catch (err) {
         console.error('Error saving lock time:', err);
         showMessage('Error saving lock time: ' + err.message, 'error', 'lockTimeMessage');
@@ -3192,7 +3244,7 @@
         const isLocked = await getImmediateLockStatus(adminDate);
         updateImmediateLockBtnUI(isLocked);
         
-        showMessage(`📅 Lock time date automatically set to ${adminDate}`, 'info', 'lockTimeMessage');
+        showMessage(` Lock time date automatically set to ${adminDate}`, 'info', 'lockTimeMessage');
       }
     });
 
@@ -3250,7 +3302,7 @@
             goLiveDateTime: goLiveDateTime,
             updatedAt: new Date().toISOString()
           });
-          console.log(`📝 Updated go-live schedule for ${questionsDate}`);
+          console.log(` Updated go-live schedule for ${questionsDate}`);
         } else {
           await db.collection('questionSchedules').add({
             questionsDate: questionsDate,
@@ -3264,7 +3316,7 @@
 
         document.getElementById('goLiveDisplayValue').textContent = `Questions for ${questionsDate} go live on ${goLiveDate} at ${goLiveTime} EST`;
         document.getElementById('goLiveDisplay').style.display = 'block';
-        showMessage(`✅ Go-live schedule saved successfully!`, 'success', 'goLiveMessage');
+        showMessage(` Go-live schedule saved successfully!`, 'success', 'goLiveMessage');
       } catch (err) {
         console.error('Error saving go-live schedule:', err);
         showMessage('Error saving go-live schedule: ' + err.message, 'error', 'goLiveMessage');
@@ -3384,7 +3436,7 @@
         const questionsSnapshot = await db.collection('questions').where('date', '==', date).get();
         console.log(`  📚 Found ${questionsSnapshot.size} question documents for date ${date}`);
         if (questionsSnapshot.empty) {
-          console.warn(`  ⚠️ No questions found for date ${date} - cannot calculate scores`);
+          console.warn(`   No questions found for date ${date} - cannot calculate scores`);
           return [];
         }
 
@@ -3396,16 +3448,16 @@
           console.log(`  🔍 Week filter: ${weekNumberFilter} (type: ${typeof weekNumberFilter})`);
           console.log(`  📋 All questions weekNumbers:`, questions.map(q => ({q: q.question.substring(0, 30), wn: q.weekNumber, type: typeof q.weekNumber})));
           questions = questions.filter(q => q.weekNumber === weekNumberFilter || q.weekNumber == weekNumberFilter);
-          console.log(`  ✅ Filtered to ${questions.length} questions for Week ${weekNumberFilter}`);
+          console.log(`   Filtered to ${questions.length} questions for Week ${weekNumberFilter}`);
         }
         
-        console.log(`  ✅ Loaded ${questions.length} questions for date ${date}`);
+        console.log(`   Loaded ${questions.length} questions for date ${date}`);
 
         // Get correct answers
         const answersSnapshot = await db.collection('correctAnswers').where('date', '==', date).get();
-        console.log(`  📝 Found ${answersSnapshot.size} correct answer document(s) for date ${date}`);
+        console.log(`   Found ${answersSnapshot.size} correct answer document(s) for date ${date}`);
         if (answersSnapshot.empty) {
-          console.warn(`  ⚠️ No correct answers found for date ${date}. Scores cannot be calculated.`);
+          console.warn(`   No correct answers found for date ${date}. Scores cannot be calculated.`);
           return [];
         }
 
@@ -3425,15 +3477,15 @@
               console.log(`    Q${a.questionId}: ${a.correctAnswer}`);
             }
           });
-          console.log(`  ✅ Loaded ${Object.keys(correctAnswersMap).length} correct answers`);
+          console.log(`   Loaded ${Object.keys(correctAnswersMap).length} correct answers`);
           
           if (Object.keys(correctAnswersMap).length === 0) {
-            console.warn(`  ⚠️ Answer array exists but no valid answers found`);
+            console.warn(`   Answer array exists but no valid answers found`);
             console.log(`  📊 Raw answers doc:`, correctAnswersDoc);
             return [];
           }
         } else {
-          console.warn(`  ⚠️ answers field is missing or not an array in correctAnswers doc`);
+          console.warn(`   answers field is missing or not an array in correctAnswers doc`);
           console.log(`  📊 Raw answers doc:`, correctAnswersDoc);
           return [];
         }
@@ -3449,7 +3501,7 @@
         }
         
         if (picksSnapshot.empty) {
-          console.warn(`  ⚠️ No user picks found for date ${date}`);
+          console.warn(`   No user picks found for date ${date}`);
           return [];
         }
         
@@ -3467,7 +3519,7 @@
         // Find the index of the tie-breaker question if it exists
         const tieBreakerIndex = allQuestions.findIndex(q => q.isTieBreaker);
         if (tieBreakerIndex !== -1) {
-          console.log(`  🏆 Tie-Breaker Question found at index ${tieBreakerIndex}: "${allQuestions[tieBreakerIndex].question}"`);
+          console.log(`   Tie-Breaker Question found at index ${tieBreakerIndex}: "${allQuestions[tieBreakerIndex].question}"`);
         }
         
         const totalQuestionsForScoring = questionIndicesToCount.length;
@@ -3503,7 +3555,7 @@
               const ansNum = parseFloat(correctAnswer);
               if (!isNaN(pickNum) && !isNaN(ansNum)) {
                 userScores[userId].tieBreakerDiff = Math.abs(pickNum - ansNum);
-                console.log(`    🏆 Tie-Breaker Guess: ${pickNum}, Correct: ${ansNum}, Diff: ${userScores[userId].tieBreakerDiff}`);
+                console.log(`     Tie-Breaker Guess: ${pickNum}, Correct: ${ansNum}, Diff: ${userScores[userId].tieBreakerDiff}`);
               }
             }
 
@@ -3553,7 +3605,7 @@
             userScores[userId].isManuallySet = true;
           }
 
-          console.log(`  ✅ ${username}: ${userCorrectCount} correct out of ${questionsMatched} with answers (checked ${questionsChecked} questions)`);
+          console.log(`   ${username}: ${userCorrectCount} correct out of ${questionsMatched} with answers (checked ${questionsChecked} questions)`);
         });
 
         // Still check scoreOverrides collection for backwards compatibility/alternative method
@@ -3565,7 +3617,7 @@
             overridesMap[data.userEmail] = data.score;
           });
         } catch (overrideErr) {
-          console.warn(`  ⚠️ Could not fetch score overrides (permissions issue):`, overrideErr.message);
+          console.warn(`   Could not fetch score overrides (permissions issue):`, overrideErr.message);
         }
         
         const scoresArray = Object.entries(userScores).map(([userId, score]) => {
@@ -3622,7 +3674,7 @@
             tieBreakerDiff: score.tieBreakerDiff
           }));
         
-        console.log(`  ✅ Returning ${finalScores.length} final scores:`, finalScores);
+        console.log(`   Returning ${finalScores.length} final scores:`, finalScores);
         return finalScores;
       } catch (err) {
         console.error('Error calculating scores:', err);
@@ -3656,7 +3708,7 @@
               <td style="padding: 14px; text-align: center; font-weight: 600;">${answerCount}</td>
               <td style="padding: 14px; text-align: center;">
                 <button class="btn btn-danger delete-submission-btn" data-doc-id="${doc.id}" style="padding: 8px 16px; font-size: 0.85rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700;">
-                  🗑️ Delete
+                   Delete
                 </button>
               </td>
             </tr>
@@ -3665,7 +3717,7 @@
 
         document.getElementById('deleteSubmissionsTable').style.display = 'table';
         document.getElementById('noSubmissionsForDeleteMessage').style.display = 'none';
-        showMessage(`✅ Loaded ${picksSnapshot.size} submission(s)`, 'success', 'submissionsMessage');
+        showMessage(` Loaded ${picksSnapshot.size} submission(s)`, 'success', 'submissionsMessage');
 
         // Add event listeners to delete buttons
         document.querySelectorAll('.delete-submission-btn').forEach(btn => {
@@ -3687,7 +3739,7 @@
       try {
         showMessage('Deleting submission...', 'info', 'submissionsMessage');
         await db.collection('picks').doc(docId).delete();
-        showMessage('✅ Submission deleted successfully!', 'success', 'submissionsMessage');
+        showMessage(' Submission deleted successfully!', 'success', 'submissionsMessage');
         
         // Reload the table
         await loadSubmissionsForDelete(date);
@@ -3823,7 +3875,7 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showMessage('✅ CSV exported successfully', 'success', 'submissionsMessage');
+        showMessage(' CSV exported successfully', 'success', 'submissionsMessage');
       } catch (err) {
         console.error('Error exporting CSV:', err);
         showMessage('Error exporting CSV: ' + err.message, 'error', 'submissionsMessage');
@@ -3892,7 +3944,7 @@
               totalAnswered++;
             }
             
-            const status = correctAnswers[qIdx] === undefined ? '⏳' : (isCorrect ? '✅' : '❌');
+            const status = correctAnswers[qIdx] === undefined ? '' : (isCorrect ? '' : '');
             const statusColor = isCorrect ? '#27ae60' : (correctAnswers[qIdx] === undefined ? '#f39c12' : '#e74c3c');
             const bgColor = isCorrect ? 'rgba(39, 174, 96, 0.1)' : (correctAnswers[qIdx] === undefined ? 'rgba(243, 156, 18, 0.1)' : 'rgba(231, 76, 60, 0.1)');
 
@@ -3935,7 +3987,7 @@
 
         document.getElementById('responsesContainer').style.display = 'block';
         document.getElementById('noResponsesMessage').style.display = 'none';
-        showMessage(`✅ Loaded ${picksSnapshot.size} user submissions`, 'success', 'submissionsMessage');
+        showMessage(` Loaded ${picksSnapshot.size} user submissions`, 'success', 'submissionsMessage');
       } catch (err) {
         console.error('Error loading responses:', err);
         showMessage('Error loading responses: ' + err.message, 'error', 'submissionsMessage');
@@ -3968,7 +4020,7 @@
         console.log(`Found ${snapshot.size} document(s) matching query for ${dateStr}`);
         
         if (snapshot.empty) {
-          console.warn(`⚠️ No questions found for ${dateStr}`);
+          console.warn(` No questions found for ${dateStr}`);
           console.warn(`  Searched for exact match: "${dateStr}"`);
           console.warn(`  Are there any questions saved at all? Check collection above.`);
           todayQuestions = [];
@@ -3983,10 +4035,10 @@
           
           if (weekNumber !== null) {
             todayQuestions = allQuestions.filter(q => q.weekNumber === weekNumber);
-            console.log(`✅ Loaded ${todayQuestions.length}/${allQuestions.length} questions for ${dateStr} (Week ${weekNumber}):`, todayQuestions);
+            console.log(` Loaded ${todayQuestions.length}/${allQuestions.length} questions for ${dateStr} (Week ${weekNumber}):`, todayQuestions);
           } else {
             todayQuestions = allQuestions;
-            console.log(`✅ Loaded ${todayQuestions.length} questions for ${dateStr}:`, todayQuestions);
+            console.log(` Loaded ${todayQuestions.length} questions for ${dateStr}:`, todayQuestions);
           }
         }
         
@@ -4020,13 +4072,13 @@
           });
           
           if (timeUntilLive > 0) {
-            console.log(`⏳ Questions not yet live. Time until go-live: ${timeUntilLive}ms`);
+            console.log(` Questions not yet live. Time until go-live: ${timeUntilLive}ms`);
             const minutesUntilLive = Math.ceil(timeUntilLive / 60000);
             const estTime = goLiveDateTime.toLocaleString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const container = document.getElementById('questionsContainer');
             container.innerHTML = `
               <div class="empty-state" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-left: 4px solid #10b981;">
-                <p style="font-size: 48px; margin-bottom: 1rem;">⏳</p>
+                <p style="font-size: 48px; margin-bottom: 1rem;"></p>
                 <p style="font-weight: 700; font-size: 1.1rem; color: var(--ink); margin-bottom: 0.5rem;">Questions Coming Soon</p>
                 <p style="color: var(--muted); margin: 0; font-size: 0.95rem;">These questions will go live on</p>
                 <p style="color: #10b981; font-weight: 700; font-size: 1rem; margin-top: 0.5rem;">${estTime} EST</p>
@@ -4059,7 +4111,7 @@
       const container = document.getElementById('questionsContainer');
       
       if (todayQuestions.length === 0) {
-        console.warn('⚠️ renderQuestions called with 0 questions');
+        console.warn(' renderQuestions called with 0 questions');
         console.warn(`  Current date: ${selectedPickDate}`);
         console.warn(`  todayQuestions array: ${JSON.stringify(todayQuestions)}`);
         container.innerHTML = '<div class="empty-state">No questions available today. Check back later!</div>';
@@ -4109,14 +4161,14 @@
         `;
       }).join('');
 
-      console.log(`✅ HTML rendered to container. DOM update complete.`);
+      console.log(` HTML rendered to container. DOM update complete.`);
       console.log(`   Question cards in DOM: ${document.querySelectorAll('.question-card').length}`);
 
       document.querySelectorAll('input[name^="q"]').forEach(input => {
         input.addEventListener('change', updateProgress);
       });
       
-      console.log(`✅ Event listeners attached to ${document.querySelectorAll('input[name^="q"]').length} input elements`);
+      console.log(` Event listeners attached to ${document.querySelectorAll('input[name^="q"]').length} input elements`);
     }
 
     function updateProgress() {
@@ -4196,7 +4248,7 @@
 
     async function checkSubmissionForDate(dateStr) {
       if (!auth.currentUser) {
-        console.log('⏳ checkSubmissionForDate: auth.currentUser not ready yet');
+        console.log(' checkSubmissionForDate: auth.currentUser not ready yet');
         return;
       }
       try {
@@ -4217,7 +4269,7 @@
         console.log(`📊 Query returned ${snapshot.size} document(s)`);
         if (!snapshot.empty) {
           const picks = snapshot.docs[0].data().answers || [];
-          console.log(`✅ Found previous submission with ${picks.length} answers`);
+          console.log(` Found previous submission with ${picks.length} answers`);
           picks.forEach((answer, i) => {
             const input = document.querySelector(`input[name="q${i}"]`);
             if (input && input.type === 'radio') {
@@ -4244,12 +4296,12 @@
           // Show consensus view since it's locked
           renderConsensus(dateStr);
         } else {
-          console.log('❌ No previous submission found and not locked');
+          console.log(' No previous submission found and not locked');
           document.getElementById('submitBtn').disabled = false;
           document.getElementById('submitBtn').textContent = 'Submit Picks';
         }
       } catch (err) {
-        console.error('❌ Error checking submission:', err);
+        console.error(' Error checking submission:', err);
         document.getElementById('submitBtn').disabled = false;
         document.getElementById('submitBtn').textContent = 'Submit Picks';
       }
@@ -4275,7 +4327,7 @@
           const isLocked = await areSubmissionsLocked(selectedPickDate, lockTime);
           console.log(`🔒 Lock time found: ${lockTime}, isLocked: ${isLocked}`);
           if (isLocked) {
-            console.log(`❌ Submissions BLOCKED - date is locked`);
+            console.log(` Submissions BLOCKED - date is locked`);
             showMessage('⏰ Submissions are closed for this date.', 'error');
             return;
           }
@@ -4324,7 +4376,7 @@
           .get();
         
         if (!existingPicksSnapshot.empty) {
-          console.log(`⚠️ User already has a submission for this date - preventing duplicate`);
+          console.log(` User already has a submission for this date - preventing duplicate`);
           document.getElementById('submitBtn').disabled = true;
           document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
           return;
@@ -4339,8 +4391,8 @@
           submittedAt: new Date().toISOString()
         });
 
-        console.log(`✅ Picks saved with doc ID: ${pickRef.id}`);
-        showMessage('✅ Picks submitted successfully!', 'success');
+        console.log(` Picks saved with doc ID: ${pickRef.id}`);
+        showMessage(' Picks submitted successfully!', 'success');
         document.getElementById('submitBtn').disabled = true;
         document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
       } catch (err) {
@@ -4455,7 +4507,7 @@
     // Start offset so today is visible (PAST_DAYS ensures today is at position PAST_DAYS in the array)
     currentDateOffset = PAST_DAYS;
     renderDateSlider();
-    console.log(`📅 Date slider rendered. Loading questions for: ${todayFormatted}`);
+    console.log(` Date slider rendered. Loading questions for: ${todayFormatted}`);
     loadQuestionsForDate(todayFormatted);
 
     // === Daily Leaderboard Date Picker ===
@@ -4465,12 +4517,12 @@
       console.log('🗓️ renderDailyDatePicker called');
       const container = document.getElementById('dailyDatePickerContainer');
       if (!container) {
-        console.error('❌ dailyDatePickerContainer not found!');
+        console.error(' dailyDatePickerContainer not found!');
         return;
       }
       const today = new Date();
       const dates = [];
-      console.log(`📅 Generating daily dates from ${today.toISOString().split('T')[0]} minus ${PAST_DAYS} days...`);
+      console.log(` Generating daily dates from ${today.toISOString().split('T')[0]} minus ${PAST_DAYS} days...`);
 
       // Generate past days (30 days back) and future days (about 200 days forward)
       const startDate = new Date(today);
@@ -4560,10 +4612,10 @@
     currentDailyDateOffset = PAST_DAYS;
 
     function renderWeekSlider() {
-      console.log('📅 renderWeekSlider called');
+      console.log(' renderWeekSlider called');
       const container = document.getElementById('weekPickerContainer');
       if (!container) {
-        console.error('❌ weekPickerContainer not found!');
+        console.error(' weekPickerContainer not found!');
         return;
       }
       
@@ -4583,7 +4635,7 @@
 
       if (visibleWeeks.length > 0 && !visibleWeeks.some(w => w.value === selectedWeek)) {
         selectedWeek = visibleWeeks[0].value;
-        console.log(`⚠️ Selected week not in visible range. Adjusted selectedWeek to ${selectedWeek}`);
+        console.log(` Selected week not in visible range. Adjusted selectedWeek to ${selectedWeek}`);
       }
 
       container.innerHTML = visibleWeeks.map(w => {
@@ -4607,7 +4659,7 @@
       });
 
       if (selectedWeek !== null) {
-        console.log(`📅 Auto-loading weekly leaderboard for Week ${selectedWeek}`);
+        console.log(` Auto-loading weekly leaderboard for Week ${selectedWeek}`);
         loadLeaderboard('weekly', selectedWeek);
       }
     }
@@ -4772,11 +4824,11 @@
           document.getElementById('overrideDate').value = '';
           document.getElementById('overrideScore').value = '';
           
-          showMessage('✅ Score override applied successfully!', 'success', 'overrideMessage');
+          showMessage(' Score override applied successfully!', 'success', 'overrideMessage');
           loadOverrides();
         } catch (err) {
           console.error('Error applying override:', err);
-          showMessage('❌ Failed to apply override: ' + err.message, 'error', 'overrideMessage');
+          showMessage(' Failed to apply override: ' + err.message, 'error', 'overrideMessage');
         }
       });
     }
@@ -4789,7 +4841,7 @@
         if (overridesSnapshot.empty) {
           overridesList.innerHTML = `
             <div style="text-align: center; padding: 40px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
-              <p style="font-size: 24px; margin-bottom: 10px;">📝</p>
+              <p style="font-size: 24px; margin-bottom: 10px;"></p>
               <p style="font-weight: 600; font-size: 0.9rem;">No overrides set</p>
             </div>
           `;
@@ -4824,11 +4876,11 @@
       
       try {
         await db.collection('scoreOverrides').doc(overrideId).delete();
-        showMessage('✅ Override deleted successfully!', 'success', 'overrideMessage');
+        showMessage(' Override deleted successfully!', 'success', 'overrideMessage');
         loadOverrides();
       } catch (err) {
         console.error('Error deleting override:', err);
-        showMessage('❌ Failed to delete override: ' + err.message, 'error', 'overrideMessage');
+        showMessage(' Failed to delete override: ' + err.message, 'error', 'overrideMessage');
       }
     };
 
@@ -4859,12 +4911,12 @@
           document.getElementById('adminWinnersUsername').value = '';
           document.getElementById('adminWinnersScore').value = '';
           
-          showMessage('✅ Winner added successfully!', 'success', 'adminWinnersMessage');
+          showMessage(' Winner added successfully!', 'success', 'adminWinnersMessage');
           loadWinners();
           loadPublicWinners();
         } catch (err) {
           console.error('Error adding winner:', err);
-          showMessage('❌ Failed to add winner: ' + err.message, 'error', 'adminWinnersMessage');
+          showMessage(' Failed to add winner: ' + err.message, 'error', 'adminWinnersMessage');
         }
       });
     }
@@ -4910,12 +4962,12 @@
       
       try {
         await db.collection('winners').doc(winnerId).delete();
-        showMessage('✅ Winner deleted successfully!', 'success', 'adminWinnersMessage');
+        showMessage(' Winner deleted successfully!', 'success', 'adminWinnersMessage');
         loadWinners();
         loadPublicWinners();
       } catch (err) {
         console.error('Error deleting winner:', err);
-        showMessage('❌ Failed to delete winner: ' + err.message, 'error', 'adminWinnersMessage');
+        showMessage(' Failed to delete winner: ' + err.message, 'error', 'adminWinnersMessage');
       }
     }
 
@@ -4964,20 +5016,20 @@
     const weeklyRefreshBtn = document.getElementById('refreshWeeklyBtn');
     const monthlyRefreshBtn = document.getElementById('refreshMonthlyBtn');
     
-    if (!dailyRefreshBtn) console.error('❌ refreshDailyBtn not found!');
-    if (!weeklyRefreshBtn) console.error('❌ refreshWeeklyBtn not found!');
-    if (!monthlyRefreshBtn) console.error('❌ refreshMonthlyBtn not found!');
+    if (!dailyRefreshBtn) console.error(' refreshDailyBtn not found!');
+    if (!weeklyRefreshBtn) console.error(' refreshWeeklyBtn not found!');
+    if (!monthlyRefreshBtn) console.error(' refreshMonthlyBtn not found!');
     
     if (dailyRefreshBtn) {
       dailyRefreshBtn.addEventListener('click', async () => {
-        console.log('🔄 User clicked refresh Daily leaderboard');
+        console.log(' User clicked refresh Daily leaderboard');
         const originalText = dailyRefreshBtn.textContent;
         const selectedDate = document.getElementById('dailyLbDate').value;
         dailyRefreshBtn.disabled = true;
         dailyRefreshBtn.textContent = 'Loading...';
         try {
           await loadLeaderboard('daily', null, null, selectedDate);
-          console.log('✅ Daily leaderboard refreshed successfully');
+          console.log(' Daily leaderboard refreshed successfully');
           dailyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
             dailyRefreshBtn.textContent = originalText;
@@ -4987,15 +5039,15 @@
           console.error('Error refreshing daily leaderboard:', err);
           dailyRefreshBtn.textContent = 'Error - Try Again';
           dailyRefreshBtn.disabled = false;
-          showMessage('❌ Failed to refresh daily leaderboard. Check console for details.', 'error');
+          showMessage(' Failed to refresh daily leaderboard. Check console for details.', 'error');
         }
       });
-      console.log('✅ Daily refresh button listener attached');
+      console.log(' Daily refresh button listener attached');
     }
 
     if (weeklyRefreshBtn) {
       weeklyRefreshBtn.addEventListener('click', async () => {
-        console.log('🔄 User clicked refresh Weekly leaderboard');
+        console.log(' User clicked refresh Weekly leaderboard');
         const originalText = weeklyRefreshBtn.textContent;
         weeklyRefreshBtn.disabled = true;
         weeklyRefreshBtn.textContent = 'Loading...';
@@ -5006,9 +5058,9 @@
           if (activeWeekBtn) {
             currentWeek = parseInt(activeWeekBtn.dataset.week);
           }
-          console.log(`🔄 Refreshing weekly leaderboard for week: ${currentWeek}`);
+          console.log(` Refreshing weekly leaderboard for week: ${currentWeek}`);
           await loadLeaderboard('weekly', currentWeek);
-          console.log('✅ Weekly leaderboard refreshed successfully');
+          console.log(' Weekly leaderboard refreshed successfully');
           weeklyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
             weeklyRefreshBtn.textContent = originalText;
@@ -5018,21 +5070,21 @@
           console.error('Error refreshing weekly leaderboard:', err);
           weeklyRefreshBtn.textContent = 'Error - Try Again';
           weeklyRefreshBtn.disabled = false;
-          showMessage('❌ Failed to refresh weekly leaderboard. Check console for details.', 'error');
+          showMessage(' Failed to refresh weekly leaderboard. Check console for details.', 'error');
         }
       });
-      console.log('✅ Weekly refresh button listener attached');
+      console.log(' Weekly refresh button listener attached');
     }
 
     if (monthlyRefreshBtn) {
       monthlyRefreshBtn.addEventListener('click', async () => {
-        console.log('🔄 User clicked refresh Monthly leaderboard');
+        console.log(' User clicked refresh Monthly leaderboard');
         const originalText = monthlyRefreshBtn.textContent;
         monthlyRefreshBtn.disabled = true;
         monthlyRefreshBtn.textContent = 'Loading...';
         try {
           await loadLeaderboard('monthly', null, selectedMonth);
-          console.log('✅ Monthly leaderboard refreshed successfully');
+          console.log(' Monthly leaderboard refreshed successfully');
           monthlyRefreshBtn.textContent = 'Refreshed! ✓';
           setTimeout(() => {
             monthlyRefreshBtn.textContent = originalText;
@@ -5042,10 +5094,31 @@
           console.error('Error refreshing monthly leaderboard:', err);
           monthlyRefreshBtn.textContent = 'Error - Try Again';
           monthlyRefreshBtn.disabled = false;
-          showMessage('❌ Failed to refresh monthly leaderboard. Check console for details.', 'error');
+          showMessage(' Failed to refresh monthly leaderboard. Check console for details.', 'error');
         }
       });
-      console.log('✅ Monthly refresh button listener attached');
+    }
+
+    const seasonRefreshBtn = document.getElementById('refreshSeasonBtn');
+    if (seasonRefreshBtn) {
+      seasonRefreshBtn.addEventListener('click', async () => {
+        const originalText = seasonRefreshBtn.textContent;
+        seasonRefreshBtn.disabled = true;
+        seasonRefreshBtn.textContent = 'Loading...';
+        try {
+          await loadLeaderboard('season');
+          seasonRefreshBtn.textContent = 'Refreshed! ✓';
+          setTimeout(() => {
+            seasonRefreshBtn.textContent = originalText;
+            seasonRefreshBtn.disabled = false;
+          }, 2000);
+        } catch (err) {
+          console.error('Error refreshing season leaderboard:', err);
+          seasonRefreshBtn.textContent = 'Error - Try Again';
+          seasonRefreshBtn.disabled = false;
+          showMessage(' Failed to refresh season leaderboard. Check console for details.', 'error');
+        }
+      });
     }
 
     async function loadLeaderboard(period, weekNumber = null, monthOffset = null, selectedDate = null) {
@@ -5060,9 +5133,11 @@
             correct_count: score.correct,
             total_count: score.total,
             percentage: score.percentage,
-            isOverridden: score.isOverridden
+            isOverridden: score.isOverridden,
+            tieBreakerDiff: score.tieBreakerDiff
           }));
           
+          dailyLbData = leaderboard;
           renderLeaderboard(period, leaderboard);
           return;
         }
@@ -5092,22 +5167,35 @@
             const dailyScores = await calculateScoresForDate(date, weekNumber);
             dailyScores.forEach(dayScore => {
               if (!userScoresMap[dayScore.username]) {
-                userScoresMap[dayScore.username] = { username: dayScore.username, totalCorrect: 0, totalQuestions: 0 };
+                userScoresMap[dayScore.username] = { username: dayScore.username, totalCorrect: 0, totalQuestions: 0, tbDiffs: [] };
               }
               userScoresMap[dayScore.username].totalCorrect += dayScore.correct;
               userScoresMap[dayScore.username].totalQuestions += dayScore.total;
+              if (dayScore.tieBreakerDiff !== Infinity && dayScore.tieBreakerDiff !== null) {
+                userScoresMap[dayScore.username].tbDiffs.push(dayScore.tieBreakerDiff);
+              }
             });
           }
           
           const leaderboard = Object.values(userScoresMap)
-            .map(score => ({
-              username: score.username,
-              correct_count: score.totalCorrect,
-              total_count: score.totalQuestions,
-              percentage: score.totalQuestions > 0 ? ((score.totalCorrect / score.totalQuestions) * 100).toFixed(1) : 0
-            }))
-            .sort((a, b) => b.correct_count - a.correct_count);
+            .map(score => {
+              const avgTb = score.tbDiffs.length > 0 
+                ? (score.tbDiffs.reduce((a, b) => a + b, 0) / score.tbDiffs.length).toFixed(1)
+                : Infinity;
+              return {
+                username: score.username,
+                correct_count: score.totalCorrect,
+                total_count: score.totalQuestions,
+                percentage: score.totalQuestions > 0 ? ((score.totalCorrect / score.totalQuestions) * 100).toFixed(1) : 0,
+                tieBreakerDiff: avgTb
+              };
+            })
+            .sort((a, b) => {
+              if (b.correct_count !== a.correct_count) return b.correct_count - a.correct_count;
+              return a.tieBreakerDiff - b.tieBreakerDiff;
+            });
           
+          weeklyLbData = leaderboard;
           renderLeaderboard(period, leaderboard);
           return;
         }
@@ -5131,22 +5219,78 @@
             const dailyScores = await calculateScoresForDate(date, null);
             dailyScores.forEach(dayScore => {
               if (!userScoresMap[dayScore.username]) {
-                userScoresMap[dayScore.username] = { username: dayScore.username, totalCorrect: 0, totalQuestions: 0 };
+                userScoresMap[dayScore.username] = { username: dayScore.username, totalCorrect: 0, totalQuestions: 0, tbDiffs: [] };
               }
               userScoresMap[dayScore.username].totalCorrect += dayScore.correct;
               userScoresMap[dayScore.username].totalQuestions += dayScore.total;
+              if (dayScore.tieBreakerDiff !== Infinity && dayScore.tieBreakerDiff !== null) {
+                userScoresMap[dayScore.username].tbDiffs.push(dayScore.tieBreakerDiff);
+              }
             });
           }
           
           const leaderboard = Object.values(userScoresMap)
-            .map(score => ({
-              username: score.username,
-              correct_count: score.totalCorrect,
-              total_count: score.totalQuestions,
-              percentage: score.totalQuestions > 0 ? ((score.totalCorrect / score.totalQuestions) * 100).toFixed(1) : 0
-            }))
-            .sort((a, b) => b.correct_count - a.correct_count);
+            .map(score => {
+              const avgTb = score.tbDiffs.length > 0 
+                ? (score.tbDiffs.reduce((a, b) => a + b, 0) / score.tbDiffs.length).toFixed(1)
+                : Infinity;
+              return {
+                username: score.username,
+                correct_count: score.totalCorrect,
+                total_count: score.totalQuestions,
+                percentage: score.totalQuestions > 0 ? ((score.totalCorrect / score.totalQuestions) * 100).toFixed(1) : 0,
+                tieBreakerDiff: avgTb
+              };
+            })
+            .sort((a, b) => {
+              if (b.correct_count !== a.correct_count) return b.correct_count - a.correct_count;
+              return a.tieBreakerDiff - b.tieBreakerDiff;
+            });
           
+          monthlyLbData = leaderboard;
+          renderLeaderboard(period, leaderboard);
+          return;
+        }
+        
+        if (period === 'season') {
+          const picksSnapshot = await db.collection('picks').get();
+          const allDates = new Set();
+          picksSnapshot.docs.forEach(doc => allDates.add(doc.data().date));
+          
+          const userScoresMap = {};
+          for (const date of allDates) {
+            const dailyScores = await calculateScoresForDate(date, null);
+            dailyScores.forEach(dayScore => {
+              if (!userScoresMap[dayScore.username]) {
+                userScoresMap[dayScore.username] = { username: dayScore.username, totalCorrect: 0, totalQuestions: 0, tbDiffs: [] };
+              }
+              userScoresMap[dayScore.username].totalCorrect += dayScore.correct;
+              userScoresMap[dayScore.username].totalQuestions += dayScore.total;
+              if (dayScore.tieBreakerDiff !== Infinity && dayScore.tieBreakerDiff !== null) {
+                userScoresMap[dayScore.username].tbDiffs.push(dayScore.tieBreakerDiff);
+              }
+            });
+          }
+          
+          const leaderboard = Object.values(userScoresMap)
+            .map(score => {
+              const avgTb = score.tbDiffs.length > 0 
+                ? (score.tbDiffs.reduce((a, b) => a + b, 0) / score.tbDiffs.length).toFixed(1)
+                : Infinity;
+              return {
+                username: score.username,
+                correct_count: score.totalCorrect,
+                total_count: score.totalQuestions,
+                percentage: score.totalQuestions > 0 ? ((score.totalCorrect / score.totalQuestions) * 100).toFixed(1) : 0,
+                tieBreakerDiff: avgTb
+              };
+            })
+            .sort((a, b) => {
+              if (b.correct_count !== a.correct_count) return b.correct_count - a.correct_count;
+              return a.tieBreakerDiff - b.tieBreakerDiff;
+            });
+          
+          seasonLbData = leaderboard;
           renderLeaderboard(period, leaderboard);
           return;
         }
@@ -5161,25 +5305,32 @@
       const container = document.getElementById(bodyId);
       if (!container) return;
 
-      console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries`);
+      console.log(`Rendering ${period} leaderboard with ${entries.length} entries`);
       
-      const medals = ['🥇', '🥈', '🥉'];
       const bodyHtml = entries.map((entry, idx) => {
         let rankDisplay = idx + 1;
         if (idx < 3) {
-          rankDisplay = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
+          rankDisplay = `<span class="rank-badge rank-${idx + 1}">${idx + 1}</span>`;
         }
         
+        // Handle Tie-Breaker display
+        const tbVal = (entry.tieBreakerDiff === Infinity || entry.tieBreakerDiff === null) ? '-' : entry.tieBreakerDiff;
+        let tbCell = `<td style="text-align: center;"><span style="color: var(--muted); font-size: 0.85rem; font-weight: 600;">${tbVal}</span></td>`;
+        
+        const isAdjusted = entry.isOverridden;
+
         return `
-          <tr>
+          <tr class="${idx < 3 ? 'top-player' : ''}">
             <td><span class="rank">${rankDisplay}</span></td>
             <td>
               <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span class="username-display">${entry.username}</span>
+                ${isAdjusted ? '<span style="font-size: 10px; background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em;">Adjusted</span>' : ''}
               </div>
             </td>
             <td style="text-align: center;"><span class="score-pill">${entry.correct_count}</span></td>
             <td style="text-align: center;"><span class="total-pill">${entry.total_count}</span></td>
+            ${tbCell}
             <td style="text-align: center;">
               <div class="percent-container">
                 <span class="percent-text">${entry.percentage}%</span>
@@ -5192,7 +5343,8 @@
         `;
       }).join('');
       
-      container.innerHTML = bodyHtml || '<tr><td colspan="5" style="text-align: center; padding: 3rem; color: var(--muted);">No entries yet for this period</td></tr>';
+      const colspan = 6;
+      container.innerHTML = bodyHtml || `<tr><td colspan="${colspan}" style="text-align: center; padding: 3rem; color: var(--muted);">No entries yet for this period</td></tr>`;
     }
 
     // === Utility ===
@@ -5236,31 +5388,57 @@
         console.log(`  - User: ${picks.username}, ${picks.answers.length} answers`);
       });
       
-      console.log(`\n⚠️ If any of these is 0, leaderboard will be empty!\n`);
+      console.log(`\n If any of these is 0, leaderboard will be empty!\n`);
     };
     
-    // Initialize leaderboard pickers when app first shows
     function initializeLeaderboardPickers() {
       console.log('🚀 Initializing leaderboard pickers');
       try {
-        console.log('📅 Rendering daily date picker');
+        console.log(' Rendering daily date picker');
         renderDailyDatePicker();
       } catch (err) {
-        console.error('❌ Error rendering daily date picker:', err);
+        console.error(' Error rendering daily date picker:', err);
       }
       try {
-        console.log('📅 Rendering week slider');
+        console.log(' Rendering week slider');
         renderWeekSlider();
       } catch (err) {
-        console.error('❌ Error rendering week slider:', err);
+        console.error(' Error rendering week slider:', err);
       }
       try {
-        console.log('📅 Rendering month slider');
+        console.log(' Rendering month slider');
         renderMonthSlider();
       } catch (err) {
-        console.error('❌ Error rendering month slider:', err);
+        console.error(' Error rendering month slider:', err);
       }
     }
+
+    // === Leaderboard Search ===
+    function setupLeaderboardSearch() {
+      const searchInputs = [
+        { id: 'dailyLbSearch', data: () => dailyLbData, period: 'daily' },
+        { id: 'weeklyLbSearch', data: () => weeklyLbData, period: 'weekly' },
+        { id: 'monthlyLbSearch', data: () => monthlyLbData, period: 'monthly' },
+        { id: 'seasonLbSearch', data: () => seasonLbData, period: 'season' }
+      ];
+
+      searchInputs.forEach(search => {
+        const input = document.getElementById(search.id);
+        if (input) {
+          input.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = search.data().filter(entry => 
+              entry.username.toLowerCase().includes(query)
+            );
+            renderLeaderboard(search.period, filtered);
+          });
+        }
+      });
+    }
+
+    // Call setupLeaderboardSearch when app initializes
+    initializeLeaderboardPickers();
+    setupLeaderboardSearch();
   </script>
 </body>
 </html>
