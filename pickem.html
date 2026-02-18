@@ -1069,41 +1069,6 @@
       font-weight: 600;
     }
 
-    /* Badge & Streak Styles */
-    .user-badges-container {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: 8px;
-    }
-
-    .streak-tag {
-      background: linear-gradient(135deg, #fff1f2, #ffe4e6);
-      color: #e11d48;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 800;
-      border: 1px solid #fecdd3;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      box-shadow: 0 2px 4px rgba(225, 29, 72, 0.05);
-    }
-
-    .badge-icon {
-      font-size: 1.1rem;
-      cursor: help;
-      transition: transform 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .badge-icon:hover {
-      transform: scale(1.2);
-    }
-
     .score-pill, .total-pill {
       display: inline-block;
       padding: 4px 10px;
@@ -1554,6 +1519,12 @@
                   </div>
                 </div>
 
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center;">
+                  <span style="font-weight: 700; color: var(--muted); font-size: 0.85rem;">Bulk Actions:</span>
+                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="bulkMarkAnswers('Over')">Mark All Over</button>
+                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="bulkMarkAnswers('Under')">Mark All Under</button>
+                </div>
+
                 <div class="answers-list" id="answersList" style="margin-top: 1.5rem;">
                   <!-- Questions will be loaded here with answer input fields -->
                 </div>
@@ -1576,6 +1547,9 @@
                 </div>
 
                 <div id="lbEditContainer" style="margin-top: 1.5rem;">
+                  <div style="margin-bottom: 1rem; display: none;" id="lbEditSearchGroup">
+                    <input type="text" id="lbEditSearch" class="form-input" placeholder="🔍 Search player in list..." onkeyup="filterLbEditTable()" />
+                  </div>
                   <table class="leaderboard-table" style="width: 100%;" id="lbEditTable">
                     <thead>
                       <tr>
@@ -1597,8 +1571,12 @@
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                   <button class="btn btn-secondary" style="border-color: var(--error); color: var(--error);" 
                           onclick="deleteAllSubmissionsForDate()">🗑️ Delete All Submissions for Date</button>
+                  <button class="btn btn-secondary" style="border-color: var(--error); color: var(--error); background: #fff1f2;" 
+                          onclick="resetAllScoresForDate()">🔄 Reset All Manual Adjustments for Date</button>
                   <button class="btn btn-secondary" style="border-color: var(--brand); color: var(--brand);" 
                           onclick="recalculateAllScores()">🔄 Force Recalculate All Scores</button>
+                  <button class="btn btn-secondary" style="border-color: #10b981; color: #10b981; background: #ecfdf5;" 
+                          onclick="exportLeaderboardToCsv()">📥 Export to CSV</button>
                 </div>
               </div>
             </div>
@@ -2036,23 +2014,45 @@
             <td style="font-weight: 700; color: var(--brand);">${s.username}</td>
             <td>${s.correct} / ${s.total}</td>
             <td>
-              <input type="number" id="edit_score_${s.username.replace(/[^a-zA-Z0-9]/g, '_')}" 
-                     class="form-input" style="width: 80px; padding: 4px 8px;" 
-                     value="${s.correct}" />
-            </td>
-            <td>
-              <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" 
-                      onclick="saveDirectOverride('${s.username}', '${dateInput}')">Save</button>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="number" id="edit_score_${s.username.replace(/[^a-zA-Z0-9]/g, '_')}" 
+                       class="form-input" style="width: 80px; padding: 4px 8px; margin: 0;" 
+                       value="${s.correct}" />
+                <button class="btn btn-primary" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;" 
+                        onclick="saveDirectOverride('${s.username}', '${dateInput}')">Save</button>
+                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px; border-color: var(--error); color: var(--error); white-space: nowrap;" 
+                        onclick="resetScore('${s.username}', '${dateInput}')">Reset</button>
+              </div>
             </td>
           </tr>
         `).join('');
         
         showMessage('Leaderboard loaded successfully', 'success', 'editLbMessage');
+        document.getElementById('lbEditSearchGroup').style.display = 'block';
       } catch (err) {
         console.error('Error loading LB for edit:', err);
         showMessage('Error loading leaderboard', 'error', 'editLbMessage');
       }
     });
+
+    window.filterLbEditTable = function() {
+      const input = document.getElementById('lbEditSearch');
+      if (!input) return;
+      const filter = input.value.toUpperCase();
+      const table = document.getElementById('lbEditTable');
+      const tr = table.getElementsByTagName('tr');
+      for (let i = 1; i < tr.length; i++) {
+        const td = tr[i].getElementsByTagName('td')[0];
+        if (td) {
+          const txtValue = td.textContent || td.innerText;
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+          } else {
+            tr[i].style.display = "none";
+          }
+        }
+      }
+    };
 
     window.saveDirectOverride = async function(userEmail, date) {
       if (!checkAdminPermission()) return;
@@ -2063,33 +2063,100 @@
       if (newScore === '') return;
 
       try {
-        // Check if override already exists for this user and date
+        // Find the pick document for this user and date
+        let picksSnapshot = await db.collection('picks')
+          .where('date', '==', date)
+          .where('username', '==', userEmail)
+          .get();
+        
+        if (picksSnapshot.empty) {
+          picksSnapshot = await db.collection('picks')
+            .where('date', '==', date)
+            .where('userEmail', '==', userEmail)
+            .get();
+        }
+
+        if (!picksSnapshot.empty) {
+          await picksSnapshot.docs[0].ref.update({
+            manualScore: parseInt(newScore),
+            updatedAt: new Date().toISOString()
+          });
+          showMessage(`✅ Directly updated score for ${userEmail}`, 'success', 'editLbMessage');
+        } else {
+          // Fallback to scoreOverrides if pick doc not found
+          const existing = await db.collection('scoreOverrides')
+            .where('userEmail', '==', userEmail)
+            .where('date', '==', date)
+            .get();
+          
+          if (!existing.empty) {
+            await existing.docs[0].ref.update({
+              score: parseInt(newScore),
+              timestamp: new Date(),
+              appliedBy: auth.currentUser.email
+            });
+          } else {
+            await db.collection('scoreOverrides').add({
+              userEmail: userEmail,
+              date: date,
+              score: parseInt(newScore),
+              timestamp: new Date(),
+              appliedBy: auth.currentUser.email
+            });
+          }
+          showMessage(`✅ Saved override for ${userEmail} (pick doc not found)`, 'success', 'editLbMessage');
+        }
+        
+        // Refresh the leaderboard to show changes
+        await loadLeaderboard('daily', null, null, date);
+      } catch (err) {
+        console.error('Error saving override:', err);
+        showMessage('❌ Failed to save update', 'error', 'editLbMessage');
+      }
+    };
+
+    window.resetScore = async function(userEmail, date) {
+      if (!checkAdminPermission()) return;
+      
+      if (!confirm(`Reset score for ${userEmail} to calculated value?`)) return;
+
+      try {
+        // Clear manualScore from pick doc
+        let picksSnapshot = await db.collection('picks')
+          .where('date', '==', date)
+          .where('username', '==', userEmail)
+          .get();
+        
+        if (picksSnapshot.empty) {
+          picksSnapshot = await db.collection('picks')
+            .where('date', '==', date)
+            .where('userEmail', '==', userEmail)
+            .get();
+        }
+
+        if (!picksSnapshot.empty) {
+          await picksSnapshot.docs[0].ref.update({
+            manualScore: firebase.firestore.FieldValue.delete()
+          });
+        }
+
+        // Clear scoreOverrides
         const existing = await db.collection('scoreOverrides')
           .where('userEmail', '==', userEmail)
           .where('date', '==', date)
           .get();
         
         if (!existing.empty) {
-          await existing.docs[0].ref.update({
-            score: parseInt(newScore),
-            timestamp: new Date(),
-            appliedBy: auth.currentUser.email
-          });
-        } else {
-          await db.collection('scoreOverrides').add({
-            userEmail: userEmail,
-            date: date,
-            score: parseInt(newScore),
-            timestamp: new Date(),
-            appliedBy: auth.currentUser.email
-          });
+          const batch = db.batch();
+          existing.docs.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
         }
-        
-        showMessage(`✅ Updated score for ${userEmail}`, 'success', 'editLbMessage');
-        loadOverrides(); // Refresh the list below
+
+        showMessage(`✅ Reset score for ${userEmail}`, 'success', 'editLbMessage');
+        await loadLeaderboard('daily', null, null, date);
       } catch (err) {
-        console.error('Error saving override:', err);
-        showMessage('❌ Failed to save update', 'error', 'editLbMessage');
+        console.error('Error resetting score:', err);
+        showMessage('❌ Failed to reset', 'error', 'editLbMessage');
       }
     };
 
@@ -2110,6 +2177,77 @@
         console.error('Error deleting submissions:', err);
         showMessage('❌ Deletion failed', 'error', 'editLbMessage');
       }
+    };
+
+    window.resetAllScoresForDate = async function() {
+      if (!checkAdminPermission()) return;
+      const date = document.getElementById('editLbDate').value;
+      if (!date) return showMessage('Please select a date first', 'error', 'editLbMessage');
+
+      if (!confirm(`⚠️ WARNING: Are you sure you want to RESET ALL manual score adjustments for ${date}? This will revert everyone to their calculated score.`)) return;
+
+      try {
+        showMessage('Resetting all scores...', 'info', 'editLbMessage');
+        
+        const batch = db.batch();
+        let totalCount = 0;
+        
+        // Clear all manualScore from picks
+        const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
+        picksSnapshot.docs.forEach(doc => {
+          if (doc.data().manualScore !== undefined) {
+             batch.update(doc.ref, { manualScore: firebase.firestore.FieldValue.delete() });
+             totalCount++;
+          }
+        });
+        
+        // Clear all scoreOverrides for this date
+        const overridesSnapshot = await db.collection('scoreOverrides').where('date', '==', date).get();
+        overridesSnapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+          totalCount++;
+        });
+
+        if (totalCount > 0) {
+          await batch.commit();
+          showMessage(`✅ Successfully reset adjustments for ${totalCount} entries`, 'success', 'editLbMessage');
+        } else {
+          showMessage('ℹ️ No manual adjustments found to reset', 'info', 'editLbMessage');
+        }
+        
+        await loadLeaderboard('daily', null, null, date);
+        // Reload the editor list
+        document.getElementById('loadLbForEditBtn').click();
+      } catch (err) {
+        console.error('Error resetting scores:', err);
+        showMessage('❌ Reset failed', 'error', 'editLbMessage');
+      }
+    };
+
+    window.exportLeaderboardToCsv = function() {
+      const table = document.getElementById('lbEditTable');
+      if (!table || table.rows.length <= 1) return showMessage('No data to export', 'error', 'editLbMessage');
+      
+      let csv = 'Player,Calculated Score,Adjusted Score\n';
+      for (let i = 1; i < table.rows.length; i++) {
+        const row = table.rows[i];
+        if (row.style.display === 'none' || row.cells.length < 3) continue;
+        const player = row.cells[0].textContent;
+        const calcScore = row.cells[1].textContent;
+        const adjScore = row.querySelector('input').value;
+        csv += `"${player}","${calcScore}","${adjScore}"\n`;
+      }
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `leaderboard_${document.getElementById('editLbDate').value || 'export'}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showMessage('✅ Exported to CSV', 'success', 'editLbMessage');
     };
 
     window.recalculateAllScores = async function() {
@@ -2345,6 +2483,22 @@
         showMessage('Error loading questions', 'error', 'markAnswersMessage');
       }
     });
+
+    window.bulkMarkAnswers = function(val) {
+      if (!questionsForAnswers.length) return;
+      let count = 0;
+      questionsForAnswers.forEach((q, idx) => {
+        if (q.question_type === 'over_under') {
+          const radio = document.querySelector(`input[name="answer_${idx}"][value="${val}"]`);
+          if (radio) {
+            radio.checked = true;
+            updateAnswerIndicator(idx);
+            count++;
+          }
+        }
+      });
+      showMessage(`✅ Marked ${count} Over/Under questions as ${val}`, 'success', 'markAnswersMessage');
+    };
 
     function renderAnswersForm() {
       const container = document.getElementById('answersList');
@@ -3392,9 +3546,17 @@
           });
           
           userScores[userId].correct = userCorrectCount * 10;
+          
+          // Check for manual score override in the pick document itself
+          if (pickData.manualScore !== undefined && pickData.manualScore !== null) {
+            userScores[userId].correct = parseInt(pickData.manualScore);
+            userScores[userId].isManuallySet = true;
+          }
+
           console.log(`  ✅ ${username}: ${userCorrectCount} correct out of ${questionsMatched} with answers (checked ${questionsChecked} questions)`);
         });
 
+        // Still check scoreOverrides collection for backwards compatibility/alternative method
         let overridesMap = {};
         try {
           const overridesSnapshot = await db.collection('scoreOverrides').where('date', '==', date).get();
@@ -3409,6 +3571,19 @@
         const scoresArray = Object.entries(userScores).map(([userId, score]) => {
           const userEmail = score.username;
           console.log(`  📊 FINAL: ${score.username} = ${score.correct}/${score.total} (Tie-breaker Diff: ${score.tieBreakerDiff})`);
+          
+          // Priority 1: manualScore on pick document
+          if (score.isManuallySet) {
+            return {
+              username: score.username,
+              correct: score.correct,
+              total: score.total,
+              isOverridden: true,
+              tieBreakerDiff: score.tieBreakerDiff
+            };
+          }
+
+          // Priority 2: scoreOverrides collection
           if (overridesMap[userEmail] !== undefined) {
             console.log(`  🔧 Override applied for ${userEmail}: ${score.correct} → ${overridesMap[userEmail]}`);
             return {
@@ -4873,62 +5048,6 @@
       console.log('✅ Monthly refresh button listener attached');
     }
 
-    async function calculateStreaksAndBadges(entries, period) {
-      if (!entries.length) return [];
-      
-      const winnersSnapshot = await db.collection('winners').get();
-      const pastWinners = new Set(winnersSnapshot.docs.map(doc => doc.data().username));
-      
-      return entries.map((entry, idx) => {
-        const badges = [];
-        
-        // 1. Winner Badge (🏆)
-        if (pastWinners.has(entry.username)) {
-          badges.push({ icon: '🏆', label: 'Past Winner', color: '#f59e0b' });
-        }
-        
-        // 2. Accuracy Badges
-        if (entry.percentage >= 90 && entry.total_count >= 10) {
-          badges.push({ icon: '🎯', label: 'Sharp Shooter (90%+ Accuracy)', color: '#10b981' });
-        } else if (entry.percentage >= 75 && entry.total_count >= 10) {
-          badges.push({ icon: '🏹', label: 'Marksman (75%+ Accuracy)', color: '#3b82f6' });
-        }
-
-        // 3. Perfect Game Badge (💎)
-        if (parseFloat(entry.percentage) === 100 && entry.total_count >= 5) {
-          badges.push({ icon: '💎', label: 'Perfect Game (100% Correct)', color: '#8b5cf6' });
-        }
-
-        // 4. Milestone: Century Club (🐘)
-        if (entry.total_count >= 100) {
-          badges.push({ icon: '🐘', label: 'Century Club (100+ Picks)', color: '#64748b' });
-        }
-
-        // 5. Underdog King (🐕) - Awarded to top 3 in any period
-        if (idx < 3) {
-          badges.push({ icon: '🐕', label: 'Elite Predictor', color: '#e11d48' });
-        }
-
-        // Streak Logic (Realistic mock based on ranking)
-        let streak = 0;
-        if (idx === 0) streak = 8;
-        else if (idx < 3) streak = 5;
-        else if (idx < 10) streak = 3;
-        else if (idx < 25) streak = 2;
-
-        let streakIcon = '🔥';
-        if (streak >= 7) streakIcon = '💨';
-        if (streak >= 14) streakIcon = '⚡';
-
-        return {
-          ...entry,
-          streak: streak,
-          streakIcon: streakIcon,
-          badges: badges
-        };
-      });
-    }
-
     async function loadLeaderboard(period, weekNumber = null, monthOffset = null, selectedDate = null) {
       try {
         console.log(`loadLeaderboard called for period: ${period}, weekNumber: ${weekNumber}, monthOffset: ${monthOffset}, selectedDate: ${selectedDate}`);
@@ -4944,8 +5063,7 @@
             isOverridden: score.isOverridden
           }));
           
-          const finalEntries = await calculateStreaksAndBadges(leaderboard, period);
-          renderLeaderboard(period, finalEntries);
+          renderLeaderboard(period, leaderboard);
           return;
         }
         
@@ -4990,8 +5108,7 @@
             }))
             .sort((a, b) => b.correct_count - a.correct_count);
           
-          const finalEntries = await calculateStreaksAndBadges(leaderboard, period);
-          renderLeaderboard(period, finalEntries);
+          renderLeaderboard(period, leaderboard);
           return;
         }
         
@@ -5030,8 +5147,7 @@
             }))
             .sort((a, b) => b.correct_count - a.correct_count);
           
-          const finalEntries = await calculateStreaksAndBadges(leaderboard, period);
-          renderLeaderboard(period, finalEntries);
+          renderLeaderboard(period, leaderboard);
           return;
         }
       } catch (err) {
@@ -5054,29 +5170,12 @@
           rankDisplay = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
         }
         
-        const streakHtml = entry.streak > 1 ? `
-          <div class="streak-tag" title="${entry.streak} Day Streak!">
-            ${entry.streakIcon} ${entry.streak}
-          </div>` : '';
-
-        const badgesHtml = (entry.badges || []).map(b => `
-          <span class="badge-icon" title="${b.label}" style="color: ${b.color || 'inherit'};">
-            ${b.icon}
-          </span>`).join('');
-
-        const overrideIndicator = entry.isOverridden ? ' <span style="color: #f39c12; font-size: 0.7rem; vertical-align: middle;" title="Score adjusted by Admin">⚙️</span>' : '';
-        
         return `
           <tr>
             <td><span class="rank">${rankDisplay}</span></td>
             <td>
               <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span class="username-display">${entry.username}</span>
-                ${overrideIndicator}
-                <div class="user-badges-container">
-                  ${streakHtml}
-                  ${badgesHtml}
-                </div>
               </div>
             </td>
             <td style="text-align: center;"><span class="score-pill">${entry.correct_count}</span></td>
