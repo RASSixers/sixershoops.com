@@ -999,6 +999,75 @@
       color: white !important;
       border-color: var(--error) !important;
     }
+
+    .consensus-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.05);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    .mvp-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 16px;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mvp-card::before {
+      content: 'MVP';
+      position: absolute;
+      right: -20px;
+      bottom: -20px;
+      font-size: 8rem;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.03);
+      line-height: 1;
+    }
+
+    .mvp-avatar {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+      flex-shrink: 0;
+    }
+
+    .mvp-info h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fbbf24;
+    }
+
+    .mvp-info .mvp-name {
+      font-size: 2rem;
+      font-weight: 900;
+      margin: 0.25rem 0;
+    }
+
+    .mvp-info .mvp-stats {
+      font-size: 1rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -1073,6 +1142,18 @@
       <div class="page-header">
         <h1 class="page-title">Welcome to <span class="highlight">Pick'em</span></h1>
         <p class="page-subtitle">Make daily NBA predictions and compete with other fans on the leaderboards</p>
+      </div>
+
+      <!-- MVP of the Week Section -->
+      <div id="mvpSection" style="display: none;">
+        <div class="mvp-card">
+          <div class="mvp-avatar">🏆</div>
+          <div class="mvp-info">
+            <h3>Previous Week's MVP</h3>
+            <div class="mvp-name" id="mvpName">---</div>
+            <div class="mvp-stats" id="mvpStats">Score: ---</div>
+          </div>
+        </div>
       </div>
 
       <section class="info-section">
@@ -1688,6 +1769,7 @@
       loadQuestionsForDate(currentDate);
       
       loadPublicWinners();
+      loadMvpOfTheWeek();
       
       loadWeeks().then(() => {
         console.log('⏰ Weeks loaded, initializing leaderboard pickers');
@@ -3572,6 +3654,55 @@
       document.getElementById('progressFill').style.width = percent + '%';
     }
 
+    async function renderConsensus(date) {
+      try {
+        const picksSnapshot = await db.collection('picks').where('date', '==', date).get();
+        if (picksSnapshot.empty) return;
+
+        const total = picksSnapshot.size;
+        const stats = {}; // { qIdx: { option: count } }
+
+        picksSnapshot.docs.forEach(doc => {
+          const answers = doc.data().answers || [];
+          answers.forEach((ans, qIdx) => {
+            if (!stats[qIdx]) stats[qIdx] = {};
+            stats[qIdx][ans] = (stats[qIdx][ans] || 0) + 1;
+          });
+        });
+
+        // Update UI for each question
+        todayQuestions.forEach((q, i) => {
+          const qStats = stats[i] || {};
+          const card = document.querySelector(`.question-card[data-index="${i}"]`);
+          if (!card) return;
+
+          // For radio options, add percentages
+          if (q.question_type === 'over_under' || q.question_type === 'multiple_choice') {
+            const labels = card.querySelectorAll('.option.radio-option');
+            labels.forEach(label => {
+              const input = label.querySelector('input');
+              if (input) {
+                const val = input.value;
+                const count = qStats[val] || 0;
+                const percent = ((count / total) * 100).toFixed(0);
+                
+                // Add or update badge
+                let badge = label.querySelector('.consensus-badge');
+                if (!badge) {
+                  badge = document.createElement('span');
+                  badge.className = 'consensus-badge';
+                  label.appendChild(badge);
+                }
+                badge.textContent = `${percent}% of fans`;
+              }
+            });
+          }
+        });
+      } catch (err) {
+        console.error('Error rendering consensus:', err);
+      }
+    }
+
     async function checkSubmissionForDate(dateStr) {
       if (!auth.currentUser) {
         console.log('⏳ checkSubmissionForDate: auth.currentUser not ready yet');
@@ -3611,10 +3742,16 @@
           document.getElementById('submitBtn').disabled = true;
           document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
           showMessage('You have already submitted your picks for this date!', 'success');
+          
+          // Show consensus view since they already picked
+          renderConsensus(dateStr);
         } else if (isLocked) {
           console.log(`🔒 Date is locked but no submission found - disabling submit button`);
           document.getElementById('submitBtn').disabled = true;
           document.getElementById('submitBtn').textContent = 'Submissions Closed';
+          
+          // Show consensus view since it's locked
+          renderConsensus(dateStr);
         } else {
           console.log('❌ No previous submission found and not locked');
           document.getElementById('submitBtn').disabled = false;
@@ -4313,6 +4450,21 @@
         });
       } catch (err) {
         console.error('Error loading public winners:', err);
+      }
+    }
+
+    async function loadMvpOfTheWeek() {
+      try {
+        // Look in winners collection for the most recent winner
+        const snapshot = await db.collection('winners').orderBy('timestamp', 'desc').limit(1).get();
+        if (!snapshot.empty) {
+          const winner = snapshot.docs[0].data();
+          document.getElementById('mvpName').textContent = winner.username;
+          document.getElementById('mvpStats').textContent = `Winner of ${winner.week} with ${winner.score} points!`;
+          document.getElementById('mvpSection').style.display = 'block';
+        }
+      } catch (err) {
+        console.error('Error loading MVP of the Week:', err);
       }
     }
 
