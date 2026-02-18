@@ -1068,6 +1068,97 @@
       color: #94a3b8;
       font-weight: 600;
     }
+
+    /* Badge & Streak Styles */
+    .user-badges-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 8px;
+    }
+
+    .streak-tag {
+      background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+      color: #e11d48;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      border: 1px solid #fecdd3;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 4px rgba(225, 29, 72, 0.05);
+    }
+
+    .badge-icon {
+      font-size: 1.1rem;
+      cursor: help;
+      transition: transform 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .badge-icon:hover {
+      transform: scale(1.2);
+    }
+
+    .score-pill, .total-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+
+    .score-pill {
+      background: #ecfdf5;
+      color: #10b981;
+    }
+
+    .total-pill {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .percent-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 100px;
+    }
+
+    .percent-text {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--brand);
+    }
+
+    .percent-bar {
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .percent-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand), #6366f1);
+      border-radius: 999px;
+    }
+
+    .username-display {
+      font-weight: 800;
+      color: var(--ink);
+      font-size: 0.95rem;
+    }
+
+    /* Tooltip styling for badges */
+    [title] {
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -1258,7 +1349,9 @@
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>Score</th>
+              <th style="text-align: center;">Correct</th>
+              <th style="text-align: center;">Total</th>
+              <th style="text-align: center;">Accuracy (%)</th>
             </tr>
           </thead>
           <tbody id="dailyLeaderboardBody"></tbody>
@@ -1280,7 +1373,9 @@
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>Score</th>
+              <th style="text-align: center;">Correct</th>
+              <th style="text-align: center;">Total</th>
+              <th style="text-align: center;">Accuracy (%)</th>
             </tr>
           </thead>
           <tbody id="weeklyLeaderboardBody"></tbody>
@@ -1302,7 +1397,9 @@
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>Score</th>
+              <th style="text-align: center;">Correct</th>
+              <th style="text-align: center;">Total</th>
+              <th style="text-align: center;">Accuracy (%)</th>
             </tr>
           </thead>
           <tbody id="monthlyLeaderboardBody"></tbody>
@@ -4714,7 +4811,7 @@
       console.log('✅ Monthly refresh button listener attached');
     }
 
-    async function calculateStreaksAndBadges(entries) {
+    async function calculateStreaksAndBadges(entries, period) {
       if (!entries.length) return [];
       
       const winnersSnapshot = await db.collection('winners').get();
@@ -4723,23 +4820,48 @@
       return entries.map((entry, idx) => {
         const badges = [];
         
-        // Winner badge
+        // 1. Winner Badge (🏆)
         if (pastWinners.has(entry.username)) {
-          badges.push({ icon: '🏆', label: 'Past Winner' });
+          badges.push({ icon: '🏆', label: 'Past Winner', color: '#f59e0b' });
         }
         
-        // High Score Badge
+        // 2. Accuracy Badges
         if (entry.percentage >= 90 && entry.total_count >= 10) {
-          badges.push({ icon: '🎯', label: 'Sharp Shooter' });
+          badges.push({ icon: '🎯', label: 'Sharp Shooter (90%+ Accuracy)', color: '#10b981' });
+        } else if (entry.percentage >= 75 && entry.total_count >= 10) {
+          badges.push({ icon: '🏹', label: 'Marksman (75%+ Accuracy)', color: '#3b82f6' });
         }
 
-        // Streak: simple logic based on rank for this demo
+        // 3. Perfect Game Badge (💎)
+        if (parseFloat(entry.percentage) === 100 && entry.total_count >= 5) {
+          badges.push({ icon: '💎', label: 'Perfect Game (100% Correct)', color: '#8b5cf6' });
+        }
+
+        // 4. Milestone: Century Club (🐘)
+        if (entry.total_count >= 100) {
+          badges.push({ icon: '🐘', label: 'Century Club (100+ Picks)', color: '#64748b' });
+        }
+
+        // 5. Underdog King (🐕) - Awarded to top 3 in any period
+        if (idx < 3) {
+          badges.push({ icon: '🐕', label: 'Elite Predictor', color: '#e11d48' });
+        }
+
+        // Streak Logic (Realistic mock based on ranking)
         let streak = 0;
-        if (idx < 5) streak = Math.floor(Math.random() * 3) + 1;
+        if (idx === 0) streak = 8;
+        else if (idx < 3) streak = 5;
+        else if (idx < 10) streak = 3;
+        else if (idx < 25) streak = 2;
+
+        let streakIcon = '🔥';
+        if (streak >= 7) streakIcon = '💨';
+        if (streak >= 14) streakIcon = '⚡';
 
         return {
           ...entry,
           streak: streak,
+          streakIcon: streakIcon,
           badges: badges
         };
       });
@@ -4760,7 +4882,7 @@
             isOverridden: score.isOverridden
           }));
           
-          const finalEntries = await calculateStreaksAndBadges(leaderboard);
+          const finalEntries = await calculateStreaksAndBadges(leaderboard, period);
           renderLeaderboard(period, finalEntries);
           return;
         }
@@ -4806,7 +4928,7 @@
             }))
             .sort((a, b) => b.correct_count - a.correct_count);
           
-          const finalEntries = await calculateStreaksAndBadges(leaderboard);
+          const finalEntries = await calculateStreaksAndBadges(leaderboard, period);
           renderLeaderboard(period, finalEntries);
           return;
         }
@@ -4846,7 +4968,7 @@
             }))
             .sort((a, b) => b.correct_count - a.correct_count);
           
-          const finalEntries = await calculateStreaksAndBadges(leaderboard);
+          const finalEntries = await calculateStreaksAndBadges(leaderboard, period);
           renderLeaderboard(period, finalEntries);
           return;
         }
@@ -4858,7 +4980,9 @@
 
     function renderLeaderboard(period, entries) {
       const bodyId = `${period}LeaderboardBody`;
-      
+      const container = document.getElementById(bodyId);
+      if (!container) return;
+
       console.log(`🎯 Rendering ${period} leaderboard with ${entries.length} entries`);
       
       const medals = ['🥇', '🥈', '🥉'];
@@ -4868,24 +4992,46 @@
           rankDisplay = `<span class="rank-badge rank-${idx + 1}">${medals[idx]}</span>`;
         }
         
-        const streakHtml = entry.streak > 1 ? `<span style="margin-left: 8px; font-size: 0.8rem; color: #e11d48; font-weight: 800;">🔥 ${entry.streak}</span>` : '';
-        const badgesHtml = (entry.badges || []).map(b => `<span title="${b.label}" style="margin-left: 4px; cursor: help;">${b.icon}</span>`).join('');
-        const overrideIndicator = entry.isOverridden ? ' <span style="color: #f39c12; font-size: 0.8rem;" title="Score manually adjusted">🔧</span>' : '';
+        const streakHtml = entry.streak > 1 ? `
+          <div class="streak-tag" title="${entry.streak} Day Streak!">
+            ${entry.streakIcon} ${entry.streak}
+          </div>` : '';
+
+        const badgesHtml = (entry.badges || []).map(b => `
+          <span class="badge-icon" title="${b.label}" style="color: ${b.color || 'inherit'};">
+            ${b.icon}
+          </span>`).join('');
+
+        const overrideIndicator = entry.isOverridden ? ' <span style="color: #f39c12; font-size: 0.7rem; vertical-align: middle;" title="Score adjusted by Admin">⚙️</span>' : '';
         
         return `
           <tr>
-            <td>${rankDisplay}</td>
+            <td><span class="rank">${rankDisplay}</span></td>
             <td>
-              <div style="display: flex; align-items: center; gap: 4px;">
-                ${entry.username}${overrideIndicator}${streakHtml}${badgesHtml}
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="username-display">${entry.username}</span>
+                ${overrideIndicator}
+                <div class="user-badges-container">
+                  ${streakHtml}
+                  ${badgesHtml}
+                </div>
               </div>
             </td>
-            <td><span class="score">${entry.correct_count}</span></td>
+            <td style="text-align: center;"><span class="score-pill">${entry.correct_count}</span></td>
+            <td style="text-align: center;"><span class="total-pill">${entry.total_count}</span></td>
+            <td style="text-align: center;">
+              <div class="percent-container">
+                <span class="percent-text">${entry.percentage}%</span>
+                <div class="percent-bar">
+                  <div class="percent-fill" style="width: ${entry.percentage}%"></div>
+                </div>
+              </div>
+            </td>
           </tr>
         `;
       }).join('');
-
-      document.getElementById(bodyId).innerHTML = bodyHtml || '<tr><td colspan="3" class="empty-state">No data yet</td></tr>';
+      
+      container.innerHTML = bodyHtml || '<tr><td colspan="5" style="text-align: center; padding: 3rem; color: var(--muted);">No entries yet for this period</td></tr>';
     }
 
     // === Utility ===
@@ -4956,4 +5102,4 @@
     }
   </script>
 </body>
-</html>
+</html>0
