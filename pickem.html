@@ -1155,6 +1155,27 @@
       font-size: 0.95rem;
     }
 
+    .tie-breaker-card {
+      border: 2px solid var(--brand) !important;
+      background: linear-gradient(135deg, rgba(0, 61, 166, 0.03), rgba(0, 61, 166, 0.01)) !important;
+      position: relative;
+    }
+
+    .tie-breaker-card::after {
+      content: '🏆 TIE-BREAKER';
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: var(--brand);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      box-shadow: 0 4px 12px rgba(0, 61, 166, 0.2);
+    }
+
     /* Tooltip styling for badges */
     [title] {
       position: relative;
@@ -1494,6 +1515,14 @@
                       <option value="SUN">Sunday</option>
                     </select>
                   </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="checkbox-option" style="cursor: pointer; background: var(--chip); padding: 10px; border-radius: 8px;">
+                    <input type="checkbox" id="adminIsTieBreaker" />
+                    <span style="font-weight: 700; font-size: 13px; color: var(--brand);">🏆 Set as Tie-Breaker Question</span>
+                  </label>
+                  <small style="display: block; color: var(--muted); margin-top: 4px;">Tie-breakers are used to rank players with the same score based on how close their answer is to the correct value.</small>
                 </div>
 
                 <button class="btn btn-primary" id="addQuestionBtn">Add Question</button>
@@ -2108,6 +2137,7 @@
       const options = document.getElementById('adminOptions').value.trim();
       const weekNumber = document.getElementById('adminQuestionWeek').value.trim();
       const dayOfWeek = document.getElementById('adminQuestionDay').value.trim();
+      const isTieBreaker = document.getElementById('adminIsTieBreaker').checked;
 
       if (!text) {
         showMessage('Please enter a question', 'error', 'adminMessage');
@@ -2125,6 +2155,7 @@
         options: type === 'multiple_choice' ? options : null,
         weekNumber: weekNumber ? parseInt(weekNumber) : null,
         dayOfWeek: dayOfWeek || null,
+        isTieBreaker: isTieBreaker,
         tempId: Date.now()
       };
 
@@ -2137,6 +2168,7 @@
       document.getElementById('adminQuestionType').value = 'multiple_choice';
       document.getElementById('adminQuestionWeek').value = '';
       document.getElementById('adminQuestionDay').value = '';
+      document.getElementById('adminIsTieBreaker').checked = false;
       document.getElementById('optionsGroup').style.display = 'block';
       
       showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
@@ -2162,6 +2194,7 @@
           <div class="admin-question-item-content">
             <div class="admin-question-item-text">${index + 1}. ${q.question}</div>
             <div class="admin-question-item-type">${q.question_type === 'over_under' ? 'Over/Under' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+            ${q.isTieBreaker ? `<div style="display: inline-block; background: var(--brand); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-top: 4px;">🏆 TIE-BREAKER</div>` : ''}
             ${q.options ? `<div class="admin-question-item-options">Options: ${q.options}</div>` : ''}
             ${q.weekNumber || q.dayOfWeek ? `<div class="admin-question-item-options" style="color: #3b82f6; margin-top: 0.5rem; font-weight: 600;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
           </div>
@@ -2362,6 +2395,7 @@
               <div>
                 <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem;">${idx + 1}. ${q.question}</div>
                 <div style="color: var(--muted); font-size: 0.85rem;">${q.question_type === 'over_under' ? 'Over/Under' : q.question_type === 'multiple_choice' ? 'Multiple Choice' : 'Numeric'}</div>
+                ${q.isTieBreaker ? `<div style="display: inline-block; background: var(--brand); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-top: 4px;">🏆 TIE-BREAKER</div>` : ''}
                 ${q.weekNumber || q.dayOfWeek ? `<div style="color: #3b82f6; font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;">📅 Week: ${q.weekNumber || '-'} | Day: ${q.dayOfWeek || '-'}</div>` : ''}
               </div>
               <span class="answer-indicator-${idx}" style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">⏳</span>
@@ -3276,6 +3310,12 @@
           ? allQuestions.map((q, idx) => q.weekNumber === weekNumberFilter ? idx : -1).filter(idx => idx !== -1)
           : allQuestions.map((q, idx) => idx);
         
+        // Find the index of the tie-breaker question if it exists
+        const tieBreakerIndex = allQuestions.findIndex(q => q.isTieBreaker);
+        if (tieBreakerIndex !== -1) {
+          console.log(`  🏆 Tie-Breaker Question found at index ${tieBreakerIndex}: "${allQuestions[tieBreakerIndex].question}"`);
+        }
+        
         const totalQuestionsForScoring = questionIndicesToCount.length;
         console.log(`  📊 Will score ${totalQuestionsForScoring} questions (${weekNumberFilter ? `Week ${weekNumberFilter} filter applied` : 'no week filter'})`);
         
@@ -3288,7 +3328,8 @@
             userScores[userId] = {
               username: username,
               correct: 0,
-              total: totalQuestionsForScoring * 10
+              total: totalQuestionsForScoring * 10,
+              tieBreakerDiff: Infinity // Default to very large distance
             };
           }
 
@@ -3300,13 +3341,24 @@
           let questionsMatched = 0;
           
           userAnswers.forEach((userPick, qIdx) => {
+            const correctAnswer = correctAnswersMap[qIdx];
+            
+            // Handle Tie-Breaker Logic
+            if (qIdx === tieBreakerIndex && userPick !== undefined && correctAnswer !== undefined) {
+              const pickNum = parseFloat(userPick);
+              const ansNum = parseFloat(correctAnswer);
+              if (!isNaN(pickNum) && !isNaN(ansNum)) {
+                userScores[userId].tieBreakerDiff = Math.abs(pickNum - ansNum);
+                console.log(`    🏆 Tie-Breaker Guess: ${pickNum}, Correct: ${ansNum}, Diff: ${userScores[userId].tieBreakerDiff}`);
+              }
+            }
+
             // Only count if this question index is in our list to count
             if (!questionIndicesToCount.includes(qIdx)) {
               return;
             }
             
             questionsChecked++;
-            const correctAnswer = correctAnswersMap[qIdx];
             
             // Normalize comparison for numeric vs string types
             let isCorrect = false;
@@ -3356,33 +3408,43 @@
         
         const scoresArray = Object.entries(userScores).map(([userId, score]) => {
           const userEmail = score.username;
-          console.log(`  📊 FINAL: ${score.username} = ${score.correct}/${score.total}`);
+          console.log(`  📊 FINAL: ${score.username} = ${score.correct}/${score.total} (Tie-breaker Diff: ${score.tieBreakerDiff})`);
           if (overridesMap[userEmail] !== undefined) {
             console.log(`  🔧 Override applied for ${userEmail}: ${score.correct} → ${overridesMap[userEmail]}`);
             return {
               username: score.username,
               correct: overridesMap[userEmail],
               total: score.total,
-              isOverridden: true
+              isOverridden: true,
+              tieBreakerDiff: score.tieBreakerDiff
             };
           }
           return {
             username: score.username,
             correct: score.correct,
             total: score.total,
-            isOverridden: false
+            isOverridden: false,
+            tieBreakerDiff: score.tieBreakerDiff
           };
         });
         
         const finalScores = scoresArray
-          .sort((a, b) => b.correct - a.correct)
+          .sort((a, b) => {
+            // Primary sort: Score (Correct points)
+            if (b.correct !== a.correct) {
+              return b.correct - a.correct;
+            }
+            // Secondary sort: Tie-Breaker Distance (Lower is better)
+            return a.tieBreakerDiff - b.tieBreakerDiff;
+          })
           .map((score, idx) => ({
             rank: idx + 1,
             username: score.username,
             correct: score.correct,
             total: score.total,
             percentage: score.total > 0 ? ((score.correct / score.total) * 100).toFixed(1) : 0,
-            isOverridden: score.isOverridden
+            isOverridden: score.isOverridden,
+            tieBreakerDiff: score.tieBreakerDiff
           }));
         
         console.log(`  ✅ Returning ${finalScores.length} final scores:`, finalScores);
@@ -3864,7 +3926,7 @@
         }
 
         return `
-          <div class="question-card" data-index="${i}">
+          <div class="question-card ${q.isTieBreaker ? 'tie-breaker-card' : ''}" data-index="${i}">
             <div class="question-number">Question ${i + 1}</div>
             <div class="question-text">${q.question}</div>
             <div class="options">${optionsHtml}</div>
@@ -5102,4 +5164,4 @@
     }
   </script>
 </body>
-</html>0
+</html>
