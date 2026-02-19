@@ -11,8 +11,6 @@ async function getNBAStandings() {
     let html = "";
     let socialHtml = "";
 
-    const now = new Date();
-
     const conferences = data.children || [];
 
     if (conferences.length === 0) {
@@ -85,23 +83,12 @@ async function getNBAStandings() {
 
         let streakClass = "";
         let socialStreakClass = "";
-        if (streakValue.startsWith('W')) {
-          streakClass = "streak-w";
-          socialStreakClass = "social-streak-w";
-        }
-        if (streakValue.startsWith('L')) {
-          streakClass = "streak-l";
-          socialStreakClass = "social-streak-l";
-        }
+        if (streakValue.startsWith('W')) { streakClass = "streak-w"; socialStreakClass = "social-streak-w"; }
+        if (streakValue.startsWith('L')) { streakClass = "streak-l"; socialStreakClass = "social-streak-l"; }
 
         html += `
           <tr class="${rowClass}">
-            <td>
-              <div class="team-info">
-                <span class="rank">${idx + 1}</span>
-                <span>${t.team.displayName}</span>
-              </div>
-            </td>
+            <td><div class="team-info"><span class="rank">${idx + 1}</span><span>${t.team.displayName}</span></div></td>
             <td>${wins}</td>
             <td>${losses}</td>
             <td class="pct">${pct}</td>
@@ -114,34 +101,15 @@ async function getNBAStandings() {
 
         socialHtml += `
           <tr class="${socialRowClass}">
-            <td>
-              <div class="cell-content">
-                <div class="social-team">
-                  <span class="social-team-rank">${idx + 1}</span>
-                  <span class="social-team-name">${t.team.displayName}</span>
-                </div>
-              </div>
-            </td>
+            <td><div class="cell-content"><div class="social-team"><span class="social-team-rank">${idx + 1}</span><span class="social-team-name">${t.team.displayName}</span></div></div></td>
             <td><div class="cell-content">${wins}-${losses}</div></td>
             <td><div class="cell-content">${pct}</div></td>
-            <td>
-              <div class="cell-content">
-                <span class="social-streak-badge ${socialStreakClass}">${streakValue}</span>
-              </div>
-            </td>
+            <td><div class="cell-content"><span class="social-streak-badge ${socialStreakClass}">${streakValue}</span></div></td>
           </tr>`;
       });
 
-      html += `
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-
-      socialHtml += `
-            </tbody>
-          </table>
-        </div>`;
+      html += `</tbody></table></div></div>`;
+      socialHtml += `</tbody></table></div>`;
     });
 
     container.innerHTML = html;
@@ -171,6 +139,10 @@ function initExport() {
 
   if (exportBtns.length === 0 || !modal) return;
 
+  // Twitter optimal dimensions: 1200×675 (16:9)
+  const TWITTER_W = 1200;
+  const TWITTER_H = 675;
+
   exportBtns.forEach(btn => {
     btn.onclick = async () => {
       const mode = btn.dataset.exportMode;
@@ -184,38 +156,34 @@ function initExport() {
         const titleH1 = grid.querySelector('.social-title-box h1');
         const subTitle = grid.querySelector('.social-title-box p');
         const header = grid.querySelector('.social-header');
-        
+
         // Reset
         content.classList.remove('mode-east', 'mode-west');
         header.classList.remove('single-conf-mode');
 
         const eastDiv = content.querySelector('[data-conf="east"]');
         const westDiv = content.querySelector('[data-conf="west"]');
-        
-        // Twitter optimal: 1200x675 (16:9)
-        const TWITTER_W = 1200;
-        const TWITTER_H = 675;
-
-        grid.style.width = TWITTER_W + 'px';
-        grid.style.height = TWITTER_H + 'px';
-        grid.style.overflow = 'hidden';
 
         const now = new Date();
         const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        // Lock to Twitter 16:9
+        grid.style.width = TWITTER_W + 'px';
+        grid.style.height = TWITTER_H + 'px';
 
         if (mode === 'east') {
           content.classList.add('mode-east');
           header.classList.add('single-conf-mode');
           if (eastDiv) eastDiv.style.display = 'block';
           if (westDiv) westDiv.style.display = 'none';
-          titleH1.textContent = 'Eastern Conference';
+          titleH1.textContent = 'Eastern Conference Standings';
           if (subTitle) subTitle.textContent = dateStr;
         } else if (mode === 'west') {
           content.classList.add('mode-west');
           header.classList.add('single-conf-mode');
           if (eastDiv) eastDiv.style.display = 'none';
           if (westDiv) westDiv.style.display = 'block';
-          titleH1.textContent = 'Western Conference';
+          titleH1.textContent = 'Western Conference Standings';
           if (subTitle) subTitle.textContent = dateStr;
         } else {
           if (eastDiv) eastDiv.style.display = 'block';
@@ -225,7 +193,7 @@ function initExport() {
         }
 
         const canvas = await html2canvas(grid, {
-          backgroundColor: null,
+          backgroundColor: '#f8fafc',
           scale: 2,
           useCORS: true,
           allowTaint: true,
@@ -267,15 +235,8 @@ function initExport() {
     };
   });
 
-  closeModal.onclick = () => {
-    modal.style.display = 'none';
-  };
-
-  window.onclick = (event) => {
-    if (event.target == modal) {
-      modal.style.display = 'none';
-    }
-  };
+  closeModal.onclick = () => { modal.style.display = 'none'; };
+  window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
