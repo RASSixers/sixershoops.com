@@ -204,41 +204,22 @@ function initExport() {
         const eastDiv = content.querySelector('[data-conf="east"]');
         const westDiv = content.querySelector('[data-conf="west"]');
         
-        // Twitter optimal: 1600x900 (16:9 ratio) for full timeline display without cropping
-        const TWITTER_WIDTH = 1600;
-        const TWITTER_HEIGHT = 900;
-
         if (mode === 'east') {
-          grid.style.width = `${TWITTER_WIDTH}px`;
-          grid.style.minHeight = `${TWITTER_HEIGHT}px`;
-          grid.style.display = 'flex';
-          grid.style.flexDirection = 'column';
-          grid.style.justifyContent = 'center';
-          grid.style.padding = '60px 140px';
+          grid.style.width = '800px';
           content.classList.add('mode-east');
           header.classList.add('single-conf-mode');
           if (eastDiv) eastDiv.style.display = 'block';
           if (westDiv) westDiv.style.display = 'none';
           titleH1.textContent = 'Eastern Conference Standings';
         } else if (mode === 'west') {
-          grid.style.width = `${TWITTER_WIDTH}px`;
-          grid.style.minHeight = `${TWITTER_HEIGHT}px`;
-          grid.style.display = 'flex';
-          grid.style.flexDirection = 'column';
-          grid.style.justifyContent = 'center';
-          grid.style.padding = '60px 140px';
+          grid.style.width = '800px';
           content.classList.add('mode-west');
           header.classList.add('single-conf-mode');
           if (eastDiv) eastDiv.style.display = 'none';
           if (westDiv) westDiv.style.display = 'block';
           titleH1.textContent = 'Western Conference Standings';
         } else {
-          grid.style.width = `${TWITTER_WIDTH}px`;
-          grid.style.minHeight = `${TWITTER_HEIGHT}px`;
-          grid.style.display = 'flex';
-          grid.style.flexDirection = 'column';
-          grid.style.justifyContent = 'center';
-          grid.style.padding = '50px 60px';
+          grid.style.width = '1200px';
           if (eastDiv) eastDiv.style.display = 'block';
           if (westDiv) westDiv.style.display = 'block';
           titleH1.textContent = 'NBA Standings';
@@ -247,19 +228,10 @@ function initExport() {
         const canvas = await html2canvas(grid, {
           backgroundColor: '#f8fafc',
           scale: 2,
-          width: TWITTER_WIDTH,
-          height: Math.max(TWITTER_HEIGHT, grid.scrollHeight),
           useCORS: true,
           allowTaint: true,
           logging: false
         });
-
-        // Reset grid styles after capture
-        grid.style.display = '';
-        grid.style.flexDirection = '';
-        grid.style.justifyContent = '';
-        grid.style.minHeight = '';
-        grid.style.padding = '';
         
         preview.src = canvas.toDataURL('image/png');
         modal.style.display = 'flex';
