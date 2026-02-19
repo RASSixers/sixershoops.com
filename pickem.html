@@ -1440,6 +1440,21 @@
               <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #92400e;">
                 <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">💡 Tip: Set the <strong>Week Number</strong> field to assign questions to a specific week for the weekly leaderboard. This is the ONLY field needed for weekly leaderboards to work! Day of Week is optional and for your reference only.</p>
               </div>
+
+              <!-- ⚡ Bulk Week Setter -->
+              <div style="background: #eef2ff; border: 2px solid var(--brand); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 0.5rem 0; color: var(--brand); font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">⚡ Set Week for ALL Questions on This Date</h3>
+                <p style="margin: 0 0 1rem 0; color: #4338ca; font-size: 0.88rem; font-weight: 600;">Instantly assigns the same week number to every question saved for the date selected above — no need to set it per question.</p>
+                <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                  <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 140px;">
+                    <label class="form-label" style="color: var(--brand);">Week Number</label>
+                    <input type="number" id="bulkWeekNumber" class="form-input" placeholder="e.g., 5" min="1" style="border-color: var(--brand);" />
+                  </div>
+                  <button class="btn btn-primary" id="applyBulkWeekBtn" style="flex: none; padding: 12px 24px; white-space: nowrap;">⚡ Apply to All Questions</button>
+                </div>
+                <div id="bulkWeekMessage" style="display: none; margin-top: 0.75rem; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem;"></div>
+              </div>
+
               <div class="admin-form">
                 <h3 style="margin-top: 0;">Add New Question</h3>
                 
@@ -5261,6 +5276,77 @@
         console.error('❌ Error rendering month slider:', err);
       }
     }
+
+    // === Bulk Week Setter ===
+    document.getElementById('applyBulkWeekBtn').addEventListener('click', async () => {
+      if (!checkAdminPermission()) return;
+
+      const dateInput = document.getElementById('adminDate').value;
+      const weekNum = document.getElementById('bulkWeekNumber').value.trim();
+      const msgEl = document.getElementById('bulkWeekMessage');
+
+      const showBulkMsg = (text, type) => {
+        msgEl.textContent = text;
+        msgEl.style.display = 'block';
+        msgEl.style.background = type === 'success'
+          ? 'rgba(16,185,129,0.15)'
+          : type === 'error'
+          ? 'rgba(239,68,68,0.12)'
+          : 'rgba(99,102,241,0.1)';
+        msgEl.style.color = type === 'success' ? '#065f46' : type === 'error' ? '#7f1d1d' : '#3730a3';
+        setTimeout(() => { msgEl.style.display = 'none'; }, 5000);
+      };
+
+      if (!dateInput) {
+        showBulkMsg('❌ Please select a date above and click "Load Questions" first.', 'error');
+        return;
+      }
+      if (!weekNum || isNaN(parseInt(weekNum)) || parseInt(weekNum) < 1) {
+        showBulkMsg('❌ Please enter a valid week number (1 or higher).', 'error');
+        return;
+      }
+
+      const parsedWeek = parseInt(weekNum);
+
+      try {
+        showBulkMsg('⏳ Applying week number...', 'info');
+
+        const snapshot = await db.collection('questions').where('date', '==', dateInput).get();
+
+        if (snapshot.empty) {
+          showBulkMsg('⚠️ No questions found for ' + dateInput + '. Save questions first, then apply the week.', 'error');
+          return;
+        }
+
+        const docRef = snapshot.docs[0].ref;
+        const items = snapshot.docs[0].data().items || [];
+
+        if (items.length === 0) {
+          showBulkMsg('⚠️ No questions exist in the database for this date yet.', 'error');
+          return;
+        }
+
+        // Stamp every question with the chosen week number
+        const updatedItems = items.map(q => ({ ...q, weekNumber: parsedWeek }));
+
+        await docRef.update({
+          items: updatedItems,
+          updatedAt: new Date().toISOString()
+        });
+
+        // Also update the in-memory list if questions are currently displayed
+        if (adminQuestions.length > 0) {
+          adminQuestions = adminQuestions.map(q => ({ ...q, weekNumber: parsedWeek }));
+          renderAdminQuestions();
+        }
+
+        console.log(`✅ Bulk week update: Week ${parsedWeek} applied to ${updatedItems.length} question(s) for ${dateInput}`);
+        showBulkMsg(`✅ Week ${parsedWeek} applied to all ${updatedItems.length} question(s) for ${dateInput}!`, 'success');
+      } catch (err) {
+        console.error('Error applying bulk week:', err);
+        showBulkMsg('❌ Error: ' + err.message, 'error');
+      }
+    });
   </script>
 </body>
 </html>
