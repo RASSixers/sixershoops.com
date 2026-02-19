@@ -1282,8 +1282,6 @@
         <button class="tab-btn active" data-tab="picks">Picks</button>
         <button class="tab-btn" data-tab="daily-lb">Daily Leaderboard</button>
         <button class="tab-btn" data-tab="weekly-lb">Weekly Leaderboard</button>
-        <button class="tab-btn" data-tab="monthly-lb">Monthly Leaderboard</button>
-        <button class="tab-btn" data-tab="season-lb">Season Leaderboard</button>
         <button class="tab-btn" data-tab="winners">Winners</button>
         <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display: none;">Manage Questions</button>
       </div>
@@ -1385,61 +1383,6 @@
         </table>
       </div>
 
-      <!-- Monthly Leaderboard Tab -->
-      <div id="monthly-lb" class="tab-content">
-        <div class="date-slider-controls" style="margin-bottom: 15px;">
-          <button class="date-nav-btn" id="prevMonthBtn">‹</button>
-          <div id="monthPickerContainer" class="date-picker-container"></div>
-          <button class="date-nav-btn" id="nextMonthBtn">›</button>
-        </div>
-        <div style="margin-bottom: 15px; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-          <button type="button" class="btn btn-secondary" id="refreshMonthlyBtn">Refresh</button>
-          <div style="flex: 1; min-width: 250px;">
-            <input type="text" id="monthlyLbSearch" class="form-input" style="padding: 8px 16px; font-size: 14px;" placeholder="Search player..." />
-          </div>
-        </div>
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Player</th>
-              <th style="text-align: center;">Correct</th>
-              <th style="text-align: center;">Total</th>
-              <th style="text-align: center;">Avg TB Diff</th>
-              <th style="text-align: center;">Accuracy (%)</th>
-            </tr>
-          </thead>
-          <tbody id="monthlyLeaderboardBody"></tbody>
-        </table>
-      </div>
-
-      <!-- Season Leaderboard Tab -->
-      <div id="season-lb" class="tab-content">
-        <div style="margin-bottom: 2rem; background: var(--white); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
-          <h2 style="color: var(--brand); margin-top: 0;">Season Standings</h2>
-          <p style="color: var(--muted); margin-bottom: 0; font-size: 0.95rem;">Cumulative performance across all dates and weeks.</p>
-        </div>
-        <div style="margin-bottom: 15px; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-          <button type="button" class="btn btn-secondary" id="refreshSeasonBtn">Refresh</button>
-          <div style="flex: 1; min-width: 250px;">
-            <input type="text" id="seasonLbSearch" class="form-input" style="padding: 8px 16px; font-size: 14px;" placeholder="Search player..." />
-          </div>
-        </div>
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Player</th>
-              <th style="text-align: center;">Correct</th>
-              <th style="text-align: center;">Total</th>
-              <th style="text-align: center;">Avg TB Diff</th>
-              <th style="text-align: center;">Accuracy (%)</th>
-            </tr>
-          </thead>
-          <tbody id="seasonLeaderboardBody"></tbody>
-        </table>
-      </div>
-
       <!-- Winners Tab -->
       <div id="winners" class="tab-content">
         <div style="margin-bottom: 2rem;">
@@ -1480,7 +1423,6 @@
             <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
               <button class="btn btn-secondary" id="addQuestionTabBtn" style="flex: 1; background: #e0e7ff; color: var(--brand); border: 2px solid var(--brand);">Add Questions</button>
               <button class="btn btn-secondary" id="markAnswersTabBtn" style="flex: 1;">Mark Correct Answers</button>
-              <button class="btn btn-secondary" id="editLeaderboardTabBtn" style="flex: 1;">Edit Leaderboard</button>
             </div>
 
             <!-- Add Questions Tab -->
@@ -1780,47 +1722,6 @@
                     <p style="font-size: 36px; margin-bottom: 10px;">📭</p>
                     <p style="font-weight: 600; font-size: 1rem;">No submissions found for this date</p>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Leaderboard Override Section -->
-          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
-          <div class="leaderboard-override-section">
-            <h2>🔧 Leaderboard Override</h2>
-            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Manually adjust user scores if something goes wrong</p>
-            <div id="overrideMessage" class="message"></div>
-
-            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #92400e;">
-              <p style="margin: 0; font-weight: 600; font-size: 0.9rem;"> Warning: This will override the calculated score for a specific user and date. Use only when necessary!</p>
-            </div>
-
-            <div class="admin-form">
-              <div class="form-group">
-                <label class="form-label">User Email</label>
-                <input type="email" id="overrideUserEmail" class="form-input" placeholder="user@example.com" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Date</label>
-                <input type="date" id="overrideDate" class="form-input" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">New Score</label>
-                <input type="number" id="overrideScore" class="form-input" placeholder="Enter score" min="0" />
-              </div>
-
-              <button class="btn btn-primary" id="applyOverrideBtn" style="width: 100%;">Apply Score Override</button>
-            </div>
-
-            <div style="margin-top: 2rem;">
-              <h3>Current Overrides</h3>
-              <div id="overridesList" style="margin-top: 1rem;">
-                <div style="text-align: center; padding: 40px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
-                  <p style="font-size: 24px; margin-bottom: 10px;"></p>
-                  <p style="font-weight: 600; font-size: 0.9rem;">No overrides set</p>
                 </div>
               </div>
             </div>
@@ -4749,20 +4650,6 @@
       }
     });
 
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-      if (currentMonthOffset > 0) {
-        currentMonthOffset--;
-        renderMonthSlider();
-      }
-    });
-
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-      if (currentMonthOffset < 12 - MONTHS_TO_SHOW) {
-        currentMonthOffset++;
-        renderMonthSlider();
-      }
-    });
-
     // === Tabs ===
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -4786,103 +4673,11 @@
           renderWeekSlider();
           loadLeaderboard('weekly', selectedWeek);
         }
-        if (tabName === 'monthly-lb') {
-          renderMonthSlider();
-          loadLeaderboard('monthly', null, selectedMonth);
-        }
         if (tabName === 'winners') {
           loadPublicWinners();
         }
       });
     });
-
-    // === Leaderboard Override ===
-    const applyOverrideBtn = document.getElementById('applyOverrideBtn');
-    if (applyOverrideBtn) {
-      applyOverrideBtn.addEventListener('click', async () => {
-        if (!checkAdminPermission()) return;
-        
-        const userEmail = document.getElementById('overrideUserEmail').value.trim();
-        const date = document.getElementById('overrideDate').value;
-        const score = document.getElementById('overrideScore').value;
-        
-        if (!userEmail || !date || score === '') {
-          showMessage('Please fill in all fields', 'error', 'overrideMessage');
-          return;
-        }
-        
-        try {
-          await db.collection('scoreOverrides').add({
-            userEmail: userEmail,
-            date: date,
-            score: parseInt(score),
-            timestamp: new Date(),
-            appliedBy: auth.currentUser.email
-          });
-          
-          document.getElementById('overrideUserEmail').value = '';
-          document.getElementById('overrideDate').value = '';
-          document.getElementById('overrideScore').value = '';
-          
-          showMessage(' Score override applied successfully!', 'success', 'overrideMessage');
-          loadOverrides();
-        } catch (err) {
-          console.error('Error applying override:', err);
-          showMessage(' Failed to apply override: ' + err.message, 'error', 'overrideMessage');
-        }
-      });
-    }
-
-    async function loadOverrides() {
-      try {
-        const overridesSnapshot = await db.collection('scoreOverrides').orderBy('timestamp', 'desc').get();
-        const overridesList = document.getElementById('overridesList');
-        
-        if (overridesSnapshot.empty) {
-          overridesList.innerHTML = `
-            <div style="text-align: center; padding: 40px 20px; color: var(--muted); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid var(--border);">
-              <p style="font-size: 24px; margin-bottom: 10px;"></p>
-              <p style="font-weight: 600; font-size: 0.9rem;">No overrides set</p>
-            </div>
-          `;
-          return;
-        }
-
-        let html = '<div style="display: grid; gap: 1rem;">';
-        overridesSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          html += `
-            <div style="background: white; border: 2px solid var(--border); border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-weight: 700; color: var(--brand);">${data.userEmail}</div>
-                <div style="font-size: 0.85rem; color: var(--muted); margin-top: 4px;">
-                  Date: ${data.date} | Score: ${data.score} | Applied by: ${data.appliedBy}
-                </div>
-              </div>
-              <button class="btn btn-secondary" onclick="deleteOverride('${doc.id}')" style="background: #fee; color: #e74c3c; border: 1px solid #e74c3c;">Delete</button>
-            </div>
-          `;
-        });
-        html += '</div>';
-        overridesList.innerHTML = html;
-      } catch (err) {
-        console.error('Error loading overrides:', err);
-      }
-    }
-
-    window.deleteOverride = async function(overrideId) {
-      if (!checkAdminPermission()) return;
-      if (!confirm('Are you sure you want to delete this override?')) return;
-      
-      try {
-        await db.collection('scoreOverrides').doc(overrideId).delete();
-        showMessage(' Override deleted successfully!', 'success', 'overrideMessage');
-        loadOverrides();
-      } catch (err) {
-        console.error('Error deleting override:', err);
-        showMessage(' Failed to delete override: ' + err.message, 'error', 'overrideMessage');
-      }
-    };
 
     // === Winners Management ===
     const adminAddWinnerBtn = document.getElementById('adminAddWinnerBtn');
@@ -5014,11 +4809,9 @@
     // === Leaderboard Refresh Buttons ===
     const dailyRefreshBtn = document.getElementById('refreshDailyBtn');
     const weeklyRefreshBtn = document.getElementById('refreshWeeklyBtn');
-    const monthlyRefreshBtn = document.getElementById('refreshMonthlyBtn');
     
     if (!dailyRefreshBtn) console.error(' refreshDailyBtn not found!');
     if (!weeklyRefreshBtn) console.error(' refreshWeeklyBtn not found!');
-    if (!monthlyRefreshBtn) console.error(' refreshMonthlyBtn not found!');
     
     if (dailyRefreshBtn) {
       dailyRefreshBtn.addEventListener('click', async () => {
@@ -5074,51 +4867,6 @@
         }
       });
       console.log(' Weekly refresh button listener attached');
-    }
-
-    if (monthlyRefreshBtn) {
-      monthlyRefreshBtn.addEventListener('click', async () => {
-        console.log(' User clicked refresh Monthly leaderboard');
-        const originalText = monthlyRefreshBtn.textContent;
-        monthlyRefreshBtn.disabled = true;
-        monthlyRefreshBtn.textContent = 'Loading...';
-        try {
-          await loadLeaderboard('monthly', null, selectedMonth);
-          console.log(' Monthly leaderboard refreshed successfully');
-          monthlyRefreshBtn.textContent = 'Refreshed! ✓';
-          setTimeout(() => {
-            monthlyRefreshBtn.textContent = originalText;
-            monthlyRefreshBtn.disabled = false;
-          }, 2000);
-        } catch (err) {
-          console.error('Error refreshing monthly leaderboard:', err);
-          monthlyRefreshBtn.textContent = 'Error - Try Again';
-          monthlyRefreshBtn.disabled = false;
-          showMessage(' Failed to refresh monthly leaderboard. Check console for details.', 'error');
-        }
-      });
-    }
-
-    const seasonRefreshBtn = document.getElementById('refreshSeasonBtn');
-    if (seasonRefreshBtn) {
-      seasonRefreshBtn.addEventListener('click', async () => {
-        const originalText = seasonRefreshBtn.textContent;
-        seasonRefreshBtn.disabled = true;
-        seasonRefreshBtn.textContent = 'Loading...';
-        try {
-          await loadLeaderboard('season');
-          seasonRefreshBtn.textContent = 'Refreshed! ✓';
-          setTimeout(() => {
-            seasonRefreshBtn.textContent = originalText;
-            seasonRefreshBtn.disabled = false;
-          }, 2000);
-        } catch (err) {
-          console.error('Error refreshing season leaderboard:', err);
-          seasonRefreshBtn.textContent = 'Error - Try Again';
-          seasonRefreshBtn.disabled = false;
-          showMessage(' Failed to refresh season leaderboard. Check console for details.', 'error');
-        }
-      });
     }
 
     async function loadLeaderboard(period, weekNumber = null, monthOffset = null, selectedDate = null) {
@@ -5196,101 +4944,6 @@
             });
           
           weeklyLbData = leaderboard;
-          renderLeaderboard(period, leaderboard);
-          return;
-        }
-        
-        if (period === 'monthly') {
-          const now = new Date();
-          const targetMonth = new Date(now);
-          targetMonth.setMonth(now.getMonth() + (monthOffset || 0));
-          const startDateStr = formatDateForComparison(new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1));
-          const endDateStr = formatDateForComparison(new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0));
-          
-          const picksSnapshot = await db.collection('picks').get();
-          const datesInRange = new Set();
-          picksSnapshot.docs.forEach(doc => {
-            const d = doc.data().date;
-            if (d >= startDateStr && d <= endDateStr) datesInRange.add(d);
-          });
-          
-          const userScoresMap = {};
-          for (const date of datesInRange) {
-            const dailyScores = await calculateScoresForDate(date, null);
-            dailyScores.forEach(dayScore => {
-              if (!userScoresMap[dayScore.username]) {
-                userScoresMap[dayScore.username] = { username: dayScore.username, totalCorrect: 0, totalQuestions: 0, tbDiffs: [] };
-              }
-              userScoresMap[dayScore.username].totalCorrect += dayScore.correct;
-              userScoresMap[dayScore.username].totalQuestions += dayScore.total;
-              if (dayScore.tieBreakerDiff !== Infinity && dayScore.tieBreakerDiff !== null) {
-                userScoresMap[dayScore.username].tbDiffs.push(dayScore.tieBreakerDiff);
-              }
-            });
-          }
-          
-          const leaderboard = Object.values(userScoresMap)
-            .map(score => {
-              const avgTb = score.tbDiffs.length > 0 
-                ? (score.tbDiffs.reduce((a, b) => a + b, 0) / score.tbDiffs.length).toFixed(1)
-                : Infinity;
-              return {
-                username: score.username,
-                correct_count: score.totalCorrect,
-                total_count: score.totalQuestions,
-                percentage: score.totalQuestions > 0 ? ((score.totalCorrect / score.totalQuestions) * 100).toFixed(1) : 0,
-                tieBreakerDiff: avgTb
-              };
-            })
-            .sort((a, b) => {
-              if (b.correct_count !== a.correct_count) return b.correct_count - a.correct_count;
-              return a.tieBreakerDiff - b.tieBreakerDiff;
-            });
-          
-          monthlyLbData = leaderboard;
-          renderLeaderboard(period, leaderboard);
-          return;
-        }
-        
-        if (period === 'season') {
-          const picksSnapshot = await db.collection('picks').get();
-          const allDates = new Set();
-          picksSnapshot.docs.forEach(doc => allDates.add(doc.data().date));
-          
-          const userScoresMap = {};
-          for (const date of allDates) {
-            const dailyScores = await calculateScoresForDate(date, null);
-            dailyScores.forEach(dayScore => {
-              if (!userScoresMap[dayScore.username]) {
-                userScoresMap[dayScore.username] = { username: dayScore.username, totalCorrect: 0, totalQuestions: 0, tbDiffs: [] };
-              }
-              userScoresMap[dayScore.username].totalCorrect += dayScore.correct;
-              userScoresMap[dayScore.username].totalQuestions += dayScore.total;
-              if (dayScore.tieBreakerDiff !== Infinity && dayScore.tieBreakerDiff !== null) {
-                userScoresMap[dayScore.username].tbDiffs.push(dayScore.tieBreakerDiff);
-              }
-            });
-          }
-          
-          const leaderboard = Object.values(userScoresMap)
-            .map(score => {
-              const avgTb = score.tbDiffs.length > 0 
-                ? (score.tbDiffs.reduce((a, b) => a + b, 0) / score.tbDiffs.length).toFixed(1)
-                : Infinity;
-              return {
-                username: score.username,
-                correct_count: score.totalCorrect,
-                total_count: score.totalQuestions,
-                percentage: score.totalQuestions > 0 ? ((score.totalCorrect / score.totalQuestions) * 100).toFixed(1) : 0,
-                tieBreakerDiff: avgTb
-              };
-            })
-            .sort((a, b) => {
-              if (b.correct_count !== a.correct_count) return b.correct_count - a.correct_count;
-              return a.tieBreakerDiff - b.tieBreakerDiff;
-            });
-          
-          seasonLbData = leaderboard;
           renderLeaderboard(period, leaderboard);
           return;
         }
