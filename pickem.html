@@ -1854,11 +1854,11 @@
         document.getElementById('userBadge').style.color = '#92400e';
         document.getElementById('adminTabBtn').style.display = 'block';
         loadWinners();
-        loadOverrides();
       } else {
         document.getElementById('adminTabBtn').style.display = 'none';
       }
-      document.getElementById('pickWeekSection').style.display = 'block';
+      const pickWeekSection = document.getElementById('pickWeekSection');
+      if (pickWeekSection) pickWeekSection.style.display = 'block';
       
       const currentDate = formatDateForComparison(new Date());
       console.log(` User authenticated. Reloading questions for ${currentDate} to check submissions`);
@@ -3794,7 +3794,8 @@
         const questionsSnapshot = await db.collection('questions').where('date', '==', dateInput).get();
         if (questionsSnapshot.empty) {
           showMessage('No questions found for this date', 'error', 'submissionsMessage');
-          document.getElementById('responsesTable').style.display = 'none';
+          const responsesTable = document.getElementById('responsesTable');
+          if (responsesTable) responsesTable.style.display = 'none';
           document.getElementById('noResponsesMessage').style.display = 'block';
           return;
         }
@@ -3817,7 +3818,8 @@
         
         if (picksSnapshot.empty) {
           showMessage('No user responses for this date', 'info', 'submissionsMessage');
-          document.getElementById('responsesTable').style.display = 'none';
+          const responsesTable = document.getElementById('responsesTable');
+          if (responsesTable) responsesTable.style.display = 'none';
           document.getElementById('noResponsesMessage').style.display = 'block';
           return;
         }
@@ -3892,7 +3894,8 @@
       } catch (err) {
         console.error('Error loading responses:', err);
         showMessage('Error loading responses: ' + err.message, 'error', 'submissionsMessage');
-        document.getElementById('responsesTable').style.display = 'none';
+        const responsesTable = document.getElementById('responsesTable');
+        if (responsesTable) responsesTable.style.display = 'none';
         document.getElementById('noResponsesMessage').style.display = 'block';
       }
     }
@@ -4573,6 +4576,7 @@
 
     function renderMonthSlider() {
       const container = document.getElementById('monthPickerContainer');
+      if (!container) return;
       const now = new Date();
       const months = [];
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -4604,8 +4608,10 @@
         `;
       }).join('');
 
-      document.getElementById('prevMonthBtn').disabled = currentMonthOffset === 0;
-      document.getElementById('nextMonthBtn').disabled = currentMonthOffset >= months.length - MONTHS_TO_SHOW;
+      const prevMonthBtn = document.getElementById('prevMonthBtn');
+      const nextMonthBtn = document.getElementById('nextMonthBtn');
+      if (prevMonthBtn) prevMonthBtn.disabled = currentMonthOffset === 0;
+      if (nextMonthBtn) nextMonthBtn.disabled = currentMonthOffset >= months.length - MONTHS_TO_SHOW;
 
       container.querySelectorAll('.date-picker-btn').forEach(btn => {
         btn.addEventListener('click', () => {
