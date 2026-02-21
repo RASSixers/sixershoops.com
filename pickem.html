@@ -549,6 +549,7 @@
       font-size: 16px;
       transition: all .15s ease;
       width: 100%;
+      color: var(--ink);
     }
 
     .text-input:focus {
@@ -1961,7 +1962,18 @@
       selectedPickDate = currentDate;
       document.getElementById('pickDate').value = currentDate;
       renderDateSlider();
-      loadQuestionsForDate(currentDate);
+      loadQuestionsForDate(currentDate).then(() => {
+        // Retry if no questions were rendered (handles first-load race conditions)
+        setTimeout(() => {
+          const container = document.getElementById('questionsContainer');
+          const hasContent = container && container.querySelector('.question-card');
+          const isLoading = container && container.querySelector('.loading-state');
+          if (!hasContent && !isLoading) {
+            console.log(' Questions container empty after load — retrying...');
+            loadQuestionsForDate(selectedPickDate || currentDate);
+          }
+        }, 3000);
+      });
       
       loadPublicWinners();
       loadMvpOfTheWeek();
