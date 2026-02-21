@@ -3036,31 +3036,35 @@
       
       const now = getESTNow();
       const today = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      
-      if (date !== todayStr) return null;
-      
-      // Convert 12-hour format to 24-hour for calculation
+
+      // Build the lock datetime for the target date (not just today)
+      const [dateYear, dateMonth, dateDay] = date.split('-').map(Number);
       const time24 = convert12To24(lockTime);
-      const [lockHours, lockMinutes] = time24.split(':');
-      const lockDate = new Date(today);
-      lockDate.setHours(parseInt(lockHours), parseInt(lockMinutes), 0);
+      const [lockHours, lockMinutes] = time24.split(':').map(Number);
       
+      // Construct the lock moment in EST by using the target date's components
+      const lockDate = new Date(today);
+      lockDate.setFullYear(dateYear, dateMonth - 1, dateDay);
+      lockDate.setHours(lockHours, lockMinutes, 0, 0);
+
       if (now >= lockDate) return 0; // Already locked
       
       const diff = lockDate - now;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const secs = Math.floor((diff % (1000 * 60)) / 1000);
       
-      return { hours, mins, secs, diff };
+      return { days, hours, mins, secs, diff };
     }
 
     // Format countdown timer display
     function formatCountdown(timeObj) {
       if (!timeObj) return '';
-      const { hours, mins, secs } = timeObj;
-      if (hours > 0) {
+      const { days, hours, mins, secs } = timeObj;
+      if (days > 0) {
+        return `${days}d ${hours}h ${mins}m`;
+      } else if (hours > 0) {
         return `${hours}h ${mins}m ${secs}s`;
       } else if (mins > 0) {
         return `${mins}m ${secs}s`;
@@ -3341,21 +3345,30 @@
           if (timeUntil && timeUntil.diff > 0) {
             document.getElementById('lockTimeStatus').style.display = 'none';
             document.getElementById('countdownTimer').style.display = 'block';
-            document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(timeUntil)})`;
+
+            const isFutureDate = timeUntil.days > 0;
+            if (isFutureDate) {
+              // Future date: show static lock time info (no ticking countdown)
+              document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(timeUntil)} away)`;
+              clearInterval(window.countdownInterval);
+            } else {
+              // Today: show live ticking countdown
+              document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(timeUntil)})`;
+              clearInterval(window.countdownInterval);
+              window.countdownInterval = setInterval(() => {
+                const updated = getTimeUntilLock(date, lockTime);
+                if (updated && updated.diff > 0) {
+                  document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(updated)})`;
+                } else {
+                  checkAndDisplayLockStatus(date);
+                }
+              }, 1000);
+            }
+
             if (!hasSubmitted) {
               document.getElementById('submitBtn').disabled = false;
               document.getElementById('submitBtn').textContent = 'Submit Picks';
             }
-
-            clearInterval(window.countdownInterval);
-            window.countdownInterval = setInterval(() => {
-              const updated = getTimeUntilLock(date, lockTime);
-              if (updated && updated.diff > 0) {
-                document.getElementById('countdownText').textContent = `Submissions close at ${lockTime} EST (${formatCountdown(updated)})`;
-              } else {
-                checkAndDisplayLockStatus(date);
-              }
-            }, 1000);
           } else {
             document.getElementById('lockTimeStatus').style.display = 'none';
             document.getElementById('countdownTimer').style.display = 'none';
