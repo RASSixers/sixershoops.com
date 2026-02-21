@@ -202,6 +202,27 @@
       margin-bottom: 1rem;
     }
 
+    /* Inline card editing (admin only) */
+    .info-card.editable-card { position: relative; }
+    .info-card.editable-card:hover { outline: 2px dashed var(--brand); outline-offset: 3px; }
+    .card-edit-btn {
+      position: absolute; top: 12px; right: 12px;
+      background: var(--brand); color: white; border: none;
+      border-radius: 8px; padding: 5px 12px; font-size: 11px;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      cursor: pointer; opacity: 0; transition: opacity 0.2s; z-index: 10;
+    }
+    .info-card.editable-card:hover .card-edit-btn,
+    .info-card.editing-active .card-edit-btn { opacity: 1; }
+    .info-card.editing-active { outline: 2px solid var(--brand) !important; outline-offset: 3px; }
+    .card-edit-toolbar {
+      display: none; gap: 8px; margin-top: 1rem;
+      padding-top: 1rem; border-top: 1px solid var(--border);
+    }
+    .info-card.editing-active .card-edit-toolbar { display: flex; align-items: center; }
+    [contenteditable="true"] { outline: none; cursor: text; }
+    [contenteditable="true"]:focus { background: rgba(0,61,166,0.02); border-radius: 4px; }
+
     /* Auth Section */
     .auth-section {
       max-width: 600px;
@@ -1187,7 +1208,7 @@
 
       <section class="info-section">
         <!-- Key Information Card -->
-        <div class="info-card key-info">
+        <div class="info-card key-info" id="keyInfoCard">
           <div class="info-content" id="keyInfoContent">
             <h2>Key Information</h2>
             <ul>
@@ -1197,10 +1218,15 @@
               <li>Weekly leaderboards are now based on the week number assigned to each question</li>
             </ul>
           </div>
+          <div class="card-edit-toolbar">
+            <button class="btn btn-primary" style="padding:8px 20px;font-size:12px;" onclick="saveCardInline('keyInfo')">Save</button>
+            <button class="btn btn-secondary" style="padding:8px 20px;font-size:12px;" onclick="cancelCardEdit('keyInfoCard','keyInfoContent')">Cancel</button>
+            <span id="keyInfoSaveMsg" style="font-size:12px;font-weight:700;color:var(--success);margin-left:8px;"></span>
+          </div>
         </div>
 
         <!-- Version & Updates Card -->
-        <div class="info-card updates">
+        <div class="info-card updates" id="whatsNewCard">
           <div class="info-content" id="whatsNewContent">
             <h2>What's New</h2>
             <div class="version-badge">V1.02</div>
@@ -1211,15 +1237,25 @@
               <li>Fixed some page styling</li>
             </ul>
           </div>
+          <div class="card-edit-toolbar">
+            <button class="btn btn-primary" style="padding:8px 20px;font-size:12px;" onclick="saveCardInline('whatsNew')">Save</button>
+            <button class="btn btn-secondary" style="padding:8px 20px;font-size:12px;" onclick="cancelCardEdit('whatsNewCard','whatsNewContent')">Cancel</button>
+            <span id="whatsNewSaveMsg" style="font-size:12px;font-weight:700;color:var(--success);margin-left:8px;"></span>
+          </div>
         </div>
 
         <!-- Schedule Card -->
-        <div class="info-card schedule">
+        <div class="info-card schedule" id="scheduleCard">
           <div class="info-content" id="scheduleContent">
             <h2>Schedule</h2>
             <ul>
               <li>Check back for upcoming pick dates</li>
             </ul>
+          </div>
+          <div class="card-edit-toolbar">
+            <button class="btn btn-primary" style="padding:8px 20px;font-size:12px;" onclick="saveCardInline('schedule')">Save</button>
+            <button class="btn btn-secondary" style="padding:8px 20px;font-size:12px;" onclick="cancelCardEdit('scheduleCard','scheduleContent')">Cancel</button>
+            <span id="scheduleSaveMsg" style="font-size:12px;font-weight:700;color:var(--success);margin-left:8px;"></span>
           </div>
         </div>
       </section>
@@ -1772,41 +1808,7 @@
           <!-- Info Cards Editor -->
           <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
           <h2>Edit Info Cards</h2>
-          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Edit the three cards shown at the top of the page. One bullet point per line.</p>
-          <div id="infoCardsMessage" class="message"></div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="admin-form" style="margin-bottom: 0;">
-              <h3 style="margin-top: 0; color: var(--brand);">Key Information</h3>
-              <div class="form-group">
-                <label class="form-label">Bullet Points (one per line)</label>
-                <textarea id="keyInfoBullets" class="form-input" rows="8" style="resize: vertical; font-size: 14px; line-height: 1.6;" placeholder="Enter each bullet point on its own line"></textarea>
-              </div>
-              <button class="btn btn-primary" id="saveKeyInfoBtn" style="width: 100%;">Save</button>
-            </div>
-
-            <div class="admin-form" style="margin-bottom: 0;">
-              <h3 style="margin-top: 0; color: #10b981;">What's New</h3>
-              <div class="form-group">
-                <label class="form-label">Version Badge</label>
-                <input type="text" id="whatsNewVersion" class="form-input" placeholder="e.g. V1.03" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Bullet Points (one per line)</label>
-                <textarea id="whatsNewBullets" class="form-input" rows="6" style="resize: vertical; font-size: 14px; line-height: 1.6;" placeholder="Enter each update on its own line"></textarea>
-              </div>
-              <button class="btn btn-primary" id="saveWhatsNewBtn" style="width: 100%;">Save</button>
-            </div>
-
-            <div class="admin-form" style="margin-bottom: 0;">
-              <h3 style="margin-top: 0; color: #d97706;">Schedule</h3>
-              <div class="form-group">
-                <label class="form-label">Bullet Points (one per line)</label>
-                <textarea id="scheduleBullets" class="form-input" rows="8" style="resize: vertical; font-size: 14px; line-height: 1.6;" placeholder="e.g. Week 3 picks go live Monday 7PM"></textarea>
-              </div>
-              <button class="btn btn-primary" id="saveScheduleCardBtn" style="width: 100%;">Save</button>
-            </div>
-          </div>
+          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0;">Hover over any of the three cards at the top of the page and click <strong>✏ Edit</strong> to edit directly. Click <strong>Save</strong> when done.</p>
 
         </div>
       </div>
@@ -5250,76 +5252,125 @@
     });
 
     // === Info Cards (Key Information, What's New, Schedule) ===
-    const INFO_DEFAULTS = {
-      keyInfo:  { bullets: ['If a pickem does not show up right away, click the box for the pickem date and it should load', 'When pickems lock for the day, the page will automatically prevent submissions - no refresh needed!', 'For the leaderboard, your email will NOT show, only the username you choose', 'Weekly leaderboards are now based on the week number assigned to each question'] },
-      whatsNew: { version: 'V1.02', bullets: ['Pickems are now scheduled to go live', 'Minor leaderboard bug fixes', 'Fixed some page styling'] },
-      schedule: { bullets: ['Check back for upcoming pick dates'] }
+    // ── Info Card defaults (used only if nothing is in Firestore yet) ──
+    const INFO_DEFAULT_HTML = {
+      keyInfo:  '<h2>Key Information</h2><ul><li>If a pickem does not show up right away, click the box for the pickem date and it should load</li><li>When pickems lock for the day, the page will automatically prevent submissions - no refresh needed!</li><li>For the leaderboard, your email will NOT show, only the username you choose</li><li>Weekly leaderboards are now based on the week number assigned to each question</li></ul>',
+      whatsNew: '<h2>What\'s New</h2><div class="version-badge">V1.02</div><p style="margin-bottom:1.25rem;font-weight:700;color:var(--ink);">Latest Updates</p><ul><li>Pickems are now scheduled to go live</li><li>Minor leaderboard bug fixes</li><li>Fixed some page styling</li></ul>',
+      schedule: '<h2>Schedule</h2><ul><li>Check back for upcoming pick dates</li></ul>'
     };
+
+    // Store originals for cancel
+    const _cardOriginals = {};
 
     async function loadInfoCards() {
       try {
         const snap = await db.collection('siteContent').doc('infoCards').get();
         const data = snap.exists ? snap.data() : {};
-        const keyBullets = data.keyInfo?.bullets   ?? INFO_DEFAULTS.keyInfo.bullets;
-        const version    = data.whatsNew?.version  ?? INFO_DEFAULTS.whatsNew.version;
-        const newBullets = data.whatsNew?.bullets  ?? INFO_DEFAULTS.whatsNew.bullets;
-        const schBullets = data.schedule?.bullets  ?? INFO_DEFAULTS.schedule.bullets;
 
-        const keyEl = document.getElementById('keyInfoContent');
-        if (keyEl) keyEl.innerHTML = `<h2>Key Information</h2><ul>${keyBullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
-
-        const newEl = document.getElementById('whatsNewContent');
-        if (newEl) newEl.innerHTML = `<h2>What's New</h2><div class="version-badge">${version}</div><p style="margin-bottom:1.25rem;font-weight:700;color:var(--ink);">Latest Updates</p><ul>${newBullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
-
-        const schEl = document.getElementById('scheduleContent');
-        if (schEl) schEl.innerHTML = `<h2>Schedule</h2><ul>${schBullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
-
-        if (isCurrentUserAdmin) {
-          const ki = document.getElementById('keyInfoBullets');
-          const wv = document.getElementById('whatsNewVersion');
-          const wb = document.getElementById('whatsNewBullets');
-          const sb = document.getElementById('scheduleBullets');
-          if (ki) ki.value = keyBullets.join('\n');
-          if (wv) wv.value = version;
-          if (wb) wb.value = newBullets.join('\n');
-          if (sb) sb.value = schBullets.join('\n');
+        // For each card: prefer the new html field, fall back to building from old bullets array, then fall back to hardcoded default
+        function resolveHtml(key) {
+          const d = data[key];
+          if (!d) return INFO_DEFAULT_HTML[key];
+          // New format: html field saved directly
+          if (d.html) return d.html;
+          // Old format: bullets array
+          if (key === 'whatsNew' && d.bullets) {
+            const version = d.version ?? 'V1.02';
+            return `<h2>What's New</h2><div class="version-badge">${version}</div><p style="margin-bottom:1.25rem;font-weight:700;color:var(--ink);">Latest Updates</p><ul>${d.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
+          }
+          if (d.bullets) {
+            const title = key === 'keyInfo' ? 'Key Information' : 'Schedule';
+            return `<h2>${title}</h2><ul>${d.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
+          }
+          return INFO_DEFAULT_HTML[key];
         }
+
+        ['keyInfo','whatsNew','schedule'].forEach(key => {
+          const elId = key === 'keyInfo' ? 'keyInfoContent' : key === 'whatsNew' ? 'whatsNewContent' : 'scheduleContent';
+          const el = document.getElementById(elId);
+          if (!el) return;
+          const html = resolveHtml(key);
+          el.innerHTML = html;
+          _cardOriginals[key] = html;
+        });
+
+        if (isCurrentUserAdmin) enableCardEditing();
       } catch (err) { console.error('Error loading info cards:', err); }
     }
 
-    async function saveInfoCard(card) {
-      if (!checkAdminPermission()) return;
-      try {
-        let updateData = {};
-        if (card === 'keyInfo') {
-          const bullets = document.getElementById('keyInfoBullets').value.split('\n').map(l=>l.trim()).filter(Boolean);
-          if (!bullets.length) { showMessage('Enter at least one bullet.', 'error', 'infoCardsMessage'); return; }
-          updateData = { 'keyInfo.bullets': bullets };
-        } else if (card === 'whatsNew') {
-          const version = document.getElementById('whatsNewVersion').value.trim();
-          const bullets = document.getElementById('whatsNewBullets').value.split('\n').map(l=>l.trim()).filter(Boolean);
-          if (!version)       { showMessage('Enter a version badge.', 'error', 'infoCardsMessage'); return; }
-          if (!bullets.length){ showMessage('Enter at least one bullet.', 'error', 'infoCardsMessage'); return; }
-          updateData = { 'whatsNew.version': version, 'whatsNew.bullets': bullets };
-        } else if (card === 'schedule') {
-          const bullets = document.getElementById('scheduleBullets').value.split('\n').map(l=>l.trim()).filter(Boolean);
-          if (!bullets.length) { showMessage('Enter at least one bullet.', 'error', 'infoCardsMessage'); return; }
-          updateData = { 'schedule.bullets': bullets };
-        }
-        await db.collection('siteContent').doc('infoCards').set(updateData, { merge: true });
-        showMessage('Saved.', 'success', 'infoCardsMessage');
-        loadInfoCards();
-      } catch (err) {
-        showMessage('Error: ' + err.message, 'error', 'infoCardsMessage');
-      }
+    function enableCardEditing() {
+      // Avoid adding duplicate edit buttons on re-calls
+      if (document.querySelector('.card-edit-btn')) return;
+      [
+        { cardId: 'keyInfoCard',   contentId: 'keyInfoContent',   key: 'keyInfo'  },
+        { cardId: 'whatsNewCard',  contentId: 'whatsNewContent',  key: 'whatsNew' },
+        { cardId: 'scheduleCard',  contentId: 'scheduleContent',  key: 'schedule' },
+      ].forEach(({ cardId, contentId, key }) => {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        card.classList.add('editable-card');
+        const btn = document.createElement('button');
+        btn.className = 'card-edit-btn';
+        btn.textContent = '✏ Edit';
+        btn.onclick = () => startCardEdit(cardId, contentId, key);
+        card.insertBefore(btn, card.firstChild);
+      });
     }
 
-    const saveKeyInfoBtn    = document.getElementById('saveKeyInfoBtn');
-    const saveWhatsNewBtn   = document.getElementById('saveWhatsNewBtn');
-    const saveScheduleCardBtn = document.getElementById('saveScheduleCardBtn');
-    if (saveKeyInfoBtn)     saveKeyInfoBtn.addEventListener('click',     () => saveInfoCard('keyInfo'));
-    if (saveWhatsNewBtn)    saveWhatsNewBtn.addEventListener('click',    () => saveInfoCard('whatsNew'));
-    if (saveScheduleCardBtn)saveScheduleCardBtn.addEventListener('click',() => saveInfoCard('schedule'));
+    function startCardEdit(cardId, contentId, key) {
+      const card    = document.getElementById(cardId);
+      const content = document.getElementById(contentId);
+      if (!card || !content) return;
+      _cardOriginals[key] = content.innerHTML;
+      card.classList.add('editing-active');
+      content.contentEditable = 'true';
+      content.focus();
+    }
+
+    window.cancelCardEdit = function(cardId, contentId) {
+      const card    = document.getElementById(cardId);
+      const content = document.getElementById(contentId);
+      if (!card || !content) return;
+      card.classList.remove('editing-active');
+      content.contentEditable = 'false';
+      const key = contentId.replace('Content', '');
+      if (_cardOriginals[key] !== undefined) content.innerHTML = _cardOriginals[key];
+    };
+
+    window.saveCardInline = async function(key) {
+      if (!checkAdminPermission()) return;
+      const contentId = key === 'keyInfo' ? 'keyInfoContent' : key === 'whatsNew' ? 'whatsNewContent' : 'scheduleContent';
+      const cardId    = key === 'keyInfo' ? 'keyInfoCard'    : key === 'whatsNew' ? 'whatsNewCard'    : 'scheduleCard';
+      const msgId     = key === 'keyInfo' ? 'keyInfoSaveMsg' : key === 'whatsNew' ? 'whatsNewSaveMsg' : 'scheduleSaveMsg';
+      const content   = document.getElementById(contentId);
+      const cardEl    = document.getElementById(cardId);
+      const msgEl     = document.getElementById(msgId);
+      if (!content) return;
+
+      const html = content.innerHTML;
+
+      try {
+        // Save the html directly — no bullets arrays, no complex parsing
+        await db.collection('siteContent').doc('infoCards').set(
+          { [key]: { html } },
+          { merge: true }
+        );
+        _cardOriginals[key] = html;
+        cardEl.classList.remove('editing-active');
+        content.contentEditable = 'false';
+        if (msgEl) {
+          msgEl.textContent = '✓ Saved!';
+          setTimeout(() => { msgEl.textContent = ''; }, 2500);
+        }
+      } catch (err) {
+        console.error('Error saving card:', err);
+        if (msgEl) {
+          msgEl.style.color = 'var(--error)';
+          msgEl.textContent = 'Error — try again';
+          setTimeout(() => { msgEl.textContent = ''; msgEl.style.color = 'var(--success)'; }, 3000);
+        }
+      }
+    };
   </script>
 </body>
 </html>
