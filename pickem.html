@@ -76,33 +76,15 @@
 
     .info-section {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
       margin-bottom: 3rem;
-    }
-
-    @media (max-width: 1024px) {
-      .info-section {
-        grid-template-columns: 1fr 1fr;
-      }
     }
 
     @media (max-width: 768px) {
       .info-section {
         grid-template-columns: 1fr;
       }
-    }
-
-    .info-card.schedule {
-      border-left: 6px solid #f59e0b;
-    }
-
-    .info-card.schedule h2 {
-      color: #d97706;
-    }
-
-    .info-card.schedule li::before {
-      color: #f59e0b;
     }
 
     .info-card {
@@ -1254,7 +1236,7 @@
       <section class="info-section">
         <!-- Key Information Card -->
         <div class="info-card key-info">
-          <div class="info-content" id="keyInfoContent">
+          <div class="info-content">
             <h2>Key Information</h2>
             <ul>
               <li>If a pickem does not show up right away, click the box for the pickem date and it should load</li>
@@ -1267,7 +1249,7 @@
 
         <!-- Version & Updates Card -->
         <div class="info-card updates">
-          <div class="info-content" id="whatsNewContent">
+          <div class="info-content">
             <h2>What's New</h2>
             <div class="version-badge">V1.02</div>
             <p style="margin-bottom: 1.25rem; font-weight: 700; color: var(--ink);">Latest Updates</p>
@@ -1275,16 +1257,6 @@
               <li>Pickems are now scheduled to go live</li>
               <li>Minor leaderboard bug fixes</li>
               <li>Fixed some page styling</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Schedule Card -->
-        <div class="info-card schedule">
-          <div class="info-content" id="scheduleContent">
-            <h2>Schedule</h2>
-            <ul>
-              <li>Check back for upcoming pick dates</li>
             </ul>
           </div>
         </div>
@@ -1470,6 +1442,18 @@
               </div>
               <div class="admin-form">
                 <h3 style="margin-top: 0;">Add New Question</h3>
+
+                <div class="form-group">
+                  <label class="form-label">Quick Presets</label>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                    <button type="button" class="preset-btn" data-question="Who will win?">Who will win?</button>
+                    <button type="button" class="preset-btn" data-question="Will there be overtime?">Will there be overtime?</button>
+                    <button type="button" class="preset-btn" data-question="Who will score first?">Who will score first?</button>
+                    <button type="button" class="preset-btn" data-question="Who will have more points?">Who will have more points?</button>
+                    <button type="button" class="preset-btn" data-question="Who will have more assists?">Who will have more assists?</button>
+                    <button type="button" class="preset-btn" data-question="Who will have more rebounds?">Who will have more rebounds?</button>
+                  </div>
+                </div>
                 
                 <div class="form-group">
                   <label class="form-label">Question Text</label>
@@ -1488,26 +1472,6 @@
                 <div class="form-group" id="optionsGroup" style="display: none;">
                   <label class="form-label">Options (comma separated)</label>
                   <input type="text" id="adminOptions" class="form-input" placeholder="e.g., Option 1, Option 2, Option 3" />
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                  <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Week Number (Optional)</label>
-                    <input type="number" id="adminQuestionWeek" class="form-input" placeholder="e.g., 1" min="1" />
-                  </div>
-                  <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Day of Week (Optional)</label>
-                    <select id="adminQuestionDay" class="form-input">
-                      <option value="">-- Select Day --</option>
-                      <option value="MON">Monday</option>
-                      <option value="TUE">Tuesday</option>
-                      <option value="WED">Wednesday</option>
-                      <option value="THU">Thursday</option>
-                      <option value="FRI">Friday</option>
-                      <option value="SAT">Saturday</option>
-                      <option value="SUN">Sunday</option>
-                    </select>
-                  </div>
                 </div>
 
                 <div class="form-group">
@@ -1852,51 +1816,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Info Cards Editor -->
-          <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
-          <h2>Edit Info Cards</h2>
-          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Edit the three cards shown at the top of the page. Enter one bullet point per line.</p>
-          <div id="infoCardsMessage" class="message"></div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-
-            <!-- Key Information editor -->
-            <div class="admin-form" style="margin-bottom: 0;">
-              <h3 style="margin-top: 0; color: var(--brand);">Key Information</h3>
-              <div class="form-group">
-                <label class="form-label">Bullet Points (one per line)</label>
-                <textarea id="keyInfoBullets" class="form-input" rows="8" style="resize: vertical; font-size: 14px; font-weight: 500; line-height: 1.6;" placeholder="Enter each bullet point on its own line"></textarea>
-              </div>
-              <button class="btn btn-primary" id="saveKeyInfoBtn" style="width: 100%;">Save</button>
-            </div>
-
-            <!-- What's New editor -->
-            <div class="admin-form" style="margin-bottom: 0;">
-              <h3 style="margin-top: 0; color: #10b981;">What's New</h3>
-              <div class="form-group">
-                <label class="form-label">Version Badge</label>
-                <input type="text" id="whatsNewVersion" class="form-input" placeholder="e.g. V1.03" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Bullet Points (one per line)</label>
-                <textarea id="whatsNewBullets" class="form-input" rows="6" style="resize: vertical; font-size: 14px; font-weight: 500; line-height: 1.6;" placeholder="Enter each update on its own line"></textarea>
-              </div>
-              <button class="btn btn-primary" id="saveWhatsNewBtn" style="width: 100%;">Save</button>
-            </div>
-
-            <!-- Schedule editor -->
-            <div class="admin-form" style="margin-bottom: 0;">
-              <h3 style="margin-top: 0; color: #d97706;">Schedule</h3>
-              <div class="form-group">
-                <label class="form-label">Bullet Points (one per line)</label>
-                <textarea id="scheduleBullets" class="form-input" rows="8" style="resize: vertical; font-size: 14px; font-weight: 500; line-height: 1.6;" placeholder="e.g. Week 3 picks go live Monday 7PM"></textarea>
-              </div>
-              <button class="btn btn-primary" id="saveScheduleCardBtn" style="width: 100%;">Save</button>
-            </div>
-
-          </div>
-
         </div>
       </div>
     </div>
@@ -1989,7 +1908,6 @@
       
       loadPublicWinners();
       loadMvpOfTheWeek();
-      loadInfoCards();
       
       loadWeeks().then(() => {
         console.log('⏰ Weeks loaded, initializing leaderboard pickers');
@@ -2347,8 +2265,6 @@
       const text = document.getElementById('adminQuestionText').value.trim();
       const type = document.getElementById('adminQuestionType').value;
       const options = document.getElementById('adminOptions').value.trim();
-      const weekNumber = document.getElementById('adminQuestionWeek').value.trim();
-      const dayOfWeek = document.getElementById('adminQuestionDay').value.trim();
       const isTieBreaker = document.getElementById('adminIsTieBreaker').checked;
 
       if (!text) {
@@ -2365,8 +2281,8 @@
         question: text,
         question_type: type,
         options: type === 'multiple_choice' ? options : null,
-        weekNumber: weekNumber ? parseInt(weekNumber) : null,
-        dayOfWeek: dayOfWeek || null,
+        weekNumber: null,
+        dayOfWeek: null,
         isTieBreaker: isTieBreaker,
         tempId: Date.now()
       };
@@ -2378,12 +2294,18 @@
       document.getElementById('adminQuestionText').value = '';
       document.getElementById('adminOptions').value = '';
       document.getElementById('adminQuestionType').value = 'multiple_choice';
-      document.getElementById('adminQuestionWeek').value = '';
-      document.getElementById('adminQuestionDay').value = '';
       document.getElementById('adminIsTieBreaker').checked = false;
       document.getElementById('optionsGroup').style.display = 'block';
       
       showMessage('Question added! Click "Save All to Database" when done.', 'success', 'adminMessage');
+    });
+
+    // Preset buttons — click to populate the question text field
+    document.querySelectorAll('.admin-form .preset-btn[data-question]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('adminQuestionText').value = btn.dataset.question;
+        document.getElementById('adminQuestionText').focus();
+      });
     });
 
     // Delete question from admin list
@@ -4521,14 +4443,16 @@
       }
     });
 
-    // Initialize date slider on page load (questions load properly once auth resolves via showApp)
+    // Initialize date slider using timezone-safe formatting
     const todayForInit = new Date();
     const todayFormatted = formatDateForComparison(todayForInit);
+    console.log(`🚀 PAGE INITIALIZATION: Loading picks for today: ${todayFormatted}`);
     document.getElementById('pickDate').value = todayFormatted;
+    // Start offset so today is visible (PAST_DAYS ensures today is at position PAST_DAYS in the array)
     currentDateOffset = PAST_DAYS;
     renderDateSlider();
-    // Do NOT call loadQuestionsForDate here — showApp() does it after auth is confirmed,
-    // which prevents the race condition where questions fail to load on first login.
+    console.log(`📅 Date slider rendered. Loading questions for: ${todayFormatted}`);
+    loadQuestionsForDate(todayFormatted);
 
     // === Daily Leaderboard Date Picker ===
     let currentDailyDateOffset = 0;
@@ -5333,107 +5257,6 @@
         console.error('❌ Error rendering month slider:', err);
       }
     }
-
-    // === Info Cards (Key Information, What's New, Schedule) ===
-    const INFO_DEFAULTS = {
-      keyInfo: {
-        bullets: [
-          'If a pickem does not show up right away, click the box for the pickem date and it should load',
-          'When pickems lock for the day, the page will automatically prevent submissions - no refresh needed!',
-          'For the leaderboard, your email will NOT show, only the username you choose',
-          'Weekly leaderboards are now based on the week number assigned to each question'
-        ]
-      },
-      whatsNew: {
-        version: 'V1.02',
-        bullets: [
-          'Pickems are now scheduled to go live',
-          'Minor leaderboard bug fixes',
-          'Fixed some page styling'
-        ]
-      },
-      schedule: {
-        bullets: [
-          'Check back for upcoming pick dates'
-        ]
-      }
-    };
-
-    async function loadInfoCards() {
-      try {
-        const snap = await db.collection('siteContent').doc('infoCards').get();
-        const data = snap.exists ? snap.data() : {};
-
-        const keyBullets   = data.keyInfo?.bullets   ?? INFO_DEFAULTS.keyInfo.bullets;
-        const version      = data.whatsNew?.version  ?? INFO_DEFAULTS.whatsNew.version;
-        const newBullets   = data.whatsNew?.bullets  ?? INFO_DEFAULTS.whatsNew.bullets;
-        const schBullets   = data.schedule?.bullets  ?? INFO_DEFAULTS.schedule.bullets;
-
-        const keyEl = document.getElementById('keyInfoContent');
-        if (keyEl) keyEl.innerHTML = `<h2>Key Information</h2><ul>${keyBullets.map(b => `<li>${b}</li>`).join('')}</ul>`;
-
-        const newEl = document.getElementById('whatsNewContent');
-        if (newEl) newEl.innerHTML = `
-          <h2>What's New</h2>
-          <div class="version-badge">${version}</div>
-          <p style="margin-bottom:1.25rem;font-weight:700;color:var(--ink);">Latest Updates</p>
-          <ul>${newBullets.map(b => `<li>${b}</li>`).join('')}</ul>`;
-
-        const schEl = document.getElementById('scheduleContent');
-        if (schEl) schEl.innerHTML = `<h2>Schedule</h2><ul>${schBullets.map(b => `<li>${b}</li>`).join('')}</ul>`;
-
-        // Populate admin editor fields
-        if (isCurrentUserAdmin) {
-          const ki = document.getElementById('keyInfoBullets');
-          const wv = document.getElementById('whatsNewVersion');
-          const wb = document.getElementById('whatsNewBullets');
-          const sb = document.getElementById('scheduleBullets');
-          if (ki) ki.value = keyBullets.join('\n');
-          if (wv) wv.value = version;
-          if (wb) wb.value = newBullets.join('\n');
-          if (sb) sb.value = schBullets.join('\n');
-        }
-      } catch (err) {
-        console.error('Error loading info cards:', err);
-      }
-    }
-
-    async function saveInfoCard(card) {
-      if (!checkAdminPermission()) return;
-      try {
-        let updateData = {};
-        if (card === 'keyInfo') {
-          const bullets = document.getElementById('keyInfoBullets').value.split('\n').map(l => l.trim()).filter(Boolean);
-          if (!bullets.length) { showMessage('Enter at least one bullet point.', 'error', 'infoCardsMessage'); return; }
-          updateData = { 'keyInfo.bullets': bullets };
-        } else if (card === 'whatsNew') {
-          const version = document.getElementById('whatsNewVersion').value.trim();
-          const bullets = document.getElementById('whatsNewBullets').value.split('\n').map(l => l.trim()).filter(Boolean);
-          if (!version) { showMessage('Enter a version badge.', 'error', 'infoCardsMessage'); return; }
-          if (!bullets.length) { showMessage('Enter at least one bullet point.', 'error', 'infoCardsMessage'); return; }
-          updateData = { 'whatsNew.version': version, 'whatsNew.bullets': bullets };
-        } else if (card === 'schedule') {
-          const bullets = document.getElementById('scheduleBullets').value.split('\n').map(l => l.trim()).filter(Boolean);
-          if (!bullets.length) { showMessage('Enter at least one bullet point.', 'error', 'infoCardsMessage'); return; }
-          updateData = { 'schedule.bullets': bullets };
-        }
-        await db.collection('siteContent').doc('infoCards').set(updateData, { merge: true });
-        showMessage('Saved successfully.', 'success', 'infoCardsMessage');
-        loadInfoCards();
-      } catch (err) {
-        console.error('Error saving info card:', err);
-        showMessage('Error saving: ' + err.message, 'error', 'infoCardsMessage');
-      }
-    }
-
-    const saveKeyInfoBtn = document.getElementById('saveKeyInfoBtn');
-    if (saveKeyInfoBtn) saveKeyInfoBtn.addEventListener('click', () => saveInfoCard('keyInfo'));
-
-    const saveWhatsNewBtn = document.getElementById('saveWhatsNewBtn');
-    if (saveWhatsNewBtn) saveWhatsNewBtn.addEventListener('click', () => saveInfoCard('whatsNew'));
-
-    const saveScheduleCardBtn = document.getElementById('saveScheduleCardBtn');
-    if (saveScheduleCardBtn) saveScheduleCardBtn.addEventListener('click', () => saveInfoCard('schedule'));
   </script>
 </body>
 </html>
