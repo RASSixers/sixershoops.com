@@ -1955,25 +1955,15 @@
       } else {
         document.getElementById('adminTabBtn').style.display = 'none';
       }
-      document.getElementById('pickWeekSection').style.display = 'block';
+      const pickWeekSection = document.getElementById('pickWeekSection');
+      if (pickWeekSection) pickWeekSection.style.display = 'block';
       
       const currentDate = formatDateForComparison(new Date());
       console.log(` User authenticated. Reloading questions for ${currentDate} to check submissions`);
       selectedPickDate = currentDate;
       document.getElementById('pickDate').value = currentDate;
       renderDateSlider();
-      loadQuestionsForDate(currentDate).then(() => {
-        // Retry if no questions were rendered (handles first-load race conditions)
-        setTimeout(() => {
-          const container = document.getElementById('questionsContainer');
-          const hasContent = container && container.querySelector('.question-card');
-          const isLoading = container && container.querySelector('.loading-state');
-          if (!hasContent && !isLoading) {
-            console.log(' Questions container empty after load — retrying...');
-            loadQuestionsForDate(selectedPickDate || currentDate);
-          }
-        }, 3000);
-      });
+      loadQuestionsForDate(currentDate);
       
       loadPublicWinners();
       loadMvpOfTheWeek();
