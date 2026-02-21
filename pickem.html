@@ -4596,84 +4596,44 @@
     document.getElementById('dailyLbDate').value = todayForDailyLb;
     currentDailyDateOffset = PAST_DAYS;
 
-    // Cache of week schedules loaded from Firestore
-    let cachedWeekSchedules = [];
-
-    async function loadWeekSchedulesForSlider() {
-      try {
-        const snap = await db.collection('weekSchedules').orderBy('weekNumber', 'asc').get();
-        cachedWeekSchedules = snap.docs.map(doc => {
-          const d = doc.data();
-          return { weekNumber: d.weekNumber, startDate: d.startDate, endDate: d.endDate };
-        });
-      } catch (err) {
-        console.error('Error loading week schedules for slider:', err);
-        cachedWeekSchedules = [];
-      }
-    }
-
-    function getCurrentWeekNumber() {
-      const today = formatDateForComparison(new Date());
-      // Find a week whose date range contains today
-      const current = cachedWeekSchedules.find(w => today >= w.startDate && today <= w.endDate);
-      if (current) return current.weekNumber;
-      // If today is past all scheduled weeks, return the last week's number
-      if (cachedWeekSchedules.length > 0) {
-        const sorted = [...cachedWeekSchedules].sort((a, b) => a.weekNumber - b.weekNumber);
-        const past = sorted.filter(w => today > w.endDate);
-        if (past.length > 0) return past[past.length - 1].weekNumber;
-        // Today is before all weeks start — return the first one
-        return sorted[0].weekNumber;
-      }
-      return null;
-    }
-
-    async function renderWeekSlider() {
+    function renderWeekSlider() {
+      console.log(' renderWeekSlider called');
       const container = document.getElementById('weekPickerContainer');
-      if (!container) return;
-
-      // Load schedules if not yet cached
-      if (cachedWeekSchedules.length === 0) {
-        await loadWeekSchedulesForSlider();
-      }
-
-      const weeks = cachedWeekSchedules;
-
-      if (weeks.length === 0) {
-        container.innerHTML = '<p style="color:var(--muted); font-size:0.85rem; padding: 0.5rem;">No weeks scheduled yet.</p>';
-        document.getElementById('prevWeekBtn').style.display = 'none';
-        document.getElementById('nextWeekBtn').style.display = 'none';
+      if (!container) {
+        console.error(' weekPickerContainer not found!');
         return;
       }
-
-      // Auto-select the current week on first load
-      if (selectedWeek === null) {
-        selectedWeek = getCurrentWeekNumber();
+      
+      const weeks = [];
+      for (let i = 1; i <= 20; i++) {
+        weeks.push({
+          value: i,
+          label: `Week ${i}`
+        });
       }
 
-      // Scroll the offset so the selected week is visible
-      const selectedIdx = weeks.findIndex(w => w.weekNumber === selectedWeek);
-      if (selectedIdx >= 0 && (selectedIdx < currentWeekOffset || selectedIdx >= currentWeekOffset + WEEKS_TO_SHOW)) {
-        currentWeekOffset = Math.max(0, selectedIdx - Math.floor(WEEKS_TO_SHOW / 2));
+      if (selectedWeek === null && weeks.length > 0) {
+        selectedWeek = weeks[4].value;
       }
 
       const visibleWeeks = weeks.slice(currentWeekOffset, currentWeekOffset + WEEKS_TO_SHOW);
 
+      if (visibleWeeks.length > 0 && !visibleWeeks.some(w => w.value === selectedWeek)) {
+        selectedWeek = visibleWeeks[0].value;
+        console.log(` Selected week not in visible range. Adjusted selectedWeek to ${selectedWeek}`);
+      }
+
       container.innerHTML = visibleWeeks.map(w => {
-        const isActive = selectedWeek === w.weekNumber;
-        const isCurrent = w.weekNumber === getCurrentWeekNumber();
+        const isActive = selectedWeek === w.value;
         return `
-          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${w.weekNumber}"
-            style="${isCurrent && !isActive ? 'border-color: var(--brand); opacity: 0.7;' : ''}">
-            <div style="font-weight: 700; font-size: 12px;">Week ${w.weekNumber}</div>
-            <div style="font-size: 10px; opacity: 0.75;">${w.startDate.slice(5)} &ndash; ${w.endDate.slice(5)}</div>
-            ${isCurrent ? '<div style="font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; color: inherit; opacity: 0.85;">Current</div>' : ''}
+          <button class="date-picker-btn ${isActive ? 'active' : ''}" data-week="${w.value}">
+            <div style="font-weight: 700; font-size: 12px;">${w.label}</div>
           </button>
         `;
       }).join('');
 
       document.getElementById('prevWeekBtn').style.display = currentWeekOffset > 0 ? 'flex' : 'none';
-      document.getElementById('nextWeekBtn').style.display = currentWeekOffset + WEEKS_TO_SHOW < weeks.length ? 'flex' : 'none';
+      document.getElementById('nextWeekBtn').style.display = currentWeekOffset < weeks.length - WEEKS_TO_SHOW ? 'flex' : 'none';
 
       container.querySelectorAll('.date-picker-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -4684,6 +4644,7 @@
       });
 
       if (selectedWeek !== null) {
+        console.log(` Auto-loading weekly leaderboard for Week ${selectedWeek}`);
         loadLeaderboard('weekly', selectedWeek);
       }
     }
@@ -5249,7 +5210,7 @@
       }
       try {
         console.log(' Rendering week slider');
-        await renderWeekSlider();
+        renderWeekSlider();
       } catch (err) {
         console.error(' Error rendering week slider:', err);
       }
@@ -5292,7 +5253,6 @@
       if (!confirm('Delete this week schedule?')) return;
       try {
         await db.collection('weekSchedules').doc(docId).delete();
-        cachedWeekSchedules = [];
         showMessage('Week deleted.', 'success', 'weekScheduleMessage');
         loadWeekSchedules();
       } catch (err) {
@@ -5320,7 +5280,6 @@
           document.getElementById('wsWeekNum').value = '';
           document.getElementById('wsStartDate').value = '';
           document.getElementById('wsEndDate').value = '';
-          cachedWeekSchedules = []; // clear cache so slider reloads fresh
           showMessage('Week ' + weekNum + ' saved: ' + startDate + ' to ' + endDate, 'success', 'weekScheduleMessage');
           loadWeekSchedules();
         } catch (err) {
