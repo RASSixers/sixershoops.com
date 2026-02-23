@@ -2052,60 +2052,80 @@
       if (!checkAdminPermission()) return;
       
       const inputId = `edit_score_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-      const newScore = document.getElementById(inputId).value;
+      const inputEl = document.getElementById(inputId);
+      if (!inputEl) {
+        showMessage(' Score input not found — try reloading the leaderboard', 'error', 'editLbMessage');
+        return;
+      }
+      const newScore = inputEl.value;
       
       if (newScore === '') return;
 
       try {
-        // Find the pick document for this user and date
-        let picksSnapshot = await db.collection('picks')
-          .where('date', '==', date)
-          .where('username', '==', userEmail)
-          .get();
-        
-        if (picksSnapshot.empty) {
-          picksSnapshot = await db.collection('picks')
-            .where('date', '==', date)
-            .where('userEmail', '==', userEmail)
-            .get();
-        }
+        let savedViaPick = false;
 
-        if (!picksSnapshot.empty) {
-          await picksSnapshot.docs[0].ref.update({
-            manualScore: parseInt(newScore),
-            updatedAt: new Date().toISOString()
-          });
-          showMessage(` Directly updated score for ${userEmail}`, 'success', 'editLbMessage');
-        } else {
-          // Fallback to scoreOverrides if pick doc not found
-          const existing = await db.collection('scoreOverrides')
-            .where('userEmail', '==', userEmail)
+        // Try to find the pick document for this user and date (try username first, then email)
+        try {
+          let picksSnapshot = await db.collection('picks')
             .where('date', '==', date)
+            .where('username', '==', userEmail)
             .get();
           
-          if (!existing.empty) {
-            await existing.docs[0].ref.update({
-              score: parseInt(newScore),
-              timestamp: new Date(),
-              appliedBy: auth.currentUser.email
-            });
-          } else {
-            await db.collection('scoreOverrides').add({
-              userEmail: userEmail,
-              date: date,
-              score: parseInt(newScore),
-              timestamp: new Date(),
-              appliedBy: auth.currentUser.email
-            });
+          if (picksSnapshot.empty) {
+            picksSnapshot = await db.collection('picks')
+              .where('date', '==', date)
+              .where('userEmail', '==', userEmail)
+              .get();
           }
-          showMessage(` Saved override for ${userEmail} (pick doc not found)`, 'success', 'editLbMessage');
+
+          if (!picksSnapshot.empty) {
+            await picksSnapshot.docs[0].ref.update({
+              manualScore: parseInt(newScore),
+              updatedAt: new Date().toISOString()
+            });
+            savedViaPick = true;
+            showMessage(` Score updated for ${userEmail}`, 'success', 'editLbMessage');
+          }
+        } catch (pickErr) {
+          console.warn('Could not update pick doc directly:', pickErr.message);
+        }
+
+        if (!savedViaPick) {
+          // Fallback: use scoreOverrides collection
+          try {
+            const existing = await db.collection('scoreOverrides')
+              .where('userEmail', '==', userEmail)
+              .where('date', '==', date)
+              .get();
+            
+            if (!existing.empty) {
+              await existing.docs[0].ref.update({
+                score: parseInt(newScore),
+                timestamp: new Date(),
+                appliedBy: auth.currentUser.email
+              });
+            } else {
+              await db.collection('scoreOverrides').add({
+                userEmail: userEmail,
+                date: date,
+                score: parseInt(newScore),
+                timestamp: new Date(),
+                appliedBy: auth.currentUser.email
+              });
+            }
+            showMessage(` Saved override for ${userEmail} via score overrides`, 'success', 'editLbMessage');
+          } catch (overrideErr) {
+            console.error('scoreOverrides also failed:', overrideErr);
+            showMessage(` Failed to save: ${overrideErr.message}`, 'error', 'editLbMessage');
+            return;
+          }
         }
         
         // Refresh the leaderboard to show changes
         await loadLeaderboard('daily', null, null, date);
       } catch (err) {
         console.error('Error saving override:', err);
-        showMessage(' Failed to save update', 'error', 'editLbMessage');
+        showMessage(` Failed to save update: ${err.message}`, 'error', 'editLbMessage');
       }
     };
 
@@ -2526,10 +2546,11 @@
         } else if (q.question_type === 'multiple_choice') {
           const options = q.options.split(',').map(opt => opt.trim());
           answerInput = `
-            <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--brand); font-weight: 600; margin-bottom: 0.25rem;">✓ Select all correct answers (multiple allowed)</div>
+            <div style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
               ${options.map((opt, optIdx) => `
                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 6px; transition: background 0.2s;">
-                  <input type="radio" name="${inputId}" value="${opt}" class="answer-input-${idx}" /> 
+                  <input type="checkbox" name="${inputId}" value="${opt}" class="answer-input-${idx}" style="width:16px;height:16px;accent-color:var(--brand);cursor:pointer;" /> 
                   <span>${opt}</span>
                 </label>
               `).join('')}
@@ -2569,12 +2590,20 @@
 
         // Pre-populate with existing correct answer if available
         if (q.correctAnswer !== undefined && q.correctAnswer !== null) {
-          if (q.question_type === 'over_under' || q.question_type === 'multiple_choice') {
+          if (q.question_type === 'over_under') {
             const radio = document.querySelector(`input[name="answer_${idx}"][value="${q.correctAnswer}"]`);
             if (radio) {
               radio.checked = true;
               updateAnswerIndicator(idx);
             }
+          } else if (q.question_type === 'multiple_choice') {
+            // correctAnswer may be a single string or an array
+            const answers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+            answers.forEach(ans => {
+              const cb = document.querySelector(`input[name="answer_${idx}"][value="${ans}"]`);
+              if (cb) cb.checked = true;
+            });
+            updateAnswerIndicator(idx);
           } else if (q.question_type === 'numeric') {
             const numInput = document.querySelector(`input[name="answer_${idx}"]`);
             if (numInput) {
@@ -2651,7 +2680,7 @@
       let isAnswered = false;
       
       for (let input of inputs) {
-        if (input.type === 'radio' && input.checked) {
+        if ((input.type === 'radio' || input.type === 'checkbox') && input.checked) {
           isAnswered = true;
           break;
         } else if (input.type === 'number' && input.value) {
@@ -2690,13 +2719,21 @@
         const inputs = document.querySelectorAll(`input[name="answer_${idx}"]`);
         let answer = null;
 
-        for (let input of inputs) {
-          if (input.type === 'radio' && input.checked) {
-            answer = input.value;
-            break;
-          } else if (input.type === 'number' && input.value) {
-            answer = parseFloat(input.value);
-            break;
+        if (inputs.length > 0 && inputs[0].type === 'checkbox') {
+          // Collect all checked checkboxes as an array
+          const checked = Array.from(inputs).filter(i => i.checked).map(i => i.value);
+          if (checked.length > 0) {
+            answer = checked.length === 1 ? checked[0] : checked;
+          }
+        } else {
+          for (let input of inputs) {
+            if (input.type === 'radio' && input.checked) {
+              answer = input.value;
+              break;
+            } else if (input.type === 'number' && input.value) {
+              answer = parseFloat(input.value);
+              break;
+            }
           }
         }
 
@@ -3470,16 +3507,17 @@
         const allQuestionsSnapshot = await db.collection('questions').where('date', '==', date).get();
         const allQuestions = allQuestionsSnapshot.empty ? [] : allQuestionsSnapshot.docs[0].data().items || [];
         
-        // Determine which question indices to count based on week filter
-        const questionIndicesToCount = weekNumberFilter !== null 
-          ? allQuestions.map((q, idx) => q.weekNumber === weekNumberFilter ? idx : -1).filter(idx => idx !== -1)
-          : allQuestions.map((q, idx) => idx);
-        
         // Find the index of the tie-breaker question if it exists
         const tieBreakerIndex = allQuestions.findIndex(q => q.isTieBreaker);
         if (tieBreakerIndex !== -1) {
           console.log(`   Tie-Breaker Question found at index ${tieBreakerIndex}: "${allQuestions[tieBreakerIndex].question}"`);
         }
+
+        // Determine which question indices to count based on week filter
+        // EXCLUDE the tie-breaker from accuracy scoring — it acts as a bonus only
+        const questionIndicesToCount = weekNumberFilter !== null 
+          ? allQuestions.map((q, idx) => (q.weekNumber === weekNumberFilter && !q.isTieBreaker) ? idx : -1).filter(idx => idx !== -1)
+          : allQuestions.map((q, idx) => q.isTieBreaker ? -1 : idx).filter(idx => idx !== -1);
         
         const totalQuestionsForScoring = questionIndicesToCount.length;
         console.log(`   Will score ${totalQuestionsForScoring} questions (${weekNumberFilter ? `Week ${weekNumberFilter} filter applied` : 'no week filter'})`);
@@ -3529,23 +3567,30 @@
             let isCorrect = false;
             if (userPick !== undefined && correctAnswer !== undefined) {
               questionsMatched++;
-              // Normalize values for comparison
-              let normalizedPick = userPick;
-              let normalizedAnswer = correctAnswer;
-              
-              // Convert booleans to lowercase strings
-              if (typeof userPick === 'boolean') normalizedPick = userPick.toString().toLowerCase();
-              if (typeof correctAnswer === 'boolean') normalizedAnswer = correctAnswer.toString().toLowerCase();
-              
-              // Convert to lowercase strings and trim whitespace
-              normalizedPick = String(normalizedPick).trim().toLowerCase();
-              normalizedAnswer = String(normalizedAnswer).trim().toLowerCase();
-              
-              // Handle numeric comparisons
-              if (!isNaN(parseFloat(normalizedPick)) && !isNaN(parseFloat(normalizedAnswer))) {
-                isCorrect = parseFloat(normalizedPick) === parseFloat(normalizedAnswer);
+
+              // If correctAnswer is an array, check if userPick matches any value
+              if (Array.isArray(correctAnswer)) {
+                const normalizedPick = String(userPick).trim().toLowerCase();
+                isCorrect = correctAnswer.some(ca => String(ca).trim().toLowerCase() === normalizedPick);
               } else {
-                isCorrect = normalizedPick === normalizedAnswer;
+                // Normalize values for comparison
+                let normalizedPick = userPick;
+                let normalizedAnswer = correctAnswer;
+                
+                // Convert booleans to lowercase strings
+                if (typeof userPick === 'boolean') normalizedPick = userPick.toString().toLowerCase();
+                if (typeof correctAnswer === 'boolean') normalizedAnswer = correctAnswer.toString().toLowerCase();
+                
+                // Convert to lowercase strings and trim whitespace
+                normalizedPick = String(normalizedPick).trim().toLowerCase();
+                normalizedAnswer = String(normalizedAnswer).trim().toLowerCase();
+                
+                // Handle numeric comparisons
+                if (!isNaN(parseFloat(normalizedPick)) && !isNaN(parseFloat(normalizedAnswer))) {
+                  isCorrect = parseFloat(normalizedPick) === parseFloat(normalizedAnswer);
+                } else {
+                  isCorrect = normalizedPick === normalizedAnswer;
+                }
               }
               
               if (isCorrect) {
