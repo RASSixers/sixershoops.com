@@ -4311,9 +4311,17 @@
       }
     }
 
+    let isSubmitting = false; // Guard against double-clicks / rapid re-submissions
+
     document.getElementById('submitBtn').addEventListener('click', async () => {
       if (!auth.currentUser) {
         showMessage('Not logged in', 'error');
+        return;
+      }
+
+      // Prevent concurrent submissions (e.g. double-click or glitch)
+      if (isSubmitting) {
+        console.log('⚠ Submission already in progress — ignoring duplicate click');
         return;
       }
 
@@ -4370,6 +4378,12 @@
         return;
       }
 
+      // Lock submission and disable button immediately to prevent race conditions
+      isSubmitting = true;
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
       try {
         console.log(` Submitting picks for date: ${selectedPickDate}, userId: ${auth.currentUser.uid}`);
         console.log(`   Answers: ${JSON.stringify(answers)}`);
@@ -4381,8 +4395,9 @@
         
         if (!existingPicksSnapshot.empty) {
           console.log(` User already has a submission for this date - preventing duplicate`);
-          document.getElementById('submitBtn').disabled = true;
-          document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Already Submitted for This Date';
+          showMessage('You have already submitted your picks for this date!', 'success');
           return;
         }
         
@@ -4397,11 +4412,15 @@
 
         console.log(` Picks saved with doc ID: ${pickRef.id}`);
         showMessage(' Picks submitted successfully!', 'success');
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').textContent = 'Already Submitted for This Date';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Already Submitted for This Date';
       } catch (err) {
         console.error('Error saving picks:', err);
         showMessage(err.message || 'Submission failed', 'error');
+        // Release the lock so the user can try again if it was a transient error
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Picks';
       }
     });
 
