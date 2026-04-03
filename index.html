@@ -58,13 +58,17 @@
         }
     </script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
         :root {
-            --color-navy: #0a174e;
-            --color-navy-dark: #060d33;
+            --color-navy: #006BB6;
+            --color-navy-dark: #003F7F;
+            --color-navy-deep: #001F4D;
+            --color-red: #ED174C;
+            --color-red-dark: #c01040;
             --color-sky: #3b82f6;
             --color-sky-light: #60a5fa;
-            --color-cyan: #06b6d4;
-            --color-ice: #f8fafc;
+            --color-ice: #f0f6ff;
             --color-slate-900: #0f172a;
             --color-slate-800: #1e293b;
             --color-slate-700: #334155;
@@ -72,30 +76,243 @@
         }
 
         body, html {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             margin-top: 80px;
+            background: #f0f4f8;
         }
 
+        /* ===== HERO ===== */
         .page-header {
-            padding: 6rem 2rem;
-            background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-dark) 100%);
+            position: relative;
+            padding: 5rem 2rem 7rem;
+            background: var(--color-navy-deep);
             color: white;
-            clip-path: ellipse(150% 100% at 50% 0%);
-            margin-bottom: -4rem;
             text-align: center;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(0, 107, 182, 0.5) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 80% 30%, rgba(237, 23, 76, 0.25) 0%, transparent 55%),
+                radial-gradient(ellipse 100% 40% at 50% 100%, rgba(0, 63, 127, 0.8) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: #f0f4f8;
+            clip-path: ellipse(55% 100% at 50% 100%);
+        }
+
+        /* Animated court lines decoration */
+        .hero-court-lines {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.06;
+        }
+        .hero-court-lines::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+        .hero-court-lines::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: white;
+            transform: translateY(-50%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(237, 23, 76, 0.2);
+            border: 1px solid rgba(237, 23, 76, 0.4);
+            color: #ff6b8a;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 100px;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(4px);
+        }
+        .hero-eyebrow::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--color-red);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.7); }
         }
 
         .page-title {
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(3.5rem, 10vw, 7rem);
             font-weight: 900;
-            margin-bottom: 1rem;
-            letter-spacing: -0.02em;
+            letter-spacing: 0.01em;
+            line-height: 0.9;
+            margin-bottom: 1.25rem;
         }
 
         .page-title .highlight {
-            background: linear-gradient(to right, var(--color-sky-light), var(--color-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--color-red);
+            display: block;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.75;
+            max-width: 38rem;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-btn-primary {
+            background: var(--color-red);
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(237, 23, 76, 0.4);
+            letter-spacing: 0.02em;
+        }
+        .hero-btn-primary:hover {
+            background: var(--color-red-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(237, 23, 76, 0.5);
+        }
+        .hero-btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .hero-btn-secondary:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateY(-1px);
+        }
+
+        /* ===== QUICK LINKS ===== */
+        .quick-links-bar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            position: relative;
+            z-index: 10;
+        }
+
+        .quick-link-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 14px 16px;
+            color: #475569;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+        }
+        .quick-link-item:hover {
+            color: var(--color-navy);
+            border-bottom-color: var(--color-navy);
+            background: #f8faff;
+        }
+
+        /* ===== MAIN CONTENT AREA ===== */
+        #community-feed-section {
+            background: #f0f4f8;
+            padding-top: 2rem !important;
+        }
+
+        /* ===== CARDS ===== */
+        .card-base {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+        }
+        .card-base:hover {
+            box-shadow: 0 4px 16px rgba(0,63,127,0.1);
+            border-color: #bfd4f0;
+        }
+
+        /* Create Post Box */
+        #create-post-box {
+            background: white !important;
+            border-radius: 14px !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+            transition: all 0.2s !important;
+        }
+        #create-post-box:hover {
+            border-color: var(--color-navy) !important;
+            box-shadow: 0 4px 16px rgba(0,107,182,0.1) !important;
+        }
+
+        /* Sidebar cards */
+        .bg-white.rounded-xl.shadow-sm.border.border-slate-200 {
+            border-radius: 14px !important;
+            border-color: #e2e8f0 !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+        }
+
+        /* Section headers */
+        .font-black.uppercase.tracking-tighter {
+            font-size: 0.72rem !important;
+            letter-spacing: 0.1em !important;
+            color: var(--color-navy-deep) !important;
         }
 
         .page-subtitle {
@@ -435,75 +652,69 @@
         <main>
             <!-- Hero Section -->
             <header class="page-header animate-fadeIn">
-                <div class="container mx-auto px-4">
+                <div class="hero-court-lines"></div>
+                <div class="hero-content container mx-auto px-4">
                     <h1 class="page-title">
-                        Welcome to <span class="highlight">Sixers Hoops</span>
+                        Sixers
+                        <span class="highlight">Hoops</span>
                     </h1>
                     <p class="page-subtitle">
-                        Your ultimate source for Philadelphia 76ers analysis, player grades, and team insights!
+                        Analysis, player grades, community discussions, and team insights. All in one place.
                     </p>
+                    <div class="hero-cta-group">
+                        <a href="#community-feed-section" class="hero-btn-primary">Join the Discussion</a>
+                        <a href="https://sixershoops.com/news" class="hero-btn-secondary">Latest News →</a>
+                    </div>
                 </div>
             </header>
 
             <!-- Quick Links -->
-            <section class="py-3 bg-secondary/30 border-b">
+            <section class="quick-links-bar">
                 <div class="container mx-auto px-4">
-                    <div class="hidden md:flex justify-center items-center gap-6 overflow-x-auto">
+                    <div class="hidden md:flex justify-center items-center overflow-x-auto">
                         <!-- News -->
-                        <a href="https://sixershoops.com/news" class="group flex items-center gap-2 px-3 py-2 hover:text-orange-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500 group-hover:scale-110 transition-transform">
+                        <a href="https://sixershoops.com/news" class="quick-link-item" style="--hover-color: #f97316;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path>
-                                <path d="M18 14h-8"></path>
-                                <path d="M15 18h-5"></path>
-                                <path d="M10 6h8v4h-8V6Z"></path>
+                                <path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path>
                             </svg>
-                            <span class="text-sm font-medium">News</span>
+                            News
                         </a>
-
-                        <!-- Roster -->
-                        <a href="https://sixershoops.com/roster" class="group flex items-center gap-2 px-3 py-2 hover:text-purple-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-500 group-hover:scale-110 transition-transform">
+                        <a href="https://sixershoops.com/roster" class="quick-link-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                                 <rect width="20" height="14" x="2" y="6" rx="2"></rect>
                             </svg>
-                            <span class="text-sm font-medium">Roster</span>
+                            Roster
                         </a>
-
-                        <!-- Depth Chart -->
-                        <a href="https://sixershoops.com/sixers-depth-chart" class="group flex items-center gap-2 px-3 py-2 hover:text-red-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500 group-hover:scale-110 transition-transform">
+                        <a href="https://sixershoops.com/sixers-depth-chart" class="quick-link-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
                                 <polyline points="16 7 22 7 22 13"></polyline>
                             </svg>
-                            <span class="text-sm font-medium">Depth Chart</span>
+                            Depth Chart
                         </a>
-
-                        <!-- Schedule -->
-                        <a href="https://sixershoops.com/schedule" class="group flex items-center gap-2 px-3 py-2 hover:text-blue-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 group-hover:scale-110 transition-transform">
+                        <a href="https://sixershoops.com/schedule" class="quick-link-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#006BB6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"></path>
                             </svg>
-                            <span class="text-sm font-medium">Schedule</span>
+                            Schedule
                         </a>
-
-                        <!-- Salary Cap -->
-                        <a href="https://sixershoops.com/salary" class="group flex items-center gap-2 px-3 py-2 hover:text-green-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500 group-hover:scale-110 transition-transform">
+                        <a href="https://sixershoops.com/salary" class="quick-link-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" x2="12" y1="2" y2="22"></line>
                                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                             </svg>
-                            <span class="text-sm font-medium">Salary Cap</span>
+                            Salary Cap
                         </a>
-
-                        <!-- Pick'em -->
-                        <a href="/pickem" class="group flex items-center gap-2 px-3 py-2 hover:text-pink-500 transition-colors whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500 group-hover:scale-110 transition-transform">
+                        <a href="/pickem" class="quick-link-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="9" cy="7" r="4"></circle>
                                 <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
-                            <span class="text-sm font-medium">Pick'em</span>
+                            Pick'em
                         </a>
                     </div>
                 </div>
