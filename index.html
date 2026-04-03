@@ -58,144 +58,96 @@
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap');
 
         :root {
-            --color-navy: #006BB6;
-            --color-navy-dark: #003F7F;
-            --color-navy-deep: #001F4D;
-            --color-red: #ED174C;
-            --color-red-dark: #c01040;
-            --color-sky: #3b82f6;
-            --color-sky-light: #60a5fa;
-            --color-ice: #f0f6ff;
-            --color-slate-900: #0f172a;
-            --color-slate-800: #1e293b;
-            --color-slate-700: #334155;
-            --color-slate-500: #64748b;
+            --sixers-blue: #006BB6;
+            --sixers-blue-light: #1a7fc4;
+            --sixers-red: #ED174C;
+            --sixers-red-dark: #c2103c;
+            --bg-page: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2230;
+            --bg-input: #0d1117;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(0,107,182,0.5);
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #484f58;
         }
 
+        *, *::before, *::after { box-sizing: border-box; }
+
         body, html {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Barlow', -apple-system, BlinkMacSystemFont, sans-serif;
             margin-top: 80px;
-            background: #f0f4f8;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
         }
 
         /* ===== HERO ===== */
         .page-header {
             position: relative;
-            padding: 5rem 2rem 7rem;
-            background: var(--color-navy-deep);
+            padding: 5.5rem 2rem 6.5rem;
+            background: #080c12;
             color: white;
             text-align: center;
             overflow: hidden;
         }
-
         .page-header::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: 
-                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(0, 107, 182, 0.5) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 80% at 80% 30%, rgba(237, 23, 76, 0.25) 0%, transparent 55%),
-                radial-gradient(ellipse 100% 40% at 50% 100%, rgba(0, 63, 127, 0.8) 0%, transparent 70%);
+            background:
+                radial-gradient(ellipse 90% 70% at 15% 60%, rgba(0,107,182,0.35) 0%, transparent 55%),
+                radial-gradient(ellipse 70% 90% at 85% 25%, rgba(237,23,76,0.2) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 50% at 50% 110%, rgba(0,63,127,0.6) 0%, transparent 65%);
             pointer-events: none;
         }
-
+        /* Subtle grid overlay */
         .page-header::after {
             content: '';
             position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: #f0f4f8;
-            clip-path: ellipse(55% 100% at 50% 100%);
-        }
-
-        /* Animated court lines decoration */
-        .hero-court-lines {
-            position: absolute;
             inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
             pointer-events: none;
-            opacity: 0.06;
         }
-        .hero-court-lines::before {
-            content: '';
+        .hero-content { position: relative; z-index: 1; }
+
+        /* Court arc at bottom */
+        .hero-arc {
             position: absolute;
-            top: 50%;
+            bottom: -1px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
-            border: 2px solid white;
-            border-radius: 50%;
-        }
-        .hero-court-lines::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: white;
-            transform: translateY(-50%);
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(237, 23, 76, 0.2);
-            border: 1px solid rgba(237, 23, 76, 0.4);
-            color: #ff6b8a;
-            font-size: 0.7rem;
-            font-weight: 800;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            padding: 6px 14px;
-            border-radius: 100px;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(4px);
-        }
-        .hero-eyebrow::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: var(--color-red);
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.7); }
+            transform: translateX(-50%);
+            width: 120%;
+            height: 80px;
+            background: var(--bg-page);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            z-index: 2;
         }
 
         .page-title {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: clamp(3.5rem, 10vw, 7rem);
+            font-size: clamp(4rem, 11vw, 8rem);
             font-weight: 900;
-            letter-spacing: 0.01em;
-            line-height: 0.9;
-            margin-bottom: 1.25rem;
+            letter-spacing: -0.01em;
+            line-height: 0.88;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
         }
-
-        .page-title .highlight {
-            color: var(--color-red);
-            display: block;
-        }
+        .page-title .line1 { display: block; color: #fff; }
+        .page-title .line2 { display: block; color: var(--sixers-red); }
 
         .page-subtitle {
-            font-size: 1.1rem;
-            opacity: 0.75;
-            max-width: 38rem;
-            margin: 0 auto 2rem;
-            line-height: 1.6;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.55);
+            max-width: 36rem;
+            margin: 0 auto 2.5rem;
+            line-height: 1.65;
             font-weight: 400;
         }
 
@@ -205,423 +157,365 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-
         .hero-btn-primary {
-            background: var(--color-red);
+            background: var(--sixers-red);
             color: white;
+            font-family: 'Barlow Condensed', sans-serif;
             font-weight: 700;
-            font-size: 0.875rem;
-            padding: 12px 28px;
-            border-radius: 8px;
+            font-size: 0.95rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 13px 32px;
+            border-radius: 6px;
             text-decoration: none;
             transition: all 0.2s;
-            box-shadow: 0 4px 20px rgba(237, 23, 76, 0.4);
-            letter-spacing: 0.02em;
+            box-shadow: 0 4px 24px rgba(237,23,76,0.35);
         }
         .hero-btn-primary:hover {
-            background: var(--color-red-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(237, 23, 76, 0.5);
+            background: var(--sixers-red-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(237,23,76,0.45);
         }
         .hero-btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: white;
+            background: rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.85);
+            font-family: 'Barlow Condensed', sans-serif;
             font-weight: 600;
-            font-size: 0.875rem;
-            padding: 12px 28px;
-            border-radius: 8px;
+            font-size: 0.95rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 13px 32px;
+            border-radius: 6px;
             text-decoration: none;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.15);
             transition: all 0.2s;
-            backdrop-filter: blur(4px);
         }
         .hero-btn-secondary:hover {
-            background: rgba(255,255,255,0.18);
-            transform: translateY(-1px);
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
         }
 
         /* ===== QUICK LINKS ===== */
         .quick-links-bar {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
             position: relative;
             z-index: 10;
         }
-
         .quick-link-item {
             display: flex;
             align-items: center;
             gap: 7px;
-            padding: 14px 16px;
-            color: #475569;
-            font-size: 0.82rem;
+            padding: 14px 18px;
+            color: var(--text-secondary);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.9rem;
             font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
             text-decoration: none;
             border-bottom: 2px solid transparent;
             transition: all 0.2s;
             white-space: nowrap;
-            letter-spacing: 0.01em;
         }
         .quick-link-item:hover {
-            color: var(--color-navy);
-            border-bottom-color: var(--color-navy);
-            background: #f8faff;
+            color: var(--text-primary);
+            border-bottom-color: var(--sixers-blue);
         }
 
-        /* ===== MAIN CONTENT AREA ===== */
+        /* ===== COMMUNITY SECTION ===== */
         #community-feed-section {
-            background: #f0f4f8;
-            padding-top: 2rem !important;
+            background: var(--bg-page) !important;
+            padding-top: 2.5rem !important;
+        }
+
+        /* Section label */
+        .section-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--sixers-blue);
+            margin-bottom: 0.4rem;
+        }
+        .section-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--text-primary);
         }
 
         /* ===== CARDS ===== */
-        .card-base {
-            background: white;
-            border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            transition: all 0.2s ease;
-        }
-        .card-base:hover {
-            box-shadow: 0 4px 16px rgba(0,63,127,0.1);
-            border-color: #bfd4f0;
-        }
-
-        /* Create Post Box */
-        #create-post-box {
-            background: white !important;
-            border-radius: 14px !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
-            transition: all 0.2s !important;
-        }
-        #create-post-box:hover {
-            border-color: var(--color-navy) !important;
-            box-shadow: 0 4px 16px rgba(0,107,182,0.1) !important;
-        }
-
-        /* Sidebar cards */
+        .card-base, 
+        #create-post-box,
         .bg-white.rounded-xl.shadow-sm.border.border-slate-200 {
-            border-radius: 14px !important;
-            border-color: #e2e8f0 !important;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+            background: var(--bg-card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: none !important;
+            transition: border-color 0.2s, background 0.2s !important;
+        }
+        .card-base:hover,
+        #create-post-box:hover {
+            border-color: var(--border-hover) !important;
+            background: var(--bg-card-hover) !important;
         }
 
-        /* Section headers */
+        /* Create Post box internals */
+        #create-post-trigger {
+            background: var(--bg-input) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-secondary) !important;
+            border-radius: 8px !important;
+        }
+        #create-post-trigger:hover {
+            border-color: var(--sixers-blue) !important;
+        }
+        #create-post-btn {
+            background: var(--sixers-blue) !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            letter-spacing: 0.05em !important;
+            text-transform: uppercase !important;
+        }
+        #create-post-btn:hover { background: var(--sixers-blue-light) !important; }
+
+        /* Filter bar */
+        #filter-hot, #filter-new, #filter-top {
+            background: transparent !important;
+            color: var(--text-secondary) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 6px !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 0.05em !important;
+            text-transform: uppercase !important;
+            transition: all 0.15s !important;
+        }
+        #filter-hot { 
+            background: rgba(0,107,182,0.15) !important;
+            color: var(--sixers-blue) !important;
+            border-color: rgba(0,107,182,0.35) !important;
+        }
+        #filter-new:hover, #filter-top:hover {
+            background: rgba(255,255,255,0.05) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-hover) !important;
+        }
+
+        /* Feed container bg */
+        .bg-white.rounded-xl.shadow-sm.border.border-slate-200.p-3 {
+            background: var(--bg-card) !important;
+        }
+
+        /* Sidebar section headers */
         .font-black.uppercase.tracking-tighter {
-            font-size: 0.72rem !important;
-            letter-spacing: 0.1em !important;
-            color: var(--color-navy-deep) !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 0.78rem !important;
+            letter-spacing: 0.12em !important;
+            color: var(--text-secondary) !important;
+            font-weight: 700 !important;
         }
 
-        .page-subtitle {
-            font-size: 1.25rem;
-            opacity: 0.9;
-            max-width: 40rem;
-            margin: 0 auto;
+        /* Sidebar view all links */
+        .text-xs.font-bold.text-blue-600 {
+            color: var(--sixers-blue) !important;
         }
+
+        /* Sidebar inputs */
+        #create-article-trigger, #create-headline-trigger {
+            background: var(--bg-input) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-secondary) !important;
+        }
+        #add-article-btn-sidebar { background: var(--sixers-blue) !important; }
+        #add-headline-btn-sidebar { background: #7c3aed !important; }
+
+        /* Admin controls */
+        #mod-article-controls .bg-slate-50,
+        #mod-headline-controls .bg-slate-50 {
+            background: var(--bg-input) !important;
+            border-color: var(--border) !important;
+        }
+
+        /* ===== PAGINATION ===== */
+        .pagination { background: transparent; }
+        .pagination button {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: var(--bg-card-hover);
+            border-color: var(--sixers-blue);
+            color: var(--text-primary);
+        }
+        .pagination button.active {
+            background: var(--sixers-blue);
+            color: white;
+            border-color: var(--sixers-blue);
+        }
+        .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ===== MODALS ===== */
+        .post-modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+            opacity: 0; visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(6px);
+        }
+        .post-modal-overlay.active { opacity: 1; visibility: visible; }
+        .post-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            width: 90%; max-width: 800px; max-height: 90vh;
+            border-radius: 16px;
+            position: relative; overflow-y: auto;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            padding: 2rem;
+            color: var(--text-primary);
+        }
+        .post-modal-overlay.active .post-modal { transform: translateY(0); }
+        .post-modal-close {
+            position: absolute; top: 1.25rem; right: 1.25rem;
+            font-size: 1.5rem; cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+            background: none; border: none;
+        }
+        .post-modal-close:hover { color: var(--text-primary); }
+
+        /* Modal internals - text */
+        .post-modal h2, .post-modal h3, .post-modal .text-slate-900 { color: var(--text-primary) !important; }
+        .post-modal .text-slate-500, .post-modal .text-slate-600 { color: var(--text-secondary) !important; }
+        .post-modal input, .post-modal textarea, .post-modal select {
+            background: var(--bg-input) !important;
+            border-color: var(--border) !important;
+            color: var(--text-primary) !important;
+        }
+        .post-modal input::placeholder, .post-modal textarea::placeholder { color: var(--text-muted) !important; }
+        .post-modal .bg-slate-50 { background: var(--bg-input) !important; }
+        .post-modal .border-slate-100, .post-modal .border-slate-200 { border-color: var(--border) !important; }
+
+        /* Create Post modal */
+        .create-post-modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2000;
+            opacity: 0; visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        .create-post-modal-overlay.active { opacity: 1; visibility: visible; }
+        .create-post-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            width: 95%; max-width: 750px; max-height: 90vh;
+            border-radius: 16px;
+            position: relative; overflow-y: auto;
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            padding: 2.5rem;
+            color: var(--text-primary);
+        }
+        .create-post-modal-overlay.active .create-post-modal { transform: scale(1) translateY(0); }
+        .create-post-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 2rem; padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .create-post-modal h2 { color: var(--text-primary) !important; }
+        .create-post-modal label { color: var(--text-secondary) !important; }
+        .create-post-modal input, .create-post-modal textarea, .create-post-modal select {
+            background: var(--bg-input) !important;
+            border-color: var(--border) !important;
+            color: var(--text-primary) !important;
+        }
+        .create-post-modal .border-slate-100 { border-color: var(--border) !important; }
+
+        /* Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-input); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
         .line-clamp-2 {
             overflow: hidden;
             display: -webkit-box;
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 2;
         }
-        .article-item {
-            display: none;
-        }
-        .article-item.active {
-            display: flex;
-        }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-top: 32px;
-            width: 100%;
-            flex-wrap: wrap;
-            min-height: 50px;
-            padding: 16px;
-            background: transparent;
-        }
-        .pagination button {
-            padding: 10px 16px;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 16px;
-            font-weight: 500;
-            visibility: visible;
-            opacity: 1;
-        }
-        .pagination button:hover:not(:disabled) {
-            background: #f3f4f6;
-        }
-        .pagination button.active {
-            background: #22c55e;
-            color: white;
-            border-color: #22c55e;
-        }
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Post Modal Styles */
-        .post-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
-        }
-
-        .post-modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .post-modal {
-            background: white;
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            border-radius: 1.5rem;
-            position: relative;
-            overflow-y: auto;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            padding: 2rem;
-        }
-
-        .post-modal-overlay.active .post-modal {
-            transform: translateY(0);
-        }
-
-        .post-modal-close {
-            position: absolute;
-            top: 1.25rem;
-            right: 1.25rem;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #64748b;
-            transition: color 0.2s;
-        }
-
-        .post-modal-close:hover {
-            color: #1e293b;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        
-        /* Utility Classes */
-        .line-clamp-3 {
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 3;
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .article-item { display: none; }
+        .article-item.active { display: flex; }
 
         /* Community Feed Enhancements */
-        .vote-btn-active-up {
-            color: #ea580c !important;
-            background: #ffedd5 !important;
-        }
-        .vote-btn-active-down {
-            color: #2563eb !important;
-            background: #eff6ff !important;
-        }
+        .vote-btn-active-up { color: var(--sixers-red) !important; background: rgba(237,23,76,0.12) !important; }
+        .vote-btn-active-down { color: var(--sixers-blue) !important; background: rgba(0,107,182,0.12) !important; }
 
         /* Player Grade Specific Styles */
         .player-card-render {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             padding: 20px;
             margin-bottom: 16px;
-            border-radius: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border-radius: 12px;
+            transition: all 0.2s;
             position: relative;
             overflow: hidden;
         }
         .player-card-render::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: #006BB6;
-            opacity: 0.8;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: var(--sixers-blue);
         }
         .player-card-render:hover {
-            border-color: #006BB6;
-            box-shadow: 0 8px 24px rgba(0, 107, 182, 0.12);
+            border-color: var(--border-hover);
             transform: translateY(-2px);
         }
-        .player-header-render {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            gap: 16px;
-        }
-        .player-name-render {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: #1e293b;
-            line-height: 1.2;
-        }
-        .player-grade-render {
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            font-weight: 900;
-            padding: 4px 12px;
-            color: white;
-            min-width: 48px;
-            text-align: center;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .player-stats-render {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            color: #64748b;
-            font-weight: 700;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px dashed #e2e8f0;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .player-analysis-render {
-            font-family: 'Inter', sans-serif;
-            color: #475569;
-            line-height: 1.6;
-            font-size: 0.9rem;
-        }
-
-        /* Create Post Modal Styles */
-        .create-post-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .create-post-modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .create-post-modal {
-            background: white;
-            width: 95%;
-            max-width: 750px;
-            max-height: 90vh;
-            border-radius: 1.5rem;
-            position: relative;
-            overflow-y: auto;
-            transform: scale(0.95) translateY(20px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        .create-post-modal-overlay.active .create-post-modal {
-            transform: scale(1) translateY(0);
-        }
-
-        .create-post-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
+        .player-header-render { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 16px; }
+        .player-name-render { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.02em; }
+        .player-grade-render { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 900; padding: 4px 12px; color: white; min-width: 48px; text-align: center; border-radius: 6px; }
+        .player-stats-render { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.06em; }
+        .player-analysis-render { color: var(--text-secondary); line-height: 1.6; font-size: 0.88rem; }
 
         /* Player Grade Pro Editor */
-        #player-grades-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
+        #player-grades-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem; }
         .player-grade-entry {
-            background: #fffcf0;
-            border: 1px solid #fef3c7;
-            padding: 1.25rem;
-            border-radius: 1rem;
-            position: relative;
-            transition: all 0.2s;
+            background: rgba(255,220,0,0.04);
+            border: 1px solid rgba(255,200,0,0.15);
+            padding: 1.25rem; border-radius: 1rem; position: relative; transition: all 0.2s;
         }
-        .player-grade-entry:hover {
-            border-color: #fcd34d;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
+        .player-grade-entry:hover { border-color: rgba(255,200,0,0.3); }
         .remove-player-entry {
-            position: absolute;
-            top: -0.5rem;
-            right: -0.5rem;
-            background: #ef4444;
-            color: white;
-            border-radius: 9999px;
-            padding: 0.25rem;
-            opacity: 0;
-            transition: opacity 0.2s;
-            cursor: pointer;
-            z-index: 10;
+            position: absolute; top: -0.5rem; right: -0.5rem;
+            background: #ef4444; color: white; border-radius: 9999px;
+            padding: 0.25rem; opacity: 0; transition: opacity 0.2s; cursor: pointer; z-index: 10;
         }
-        .player-grade-entry:hover .remove-player-entry {
-            opacity: 1;
-        }
+        .player-grade-entry:hover .remove-player-entry { opacity: 1; }
 
-        /* Grade Colors - Professional Palette matching the blog articles */
+        /* Utility */
+        .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Grade Colors */
         .grade-a-plus { background: hsl(152, 69%, 31%); }
         .grade-a { background: hsl(184, 77%, 34%); }
         .grade-a-minus { background: hsl(199, 84%, 39%); }
@@ -633,7 +527,6 @@
         .grade-d-plus { background: hsl(0, 65%, 48%); }
         .grade-d { background: hsl(0, 72%, 40%); }
         .grade-f { background: hsl(0, 75%, 32%); }
-        
     </style>
     <!-- Google Analytics 4 (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
@@ -647,68 +540,67 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8055761449140377"
          crossorigin="anonymous"></script>
 </head>
-<body class="bg-gray-50 text-foreground">
+<body style="background:#0d1117;color:#e6edf3;">
     <div class="min-h-screen">
         <main>
             <!-- Hero Section -->
             <header class="page-header animate-fadeIn">
-                <div class="hero-court-lines"></div>
                 <div class="hero-content container mx-auto px-4">
                     <h1 class="page-title">
-                        Sixers
-                        <span class="highlight">Hoops</span>
+                        <span class="line1">Sixers</span>
+                        <span class="line2">Hoops</span>
                     </h1>
                     <p class="page-subtitle">
                         Analysis, player grades, community discussions, and team insights. All in one place.
                     </p>
                     <div class="hero-cta-group">
                         <a href="#community-feed-section" class="hero-btn-primary">Join the Discussion</a>
-                        <a href="https://sixershoops.com/news" class="hero-btn-secondary">Latest News →</a>
+                        <a href="https://sixershoops.com/news" class="hero-btn-secondary">Latest News</a>
                     </div>
                 </div>
+                <div class="hero-arc"></div>
             </header>
 
             <!-- Quick Links -->
             <section class="quick-links-bar">
                 <div class="container mx-auto px-4">
                     <div class="hidden md:flex justify-center items-center overflow-x-auto">
-                        <!-- News -->
-                        <a href="https://sixershoops.com/news" class="quick-link-item" style="--hover-color: #f97316;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <a href="https://sixershoops.com/news" class="quick-link-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path>
                                 <path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path>
                             </svg>
                             News
                         </a>
                         <a href="https://sixershoops.com/roster" class="quick-link-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                                 <rect width="20" height="14" x="2" y="6" rx="2"></rect>
                             </svg>
                             Roster
                         </a>
                         <a href="https://sixershoops.com/sixers-depth-chart" class="quick-link-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
                                 <polyline points="16 7 22 7 22 13"></polyline>
                             </svg>
                             Depth Chart
                         </a>
                         <a href="https://sixershoops.com/schedule" class="quick-link-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#006BB6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"></path>
                             </svg>
                             Schedule
                         </a>
                         <a href="https://sixershoops.com/salary" class="quick-link-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" x2="12" y1="2" y2="22"></line>
                                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                             </svg>
                             Salary Cap
                         </a>
                         <a href="/pickem" class="quick-link-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="9" cy="7" r="4"></circle>
                                 <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -720,84 +612,87 @@
                 </div>
             </section>
 
-    <section id="community-feed-section" class="py-12 bg-slate-50 min-h-screen">
+    <section id="community-feed-section" class="py-10 min-h-screen" style="background:var(--bg-page);">
         <div class="container mx-auto px-4 max-w-6xl">
-            <div class="flex flex-col lg:flex-row gap-8">
+
+            <!-- Section Header -->
+            <div class="mb-6">
+                <p class="section-label">Community</p>
+                <h2 class="section-title">Fan Wall</h2>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Column: Community Feed -->
-                <div class="lg:w-2/3 space-y-6">
+                <div class="lg:w-2/3 space-y-4">
                     <!-- Create Post -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col transition-all duration-300 hover:border-blue-400 hover:shadow-md" id="create-post-box">
-                        <div id="create-post-collapsed" class="flex gap-4 items-center">
-                            <div id="create-post-avatar-container" class="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-slate-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" id="create-post-default-avatar"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;transition:border-color 0.2s;" id="create-post-box">
+                        <div id="create-post-collapsed" class="flex gap-3 items-center">
+                            <div id="create-post-avatar-container" style="width:40px;height:40px;border-radius:50%;background:#1c2230;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border);overflow:hidden;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#484f58" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="create-post-default-avatar"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
-                            <input type="text" placeholder="What's on your mind?" id="create-post-trigger" class="flex-1 bg-slate-100 border-none rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all cursor-pointer hover:bg-slate-200" readonly>
-                            <button id="create-post-btn" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-sm">Post</button>
+                            <input type="text" placeholder="What's on your mind, Sixers fan?" id="create-post-trigger" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:0.9rem;color:var(--text-secondary);cursor:pointer;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.2s;" readonly>
+                            <button id="create-post-btn" style="background:var(--sixers-blue);color:white;padding:10px 20px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.05em;text-transform:uppercase;border:none;cursor:pointer;transition:background 0.2s;white-space:nowrap;">Post</button>
                         </div>
                     </div>
 
                     <!-- Feed Filters -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex gap-4 items-center overflow-x-auto no-scrollbar">
-                        <button id="filter-hot" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-sm font-bold">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem;display:flex;gap:8px;align-items:center;overflow-x:auto;" class="no-scrollbar">
+                        <button id="filter-hot" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;background:rgba(0,107,182,0.15);color:var(--sixers-blue);border:1px solid rgba(0,107,182,0.35);white-space:nowrap;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
                             Hot
                         </button>
-                        <button id="filter-new" class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 text-slate-600 rounded-full text-sm font-medium transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 7v5l3 3"/></svg>
+                        <button id="filter-new" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;background:transparent;color:var(--text-secondary);border:1px solid var(--border);white-space:nowrap;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 7v5l3 3"/></svg>
                             New
                         </button>
-                        <button id="filter-top" class="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 text-slate-600 rounded-full text-sm font-medium transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4-4 4 4"/><path d="m7 12V4"/><path d="m21 8-4 4-4-4"/><path d="m17 12V4"/><path d="M3 20h18"/></svg>
+                        <button id="filter-top" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;background:transparent;color:var(--text-secondary);border:1px solid var(--border);white-space:nowrap;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4-4 4 4"/><path d="m7 12V4"/><path d="m21 8-4 4-4-4"/><path d="m17 12V4"/><path d="M3 20h18"/></svg>
                             Top
                         </button>
                     </div>
 
                     <!-- Post Feed -->
-                    <div id="feed-container" class="space-y-4">
+                    <div id="feed-container" class="space-y-3">
                         <!-- Posts will be loaded here from Firebase -->
                     </div>
                 </div>
 
-                <!-- Right Column: Sidebar Articles -->
-                <aside class="lg:w-1/3 space-y-6">
-                    <!-- Latest Articles List -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-black uppercase tracking-tighter text-slate-900">Latest Articles</h3>
-                            <button id="view-all-articles" class="text-xs font-bold text-blue-600 hover:underline">View All</button>
+                <!-- Right Column: Sidebar -->
+                <aside class="lg:w-1/3 space-y-4">
+                    <!-- Latest Articles -->
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="width:3px;height:16px;background:var(--sixers-blue);border-radius:2px;"></div>
+                                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-secondary);">Latest Articles</span>
+                            </div>
+                            <button id="view-all-articles" style="font-size:0.75rem;font-weight:700;color:var(--sixers-blue);background:none;border:none;cursor:pointer;font-family:'Barlow',sans-serif;">View All</button>
                         </div>
-                        <div id="sidebar-articles-container" class="space-y-4">
-                            <!-- Articles will be loaded dynamically -->
-                        </div>
-                        <div id="mod-article-controls" class="mt-4 pt-4 border-t border-slate-100 hidden">
-                            <!-- Article Specific Creator -->
-                            <div class="bg-slate-50 rounded-lg p-3 flex gap-3 items-center border border-slate-200 mb-4">
-                                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-xs">
-                                    A
-                                </div>
-                                <input type="text" placeholder="Write a new article..." id="create-article-trigger" class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer" readonly>
-                                <button id="add-article-btn-sidebar" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition-all shadow-sm">Add</button>
+                        <div id="sidebar-articles-container" class="space-y-3"></div>
+                        <div id="mod-article-controls" class="mt-4 pt-4 hidden" style="border-top:1px solid var(--border);">
+                            <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+                                <div style="width:30px;height:30px;border-radius:50%;background:var(--sixers-blue);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-weight:700;font-size:0.7rem;">A</div>
+                                <input type="text" placeholder="Write a new article..." id="create-article-trigger" style="flex:1;background:transparent;border:none;font-size:0.8rem;color:var(--text-secondary);outline:none;cursor:pointer;font-family:'Barlow',sans-serif;" readonly>
+                                <button id="add-article-btn-sidebar" style="background:var(--sixers-blue);color:white;padding:5px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;text-transform:uppercase;">Add</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Trending Headlines -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-black uppercase tracking-tighter text-slate-900">Trending Headlines</h3>
-                            <button id="view-all-headlines" class="text-xs font-bold text-blue-600 hover:underline">View All</button>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="width:3px;height:16px;background:var(--sixers-red);border-radius:2px;"></div>
+                                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-secondary);">Trending Headlines</span>
+                            </div>
+                            <button id="view-all-headlines" style="font-size:0.75rem;font-weight:700;color:var(--sixers-blue);background:none;border:none;cursor:pointer;font-family:'Barlow',sans-serif;">View All</button>
                         </div>
-                        <div id="sidebar-headlines-container" class="space-y-4">
-                            <!-- Headlines will be loaded dynamically -->
-                        </div>
-                        <div id="mod-headline-controls" class="mt-4 pt-4 border-t border-slate-100 hidden">
-                            <!-- Headline Specific Creator -->
-                            <div class="bg-slate-50 rounded-lg p-3 flex gap-3 items-center border border-slate-200 mb-4">
-                                <div class="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-xs">
-                                    H
-                                </div>
-                                <input type="text" placeholder="Add a trending headline..." id="create-headline-trigger" class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-purple-500/20 transition-all cursor-pointer" readonly>
-                                <button id="add-headline-btn-sidebar" class="bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 transition-all shadow-sm">Add</button>
+                        <div id="sidebar-headlines-container" class="space-y-3"></div>
+                        <div id="mod-headline-controls" class="mt-4 pt-4 hidden" style="border-top:1px solid var(--border);">
+                            <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+                                <div style="width:30px;height:30px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-weight:700;font-size:0.7rem;">H</div>
+                                <input type="text" placeholder="Add a trending headline..." id="create-headline-trigger" style="flex:1;background:transparent;border:none;font-size:0.8rem;color:var(--text-secondary);outline:none;cursor:pointer;font-family:'Barlow',sans-serif;" readonly>
+                                <button id="add-headline-btn-sidebar" style="background:#7c3aed;color:white;padding:5px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;text-transform:uppercase;">Add</button>
                             </div>
                         </div>
                     </div>
