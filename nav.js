@@ -276,6 +276,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="auth-label">Display Name (Max 12 chars)</label>
                         <input type="text" class="auth-input" id="navProfileName" required maxlength="12">
                     </div>
+
+                    <div class="auth-form-group">
+                        <label class="auth-label">Avatar Color</label>
+                        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;">
+                            <div class="nav-avatar-opt" data-color="#001a57" data-label="Navy" style="width:34px;height:34px;border-radius:50%;background:#001a57;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Navy">S</div>
+                            <div class="nav-avatar-opt" data-color="#006BB6" data-label="Blue" style="width:34px;height:34px;border-radius:50%;background:#006BB6;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Blue">S</div>
+                            <div class="nav-avatar-opt" data-color="#ED174C" data-label="Red" style="width:34px;height:34px;border-radius:50%;background:#ED174C;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Red">S</div>
+                            <div class="nav-avatar-opt" data-color="#475569" data-label="Slate" style="width:34px;height:34px;border-radius:50%;background:#475569;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Slate">S</div>
+                            <div class="nav-avatar-opt" data-color="#1e293b" data-label="Dark" style="width:34px;height:34px;border-radius:50%;background:#1e293b;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Dark">S</div>
+                        </div>
+                        <input type="hidden" id="navAvatarColor" value="">
+                    </div>
                     
                     <button type="submit" class="auth-submit-btn">Save Changes</button>
                     
@@ -627,6 +639,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user) {
             document.getElementById('navProfileName').value = user.displayName || '';
             
+            // Load saved avatar color and initialize picker
+            const savedColor = localStorage.getItem('avatarColor') || '#001a57';
+            document.getElementById('navAvatarColor').value = savedColor;
+            const avatarOpts = document.querySelectorAll('.nav-avatar-opt');
+            avatarOpts.forEach(opt => {
+                const isSelected = opt.dataset.color === savedColor;
+                opt.style.borderColor = isSelected ? '#006BB6' : 'transparent';
+                opt.style.boxShadow = isSelected ? '0 0 0 2px rgba(0,107,182,0.3)' : 'none';
+                opt.style.transform = isSelected ? 'scale(1.1)' : 'scale(1)';
+                opt.onclick = () => {
+                    avatarOpts.forEach(o => {
+                        o.style.borderColor = 'transparent';
+                        o.style.boxShadow = 'none';
+                        o.style.transform = 'scale(1)';
+                    });
+                    opt.style.borderColor = '#006BB6';
+                    opt.style.boxShadow = '0 0 0 2px rgba(0,107,182,0.3)';
+                    opt.style.transform = 'scale(1.1)';
+                    document.getElementById('navAvatarColor').value = opt.dataset.color;
+                };
+            });
 
             // Initial notification fetch
             loadNotifications();
@@ -894,7 +927,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(profileForm) profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('navProfileName').value;
-        
+        const avatarColor = document.getElementById('navAvatarColor').value;
         
         if (name.length > 12) {
             showNavMessage('Username must be 12 characters or less', 'error');
@@ -905,13 +938,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const user = window.auth.currentUser;
             await user.updateProfile({
                 displayName: name,
-                
             });
+
+            // Save avatar color locally
+            if (avatarColor) {
+                localStorage.setItem('avatarColor', avatarColor);
+            }
             
             // Sync with Firestore
             await window.db.collection('users').doc(user.uid).set({
                 username: name,
-                
+                avatarColor: avatarColor || '#001a57',
                 updatedAt: new Date().toISOString()
             }, { merge: true }).catch(err => console.error("Firestore sync error:", err));
 
@@ -1067,4 +1104,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-
