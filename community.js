@@ -1,4 +1,3 @@
-
 // Community Feed Logic
 const CommunityFeed = (() => {
 
@@ -9,6 +8,7 @@ const CommunityFeed = (() => {
     const COLLECTION_NAME = 'community_posts';
     const ARTICLE_COLLECTION = 'sidebar_articles';
     const HEADLINE_COLLECTION = 'trending_headlines';
+    const POLL_COLLECTION = 'weekly_polls';
     const MOD_EMAIL = 'rhatus13@gmail.com';
 
     async function createNotification(recipientId, type, text, postId, sender) {
@@ -39,6 +39,8 @@ ANALYSIS: [Analysis]
 
     let sidebarArticles = [];
     let trendingHeadlines = [];
+    let currentPoll = null;
+    let mostActiveUserId = null;
 
     // Helper to generate URL-friendly slugs
     function generateSlug(text) {
@@ -70,7 +72,8 @@ ANALYSIS: [Analysis]
             setupEventListeners();
             listenToArticles();
             listenToHeadlines();
-            setFilter('hot'); 
+            listenToPoll();
+            setFilter('hot');
             checkDeepLink();
         } else {
             // Try again soon
@@ -88,18 +91,24 @@ ANALYSIS: [Analysis]
         }
 
         if (postId) {
-            console.log("Deep link detected for post:", postId);
-            // Wait for posts to load then open
+            let attempts = 0;
             const interval = setInterval(() => {
+                attempts++;
                 if (posts.length > 0) {
                     if (posts.some(p => p.id === postId)) {
                         openDetailedView(postId);
                         clearInterval(interval);
+                    } else if (attempts >= 20) {
+                        // Post not found after 10 seconds of polling
+                        clearInterval(interval);
+                        // Clean the bad post ID from the URL silently
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('post');
+                        window.history.replaceState({}, '', url.toString());
+                        showAlert('This post could not be found. It may have been deleted.', 'Post Not Found');
                     }
                 }
             }, 500);
-            // Timeout after 10 seconds
-            setTimeout(() => clearInterval(interval), 10000);
         }
     }
 
@@ -114,13 +123,7 @@ ANALYSIS: [Analysis]
         filters.forEach(f => {
             const btn = document.getElementById(`filter-${f}`);
             if (btn) {
-                if (f === currentFilter) {
-                    btn.classList.add('bg-blue-50', 'text-blue-600', 'font-bold');
-                    btn.classList.remove('hover:bg-slate-50', 'text-slate-600', 'font-medium');
-                } else {
-                    btn.classList.remove('bg-blue-50', 'text-blue-600', 'font-bold');
-                    btn.classList.add('hover:bg-slate-50', 'text-slate-600', 'font-medium');
-                }
+                btn.classList.toggle('active', f === currentFilter);
             }
         });
     }
@@ -150,7 +153,8 @@ ANALYSIS: [Analysis]
                 ...doc.data(),
                 time: formatTimeAgo(doc.data().createdAt)
             }));
-            
+
+            computeMostActive(posts);
             renderFeed();
 
             const modal = document.getElementById('post-modal-overlay');
@@ -180,20 +184,210 @@ ANALYSIS: [Analysis]
         });
     }
 
-    function renderGuestFeed() {
-        const container = document.getElementById('feed-container');
+    // ── WEEKLY POLL ───────────────────────────────────────────────
+    function listenToPoll() {
+        if (!window.db) return;
+        window.db.collection(POLL_COLLECTION)
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .onSnapshot(snapshot => {
+                if (snapshot.empty) {
+                    renderPoll(null);
+                    return;
+                }
+                const doc = snapshot.docs[0];
+                currentPoll = { id: doc.id, ...doc.data() };
+                renderPoll(currentPoll);
+            }, err => console.error('Poll listener error:', err));
+    }
+
+    function renderPoll(poll) {
+        const container = document.getElementById('poll-container');
+        const endsLabel = document.getElementById('poll-ends-label');
         if (!container) return;
-        
+
+        if (!poll) {
+            // Mod-only: show create prompt; guests see nothing
+            if (isMod()) {
+                container.innerHTML = `
+                    <button id="create-poll-btn" style="width:100%;padding:0.6rem;border:1px dashed var(--border-light);border-radius:8px;background:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);">+ Create Poll</button>
+                `;
+                document.getElementById('create-poll-btn').onclick = openCreatePollModal;
+            } else {
+                const card = document.getElementById('poll-sidebar-card');
+                if (card) card.style.display = 'none';
+            }
+            if (endsLabel) endsLabel.textContent = '';
+            return;
+        }
+
+        // Show card if hidden
+        const card = document.getElementById('poll-sidebar-card');
+        if (card) card.style.display = '';
+
+        const user = window.auth ? window.auth.currentUser : null;
+        const voters = poll.voters || {};
+        const hasVoted = user && voters[user.uid] !== undefined;
+        const totalVotes = Object.values(poll.votes || {}).reduce((a, b) => a + b, 0);
+        const options = poll.options || [];
+
+        // Ends label
+        if (endsLabel && poll.endsAt) {
+            const endsDate = poll.endsAt.toDate ? poll.endsAt.toDate() : new Date(poll.endsAt);
+            const diff = endsDate - new Date();
+            const daysLeft = Math.max(0, Math.ceil(diff / 86400000));
+            endsLabel.textContent = daysLeft > 0 ? `${daysLeft}d left` : 'Ended';
+        }
+
+        const isPollEnded = poll.endsAt && (() => {
+            const endsDate = poll.endsAt.toDate ? poll.endsAt.toDate() : new Date(poll.endsAt);
+            return new Date() > endsDate;
+        })();
+
         container.innerHTML = `
-            <div class="bg-white rounded-xl p-12 text-center border border-slate-200 shadow-sm">
-                <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">Join the Sixers Community</h3>
-                <p class="text-slate-500 mb-8 max-w-md mx-auto">Sign in to share your thoughts, vote on posts, and join the conversation with other fans!</p>
-                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">Sign In to Participate</button>
+            <p style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.95rem;line-height:1.3;color:var(--ink);margin-bottom:0.85rem;">${poll.question}</p>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;" id="poll-options-list">
+                ${options.map((opt, i) => {
+                    const voteCount = (poll.votes || {})[i] || 0;
+                    const pct = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+                    const isMyVote = hasVoted && voters[user.uid] === i;
+                    const showResults = hasVoted || isPollEnded;
+
+                    if (showResults) {
+                        return `
+                        <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid ${isMyVote ? 'var(--sixers-blue)' : 'var(--border-light)'};background:${isMyVote ? 'rgba(0,107,182,0.06)' : 'transparent'};">
+                            <div class="poll-option-bar-bg" style="position:absolute;inset:0;background:#f1f5f9;z-index:0;border-radius:8px;"></div>
+                            <div style="position:absolute;inset:0;background:${isMyVote ? 'rgba(0,107,182,0.14)' : 'rgba(0,107,182,0.07)'};width:${pct}%;z-index:1;border-radius:8px;transition:width 0.6s ease;"></div>
+                            <div style="position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;">
+                                <span style="font-family:'Barlow',sans-serif;font-size:0.82rem;font-weight:${isMyVote ? '700' : '500'};color:var(--ink);">${isMyVote ? '✓ ' : ''}${opt}</span>
+                                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:800;color:${isMyVote ? 'var(--sixers-blue)' : 'var(--mid)'};">${pct}%</span>
+                            </div>
+                        </div>`;
+                    } else {
+                        return `
+                        <button class="poll-option-btn" data-poll-idx="${i}" style="width:100%;text-align:left;padding:0.55rem 0.75rem;border:1px solid var(--border-light);border-radius:8px;background:var(--card-bg, #fff);cursor:pointer;font-family:'Barlow',sans-serif;font-size:0.82rem;font-weight:500;color:var(--ink);transition:border-color 0.2s,background 0.2s;">
+                            ${opt}
+                        </button>`;
+                    }
+                }).join('')}
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.65rem;">
+                <span style="font-family:'Barlow',sans-serif;font-size:0.68rem;color:var(--mid);">${totalVotes} vote${totalVotes !== 1 ? 's' : ''}</span>
+                ${isMod() ? `<button id="edit-poll-btn" style="font-family:'Barlow',sans-serif;font-size:0.68rem;color:var(--sixers-blue);background:none;border:none;cursor:pointer;font-weight:600;">Edit Poll</button>` : ''}
             </div>
         `;
+
+        // Vote button listeners
+        container.querySelectorAll('.poll-option-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.borderColor = 'var(--sixers-blue)';
+                btn.style.background = 'rgba(0,107,182,0.05)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.borderColor = 'var(--border-light)';
+                btn.style.background = 'var(--card-bg, #fff)';
+            });
+            btn.addEventListener('click', () => handlePollVote(poll.id, parseInt(btn.dataset.pollIdx)));
+        });
+
+        const editBtn = document.getElementById('edit-poll-btn');
+        if (editBtn) editBtn.onclick = openCreatePollModal;
+    }
+
+    async function handlePollVote(pollId, optionIdx) {
+        const user = window.auth ? window.auth.currentUser : null;
+        if (!user) { triggerLogin(); return; }
+        if (!window.db) return;
+
+        const poll = currentPoll;
+        if (!poll) return;
+        const voters = poll.voters || {};
+        if (voters[user.uid] !== undefined) return; // already voted
+
+        try {
+            const voteField = `votes.${optionIdx}`;
+            const currentCount = (poll.votes || {})[optionIdx] || 0;
+            await window.db.collection(POLL_COLLECTION).doc(pollId).update({
+                [voteField]: currentCount + 1,
+                [`voters.${user.uid}`]: optionIdx
+            });
+        } catch (err) {
+            console.error('Poll vote error:', err);
+        }
+    }
+
+    function openCreatePollModal() {
+        if (!isMod()) return;
+        const question = prompt('Poll question:');
+        if (!question) return;
+        const opt1 = prompt('Option 1:');
+        if (!opt1) return;
+        const opt2 = prompt('Option 2:');
+        if (!opt2) return;
+        const opt3 = prompt('Option 3 (leave blank to skip):') || null;
+        const opt4 = prompt('Option 4 (leave blank to skip):') || null;
+        const daysStr = prompt('How many days should the poll run? (default 7):', '7');
+        const days = parseInt(daysStr) || 7;
+
+        const options = [opt1, opt2, opt3, opt4].filter(Boolean);
+        const votes = {};
+        options.forEach((_, i) => { votes[i] = 0; });
+
+        const endsAt = new Date();
+        endsAt.setDate(endsAt.getDate() + days);
+
+        if (!window.db) return;
+        window.db.collection(POLL_COLLECTION).add({
+            question,
+            options,
+            votes,
+            voters: {},
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+            endsAt
+        }).then(() => {
+            // Old polls auto-pushed out by the limit(1) desc query
+        }).catch(err => showAlert('Error creating poll: ' + err.message, 'Error'));
+    }
+
+    // ── MOST ACTIVE TODAY ─────────────────────────────────────────
+    function computeMostActive(postsList) {
+        if (!postsList || postsList.length === 0) return;
+        const cutoff = Date.now() - 86400000; // 24 hours ago
+        const tally = {};
+
+        postsList.forEach(post => {
+            // Count posts authored today
+            let postTime = 0;
+            if (post.createdAt) {
+                const d = post.createdAt.toDate ? post.createdAt.toDate() : new Date(post.createdAt);
+                postTime = d.getTime ? d.getTime() : 0;
+            }
+            if (postTime >= cutoff && post.authorId) {
+                tally[post.authorId] = tally[post.authorId] || { name: post.author, score: 0 };
+                tally[post.authorId].score += 3; // posts worth more
+            }
+
+            // Count comments authored today
+            (post.comments || []).forEach(c => {
+                let cTime = 0;
+                if (c.createdAt) {
+                    const d = new Date(c.createdAt);
+                    cTime = isNaN(d) ? 0 : d.getTime();
+                }
+                if (cTime >= cutoff && c.authorId) {
+                    tally[c.authorId] = tally[c.authorId] || { name: c.author, score: 0 };
+                    tally[c.authorId].score += 1;
+                }
+            });
+        });
+
+        const sorted = Object.entries(tally).sort((a, b) => b[1].score - a[1].score);
+        mostActiveUserId = sorted.length > 0 ? sorted[0][0] : null;
+    }
+
+    function getMostActiveBadge(authorId) {
+        if (!mostActiveUserId || authorId !== mostActiveUserId) return '';
+        return `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:linear-gradient(90deg,var(--sixers-blue),#4da8ff);color:white;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle;">🔥 Most Active</span>`;
     }
 
     function listenToHeadlines() {
@@ -429,16 +623,12 @@ ANALYSIS: [Analysis]
         const displayedArticles = sidebarArticles.slice(0, 3);
         container.innerHTML = displayedArticles.map(article => {
             const isPlayerGrade = article.category && article.category.toLowerCase().includes('player grade');
-            const categoryClass = isPlayerGrade ? 'text-amber-600' : 'text-blue-600';
-            const bgClass = isPlayerGrade ? 'bg-amber-50' : 'bg-blue-50';
-            const borderClass = isPlayerGrade ? 'border-amber-100' : 'border-blue-100';
-            const accentBorder = isPlayerGrade ? 'border-l-4 border-l-amber-500 pl-3' : 'pl-2';
             
             return `
-            <a href="${article.url}" class="flex gap-3 group relative p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-all ${isPlayerGrade ? 'bg-amber-50/30' : ''}">
-                <div class="flex-1 min-w-0 ${accentBorder}">
+            <a href="${article.url}" class="flex gap-3 group relative p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-all">
+                <div class="flex-1 min-w-0 pl-2">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${bgClass} ${categoryClass} border ${borderClass} tracking-tight">
+                        <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 tracking-tight">
                             ${isPlayerGrade ? '★ ' : ''}${article.category}
                         </span>
                         <span class="text-[10px] text-slate-400 whitespace-nowrap">${article.date}</span>
@@ -502,9 +692,6 @@ ANALYSIS: [Analysis]
 
         list.innerHTML = sidebarArticles.map(article => {
             const isPlayerGrade = article.category && article.category.toLowerCase().includes('player grade');
-            const categoryClass = isPlayerGrade ? 'text-amber-600' : 'text-blue-600';
-            const bgClass = isPlayerGrade ? 'bg-amber-50' : 'bg-blue-50';
-            const borderClass = isPlayerGrade ? 'border-amber-100' : 'border-blue-100';
 
             return `
             <div class="flex gap-4 p-4 bg-white rounded-xl border border-slate-200 group relative shadow-sm hover:shadow-md transition-all">
@@ -513,7 +700,7 @@ ANALYSIS: [Analysis]
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${bgClass} ${categoryClass} border ${borderClass}">
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">
                             ${isPlayerGrade ? '★ ' : ''}${article.category}
                         </span>
                         <span class="text-[10px] text-slate-400 font-medium">${article.date}</span>
@@ -694,7 +881,8 @@ ANALYSIS: [Analysis]
                 avatarContainer.innerHTML = `<img src="${photoURL}" class="h-full w-full object-cover" alt="${displayName}">`;
             } else {
                 const initial = displayName.charAt(0).toUpperCase();
-                avatarContainer.innerHTML = `<div class="h-full w-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">${initial}</div>`;
+                const savedColor = localStorage.getItem('avatarColor') || '#003da6';
+                avatarContainer.innerHTML = `<div class="h-full w-full text-white flex items-center justify-center font-bold text-lg" style="background:${savedColor};">${initial}</div>`;
             }
             triggerInput.placeholder = `What's on your mind, ${displayName}?`;
             if (submitBtn) submitBtn.innerText = 'Post';
@@ -913,7 +1101,7 @@ ANALYSIS: [Analysis]
     function createPostElement(post) {
         const isPlayerGrade = post.tag === 'Player Grade';
         const div = document.createElement('div');
-        div.className = `bg-white rounded-xl shadow-sm border ${isPlayerGrade ? 'border-amber-200 bg-gradient-to-br from-white to-amber-50/30' : 'border-slate-200'} overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md`;
+        div.className = `bg-white rounded-xl shadow-sm border ${isPlayerGrade ? 'border-slate-200' : 'border-slate-200'} overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md`;
         div.dataset.id = post.id;
         
         const user = window.auth ? window.auth.currentUser : null;
@@ -932,11 +1120,11 @@ ANALYSIS: [Analysis]
                              !post.imageUrl.startsWith('window.') &&
                              !(post.imageUrl.includes(window.location.host) && post.imageUrl.endsWith('/#'));
 
-        const tagClass = isPlayerGrade ? 'bg-amber-100 text-amber-700 border border-amber-200' : (post.tagClass || 'bg-slate-100 text-slate-700');
+        const tagClass = isPlayerGrade ? 'bg-blue-100 text-blue-700 border border-blue-200' : (post.tagClass || 'bg-slate-100 text-slate-700');
 
         div.innerHTML = `
             <!-- Vote Sidebar -->
-            <div class="w-12 ${isPlayerGrade ? 'bg-amber-50/50' : 'bg-slate-50/50'} p-2 flex flex-col items-center gap-1 border-r ${isPlayerGrade ? 'border-amber-100' : 'border-slate-100'}">
+            <div class="w-12 bg-slate-50/50 p-2 flex flex-col items-center gap-1 border-r border-slate-100">
                 <button class="p-1 hover:bg-slate-200 rounded transition-colors vote-up ${isUpvoted ? 'text-orange-600' : 'text-slate-400'}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                 </button>
@@ -956,7 +1144,7 @@ ANALYSIS: [Analysis]
                             </span>
                             <span>•</span>
                         ` : ''}
-                        <span class="font-bold text-slate-900">${post.author}</span>
+                        <span class="font-bold text-slate-900">${post.author}${getMostActiveBadge(post.authorId)}</span>
                         <span>•</span>
                         <span>${post.time}</span>
                         <span class="${tagClass} px-2 py-0.5 rounded-full font-black uppercase text-[9px] tracking-tight flex items-center gap-1">
@@ -988,6 +1176,10 @@ ANALYSIS: [Analysis]
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         ${countTotalComments(post.comments)} Comments
                     </button>
+                    <button class="flex items-center gap-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors text-sm jump-to-comments-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                        Jump to Comments
+                    </button>
                     <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm share-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                         Share
@@ -1011,6 +1203,17 @@ ANALYSIS: [Analysis]
             } else if (e.target.closest('.share-btn')) {
                 e.stopPropagation();
                 handleSharePost(post.id, post.title);
+            } else if (e.target.closest('.jump-to-comments-btn')) {
+                e.stopPropagation();
+                openDetailedView(post.id);
+                // After modal renders, scroll comment input into view
+                setTimeout(() => {
+                    const commentInput = document.getElementById('comment-input');
+                    if (commentInput) {
+                        commentInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        commentInput.focus();
+                    }
+                }, 120);
             } else {
                 openDetailedView(post.id);
             }
@@ -1166,6 +1369,22 @@ ANALYSIS: [Analysis]
         if (filterHot) filterHot.addEventListener('click', () => setFilter('hot'));
         if (filterNew) filterNew.addEventListener('click', () => setFilter('new'));
         if (filterTop) filterTop.addEventListener('click', () => setFilter('top'));
+
+        // Character counter for post content
+        const postContentInput = document.getElementById('post-content-input');
+        const charCounter = document.getElementById('post-char-counter');
+        if (postContentInput && charCounter) {
+            postContentInput.addEventListener('input', () => {
+                const len = postContentInput.value.length;
+                const max = 2000;
+                charCounter.textContent = `${len} / ${max}`;
+                if (len > max * 0.9) {
+                    charCounter.style.color = len >= max ? '#ef4444' : '#f59e0b';
+                } else {
+                    charCounter.style.color = '';
+                }
+            });
+        }
 
         const openModal = () => {
             const user = window.auth ? window.auth.currentUser : null;
@@ -1479,6 +1698,8 @@ ANALYSIS: [Analysis]
             document.getElementById('post-title-input').value = '';
             document.getElementById('post-content-input').value = '';
             document.getElementById('post-tag-input').value = 'Discussion';
+            const charCounter = document.getElementById('post-char-counter');
+            if (charCounter) { charCounter.textContent = '0 / 2000'; charCounter.style.color = ''; }
             
             // Reset Pro Editor
             const proEditor = document.getElementById('player-grade-editor');
@@ -1693,7 +1914,7 @@ ANALYSIS: [Analysis]
                                         <span class="font-bold text-slate-900">${r.author}</span>
                                         ${r.replyingTo ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-medium">replying to - <span class="font-bold">${r.replyingTo}</span></span>` : ''}
                                         <span>•</span>
-                                        <span>${r.time || 'Just now'}</span>
+                                        <span>${formatTimeAgo(r.createdAt) || 'just now'}</span>
                                     </div>
                                     ${(user && r.authorId === user.uid) || isMod() ? `
                                         <button class="delete-comment-btn text-red-400 hover:text-red-600 transition-colors p-1" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
@@ -1781,7 +2002,7 @@ ANALYSIS: [Analysis]
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 text-xs text-slate-500">
-                        <span class="font-bold text-slate-900">${post.author}</span>
+                        <span class="font-bold text-slate-900">${post.author}${getMostActiveBadge(post.authorId)}</span>
                         <span>•</span>
                         <span>${post.time}</span>
                         <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
@@ -1833,7 +2054,7 @@ ANALYSIS: [Analysis]
                             <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${idx}">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2 text-xs text-slate-500">
-                                        <span class="font-bold text-slate-900">${c.author}</span>
+                                        <span class="font-bold text-slate-900">${c.author}${getMostActiveBadge(c.authorId)}</span>
                                         <span>•</span>
                                         <span>${c.time || formatTimeAgo(c.createdAt)}</span>
                                     </div>
@@ -2250,7 +2471,6 @@ ANALYSIS: [Analysis]
             authorId: user.uid,
             text: text,
             replyingTo: parentReply.author,
-            time: 'Just now',
             createdAt: new Date().toISOString(),
             votes: 0,
             voters: {},
@@ -2301,7 +2521,6 @@ ANALYSIS: [Analysis]
             authorId: user.uid,
             text: text,
             replyingTo: comment.author,
-            time: 'Just now',
             createdAt: new Date().toISOString(),
             votes: 0,
             voters: {}
@@ -2351,7 +2570,6 @@ ANALYSIS: [Analysis]
             author: 'u/' + authorName,
             authorId: user.uid,
             text: text,
-            time: 'Just now',
             createdAt: new Date().toISOString(),
             votes: 0,
             voters: {},
@@ -2434,7 +2652,13 @@ ANALYSIS: [Analysis]
         posts: () => posts,
         setPosts: (p) => { posts = p; },
         renderPlayerGrades: renderPlayerGrades,
-        getGradeClass: getGradeClass
+        getGradeClass: getGradeClass,
+        listenToPoll,
+        renderPoll,
+        handlePollVote,
+        openCreatePollModal,
+        computeMostActive,
+        getMostActiveBadge
     };
 })();
 
