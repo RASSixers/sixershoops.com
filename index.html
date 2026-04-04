@@ -601,7 +601,7 @@
             justify-content: space-between;
         }
         .sidebar-card {
-            border-top: 3px solid var(--sixers-blue) !important;
+            border-top: 3px solid var(--navy) !important;
         }
         .sidebar-card.headlines-card {
             border-top-color: var(--navy) !important;
@@ -909,24 +909,54 @@
         :root.dark-mode .filter-btn.active { background: var(--sixers-blue); color: white; }
         :root.dark-mode .sidebar-heading { color: var(--ink); }
         :root.dark-mode #sidebar-articles-container a,
-        :root.dark-mode #sidebar-headlines-container a { border-color: var(--border-light); }
+        :root.dark-mode #sidebar-headlines-container a { border-color: var(--border-light); color: var(--ink); }
+        :root.dark-mode #sidebar-articles-container a:hover,
+        :root.dark-mode #sidebar-headlines-container a:hover { opacity: 0.75; }
         :root.dark-mode .pagination button { background: var(--card-bg); border-color: var(--border-light); color: var(--ink); }
         :root.dark-mode .pagination button:hover:not(:disabled) { background: #1e2130; }
         :root.dark-mode .player-card-render { background: var(--card-bg); border-color: var(--border-light); }
         :root.dark-mode .player-name-render { color: var(--ink); }
+        :root.dark-mode .player-analysis-render { color: var(--mid); }
+        :root.dark-mode .player-stats-render { color: var(--mid); border-color: var(--border-light); }
+        :root.dark-mode .player-grade-entry { background: #1e2130; border-color: var(--border-light); }
         :root.dark-mode .post-modal,
         :root.dark-mode .create-post-modal { background: var(--card-bg); color: var(--ink); }
         :root.dark-mode .post-modal-close { background: #1e2130; color: var(--mid); }
+        :root.dark-mode .create-post-header { border-color: var(--border-light); }
         :root.dark-mode h1, :root.dark-mode h2, :root.dark-mode h3,
         :root.dark-mode h4, :root.dark-mode h5, :root.dark-mode h6 { color: var(--ink); }
         :root.dark-mode input, :root.dark-mode textarea, :root.dark-mode select { background: #1e2130; color: var(--ink); border-color: var(--border-light); }
+        :root.dark-mode input::placeholder, :root.dark-mode textarea::placeholder { color: var(--mid); }
+        /* Tailwind utility overrides for dark mode */
         :root.dark-mode .bg-white { background-color: var(--card-bg) !important; }
-        :root.dark-mode .bg-slate-50 { background-color: #111318 !important; }
-        :root.dark-mode .border-slate-200 { border-color: var(--border-light) !important; }
-        :root.dark-mode .text-slate-900 { color: var(--ink) !important; }
-        :root.dark-mode .text-slate-500 { color: var(--mid) !important; }
+        :root.dark-mode .bg-slate-50 { background-color: #1a1e2a !important; }
         :root.dark-mode .bg-slate-100 { background-color: #1e2130 !important; }
+        :root.dark-mode .border-slate-200 { border-color: var(--border-light) !important; }
+        :root.dark-mode .border-slate-100 { border-color: var(--border-light) !important; }
+        :root.dark-mode .text-slate-900 { color: var(--ink) !important; }
+        :root.dark-mode .text-slate-800 { color: var(--ink) !important; }
+        :root.dark-mode .text-slate-700 { color: #c0c0d0 !important; }
+        :root.dark-mode .text-slate-600 { color: var(--mid) !important; }
+        :root.dark-mode .text-slate-500 { color: var(--mid) !important; }
+        :root.dark-mode .text-slate-400 { color: #666680 !important; }
         :root.dark-mode .hover\:bg-slate-100:hover { background-color: #1e2130 !important; }
+        :root.dark-mode .hover\:bg-slate-50:hover { background-color: #1a1e2a !important; }
+        /* Feed post cards (dynamically injected) */
+        :root.dark-mode [class*="post-card"],
+        :root.dark-mode .feed-post { background: var(--card-bg); border-color: var(--border-light); }
+        /* Section label line */
+        :root.dark-mode .section-label::after { background: var(--border-light); }
+        :root.dark-mode .section-label { color: var(--mid); }
+        /* Community feed heading */
+        :root.dark-mode .community-feed-title { color: var(--ink); }
+        /* Sidebar view-all stays blue — no override needed */
+        /* Article/headline tag badges in dark mode */
+        :root.dark-mode .sidebar-view-all { color: #4da8ff; }
+        /* Inbox/notification section inside dropdown */
+        :root.dark-mode .notification-item { border-color: var(--border-light); }
+        :root.dark-mode .notification-item:hover { background: #1e2130; }
+        :root.dark-mode .notification-item.unread { background: rgba(0,107,182,0.12); }
+        :root.dark-mode .notification-item.unread:hover { background: rgba(0,107,182,0.2); }
 
         /* ─── COMMUNITY FEED HEADING ────────────────── */
         .community-feed-heading {
@@ -1100,16 +1130,6 @@
         <div class="community-feed-heading">
             <span class="community-feed-title">Community Feed</span>
             <span class="community-feed-badge">LIVE</span>
-        </div>
-
-        <!-- Avatar Picker -->
-        <div class="avatar-picker-row" id="avatar-picker-row">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-right:2px;">Pick avatar:</span>
-            <div class="avatar-option avatar-option-navy selected" data-initial="S" id="av-navy">S</div>
-            <div class="avatar-option avatar-option-blue" data-initial="S" id="av-blue">S</div>
-            <div class="avatar-option avatar-option-red" data-initial="S" id="av-red">S</div>
-            <div class="avatar-option avatar-option-slate" data-initial="S" id="av-slate">S</div>
-            <div class="avatar-option avatar-option-dark" data-initial="S" id="av-dark">S</div>
         </div>
 
         <!-- Create Post -->
@@ -1369,23 +1389,8 @@
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 <script>
-    // Avatar picker
-    const avatarOptions = document.querySelectorAll('.avatar-option');
-    const avatarContainer = document.getElementById('create-post-avatar-container');
-    avatarOptions.forEach(opt => {
-        opt.addEventListener('click', () => {
-            avatarOptions.forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            const bg = getComputedStyle(opt).backgroundColor;
-            avatarContainer.innerHTML = '';
-            const circle = document.createElement('div');
-            circle.style.cssText = `width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:white;`;
-            circle.textContent = 'S';
-            avatarContainer.appendChild(circle);
-        });
-    });
-    // Init first avatar
-    avatarOptions[0].click();
+    // Filter button active state
+    document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
