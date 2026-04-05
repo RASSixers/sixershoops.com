@@ -197,6 +197,48 @@
         .btn-dl:hover { background:#0080d4; transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,107,182,0.35); }
         .btn-copy-img { background:#f0ede6; color:var(--ink); }
         .btn-copy-img:hover { background:#e8e4dc; }
+
+        /* ── Envelope Flip Reveal ── */
+        .envelope-wrap {
+            perspective: 800px;
+            margin-bottom: 0.5rem;
+        }
+        .envelope-card {
+            position: relative; width: 100%; min-height: 72px;
+            transform-style: preserve-3d;
+            transform: rotateX(-90deg) scale(0.8);
+            opacity: 0;
+            transition: transform 0.55s cubic-bezier(0.34,1.3,0.64,1), opacity 0.3s ease;
+        }
+        .envelope-card.flipped {
+            transform: rotateX(0deg) scale(1);
+            opacity: 1;
+        }
+        /* Shimmer on #1 reveal */
+        .envelope-card.pick-1-card::after {
+            content:'';
+            position:absolute; inset:0; border-radius:10px;
+            background: linear-gradient(105deg, transparent 30%, rgba(255,215,0,0.25) 50%, transparent 70%);
+            background-size: 200% 100%;
+            animation: goldShimmer 1.2s ease 0.4s 1;
+            pointer-events:none;
+        }
+        @keyframes goldShimmer {
+            0%   { background-position: 200% 0; opacity:0; }
+            20%  { opacity:1; }
+            100% { background-position: -200% 0; opacity:0; }
+        }
+        /* Suspense placeholder shown before flip */
+        .envelope-sealed {
+            display:flex; align-items:center; justify-content:center;
+            background: linear-gradient(135deg, var(--navy-deep), #00245e);
+            border: 1px solid rgba(0,107,182,0.3);
+            border-radius:10px; min-height:72px;
+            font-family:'Barlow Condensed',sans-serif;
+            font-size:1rem; font-weight:800; letter-spacing:0.12em;
+            text-transform:uppercase; color:rgba(255,255,255,0.3);
+            position:absolute; inset:0;
+        }
     </style>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-T1V9Q0MNEM');</script>
@@ -243,6 +285,17 @@
                     <input type="checkbox" id="show-bottom-picks" checked style="accent-color:var(--sixers-blue);">
                     <span style="font-size:0.77rem;color:var(--mid);">Show picks 5–14 in results</span>
                 </label>
+
+                <div style="border-top:1px solid var(--border-light);padding-top:0.7rem;display:flex;flex-direction:column;gap:0.5rem;">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid);">Run Until a Team Gets #1</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <select id="until-one-team-select" style="flex:1;padding:0.38rem 0.6rem;border:1px solid var(--border-light);border-radius:7px;font-size:0.8rem;background:white;color:var(--ink);cursor:pointer;font-family:'Barlow',sans-serif;">
+                            <option value="PHI">76ers (default)</option>
+                        </select>
+                        <button class="btn-secondary" id="until-one-btn" onclick="runUntilPickOne()" style="white-space:nowrap;padding:0.38rem 0.9rem;">🎯 Run</button>
+                    </div>
+                    <div id="until-one-result" style="display:none;padding:0.5rem 0.75rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.8rem;color:var(--ink);font-weight:600;" id="until-one-text"></div>
+                </div>
             </div>
         </div>
 
@@ -502,6 +555,11 @@ async function fetchAndBuildLottery() {
         }));
         COMBO_MAP=null; // Reset so buildComboMap() runs fresh on next sim
         renderOddsTable(); renderSixersOddsPanel(); renderJumpCard(); renderPastPicks(); populateScenarioSelect();
+        // Populate until-one team select
+        const sel=document.getElementById('until-one-team-select');
+        if(sel){
+            sel.innerHTML=lotteryTeams.map(t=>`<option value="${t.abbr}"${t.abbr==='PHI'?' selected':''}>${t.shortName}</option>`).join('');
+        }
         const now=new Date();
         document.getElementById('odds-updated-badge').textContent=`Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
     } catch(err) {
@@ -672,14 +730,18 @@ async function runLottery() {
         badge.style.display='inline-block';
         badge.textContent=`Sixers → Pick #${pn}`;
         badge.className=`badge ${pn===1?'badge-gold':pn<=4?'badge-blue':'badge-red'}`;
-        if(pn<=4) fireConfetti();
+        if(pn<=4) fireConfetti(pn===1);
         renderResultHeadline(pn, picks);
     } else {
         renderResultHeadline(null, picks);
     }
     document.getElementById('social-card-btn').style.display='';
     const showBottom=document.getElementById('show-bottom-picks').checked;
-    for(let i=0;i<4;i++){await sleep(200);appendPickEl(picks[i],picksEl);}
+    // Top 4: dramatic envelope flip with longer delays
+    for(let i=0;i<4;i++){
+        await sleep(i===0?300:600);
+        await appendPickEnvelope(picks[i],picksEl,true);
+    }
     if(showBottom&&picks.length>4){
         const lbl=document.createElement('div');
         lbl.style.cssText="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin:0.65rem 0 0.3rem;";
@@ -705,6 +767,60 @@ function appendPickEl(pickObj,container) {
     requestAnimationFrame(()=>el.classList.add('revealed'));
 }
 
+async function appendPickEnvelope(pickObj, container, withSuspense=true) {
+    const isSixers=pickObj.team.abbr==='PHI', c=TEAM_COLORS[pickObj.team.abbr]||'#888', p=pickObj.pick;
+    const medalLabel = p===1?'🏆 Pick #1':p===2?'🥈 Pick #2':p===3?'🥉 Pick #3':'Pick #4';
+    const wrapClass=`result-pick${p===1?' pick-gold':p===2?' pick-silver':p===3?' pick-bronze':''}${isSixers?' sixers-pick':''}`;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'envelope-wrap';
+
+    const card = document.createElement('div');
+    card.className = `envelope-card${p===1?' pick-1-card':''}`;
+
+    if (withSuspense) {
+        // Show sealed envelope first
+        const sealed = document.createElement('div');
+        sealed.className = 'envelope-sealed';
+        sealed.textContent = medalLabel;
+        card.appendChild(sealed);
+        wrap.appendChild(card);
+        container.appendChild(wrap);
+        // Animate in sealed
+        requestAnimationFrame(()=>{ requestAnimationFrame(()=>card.classList.add('flipped')); });
+        await sleep(700);
+        // Remove sealed, flip back, swap content
+        card.classList.remove('flipped');
+        await sleep(320);
+        sealed.remove();
+    }
+
+    // Build real pick content
+    const inner = document.createElement('div');
+    inner.className = wrapClass;
+    inner.style.cssText='opacity:1;transform:none;margin:0;';
+    inner.innerHTML=`
+        <div class="pick-num${p<=4?' pick-'+p:''}">${p}</div>
+        <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
+        <div class="pick-team">
+            <div class="pick-team-name">${pickObj.team.shortName}</div>
+            <div class="pick-team-sub">${pickObj.protectionNote||(p<=4?pickObj.team.oddsTop1.toFixed(1)+'% pick #1 odds':pickObj.team.wins+'-'+pickObj.team.losses)}</div>
+        </div>
+        ${isSixers?'<span class="pick-sixers-tag">Sixers ★</span>':''}`;
+
+    card.appendChild(inner);
+    if (!withSuspense) { wrap.appendChild(card); container.appendChild(wrap); }
+
+    // Flip reveal
+    requestAnimationFrame(()=>{ requestAnimationFrame(()=>card.classList.add('flipped')); });
+
+    // #1 pick: fire Sixers confetti after reveal
+    if (p===1) {
+        await sleep(400);
+        fireConfetti(isSixers);
+    }
+}
+
 function resetSim() {
     document.getElementById('results-card').style.display='none';
     document.getElementById('result-picks').innerHTML='';
@@ -717,14 +833,17 @@ function resetSim() {
 async function runUntilPickOne() {
     if(!lotteryTeams.length){alert('Standings still loading…');return;}
     const btn=document.getElementById('until-one-btn');
-    btn.disabled=true; btn.textContent='Simulating…'; await sleep(30);
+    const abbr=document.getElementById('until-one-team-select').value||'PHI';
+    const team=lotteryTeams.find(t=>t.abbr===abbr)||lotteryTeams[0];
+    btn.disabled=true; btn.textContent='Running…'; await sleep(30);
     let count=0; const MAX=50000;
-    while(count<MAX){count++;const p=runLotterySimOnce();const sp=p&&p.find(x=>x.team.abbr==='PHI');if(sp&&sp.pick===1)break;}
-    document.getElementById('until-one-result').style.display='block';
-    document.getElementById('until-one-text').textContent=count>=MAX
-        ?`Still waiting after ${MAX.toLocaleString()} draws 😬`
-        :`Sixers got #1 after ${count.toLocaleString()} draw${count!==1?'s':''}`;
-    btn.disabled=false; btn.textContent='🎯 Run Until Sixers Get #1';
+    while(count<MAX){count++;const p=runLotterySimOnce();const sp=p&&p.find(x=>x.team.abbr===team.abbr);if(sp&&sp.pick===1)break;}
+    const resultEl=document.getElementById('until-one-result');
+    resultEl.style.display='block';
+    resultEl.innerHTML=count>=MAX
+        ?`<span style="color:var(--sixers-red)">Still waiting after ${MAX.toLocaleString()} draws 😬</span>`
+        :`🎯 <strong>${team.shortName}</strong> got #1 after <strong style="color:var(--sixers-blue)">${count.toLocaleString()} draw${count!==1?'s':''}</strong>`;
+    btn.disabled=false; btn.textContent='🎯 Run';
 }
 
 async function runMassSimulation(n) {
@@ -859,13 +978,26 @@ function toggleExplainer() {
     c.style.transform=b.classList.contains('open')?'rotate(180deg)':'rotate(0)';
 }
 
-function fireConfetti() {
-    const colors=['#006BB6','#ED174C','#ffffff','#4da8ff','#ffd700'];
-    for(let i=0;i<60;i++){
+function fireConfetti(isSixers=false) {
+    const sixersColors=['#006BB6','#006BB6','#ED174C','#ffffff','#4da8ff','#c9f0ff','#ED174C'];
+    const neutralColors=['#c9a84c','#9ca3af','#ffffff','#e8e4dc','#b45309'];
+    const colors = isSixers ? sixersColors : neutralColors;
+    const count = isSixers ? 120 : 50;
+    for(let i=0;i<count;i++){
         const el=document.createElement('div'); el.className='confetti-piece';
-        el.style.cssText=`left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};width:${4+Math.random()*8}px;height:${4+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;`;
-        document.body.appendChild(el); setTimeout(()=>el.remove(),4000);
+        const size=4+Math.random()*10;
+        const shape=Math.random();
+        el.style.cssText=`left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};width:${size}px;height:${shape>0.7?size*2.5:size}px;border-radius:${shape>0.85?'50%':shape>0.7?'2px':'1px'};animation-duration:${1.8+Math.random()*2.5}s;animation-delay:${Math.random()*0.8}s;`;
+        document.body.appendChild(el); setTimeout(()=>el.remove(),5000);
     }
+    // Second burst for Sixers
+    if(isSixers) setTimeout(()=>{
+        for(let i=0;i<60;i++){
+            const el=document.createElement('div'); el.className='confetti-piece';
+            el.style.cssText=`left:${20+Math.random()*60}vw;background:${sixersColors[Math.floor(Math.random()*sixersColors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*18}px;border-radius:2px;animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*0.4}s;`;
+            document.body.appendChild(el); setTimeout(()=>el.remove(),5000);
+        }
+    }, 500);
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
