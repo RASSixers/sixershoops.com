@@ -128,6 +128,16 @@
         .confetti-piece { position:fixed; top:-10px; animation:confetti-fall linear forwards; z-index:9999; pointer-events:none; }
         @keyframes confetti-fall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
 
+        .protection-item { padding:0.6rem 0; border-bottom:1px solid #f0ede6; margin-bottom:0.1rem; }
+        .protection-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; gap:0.4rem; flex-wrap:wrap; }
+        .protection-teams { font-family:"Barlow Condensed",sans-serif; font-weight:800; font-size:0.82rem; color:var(--ink); }
+        .protection-tag { font-family:"Barlow Condensed",sans-serif; font-size:0.55rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(0,107,182,0.08); color:var(--sixers-blue); border:1px solid rgba(0,107,182,0.18); padding:2px 6px; border-radius:4px; white-space:nowrap; }
+        .protection-detail { font-size:0.72rem; color:var(--mid); line-height:1.55; }
+        .protection-detail strong { color:var(--ink); }
+        .swap-row { display:flex; gap:0.5rem; align-items:flex-start; margin-bottom:0.45rem; }
+        .swap-arrow { font-family:"Barlow Condensed",sans-serif; font-weight:900; color:var(--sixers-red); font-size:0.9rem; flex-shrink:0; margin-top:1px; }
+        .swap-text { font-size:0.72rem; color:var(--mid); line-height:1.55; }
+        .swap-text strong { color:var(--ink); }
         @media (max-width:768px) { .main-layout { grid-template-columns:1fr; padding:1rem; } }
     </style>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
@@ -203,7 +213,10 @@
         <div class="card" id="results-card" style="display:none;margin-bottom:1.25rem;">
             <div class="card-header">
                 <span class="card-title">Lottery Results</span>
-                <span class="badge" id="result-sixers-badge" style="display:none;"></span>
+                <div style="display:flex;gap:0.4rem;align-items:center;">
+                    <span class="badge" id="result-sixers-badge" style="display:none;"></span>
+                    <button class="btn-secondary" id="share-btn" style="display:none;padding:3px 9px;font-size:0.7rem;" onclick="shareResult()">📤 Share</button>
+                </div>
             </div>
             <div class="card-body">
                 <div id="spinner-wrap" class="spinner-wrap" style="display:none;">
@@ -272,10 +285,77 @@
             </div>
         </div>
 
+        <!-- Scenario Builder -->
+        <div class="section-label" style="margin-top:0.5rem;">Scenario Builder</div>
+        <div class="card" style="margin-bottom:1.25rem;">
+            <div class="card-body">
+                <div style="font-size:0.77rem;color:var(--mid);margin-bottom:0.75rem;line-height:1.5;">Override any team's lottery seed to explore "what if" scenarios.</div>
+                <div style="margin-bottom:0.65rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Team</label>
+                    <select id="scenario-team-select" style="width:100%;padding:0.4rem 0.6rem;border:1px solid var(--border-light);border-radius:7px;font-size:0.8rem;background:white;color:var(--ink);cursor:pointer;">
+                        <option value="">— select team —</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:0.75rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Override Lottery Seed: <span id="scenario-seed-val" style="color:var(--sixers-blue);">—</span></label>
+                    <input type="range" id="scenario-seed-range" min="1" max="14" value="1" style="width:100%;accent-color:var(--sixers-blue);" oninput="onScenarioSlider()" disabled>
+                </div>
+                <div id="scenario-odds-preview" style="display:none;padding:0.55rem 0.8rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.78rem;color:var(--mid);margin-bottom:0.65rem;line-height:1.6;"></div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="btn-run" style="flex:1;padding:0.6rem;" onclick="applyScenario()">Apply Scenario</button>
+                    <button class="btn-secondary" onclick="clearScenario()" title="Reset to live standings">Reset</button>
+                </div>
+                <div id="scenario-active-banner" style="display:none;margin-top:0.6rem;padding:0.45rem 0.7rem;background:rgba(237,23,76,0.07);border:1px solid rgba(237,23,76,0.18);border-radius:7px;font-size:0.72rem;color:var(--sixers-red);font-weight:600;text-align:center;"></div>
+            </div>
+        </div>
+
         <!-- Jump Card -->
         <div class="card" id="jump-card" style="display:none;margin-bottom:1.25rem;">
             <div class="card-header"><span class="card-title">Spots Needed to Jump</span></div>
             <div class="card-body" id="jump-body" style="text-align:center;padding:1.1rem;"></div>
+        </div>
+
+        <!-- Pick Protections -->
+        <div class="section-label" style="margin-top:0.5rem;">2026 Pick Protections</div>
+        <div class="card" style="margin-bottom:1.25rem;">
+            <div class="card-body" style="padding-top:0.9rem;">
+                <div style="font-size:0.74rem;color:var(--mid);margin-bottom:0.85rem;line-height:1.55;">If a pick lands in the protected range, the original team keeps it and it rolls to next year. Outside the range, it conveys to the new owner.</div>
+                <div class="protection-item">
+                    <div class="protection-header"><span class="protection-teams">76ers <span style="opacity:0.5">→</span> Thunder</span><span class="protection-tag">Top-4 Protected</span></div>
+                    <div class="protection-detail">Lands <strong>1–4</strong>: Sixers keep it (rolls to 2027, still top-4 protected).</div>
+                    <div class="protection-detail">Lands <strong>5–30</strong>: Conveys fully to OKC.</div>
+                </div>
+                <div class="protection-item">
+                    <div class="protection-header"><span class="protection-teams">Pacers <span style="opacity:0.5">→</span> Clippers</span><span class="protection-tag">5–9 Window Only</span></div>
+                    <div class="protection-detail">Lands <strong>1–4 or 10–30</strong>: Pacers keep it.</div>
+                    <div class="protection-detail">Lands <strong>5–9</strong>: Conveys to Clippers (narrow window).</div>
+                    <div class="protection-detail" style="font-style:italic;">No 2026 conveyance → becomes Pacers' 2031 R1 (unprotected).</div>
+                </div>
+                <div class="protection-item">
+                    <div class="protection-header"><span class="protection-teams">Wizards <span style="opacity:0.5">→</span> Knicks</span><span class="protection-tag">Top-8 Protected</span></div>
+                    <div class="protection-detail">Lands <strong>1–8</strong>: Wizards keep it.</div>
+                    <div class="protection-detail">Lands <strong>9–30</strong>: Conveys to Knicks.</div>
+                </div>
+                <div class="protection-item" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
+                    <div class="protection-header"><span class="protection-teams">Jazz outgoing</span><span class="protection-tag">Top-8 Protected</span></div>
+                    <div class="protection-detail">Lands <strong>9–30</strong>: Conveys (typically to OKC).</div>
+                    <div class="protection-detail">Lands <strong>1–8</strong>: Jazz keep it.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Swap Rights -->
+        <div class="section-label">2026 Swap Rights</div>
+        <div class="card" style="margin-bottom:1.25rem;">
+            <div class="card-body" style="padding-top:0.9rem;">
+                <div style="font-size:0.74rem;color:var(--mid);margin-bottom:0.85rem;line-height:1.55;">Swap rights let a team take the more favorable of two picks. Resolved after full draft order is set.</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.5rem;">ATL · SAS · CLE · UTA · MIN · DET Chain</div>
+                <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Spurs</strong> take the better of their pick vs. <strong>Hawks</strong>'.</div></div>
+                <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Hawks</strong> can then swap the result with <strong>Cavaliers</strong> (or further down the chain).</div></div>
+                <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Jazz</strong> can swap with <strong>Minnesota</strong> or <strong>Cleveland</strong> — often landing the most favorable of the three.</div></div>
+                <div class="swap-row" style="margin-bottom:0;"><span class="swap-arrow">→</span><div class="swap-text"><strong>Minnesota</strong> can swap with <strong>Detroit</strong>. <strong>Cleveland</strong> often ends up with the least favorable outcome.</div></div>
+                <div style="margin-top:0.75rem;padding:0.5rem 0.7rem;background:#f9f7f3;border-radius:7px;font-size:0.72rem;color:var(--mid);line-height:1.55;">Final landing spots can shift dramatically — one pick can chain through multiple teams before settling.</div>
+            </div>
         </div>
 
         <!-- History -->
@@ -358,7 +438,7 @@ async function fetchAndBuildLottery() {
             oddsTop1:OFFICIAL_LOTTERY_ODDS[i+1].pct1,
         }));
         COMBO_MAP=null; // Reset so buildComboMap() runs fresh on next sim
-        renderOddsTable(); renderSixersOddsPanel(); renderJumpCard(); renderPastPicks();
+        renderOddsTable(); renderSixersOddsPanel(); renderJumpCard(); renderPastPicks(); populateScenarioSelect();
         const now=new Date();
         document.getElementById('odds-updated-badge').textContent=`Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
     } catch(err) {
@@ -491,6 +571,7 @@ async function runLottery() {
     runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
     await sleep(850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
+    lastPicksForShare=picks; document.getElementById('share-btn').style.display='';
     spinnerWrap.style.display='none';
     const sp=picks.find(p=>p.team.abbr==='PHI');
     if(sp){
@@ -673,6 +754,116 @@ function fireConfetti() {
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+
+// ── Scenario Builder ─────────────────────────────────────────────────────────
+let scenarioOverride = null; // {teamAbbr, fromSeed, toSeed}
+let scenarioOriginalTeams = null;
+
+function populateScenarioSelect() {
+    const sel = document.getElementById('scenario-team-select');
+    sel.innerHTML = '<option value="">— select team —</option>';
+    lotteryTeams.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.abbr;
+        opt.textContent = `#${t.lotteryRank} ${t.shortName} (${t.wins}-${t.losses})`;
+        if (t.abbr === 'PHI') opt.selected = true;
+        sel.appendChild(opt);
+    });
+    sel.onchange = onScenarioTeamChange;
+    onScenarioTeamChange();
+}
+
+function onScenarioTeamChange() {
+    const abbr = document.getElementById('scenario-team-select').value;
+    const slider = document.getElementById('scenario-seed-range');
+    const seedVal = document.getElementById('scenario-seed-val');
+    const preview = document.getElementById('scenario-odds-preview');
+    if (!abbr) { slider.disabled = true; seedVal.textContent = '—'; preview.style.display = 'none'; return; }
+    const team = lotteryTeams.find(t => t.abbr === abbr);
+    if (!team) return;
+    slider.disabled = false;
+    slider.value = team.lotteryRank;
+    seedVal.textContent = `#${team.lotteryRank}`;
+    updateScenarioPreview(abbr, team.lotteryRank);
+}
+
+function onScenarioSlider() {
+    const abbr = document.getElementById('scenario-team-select').value;
+    const seed = parseInt(document.getElementById('scenario-seed-range').value);
+    document.getElementById('scenario-seed-val').textContent = `#${seed}`;
+    if (abbr) updateScenarioPreview(abbr, seed);
+}
+
+function updateScenarioPreview(abbr, seed) {
+    const preview = document.getElementById('scenario-odds-preview');
+    const odds = OFFICIAL_LOTTERY_ODDS[seed];
+    if (!odds) return;
+    const team = lotteryTeams.find(t => t.abbr === abbr);
+    const origSeed = team ? team.lotteryRank : seed;
+    const moved = seed !== origSeed ? ` (was #${origSeed})` : '';
+    preview.style.display = 'block';
+    preview.innerHTML = `Seed <strong style="color:var(--ink)">#${seed}${moved}</strong> → <strong style="color:var(--sixers-blue)">${odds.pct1}%</strong> pick #1 odds · <strong>${odds.combinations}</strong> combinations`;
+}
+
+function applyScenario() {
+    const abbr = document.getElementById('scenario-team-select').value;
+    const toSeed = parseInt(document.getElementById('scenario-seed-range').value);
+    if (!abbr) { alert('Select a team first.'); return; }
+    if (!scenarioOriginalTeams) scenarioOriginalTeams = JSON.parse(JSON.stringify(lotteryTeams));
+
+    // Re-derive from originals each time so multiple applies stay consistent
+    lotteryTeams = JSON.parse(JSON.stringify(scenarioOriginalTeams));
+    const target = lotteryTeams.find(t => t.abbr === abbr);
+    if (!target) return;
+
+    const fromSeed = target.lotteryRank;
+    if (fromSeed === toSeed) { clearScenario(); return; }
+
+    // Swap the seed and combinations between target and whoever currently holds toSeed
+    const other = lotteryTeams.find(t => t.lotteryRank === toSeed);
+    if (other) { other.lotteryRank = fromSeed; other.combinations = OFFICIAL_LOTTERY_ODDS[fromSeed].combinations; other.oddsTop1 = OFFICIAL_LOTTERY_ODDS[fromSeed].pct1; }
+    target.lotteryRank = toSeed; target.combinations = OFFICIAL_LOTTERY_ODDS[toSeed].combinations; target.oddsTop1 = OFFICIAL_LOTTERY_ODDS[toSeed].pct1;
+    lotteryTeams.sort((a,b) => a.lotteryRank - b.lotteryRank);
+
+    COMBO_MAP = null;
+    renderOddsTable(); renderSixersOddsPanel(); renderJumpCard();
+
+    const banner = document.getElementById('scenario-active-banner');
+    banner.style.display = 'block';
+    const tname = lotteryTeams.find(t => t.abbr === abbr)?.shortName || abbr;
+    banner.textContent = `⚠ Scenario active: ${tname} moved to seed #${toSeed}`;
+}
+
+function clearScenario() {
+    if (scenarioOriginalTeams) { lotteryTeams = JSON.parse(JSON.stringify(scenarioOriginalTeams)); scenarioOriginalTeams = null; }
+    COMBO_MAP = null;
+    document.getElementById('scenario-active-banner').style.display = 'none';
+    renderOddsTable(); renderSixersOddsPanel(); renderJumpCard();
+    populateScenarioSelect();
+}
+
+// ── Share Result ──────────────────────────────────────────────────────────────
+let lastPicksForShare = null;
+
+function shareResult() {
+    if (!lastPicksForShare) return;
+    const top4 = lastPicksForShare.slice(0, 4).map(p => `#${p.pick} ${p.team.shortName}`).join(' · ');
+    const sp = lastPicksForShare.find(p => p.team.abbr === 'PHI');
+    const sixersLine = sp ? `76ers landed #${sp.pick} overall` : '76ers missed the top 4';
+    const text = `2026 NBA Draft Lottery Sim\n${sixersLine}\nTop 4: ${top4}\nSimulate yours → sixershoops.com`;
+    if (navigator.share) {
+        navigator.share({ title: '2026 Draft Lottery Sim', text }).catch(() => copyToClipboard(text));
+    } else { copyToClipboard(text); }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('share-btn');
+        const orig = btn.textContent; btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = orig, 2000);
+    }).catch(() => alert('Could not copy to clipboard.'));
+}
 
 document.addEventListener('DOMContentLoaded',()=>{
     fetchAndBuildLottery();
