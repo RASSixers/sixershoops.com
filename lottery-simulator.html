@@ -357,6 +357,7 @@ async function fetchAndBuildLottery() {
             combinations:OFFICIAL_LOTTERY_ODDS[i+1].combinations,
             oddsTop1:OFFICIAL_LOTTERY_ODDS[i+1].pct1,
         }));
+        COMBO_MAP=null; // Reset so buildComboMap() runs fresh on next sim
         renderOddsTable(); renderSixersOddsPanel(); renderJumpCard(); renderPastPicks();
         const now=new Date();
         document.getElementById('odds-updated-badge').textContent=`Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
@@ -426,17 +427,58 @@ function renderJumpCard() {
         <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--mid);">Currently Lottery Rank <strong style="color:var(--ink);">#${s.lotteryRank}</strong></div>`;
 }
 
+// Pre-build the combination-to-team map once when teams are set
+// 1,001 possible unordered 4-ball combos from balls 1-14; 1,000 assigned, 1 unassigned
+let COMBO_MAP = null; // Map from sorted combo key "a,b,c,d" -> team index (0-13), or -1 if unassigned
+
+function buildComboMap() {
+    // Generate all C(14,4) = 1001 unordered combinations of 4 balls from 1-14
+    const allCombos = [];
+    for(let a=1;a<=14;a++) for(let b=a+1;b<=14;b++) for(let c=b+1;c<=14;c++) for(let d=c+1;d<=14;d++)
+        allCombos.push([a,b,c,d]);
+    // allCombos.length === 1001
+    // Shuffle so the "unassigned" combo is random
+    for(let i=allCombos.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[allCombos[i],allCombos[j]]=[allCombos[j],allCombos[i]];}
+    COMBO_MAP = new Map();
+    let idx=0;
+    lotteryTeams.forEach((t,ti)=>{
+        for(let k=0;k<t.combinations;k++){
+            COMBO_MAP.set(allCombos[idx].join(','), ti);
+            idx++;
+        }
+    });
+    // The last combo (allCombos[1000]) is unassigned — we just don't add it
+}
+
+function drawOneCombination() {
+    // Draw 4 distinct balls 1-14 in sequence, treat as unordered
+    const balls=[1,2,3,4,5,6,7,8,9,10,11,12,13,14];
+    const drawn=[];
+    for(let i=0;i<4;i++){
+        const j=Math.floor(Math.random()*(balls.length));
+        drawn.push(balls[j]);
+        balls.splice(j,1);
+    }
+    drawn.sort((a,b)=>a-b);
+    return drawn.join(',');
+}
+
 function runLotterySimOnce() {
     if(!lotteryTeams.length) return null;
-    const pool=[];
-    lotteryTeams.forEach((t,i)=>{for(let j=0;j<t.combinations;j++)pool.push(i);});
-    const used=new Set(), results=[];
+    if(!COMBO_MAP) buildComboMap();
+    const usedTeams=new Set(), results=[];
     for(let pick=0;pick<4;pick++){
-        let drawn,att=0;
-        do{drawn=pool[Math.floor(Math.random()*pool.length)];att++;}while(used.has(drawn)&&att<10000);
-        used.add(drawn); results.push(drawn);
+        let teamIdx, att=0;
+        do {
+            const key=drawOneCombination();
+            teamIdx=COMBO_MAP.has(key)?COMBO_MAP.get(key):-1; // -1 = unassigned combo
+            att++;
+        } while((teamIdx===-1||usedTeams.has(teamIdx))&&att<10000);
+        if(teamIdx===-1||!lotteryTeams[teamIdx]){continue;} // safety
+        usedTeams.add(teamIdx);
+        results.push(teamIdx);
     }
-    const rem=lotteryTeams.map((_,i)=>i).filter(i=>!used.has(i));
+    const rem=lotteryTeams.map((_,i)=>i).filter(i=>!usedTeams.has(i));
     rem.sort((a,b)=>lotteryTeams[a].lotteryRank-lotteryTeams[b].lotteryRank);
     rem.forEach(i=>results.push(i));
     return results.map((idx,pi)=>({pick:pi+1,team:lotteryTeams[idx]}));
