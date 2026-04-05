@@ -243,11 +243,6 @@
             </div>
         </div>
 
-        <!-- Past Picks -->
-        <div class="section-label" style="margin-top:0.5rem;">Sixers Draft History</div>
-        <div class="card">
-            <div class="card-body" id="past-picks-body" style="padding-top:1rem;"></div>
-        </div>
     </div>
 
     <!-- RIGHT SIDEBAR -->
@@ -275,7 +270,7 @@
                 </div>
 
                 <div id="lottery-date-note" style="margin-top:0.75rem;padding:0.6rem 0.9rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.75rem;color:var(--mid);text-align:center;">
-                    📅 <strong style="color:var(--ink);">Lottery Date:</strong> May 10, 2026
+                    <strong style="color:var(--ink);">Lottery Date:</strong> May 10, 2026
                 </div>
             </div>
         </div>
@@ -353,18 +348,10 @@
             </div>
         </div>
 
-        <!-- History -->
-        <div class="section-label">Recent Draws</div>
+        <!-- Draft History -->
+        <div class="section-label">Sixers Draft History</div>
         <div class="card">
-            <div class="card-header">
-                <span class="card-title">Sixers Pick History</span>
-                <span class="badge badge-blue" id="history-count-badge">0 draws</span>
-            </div>
-            <div class="card-body" style="padding-top:0.75rem;">
-                <div id="history-list">
-                    <div style="text-align:center;padding:1.5rem 0;color:var(--mid);font-size:0.8rem;">Run a simulation to see results here.</div>
-                </div>
-            </div>
+            <div class="card-body" id="past-picks-body" style="padding-top:1rem;"></div>
         </div>
     </div>
 
@@ -739,13 +726,15 @@ function renderHistory() {
 
 function renderPastPicks() {
     const el=document.getElementById('past-picks-body');
-    let html='';
+    if(!el) return;
+    const CUTOFF=2020;
+    let recent='', older='';
     PAST_PICKS.forEach(yr=>{
-        html+=`<div class="draft-year-block"><div class="draft-year-heading">${yr.year}</div>`;
-        if(yr.note&&!yr.picks.length) html+=`<div style="font-size:0.77rem;color:var(--mid);padding:0.35rem 0 0.5rem;font-style:italic;">${yr.note}</div>`;
+        let block=`<div class="draft-year-block"><div class="draft-year-heading">${yr.year}</div>`;
+        if(yr.note&&!yr.picks.length) block+=`<div style="font-size:0.77rem;color:var(--mid);padding:0.35rem 0 0.5rem;font-style:italic;">${yr.note}</div>`;
         yr.picks.forEach(p=>{
             const tag=p.traded?`<span class="traded-tag">Traded</span>`:'';
-            html+=`<div class="pick-row">
+            block+=`<div class="pick-row">
                 <span class="pick-rnd-badge ${p.rnd===1?'pick-rnd-r1':'pick-rnd-r2'}">R${p.rnd}</span>
                 <span class="pick-num-small">#${p.num}</span>
                 <div>
@@ -754,10 +743,27 @@ function renderPastPicks() {
                 </div>
             </div>`;
         });
-        if(yr.note&&yr.picks.length) html+=`<div style="font-size:0.7rem;color:var(--mid);padding:0.25rem 0;font-style:italic;">* ${yr.note}</div>`;
-        html+=`</div>`;
+        if(yr.note&&yr.picks.length) block+=`<div style="font-size:0.7rem;color:var(--mid);padding:0.25rem 0;font-style:italic;">* ${yr.note}</div>`;
+        block+=`</div>`;
+        if(yr.year>=CUTOFF) recent+=block; else older+=block;
     });
-    el.innerHTML=html;
+    el.innerHTML=recent+`
+        <div id="older-picks-wrap" style="overflow:hidden;max-height:0;transition:max-height 0.4s ease;">${older}</div>
+        <button onclick="toggleOlderPicks()" id="older-picks-btn" style="width:100%;margin-top:0.5rem;background:none;border:1px solid var(--border-light);border-radius:7px;padding:0.45rem 0.75rem;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+            <span id="older-picks-label">Show Earlier Years (2010–2019)</span>
+            <svg id="older-picks-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.3s;"><path d="m6 9 6 6 6-6"/></svg>
+        </button>`;
+}
+
+function toggleOlderPicks() {
+    const wrap=document.getElementById('older-picks-wrap');
+    const btn=document.getElementById('older-picks-btn');
+    const label=document.getElementById('older-picks-label');
+    const chev=document.getElementById('older-picks-chevron');
+    const isOpen=wrap.style.maxHeight!=='0px'&&wrap.style.maxHeight!=='';
+    wrap.style.maxHeight=isOpen?'0':'2000px';
+    label.textContent=isOpen?'Show Earlier Years (2010–2019)':'Hide Earlier Years';
+    chev.style.transform=isOpen?'':'rotate(180deg)';
 }
 
 function toggleExplainer() {
