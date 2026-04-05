@@ -2648,6 +2648,14 @@ ANALYSIS: [Analysis]
         statsEl.innerHTML = '';
         postsEl.innerHTML = '<p style="font-size:0.82rem;color:var(--mid);text-align:center;padding:2rem 0;">Loading…</p>';
 
+        // Reset rank/score UI
+        const rankSection = document.getElementById('profile-rank-section');
+        const barWrap = document.getElementById('profile-score-bar-wrap');
+        const badgesEl = document.getElementById('profile-modal-badges');
+        if (rankSection) rankSection.style.display = 'none';
+        if (barWrap) barWrap.style.display = 'none';
+        if (badgesEl) badgesEl.innerHTML = '';
+
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
 
@@ -2658,9 +2666,12 @@ ANALYSIS: [Analysis]
         // Count total votes received across local posts
         const totalVotesReceived = localPosts.reduce((sum, p) => sum + (p.votes || 0), 0);
         const totalComments = localPosts.reduce((sum, p) => sum + countTotalComments(p.comments), 0);
+        const totalRepliesReceived = localPosts.reduce((sum, p) => {
+            return sum + (p.comments || []).reduce((cs, c) => cs + ((c.replies || []).length), 0);
+        }, 0);
 
         // Show local data immediately while Firestore loads
-        renderProfileStats(statsEl, localPosts.length, totalVotesReceived, totalComments);
+        renderProfileStats(statsEl, localPosts.length, totalVotesReceived, totalComments, totalRepliesReceived);
         renderProfilePosts(postsEl, localPosts, authorId);
 
         // Try to get a fuller picture from Firestore
@@ -2694,8 +2705,11 @@ ANALYSIS: [Analysis]
 
                 const allVotes = firestorePosts.reduce((sum, p) => sum + (p.votes || 0), 0);
                 const allComments = firestorePosts.reduce((sum, p) => sum + countTotalComments(p.comments), 0);
+                const allRepliesReceived = firestorePosts.reduce((sum, p) => {
+                    return sum + (p.comments || []).reduce((cs, c) => cs + ((c.replies || []).length), 0);
+                }, 0);
 
-                renderProfileStats(statsEl, firestorePosts.length, allVotes, allComments);
+                renderProfileStats(statsEl, firestorePosts.length, allVotes, allComments, allRepliesReceived);
                 renderProfilePosts(postsEl, firestorePosts, authorId);
 
             } catch (err) {
@@ -2706,7 +2720,76 @@ ANALYSIS: [Analysis]
         }
     }
 
-    function renderProfileStats(container, postCount, votes, comments) {
+    // ── FAN SCORE ENGINE ──────────────────────────────────────────
+    function computeFanScore(postCount, totalVotes, commentCount, totalRepliesReceived) {
+        // Scoring formula:
+        //   Posts:              15 pts each
+        //   Upvotes received:    3 pts each
+        //   Comments written:    5 pts each
+        //   Replies received:    2 pts each
+        //   Engagement bonus:   extra pts when post avg upvotes > 5
+        const base = (postCount * 15) + (totalVotes * 3) + (commentCount * 5) + (totalRepliesReceived * 2);
+        const avgVotesPerPost = postCount > 0 ? totalVotes / postCount : 0;
+        const engagementBonus = avgVotesPerPost > 5 ? Math.floor(avgVotesPerPost * 2) : 0;
+        return base + engagementBonus;
+    }
+
+    const RANK_TIERS = [
+        { min: 0,    max: 49,    title: 'Casual Fan',      icon: '👀', color: '#64748b', barColor: '#94a3b8' },
+        { min: 50,   max: 149,   title: 'Hoops Head',      icon: '🏀', color: '#0077cc', barColor: '#4da8ff' },
+        { min: 150,  max: 349,   title: 'Die-Hard',        icon: '🔥', color: '#b06b00', barColor: '#f59e0b' },
+        { min: 350,  max: 699,   title: 'Sixers Faithful', icon: '💪', color: '#006BB6', barColor: '#38bdf8' },
+        { min: 700,  max: 1199,  title: 'Court Analyst',   icon: '📊', color: '#7c3aed', barColor: '#a78bfa' },
+        { min: 1200, max: 2199,  title: 'Process Believer',icon: '⚙️', color: '#1a6b3c', barColor: '#4ade80' },
+        { min: 2200, max: 3999,  title: 'Bell Ringer',     icon: '🔔', color: '#c2410c', barColor: '#fb923c' },
+        { min: 4000, max: 7499,  title: 'Philly Legend',   icon: '🏆', color: '#b45309', barColor: '#fbbf24' },
+        { min: 7500, max: Infinity, title: 'Sixers Icon',  icon: '👑', color: '#ED174C', barColor: '#f43f5e' },
+    ];
+
+    function getRankTier(score) {
+        return RANK_TIERS.find(t => score >= t.min && score <= t.max) || RANK_TIERS[0];
+    }
+
+    function renderFanScore(score) {
+        const tier = getRankTier(score);
+        const nextTierIdx = RANK_TIERS.indexOf(tier) + 1;
+        const nextTier = RANK_TIERS[nextTierIdx] || null;
+
+        const rankSection = document.getElementById('profile-rank-section');
+        const rankIcon = document.getElementById('profile-rank-icon');
+        const rankTitle = document.getElementById('profile-rank-title');
+        const rankScoreVal = document.getElementById('profile-rank-score-val');
+        const barWrap = document.getElementById('profile-score-bar-wrap');
+        const barFill = document.getElementById('profile-score-bar-fill');
+        const barNextLabel = document.getElementById('profile-score-next-label');
+        const barPctLabel = document.getElementById('profile-score-pct-label');
+
+        if (!rankSection) return;
+
+        rankSection.style.display = 'flex';
+        rankIcon.textContent = tier.icon;
+        rankTitle.textContent = tier.title;
+        rankTitle.style.color = tier.barColor;
+        rankScoreVal.textContent = score >= 1000 ? (score / 1000).toFixed(1) + 'k' : score;
+
+        barWrap.style.display = 'block';
+        if (nextTier) {
+            const pct = Math.min(100, Math.round(((score - tier.min) / (nextTier.min - tier.min)) * 100));
+            barFill.style.width = pct + '%';
+            barFill.style.background = `linear-gradient(90deg, ${tier.barColor}, ${nextTier.barColor})`;
+            barNextLabel.textContent = `Next: ${nextTier.title}`;
+            barPctLabel.textContent = `${pct}%`;
+        } else {
+            barFill.style.width = '100%';
+            barFill.style.background = `linear-gradient(90deg, ${tier.barColor}, #fff)`;
+            barNextLabel.textContent = 'Max Rank Achieved';
+            barPctLabel.textContent = '100%';
+        }
+    }
+
+    function renderProfileStats(container, postCount, votes, comments, repliesReceived) {
+        const score = computeFanScore(postCount, votes, comments, repliesReceived || 0);
+        renderFanScore(score);
         container.innerHTML = `
             <div class="profile-stat">
                 <div class="profile-stat-val">${postCount}</div>
@@ -2720,26 +2803,31 @@ ANALYSIS: [Analysis]
                 <div class="profile-stat-val">${comments}</div>
                 <div class="profile-stat-label">Comments</div>
             </div>
+            <div class="profile-stat">
+                <div class="profile-stat-val">${repliesReceived || 0}</div>
+                <div class="profile-stat-label">Replies Got</div>
+            </div>
         `;
     }
 
     function renderProfilePosts(container, userPosts, authorId) {
+        // Render badges in the new dedicated element
+        const badgesEl = document.getElementById('profile-modal-badges');
+        if (badgesEl) {
+            const isCurrentUser = window.auth && window.auth.currentUser && window.auth.currentUser.uid === authorId;
+            const isMostActive = mostActiveUserId === authorId;
+            const badges = [];
+            if (isMostActive) badges.push(`<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:linear-gradient(90deg,var(--sixers-blue),#4da8ff);color:white;border-radius:4px;padding:2px 7px;">🔥 Most Active Today</span>`);
+            if (isMod() && isCurrentUser) badges.push(`<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:var(--sixers-red);color:white;border-radius:4px;padding:2px 7px;">MOD</span>`);
+            badgesEl.innerHTML = badges.join('');
+        }
+
         if (!userPosts || userPosts.length === 0) {
             container.innerHTML = '<p style="font-size:0.82rem;color:var(--mid);text-align:center;padding:2rem 0;">No posts yet.</p>';
             return;
         }
 
-        const isCurrentUser = window.auth && window.auth.currentUser && window.auth.currentUser.uid === authorId;
-        const isMostActive = mostActiveUserId === authorId;
-
-        // Header badges
-        const badges = [];
-        if (isMostActive) badges.push(`<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:linear-gradient(90deg,var(--sixers-blue),#4da8ff);color:white;border-radius:4px;padding:2px 7px;">🔥 Most Active Today</span>`);
-        if (isMod() && isCurrentUser) badges.push(`<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:var(--sixers-red);color:white;border-radius:4px;padding:2px 7px;">MOD</span>`);
-
-        const badgeHTML = badges.length > 0 ? `<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.85rem;">${badges.join('')}</div>` : '';
-
-        container.innerHTML = badgeHTML + userPosts.map(post => `
+        container.innerHTML = userPosts.map(post => `
             <div class="profile-post-item" data-post-id="${post.id}">
                 <div class="profile-post-title">${post.title}</div>
                 <div class="profile-post-meta">
