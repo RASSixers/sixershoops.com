@@ -290,7 +290,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div style="position:relative;flex-shrink:0;">
                             <div id="navProfileAvatarPreview" style="width:56px;height:56px;border-radius:50%;background:#001a57;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.4rem;color:white;overflow:hidden;border:3px solid rgba(0,107,182,0.3);">
                                 <span id="navProfileInitialPreview">?</span>
-                                <img id="navProfileImgPreview" src="" style="display:none;width:56px;height:56px;object-fit:cover;" alt="Avatar">
                             </div>
                         </div>
                         <div style="flex:1;min-width:0;">
@@ -308,23 +307,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="text" class="auth-input" id="navProfileName" required maxlength="12">
                     </div>
 
-                    <!-- Profile Picture Upload -->
                     <div class="auth-form-group">
-                        <label class="auth-label">Profile Picture</label>
-                        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-                            <label for="navProfilePicInput" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 1rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:0.8rem;font-weight:600;color:#374151;cursor:pointer;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                Upload Photo
-                            </label>
-                            <input type="file" id="navProfilePicInput" accept="image/*" style="display:none;">
-                            <span id="navProfilePicStatus" style="font-size:0.75rem;color:#94a3b8;">No file chosen</span>
-                            <button type="button" id="navRemoveProfilePicBtn" style="display:none;font-size:0.75rem;color:#ef4444;font-weight:600;background:none;border:none;cursor:pointer;padding:0;">Remove</button>
-                        </div>
-                        <p style="font-size:0.7rem;color:#94a3b8;margin-top:0.4rem;">JPG, PNG or GIF · Max 2MB</p>
-                    </div>
-
-                    <div class="auth-form-group">
-                        <label class="auth-label">Avatar Color <span style="font-size:0.7rem;color:#94a3b8;">(used when no photo set)</span></label>
+                        <label class="auth-label">Avatar Color</label>
                         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;">
                             <div class="nav-avatar-opt" data-color="#001a57" data-label="Navy" style="width:34px;height:34px;border-radius:50%;background:#001a57;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Navy">S</div>
                             <div class="nav-avatar-opt" data-color="#006BB6" data-label="Blue" style="width:34px;height:34px;border-radius:50%;background:#006BB6;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Blue">S</div>
@@ -479,11 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const initial = displayName.charAt(0).toUpperCase();
             
             
-            const savedPhotoURL = (user.photoURL) || localStorage.getItem('profilePicURL') || '';
-            const avatarInner = savedPhotoURL
-                ? `<img src="${savedPhotoURL}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="${displayName}">`
-                : initial;
-            const avatarHTML = `<div class="relative"><div class="user-avatar">${avatarInner}</div><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
+            const avatarHTML = `<div class="relative"><div class="user-avatar">${initial}</div><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
             
             const userHTML = `
                 <div class="user-profile-wrapper">
@@ -685,12 +665,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.querySelector('.auth-modal-title').textContent = 'Account Settings';
 
-        const user = window.auth.currentUser;
         if (user) {
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             const initial = displayName.charAt(0).toUpperCase();
             const savedColor = localStorage.getItem('avatarColor') || '#001a57';
-            const savedPhotoURL = user.photoURL || localStorage.getItem('profilePicURL') || '';
 
             // Populate fields
             document.getElementById('navProfileName').value = displayName;
@@ -700,29 +678,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const namePreview = document.getElementById('navProfileNamePreview');
             const emailPreview = document.getElementById('navProfileEmailPreview');
             const initialPreview = document.getElementById('navProfileInitialPreview');
-            const imgPreview = document.getElementById('navProfileImgPreview');
             const avatarPreview = document.getElementById('navProfileAvatarPreview');
-            const picStatus = document.getElementById('navProfilePicStatus');
-            const removeBtn = document.getElementById('navRemoveProfilePicBtn');
 
             if (namePreview) namePreview.textContent = displayName;
             if (emailPreview) emailPreview.textContent = user.email || '';
             if (avatarPreview) avatarPreview.style.background = savedColor;
             if (initialPreview) initialPreview.textContent = initial;
-
-            // Show existing photo if set
-            if (savedPhotoURL && imgPreview && initialPreview) {
-                imgPreview.src = savedPhotoURL;
-                imgPreview.style.display = 'block';
-                initialPreview.style.display = 'none';
-                if (picStatus) picStatus.textContent = 'Current photo active';
-                if (removeBtn) removeBtn.style.display = 'inline';
-            } else {
-                if (imgPreview) imgPreview.style.display = 'none';
-                if (initialPreview) initialPreview.style.display = 'flex';
-                if (picStatus) picStatus.textContent = 'No file chosen';
-                if (removeBtn) removeBtn.style.display = 'none';
-            }
 
             // Live preview: name input → preview card
             const nameInput = document.getElementById('navProfileName');
@@ -730,52 +691,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 nameInput.oninput = () => {
                     const val = nameInput.value || displayName;
                     namePreview.textContent = val;
-                    if (imgPreview && imgPreview.style.display === 'none') {
-                        initialPreview.textContent = val.charAt(0).toUpperCase() || initial;
-                    }
-                };
-            }
-
-            // File input: live preview
-            const picInput = document.getElementById('navProfilePicInput');
-            if (picInput) {
-                picInput.onchange = () => {
-                    const file = picInput.files[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                        if (picStatus) picStatus.textContent = 'File too large (max 2MB)';
-                        picInput.value = '';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        if (imgPreview && initialPreview) {
-                            imgPreview.src = e.target.result;
-                            imgPreview.style.display = 'block';
-                            initialPreview.style.display = 'none';
-                        }
-                        if (picStatus) picStatus.textContent = file.name;
-                        if (removeBtn) removeBtn.style.display = 'inline';
-                    };
-                    reader.readAsDataURL(file);
-                };
-            }
-
-            // Remove photo button
-            if (removeBtn) {
-                removeBtn.onclick = () => {
-                    if (picInput) { picInput.value = ''; }
-                    if (imgPreview && initialPreview) {
-                        imgPreview.src = '';
-                        imgPreview.style.display = 'none';
-                        initialPreview.style.display = 'flex';
-                        initialPreview.textContent = (nameInput ? nameInput.value : displayName).charAt(0).toUpperCase() || initial;
-                    }
-                    if (avatarPreview) avatarPreview.style.background = document.getElementById('navAvatarColor').value || savedColor;
-                    if (picStatus) picStatus.textContent = 'No file chosen';
-                    removeBtn.style.display = 'none';
-                    // Flag for removal on save
-                    removeBtn.dataset.removePhoto = 'true';
+                    initialPreview.textContent = val.charAt(0).toUpperCase() || initial;
                 };
             }
 
@@ -796,10 +712,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     opt.style.boxShadow = '0 0 0 2px rgba(0,107,182,0.3)';
                     opt.style.transform = 'scale(1.1)';
                     document.getElementById('navAvatarColor').value = opt.dataset.color;
-                    // Update preview avatar bg (only when no photo)
-                    if (avatarPreview && imgPreview && imgPreview.style.display === 'none') {
-                        avatarPreview.style.background = opt.dataset.color;
-                    }
+                    if (avatarPreview) avatarPreview.style.background = opt.dataset.color;
                 };
             });
 
@@ -1069,9 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const name = document.getElementById('navProfileName').value;
         const avatarColor = document.getElementById('navAvatarColor').value;
-        const picInput = document.getElementById('navProfilePicInput');
-        const removeBtn = document.getElementById('navRemoveProfilePicBtn');
-        
+
         if (name.length > 12) {
             showNavMessage('Username must be 12 characters or less', 'error');
             return;
@@ -1082,55 +993,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const user = window.auth.currentUser;
-            let photoURL = user.photoURL || localStorage.getItem('profilePicURL') || '';
-
-            // Handle photo removal
-            if (removeBtn && removeBtn.dataset.removePhoto === 'true') {
-                photoURL = '';
-                localStorage.removeItem('profilePicURL');
-                delete removeBtn.dataset.removePhoto;
-            }
-
-            // Handle new photo upload
-            const file = picInput && picInput.files[0];
-            if (file) {
-                if (window.storage) {
-                    try {
-                        const storageRef = window.storage.ref(`avatars/${user.uid}`);
-                        await storageRef.put(file);
-                        photoURL = await storageRef.getDownloadURL();
-                        localStorage.setItem('profilePicURL', photoURL);
-                    } catch (uploadErr) {
-                        console.warn('Storage upload failed, using local preview:', uploadErr);
-                        // Fallback: store data URL locally (won't persist across devices)
-                        const reader = new FileReader();
-                        photoURL = await new Promise(res => { reader.onload = e => res(e.target.result); reader.readAsDataURL(file); });
-                        localStorage.setItem('profilePicURL', photoURL);
-                    }
-                } else {
-                    // No storage SDK: use data URL locally
-                    const reader = new FileReader();
-                    photoURL = await new Promise(res => { reader.onload = e => res(e.target.result); reader.readAsDataURL(file); });
-                    localStorage.setItem('profilePicURL', photoURL);
-                }
-            }
-
-            // Update Firebase Auth profile
-            await user.updateProfile({ displayName: name, photoURL: photoURL || null });
-
+            await user.updateProfile({ displayName: name });
             if (avatarColor) localStorage.setItem('avatarColor', avatarColor);
-            
-            // Sync with Firestore
+
             await window.db.collection('users').doc(user.uid).set({
                 username: name,
                 avatarColor: avatarColor || '#001a57',
-                photoURL: photoURL || '',
                 updatedAt: new Date().toISOString()
             }, { merge: true }).catch(err => console.error("Firestore sync error:", err));
 
             await user.reload();
             renderUserNav(window.auth.currentUser);
-
             showNavMessage('Settings saved successfully!', 'success');
             setTimeout(closeAuthModal, 1800);
         } catch (err) {
