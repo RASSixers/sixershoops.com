@@ -196,12 +196,7 @@
                     Draw Lottery
                     <span style="font-size:0.66rem;opacity:0.5;font-weight:400;letter-spacing:0;text-transform:none;">(or Space)</span>
                 </button>
-                <button class="btn-secondary" id="until-one-btn" onclick="runUntilPickOne()" style="width:100%;padding:0.6rem;text-align:center;">
-                    🎯 Run Until Sixers Get #1
-                </button>
-                <div id="until-one-result" style="display:none;text-align:center;padding:0.6rem;background:rgba(0,107,182,0.06);border:1px solid rgba(0,107,182,0.18);border-radius:8px;">
-                    <span id="until-one-text" style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:var(--sixers-blue);"></span>
-                </div>
+
                 <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
                     <input type="checkbox" id="show-bottom-picks" checked style="accent-color:var(--sixers-blue);">
                     <span style="font-size:0.77rem;color:var(--mid);">Show picks 5–14 in results</span>
@@ -280,7 +275,7 @@
                 </div>
 
                 <div id="lottery-date-note" style="margin-top:0.75rem;padding:0.6rem 0.9rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.75rem;color:var(--mid);text-align:center;">
-                    📅 <strong style="color:var(--ink);">Lottery Date:</strong> TBD — typically mid-May
+                    📅 <strong style="color:var(--ink);">Lottery Date:</strong> May 10, 2026
                 </div>
             </div>
         </div>
@@ -507,6 +502,32 @@ function renderJumpCard() {
         <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--mid);">Currently Lottery Rank <strong style="color:var(--ink);">#${s.lotteryRank}</strong></div>`;
 }
 
+
+// 2026 Pick Protections - applied after lottery determines final pick slots
+const PICK_PROTECTIONS_2026 = [
+    // {owner, recipient, conveys: fn(pickNum) => true if it conveys to recipient}
+    {owner:'PHI', recipient:'OKC', conveys: p => p >= 5},
+    {owner:'IND', recipient:'LAC', conveys: p => p >= 5 && p <= 9},
+    {owner:'WAS', recipient:'NYK', conveys: p => p >= 9},
+    {owner:'UTA', recipient:'OKC', conveys: p => p >= 9},
+];
+
+function applyProtections(results) {
+    // results: array of {pick, team} sorted by pick number
+    return results.map(r => {
+        const prot = PICK_PROTECTIONS_2026.find(p => p.owner === r.team.abbr);
+        if (!prot) return r;
+        if (prot.conveys(r.pick)) {
+            // Find the recipient team in lotteryTeams (may not be in lottery - handle gracefully)
+            const recipientTeam = lotteryTeams.find(t => t.abbr === prot.recipient);
+            if (recipientTeam) {
+                return { ...r, team: recipientTeam, protectionNote: `${r.team.shortName} pick conveyed (protection)` };
+            }
+        }
+        return r;
+    });
+}
+
 // Pre-build the combination-to-team map once when teams are set
 // 1,001 possible unordered 4-ball combos from balls 1-14; 1,000 assigned, 1 unassigned
 let COMBO_MAP = null; // Map from sorted combo key "a,b,c,d" -> team index (0-13), or -1 if unassigned
@@ -561,7 +582,8 @@ function runLotterySimOnce() {
     const rem=lotteryTeams.map((_,i)=>i).filter(i=>!usedTeams.has(i));
     rem.sort((a,b)=>lotteryTeams[a].lotteryRank-lotteryTeams[b].lotteryRank);
     rem.forEach(i=>results.push(i));
-    return results.map((idx,pi)=>({pick:pi+1,team:lotteryTeams[idx]}));
+    const rawResults = results.map((idx,pi)=>({pick:pi+1,team:lotteryTeams[idx]}));
+    return applyProtections(rawResults);
 }
 
 async function runLottery() {
@@ -589,7 +611,7 @@ async function runLottery() {
     if(showBottom&&picks.length>4){
         const lbl=document.createElement('div');
         lbl.style.cssText="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin:0.65rem 0 0.3rem;";
-        lbl.textContent='Picks 5–14 (by record)'; picksEl.appendChild(lbl);
+        picksEl.appendChild(lbl); lbl.style.display='none';
         for(let i=4;i<picks.length;i++){await sleep(35);appendPickEl(picks[i],picksEl);}
     }
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
@@ -604,7 +626,7 @@ function appendPickEl(pickObj,container) {
         <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
         <div class="pick-team">
             <div class="pick-team-name">${pickObj.team.shortName}</div>
-            <div class="pick-team-sub">${p<=4?pickObj.team.oddsTop1.toFixed(1)+'% pick #1 odds':pickObj.team.wins+'-'+pickObj.team.losses}</div>
+            <div class="pick-team-sub">${pickObj.protectionNote||( p<=4?pickObj.team.oddsTop1.toFixed(1)+'% pick #1 odds':pickObj.team.wins+'-'+pickObj.team.losses)}</div>
         </div>
         ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
     container.appendChild(el);
