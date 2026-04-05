@@ -1144,7 +1144,7 @@ ANALYSIS: [Analysis]
                             </span>
                             <span>•</span>
                         ` : ''}
-                        <span class="font-bold text-slate-900">${post.author}${getMostActiveBadge(post.authorId)}</span>
+                        <span class="font-bold text-slate-900 author-link" data-author-id="${post.authorId}" data-author-name="${post.author}">${post.author}${getMostActiveBadge(post.authorId)}</span>
                         <span>•</span>
                         <span>${post.time}</span>
                         <span class="${tagClass} px-2 py-0.5 rounded-full font-black uppercase text-[9px] tracking-tight flex items-center gap-1">
@@ -1486,6 +1486,24 @@ ANALYSIS: [Analysis]
                     alertOverlay.classList.remove('active');
                     document.body.style.overflow = '';
                 }
+            });
+        }
+
+        // Profile modal — delegated listener for all author-link clicks
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('.author-link');
+            if (link) {
+                e.stopPropagation();
+                const authorId = link.dataset.authorId;
+                const authorName = link.dataset.authorName;
+                if (authorId && authorName) openProfileModal(authorId, authorName);
+            }
+        });
+        if (profileClose) profileClose.addEventListener('click', closeProfileModal);
+        const profileOverlay = document.getElementById('profile-modal-overlay');
+        if (profileOverlay) {
+            profileOverlay.addEventListener('click', (e) => {
+                if (e.target === profileOverlay) closeProfileModal();
             });
         }
 
@@ -2002,7 +2020,7 @@ ANALYSIS: [Analysis]
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 text-xs text-slate-500">
-                        <span class="font-bold text-slate-900">${post.author}${getMostActiveBadge(post.authorId)}</span>
+                        <span class="font-bold text-slate-900 author-link" data-author-id="${post.authorId}" data-author-name="${post.author}">${post.author}${getMostActiveBadge(post.authorId)}</span>
                         <span>•</span>
                         <span>${post.time}</span>
                         <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
@@ -2054,7 +2072,7 @@ ANALYSIS: [Analysis]
                             <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${idx}">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2 text-xs text-slate-500">
-                                        <span class="font-bold text-slate-900">${c.author}${getMostActiveBadge(c.authorId)}</span>
+                                        <span class="font-bold text-slate-900 author-link" data-author-id="${c.authorId}" data-author-name="${c.author}">${c.author}${getMostActiveBadge(c.authorId)}</span>
                                         <span>•</span>
                                         <span>${c.time || formatTimeAgo(c.createdAt)}</span>
                                     </div>
@@ -2604,6 +2622,166 @@ ANALYSIS: [Analysis]
         }
     }
 
+    // ── USER PROFILE MODAL ────────────────────────────────────────
+    async function openProfileModal(authorId, authorName) {
+        if (!authorId) return;
+
+        const overlay = document.getElementById('profile-modal-overlay');
+        const avatarEl = document.getElementById('profile-modal-avatar');
+        const usernameEl = document.getElementById('profile-modal-username');
+        const joinedEl = document.getElementById('profile-modal-joined');
+        const statsEl = document.getElementById('profile-modal-stats');
+        const postsEl = document.getElementById('profile-modal-posts');
+        if (!overlay) return;
+
+        // Style the avatar using saved color if available, else derive from name
+        const displayName = authorName.replace(/^u\//, '');
+        const initial = displayName.charAt(0).toUpperCase();
+        const avatarColors = ['#001a57','#006BB6','#ED174C','#475569','#1e293b'];
+        const colorIdx = displayName.charCodeAt(0) % avatarColors.length;
+        const avatarColor = avatarColors[colorIdx];
+
+        avatarEl.style.background = avatarColor;
+        avatarEl.textContent = initial;
+        usernameEl.textContent = authorName;
+        joinedEl.textContent = '';
+        statsEl.innerHTML = '';
+        postsEl.innerHTML = '<p style="font-size:0.82rem;color:var(--mid);text-align:center;padding:2rem 0;">Loading…</p>';
+
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Fetch all posts by this author from the already-loaded posts array first (fast),
+        // then do a Firestore query to get their full history (up to 20)
+        const localPosts = posts.filter(p => p.authorId === authorId);
+
+        // Count total votes received across local posts
+        const totalVotesReceived = localPosts.reduce((sum, p) => sum + (p.votes || 0), 0);
+        const totalComments = localPosts.reduce((sum, p) => sum + countTotalComments(p.comments), 0);
+
+        // Show local data immediately while Firestore loads
+        renderProfileStats(statsEl, localPosts.length, totalVotesReceived, totalComments);
+        renderProfilePosts(postsEl, localPosts, authorId);
+
+        // Try to get a fuller picture from Firestore
+        if (window.db) {
+            try {
+                const snapshot = await window.db.collection(COLLECTION_NAME)
+                    .where('authorId', '==', authorId)
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+
+                const firestorePosts = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    time: formatTimeAgo(doc.data().createdAt)
+                }));
+
+                // Also try to get join date from users collection
+                try {
+                    const userDoc = await window.db.collection('users').doc(authorId).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        if (userData.createdAt) {
+                            const joined = new Date(userData.createdAt);
+                            if (!isNaN(joined)) {
+                                joinedEl.textContent = `Joined ${joined.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+                            }
+                        }
+                    }
+                } catch (e) { /* user doc optional */ }
+
+                const allVotes = firestorePosts.reduce((sum, p) => sum + (p.votes || 0), 0);
+                const allComments = firestorePosts.reduce((sum, p) => sum + countTotalComments(p.comments), 0);
+
+                renderProfileStats(statsEl, firestorePosts.length, allVotes, allComments);
+                renderProfilePosts(postsEl, firestorePosts, authorId);
+
+            } catch (err) {
+                // Composite index might not exist yet — fall back to local data gracefully
+                console.warn('Profile query error:', err.message);
+                // Local data already rendered, nothing to do
+            }
+        }
+    }
+
+    function renderProfileStats(container, postCount, votes, comments) {
+        container.innerHTML = `
+            <div class="profile-stat">
+                <div class="profile-stat-val">${postCount}</div>
+                <div class="profile-stat-label">Posts</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-val">${votes >= 1000 ? (votes/1000).toFixed(1)+'k' : votes}</div>
+                <div class="profile-stat-label">Upvotes</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-val">${comments}</div>
+                <div class="profile-stat-label">Comments</div>
+            </div>
+        `;
+    }
+
+    function renderProfilePosts(container, userPosts, authorId) {
+        if (!userPosts || userPosts.length === 0) {
+            container.innerHTML = '<p style="font-size:0.82rem;color:var(--mid);text-align:center;padding:2rem 0;">No posts yet.</p>';
+            return;
+        }
+
+        const isCurrentUser = window.auth && window.auth.currentUser && window.auth.currentUser.uid === authorId;
+        const isMostActive = mostActiveUserId === authorId;
+
+        // Header badges
+        const badges = [];
+        if (isMostActive) badges.push(`<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:linear-gradient(90deg,var(--sixers-blue),#4da8ff);color:white;border-radius:4px;padding:2px 7px;">🔥 Most Active Today</span>`);
+        if (isMod() && isCurrentUser) badges.push(`<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:var(--sixers-red);color:white;border-radius:4px;padding:2px 7px;">MOD</span>`);
+
+        const badgeHTML = badges.length > 0 ? `<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.85rem;">${badges.join('')}</div>` : '';
+
+        container.innerHTML = badgeHTML + userPosts.map(post => `
+            <div class="profile-post-item" data-post-id="${post.id}">
+                <div class="profile-post-title">${post.title}</div>
+                <div class="profile-post-meta">
+                    <span style="background:${getTagColor(post.tag)};color:white;border-radius:3px;padding:1px 5px;font-size:0.58rem;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;">${post.tag || 'Post'}</span>
+                    <span>•</span>
+                    <span>${post.time || formatTimeAgo(post.createdAt)}</span>
+                    <span>•</span>
+                    <span>▲ ${post.votes || 0}</span>
+                    <span>•</span>
+                    <span>💬 ${countTotalComments(post.comments)}</span>
+                </div>
+            </div>
+        `).join('');
+
+        // Click a post row → close profile modal and open that post
+        container.querySelectorAll('.profile-post-item').forEach(item => {
+            item.addEventListener('click', () => {
+                closeProfileModal();
+                setTimeout(() => openDetailedView(item.dataset.postId), 200);
+            });
+        });
+    }
+
+    function getTagColor(tag) {
+        const map = {
+            'Discussion': '#2563eb',
+            'Highlight':  '#ea580c',
+            'News':       '#16a34a',
+            'Question':   '#7c3aed',
+            'Player Grade': '#006BB6',
+        };
+        return map[tag] || '#64748b';
+    }
+
+    function closeProfileModal() {
+        const overlay = document.getElementById('profile-modal-overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
     function closeModal() {
         const modal = document.getElementById('post-modal-overlay');
         if (modal) {
@@ -2658,7 +2836,9 @@ ANALYSIS: [Analysis]
         handlePollVote,
         openCreatePollModal,
         computeMostActive,
-        getMostActiveBadge
+        getMostActiveBadge,
+        openProfileModal,
+        closeProfileModal
     };
 })();
 
