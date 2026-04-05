@@ -737,9 +737,9 @@ async function runLottery() {
     }
     document.getElementById('social-card-btn').style.display='';
     const showBottom=document.getElementById('show-bottom-picks').checked;
-    // Top 4: dramatic envelope flip with longer delays
-    for(let i=0;i<4;i++){
-        await sleep(i===0?300:600);
+    // Top 4: dramatic envelope flip in reverse order (#4 → #1 for max drama)
+    for(let i=3;i>=0;i--){
+        await sleep(i===3?300:600);
         await appendPickEnvelope(picks[i],picksEl,true);
     }
     if(showBottom&&picks.length>4){
@@ -785,7 +785,7 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
         sealed.textContent = medalLabel;
         card.appendChild(sealed);
         wrap.appendChild(card);
-        container.appendChild(wrap);
+        container.prepend(wrap);
         // Animate in sealed
         requestAnimationFrame(()=>{ requestAnimationFrame(()=>card.classList.add('flipped')); });
         await sleep(700);
@@ -809,7 +809,7 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
         ${isSixers?'<span class="pick-sixers-tag">Sixers ★</span>':''}`;
 
     card.appendChild(inner);
-    if (!withSuspense) { wrap.appendChild(card); container.appendChild(wrap); }
+    if (!withSuspense) { wrap.appendChild(card); container.prepend(wrap); }
 
     // Flip reveal
     requestAnimationFrame(()=>{ requestAnimationFrame(()=>card.classList.add('flipped')); });
