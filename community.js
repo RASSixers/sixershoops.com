@@ -1181,10 +1181,10 @@ ANALYSIS: [Analysis]
                         ` : ''}
                     </div>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">${post.title}</h3>
+                <h3 class="text-base font-bold text-slate-900 mb-2 leading-snug">${post.title}</h3>
                 ${post.content ? `
-                    <div class="bg-white/50 backdrop-blur-sm rounded-lg p-4 mb-3 border border-slate-100 shadow-inner">
-                        ${isPlayerGrade ? renderPlayerGrades(post.content) : `<p class="text-sm text-slate-600 line-clamp-3">${formatTwitterContent(post.content)}</p>`}
+                    <div class="mb-3">
+                        ${isPlayerGrade ? renderPlayerGrades(post.content) : `<p class="text-sm text-slate-500 leading-relaxed line-clamp-3" style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${formatTwitterContent(post.content)}</p>`}
                     </div>` : ''}
                 ${twitterId ? `<div class="mb-4 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
                 ${hasValidImage ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block" onerror="this.parentElement.style.display='none'"></div>` : ''}
@@ -2801,7 +2801,7 @@ ANALYSIS: [Analysis]
 
         if (!rankSection) return;
         rankSection.style.display = 'flex';
-        if (rankScoreVal) rankScoreVal.textContent = score.toLocaleString() + ' pts';
+        if (rankScoreVal) rankScoreVal.textContent = score.toLocaleString();
         if (barWrap) barWrap.style.display = 'none';
 
         // Compute rank # from the already-loaded posts array
