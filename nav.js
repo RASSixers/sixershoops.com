@@ -1071,36 +1071,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Theme Toggle
+    // Theme Toggle — query icons AFTER navbar is injected so elements exist
     const themeToggle = document.getElementById('themeToggle');
-    const sunIcon = document.querySelector('.sun-icon');
-    const moonIcon = document.querySelector('.moon-icon');
     const htmlElement = document.documentElement;
-    
+
+    // Helper to sync icon visibility with current theme
+    function syncThemeIcons() {
+        const sunIcon = document.querySelector('.sun-icon');
+        const moonIcon = document.querySelector('.moon-icon');
+        const isDark = htmlElement.classList.contains('dark-mode');
+        if (sunIcon && moonIcon) {
+            sunIcon.style.display = isDark ? 'none' : 'block';
+            moonIcon.style.display = isDark ? 'block' : 'none';
+        }
+    }
+
     // Load saved theme preference - default to light mode
     const savedTheme = localStorage.getItem('theme') || 'light';
-    
+
     // Apply theme immediately to prevent flash
     if (savedTheme === 'dark') {
         htmlElement.classList.add('dark-mode');
-        if (sunIcon && moonIcon) {
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'block';
-        }
     }
-    
-    if(themeToggle) themeToggle.addEventListener('click', function() {
+
+    // Sync icons now that navbar HTML is in the DOM
+    syncThemeIcons();
+
+    if (themeToggle) themeToggle.addEventListener('click', function() {
         const isDark = htmlElement.classList.toggle('dark-mode');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        
-        if (sunIcon && moonIcon) {
-            if (isDark) {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            } else {
-                sunIcon.style.display = 'block';
-                moonIcon.style.display = 'none';
-            }
-        }
+        syncThemeIcons();
     });
 });
