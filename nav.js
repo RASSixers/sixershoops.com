@@ -1,4 +1,16 @@
 // Navbar Injection Script
+
+// === DARK MODE ANTI-FLASH ===
+// Run immediately (outside DOMContentLoaded) so theme applies before first paint.
+(function() {
+    try {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            document.documentElement.style.colorScheme = 'dark';
+        }
+    } catch(e) {}
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     // Add Navbar Styles if not present
     if (!document.getElementById('navbar-styles')) {
