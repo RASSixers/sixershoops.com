@@ -1499,6 +1499,7 @@ ANALYSIS: [Analysis]
                 if (authorId && authorName) openProfileModal(authorId, authorName);
             }
         });
+        const profileClose = document.getElementById('profile-modal-close');
         if (profileClose) profileClose.addEventListener('click', closeProfileModal);
         const profileOverlay = document.getElementById('profile-modal-overlay');
         if (profileOverlay) {
@@ -2722,68 +2723,40 @@ ANALYSIS: [Analysis]
 
     // ── FAN SCORE ENGINE ──────────────────────────────────────────
     function computeFanScore(postCount, totalVotes, commentCount, totalRepliesReceived) {
-        // Scoring formula:
-        //   Posts:              15 pts each
-        //   Upvotes received:    3 pts each
-        //   Comments written:    5 pts each
-        //   Replies received:    2 pts each
-        //   Engagement bonus:   extra pts when post avg upvotes > 5
         const base = (postCount * 15) + (totalVotes * 3) + (commentCount * 5) + (totalRepliesReceived * 2);
-        const avgVotesPerPost = postCount > 0 ? totalVotes / postCount : 0;
-        const engagementBonus = avgVotesPerPost > 5 ? Math.floor(avgVotesPerPost * 2) : 0;
-        return base + engagementBonus;
-    }
-
-    const RANK_TIERS = [
-        { min: 0,    max: 49,    title: 'Casual Fan',      icon: '👀', color: '#64748b', barColor: '#94a3b8' },
-        { min: 50,   max: 149,   title: 'Hoops Head',      icon: '🏀', color: '#0077cc', barColor: '#4da8ff' },
-        { min: 150,  max: 349,   title: 'Die-Hard',        icon: '🔥', color: '#b06b00', barColor: '#f59e0b' },
-        { min: 350,  max: 699,   title: 'Sixers Faithful', icon: '💪', color: '#006BB6', barColor: '#38bdf8' },
-        { min: 700,  max: 1199,  title: 'Court Analyst',   icon: '📊', color: '#7c3aed', barColor: '#a78bfa' },
-        { min: 1200, max: 2199,  title: 'Process Believer',icon: '⚙️', color: '#1a6b3c', barColor: '#4ade80' },
-        { min: 2200, max: 3999,  title: 'Bell Ringer',     icon: '🔔', color: '#c2410c', barColor: '#fb923c' },
-        { min: 4000, max: 7499,  title: 'Philly Legend',   icon: '🏆', color: '#b45309', barColor: '#fbbf24' },
-        { min: 7500, max: Infinity, title: 'Sixers Icon',  icon: '👑', color: '#ED174C', barColor: '#f43f5e' },
-    ];
-
-    function getRankTier(score) {
-        return RANK_TIERS.find(t => score >= t.min && score <= t.max) || RANK_TIERS[0];
+        const avgVotes = postCount > 0 ? totalVotes / postCount : 0;
+        return base + (avgVotes > 5 ? Math.floor(avgVotes * 2) : 0);
     }
 
     function renderFanScore(score) {
-        const tier = getRankTier(score);
-        const nextTierIdx = RANK_TIERS.indexOf(tier) + 1;
-        const nextTier = RANK_TIERS[nextTierIdx] || null;
-
         const rankSection = document.getElementById('profile-rank-section');
-        const rankIcon = document.getElementById('profile-rank-icon');
-        const rankTitle = document.getElementById('profile-rank-title');
         const rankScoreVal = document.getElementById('profile-rank-score-val');
+        const rankNumEl = document.getElementById('profile-rank-number');
         const barWrap = document.getElementById('profile-score-bar-wrap');
-        const barFill = document.getElementById('profile-score-bar-fill');
-        const barNextLabel = document.getElementById('profile-score-next-label');
-        const barPctLabel = document.getElementById('profile-score-pct-label');
 
         if (!rankSection) return;
-
         rankSection.style.display = 'flex';
-        rankIcon.textContent = tier.icon;
-        rankTitle.textContent = tier.title;
-        rankTitle.style.color = tier.barColor;
-        rankScoreVal.textContent = score >= 1000 ? (score / 1000).toFixed(1) + 'k' : score;
+        if (rankScoreVal) rankScoreVal.textContent = score.toLocaleString() + ' pts';
+        if (barWrap) barWrap.style.display = 'none';
 
-        barWrap.style.display = 'block';
-        if (nextTier) {
-            const pct = Math.min(100, Math.round(((score - tier.min) / (nextTier.min - tier.min)) * 100));
-            barFill.style.width = pct + '%';
-            barFill.style.background = `linear-gradient(90deg, ${tier.barColor}, ${nextTier.barColor})`;
-            barNextLabel.textContent = `Next: ${nextTier.title}`;
-            barPctLabel.textContent = `${pct}%`;
-        } else {
-            barFill.style.width = '100%';
-            barFill.style.background = `linear-gradient(90deg, ${tier.barColor}, #fff)`;
-            barNextLabel.textContent = 'Max Rank Achieved';
-            barPctLabel.textContent = '100%';
+        // Compute rank # by comparing against all loaded posts' authors
+        if (rankNumEl && window.CommunityFeed) {
+            try {
+                const allPosts = window.CommunityFeed.posts ? window.CommunityFeed.posts() : [];
+                const scoresByUser = {};
+                allPosts.forEach(p => {
+                    if (!p.authorId) return;
+                    if (!scoresByUser[p.authorId]) scoresByUser[p.authorId] = { posts: 0, votes: 0, comments: 0, replies: 0 };
+                    scoresByUser[p.authorId].posts++;
+                    scoresByUser[p.authorId].votes += (p.votes || 0);
+                    const c = (p.comments || []);
+                    scoresByUser[p.authorId].comments += c.length;
+                    scoresByUser[p.authorId].replies += c.reduce((s, cm) => s + ((cm.replies || []).length), 0);
+                });
+                const allScores = Object.values(scoresByUser).map(u => computeFanScore(u.posts, u.votes, u.comments, u.replies));
+                const rank = allScores.filter(s => s > score).length + 1;
+                rankNumEl.textContent = `#${rank}`;
+            } catch(e) { rankNumEl.textContent = '—'; }
         }
     }
 
@@ -2805,7 +2778,7 @@ ANALYSIS: [Analysis]
             </div>
             <div class="profile-stat">
                 <div class="profile-stat-val">${repliesReceived || 0}</div>
-                <div class="profile-stat-label">Replies Got</div>
+                <div class="profile-stat-label">Replies</div>
             </div>
         `;
     }
