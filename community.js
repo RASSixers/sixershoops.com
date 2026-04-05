@@ -62,10 +62,27 @@ ANALYSIS: [Analysis]
     const defaultPosts = [];
 
     let isInitialized = false;
+    let feedLoaded = false;
+
+    function showFeedSkeleton() {
+        const container = document.getElementById('feed-container');
+        if (!container || feedLoaded) return;
+        const skeletonCard = () => `
+            <div style="background:white;border:1px solid var(--border-light);border-radius:10px;padding:1.25rem;margin-bottom:1rem;animation:skeleton-pulse 1.4s ease-in-out infinite;">
+                <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.85rem;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:#eef2f8;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="height:10px;background:#eef2f8;border-radius:4px;width:40%;margin-bottom:5px;"></div><div style="height:8px;background:#eef2f8;border-radius:4px;width:25%;"></div></div>
+                </div>
+                <div style="height:13px;background:#eef2f8;border-radius:4px;width:80%;margin-bottom:8px;"></div>
+                <div style="height:11px;background:#eef2f8;border-radius:4px;width:60%;margin-bottom:16px;"></div>
+                <div style="display:flex;gap:0.5rem;"><div style="height:28px;width:60px;background:#eef2f8;border-radius:6px;"></div><div style="height:28px;width:80px;background:#eef2f8;border-radius:6px;"></div></div>
+            </div>`;
+        container.innerHTML = `<style>@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:0.5}}</style>` + skeletonCard() + skeletonCard() + skeletonCard();
+    }
 
     function init() {
         if (isInitialized) return;
-        
+        showFeedSkeleton();
         if (window.db) {
             isInitialized = true;
             setupAuthListener();
@@ -76,7 +93,6 @@ ANALYSIS: [Analysis]
             setFilter('hot');
             checkDeepLink();
         } else {
-            // Try again soon
             setTimeout(init, 200);
         }
     }
@@ -148,6 +164,7 @@ ANALYSIS: [Analysis]
         }
 
         unsubscribe = query.limit(50).onSnapshot((snapshot) => {
+            feedLoaded = true;
             posts = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
@@ -1501,6 +1518,10 @@ ANALYSIS: [Analysis]
         });
         const profileClose = document.getElementById('profile-modal-close');
         if (profileClose) profileClose.addEventListener('click', closeProfileModal);
+        // Fallback: event delegation for close button (handles dynamically injected modals)
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'profile-modal-close') closeProfileModal();
+        });
         const profileOverlay = document.getElementById('profile-modal-overlay');
         if (profileOverlay) {
             profileOverlay.addEventListener('click', (e) => {
@@ -2653,12 +2674,50 @@ ANALYSIS: [Analysis]
         const rankSection = document.getElementById('profile-rank-section');
         const barWrap = document.getElementById('profile-score-bar-wrap');
         const badgesEl = document.getElementById('profile-modal-badges');
+        const followerEl = document.getElementById('profile-follower-count');
         if (rankSection) rankSection.style.display = 'none';
         if (barWrap) barWrap.style.display = 'none';
         if (badgesEl) badgesEl.innerHTML = '';
+        if (followerEl) followerEl.textContent = '';
 
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+
+        // ── FOLLOW BUTTON ──────────────────────────────────────────
+        const currentUser = window.auth ? window.auth.currentUser : null;
+        const followBtnContainer = document.getElementById('profile-modal-badges');
+        const isOwnProfile = currentUser && currentUser.uid === authorId;
+
+        async function renderFollowButton(targetId) {
+            if (!followBtnContainer || isOwnProfile || !currentUser || !window.db) return;
+            const followId = `${currentUser.uid}_${targetId}`;
+            let isFollowing = false;
+            try {
+                const doc = await window.db.collection('follows').doc(followId).get();
+                isFollowing = doc.exists;
+            } catch(e) {}
+
+            const existingFollowBtn = document.getElementById('follow-btn');
+            if (existingFollowBtn) existingFollowBtn.remove();
+
+            const btn = document.createElement('button');
+            btn.id = 'follow-btn';
+            btn.textContent = isFollowing ? '✓ Following' : '+ Follow';
+            btn.style.cssText = `font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:${isFollowing ? 'rgba(0,107,182,0.15)' : 'var(--sixers-blue)'};color:${isFollowing ? '#4da8ff' : 'white'};border:1px solid ${isFollowing ? 'rgba(0,107,182,0.3)' : 'transparent'};border-radius:4px;padding:3px 9px;cursor:pointer;transition:all 0.2s;`;
+            btn.onclick = async () => {
+                if (!window.db) return;
+                const followRef = window.db.collection('follows').doc(followId);
+                if (isFollowing) {
+                    await followRef.delete();
+                } else {
+                    await followRef.set({ followerId: currentUser.uid, followingId: targetId, createdAt: new Date().toISOString() });
+                }
+                renderFollowButton(targetId);
+            };
+            followBtnContainer.appendChild(btn);
+        }
+
+        renderFollowButton(authorId);
 
         // Fetch all posts by this author from the already-loaded posts array first (fast),
         // then do a Firestore query to get their full history (up to 20)
@@ -2690,9 +2749,12 @@ ANALYSIS: [Analysis]
                     time: formatTimeAgo(doc.data().createdAt)
                 }));
 
-                // Also try to get join date from users collection
+                // Also try to get join date + follower count from users collection
                 try {
-                    const userDoc = await window.db.collection('users').doc(authorId).get();
+                    const [userDoc, followersSnap] = await Promise.all([
+                        window.db.collection('users').doc(authorId).get(),
+                        window.db.collection('follows').where('followingId', '==', authorId).get()
+                    ]);
                     if (userDoc.exists) {
                         const userData = userDoc.data();
                         if (userData.createdAt) {
@@ -2702,7 +2764,10 @@ ANALYSIS: [Analysis]
                             }
                         }
                     }
-                } catch (e) { /* user doc optional */ }
+                    const followerCount = followersSnap.size;
+                    const followerEl = document.getElementById('profile-follower-count');
+                    if (followerEl) followerEl.textContent = `${followerCount} follower${followerCount !== 1 ? 's' : ''}`;
+                } catch (e) { /* optional */ }
 
                 const allVotes = firestorePosts.reduce((sum, p) => sum + (p.votes || 0), 0);
                 const allComments = firestorePosts.reduce((sum, p) => sum + countTotalComments(p.comments), 0);
@@ -2739,12 +2804,11 @@ ANALYSIS: [Analysis]
         if (rankScoreVal) rankScoreVal.textContent = score.toLocaleString() + ' pts';
         if (barWrap) barWrap.style.display = 'none';
 
-        // Compute rank # by comparing against all loaded posts' authors
-        if (rankNumEl && window.CommunityFeed) {
+        // Compute rank # from the already-loaded posts array
+        if (rankNumEl) {
             try {
-                const allPosts = window.CommunityFeed.posts ? window.CommunityFeed.posts() : [];
                 const scoresByUser = {};
-                allPosts.forEach(p => {
+                posts.forEach(p => {
                     if (!p.authorId) return;
                     if (!scoresByUser[p.authorId]) scoresByUser[p.authorId] = { posts: 0, votes: 0, comments: 0, replies: 0 };
                     scoresByUser[p.authorId].posts++;
