@@ -736,17 +736,14 @@ async function runLottery() {
         renderResultHeadline(null, picks);
     }
     document.getElementById('social-card-btn').style.display='';
+    // All picks revealed in reverse order (#14 → #1 for max drama)
     const showBottom=document.getElementById('show-bottom-picks').checked;
-    // Top 4: dramatic envelope flip in reverse order (#4 → #1 for max drama)
-    for(let i=3;i>=0;i--){
-        await sleep(i===3?300:600);
-        await appendPickEnvelope(picks[i],picksEl,true);
-    }
-    if(showBottom&&picks.length>4){
-        const lbl=document.createElement('div');
-        lbl.style.cssText="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin:0.65rem 0 0.3rem;";
-        picksEl.appendChild(lbl); lbl.style.display='none';
-        for(let i=4;i<picks.length;i++){await sleep(35);appendPickEl(picks[i],picksEl);}
+    const picksToShow = showBottom ? picks.slice().reverse() : [...picks.slice(4).reverse(), ...picks.slice(0,4).reverse()];
+    for(let i=0;i<picksToShow.length;i++){
+        const p=picksToShow[i];
+        const isTop4=p.pick<=4;
+        await sleep(isTop4?600:200);
+        await appendPickEnvelope(p,picksEl,isTop4);
     }
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
 }
