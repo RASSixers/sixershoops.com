@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar-styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --navy: #001a57; --navy-deep: #000d2e; --sixers-blue: #006BB6;
@@ -140,6 +139,64 @@
         .swap-text { font-size:0.72rem; color:var(--mid); line-height:1.55; }
         .swap-text strong { color:var(--ink); }
         @media (max-width:768px) { .main-layout { grid-template-columns:1fr; padding:1rem; } }
+
+        /* ── Result Headline ── */
+        .result-headline {
+            display:none;
+            background:linear-gradient(135deg,var(--navy-deep) 0%,#00245e 100%);
+            border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1rem;
+            text-align:center; position:relative; overflow:hidden;
+        }
+        .result-headline::before {
+            content:''; position:absolute; inset:0;
+            background-image:linear-gradient(rgba(0,107,182,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.08) 1px,transparent 1px);
+            background-size:32px 32px; pointer-events:none;
+        }
+        .result-headline.show { display:block; animation:headlinePop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes headlinePop { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+        .headline-pick-num {
+            font-family:'Barlow Condensed',sans-serif; font-weight:900;
+            font-size:clamp(3.5rem,12vw,6rem); line-height:1;
+            color:white; position:relative; z-index:1;
+        }
+        .headline-pick-num.pick-1 { background:linear-gradient(135deg,#f5c842,#c9a84c); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .headline-pick-num.pick-2 { background:linear-gradient(135deg,#d0d5db,#9ca3af); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .headline-pick-num.pick-3 { background:linear-gradient(135deg,#e8a56a,#b45309); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .headline-pick-num.top4 { color:rgba(255,255,255,0.95); }
+        .headline-label { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.45); position:relative; z-index:1; }
+        .headline-sub { font-size:0.82rem; color:rgba(255,255,255,0.55); margin-top:0.3rem; position:relative; z-index:1; }
+        .headline-miss { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.3rem; color:var(--sixers-red); position:relative; z-index:1; }
+
+        /* ── Social Card Modal ── */
+        .social-modal-overlay {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+            z-index:10000; align-items:center; justify-content:center; padding:1rem;
+            backdrop-filter:blur(4px);
+        }
+        .social-modal-overlay.open { display:flex; animation:fadeInOverlay 0.2s ease; }
+        @keyframes fadeInOverlay { from{opacity:0} to{opacity:1} }
+        .social-modal {
+            background:white; border-radius:16px; padding:1.5rem;
+            max-width:520px; width:100%; box-shadow:0 24px 64px rgba(0,0,0,0.4);
+            animation:slideUpModal 0.3s cubic-bezier(0.34,1.2,0.64,1);
+        }
+        @keyframes slideUpModal { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        .social-modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+        .social-modal-title { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink); }
+        .social-modal-close { background:none; border:none; cursor:pointer; color:var(--mid); font-size:1.2rem; padding:2px 6px; border-radius:6px; transition:background 0.15s; }
+        .social-modal-close:hover { background:#f0ede6; }
+        #social-card-canvas { border-radius:10px; width:100%; height:auto; display:block; box-shadow:0 4px 20px rgba(0,0,0,0.15); margin-bottom:1rem; }
+        .social-action-btns { display:flex; gap:0.6rem; }
+        .btn-social-action {
+            flex:1; padding:0.7rem 1rem; border-radius:10px; border:none; cursor:pointer;
+            font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.88rem;
+            letter-spacing:0.08em; text-transform:uppercase; transition:all 0.18s;
+            display:flex; align-items:center; justify-content:center; gap:0.4rem;
+        }
+        .btn-dl { background:var(--sixers-blue); color:white; }
+        .btn-dl:hover { background:#0080d4; transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,107,182,0.35); }
+        .btn-copy-img { background:#f0ede6; color:var(--ink); }
+        .btn-copy-img:hover { background:#e8e4dc; }
     </style>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-T1V9Q0MNEM');</script>
@@ -193,62 +250,19 @@
         <div class="card" id="results-card" style="display:none;margin-bottom:1.25rem;">
             <div class="card-header">
                 <span class="card-title">Lottery Results</span>
-                <span class="badge" id="result-sixers-badge" style="display:none;"></span>
+                <div style="display:flex;gap:0.4rem;align-items:center;">
+                    <span class="badge" id="result-sixers-badge" style="display:none;"></span>
+                    <button class="btn-secondary" id="share-btn" style="display:none;padding:3px 9px;font-size:0.7rem;" onclick="shareResult()">📤 Share Text</button>
+                    <button class="btn-secondary" id="social-card-btn" style="display:none;padding:3px 9px;font-size:0.7rem;background:var(--sixers-blue);color:white;border-color:var(--sixers-blue);" onclick="openSocialCard()">🖼 Share Image</button>
+                </div>
             </div>
-            <div class="card-body" style="padding:0;">
-                <!-- Spinner -->
-                <div id="spinner-wrap" class="spinner-wrap" style="display:none;padding:2rem;">
+            <div class="card-body">
+                <div id="result-headline" class="result-headline"></div>
+                <div id="spinner-wrap" class="spinner-wrap" style="display:none;">
                     <div class="lottery-drum"></div>
                     <div class="spinner-text">Drawing picks...</div>
                 </div>
-                <!-- Social Graphic Panel -->
-                <div id="lottery-graphic" style="display:none;">
-                    <div id="lottery-export-card" style="background:linear-gradient(135deg,#000d2e 0%,#001a57 60%,#002070 100%);padding:1.5rem 1.5rem 1.25rem;position:relative;overflow:hidden;">
-                        <!-- bg grid -->
-                        <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,107,182,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.08) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;"></div>
-                        <!-- bg glow -->
-                        <div style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:500px;height:300px;background:radial-gradient(ellipse,rgba(0,107,182,0.25) 0%,transparent 65%);pointer-events:none;"></div>
-                        <div style="position:relative;z-index:1;">
-                            <!-- Header -->
-                            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.1rem;">
-                                <div>
-                                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:0.15rem;">2026 NBA Draft</div>
-                                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;text-transform:uppercase;color:#fff;line-height:1;letter-spacing:0.02em;">Lottery Simulation</div>
-                                </div>
-                                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.3);text-align:right;margin-top:2px;" id="graphic-date"></div>
-                            </div>
-                            <!-- Top 4 picks grid -->
-                            <div id="graphic-top4" style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.6rem;"></div>
-                            <!-- Remaining picks strip -->
-                            <div id="graphic-rest" style="display:none;border-top:1px solid rgba(255,255,255,0.1);padding-top:0.6rem;margin-top:0.2rem;">
-                                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:0.4rem;">Picks 5–14</div>
-                                <div id="graphic-rest-picks" style="display:flex;flex-wrap:wrap;gap:0.3rem;"></div>
-                            </div>
-                            <!-- Footer -->
-                            <div style="margin-top:0.9rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;">
-                                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.35);">sixershoops.com</div>
-                                <div style="display:flex;gap:4px;align-items:center;">
-                                    <div style="width:6px;height:6px;border-radius:50%;background:var(--sixers-blue);"></div>
-                                    <div style="width:6px;height:6px;border-radius:50%;background:var(--sixers-red);"></div>
-                                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-left:2px;">Simulation</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Export buttons -->
-                    <div style="display:flex;gap:0.5rem;padding:0.75rem 1rem;border-top:1px solid var(--border-light);">
-                        <button class="btn-run" style="flex:1;padding:0.6rem;font-size:0.8rem;" onclick="exportGraphic('copy')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            Copy Image
-                        </button>
-                        <button class="btn-secondary" style="flex:1;padding:0.6rem;text-align:center;" onclick="exportGraphic('download')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-right:4px;vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Download
-                        </button>
-                    </div>
-                </div>
-                <!-- hidden original pick list still used for sim logic -->
-                <div id="result-picks" class="result-picks" style="display:none;"></div>
+                <div id="result-picks" class="result-picks"></div>
             </div>
         </div>
 
@@ -404,6 +418,27 @@
 </section>
 </main>
 </div>
+<!-- Social Card Modal -->
+<div class="social-modal-overlay" id="social-modal-overlay" onclick="closeSocialCardOnOverlay(event)">
+    <div class="social-modal">
+        <div class="social-modal-header">
+            <span class="social-modal-title">Share Your Result</span>
+            <button class="social-modal-close" onclick="closeSocialCard()">✕</button>
+        </div>
+        <canvas id="social-card-canvas" width="1080" height="566"></canvas>
+        <div class="social-action-btns">
+            <button class="btn-social-action btn-dl" onclick="downloadSocialCard()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+            </button>
+            <button class="btn-social-action btn-copy-img" id="copy-img-btn" onclick="copyCardToClipboard()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy Image
+            </button>
+        </div>
+    </div>
+</div>
+
 <script src="nav.js"></script>
 <script>
 const OFFICIAL_LOTTERY_ODDS = {
@@ -622,14 +657,11 @@ function runLotterySimOnce() {
 async function runLottery() {
     if(!lotteryTeams.length){alert('Standings still loading…');return;}
     const runBtn=document.getElementById('run-btn'), resultsCard=document.getElementById('results-card');
-    const spinnerWrap=document.getElementById('spinner-wrap');
-    runBtn.disabled=true;
-    resultsCard.style.display='block';
-    document.getElementById('lottery-graphic').style.display='none';
-    spinnerWrap.style.display='flex';
+    const spinnerWrap=document.getElementById('spinner-wrap'), picksEl=document.getElementById('result-picks');
+    runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
     await sleep(850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
-    lastPicksForShare=picks;
+    lastPicksForShare=picks; document.getElementById('share-btn').style.display='';
     spinnerWrap.style.display='none';
     const sp=picks.find(p=>p.team.abbr==='PHI');
     if(sp){
@@ -641,95 +673,36 @@ async function runLottery() {
         badge.textContent=`Sixers → Pick #${pn}`;
         badge.className=`badge ${pn===1?'badge-gold':pn<=4?'badge-blue':'badge-red'}`;
         if(pn<=4) fireConfetti();
+        renderResultHeadline(pn, picks);
+    } else {
+        renderResultHeadline(null, picks);
     }
-    renderLotteryGraphic(picks);
+    document.getElementById('social-card-btn').style.display='';
+    const showBottom=document.getElementById('show-bottom-picks').checked;
+    for(let i=0;i<4;i++){await sleep(200);appendPickEl(picks[i],picksEl);}
+    if(showBottom&&picks.length>4){
+        const lbl=document.createElement('div');
+        lbl.style.cssText="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin:0.65rem 0 0.3rem;";
+        picksEl.appendChild(lbl); lbl.style.display='none';
+        for(let i=4;i<picks.length;i++){await sleep(35);appendPickEl(picks[i],picksEl);}
+    }
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
 }
 
-function renderLotteryGraphic(picks) {
-    const showBottom=document.getElementById('show-bottom-picks').checked;
-    const top4=picks.slice(0,4);
-    const rest=picks.slice(4);
-    const MEDAL=['🥇','🥈','🥉',''];
-    const LABEL_COLOR=['#c9a84c','#9ca3af','#b45309','rgba(255,255,255,0.7)'];
-    const PICK_BG=['rgba(201,168,76,0.18)','rgba(156,163,175,0.12)','rgba(180,83,9,0.14)','rgba(255,255,255,0.06)'];
-
-    // Top 4 grid
-    const top4El=document.getElementById('graphic-top4');
-    top4El.innerHTML=top4.map((p,i)=>{
-        const isSixers=p.team.abbr==='PHI';
-        const tc=TEAM_COLORS[p.team.abbr]||'#888';
-        const border=isSixers?'2px solid rgba(0,107,182,0.7)':'1px solid rgba(255,255,255,0.1)';
-        const bg=isSixers?'rgba(0,107,182,0.2)':PICK_BG[i];
-        const sub=p.protectionNote
-            ?`<div style="font-size:0.58rem;color:rgba(237,23,76,0.85);margin-top:2px;line-height:1.3;">${p.protectionNote}</div>`
-            :`<div style="font-size:0.6rem;color:rgba(255,255,255,0.4);margin-top:2px;">${p.team.oddsTop1.toFixed(1)}% #1 odds</div>`;
-        return `<div style="background:${bg};border:${border};border-radius:10px;padding:0.65rem 0.75rem;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:6px;right:8px;font-size:1.1rem;opacity:0.5;">${MEDAL[i]}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${LABEL_COLOR[i]};margin-bottom:0.2rem;">Pick #${p.pick}</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:${tc};flex-shrink:0;"></div>
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.95rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.02em;line-height:1;">${p.team.shortName}</div>
-                ${isSixers?'<div style="font-family:'Barlow Condensed',sans-serif;font-size:0.48rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;background:var(--sixers-blue);color:#fff;padding:1px 5px;border-radius:3px;">Sixers</div>':''}
-            </div>
-            ${sub}
-        </div>`;
-    }).join('');
-
-    // Picks 5-14 strip
-    const restEl=document.getElementById('graphic-rest');
-    const restPicksEl=document.getElementById('graphic-rest-picks');
-    if(showBottom && rest.length){
-        restEl.style.display='block';
-        restPicksEl.innerHTML=rest.map(p=>{
-            const isSixers=p.team.abbr==='PHI';
-            const tc=TEAM_COLORS[p.team.abbr]||'#888';
-            return `<div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.05);border:1px solid ${isSixers?'rgba(0,107,182,0.5)':'rgba(255,255,255,0.08)'};border-radius:5px;padding:3px 7px;">
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;color:rgba(255,255,255,0.4);">#${p.pick}</span>
-                <div style="width:5px;height:5px;border-radius:50%;background:${tc};flex-shrink:0;"></div>
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:${isSixers?'#4da8ff':'rgba(255,255,255,0.75)'};text-transform:uppercase;">${p.team.shortName}</span>
-            </div>`;
-        }).join('');
-    } else {
-        restEl.style.display='none';
-    }
-
-    // Date
-    document.getElementById('graphic-date').textContent=new Date().toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'});
-
-    document.getElementById('lottery-graphic').style.display='block';
-}
-
-async function exportGraphic(mode) {
-    const el=document.getElementById('lottery-export-card');
-    const btns=document.querySelectorAll('#lottery-graphic button');
-    btns.forEach(b=>b.style.visibility='hidden');
-    try {
-        const canvas=await html2canvas(el,{backgroundColor:null,scale:3,useCORS:true,logging:false});
-        if(mode==='download'){
-            const a=document.createElement('a');
-            a.download=`sixers-lottery-${new Date().toISOString().split('T')[0]}.png`;
-            a.href=canvas.toDataURL('image/png'); a.click();
-        } else {
-            canvas.toBlob(async blob=>{
-                try {
-                    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
-                    const btn=document.querySelector('#lottery-graphic button');
-                    const orig=btn.innerHTML; btn.innerHTML='✓ Copied!'; btn.style.visibility='visible';
-                    setTimeout(()=>{btn.innerHTML=orig;},2000);
-                } catch(e){ alert('Copy failed — try Download instead.'); }
-            });
-        }
-    } catch(e){ alert('Export failed: '+e.message); }
-    finally { btns.forEach(b=>b.style.visibility='visible'); }
-}
-
 function appendPickEl(pickObj,container) {
-    // kept for mass sim compat — not used in main display anymore
     const isSixers=pickObj.team.abbr==='PHI', c=TEAM_COLORS[pickObj.team.abbr]||'#888', p=pickObj.pick;
-    const el=document.createElement('div'); el.className='result-pick';
-    el.innerHTML=`<div class="pick-num">${p}</div><span style="background:${c};width:8px;height:8px;border-radius:50%;display:inline-block;"></span><div class="pick-team"><div class="pick-team-name">${pickObj.team.shortName}</div></div>`;
+    const wrapClass=`result-pick${p===1?' pick-gold':p===2?' pick-silver':p===3?' pick-bronze':''}${isSixers?' sixers-pick':''}`;
+    const el=document.createElement('div'); el.className=wrapClass;
+    el.innerHTML=`
+        <div class="pick-num${p<=4?' pick-'+p:''}">${p}</div>
+        <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
+        <div class="pick-team">
+            <div class="pick-team-name">${pickObj.team.shortName}</div>
+            <div class="pick-team-sub">${pickObj.protectionNote||( p<=4?pickObj.team.oddsTop1.toFixed(1)+'% pick #1 odds':pickObj.team.wins+'-'+pickObj.team.losses)}</div>
+        </div>
+        ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
     container.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('revealed'));
 }
 
 function resetSim() {
@@ -737,8 +710,8 @@ function resetSim() {
     document.getElementById('result-picks').innerHTML='';
     document.getElementById('result-sixers-badge').style.display='none';
     document.getElementById('reset-btn').style.display='none';
-    document.getElementById('lottery-graphic').style.display='none';
-    document.getElementById('graphic-top4').innerHTML='';
+    document.getElementById('social-card-btn').style.display='none';
+    const hl=document.getElementById('result-headline'); hl.className='result-headline'; hl.innerHTML='';
 }
 
 async function runUntilPickOne() {
@@ -1005,6 +978,204 @@ function copyToClipboard(text) {
         const orig = btn.textContent; btn.textContent = '✓ Copied!';
         setTimeout(() => btn.textContent = orig, 2000);
     }).catch(() => alert('Could not copy to clipboard.'));
+}
+
+// ── Result Headline ──────────────────────────────────────────────────────────
+function renderResultHeadline(sixersPick, allPicks) {
+    const el = document.getElementById('result-headline');
+    el.innerHTML = '';
+    if (sixersPick === null) {
+        el.innerHTML = `<div class="headline-miss">76ers missed the top 4</div><div class="headline-sub">Better luck next year 🙏</div>`;
+        el.className = 'result-headline show';
+        return;
+    }
+    const emojis = {1:'🏆',2:'🥈',3:'🥉',4:'✅'};
+    const labels = {1:'#1 OVERALL PICK',2:'#2 OVERALL PICK',3:'#3 OVERALL PICK',4:'#4 OVERALL PICK'};
+    const msgs = {1:'The Sixers WIN the lottery!',2:'Sixers land a top-2 pick!',3:'Sixers in the top 3!',4:'Sixers sneak into the top 4!'};
+    const extras = sixersPick <= 4 ? '' : `<div class="headline-sub" style="margin-top:0.15rem;opacity:0.6;">Pick #${sixersPick} overall</div>`;
+    if (sixersPick <= 4) {
+        el.innerHTML = `
+            <div class="headline-label">${emojis[sixersPick]} 2026 NBA Draft Lottery Result</div>
+            <div class="headline-pick-num ${sixersPick===1?'pick-1':sixersPick===2?'pick-2':sixersPick===3?'pick-3':'top4'}">#${sixersPick}</div>
+            <div class="headline-label">${labels[sixersPick]}</div>
+            <div class="headline-sub" style="margin-top:0.4rem;color:rgba(255,255,255,0.75);font-weight:600;">${msgs[sixersPick]}</div>`;
+    } else {
+        el.innerHTML = `
+            <div class="headline-label">2026 NBA Draft Lottery Result</div>
+            <div class="headline-miss" style="font-size:1.6rem;margin:0.25rem 0;">76ers land #${sixersPick}</div>
+            <div class="headline-sub">Outside the top 4 this time</div>`;
+    }
+    el.className = 'result-headline show';
+}
+
+// ── Social Card ───────────────────────────────────────────────────────────────
+function openSocialCard() {
+    if (!lastPicksForShare) return;
+    drawSocialCard(lastPicksForShare);
+    document.getElementById('social-modal-overlay').classList.add('open');
+}
+
+function closeSocialCard() {
+    document.getElementById('social-modal-overlay').classList.remove('open');
+}
+
+function closeSocialCardOnOverlay(e) {
+    if (e.target === document.getElementById('social-modal-overlay')) closeSocialCard();
+}
+
+function drawSocialCard(picks) {
+    const canvas = document.getElementById('social-card-canvas');
+    const W = 1080, H = 566;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#000d2e'); bg.addColorStop(1, '#001a57');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    // Grid pattern
+    ctx.strokeStyle = 'rgba(0,107,182,0.07)'; ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Blue glow top-center
+    const glow = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, 400);
+    glow.addColorStop(0, 'rgba(0,107,182,0.25)'); glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+    // Red accent bar bottom
+    ctx.fillStyle = '#ED174C'; ctx.fillRect(0, H-5, W, 5);
+
+    // Left panel — Sixers result
+    const sp = picks.find(p => p.team.abbr === 'PHI');
+    const sixersPick = sp ? sp.pick : null;
+    const LX = 80;
+
+    // Site label
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '600 22px Barlow, sans-serif';
+    ctx.fillText('SIXERSHOOPS.COM', LX, 72);
+
+    // Pick number (huge)
+    const pickColors = {1:['#f5c842','#c9a84c'], 2:['#d0d5db','#9ca3af'], 3:['#e8a56a','#b45309']};
+    if (sixersPick && sixersPick <= 3) {
+        const [c1,c2] = pickColors[sixersPick];
+        const grad = ctx.createLinearGradient(LX, 120, LX, 320);
+        grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+        ctx.fillStyle = grad;
+    } else if (sixersPick && sixersPick === 4) {
+        ctx.fillStyle = '#006BB6';
+    } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    }
+    ctx.font = '900 220px "Barlow Condensed", sans-serif';
+    const pickTxt = sixersPick ? `#${sixersPick}` : '—';
+    ctx.fillText(pickTxt, LX - 10, 330);
+
+    // Label under pick
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '700 24px "Barlow Condensed", sans-serif';
+    ctx.letterSpacing = '0.15em';
+    ctx.fillText('2026 NBA DRAFT LOTTERY SIMULATION', LX, 375);
+
+    // Sub message
+    const msgs = {1:'🏆 SIXERS WIN THE LOTTERY!', 2:'🥈 TOP-2 PICK SECURED!', 3:'🥉 SIXERS IN THE TOP 3!', 4:'✅ TOP-4 PICK LANDED!'};
+    ctx.fillStyle = sixersPick && sixersPick <= 4 ? '#ffffff' : '#ED174C';
+    ctx.font = `800 32px "Barlow Condensed", sans-serif`;
+    ctx.fillText(sixersPick && msgs[sixersPick] ? msgs[sixersPick] : (sixersPick ? `SIXERS LAND #${sixersPick}` : 'SIXERS MISS TOP 4'), LX, 420);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W/2 - 20, 60); ctx.lineTo(W/2 - 20, H - 20); ctx.stroke();
+
+    // Right panel — Top 4 picks
+    const RX = W/2 + 20;
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '700 20px "Barlow Condensed", sans-serif';
+    ctx.fillText('TOP 4 PICKS', RX, 72);
+
+    const top4 = picks.slice(0, 4);
+    const medalColors = ['#c9a84c','#9ca3af','#b45309','#006BB6'];
+    top4.forEach((p, i) => {
+        const Y = 115 + i * 108;
+        const isSixers = p.team.abbr === 'PHI';
+
+        // Row bg
+        ctx.fillStyle = isSixers ? 'rgba(0,107,182,0.22)' : 'rgba(255,255,255,0.04)';
+        roundRect(ctx, RX, Y - 4, W - RX - 60, 90, 12);
+        ctx.fill();
+        if (isSixers) {
+            ctx.strokeStyle = 'rgba(0,107,182,0.6)'; ctx.lineWidth = 1.5;
+            roundRect(ctx, RX, Y - 4, W - RX - 60, 90, 12);
+            ctx.stroke();
+        }
+
+        // Pick number
+        ctx.fillStyle = medalColors[i];
+        ctx.font = `900 52px "Barlow Condensed", sans-serif`;
+        ctx.fillText(`#${p.pick}`, RX + 20, Y + 58);
+
+        // Team dot
+        ctx.fillStyle = TEAM_COLORS[p.team.abbr] || '#888';
+        ctx.beginPath(); ctx.arc(RX + 110, Y + 34, 10, 0, Math.PI*2); ctx.fill();
+
+        // Team name
+        ctx.fillStyle = isSixers ? '#ffffff' : 'rgba(255,255,255,0.9)';
+        ctx.font = `${isSixers?800:700} 32px "Barlow Condensed", sans-serif`;
+        ctx.fillText(p.team.shortName.toUpperCase(), RX + 130, Y + 44);
+
+        // Sixers badge
+        if (isSixers) {
+            ctx.fillStyle = '#006BB6';
+            roundRect(ctx, RX + 130, Y + 52, 90, 22, 5);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = '700 14px "Barlow Condensed", sans-serif';
+            ctx.fillText('SIXERS ★', RX + 137, Y + 68);
+        }
+    });
+
+    // Bottom watermark
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.font = '600 18px Barlow, sans-serif';
+    ctx.fillText('Simulate yours at sixershoops.com', LX, H - 22);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+    ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+    ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+    ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+    ctx.closePath();
+}
+
+function downloadSocialCard() {
+    const canvas = document.getElementById('social-card-canvas');
+    const a = document.createElement('a');
+    a.download = '2026-sixers-lottery-result.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+}
+
+async function copyCardToClipboard() {
+    const canvas = document.getElementById('social-card-canvas');
+    const btn = document.getElementById('copy-img-btn');
+    try {
+        canvas.toBlob(async blob => {
+            try {
+                await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => { btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Image`; }, 2200);
+            } catch(e) {
+                btn.textContent = '❌ Not supported'; setTimeout(() => btn.textContent = 'Copy Image', 2000);
+            }
+        }, 'image/png');
+    } catch(e) {
+        alert('Copy not supported in this browser — use Download instead.');
+    }
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
