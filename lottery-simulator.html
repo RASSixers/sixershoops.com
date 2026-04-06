@@ -125,8 +125,8 @@
         .pick-note { color:var(--mid); font-size:0.7rem; margin-top:1px; }
         .traded-tag { font-family:'Barlow Condensed',sans-serif; font-size:0.52rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(237,23,76,0.08); color:var(--sixers-red); border:1px solid rgba(237,23,76,0.15); padding:1px 5px; border-radius:3px; margin-left:4px; vertical-align:middle; }
 
-        .confetti-piece { position:fixed; top:-10px; animation:confetti-fall linear forwards; z-index:9999; pointer-events:none; }
-        @keyframes confetti-fall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+        .confetti-piece { position:fixed; bottom:-10px; animation:confetti-rise linear forwards; z-index:9999; pointer-events:none; }
+        @keyframes confetti-rise { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-110vh) rotate(720deg);opacity:0} }
 
         .protection-item { padding:0.6rem 0; border-bottom:1px solid #f0ede6; margin-bottom:0.1rem; }
         .protection-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; gap:0.4rem; flex-wrap:wrap; }
@@ -298,6 +298,10 @@
                     <input type="checkbox" id="show-bottom-picks" checked style="accent-color:var(--sixers-blue);">
                     <span style="font-size:0.77rem;color:var(--mid);">Show picks 5–14 in results</span>
                 </label>
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                    <input type="checkbox" id="instant-mode" style="accent-color:var(--sixers-blue);">
+                    <span style="font-size:0.77rem;color:var(--mid);">Instant mode (no animation)</span>
+                </label>
 
                 <div style="border-top:1px solid var(--border-light);padding-top:0.7rem;display:flex;flex-direction:column;gap:0.5rem;">
                     <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid);">Run Until a Team Gets #1</div>
@@ -318,7 +322,6 @@
                 <span class="card-title">Lottery Results</span>
                 <div style="display:flex;gap:0.4rem;align-items:center;">
                     <span class="badge" id="result-sixers-badge" style="display:none;"></span>
-                    <button class="btn-secondary" id="social-card-btn" style="display:none;padding:3px 9px;font-size:0.7rem;background:var(--sixers-blue);color:white;border-color:var(--sixers-blue);" onclick="openSocialCard()">Share Image</button>
                 </div>
             </div>
             <div class="card-body">
@@ -482,26 +485,6 @@
 
 </section>
 </main>
-</div>
-<!-- Social Card Modal -->
-<div class="social-modal-overlay" id="social-modal-overlay" onclick="closeSocialCardOnOverlay(event)">
-    <div class="social-modal">
-        <div class="social-modal-header">
-            <span class="social-modal-title">Share Your Result</span>
-            <button class="social-modal-close" onclick="closeSocialCard()">✕</button>
-        </div>
-        <canvas id="social-card-canvas" width="1080" height="566"></canvas>
-        <div class="social-action-btns">
-            <button class="btn-social-action btn-dl" onclick="downloadSocialCard()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download
-            </button>
-            <button class="btn-social-action btn-copy-img" id="copy-img-btn" onclick="copyCardToClipboard()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                Copy Image
-            </button>
-        </div>
-    </div>
 </div>
 
 <script src="nav.js"></script>
@@ -729,7 +712,8 @@ async function runLottery() {
     const runBtn=document.getElementById('run-btn'), resultsCard=document.getElementById('results-card');
     const spinnerWrap=document.getElementById('spinner-wrap'), picksEl=document.getElementById('result-picks');
     runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
-    await sleep(850);
+    const instant=document.getElementById('instant-mode').checked;
+    await sleep(instant?0:850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
     lastPicksForShare=picks;
     spinnerWrap.style.display='none';
@@ -747,15 +731,15 @@ async function runLottery() {
     } else {
         renderResultHeadline(null, picks);
     }
-    document.getElementById('social-card-btn').style.display='';
+    document.getElementById('social-card-btn')&&(document.getElementById('social-card-btn').style.display='none');
     // All picks revealed in reverse order (#14 → #1 for max drama)
     const showBottom=document.getElementById('show-bottom-picks').checked;
     const picksToShow = showBottom ? picks.slice().reverse() : picks.slice(0,4).reverse();
     for(let i=0;i<picksToShow.length;i++){
         const p=picksToShow[i];
         const isTop4=p.pick<=4;
-        await sleep(isTop4?600:180);
-        await appendPickEnvelope(p,picksEl,isTop4);
+        await sleep(instant?0:isTop4?600:180);
+        await appendPickEnvelope(p,picksEl,isTop4&&!instant);
     }
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
 }
@@ -829,7 +813,6 @@ function resetSim() {
     document.getElementById('result-picks').innerHTML='';
     document.getElementById('result-sixers-badge').style.display='none';
     document.getElementById('reset-btn').style.display='none';
-    document.getElementById('social-card-btn').style.display='none';
     const hl=document.getElementById('result-headline'); hl.className='result-headline'; hl.innerHTML='';
 }
 
@@ -846,7 +829,7 @@ async function runUntilPickOne() {
     resultEl.innerHTML=count>=MAX
         ?`<span style="color:var(--sixers-red)">Still waiting after ${MAX.toLocaleString()} draws</span>`
         :`<strong>${team.shortName}</strong> got #1 after <strong style="color:var(--sixers-blue)">${count.toLocaleString()} draw${count!==1?'s':''}</strong>`;
-    btn.disabled=false; btn.textContent='🎯 Run';
+    btn.disabled=false; btn.textContent='Run';
 }
 
 async function runMassSimulation(n) {
