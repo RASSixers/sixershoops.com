@@ -731,7 +731,7 @@ async function runLottery() {
     runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
     await sleep(850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
-    lastPicksForShare=picks; document.getElementById('share-btn').style.display='';
+    lastPicksForShare=picks;
     spinnerWrap.style.display='none';
     const sp=picks.find(p=>p.team.abbr==='PHI');
     if(sp){
@@ -750,11 +750,11 @@ async function runLottery() {
     document.getElementById('social-card-btn').style.display='';
     // All picks revealed in reverse order (#14 → #1 for max drama)
     const showBottom=document.getElementById('show-bottom-picks').checked;
-    const picksToShow = showBottom ? picks.slice().reverse() : [...picks.slice(4).reverse(), ...picks.slice(0,4).reverse()];
+    const picksToShow = showBottom ? picks.slice().reverse() : picks.slice(0,4).reverse();
     for(let i=0;i<picksToShow.length;i++){
         const p=picksToShow[i];
         const isTop4=p.pick<=4;
-        await sleep(isTop4?600:200);
+        await sleep(isTop4?600:180);
         await appendPickEnvelope(p,picksEl,isTop4);
     }
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
@@ -818,7 +818,7 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
         ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
 
     card.appendChild(inner);
-    if (!withSuspense) { wrap.appendChild(card); container.prepend(wrap); }
+    if (!withSuspense) { wrap.appendChild(card); container.appendChild(wrap); }
 
     // Flip reveal
     requestAnimationFrame(()=>{ requestAnimationFrame(()=>card.classList.add('flipped')); });
