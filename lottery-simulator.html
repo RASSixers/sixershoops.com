@@ -138,7 +138,21 @@
         .swap-arrow { font-family:"Barlow Condensed",sans-serif; font-weight:900; color:var(--sixers-red); font-size:0.9rem; flex-shrink:0; margin-top:1px; }
         .swap-text { font-size:0.72rem; color:var(--mid); line-height:1.55; }
         .swap-text strong { color:var(--ink); }
-        @media (max-width:768px) { .main-layout { grid-template-columns:1fr; padding:1rem; } }
+        @media (max-width:768px) {
+            .main-layout { grid-template-columns:1fr; padding:1rem; }
+            .hero-inner { padding:2.5rem 1.25rem 2rem; }
+            .card-header { padding:0.9rem 1rem 0.75rem; flex-wrap:wrap; gap:0.4rem; }
+            .card-body { padding:1rem; }
+            .btn-run { font-size:0.95rem; padding:0.8rem 1rem; }
+            .lottery-table th, .lottery-table td { padding:0.45rem 0.4rem; font-size:0.75rem; }
+            .pick-num { font-size:1.1rem; width:28px; }
+            .result-headline { padding:1rem; }
+            .headline-pick-num { font-size:clamp(2.8rem,15vw,5rem); }
+            .social-modal { padding:1rem; }
+            .social-action-btns { flex-direction:column; }
+            .envelope-sealed { min-height:60px; font-size:0.85rem; }
+            .result-pick { padding:0.5rem 0.7rem; }
+        }
 
         /* ── Result Headline ── */
         .result-headline {
@@ -271,7 +285,6 @@
                 <span class="card-title">Run Simulation</span>
                 <div style="display:flex;gap:0.5rem;">
                     <button class="btn-secondary" id="reset-btn" style="display:none;" onclick="resetSim()">Reset</button>
-                    <button class="btn-secondary" id="sim-1000-btn" onclick="runMassSimulation(1000)">Sim 1,000×</button>
                 </div>
             </div>
             <div class="card-body" style="display:flex;flex-direction:column;gap:0.7rem;">
@@ -292,7 +305,7 @@
                         <select id="until-one-team-select" style="flex:1;padding:0.38rem 0.6rem;border:1px solid var(--border-light);border-radius:7px;font-size:0.8rem;background:white;color:var(--ink);cursor:pointer;font-family:'Barlow',sans-serif;">
                             <option value="PHI">76ers (default)</option>
                         </select>
-                        <button class="btn-secondary" id="until-one-btn" onclick="runUntilPickOne()" style="white-space:nowrap;padding:0.38rem 0.9rem;">🎯 Run</button>
+                        <button class="btn-secondary" id="until-one-btn" onclick="runUntilPickOne()" style="white-space:nowrap;padding:0.38rem 0.9rem;">Run</button>
                     </div>
                     <div id="until-one-result" style="display:none;padding:0.5rem 0.75rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.8rem;color:var(--ink);font-weight:600;" id="until-one-text"></div>
                 </div>
@@ -305,8 +318,7 @@
                 <span class="card-title">Lottery Results</span>
                 <div style="display:flex;gap:0.4rem;align-items:center;">
                     <span class="badge" id="result-sixers-badge" style="display:none;"></span>
-                    <button class="btn-secondary" id="share-btn" style="display:none;padding:3px 9px;font-size:0.7rem;" onclick="shareResult()">📤 Share Text</button>
-                    <button class="btn-secondary" id="social-card-btn" style="display:none;padding:3px 9px;font-size:0.7rem;background:var(--sixers-blue);color:white;border-color:var(--sixers-blue);" onclick="openSocialCard()">🖼 Share Image</button>
+                    <button class="btn-secondary" id="social-card-btn" style="display:none;padding:3px 9px;font-size:0.7rem;background:var(--sixers-blue);color:white;border-color:var(--sixers-blue);" onclick="openSocialCard()">Share Image</button>
                 </div>
             </div>
             <div class="card-body">
@@ -766,7 +778,7 @@ function appendPickEl(pickObj,container) {
 
 async function appendPickEnvelope(pickObj, container, withSuspense=true) {
     const isSixers=pickObj.team.abbr==='PHI', c=TEAM_COLORS[pickObj.team.abbr]||'#888', p=pickObj.pick;
-    const medalLabel = p===1?'🏆 Pick #1':p===2?'🥈 Pick #2':p===3?'🥉 Pick #3':'Pick #4';
+    const medalLabel = p===1?'Pick #1':p===2?'Pick #2':p===3?'Pick #3':'Pick #4';
     const wrapClass=`result-pick${p===1?' pick-gold':p===2?' pick-silver':p===3?' pick-bronze':''}${isSixers?' sixers-pick':''}`;
 
     const wrap = document.createElement('div');
@@ -803,7 +815,7 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
             <div class="pick-team-name">${pickObj.team.shortName}</div>
             <div class="pick-team-sub">${pickObj.protectionNote||(p<=4?pickObj.team.oddsTop1.toFixed(1)+'% pick #1 odds':pickObj.team.wins+'-'+pickObj.team.losses)}</div>
         </div>
-        ${isSixers?'<span class="pick-sixers-tag">Sixers ★</span>':''}`;
+        ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
 
     card.appendChild(inner);
     if (!withSuspense) { wrap.appendChild(card); container.prepend(wrap); }
@@ -838,8 +850,8 @@ async function runUntilPickOne() {
     const resultEl=document.getElementById('until-one-result');
     resultEl.style.display='block';
     resultEl.innerHTML=count>=MAX
-        ?`<span style="color:var(--sixers-red)">Still waiting after ${MAX.toLocaleString()} draws 😬</span>`
-        :`🎯 <strong>${team.shortName}</strong> got #1 after <strong style="color:var(--sixers-blue)">${count.toLocaleString()} draw${count!==1?'s':''}</strong>`;
+        ?`<span style="color:var(--sixers-red)">Still waiting after ${MAX.toLocaleString()} draws</span>`
+        :`<strong>${team.shortName}</strong> got #1 after <strong style="color:var(--sixers-blue)">${count.toLocaleString()} draw${count!==1?'s':''}</strong>`;
     btn.disabled=false; btn.textContent='🎯 Run';
 }
 
@@ -921,7 +933,7 @@ function renderHistory() {
         <div class="history-item">
             <div style="display:flex;align-items:center;gap:0.45rem;">
                 <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;color:${pc(h.pick)}">#${h.pick}</span>
-                <span style="font-size:0.73rem;color:var(--mid);">${h.pick===1?'🏆 #1!':h.pick<=4?'✅ Top 4':'—'}</span>
+                <span style="font-size:0.73rem;color:var(--mid);">${h.pick===1?'#1 Overall':h.pick<=4?'Top 4':'—'}</span>
             </div>
             <span style="font-size:0.68rem;color:var(--mid);">${h.time}</span>
         </div>`).join('');
@@ -1114,17 +1126,17 @@ function renderResultHeadline(sixersPick, allPicks) {
     const el = document.getElementById('result-headline');
     el.innerHTML = '';
     if (sixersPick === null) {
-        el.innerHTML = `<div class="headline-miss">76ers missed the top 4</div><div class="headline-sub">Better luck next year 🙏</div>`;
+        el.innerHTML = `<div class="headline-miss">76ers missed the top 4</div><div class="headline-sub">Better luck next year</div>`;
         el.className = 'result-headline show';
         return;
     }
-    const emojis = {1:'🏆',2:'🥈',3:'🥉',4:'✅'};
+    const emojis = {1:'',2:'',3:'',4:''};
     const labels = {1:'#1 OVERALL PICK',2:'#2 OVERALL PICK',3:'#3 OVERALL PICK',4:'#4 OVERALL PICK'};
-    const msgs = {1:'The Sixers WIN the lottery!',2:'Sixers land a top-2 pick!',3:'Sixers in the top 3!',4:'Sixers sneak into the top 4!'};
+    const msgs = {1:'SIXERS WIN THE LOTTERY!',2:'TOP-2 PICK SECURED!',3:'SIXERS IN THE TOP 3!',4:'TOP-4 PICK LANDED!'};
     const extras = sixersPick <= 4 ? '' : `<div class="headline-sub" style="margin-top:0.15rem;opacity:0.6;">Pick #${sixersPick} overall</div>`;
     if (sixersPick <= 4) {
         el.innerHTML = `
-            <div class="headline-label">${emojis[sixersPick]} 2026 NBA Draft Lottery Result</div>
+            <div class="headline-label">2026 NBA DRAFT LOTTERY SIMULATION</div>
             <div class="headline-pick-num ${sixersPick===1?'pick-1':sixersPick===2?'pick-2':sixersPick===3?'pick-3':'top4'}">#${sixersPick}</div>
             <div class="headline-label">${labels[sixersPick]}</div>
             <div class="headline-sub" style="margin-top:0.4rem;color:rgba(255,255,255,0.75);font-weight:600;">${msgs[sixersPick]}</div>`;
@@ -1209,7 +1221,7 @@ function drawSocialCard(picks) {
     ctx.fillText('2026 NBA DRAFT LOTTERY SIMULATION', LX, 375);
 
     // Sub message
-    const msgs = {1:'🏆 SIXERS WIN THE LOTTERY!', 2:'🥈 TOP-2 PICK SECURED!', 3:'🥉 SIXERS IN THE TOP 3!', 4:'✅ TOP-4 PICK LANDED!'};
+    const msgs = {1:'SIXERS WIN THE LOTTERY!', 2:'TOP-2 PICK SECURED!', 3:'SIXERS IN THE TOP 3!', 4:'TOP-4 PICK LANDED!'};
     ctx.fillStyle = sixersPick && sixersPick <= 4 ? '#ffffff' : '#ED174C';
     ctx.font = `800 32px "Barlow Condensed", sans-serif`;
     ctx.fillText(sixersPick && msgs[sixersPick] ? msgs[sixersPick] : (sixersPick ? `SIXERS LAND #${sixersPick}` : 'SIXERS MISS TOP 4'), LX, 420);
@@ -1261,7 +1273,7 @@ function drawSocialCard(picks) {
             ctx.fill();
             ctx.fillStyle = 'white';
             ctx.font = '700 14px "Barlow Condensed", sans-serif';
-            ctx.fillText('SIXERS ★', RX + 137, Y + 68);
+            ctx.fillText('SIXERS', RX + 137, Y + 68);
         }
     });
 
