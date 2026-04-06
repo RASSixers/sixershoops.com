@@ -783,28 +783,26 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
 
     const wrap = document.createElement('div');
     wrap.className = 'envelope-wrap';
-
     const card = document.createElement('div');
     card.className = `envelope-card${p===1?' pick-1-card':''}`;
 
     if (withSuspense) {
-        // Show sealed envelope first
         const sealed = document.createElement('div');
         sealed.className = 'envelope-sealed';
         sealed.textContent = medalLabel;
         card.appendChild(sealed);
         wrap.appendChild(card);
         container.prepend(wrap);
-        // Animate in sealed
         requestAnimationFrame(()=>{ requestAnimationFrame(()=>card.classList.add('flipped')); });
         await sleep(700);
-        // Remove sealed, flip back, swap content
         card.classList.remove('flipped');
         await sleep(320);
         sealed.remove();
+    } else {
+        wrap.appendChild(card);
+        container.prepend(wrap);
     }
 
-    // Build real pick content
     const inner = document.createElement('div');
     inner.className = wrapClass;
     inner.style.cssText='opacity:1;transform:none;margin:0;';
@@ -818,12 +816,8 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
         ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
 
     card.appendChild(inner);
-    if (!withSuspense) { wrap.appendChild(card); container.appendChild(wrap); }
-
-    // Flip reveal
     requestAnimationFrame(()=>{ requestAnimationFrame(()=>card.classList.add('flipped')); });
 
-    // #1 pick: fire Sixers confetti after reveal
     if (p===1) {
         await sleep(400);
         fireConfetti(isSixers);
@@ -1126,8 +1120,7 @@ function renderResultHeadline(sixersPick, allPicks) {
     const el = document.getElementById('result-headline');
     el.innerHTML = '';
     if (sixersPick === null) {
-        el.innerHTML = `<div class="headline-miss">76ers missed the top 4</div><div class="headline-sub">Better luck next year</div>`;
-        el.className = 'result-headline show';
+        el.className = 'result-headline';
         return;
     }
     const emojis = {1:'',2:'',3:'',4:''};
