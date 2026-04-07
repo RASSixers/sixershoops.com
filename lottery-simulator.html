@@ -427,10 +427,10 @@
             </div>
         </div>
 
-        <!-- Jump Card -->
-        <div class="card" id="jump-card" style="display:none;margin-bottom:1.25rem;">
-            <div class="card-header"><span class="card-title">Spots Needed to Jump</span></div>
-            <div class="card-body" id="jump-body" style="text-align:center;padding:1.1rem;"></div>
+        <!-- Bubble Card -->
+        <div class="card" id="jump-card" style="margin-bottom:1.25rem;">
+            <div class="card-header"><span class="card-title">Lottery Bubble</span><span class="badge badge-red" style="font-size:0.58rem;letter-spacing:0.1em;">Live · Updates Every 5 min</span></div>
+            <div class="card-body" id="jump-body" style="text-align:center;padding:1.1rem;"><div class="loading-pulse" style="width:100%;margin-bottom:8px;"></div><div class="loading-pulse" style="width:75%;"></div></div>
         </div>
 
         <!-- Pick Protections -->
@@ -522,7 +522,7 @@ const PAST_PICKS = [
     {year:2010,picks:[{rnd:1,num:2,player:'Evan Turner',pos:'SF/SG',school:'Ohio State'}]},
 ];
 
-let lotteryTeams=[], simHistory=[], sessionPickCounts={}, totalSessionDraws=0;
+let lotteryTeams=[], bubbleTeams=[], simHistory=[], sessionPickCounts={}, totalSessionDraws=0;
 let _prevLotteryKey=''; // Used to detect when the bottom-14 field changes
 
 function showStandingsToast(msg){
@@ -561,6 +561,8 @@ async function fetchAndBuildLottery() {
         });
         allTeams.sort((a,b)=>a.winPct-b.winPct||b.losses-a.losses);
         const newBottom14=allTeams.slice(0,14);
+        // Capture up to 5 teams just outside the lottery for the bubble view
+        const newBubble=allTeams.slice(14,19);
 
         // Detect changes: team composition OR records
         const newKey=newBottom14.map(t=>`${t.abbr}:${t.wins}-${t.losses}`).join('|');
@@ -574,8 +576,8 @@ async function fetchAndBuildLottery() {
             const exited=oldAbbrs.filter(a=>!newAbbrs.includes(a));
             if(entered.length||exited.length){
                 const msgs=[];
-                if(entered.length) msgs.push(`${entered.join(', ')} entered lottery`);
-                if(exited.length) msgs.push(`${exited.join(', ')} out`);
+                if(entered.length) msgs.push(`🔥 ${entered.join(', ')} entered lottery`);
+                if(exited.length) msgs.push(`${exited.join(', ')} fell out`);
                 showStandingsToast(msgs.join(' · '));
             } else {
                 showStandingsToast('Standings updated');
@@ -588,13 +590,19 @@ async function fetchAndBuildLottery() {
             combinations:OFFICIAL_LOTTERY_ODDS[i+1].combinations,
             oddsTop1:OFFICIAL_LOTTERY_ODDS[i+1].pct1,
         }));
+        // Store bubble teams (just outside lottery, could jump in)
+        bubbleTeams=newBubble.map((t,i)=>({
+            ...t, lotteryRank:null, overallRank:i+15, combinations:0, oddsTop1:0,
+        }));
         COMBO_MAP=null; // Reset so buildComboMap() runs fresh on next sim
-        renderOddsTable(); renderSixersOddsPanel(); renderJumpCard(); renderPastPicks(); populateScenarioSelect();
+        renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard(); renderPastPicks(); populateScenarioSelect();
         // Populate until-one team select
         const sel=document.getElementById('until-one-team-select');
         if(sel){
             sel.innerHTML=lotteryTeams.map(t=>`<option value="${t.abbr}"${t.abbr==='PHI'?' selected':''}>${t.shortName}</option>`).join('');
         }
+        // Always show the bubble card
+        document.getElementById('jump-card').style.display='block';
         const now=new Date();
         if(badge) badge.textContent=`Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Live`;
     } catch(err) {
@@ -617,8 +625,9 @@ function computePickN(idx,pick) {
 function renderOddsTable() {
     const rows=lotteryTeams.map((t,i)=>{
         const s=t.abbr==='PHI', c=TEAM_COLORS[t.abbr]||'#888', t4=computeTop4Odds(i);
-        return `<tr class="${s?'highlight-row':''}" ${s?'id="sixers-table-row"':''}>
-            <td><div style="display:flex;align-items:center;gap:6px;">
+        const isLast=i===lotteryTeams.length-1;
+        return `<tr class="${s?'highlight-row':''}" ${s?'id="sixers-table-row"':''}${isLast?' style="border-bottom:2px dashed var(--sixers-red);"':''}>
+            <td style="${isLast?'border-bottom:2px dashed var(--sixers-red);':''}"><div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--mid);width:16px;">${t.lotteryRank}</span>
                 <span class="team-dot" style="background:${c}"></span>
                 <span style="font-weight:${s?700:500};font-size:0.8rem;">${t.shortName}${s?' ★':''}</span>
@@ -630,10 +639,26 @@ function renderOddsTable() {
             <td><span class="pct-val" style="color:var(--mid)">${t4.toFixed(1)}%</span></td>
         </tr>`;
     }).join('');
+
+    // Build "could jump in" rows for bubble teams
+    const bubbleRows = bubbleTeams.slice(0,3).map((t)=>{
+        const c=TEAM_COLORS[t.abbr]||'#888';
+        const s=t.abbr==='PHI';
+        return `<tr style="opacity:0.55;" ${s?'id="sixers-table-row"':''}>
+            <td><div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--sixers-red);width:16px;">${t.overallRank}</span>
+                <span class="team-dot" style="background:${c}"></span>
+                <span style="font-weight:${s?700:500};font-size:0.8rem;color:var(--mid);">${t.shortName}${s?' ★':''}</span>
+            </div></td>
+            <td style="color:var(--mid);font-size:0.74rem;">${t.wins}-${t.losses}</td>
+            <td colspan="4" style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sixers-red);">Not in lottery · could jump in</td>
+        </tr>`;
+    }).join('');
+
     document.getElementById('odds-table-wrap').innerHTML=`
         <table class="lottery-table">
             <thead><tr><th>Team</th><th>Record</th><th>#1</th><th>#2</th><th>#3</th><th>Top 4</th></tr></thead>
-            <tbody>${rows}</tbody>
+            <tbody>${rows}${bubbleRows}</tbody>
         </table>`;
     setTimeout(()=>{
         const r=document.getElementById('sixers-table-row');
@@ -643,7 +668,25 @@ function renderOddsTable() {
 
 function renderSixersOddsPanel() {
     const s=lotteryTeams.find(t=>t.abbr==='PHI');
-    if(!s){document.getElementById('sixers-odds-display').innerHTML=`<div style="color:var(--mid);font-size:0.85rem;">Sixers not in lottery this year.</div>`;return;}
+    // Check if Sixers are a bubble team (just outside lottery)
+    const sBubble=!s && bubbleTeams.find(t=>t.abbr==='PHI');
+    if(!s && !sBubble){document.getElementById('sixers-odds-display').innerHTML=`<div style="color:var(--mid);font-size:0.85rem;">Sixers not in lottery this year.</div>`;return;}
+    if(sBubble){
+        // Sixers are just outside the lottery — show bubble status
+        const borderTeam=lotteryTeams[lotteryTeams.length-1];
+        const lDiff=borderTeam?(borderTeam.losses-sBubble.losses):0;
+        const wDiff=borderTeam?(sBubble.wins-borderTeam.wins):0;
+        let gap='';
+        if(lDiff>0) gap=`${lDiff} more loss${lDiff!==1?'es':''} needed to enter`;
+        else if(wDiff>0) gap=`${wDiff} fewer win${wDiff!==1?'s':''} would help`;
+        else gap='Same record as #14 team — could flip';
+        document.getElementById('sixers-odds-display').innerHTML=`
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--sixers-red);margin-bottom:0.3rem;">Not in Lottery · Rank #${sBubble.overallRank}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;color:var(--sixers-red);line-height:1.1;">On Bubble</div>
+            <div style="margin-top:0.4rem;font-size:0.72rem;color:var(--mid);line-height:1.5;">${gap}</div>
+            <div style="margin-top:0.4rem;font-size:0.7rem;color:var(--mid);">${sBubble.wins}-${sBubble.losses}</div>`;
+        return;
+    }
     const t4=computeTop4Odds(s.lotteryRank-1);
     document.getElementById('sixers-odds-display').innerHTML=`
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.2rem;">Pick #1 Odds</div>
@@ -653,15 +696,55 @@ function renderSixersOddsPanel() {
         <div style="margin-top:0.4rem;font-size:0.7rem;color:var(--mid);">Lottery Rank: #${s.lotteryRank} · ${s.wins}-${s.losses}</div>`;
 }
 
-function renderJumpCard() {
-    const s=lotteryTeams.find(t=>t.abbr==='PHI');
-    if(!s||s.lotteryRank<=1){document.getElementById('jump-card').style.display='none';return;}
-    const jump=s.lotteryRank-1;
-    document.getElementById('jump-card').style.display='block';
-    document.getElementById('jump-body').innerHTML=`
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:3rem;font-weight:900;color:var(--sixers-blue);line-height:1;">${jump}</div>
-        <div style="font-size:0.75rem;color:var(--mid);margin-top:0.25rem;">spot${jump!==1?'s':''} to jump for the #1 pick</div>
-        <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--mid);">Currently Lottery Rank <strong style="color:var(--ink);">#${s.lotteryRank}</strong></div>`;
+function renderBubbleCard() {
+    const card=document.getElementById('jump-card');
+    const body=document.getElementById('jump-body');
+    if(!lotteryTeams.length){card.style.display='none';return;}
+
+    const lastIn=lotteryTeams.slice(-3); // last 3 IN the lottery (could fall out)
+    const firstOut=bubbleTeams.slice(0,3); // first 3 OUTSIDE (could jump in)
+    const borderTeam=lotteryTeams[lotteryTeams.length-1]; // rank #14
+    const firstOutTeam=bubbleTeams[0]; // rank #15
+
+    card.style.display='block';
+    body.style.textAlign='left';
+    body.style.padding='0.85rem 1rem';
+
+    const teamRow=(t,isIn)=>{
+        const c=TEAM_COLORS[t.abbr]||'#888';
+        const isPHI=t.abbr==='PHI';
+        const rank=isIn?`#${t.lotteryRank}`:`#${t.overallRank}`;
+        return `<div style="display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:8px;background:${isIn?'rgba(16,185,129,0.06)':'rgba(237,23,76,0.05)'};border:1px solid ${isIn?'rgba(16,185,129,0.22)':'rgba(237,23,76,0.18)'};margin-bottom:3px;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;color:var(--mid);width:18px;flex-shrink:0;">${rank}</span>
+            <span style="width:7px;height:7px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block;"></span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.8rem;flex:1;color:var(--ink);">${t.shortName}${isPHI?' ★':''}</span>
+            <span style="font-size:0.7rem;color:var(--mid);flex-shrink:0;">${t.wins}-${t.losses}</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;padding:2px 6px;border-radius:4px;flex-shrink:0;background:${isIn?'rgba(16,185,129,0.14)':'rgba(237,23,76,0.1)'};color:${isIn?'#059669':'var(--sixers-red)'};">${isIn?'IN':'OUT'}</span>
+        </div>`;
+    };
+
+    // Gap label between the boundary teams
+    let gapLabel='';
+    if(borderTeam && firstOutTeam){
+        const lDiff=borderTeam.losses-firstOutTeam.losses;
+        const wDiff=firstOutTeam.wins-borderTeam.wins;
+        if(lDiff===0 && wDiff===0) gapLabel='Same record';
+        else if(lDiff>0) gapLabel=`${lDiff} loss${lDiff!==1?'es':''} separate`;
+        else gapLabel=`${wDiff} win${wDiff!==1?'s':''} separate`;
+    }
+
+    body.innerHTML=`
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#059669;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;"><span style="width:6px;height:6px;border-radius:50%;background:#059669;display:inline-block;"></span>Last 3 In Lottery</div>
+        ${lastIn.map(t=>teamRow(t,true)).join('')}
+        <div style="margin:0.55rem 0;display:flex;align-items:center;gap:0.5rem;">
+            <div style="flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--sixers-red) 0,var(--sixers-red) 5px,transparent 5px,transparent 10px);opacity:0.7;"></div>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.56rem;font-weight:800;letter-spacing:0.12em;color:var(--sixers-red);text-transform:uppercase;white-space:nowrap;">Lottery Line · ${gapLabel}</span>
+            <div style="flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--sixers-red) 0,var(--sixers-red) 5px,transparent 5px,transparent 10px);opacity:0.7;"></div>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--sixers-red);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--sixers-red);display:inline-block;"></span>Could Jump In</div>
+        ${firstOut.map(t=>teamRow(t,false)).join('')}
+        <div style="margin-top:0.6rem;font-size:0.66rem;color:var(--mid);line-height:1.45;border-top:1px solid var(--border-light);padding-top:0.5rem;">Updates every 5 min from live standings. Teams swap when records cross the #14/#15 boundary.</div>
+    `;
 }
 
 
@@ -1101,7 +1184,7 @@ function applyScenario() {
     lotteryTeams.sort((a,b) => a.lotteryRank - b.lotteryRank);
 
     COMBO_MAP = null;
-    renderOddsTable(); renderSixersOddsPanel(); renderJumpCard();
+    renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard();
 
     const banner = document.getElementById('scenario-active-banner');
     banner.style.display = 'block';
@@ -1113,7 +1196,7 @@ function clearScenario() {
     if (scenarioOriginalTeams) { lotteryTeams = JSON.parse(JSON.stringify(scenarioOriginalTeams)); scenarioOriginalTeams = null; }
     COMBO_MAP = null;
     document.getElementById('scenario-active-banner').style.display = 'none';
-    renderOddsTable(); renderSixersOddsPanel(); renderJumpCard();
+    renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard();
     populateScenarioSelect();
 }
 
