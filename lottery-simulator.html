@@ -558,8 +558,10 @@ async function fetchAndBuildLottery() {
                     if(s.name) stats[s.name]=s;
                     if(s.type) stats[s.type]=s;
                 });
-                const wins  = parseInt(stats.wins?.displayValue  ?? stats.wins?.value  ?? 0);
-                const losses= parseInt(stats.losses?.displayValue?? stats.losses?.value?? 0);
+                // ESPN: .value is numeric, .displayValue is string — use .value first
+                const wins  = parseInt(stats.wins?.value  ?? stats.wins?.displayValue  ?? 0);
+                console.log(`[Lottery] ${entry.team.abbreviation} W:${stats.wins?.value}/D:${stats.wins?.displayValue} L:${stats.losses?.value}/D:${stats.losses?.displayValue}`);
+                const losses= parseInt(stats.losses?.value ?? stats.losses?.displayValue ?? 0);
                 // Mirror standings.js exactly: use stats.winPercent?.value (the raw decimal from ESPN)
                 const winPct = parseFloat(stats.winPercent?.value ?? 0);
                 allTeams.push({
@@ -578,6 +580,7 @@ async function fetchAndBuildLottery() {
             if(a.wins !== b.wins) return a.wins - b.wins;   // fewer wins = worse
             return b.losses - a.losses;                      // same wins → more losses = worse
         });
+        console.log("[Lottery] Sorted order:", allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(", "));
         const newBottom14=allTeams.slice(0,14);
         // Capture up to 5 teams just outside the lottery for the bubble view
         const newBubble=allTeams.slice(14,19);
