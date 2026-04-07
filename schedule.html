@@ -7,6 +7,10 @@
   <link rel="icon" href="/favicon.ico"/>
   <link rel="apple-touch-icon" href="/favicon.ico"/>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="styles.css"/>
   <link rel="stylesheet" href="navbar-styles.css"/>
 
@@ -21,6 +25,10 @@
 
   <style>
     :root {
+      --navy: #001a57;
+      --navy-deep: #000d2e;
+      --sixers-blue: #006BB6;
+      --sixers-red: #ED174C;
       --color-navy: #0a174e;
       --color-navy-soft: #122860;
       --color-sky: #3b82f6;
@@ -45,56 +53,123 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #f9fafb;
       color: #111827;
       line-height: 1.6;
-      padding-top: 80px;
+      padding-top: 64px;
       margin: 0;
       position: relative;
       overflow-x: hidden;
     }
 
+    /* ── HERO BANNER (matches lottery-simulator) ── */
+    .hero {
+      background: var(--navy-deep);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,107,182,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,107,182,0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-glow-blue {
+      position: absolute;
+      left: 50%;
+      top: -80px;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse at center, rgba(0,107,182,0.2) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-glow-red {
+      position: absolute;
+      left: 50%;
+      bottom: -40px;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 300px;
+      background: radial-gradient(ellipse at center, rgba(237,23,76,0.1) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4rem 2rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hero-title-top {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 900;
+      line-height: 0.85;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.95);
+      margin: 0;
+    }
+
+    .hero-title-bottom {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 900;
+      line-height: 0.85;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--sixers-blue), #4da8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 0.15em;
+    }
+
+    .hero-divider {
+      width: 40px;
+      height: 3px;
+      background: var(--sixers-red);
+      border-radius: 2px;
+      margin: 1.1rem auto 1rem;
+    }
+
+    .hero-sub {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.38);
+      max-width: 420px;
+      line-height: 1.65;
+      margin: 0;
+      font-family: 'Barlow', sans-serif;
+    }
+
+    /* ── SCHEDULE CONTENT ── */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .page-header {
-      padding: 5rem 2rem;
-      text-align: center;
-      animation: fadeIn 0.5s ease-in;
-    }
-
-    .page-header-content {
-      max-width: 56rem;
-      margin: 0 auto;
-    }
-
-    .page-title {
-      font-size: clamp(2.5rem, 7vw, 4rem);
-      font-weight: 800;
-      margin-bottom: 1.5rem;
-      line-height: 1.2;
-      color: var(--color-navy);
-    }
-
-    .page-title .highlight {
-      color: var(--color-sky);
-    }
-
-    .page-subtitle {
-      font-size: clamp(1rem, 2vw, 1.25rem);
-      color: var(--color-slate-500);
-      max-width: 42rem;
-      margin: 0 auto;
-      font-weight: 500;
-    }
-
     .content-wrapper {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 2.5rem 20px;
     }
 
     .schedule-container {
@@ -121,7 +196,7 @@
       font-weight: 800;
       margin-bottom: 2rem;
       padding-bottom: 0.75rem;
-      border-bottom: 3px solid var(--color-sky);
+      border-bottom: 3px solid var(--sixers-blue);
       display: inline-block;
     }
 
@@ -213,7 +288,7 @@
 
     .loader-spinner {
       border: 4px solid #f3f3f3;
-      border-top: 4px solid var(--color-sky);
+      border-top: 4px solid var(--sixers-blue);
       border-radius: 50%;
       width: 40px;
       height: 40px;
@@ -227,7 +302,7 @@
     }
 
     @media (max-width: 768px) {
-      .page-header { padding: 3rem 1rem; }
+      .hero-inner { padding: 3rem 1.25rem 2rem; }
       .schedule-container { padding: 1rem; }
       th, td { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
     }
@@ -236,12 +311,17 @@
 <body>
   <script src="nav.js"></script>
 
-  <section class="page-header">
-    <div class="page-header-content">
-      <h1 class="page-title">Sixers <span class="highlight">Schedule</span></h1>
-      <p class="page-subtitle">2025-26 Season Game Tracker & Results</p>
+  <!-- Hero Banner (matches lottery-simulator.html) -->
+  <header class="hero">
+    <div class="hero-glow-blue"></div>
+    <div class="hero-glow-red"></div>
+    <div class="hero-inner">
+      <p class="hero-title-top">Sixers</p>
+      <p class="hero-title-bottom">Schedule</p>
+      <div class="hero-divider"></div>
+      <p class="hero-sub">2025–26 Season Game Tracker &amp; Results</p>
     </div>
-  </section>
+  </header>
 
   <div class="content-wrapper">
     <main class="schedule-container" id="schedule">
