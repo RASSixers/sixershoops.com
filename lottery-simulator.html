@@ -549,17 +549,31 @@ async function fetchAndBuildLottery() {
         const allTeams=[];
         (data.children||[]).forEach(conf=>{
             (conf.standings?.entries||[]).forEach(entry=>{
+                // Mirror standings.js: index by BOTH s.name and s.type for full coverage
                 const stats={};
-                entry.stats.forEach(s=>{if(s.name)stats[s.name]=s;});
+                entry.stats.forEach(s=>{
+                    if(s.name) stats[s.name]=s;
+                    if(s.type) stats[s.type]=s;
+                });
+                const wins  = parseInt(stats.wins?.displayValue  ?? stats.wins?.value  ?? 0);
+                const losses= parseInt(stats.losses?.displayValue?? stats.losses?.value?? 0);
+                // winPercent may come as a decimal (0.xxx) or percentage — normalise to 0-1
+                let rawPct  = parseFloat(stats.winPercent?.value ?? stats.winPct?.value ?? 0);
+                if(rawPct > 1) rawPct = rawPct / 100; // guard against % form
                 allTeams.push({
                     abbr:entry.team.abbreviation, name:entry.team.displayName,
                     shortName:entry.team.shortDisplayName||entry.team.displayName,
-                    wins:parseInt(stats.wins?.value??0), losses:parseInt(stats.losses?.value??0),
-                    winPct:stats.winPercent?.value??0,
+                    wins, losses,
+                    winPct: rawPct,
                 });
             });
         });
-        allTeams.sort((a,b)=>a.winPct-b.winPct||b.losses-a.losses);
+        // Sort worst-to-best: lowest win% first; break ties by most losses (mirrors standings.js sort)
+        allTeams.sort((a,b)=>{
+            const pctDiff = a.winPct - b.winPct;
+            if(Math.abs(pctDiff) > 0.0001) return pctDiff; // different win%
+            return b.losses - a.losses; // same win% → more losses = worse = ranked higher in lottery
+        });
         const newBottom14=allTeams.slice(0,14);
         // Capture up to 5 teams just outside the lottery for the bubble view
         const newBubble=allTeams.slice(14,19);
