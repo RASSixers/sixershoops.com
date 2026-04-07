@@ -570,13 +570,13 @@ async function fetchAndBuildLottery() {
                 });
             });
         });
-        // Sort worst-to-best: mirror standings.js which sorts by winPercent descending,
-        // then we take the BOTTOM 14 (slice from the end after reversing here via ascending sort).
-        // Tiebreaker: more losses = worse = higher lottery rank (earlier in this ascending array).
+        // Sort worst-to-best (ascending), matching the official lottery order:
+        // Primary: fewest wins first. Secondary: most losses first (breaks win% ties).
+        // This matches the NBA tiebreaker: teams with same win% are ordered by most losses.
+        // Teams with identical W-L records share a slot (coin flip handled by NBA).
         allTeams.sort((a,b)=>{
-            const pctDiff = a.winPct - b.winPct;
-            if(Math.abs(pctDiff) > 0.00001) return pctDiff; // ascending: worst first
-            return b.losses - a.losses; // same win% → more losses = worse = appears earlier
+            if(a.wins !== b.wins) return a.wins - b.wins;   // fewer wins = worse
+            return b.losses - a.losses;                      // same wins → more losses = worse
         });
         const newBottom14=allTeams.slice(0,14);
         // Capture up to 5 teams just outside the lottery for the bubble view
