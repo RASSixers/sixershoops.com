@@ -560,22 +560,23 @@ async function fetchAndBuildLottery() {
                 });
                 const wins  = parseInt(stats.wins?.displayValue  ?? stats.wins?.value  ?? 0);
                 const losses= parseInt(stats.losses?.displayValue?? stats.losses?.value?? 0);
-                // winPercent may come as a decimal (0.xxx) or percentage — normalise to 0-1
-                let rawPct  = parseFloat(stats.winPercent?.value ?? stats.winPct?.value ?? 0);
-                if(rawPct > 1) rawPct = rawPct / 100; // guard against % form
+                // Mirror standings.js exactly: use stats.winPercent?.value (the raw decimal from ESPN)
+                const winPct = parseFloat(stats.winPercent?.value ?? 0);
                 allTeams.push({
                     abbr:entry.team.abbreviation, name:entry.team.displayName,
                     shortName:entry.team.shortDisplayName||entry.team.displayName,
                     wins, losses,
-                    winPct: rawPct,
+                    winPct,
                 });
             });
         });
-        // Sort worst-to-best: lowest win% first; break ties by most losses (mirrors standings.js sort)
+        // Sort worst-to-best: mirror standings.js which sorts by winPercent descending,
+        // then we take the BOTTOM 14 (slice from the end after reversing here via ascending sort).
+        // Tiebreaker: more losses = worse = higher lottery rank (earlier in this ascending array).
         allTeams.sort((a,b)=>{
             const pctDiff = a.winPct - b.winPct;
-            if(Math.abs(pctDiff) > 0.0001) return pctDiff; // different win%
-            return b.losses - a.losses; // same win% → more losses = worse = ranked higher in lottery
+            if(Math.abs(pctDiff) > 0.00001) return pctDiff; // ascending: worst first
+            return b.losses - a.losses; // same win% → more losses = worse = appears earlier
         });
         const newBottom14=allTeams.slice(0,14);
         // Capture up to 5 teams just outside the lottery for the bubble view
