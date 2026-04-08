@@ -898,6 +898,8 @@ async function runLottery() {
     const runBtn=document.getElementById('run-btn'), resultsCard=document.getElementById('results-card');
     const spinnerWrap=document.getElementById('spinner-wrap'), picksEl=document.getElementById('result-picks');
     runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
+    // Clear any previous bottom picks wrapper
+    if(picksEl.nextElementSibling) picksEl.nextElementSibling.remove();
     const instant=document.getElementById('instant-mode').checked;
     await sleep(instant?0:850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
@@ -1013,16 +1015,12 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
 
 function resetSim() {
     document.getElementById('results-card').style.display='none';
-    document.getElementById('result-picks').innerHTML='';
+    const rp = document.getElementById('result-picks');
+    rp.innerHTML='';
+    if(rp.nextElementSibling) rp.nextElementSibling.remove();
     document.getElementById('result-sixers-badge').style.display='none';
     document.getElementById('reset-btn').style.display='none';
     const hl=document.getElementById('result-headline'); hl.className='result-headline'; hl.innerHTML='';
-    // Remove bottom picks wrapper if present
-    const bpw = document.getElementById('result-picks')?.parentElement?.querySelector('.bottom-picks-toggle')?.parentElement;
-    if(bpw) bpw.remove();
-    // Also remove any sibling wrapper divs added after result-picks
-    const rp = document.getElementById('result-picks');
-    if(rp && rp.nextElementSibling) { rp.nextElementSibling.remove(); }
 }
 
 async function runUntilPickOne() {
