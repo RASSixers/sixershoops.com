@@ -606,10 +606,40 @@ async function fetchAndBuildLottery() {
         }
         _prevLotteryKey=newKey;
 
-        lotteryTeams=newBottom14.map((t,i)=>({
-            ...t, lotteryRank:i+1,
-            combinations:OFFICIAL_LOTTERY_ODDS[i+1].combinations,
-            oddsTop1:OFFICIAL_LOTTERY_ODDS[i+1].pct1,
+        // Assign lottery odds, averaging across tied W-L groups
+        // NBA treats teams with identical records as sharing a slot — their odds are averaged
+        const bottom14WithOdds = newBottom14.map((t,i) => ({...t, _slotIdx: i}));
+
+        // Find tied groups (same W-L) and average their combinations/pct across their slots
+        let i14 = 0;
+        while (i14 < bottom14WithOdds.length) {
+            let j = i14 + 1;
+            while (j < bottom14WithOdds.length &&
+                   bottom14WithOdds[j].wins === bottom14WithOdds[i14].wins &&
+                   bottom14WithOdds[j].losses === bottom14WithOdds[i14].losses) { j++; }
+            // Slots i14..j-1 are tied — average their odds
+            let totalCombos = 0, totalPct = 0;
+            for (let k = i14; k < j; k++) {
+                totalCombos += OFFICIAL_LOTTERY_ODDS[k+1].combinations;
+                totalPct    += OFFICIAL_LOTTERY_ODDS[k+1].pct1;
+            }
+            const avgCombos = Math.round(totalCombos / (j - i14));
+            const avgPct    = parseFloat((totalPct / (j - i14)).toFixed(1));
+            for (let k = i14; k < j; k++) {
+                bottom14WithOdds[k]._avgCombinations = avgCombos;
+                bottom14WithOdds[k]._avgOddsTop1     = avgPct;
+                bottom14WithOdds[k]._tieGroup        = j - i14 > 1; // flag if part of a tie
+                bottom14WithOdds[k]._tieSlotStart    = i14 + 1;     // e.g. "4" for the first tied slot
+                bottom14WithOdds[k]._tieSlotEnd      = j;           // e.g. 5 for last tied slot (exclusive)
+            }
+            i14 = j;
+        }
+
+        lotteryTeams = bottom14WithOdds.map((t, i) => ({
+            ...t,
+            lotteryRank:  i + 1,
+            combinations: t._avgCombinations,
+            oddsTop1:     t._avgOddsTop1,
         }));
         // Store bubble teams (just outside lottery, could jump in)
         bubbleTeams=newBubble.map((t,i)=>({
@@ -645,11 +675,16 @@ function computePickN(idx,pick) {
 
 function renderOddsTable() {
     const rows=lotteryTeams.map((t,i)=>{
-        const s=t.abbr==='PHI', c=TEAM_COLORS[t.abbr]||'#888', t4=computeTop4Odds(i);
+        const rankDisplay = t._tieGroup
+            ? (t._tieSlotStart === t._tieSlotEnd - 1
+                ? `${t._tieSlotStart}`   // shouldn't happen (single), but fallback
+                : `-`)                    // tied — no unique rank shown
+            : `${t.lotteryRank}`;
         const isLast=i===lotteryTeams.length-1;
+        const s=t.abbr==='PHI', c=TEAM_COLORS[t.abbr]||'#888', t4=computeTop4Odds(i);
         return `<tr class="${s?'highlight-row':''}" ${s?'id="sixers-table-row"':''}${isLast?' style="border-bottom:2px dashed var(--sixers-red);"':''}>
             <td style="${isLast?'border-bottom:2px dashed var(--sixers-red);':''}"><div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--mid);width:16px;">${t.lotteryRank}</span>
+                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--mid);width:16px;">${rankDisplay}</span>
                 <span class="team-dot" style="background:${c}"></span>
                 <span style="font-weight:${s?700:500};font-size:0.8rem;">${t.shortName}${s?' ★':''}</span>
             </div></td>
