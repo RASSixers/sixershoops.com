@@ -126,6 +126,27 @@
         .traded-tag { font-family:'Barlow Condensed',sans-serif; font-size:0.52rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(237,23,76,0.08); color:var(--sixers-red); border:1px solid rgba(237,23,76,0.15); padding:1px 5px; border-radius:3px; margin-left:4px; vertical-align:middle; }
 
         .confetti-piece { position:fixed; bottom:-10px; animation:confetti-rise linear forwards; z-index:9999; pointer-events:none; }
+
+        /* Collapsible bottom picks */
+        .bottom-picks-toggle {
+            width:100%; background:#f9f7f3; border:1px solid var(--border-light);
+            border-radius:8px; padding:0.5rem 0.9rem;
+            display:flex; align-items:center; justify-content:space-between;
+            cursor:pointer; margin-top:0.5rem;
+            font-family:'Barlow Condensed',sans-serif; font-size:0.72rem;
+            font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+            color:var(--mid); transition:background 0.15s;
+        }
+        .bottom-picks-toggle:hover { background:#f0ede6; color:var(--ink); }
+        .bottom-picks-chevron { transition:transform 0.3s; flex-shrink:0; }
+        .bottom-picks-chevron.open { transform:rotate(180deg); }
+        .bottom-picks-body { overflow:hidden; max-height:0; transition:max-height 0.4s ease; }
+        .bottom-picks-body.open { max-height:2000px; }
+        .picks-15-30-label {
+            font-family:'Barlow Condensed',sans-serif; font-size:0.58rem; font-weight:700;
+            letter-spacing:0.14em; text-transform:uppercase; color:var(--mid);
+            padding:0.4rem 0 0.2rem; text-align:center;
+        }
         @keyframes confetti-rise { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-110vh) rotate(720deg);opacity:0} }
 
         .protection-item { padding:0.6rem 0; border-bottom:1px solid #f0ede6; margin-bottom:0.1rem; }
@@ -292,10 +313,7 @@
                     <span style="font-size:0.66rem;opacity:0.5;font-weight:400;letter-spacing:0;text-transform:none;">(or Space)</span>
                 </button>
 
-                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                    <input type="checkbox" id="show-bottom-picks" checked style="accent-color:var(--sixers-blue);">
-                    <span style="font-size:0.77rem;color:var(--mid);">Show picks 5–14 in results</span>
-                </label>
+
                 <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
                     <input type="checkbox" id="instant-mode" style="accent-color:var(--sixers-blue);">
                     <span style="font-size:0.77rem;color:var(--mid);">Instant mode (no animation)</span>
@@ -580,6 +598,9 @@ async function fetchAndBuildLottery() {
             if(a.wins !== b.wins) return a.wins - b.wins;
             return b.losses - a.losses;
         });
+
+        // Store globally for picks 15-30 generation
+        window._allTeamsSorted = allTeams.map(t => ({...t}));
 
         console.log("[Lottery] Sorted:", allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(" | "));
 
@@ -896,14 +917,33 @@ async function runLottery() {
     } else {
         renderResultHeadline(null, picks);
     }
-    const showBottom=document.getElementById('show-bottom-picks').checked;
-    const picksToShow = showBottom ? picks.slice().reverse() : picks.slice(0,4).reverse();
+    // Always show all 14 lottery picks (top 4 with envelope, 5-14 instantly)
+    const picksToShow = picks.slice().reverse(); // show bottom-up (14 first, then 1)
     for(let i=0;i<picksToShow.length;i++){
         const p=picksToShow[i];
         const isTop4=p.pick<=4;
         await sleep(instant?0:isTop4?600:180);
         await appendPickEnvelope(p,picksEl,isTop4&&!instant);
     }
+
+    // Build picks 15-30 from the remaining teams (non-lottery) in reverse record order
+    // allTeams sorted worst->best; lottery is first 14, so picks 15-30 are slots 14-29
+    // We'll generate the full order from the global bubbleTeams + additional teams
+    const bottomPicksHTML = buildBottomPicks();
+    if (bottomPicksHTML) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+            <button class="bottom-picks-toggle" onclick="toggleBottomPicks(this)">
+                <span>Picks 15–30 (Non-Lottery Order)</span>
+                <svg class="bottom-picks-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="bottom-picks-body" id="bottom-picks-body">
+                <div class="picks-15-30-label">Remaining picks in reverse standings order</div>
+                <div class="result-picks" style="margin-top:0.3rem;">${bottomPicksHTML}</div>
+            </div>`;
+        picksEl.after(wrapper);
+    }
+
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
 }
 
@@ -977,6 +1017,12 @@ function resetSim() {
     document.getElementById('result-sixers-badge').style.display='none';
     document.getElementById('reset-btn').style.display='none';
     const hl=document.getElementById('result-headline'); hl.className='result-headline'; hl.innerHTML='';
+    // Remove bottom picks wrapper if present
+    const bpw = document.getElementById('result-picks')?.parentElement?.querySelector('.bottom-picks-toggle')?.parentElement;
+    if(bpw) bpw.remove();
+    // Also remove any sibling wrapper divs added after result-picks
+    const rp = document.getElementById('result-picks');
+    if(rp && rp.nextElementSibling) { rp.nextElementSibling.remove(); }
 }
 
 async function runUntilPickOne() {
@@ -1222,6 +1268,38 @@ function renderResultHeadline(sixersPick, allPicks) {
             <div class="headline-sub">Outside the top 4 this time</div>`;
     }
     el.className = 'result-headline show';
+}
+
+function toggleBottomPicks(btn) {
+    const body = document.getElementById('bottom-picks-body');
+    const chevron = btn.querySelector('.bottom-picks-chevron');
+    if (!body) return;
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+}
+
+function buildBottomPicks() {
+    if (!window._allTeamsSorted || window._allTeamsSorted.length < 20) return '';
+    const lotteryAbbrs = new Set(lotteryTeams.map(t => t.abbr));
+    // Non-lottery teams sorted worst->best; worst picks 15th
+    const nonLottery = window._allTeamsSorted.filter(t => !lotteryAbbrs.has(t.abbr));
+    let html = '';
+    nonLottery.forEach((t, idx) => {
+        const pickNum = 15 + idx;
+        const isSixers = t.abbr === 'PHI';
+        const c = TEAM_COLORS[t.abbr] || '#888';
+        const wrapClass = `result-pick${isSixers ? ' sixers-pick' : ''}`;
+        html += `<div class="${wrapClass}" style="opacity:1;transform:none;">
+            <div class="pick-num" style="font-size:1rem;width:30px;color:var(--mid);">${pickNum}</div>
+            <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
+            <div class="pick-team">
+                <div class="pick-team-name">${t.shortName || t.name}</div>
+                <div class="pick-team-sub">${t.wins}-${t.losses}</div>
+            </div>
+            ${isSixers ? '<span class="pick-sixers-tag">Sixers</span>' : ''}
+        </div>`;
+    });
+    return html;
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
