@@ -552,11 +552,13 @@ async function fetchAndBuildLottery() {
         const allTeams=[];
         (data.children||[]).forEach(conf=>{
             (conf.standings?.entries||[]).forEach(entry=>{
-                // Mirror standings.js: index by BOTH s.name and s.type for full coverage
+                // Index by s.name first (authoritative); only fill s.type if that key isn't already set.
+                // This prevents sub-stats whose s.type === 'wins'/'losses' from overwriting the real
+                // season-total wins/losses and corrupting the lottery sort order.
                 const stats={};
                 entry.stats.forEach(s=>{
                     if(s.name) stats[s.name]=s;
-                    if(s.type) stats[s.type]=s;
+                    if(s.type && !stats[s.type]) stats[s.type]=s;
                 });
                 // ESPN: .value is numeric, .displayValue is string — use .value first
                 const wins  = parseInt(stats.wins?.value  ?? stats.wins?.displayValue  ?? 0);
