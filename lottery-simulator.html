@@ -899,7 +899,8 @@ async function runLottery() {
     const spinnerWrap=document.getElementById('spinner-wrap'), picksEl=document.getElementById('result-picks');
     runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
     // Clear any previous bottom picks wrapper
-    if(picksEl.nextElementSibling) picksEl.nextElementSibling.remove();
+    const oldWrapper = document.getElementById('bottom-picks-wrapper');
+    if(oldWrapper) oldWrapper.remove();
     const instant=document.getElementById('instant-mode').checked;
     await sleep(instant?0:850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
@@ -934,6 +935,8 @@ async function runLottery() {
     const bottomPicksHTML = buildBottomPicks();
     if (bottomPicksHTML) {
         const wrapper = document.createElement('div');
+        wrapper.id = 'bottom-picks-wrapper';
+        wrapper.style.marginTop = '0.5rem';
         wrapper.innerHTML = `
             <button class="bottom-picks-toggle" onclick="toggleBottomPicks(this)">
                 <span>Picks 15–30 (Non-Lottery Order)</span>
@@ -943,7 +946,7 @@ async function runLottery() {
                 <div class="picks-15-30-label">Remaining picks in reverse standings order</div>
                 <div class="result-picks" style="margin-top:0.3rem;">${bottomPicksHTML}</div>
             </div>`;
-        picksEl.after(wrapper);
+        picksEl.parentElement.appendChild(wrapper);
     }
 
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
@@ -1015,9 +1018,9 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
 
 function resetSim() {
     document.getElementById('results-card').style.display='none';
-    const rp = document.getElementById('result-picks');
-    rp.innerHTML='';
-    if(rp.nextElementSibling) rp.nextElementSibling.remove();
+    document.getElementById('result-picks').innerHTML='';
+    const oldWrapper = document.getElementById('bottom-picks-wrapper');
+    if(oldWrapper) oldWrapper.remove();
     document.getElementById('result-sixers-badge').style.display='none';
     document.getElementById('reset-btn').style.display='none';
     const hl=document.getElementById('result-headline'); hl.className='result-headline'; hl.innerHTML='';
