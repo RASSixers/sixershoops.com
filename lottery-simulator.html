@@ -126,27 +126,6 @@
         .traded-tag { font-family:'Barlow Condensed',sans-serif; font-size:0.52rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(237,23,76,0.08); color:var(--sixers-red); border:1px solid rgba(237,23,76,0.15); padding:1px 5px; border-radius:3px; margin-left:4px; vertical-align:middle; }
 
         .confetti-piece { position:fixed; bottom:-10px; animation:confetti-rise linear forwards; z-index:9999; pointer-events:none; }
-
-        /* Collapsible bottom picks */
-        .bottom-picks-toggle {
-            width:100%; background:#f9f7f3; border:1px solid var(--border-light);
-            border-radius:8px; padding:0.5rem 0.9rem;
-            display:flex; align-items:center; justify-content:space-between;
-            cursor:pointer; margin-top:0.5rem;
-            font-family:'Barlow Condensed',sans-serif; font-size:0.72rem;
-            font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-            color:var(--mid); transition:background 0.15s;
-        }
-        .bottom-picks-toggle:hover { background:#f0ede6; color:var(--ink); }
-        .bottom-picks-chevron { transition:transform 0.3s; flex-shrink:0; }
-        .bottom-picks-chevron.open { transform:rotate(180deg); }
-        .bottom-picks-body { overflow:hidden; max-height:0; transition:max-height 0.4s ease; }
-        .bottom-picks-body.open { max-height:2000px; }
-        .picks-15-30-label {
-            font-family:'Barlow Condensed',sans-serif; font-size:0.58rem; font-weight:700;
-            letter-spacing:0.14em; text-transform:uppercase; color:var(--mid);
-            padding:0.4rem 0 0.2rem; text-align:center;
-        }
         @keyframes confetti-rise { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-110vh) rotate(720deg);opacity:0} }
 
         .protection-item { padding:0.6rem 0; border-bottom:1px solid #f0ede6; margin-bottom:0.1rem; }
@@ -249,6 +228,7 @@
             transform: rotateX(0deg) scale(1);
             opacity: 1;
         }
+        /* Shimmer on #1 reveal */
         .envelope-card.pick-1-card::after {
             content:'';
             position:absolute; inset:0; border-radius:10px;
@@ -262,6 +242,7 @@
             20%  { opacity:1; }
             100% { background-position: -200% 0; opacity:0; }
         }
+        /* Suspense placeholder shown before flip */
         .envelope-sealed {
             display:flex; align-items:center; justify-content:center;
             background: linear-gradient(135deg, var(--navy-deep), #00245e);
@@ -313,7 +294,6 @@
                     <span style="font-size:0.66rem;opacity:0.5;font-weight:400;letter-spacing:0;text-transform:none;">(or Space)</span>
                 </button>
 
-
                 <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
                     <input type="checkbox" id="instant-mode" style="accent-color:var(--sixers-blue);">
                     <span style="font-size:0.77rem;color:var(--mid);">Instant mode (no animation)</span>
@@ -327,7 +307,7 @@
                         </select>
                         <button class="btn-secondary" id="until-one-btn" onclick="runUntilPickOne()" style="white-space:nowrap;padding:0.38rem 0.9rem;">Run</button>
                     </div>
-                    <div id="until-one-result" style="display:none;padding:0.5rem 0.75rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.8rem;color:var(--ink);font-weight:600;"></div>
+                    <div id="until-one-result" style="display:none;padding:0.5rem 0.75rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.8rem;color:var(--ink);font-weight:600;" id="until-one-text"></div>
                 </div>
             </div>
         </div>
@@ -347,23 +327,13 @@
                     <div class="spinner-text">Drawing picks...</div>
                 </div>
                 <div id="result-picks" class="result-picks"></div>
-                <div id="bottom-picks-wrapper" style="display:none; margin-top:0.5rem;">
-                    <button class="bottom-picks-toggle" onclick="toggleBottomPicks(this)">
-                        <span>Picks 15–30 (Non-Lottery Order)</span>
-                        <svg class="bottom-picks-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </button>
-                    <div class="bottom-picks-body" id="bottom-picks-body">
-                        <div class="picks-15-30-label">Remaining picks in reverse standings order</div>
-                        <div class="result-picks" id="bottom-picks-list" style="margin-top:0.3rem;"></div>
-                    </div>
-                </div>
             </div>
         </div>
 
         <!-- Odds Table -->
         <div class="card" style="margin-bottom:1.25rem;">
             <div class="card-header">
-                <span class="card-title">2026 Lottery Odds</span>
+                <span class="card-title">2025 Lottery Odds</span>
                 <span class="badge badge-blue" id="odds-updated-badge">Loading...</span>
             </div>
             <div id="odds-table-wrap">
@@ -515,8 +485,6 @@
 
 <script src="nav.js"></script>
 <script>
-// ====================== FIXED & CLEANED SCRIPT - PART 1 ======================
-
 const OFFICIAL_LOTTERY_ODDS = {
     1:{combinations:140,pct1:14.0},2:{combinations:140,pct1:14.0},3:{combinations:140,pct1:14.0},
     4:{combinations:125,pct1:12.5},5:{combinations:105,pct1:10.5},6:{combinations:90,pct1:9.0},
@@ -524,16 +492,16 @@ const OFFICIAL_LOTTERY_ODDS = {
     10:{combinations:30,pct1:3.0},11:{combinations:20,pct1:2.0},12:{combinations:15,pct1:1.5},
     13:{combinations:10,pct1:1.0},14:{combinations:5,pct1:0.5},
 };
-
 const TEAM_COLORS = {
+    // ESPN API abbreviations (verified from live data)
     'PHI':'#006BB6','BKN':'#000000','WSH':'#002B5C','DET':'#C8102E','CHA':'#1D1160','TOR':'#CE1141',
     'SAS':'#C4CED4','MEM':'#5D76A9','POR':'#E03A3E','HOU':'#CE1141','UTAH':'#002B5C','OKC':'#007AC1',
     'ORL':'#0077C0','IND':'#FDBB30','ATL':'#E03A3E','CHI':'#CE1141','NO':'#0C2340','MIN':'#0C2340',
     'MIL':'#00471B','NY':'#006BB6','LAC':'#C8102E','MIA':'#98002E','GS':'#1D428A','DEN':'#0E2240',
     'LAL':'#552583','PHX':'#1D1160','SAC':'#5A2D81','DAL':'#00538C','CLE':'#860038','BOS':'#007A33',
+    // Legacy aliases so any hardcoded refs still resolve
     'WAS':'#002B5C','UTA':'#002B5C','NOP':'#0C2340','NYK':'#006BB6','GSW':'#1D428A',
 };
-
 const PAST_PICKS = [
     {year:2025,picks:[{rnd:1,num:3,player:'V.J. Edgecombe',pos:'SG',school:'Baylor'},{rnd:2,num:35,player:'Johni Broome',pos:'PF/C',school:'Auburn'}]},
     {year:2024,picks:[{rnd:1,num:16,player:'Jared McCain',pos:'PG',school:'Duke'},{rnd:2,num:41,player:'Adem Bona',pos:'PF/C',school:'UCLA'}]},
@@ -553,8 +521,8 @@ const PAST_PICKS = [
     {year:2010,picks:[{rnd:1,num:2,player:'Evan Turner',pos:'SF/SG',school:'Ohio State'}]},
 ];
 
-let lotteryTeams=[], bubbleTeams=[], simHistory=[], sessionPickCounts={}, totalSessionDraws=0;
-let _prevLotteryKey='';
+let lotteryTeams=[], bubbleTeams=[], allDraftTeams=[], simHistory=[], sessionPickCounts={}, totalSessionDraws=0;
+let _prevLotteryKey=''; // Used to detect when the bottom-14 field changes
 
 function showStandingsToast(msg){
     let t=document.getElementById('standings-toast');
@@ -570,60 +538,73 @@ function showStandingsToast(msg){
     t._to=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; },4000);
 }
 
-// FIXED fetchAndBuildLottery - Improved ESPN parsing
 async function fetchAndBuildLottery() {
     try {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
-
         const res = await fetch('https://site.api.espn.com/apis/v2/sports/basketball/nba/standings');
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
-
         const allTeams=[];
         (data.children||[]).forEach(conf=>{
             (conf.standings?.entries||[]).forEach(entry=>{
+                // Mirror standings.js: index by BOTH s.name and s.type for full coverage
                 const stats={};
-                (entry.stats||[]).forEach(s=>{
+                entry.stats.forEach(s=>{
                     if(s.name) stats[s.name]=s;
                     if(s.type) stats[s.type]=s;
                 });
-
+                // ESPN: .value is numeric, .displayValue is string — use .value first
                 const wins  = parseInt(stats.wins?.value  ?? stats.wins?.displayValue  ?? 0);
+                console.log(`[Lottery] ${entry.team.abbreviation} W:${stats.wins?.value}/D:${stats.wins?.displayValue} L:${stats.losses?.value}/D:${stats.losses?.displayValue}`);
                 const losses= parseInt(stats.losses?.value ?? stats.losses?.displayValue ?? 0);
-                const winPct = parseFloat(stats.winPercent?.value ?? stats.winPct?.value ?? 0);
-
-                if (isNaN(wins) || isNaN(losses)) return;
-
+                // Mirror standings.js exactly: use stats.winPercent?.value (the raw decimal from ESPN)
+                const winPct = parseFloat(stats.winPercent?.value ?? 0);
                 allTeams.push({
-                    abbr:entry.team.abbreviation, 
-                    name:entry.team.displayName,
+                    abbr:entry.team.abbreviation, name:entry.team.displayName,
                     shortName:entry.team.shortDisplayName||entry.team.displayName,
-                    wins, losses, winPct
+                    wins, losses,
+                    winPct,
                 });
             });
         });
-
+        // Sort worst-to-best (ascending), matching the official lottery order:
+        // Primary: fewest wins first. Secondary: most losses first (breaks win% ties).
+        // This matches the NBA tiebreaker: teams with same win% are ordered by most losses.
+        // Teams with identical W-L records share a slot (coin flip handled by NBA).
         allTeams.sort((a,b)=>{
-            if(a.wins !== b.wins) return a.wins - b.wins;
-            return b.losses - a.losses;
+            if(a.wins !== b.wins) return a.wins - b.wins;   // fewer wins = worse
+            return b.losses - a.losses;                      // same wins → more losses = worse
         });
+        console.log("[Lottery] Sorted order:", allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(", "));
+        const newBottom14=allTeams.slice(0,14);
+        // Store full 30-team sorted list (worst-to-best for lottery, best-to-worst for picks 15-30)
+        allDraftTeams = allTeams.slice();
+        // Capture up to 5 teams just outside the lottery for the bubble view
+        const newBubble=allTeams.slice(14,19);
 
-        // Store globally for picks 15-30 generation
-        window._allTeamsSorted = allTeams.map(t => ({...t}));
+        // Detect changes: team composition OR records
+        const newKey=newBottom14.map(t=>`${t.abbr}:${t.wins}-${t.losses}`).join('|');
+        const changed=newKey!==_prevLotteryKey;
 
-        console.log("[Lottery] Sorted:", allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(" | "));
-
-        const newBottom14 = allTeams.slice(0,14);
-        const newBubble = allTeams.slice(14,19);
-
-        const newKey = newBottom14.map(t=>`${t.abbr}:${t.wins}-${t.losses}`).join('|');
-        if (newKey !== _prevLotteryKey && _prevLotteryKey !== '') {
-            showStandingsToast('Standings updated');
+        if(changed && _prevLotteryKey!==''){
+            // Figure out which teams swapped in/out
+            const oldAbbrs=_prevLotteryKey.split('|').map(s=>s.split(':')[0]);
+            const newAbbrs=newBottom14.map(t=>t.abbr);
+            const entered=newAbbrs.filter(a=>!oldAbbrs.includes(a));
+            const exited=oldAbbrs.filter(a=>!newAbbrs.includes(a));
+            if(entered.length||exited.length){
+                const msgs=[];
+                if(entered.length) msgs.push(`🔥 ${entered.join(', ')} entered lottery`);
+                if(exited.length) msgs.push(`${exited.join(', ')} fell out`);
+                showStandingsToast(msgs.join(' · '));
+            } else {
+                showStandingsToast('Standings updated');
+            }
         }
-        _prevLotteryKey = newKey;
+        _prevLotteryKey=newKey;
 
-        // Build lotteryTeams with proper tie handling
+        // Build lotteryTeams with proper tie-group averaging
         lotteryTeams = [];
         let currentRank = 1;
         let ti = 0;
@@ -631,62 +612,53 @@ async function fetchAndBuildLottery() {
             const start = ti;
             const curWins = newBottom14[ti].wins;
             const curLosses = newBottom14[ti].losses;
-            while (ti < newBottom14.length && newBottom14[ti].wins === curWins && newBottom14[ti].losses === curLosses) ti++;
+            while (ti < newBottom14.length &&
+                   newBottom14[ti].wins === curWins &&
+                   newBottom14[ti].losses === curLosses) { ti++; }
             const groupSize = ti - start;
-
             let totalCombos = 0, totalPct1 = 0;
             for (let k = 0; k < groupSize; k++) {
                 const slot = start + k + 1;
                 totalCombos += OFFICIAL_LOTTERY_ODDS[slot].combinations;
-                totalPct1 += OFFICIAL_LOTTERY_ODDS[slot].pct1;
+                totalPct1   += OFFICIAL_LOTTERY_ODDS[slot].pct1;
             }
             const avgCombos = Math.round(totalCombos / groupSize);
-            const avgPct1 = parseFloat((totalPct1 / groupSize).toFixed(1));
-
+            const avgPct1   = parseFloat((totalPct1 / groupSize).toFixed(1));
             newBottom14.slice(start, ti).forEach((t, idx) => {
                 lotteryTeams.push({
                     ...t,
-                    lotteryRank: currentRank + idx,
-                    combinations: avgCombos,
-                    oddsTop1: avgPct1,
-                    _isTied: groupSize > 1,
-                    _tieGroupSize: groupSize,
-                    _tieStartRank: currentRank,
+                    lotteryRank:    currentRank + idx,
+                    combinations:   avgCombos,
+                    oddsTop1:       avgPct1,
+                    _isTied:        groupSize > 1,
+                    _tieGroupSize:  groupSize,
+                    _tieStartRank:  currentRank,
                 });
             });
             currentRank += groupSize;
         }
-
+        // Re-sort and re-assign ranks cleanly (ensures consistency everywhere)
         lotteryTeams.sort((a,b) => a.wins - b.wins || b.losses - a.losses || a.abbr.localeCompare(b.abbr));
-        lotteryTeams.forEach((t,i) => t.lotteryRank = i + 1);
-
-        bubbleTeams = newBubble.map((t,i)=>({
+        lotteryTeams.forEach((t,i) => { t.lotteryRank = i + 1; });
+        // Store bubble teams (just outside lottery, could jump in)
+        bubbleTeams=newBubble.map((t,i)=>({
             ...t, lotteryRank:null, overallRank:i+15, combinations:0, oddsTop1:0,
         }));
-
-        COMBO_MAP = null;
-
-        renderOddsTable(); 
-        renderSixersOddsPanel(); 
-        renderBubbleCard(); 
-        renderPastPicks(); 
-        populateScenarioSelect();
-
+        COMBO_MAP=null; // Reset so buildComboMap() runs fresh on next sim
+        renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard(); renderPastPicks(); populateScenarioSelect();
+        // Populate until-one team select
         const sel=document.getElementById('until-one-team-select');
         if(sel){
             sel.innerHTML=lotteryTeams.map(t=>`<option value="${t.abbr}"${t.abbr==='PHI'?' selected':''}>${t.shortName}</option>`).join('');
         }
-
+        // Always show the bubble card
         document.getElementById('jump-card').style.display='block';
-
         const now=new Date();
         if(badge) badge.textContent=`Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Live`;
-
     } catch(err) {
-        console.error(err);
         const badge=document.getElementById('odds-updated-badge');
-        if(badge) badge.textContent='Error – retrying';
-        document.getElementById('odds-table-wrap').innerHTML=`<div style="padding:1.5rem;text-align:center;color:var(--sixers-red);font-size:0.85rem;">Failed to load standings.<br><button onclick="fetchAndBuildLottery()" style="color:var(--sixers-blue);background:none;border:none;cursor:pointer;font-weight:700;">Retry</button></div>`;
+        if(badge) badge.textContent='Error – retrying in 5 min';
+        document.getElementById('odds-table-wrap').innerHTML=`<div style="padding:1.5rem;text-align:center;color:var(--sixers-red);font-size:0.85rem;">Failed to load. <button onclick="fetchAndBuildLottery()" style="color:var(--sixers-blue);background:none;border:none;cursor:pointer;font-weight:700;text-decoration:underline;">Retry</button></div>`;
     }
 }
 
@@ -694,7 +666,6 @@ function computeTop4Odds(idx) {
     const t=lotteryTeams[idx]; if(!t) return 0;
     return Math.min((1-Math.pow((1000-t.combinations)/1000,4))*100*1.1,99);
 }
-
 function computePickN(idx,pick) {
     const t=lotteryTeams[idx]; if(!t) return 0;
     const m={1:1,2:0.88,3:0.76,4:0.64};
@@ -720,6 +691,7 @@ function renderOddsTable() {
         </tr>`;
     }).join('');
 
+    // Build "could jump in" rows for bubble teams
     const bubbleRows = bubbleTeams.slice(0,3).map((t)=>{
         const c=TEAM_COLORS[t.abbr]||'#888';
         const s=t.abbr==='PHI';
@@ -747,12 +719,11 @@ function renderOddsTable() {
 
 function renderSixersOddsPanel() {
     const s=lotteryTeams.find(t=>t.abbr==='PHI');
+    // Check if Sixers are a bubble team (just outside lottery)
     const sBubble=!s && bubbleTeams.find(t=>t.abbr==='PHI');
-    if(!s && !sBubble){
-        document.getElementById('sixers-odds-display').innerHTML=`<div style="color:var(--mid);font-size:0.85rem;">Sixers not in lottery this year.</div>`;
-        return;
-    }
+    if(!s && !sBubble){document.getElementById('sixers-odds-display').innerHTML=`<div style="color:var(--mid);font-size:0.85rem;">Sixers not in lottery this year.</div>`;return;}
     if(sBubble){
+        // Sixers are just outside the lottery — show bubble status
         const borderTeam=lotteryTeams[lotteryTeams.length-1];
         const lDiff=borderTeam?(borderTeam.losses-sBubble.losses):0;
         const wDiff=borderTeam?(sBubble.wins-borderTeam.wins):0;
@@ -781,10 +752,10 @@ function renderBubbleCard() {
     const body=document.getElementById('jump-body');
     if(!lotteryTeams.length){card.style.display='none';return;}
 
-    const lastIn=lotteryTeams.slice(-3);
-    const firstOut=bubbleTeams.slice(0,3);
-    const borderTeam=lotteryTeams[lotteryTeams.length-1];
-    const firstOutTeam=bubbleTeams[0];
+    const lastIn=lotteryTeams.slice(-3); // last 3 IN the lottery (could fall out)
+    const firstOut=bubbleTeams.slice(0,3); // first 3 OUTSIDE (could jump in)
+    const borderTeam=lotteryTeams[lotteryTeams.length-1]; // rank #14
+    const firstOutTeam=bubbleTeams[0]; // rank #15
 
     card.style.display='block';
     body.style.textAlign='left';
@@ -803,6 +774,7 @@ function renderBubbleCard() {
         </div>`;
     };
 
+    // Gap label between the boundary teams
     let gapLabel='';
     if(borderTeam && firstOutTeam){
         const lDiff=borderTeam.losses-firstOutTeam.losses;
@@ -826,7 +798,10 @@ function renderBubbleCard() {
     `;
 }
 
+
+// 2026 Pick Protections - applied after lottery determines final pick slots
 const PICK_PROTECTIONS_2026 = [
+    // {owner, recipient, conveys: fn(pickNum) => true if it conveys to recipient}
     {owner:'PHI', recipient:'OKC', conveys: p => p >= 5},
     {owner:'IND', recipient:'LAC', conveys: p => p >= 5 && p <= 9},
     {owner:'WSH', recipient:'NY', conveys: p => p >= 9},
@@ -834,10 +809,12 @@ const PICK_PROTECTIONS_2026 = [
 ];
 
 function applyProtections(results) {
+    // results: array of {pick, team} sorted by pick number
     return results.map(r => {
         const prot = PICK_PROTECTIONS_2026.find(p => p.owner === r.team.abbr);
         if (!prot) return r;
         if (prot.conveys(r.pick)) {
+            // Find the recipient team in lotteryTeams (may not be in lottery - handle gracefully)
             const recipientTeam = lotteryTeams.find(t => t.abbr === prot.recipient);
             if (recipientTeam) {
                 return { ...r, team: recipientTeam, protectionNote: `${r.team.shortName} pick conveyed (protection)` };
@@ -847,18 +824,18 @@ function applyProtections(results) {
     });
 }
 
-let COMBO_MAP = null;
+// Pre-build the combination-to-team map once when teams are set
+// 1,001 possible unordered 4-ball combos from balls 1-14; 1,000 assigned, 1 unassigned
+let COMBO_MAP = null; // Map from sorted combo key "a,b,c,d" -> team index (0-13), or -1 if unassigned
 
 function buildComboMap() {
+    // Generate all C(14,4) = 1001 unordered combinations of 4 balls from 1-14
     const allCombos = [];
     for(let a=1;a<=14;a++) for(let b=a+1;b<=14;b++) for(let c=b+1;c<=14;c++) for(let d=c+1;d<=14;d++)
         allCombos.push([a,b,c,d]);
-
-    for(let i=allCombos.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [allCombos[i],allCombos[j]]=[allCombos[j],allCombos[i]];
-    }
-
+    // allCombos.length === 1001
+    // Shuffle so the "unassigned" combo is random
+    for(let i=allCombos.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[allCombos[i],allCombos[j]]=[allCombos[j],allCombos[i]];}
     COMBO_MAP = new Map();
     let idx=0;
     lotteryTeams.forEach((t,ti)=>{
@@ -867,9 +844,11 @@ function buildComboMap() {
             idx++;
         }
     });
+    // The last combo (allCombos[1000]) is unassigned — we just don't add it
 }
 
 function drawOneCombination() {
+    // Draw 4 distinct balls 1-14 in sequence, treat as unordered
     const balls=[1,2,3,4,5,6,7,8,9,10,11,12,13,14];
     const drawn=[];
     for(let i=0;i<4;i++){
@@ -889,10 +868,10 @@ function runLotterySimOnce() {
         let teamIdx, att=0;
         do {
             const key=drawOneCombination();
-            teamIdx=COMBO_MAP.has(key)?COMBO_MAP.get(key):-1;
+            teamIdx=COMBO_MAP.has(key)?COMBO_MAP.get(key):-1; // -1 = unassigned combo
             att++;
         } while((teamIdx===-1||usedTeams.has(teamIdx))&&att<10000);
-        if(teamIdx===-1||!lotteryTeams[teamIdx]) continue;
+        if(teamIdx===-1||!lotteryTeams[teamIdx]){continue;} // safety
         usedTeams.add(teamIdx);
         results.push(teamIdx);
     }
@@ -900,7 +879,17 @@ function runLotterySimOnce() {
     rem.sort((a,b)=>lotteryTeams[a].lotteryRank-lotteryTeams[b].lotteryRank);
     rem.forEach(i=>results.push(i));
     const rawResults = results.map((idx,pi)=>({pick:pi+1,team:lotteryTeams[idx]}));
-    return applyProtections(rawResults);
+    const lotteryResults = applyProtections(rawResults);
+
+    // Append picks 15-30: non-lottery teams sorted best record first (reverse of lottery order)
+    // allDraftTeams is sorted worst-to-best, so slice(14) gives us teams 15-30 worst-to-best
+    // Pick 15 = worst non-lottery team, pick 30 = best team
+    const nonLotteryTeams = allDraftTeams.slice(14); // these are sorted worst-to-best
+    nonLotteryTeams.forEach((t, i) => {
+        lotteryResults.push({ pick: 15 + i, team: t });
+    });
+
+    return lotteryResults;
 }
 
 async function runLottery() {
@@ -908,13 +897,6 @@ async function runLottery() {
     const runBtn=document.getElementById('run-btn'), resultsCard=document.getElementById('results-card');
     const spinnerWrap=document.getElementById('spinner-wrap'), picksEl=document.getElementById('result-picks');
     runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
-    // Reset bottom picks
-    document.getElementById('bottom-picks-wrapper').style.display='none';
-    document.getElementById('bottom-picks-list').innerHTML='';
-    const bpBody = document.getElementById('bottom-picks-body');
-    if(bpBody) { bpBody.classList.remove('open'); }
-    const bpBtn = document.querySelector('.bottom-picks-toggle');
-    if(bpBtn) { bpBtn.querySelector('.bottom-picks-chevron')?.classList.remove('open'); }
     const instant=document.getElementById('instant-mode').checked;
     await sleep(instant?0:850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
@@ -934,24 +916,56 @@ async function runLottery() {
     } else {
         renderResultHeadline(null, picks);
     }
-    // Always show all 14 lottery picks (top 4 with envelope, 5-14 instantly)
-    const picksToShow = picks.slice().reverse(); // show bottom-up (14 first, then 1)
-    for(let i=0;i<picksToShow.length;i++){
-        const p=picksToShow[i];
+    document.getElementById('social-card-btn')&&(document.getElementById('social-card-btn').style.display='none');
+    // Always show all 14 lottery picks; picks 15-30 are collapsible
+    const lotteryPicks = picks.slice(0, 14).reverse(); // reverse for drama (14→1)
+    const nonLotteryPicks = picks.slice(14);           // picks 15-30
+    for(let i=0;i<lotteryPicks.length;i++){
+        const p=lotteryPicks[i];
         const isTop4=p.pick<=4;
         await sleep(instant?0:isTop4?600:180);
         await appendPickEnvelope(p,picksEl,isTop4&&!instant);
     }
 
-    // Build picks 15-30 from the remaining teams (non-lottery) in reverse record order
-    // allTeams sorted worst->best; lottery is first 14, so picks 15-30 are slots 14-29
-    // We'll generate the full order from the global bubbleTeams + additional teams
-    const bottomPicksHTML = buildBottomPicks();
-    if (bottomPicksHTML) {
-        document.getElementById('bottom-picks-list').innerHTML = bottomPicksHTML;
-        document.getElementById('bottom-picks-wrapper').style.display = 'block';
+    // Inject collapsible section for picks 15-30
+    if(nonLotteryPicks.length>0){
+        const collapsible=document.createElement('div');
+        collapsible.id='non-lottery-section';
+        collapsible.style.cssText='margin-top:0.5rem;';
+        const toggleBtn=document.createElement('button');
+        toggleBtn.className='btn-secondary';
+        toggleBtn.style.cssText='width:100%;display:flex;align-items:center;justify-content:center;gap:0.4rem;margin-bottom:0.4rem;font-size:0.75rem;';
+        toggleBtn.innerHTML=`<span id="nlp-chevron" style="transition:transform 0.25s;display:inline-block;">▼</span> Show Picks 15–30`;
+        const nlpBody=document.createElement('div');
+        nlpBody.id='nlp-body';
+        nlpBody.style.cssText='display:none;';
+        nonLotteryPicks.forEach(p=>{
+            const isSixers=p.team.abbr==='PHI';
+            const c=TEAM_COLORS[p.team.abbr]||'#888';
+            const el=document.createElement('div');
+            el.className=`result-pick${isSixers?' sixers-pick':''}`;
+            el.style.cssText='opacity:1;transform:none;margin-bottom:0.4rem;';
+            el.innerHTML=`
+                <div class="pick-num" style="color:var(--mid);font-size:1rem;">${p.pick}</div>
+                <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
+                <div class="pick-team">
+                    <div class="pick-team-name" style="font-size:0.82rem;">${p.team.shortName||p.team.name}</div>
+                    <div class="pick-team-sub">${p.team.wins !== undefined ? p.team.wins+'-'+p.team.losses : ''}</div>
+                </div>
+                ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
+            nlpBody.appendChild(el);
+        });
+        let nlpOpen=false;
+        toggleBtn.onclick=()=>{
+            nlpOpen=!nlpOpen;
+            nlpBody.style.display=nlpOpen?'block':'none';
+            document.getElementById('nlp-chevron').style.transform=nlpOpen?'rotate(180deg)':'rotate(0deg)';
+            toggleBtn.innerHTML=`<span id="nlp-chevron" style="transition:transform 0.25s;display:inline-block;transform:${nlpOpen?'rotate(180deg)':'rotate(0deg)'};"">▼</span> ${nlpOpen?'Hide':'Show'} Picks 15–30`;
+        };
+        collapsible.appendChild(toggleBtn);
+        collapsible.appendChild(nlpBody);
+        picksEl.appendChild(collapsible);
     }
-
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
 }
 
@@ -1022,10 +1036,6 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
 function resetSim() {
     document.getElementById('results-card').style.display='none';
     document.getElementById('result-picks').innerHTML='';
-    document.getElementById('bottom-picks-wrapper').style.display='none';
-    document.getElementById('bottom-picks-list').innerHTML='';
-    const bpBody = document.getElementById('bottom-picks-body');
-    if(bpBody) bpBody.classList.remove('open');
     document.getElementById('result-sixers-badge').style.display='none';
     document.getElementById('reset-btn').style.display='none';
     const hl=document.getElementById('result-headline'); hl.className='result-headline'; hl.innerHTML='';
@@ -1045,6 +1055,49 @@ async function runUntilPickOne() {
         ?`<span style="color:var(--sixers-red)">Still waiting after ${MAX.toLocaleString()} draws</span>`
         :`<strong>${team.shortName}</strong> got #1 after <strong style="color:var(--sixers-blue)">${count.toLocaleString()} draw${count!==1?'s':''}</strong>`;
     btn.disabled=false; btn.textContent='Run';
+}
+
+async function runMassSimulation(n) {
+    if(!lotteryTeams.length){alert('Standings still loading…');return;}
+    const btn=document.getElementById('sim-1000-btn');
+    btn.disabled=true; btn.textContent='Simulating…'; await sleep(50);
+    const pc={};
+    lotteryTeams.forEach((_,i)=>{for(let p=1;p<=14;p++)pc[`${i}_${p}`]=0;});
+    for(let s=0;s<n;s++){
+        const picks=runLotterySimOnce();
+        picks.forEach(({pick,team})=>{
+            lotteryTeams.forEach((t,i)=>{if(t.abbr===team.abbr)pc[`${i}_${pick}`]++;});
+        });
+    }
+    const si=lotteryTeams.findIndex(t=>t.abbr==='PHI');
+    document.getElementById('mass-sim-n').textContent=n.toLocaleString();
+    document.getElementById('mass-sim-badge').textContent=n.toLocaleString()+' sims';
+    document.getElementById('mass-sim-badge').className='badge badge-blue';
+    if(si>=0){
+        let t1=0,t4=0;
+        for(let p=1;p<=14;p++){const c=pc[`${si}_${p}`]||0;if(p===1)t1=c;if(p<=4)t4+=c;}
+        document.getElementById('sim-stats-grid').innerHTML=`
+            <div class="sim-stat-box"><div class="sim-stat-val">${((t1/n)*100).toFixed(1)}%</div><div class="sim-stat-label">Got #1 Pick</div></div>
+            <div class="sim-stat-box"><div class="sim-stat-val">${((t4/n)*100).toFixed(1)}%</div><div class="sim-stat-label">Top 4 Pick</div></div>`;
+        let dr='';
+        for(let p=1;p<=lotteryTeams.length;p++){
+            const c=pc[`${si}_${p}`]||0,pct=(c/n)*100;
+            dr+=`<tr>
+                <td style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;color:${p<=4?'var(--sixers-blue)':'var(--ink)'}">#${p}</td>
+                <td><div style="display:flex;align-items:center;gap:7px;">
+                    <div style="width:85px;height:6px;background:#e8e4dc;border-radius:3px;overflow:hidden;"><div style="width:${Math.min((pct/20)*100,100)}%;height:100%;background:${p<=4?'var(--sixers-blue)':'var(--mid)'};border-radius:3px;"></div></div>
+                    <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.8rem;">${pct.toFixed(1)}%</span>
+                </div></td>
+                <td style="color:var(--mid);font-size:0.74rem;">${c.toLocaleString()}</td>
+            </tr>`;
+        }
+        document.getElementById('mass-result-table-wrap').innerHTML=`
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin-bottom:0.5rem;">Sixers Pick Distribution</div>
+            <table class="lottery-table"><thead><tr><th>Pick</th><th>Frequency</th><th>Count</th></tr></thead><tbody>${dr}</tbody></table>`;
+    }
+    const mc=document.getElementById('mass-results-card');
+    mc.style.display='block'; mc.scrollIntoView({behavior:'smooth',block:'nearest'});
+    btn.disabled=false; btn.textContent='Sim 1,000×';
 }
 
 function updateSessionChart() {
@@ -1071,6 +1124,7 @@ function addHistory(pickNum) {
     simHistory.unshift({pick:pickNum,time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
     if(simHistory.length>10) simHistory.pop();
     renderHistory();
+    document.getElementById('history-count-badge').textContent=`${simHistory.length} draw${simHistory.length!==1?'s':''}`;
 }
 
 function renderHistory() {
@@ -1147,6 +1201,7 @@ function fireConfetti(isSixers=false) {
         el.style.cssText=`left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};width:${size}px;height:${shape>0.7?size*2.5:size}px;border-radius:${shape>0.85?'50%':shape>0.7?'2px':'1px'};animation-duration:${1.8+Math.random()*2.5}s;animation-delay:${Math.random()*0.8}s;`;
         document.body.appendChild(el); setTimeout(()=>el.remove(),5000);
     }
+    // Second burst for Sixers
     if(isSixers) setTimeout(()=>{
         for(let i=0;i<60;i++){
             const el=document.createElement('div'); el.className='confetti-piece';
@@ -1158,6 +1213,9 @@ function fireConfetti(isSixers=false) {
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
+
+// ── Scenario Builder ─────────────────────────────────────────────────────────
+let scenarioOverride = null; // {teamAbbr, fromSeed, toSeed}
 let scenarioOriginalTeams = null;
 
 function populateScenarioSelect() {
@@ -1212,6 +1270,7 @@ function applyScenario() {
     if (!abbr) { alert('Select a team first.'); return; }
     if (!scenarioOriginalTeams) scenarioOriginalTeams = JSON.parse(JSON.stringify(lotteryTeams));
 
+    // Re-derive from originals each time so multiple applies stay consistent
     lotteryTeams = JSON.parse(JSON.stringify(scenarioOriginalTeams));
     const target = lotteryTeams.find(t => t.abbr === abbr);
     if (!target) return;
@@ -1219,15 +1278,10 @@ function applyScenario() {
     const fromSeed = target.lotteryRank;
     if (fromSeed === toSeed) { clearScenario(); return; }
 
+    // Swap the seed and combinations between target and whoever currently holds toSeed
     const other = lotteryTeams.find(t => t.lotteryRank === toSeed);
-    if (other) { 
-        other.lotteryRank = fromSeed; 
-        other.combinations = OFFICIAL_LOTTERY_ODDS[fromSeed].combinations; 
-        other.oddsTop1 = OFFICIAL_LOTTERY_ODDS[fromSeed].pct1; 
-    }
-    target.lotteryRank = toSeed; 
-    target.combinations = OFFICIAL_LOTTERY_ODDS[toSeed].combinations; 
-    target.oddsTop1 = OFFICIAL_LOTTERY_ODDS[toSeed].pct1;
+    if (other) { other.lotteryRank = fromSeed; other.combinations = OFFICIAL_LOTTERY_ODDS[fromSeed].combinations; other.oddsTop1 = OFFICIAL_LOTTERY_ODDS[fromSeed].pct1; }
+    target.lotteryRank = toSeed; target.combinations = OFFICIAL_LOTTERY_ODDS[toSeed].combinations; target.oddsTop1 = OFFICIAL_LOTTERY_ODDS[toSeed].pct1;
     lotteryTeams.sort((a,b) => a.lotteryRank - b.lotteryRank);
 
     COMBO_MAP = null;
@@ -1240,18 +1294,36 @@ function applyScenario() {
 }
 
 function clearScenario() {
-    if (scenarioOriginalTeams) { 
-        lotteryTeams = JSON.parse(JSON.stringify(scenarioOriginalTeams)); 
-        scenarioOriginalTeams = null; 
-    }
+    if (scenarioOriginalTeams) { lotteryTeams = JSON.parse(JSON.stringify(scenarioOriginalTeams)); scenarioOriginalTeams = null; }
     COMBO_MAP = null;
     document.getElementById('scenario-active-banner').style.display = 'none';
     renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard();
     populateScenarioSelect();
 }
 
+// ── Share Result ──────────────────────────────────────────────────────────────
 let lastPicksForShare = null;
 
+function shareResult() {
+    if (!lastPicksForShare) return;
+    const top4 = lastPicksForShare.slice(0, 4).map(p => `#${p.pick} ${p.team.shortName}`).join(' · ');
+    const sp = lastPicksForShare.find(p => p.team.abbr === 'PHI');
+    const sixersLine = sp ? `76ers landed #${sp.pick} overall` : '76ers missed the top 4';
+    const text = `2026 NBA Draft Lottery Sim\n${sixersLine}\nTop 4: ${top4}\nSimulate yours → sixershoops.com`;
+    if (navigator.share) {
+        navigator.share({ title: '2026 Draft Lottery Sim', text }).catch(() => copyToClipboard(text));
+    } else { copyToClipboard(text); }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('share-btn');
+        const orig = btn.textContent; btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = orig, 2000);
+    }).catch(() => alert('Could not copy to clipboard.'));
+}
+
+// ── Result Headline ──────────────────────────────────────────────────────────
 function renderResultHeadline(sixersPick, allPicks) {
     const el = document.getElementById('result-headline');
     el.innerHTML = '';
@@ -1259,9 +1331,11 @@ function renderResultHeadline(sixersPick, allPicks) {
         el.className = 'result-headline';
         return;
     }
+    const emojis = {1:'',2:'',3:'',4:''};
+    const labels = {1:'#1 OVERALL PICK',2:'#2 OVERALL PICK',3:'#3 OVERALL PICK',4:'#4 OVERALL PICK'};
+    const msgs = {1:'SIXERS WIN THE LOTTERY!',2:'TOP-2 PICK SECURED!',3:'SIXERS IN THE TOP 3!',4:'TOP-4 PICK LANDED!'};
+    const extras = sixersPick <= 4 ? '' : `<div class="headline-sub" style="margin-top:0.15rem;opacity:0.6;">Pick #${sixersPick} overall</div>`;
     if (sixersPick <= 4) {
-        const labels = {1:'#1 OVERALL PICK',2:'#2 OVERALL PICK',3:'#3 OVERALL PICK',4:'#4 OVERALL PICK'};
-        const msgs = {1:'SIXERS WIN THE LOTTERY!',2:'TOP-2 PICK SECURED!',3:'SIXERS IN THE TOP 3!',4:'TOP-4 PICK LANDED!'};
         el.innerHTML = `
             <div class="headline-label">2026 NBA DRAFT LOTTERY SIMULATION</div>
             <div class="headline-pick-num ${sixersPick===1?'pick-1':sixersPick===2?'pick-2':sixersPick===3?'pick-3':'top4'}">#${sixersPick}</div>
@@ -1276,41 +1350,179 @@ function renderResultHeadline(sixersPick, allPicks) {
     el.className = 'result-headline show';
 }
 
-function toggleBottomPicks(btn) {
-    const body = document.getElementById('bottom-picks-body');
-    const chevron = btn.querySelector('.bottom-picks-chevron');
-    body.classList.toggle('open');
-    if(chevron) chevron.classList.toggle('open');
+// ── Social Card ───────────────────────────────────────────────────────────────
+function openSocialCard() {
+    if (!lastPicksForShare) return;
+    drawSocialCard(lastPicksForShare);
+    document.getElementById('social-modal-overlay').classList.add('open');
 }
 
-function buildBottomPicks() {
-    if (!window._allTeamsSorted || window._allTeamsSorted.length < 20) return '';
-    const lotteryAbbrs = new Set(lotteryTeams.map(t => t.abbr));
-    // Non-lottery teams sorted worst->best; worst picks 15th
-    const nonLottery = window._allTeamsSorted.filter(t => !lotteryAbbrs.has(t.abbr));
-    let html = '';
-    nonLottery.forEach((t, idx) => {
-        const pickNum = 15 + idx;
-        const isSixers = t.abbr === 'PHI';
-        const c = TEAM_COLORS[t.abbr] || '#888';
-        const wrapClass = `result-pick${isSixers ? ' sixers-pick' : ''}`;
-        html += `<div class="${wrapClass}" style="opacity:1;transform:none;">
-            <div class="pick-num" style="font-size:1rem;width:30px;color:var(--mid);">${pickNum}</div>
-            <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
-            <div class="pick-team">
-                <div class="pick-team-name">${t.shortName || t.name}</div>
-                <div class="pick-team-sub">${t.wins}-${t.losses}</div>
-            </div>
-            ${isSixers ? '<span class="pick-sixers-tag">Sixers</span>' : ''}
-        </div>`;
+function closeSocialCard() {
+    document.getElementById('social-modal-overlay').classList.remove('open');
+}
+
+function closeSocialCardOnOverlay(e) {
+    if (e.target === document.getElementById('social-modal-overlay')) closeSocialCard();
+}
+
+function drawSocialCard(picks) {
+    const canvas = document.getElementById('social-card-canvas');
+    const W = 1080, H = 566;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#000d2e'); bg.addColorStop(1, '#001a57');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    // Grid pattern
+    ctx.strokeStyle = 'rgba(0,107,182,0.07)'; ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Blue glow top-center
+    const glow = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, 400);
+    glow.addColorStop(0, 'rgba(0,107,182,0.25)'); glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+    // Red accent bar bottom
+    ctx.fillStyle = '#ED174C'; ctx.fillRect(0, H-5, W, 5);
+
+    // Left panel — Sixers result
+    const sp = picks.find(p => p.team.abbr === 'PHI');
+    const sixersPick = sp ? sp.pick : null;
+    const LX = 80;
+
+    // Site label
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '600 22px Barlow, sans-serif';
+    ctx.fillText('SIXERSHOOPS.COM', LX, 72);
+
+    // Pick number (huge)
+    const pickColors = {1:['#f5c842','#c9a84c'], 2:['#d0d5db','#9ca3af'], 3:['#e8a56a','#b45309']};
+    if (sixersPick && sixersPick <= 3) {
+        const [c1,c2] = pickColors[sixersPick];
+        const grad = ctx.createLinearGradient(LX, 120, LX, 320);
+        grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+        ctx.fillStyle = grad;
+    } else if (sixersPick && sixersPick === 4) {
+        ctx.fillStyle = '#006BB6';
+    } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    }
+    ctx.font = '900 220px "Barlow Condensed", sans-serif';
+    const pickTxt = sixersPick ? `#${sixersPick}` : '—';
+    ctx.fillText(pickTxt, LX - 10, 330);
+
+    // Label under pick
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '700 24px "Barlow Condensed", sans-serif';
+    ctx.letterSpacing = '0.15em';
+    ctx.fillText('2026 NBA DRAFT LOTTERY SIMULATION', LX, 375);
+
+    // Sub message
+    const msgs = {1:'SIXERS WIN THE LOTTERY!', 2:'TOP-2 PICK SECURED!', 3:'SIXERS IN THE TOP 3!', 4:'TOP-4 PICK LANDED!'};
+    ctx.fillStyle = sixersPick && sixersPick <= 4 ? '#ffffff' : '#ED174C';
+    ctx.font = `800 32px "Barlow Condensed", sans-serif`;
+    ctx.fillText(sixersPick && msgs[sixersPick] ? msgs[sixersPick] : (sixersPick ? `SIXERS LAND #${sixersPick}` : 'SIXERS MISS TOP 4'), LX, 420);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W/2 - 20, 60); ctx.lineTo(W/2 - 20, H - 20); ctx.stroke();
+
+    // Right panel — Top 4 picks
+    const RX = W/2 + 20;
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '700 20px "Barlow Condensed", sans-serif';
+    ctx.fillText('TOP 4 PICKS', RX, 72);
+
+    const top4 = picks.slice(0, 4);
+    const medalColors = ['#c9a84c','#9ca3af','#b45309','#006BB6'];
+    top4.forEach((p, i) => {
+        const Y = 115 + i * 108;
+        const isSixers = p.team.abbr === 'PHI';
+
+        // Row bg
+        ctx.fillStyle = isSixers ? 'rgba(0,107,182,0.22)' : 'rgba(255,255,255,0.04)';
+        roundRect(ctx, RX, Y - 4, W - RX - 60, 90, 12);
+        ctx.fill();
+        if (isSixers) {
+            ctx.strokeStyle = 'rgba(0,107,182,0.6)'; ctx.lineWidth = 1.5;
+            roundRect(ctx, RX, Y - 4, W - RX - 60, 90, 12);
+            ctx.stroke();
+        }
+
+        // Pick number
+        ctx.fillStyle = medalColors[i];
+        ctx.font = `900 52px "Barlow Condensed", sans-serif`;
+        ctx.fillText(`#${p.pick}`, RX + 20, Y + 58);
+
+        // Team dot
+        ctx.fillStyle = TEAM_COLORS[p.team.abbr] || '#888';
+        ctx.beginPath(); ctx.arc(RX + 110, Y + 34, 10, 0, Math.PI*2); ctx.fill();
+
+        // Team name
+        ctx.fillStyle = isSixers ? '#ffffff' : 'rgba(255,255,255,0.9)';
+        ctx.font = `${isSixers?800:700} 32px "Barlow Condensed", sans-serif`;
+        ctx.fillText(p.team.shortName.toUpperCase(), RX + 130, Y + 44);
+
+        // Sixers badge
+        if (isSixers) {
+            ctx.fillStyle = '#006BB6';
+            roundRect(ctx, RX + 130, Y + 52, 90, 22, 5);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = '700 14px "Barlow Condensed", sans-serif';
+            ctx.fillText('SIXERS', RX + 137, Y + 68);
+        }
     });
-    return html;
+
+    // Bottom watermark
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.font = '600 18px Barlow, sans-serif';
+    ctx.fillText('Simulate yours at sixershoops.com', LX, H - 22);
 }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+    ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+    ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+    ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+    ctx.closePath();
+}
+
+function downloadSocialCard() {
+    const canvas = document.getElementById('social-card-canvas');
+    const a = document.createElement('a');
+    a.download = '2026-sixers-lottery-result.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+}
+
+async function copyCardToClipboard() {
+    const canvas = document.getElementById('social-card-canvas');
+    const btn = document.getElementById('copy-img-btn');
+    try {
+        canvas.toBlob(async blob => {
+            try {
+                await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => { btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Image`; }, 2200);
+            } catch(e) {
+                btn.textContent = '❌ Not supported'; setTimeout(() => btn.textContent = 'Copy Image', 2000);
+            }
+        }, 'image/png');
+    } catch(e) {
+        alert('Copy not supported in this browser — use Download instead.');
+    }
+}
 
 document.addEventListener('DOMContentLoaded',()=>{
     fetchAndBuildLottery();
+    // Poll every 5 minutes so bottom-14 teams update as standings change
     setInterval(fetchAndBuildLottery, 5*60*1000);
     document.addEventListener('keydown',e=>{
         if(e.code==='Space'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='BUTTON'&&e.target.tagName!=='TEXTAREA'){
