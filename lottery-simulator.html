@@ -347,6 +347,16 @@
                     <div class="spinner-text">Drawing picks...</div>
                 </div>
                 <div id="result-picks" class="result-picks"></div>
+                <div id="bottom-picks-wrapper" style="display:none; margin-top:0.5rem;">
+                    <button class="bottom-picks-toggle" onclick="toggleBottomPicks(this)">
+                        <span>Picks 15–30 (Non-Lottery Order)</span>
+                        <svg class="bottom-picks-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div class="bottom-picks-body" id="bottom-picks-body">
+                        <div class="picks-15-30-label">Remaining picks in reverse standings order</div>
+                        <div class="result-picks" id="bottom-picks-list" style="margin-top:0.3rem;"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -898,9 +908,13 @@ async function runLottery() {
     const runBtn=document.getElementById('run-btn'), resultsCard=document.getElementById('results-card');
     const spinnerWrap=document.getElementById('spinner-wrap'), picksEl=document.getElementById('result-picks');
     runBtn.disabled=true; resultsCard.style.display='block'; spinnerWrap.style.display='flex'; picksEl.innerHTML='';
-    // Clear any previous bottom picks wrapper
-    const oldWrapper = document.getElementById('bottom-picks-wrapper');
-    if(oldWrapper) oldWrapper.remove();
+    // Reset bottom picks
+    document.getElementById('bottom-picks-wrapper').style.display='none';
+    document.getElementById('bottom-picks-list').innerHTML='';
+    const bpBody = document.getElementById('bottom-picks-body');
+    if(bpBody) { bpBody.classList.remove('open'); }
+    const bpBtn = document.querySelector('.bottom-picks-toggle');
+    if(bpBtn) { bpBtn.querySelector('.bottom-picks-chevron')?.classList.remove('open'); }
     const instant=document.getElementById('instant-mode').checked;
     await sleep(instant?0:850);
     const picks=runLotterySimOnce(); if(!picks){runBtn.disabled=false;return;}
@@ -934,19 +948,8 @@ async function runLottery() {
     // We'll generate the full order from the global bubbleTeams + additional teams
     const bottomPicksHTML = buildBottomPicks();
     if (bottomPicksHTML) {
-        const wrapper = document.createElement('div');
-        wrapper.id = 'bottom-picks-wrapper';
-        wrapper.style.marginTop = '0.5rem';
-        wrapper.innerHTML = `
-            <button class="bottom-picks-toggle" onclick="toggleBottomPicks(this)">
-                <span>Picks 15–30 (Non-Lottery Order)</span>
-                <svg class="bottom-picks-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <div class="bottom-picks-body" id="bottom-picks-body">
-                <div class="picks-15-30-label">Remaining picks in reverse standings order</div>
-                <div class="result-picks" style="margin-top:0.3rem;">${bottomPicksHTML}</div>
-            </div>`;
-        picksEl.parentElement.appendChild(wrapper);
+        document.getElementById('bottom-picks-list').innerHTML = bottomPicksHTML;
+        document.getElementById('bottom-picks-wrapper').style.display = 'block';
     }
 
     runBtn.disabled=false; document.getElementById('reset-btn').style.display='';
@@ -1019,8 +1022,10 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
 function resetSim() {
     document.getElementById('results-card').style.display='none';
     document.getElementById('result-picks').innerHTML='';
-    const oldWrapper = document.getElementById('bottom-picks-wrapper');
-    if(oldWrapper) oldWrapper.remove();
+    document.getElementById('bottom-picks-wrapper').style.display='none';
+    document.getElementById('bottom-picks-list').innerHTML='';
+    const bpBody = document.getElementById('bottom-picks-body');
+    if(bpBody) bpBody.classList.remove('open');
     document.getElementById('result-sixers-badge').style.display='none';
     document.getElementById('reset-btn').style.display='none';
     const hl=document.getElementById('result-headline'); hl.className='result-headline'; hl.innerHTML='';
@@ -1274,9 +1279,8 @@ function renderResultHeadline(sixersPick, allPicks) {
 function toggleBottomPicks(btn) {
     const body = document.getElementById('bottom-picks-body');
     const chevron = btn.querySelector('.bottom-picks-chevron');
-    if (!body) return;
     body.classList.toggle('open');
-    chevron.classList.toggle('open');
+    if(chevron) chevron.classList.toggle('open');
 }
 
 function buildBottomPicks() {
