@@ -337,7 +337,7 @@
         <!-- Odds Table -->
         <div class="card" style="margin-bottom:1.25rem;">
             <div class="card-header">
-                <span class="card-title">2025 Lottery Odds</span>
+                <span class="card-title">2026 Lottery Odds</span>
                 <span class="badge badge-blue" id="odds-updated-badge">Loading...</span>
             </div>
             <div id="odds-table-wrap">
@@ -611,6 +611,37 @@ async function fetchAndBuildLottery() {
             combinations:OFFICIAL_LOTTERY_ODDS[i+1].combinations,
             oddsTop1:OFFICIAL_LOTTERY_ODDS[i+1].pct1,
         }));
+
+        // ── Tie-breaking: teams with identical W-L records share their combined
+        //    lottery combinations equally, per official NBA lottery rules.
+        //    e.g. seeds 4 & 5 both at 21-59 → (125+105)/2 = 115 combos each.
+        // Group consecutive teams with the same record and redistribute.
+        let i = 0;
+        while (i < lotteryTeams.length) {
+            let j = i;
+            // Find the end of this tied group
+            while (j + 1 < lotteryTeams.length &&
+                   lotteryTeams[j+1].wins === lotteryTeams[i].wins &&
+                   lotteryTeams[j+1].losses === lotteryTeams[i].losses) {
+                j++;
+            }
+            if (j > i) {
+                // Tied group from i to j (inclusive)
+                const totalCombos = lotteryTeams.slice(i, j+1).reduce((s, t) => s + t.combinations, 0);
+                const sharedCombos = Math.round(totalCombos / (j - i + 1)); // integer combos per team
+                // Distribute: give sharedCombos to all, put any remainder on the worst-seeded (first) team
+                let distributed = 0;
+                for (let k = i; k <= j; k++) {
+                    lotteryTeams[k].combinations = sharedCombos;
+                    lotteryTeams[k].oddsTop1 = parseFloat((sharedCombos / 10).toFixed(2)); // 1 combo = 0.1%
+                    distributed += sharedCombos;
+                }
+                // Fix rounding: if totalCombos doesn't divide evenly, adjust the first team in the group
+                lotteryTeams[i].combinations += (totalCombos - distributed);
+                lotteryTeams[i].oddsTop1 = parseFloat((lotteryTeams[i].combinations / 10).toFixed(2));
+            }
+            i = j + 1;
+        }
         // Store bubble teams (just outside lottery, could jump in)
         bubbleTeams=newBubble.map((t,i)=>({
             ...t, lotteryRank:null, overallRank:i+15, combinations:0, oddsTop1:0,
@@ -903,7 +934,7 @@ function appendPickEl(pickObj,container) {
         <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
         <div class="pick-team">
             <div class="pick-team-name">${pickObj.team.shortName}</div>
-            <div class="pick-team-sub">${pickObj.protectionNote||(p<=4?(pickObj.team.oddsTop1||0).toFixed(1)+'% pick #1 odds':pickObj.team.wins+'-'+pickObj.team.losses)}</div>
+            <div class="pick-team-sub">${pickObj.protectionNote||(p<=4?(pickObj.team.oddsTop1||0).toFixed(1)+'% pick #1 odds':'Seed #'+(pickObj.team.lotteryRank||'?')+' · '+(pickObj.team.wins||0)+'-'+(pickObj.team.losses||0))}</div>
         </div>
         ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
     container.appendChild(el);
@@ -945,7 +976,7 @@ async function appendPickEnvelope(pickObj, container, withSuspense=true) {
         <span class="team-dot" style="background:${c};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></span>
         <div class="pick-team">
             <div class="pick-team-name">${pickObj.team.shortName}</div>
-            <div class="pick-team-sub">${pickObj.protectionNote||(p<=4?(pickObj.team.oddsTop1||0).toFixed(1)+'% pick #1 odds':pickObj.team.wins+'-'+pickObj.team.losses)}</div>
+            <div class="pick-team-sub">${pickObj.protectionNote||(p<=4?(pickObj.team.oddsTop1||0).toFixed(1)+'% pick #1 odds':'Seed #'+(pickObj.team.lotteryRank||'?')+' · '+(pickObj.team.wins||0)+'-'+(pickObj.team.losses||0))}</div>
         </div>
         ${isSixers?'<span class="pick-sixers-tag">Sixers</span>':''}`;
 
