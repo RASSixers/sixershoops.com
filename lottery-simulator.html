@@ -675,12 +675,23 @@ function computePickN(idx,pick) {
 }
 
 function renderOddsTable() {
+    // Determine which ranks are tied (shared W-L record) so we can show "—" for non-first in group
+    const tiedSet = new Set();
+    for(let i=1;i<lotteryTeams.length;i++){
+        if(lotteryTeams[i].wins===lotteryTeams[i-1].wins && lotteryTeams[i].losses===lotteryTeams[i-1].losses){
+            tiedSet.add(i);
+        }
+    }
     const rows=lotteryTeams.map((t,i)=>{
         const s=t.abbr==='PHI', c=TEAM_COLORS[t.abbr]||'#888', t4=computeTop4Odds(i);
         const isLast=i===lotteryTeams.length-1;
+        const isTied=tiedSet.has(i);
+        const rankDisplay=isTied
+            ? `<span style="color:var(--sixers-red);font-size:0.7rem;font-weight:900;width:16px;display:inline-block;text-align:center;">—</span>`
+            : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--mid);width:16px;display:inline-block;">${t.lotteryRank}</span>`;
         return `<tr class="${s?'highlight-row':''}" ${s?'id="sixers-table-row"':''}${isLast?' style="border-bottom:2px dashed var(--sixers-red);"':''}>
             <td style="${isLast?'border-bottom:2px dashed var(--sixers-red);':''}"><div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--mid);width:16px;">${t.lotteryRank}</span>
+                ${rankDisplay}
                 <span class="team-dot" style="background:${c}"></span>
                 <span style="font-weight:${s?700:500};font-size:0.8rem;">${t.shortName}${s?' ★':''}</span>
             </div></td>
@@ -882,7 +893,13 @@ function runLotterySimOnce() {
         results.push(teamIdx);
     }
     const rem=lotteryTeams.map((_,i)=>i).filter(i=>!usedTeams.has(i));
-    rem.sort((a,b)=>lotteryTeams[a].lotteryRank-lotteryTeams[b].lotteryRank);
+    // Sort by lotteryRank; shuffle within tied groups (same W-L = coin flip per NBA rules)
+    rem.sort((a,b)=>{
+        const ta=lotteryTeams[a], tb=lotteryTeams[b];
+        if(ta.wins!==tb.wins) return ta.wins-tb.wins;
+        if(ta.losses!==tb.losses) return tb.losses-ta.losses;
+        return Math.random()-0.5; // true coin flip for identical records
+    });
     rem.forEach(i=>results.push(i));
     const rawResults = results.map((idx,pi)=>({pick:pi+1,team:lotteryTeams[idx]}));
     return applyProtections(rawResults);
