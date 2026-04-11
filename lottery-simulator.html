@@ -553,36 +553,59 @@ async function fetchAndBuildLottery() {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
 
-        // Use ESPN scoreboard API which has more reliable current standings
-        const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&type=0&_=${Date.now()}`);
-        if (!res.ok) throw new Error('HTTP '+res.status);
-        const data = await res.json();
-        const allTeams=[];
-        (data.children||[]).forEach(conf=>{
-            (conf.standings?.entries||[]).forEach(entry=>{
-                const stats={};
-                entry.stats.forEach(s=>{
-                    if(s.name) stats[s.name]=s;
-                    if(s.type) stats[s.type]=s;
-                    if(s.shortDisplayName) stats[s.shortDisplayName]=s;
-                });
-
-                // Try every known ESPN field name for wins/losses
-                const wins   = parseInt(stats['wins']?.value   ?? stats['W']?.value   ?? stats['OW']?.value  ?? 0);
-                const losses = parseInt(stats['losses']?.value ?? stats['L']?.value   ?? stats['OL']?.value  ?? 0);
-                let winPct   = parseFloat(stats['winPercent']?.value ?? stats['PCT']?.value ?? stats['WP']?.value ?? 0);
-                if (winPct > 1) winPct = winPct / 100;
-
-                if (wins === 0 && losses === 0) return; // skip malformed entries
-
-                allTeams.push({
-                    abbr: entry.team.abbreviation,
-                    name: entry.team.displayName,
-                    shortName: entry.team.shortDisplayName || entry.team.displayName,
-                    wins, losses, winPct,
+        // Use NBA.com's leaguestandings endpoint — this is what most sites use for accurate records
+        // It explicitly separates regular season from play-in
+        let allTeams = [];
+        
+        try {
+            const res = await fetch(`https://stats.nba.com/stats/leaguestandings?LeagueID=00&Season=2025-26&SeasonType=Regular+Season&_=${Date.now()}`, {
+                headers: {
+                    'Referer': 'https://www.nba.com/',
+                    'Origin': 'https://www.nba.com',
+                }
+            });
+            if (!res.ok) throw new Error('NBA stats ' + res.status);
+            const data = await res.json();
+            const headers = data.resultSets[0].headers;
+            const rows = data.resultSets[0].rowSet;
+            const idx = (name) => headers.indexOf(name);
+            rows.forEach(row => {
+                const abbr = row[idx('TeamAbbreviation')];
+                const wins = parseInt(row[idx('WINS')]);
+                const losses = parseInt(row[idx('LOSSES')]);
+                const winPct = parseFloat(row[idx('WinPct')]);
+                const name = row[idx('TeamName')];
+                const city = row[idx('TeamCity')];
+                allTeams.push({ abbr, name: `${city} ${name}`, shortName: name, wins, losses, winPct });
+            });
+        } catch(e) {
+            // Fallback to ESPN if NBA.com blocked (CORS)
+            console.warn('NBA.com failed, falling back to ESPN:', e.message);
+            const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2&_=${Date.now()}`);
+            if (!res.ok) throw new Error('HTTP '+res.status);
+            const data = await res.json();
+            (data.children||[]).forEach(conf=>{
+                (conf.standings?.entries||[]).forEach(entry=>{
+                    const stats={};
+                    entry.stats.forEach(s=>{
+                        if(s.name) stats[s.name]=s;
+                        if(s.type) stats[s.type]=s;
+                        if(s.shortDisplayName) stats[s.shortDisplayName]=s;
+                    });
+                    const wins   = parseInt(stats['wins']?.value   ?? stats['W']?.value   ?? 0);
+                    const losses = parseInt(stats['losses']?.value ?? stats['L']?.value   ?? 0);
+                    let winPct   = parseFloat(stats['winPercent']?.value ?? stats['PCT']?.value ?? 0);
+                    if (winPct > 1) winPct = winPct / 100;
+                    if (wins === 0 && losses === 0) return;
+                    allTeams.push({
+                        abbr: entry.team.abbreviation,
+                        name: entry.team.displayName,
+                        shortName: entry.team.shortDisplayName || entry.team.displayName,
+                        wins, losses, winPct,
+                    });
                 });
             });
-        });
+        }
 
         // Show a visible debug line so you can verify data in browser
         const debugEl = document.getElementById('debug-panel');
