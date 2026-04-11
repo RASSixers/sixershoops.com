@@ -553,85 +553,88 @@ async function fetchAndBuildLottery() {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
 
-        // Use NBA.com's leaguestandings endpoint — this is what most sites use for accurate records
-        // It explicitly separates regular season from play-in
-        let allTeams = [];
-        
-        try {
-            const res = await fetch(`https://stats.nba.com/stats/leaguestandings?LeagueID=00&Season=2025-26&SeasonType=Regular+Season&_=${Date.now()}`, {
-                headers: {
-                    'Referer': 'https://www.nba.com/',
-                    'Origin': 'https://www.nba.com',
+        // ESPN standings API returns teams grouped BY CONFERENCE, in conference standing order.
+        // We use this to identify the 7 non-playoff teams per conference (seeds 9-15 = lottery).
+        // Playoff teams = seeds 1-8. Seeds 9-15 miss playoffs = lottery eligible.
+        // We do NOT sort by record across conferences — a 9-seed always gets lottery odds
+        // even if their record is better than a playoff team in the other conference.
+        const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2&_=${Date.now()}`);
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        const data = await res.json();
+
+        const lotteryEligible = []; // teams seeds 9-15 in either conference
+        const allParsed = [];       // all 30 teams for debug
+
+        (data.children||[]).forEach(conf => {
+            const entries = conf.standings?.entries || [];
+            // entries are in conference standing order (best to worst by conference rank)
+            entries.forEach((entry, confIdx) => {
+                const stats = {};
+                entry.stats.forEach(s => {
+                    if(s.name) stats[s.name] = s;
+                    if(s.type) stats[s.type] = s;
+                });
+                const wins   = parseInt(stats['wins']?.value   ?? stats['W']?.value   ?? 0);
+                const losses = parseInt(stats['losses']?.value ?? stats['L']?.value   ?? 0);
+                let winPct   = parseFloat(stats['winPercent']?.value ?? stats['PCT']?.value ?? 0);
+                if (winPct > 1) winPct = winPct / 100;
+                if (wins === 0 && losses === 0) return;
+
+                const confSeed = confIdx + 1; // 1 = best in conference
+                const team = {
+                    abbr: entry.team.abbreviation,
+                    name: entry.team.displayName,
+                    shortName: entry.team.shortDisplayName || entry.team.displayName,
+                    wins, losses, winPct, confSeed,
+                    conference: conf.abbreviation || conf.name,
+                };
+                allParsed.push(team);
+                // Seeds 9-15 = missed playoffs = lottery eligible (top 8 make playoffs)
+                if (confSeed >= 9 && confSeed <= 15) {
+                    lotteryEligible.push(team);
                 }
             });
-            if (!res.ok) throw new Error('NBA stats ' + res.status);
-            const data = await res.json();
-            const headers = data.resultSets[0].headers;
-            const rows = data.resultSets[0].rowSet;
-            const idx = (name) => headers.indexOf(name);
-            rows.forEach(row => {
-                const abbr = row[idx('TeamAbbreviation')];
-                const wins = parseInt(row[idx('WINS')]);
-                const losses = parseInt(row[idx('LOSSES')]);
-                const winPct = parseFloat(row[idx('WinPct')]);
-                const name = row[idx('TeamName')];
-                const city = row[idx('TeamCity')];
-                allTeams.push({ abbr, name: `${city} ${name}`, shortName: name, wins, losses, winPct });
-            });
-        } catch(e) {
-            // Fallback to ESPN if NBA.com blocked (CORS)
-            console.warn('NBA.com failed, falling back to ESPN:', e.message);
-            const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2&_=${Date.now()}`);
-            if (!res.ok) throw new Error('HTTP '+res.status);
-            const data = await res.json();
-            (data.children||[]).forEach(conf=>{
-                (conf.standings?.entries||[]).forEach(entry=>{
-                    const stats={};
-                    entry.stats.forEach(s=>{
-                        if(s.name) stats[s.name]=s;
-                        if(s.type) stats[s.type]=s;
-                        if(s.shortDisplayName) stats[s.shortDisplayName]=s;
-                    });
-                    const wins   = parseInt(stats['wins']?.value   ?? stats['W']?.value   ?? 0);
-                    const losses = parseInt(stats['losses']?.value ?? stats['L']?.value   ?? 0);
-                    let winPct   = parseFloat(stats['winPercent']?.value ?? stats['PCT']?.value ?? 0);
-                    if (winPct > 1) winPct = winPct / 100;
-                    if (wins === 0 && losses === 0) return;
-                    allTeams.push({
-                        abbr: entry.team.abbreviation,
-                        name: entry.team.displayName,
-                        shortName: entry.team.shortDisplayName || entry.team.displayName,
-                        wins, losses, winPct,
-                    });
-                });
-            });
-        }
+        });
 
-        // Show a visible debug line so you can verify data in browser
+        // Debug output
         const debugEl = document.getElementById('debug-panel');
-        const debugLines = ['=== ESPN RAW DATA ===', ...allTeams.map(t=>`${String(t.abbr).padEnd(5)} ${t.wins}-${t.losses} (${t.winPct.toFixed(3)})`)];
-        console.log('[Lottery] Raw teams from ESPN:', allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses} (${t.winPct.toFixed(3)})`).join(', '));
+        const debugLines = ['=== ALL TEAMS (conf seed order) ===',
+            ...allParsed.map(t=>`${t.conference} #${t.confSeed} ${String(t.abbr).padEnd(5)} ${t.wins}-${t.losses}`)
+        ];
 
-        if (allTeams.length < 20) {
-            throw new Error(`Only got ${allTeams.length} teams — ESPN response may have changed structure`);
+        if (lotteryEligible.length !== 14) {
+            // Fallback: if we didn't get exactly 14, warn and fall back to record-based
+            console.warn(`Expected 14 lottery teams, got ${lotteryEligible.length}. Falling back to record sort.`);
+            allParsed.sort((a,b) => {
+                if(Math.abs(a.winPct - b.winPct) > 0.0001) return a.winPct - b.winPct;
+                if(b.losses !== a.losses) return b.losses - a.losses;
+                return a.wins - b.wins;
+            });
+            lotteryEligible.length = 0;
+            allParsed.slice(0,14).forEach(t => lotteryEligible.push(t));
         }
 
-        // Sort worst-to-best: primary = win%, secondary = most losses, tertiary = fewest wins
-        allTeams.sort((a,b)=>{
+        // Within the 14 lottery teams, sort by record (worst first) to assign combo slots
+        // Lottery odds are assigned by record rank among the 14, not by conference seed
+        lotteryEligible.sort((a,b) => {
             if(Math.abs(a.winPct - b.winPct) > 0.0001) return a.winPct - b.winPct;
             if(b.losses !== a.losses) return b.losses - a.losses;
             return a.wins - b.wins;
         });
 
-        console.log('[Lottery] Sorted worst→best:', allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(', '));
-        if (debugEl) {
-            debugLines.push('', '=== SORTED WORST→BEST ===');
-            allTeams.forEach((t,i) => debugLines.push(`#${i+1} ${String(t.abbr).padEnd(5)} ${t.wins}-${t.losses} (${t.winPct.toFixed(3)})`));
-            debugEl.textContent = debugLines.join('\n');
-        }
-        const newBottom14=allTeams.slice(0,14);
-        // Capture up to 5 teams just outside the lottery for the bubble view
-        const newBubble=allTeams.slice(14,19);
+        debugLines.push('', '=== LOTTERY TEAMS (worst→best) ===');
+        lotteryEligible.forEach((t,i) => debugLines.push(`#${i+1} ${String(t.abbr).padEnd(5)} ${t.wins}-${t.losses} (conf seed ${t.confSeed})`));
+        if(debugEl) debugEl.textContent = debugLines.join('\n');
+        console.log('[Lottery]', debugLines.join('\n'));
+
+        // Non-lottery teams sorted by record for bubble display
+        const nonLotteryAbbrs = new Set(lotteryEligible.map(t=>t.abbr));
+        const bubblePool = allParsed
+            .filter(t => !nonLotteryAbbrs.has(t.abbr))
+            .sort((a,b) => a.winPct - b.winPct);
+
+        const newBottom14 = lotteryEligible;
+        const newBubble = bubblePool.slice(0, 5);
 
         // Detect changes: team composition OR records
         const newKey=newBottom14.map(t=>`${t.abbr}:${t.wins}-${t.losses}`).join('|');
