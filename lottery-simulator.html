@@ -546,7 +546,7 @@ async function fetchAndBuildLottery() {
     try {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
-        const res = await fetch('https://site.api.espn.com/apis/v2/sports/basketball/nba/standings');
+        const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&_=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
         const allTeams=[];
@@ -563,7 +563,9 @@ async function fetchAndBuildLottery() {
                 console.log(`[Lottery] ${entry.team.abbreviation} W:${stats.wins?.value}/D:${stats.wins?.displayValue} L:${stats.losses?.value}/D:${stats.losses?.displayValue}`);
                 const losses= parseInt(stats.losses?.value ?? stats.losses?.displayValue ?? 0);
                 // Mirror standings.js exactly: use stats.winPercent?.value (the raw decimal from ESPN)
-                const winPct = parseFloat(stats.winPercent?.value ?? 0);
+                let winPct = parseFloat(stats.winPercent?.value ?? stats.winPercent?.displayValue ?? 0);
+                // Normalize: ESPN returns values like 0.215 (decimal) — ensure it's 0–1 range
+                if (winPct > 1) winPct = winPct / 100;
                 allTeams.push({
                     abbr:entry.team.abbreviation, name:entry.team.displayName,
                     shortName:entry.team.shortDisplayName||entry.team.displayName,
@@ -572,13 +574,15 @@ async function fetchAndBuildLottery() {
                 });
             });
         });
-        // Sort worst-to-best (ascending), matching the official lottery order:
-        // Primary: fewest wins first. Secondary: most losses first (breaks win% ties).
-        // This matches the NBA tiebreaker: teams with same win% are ordered by most losses.
-        // Teams with identical W-L records share a slot (coin flip handled by NBA).
+        // Sort worst-to-best (ascending) matching Tankathon/official NBA lottery order:
+        // Primary: win% ascending (worst win% = highest lottery odds)
+        // Secondary: most losses (teams with same win% but more losses played more games → worse)
+        // Tertiary: fewest wins (additional safety tiebreaker)
+        // Teams with truly identical W-L records share a slot (coin flip per NBA rules)
         allTeams.sort((a,b)=>{
-            if(a.wins !== b.wins) return a.wins - b.wins;   // fewer wins = worse
-            return b.losses - a.losses;                      // same wins → more losses = worse
+            if(a.winPct !== b.winPct) return a.winPct - b.winPct;  // lower win% = worse = first
+            if(b.losses !== a.losses) return b.losses - a.losses;   // more losses = worse
+            return a.wins - b.wins;                                  // fewer wins = worse
         });
         console.log("[Lottery] Sorted order:", allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(", "));
         const newBottom14=allTeams.slice(0,14);
