@@ -334,11 +334,17 @@
             </div>
         </div>
 
+        <!-- DEBUG PANEL - remove once data confirmed correct -->
+        <div id="debug-panel" style="background:#0d0d0d;color:#00ff88;font-family:monospace;font-size:0.65rem;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;white-space:pre-wrap;line-height:1.6;display:none;"></div>
+
         <!-- Odds Table -->
         <div class="card" style="margin-bottom:1.25rem;">
             <div class="card-header">
                 <span class="card-title">2026 Lottery Odds</span>
-                <span class="badge badge-blue" id="odds-updated-badge">Loading...</span>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <button onclick="document.getElementById('debug-panel').style.display=document.getElementById('debug-panel').style.display==='none'?'block':'none'" style="font-size:0.6rem;padding:2px 8px;border:1px solid #ccc;border-radius:4px;background:white;cursor:pointer;font-family:monospace;">debug</button>
+                    <span class="badge badge-blue" id="odds-updated-badge">Loading...</span>
+                </div>
             </div>
             <div id="odds-table-wrap">
                 <div style="padding:1rem 1.5rem;">
@@ -546,45 +552,60 @@ async function fetchAndBuildLottery() {
     try {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
-        const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&_=${Date.now()}`);
+
+        // Use ESPN scoreboard API which has more reliable current standings
+        const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&type=0&_=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
         const allTeams=[];
         (data.children||[]).forEach(conf=>{
             (conf.standings?.entries||[]).forEach(entry=>{
-                // Mirror standings.js: index by BOTH s.name and s.type for full coverage
                 const stats={};
                 entry.stats.forEach(s=>{
                     if(s.name) stats[s.name]=s;
                     if(s.type) stats[s.type]=s;
+                    if(s.shortDisplayName) stats[s.shortDisplayName]=s;
                 });
-                // ESPN: .value is numeric, .displayValue is string — use .value first
-                const wins  = parseInt(stats.wins?.value  ?? stats.wins?.displayValue  ?? 0);
-                console.log(`[Lottery] ${entry.team.abbreviation} W:${stats.wins?.value}/D:${stats.wins?.displayValue} L:${stats.losses?.value}/D:${stats.losses?.displayValue}`);
-                const losses= parseInt(stats.losses?.value ?? stats.losses?.displayValue ?? 0);
-                // Mirror standings.js exactly: use stats.winPercent?.value (the raw decimal from ESPN)
-                let winPct = parseFloat(stats.winPercent?.value ?? stats.winPercent?.displayValue ?? 0);
-                // Normalize: ESPN returns values like 0.215 (decimal) — ensure it's 0–1 range
+
+                // Try every known ESPN field name for wins/losses
+                const wins   = parseInt(stats['wins']?.value   ?? stats['W']?.value   ?? stats['OW']?.value  ?? 0);
+                const losses = parseInt(stats['losses']?.value ?? stats['L']?.value   ?? stats['OL']?.value  ?? 0);
+                let winPct   = parseFloat(stats['winPercent']?.value ?? stats['PCT']?.value ?? stats['WP']?.value ?? 0);
                 if (winPct > 1) winPct = winPct / 100;
+
+                if (wins === 0 && losses === 0) return; // skip malformed entries
+
                 allTeams.push({
-                    abbr:entry.team.abbreviation, name:entry.team.displayName,
-                    shortName:entry.team.shortDisplayName||entry.team.displayName,
-                    wins, losses,
-                    winPct,
+                    abbr: entry.team.abbreviation,
+                    name: entry.team.displayName,
+                    shortName: entry.team.shortDisplayName || entry.team.displayName,
+                    wins, losses, winPct,
                 });
             });
         });
-        // Sort worst-to-best (ascending) matching Tankathon/official NBA lottery order:
-        // Primary: win% ascending (worst win% = highest lottery odds)
-        // Secondary: most losses (teams with same win% but more losses played more games → worse)
-        // Tertiary: fewest wins (additional safety tiebreaker)
-        // Teams with truly identical W-L records share a slot (coin flip per NBA rules)
+
+        // Show a visible debug line so you can verify data in browser
+        const debugEl = document.getElementById('debug-panel');
+        const debugLines = ['=== ESPN RAW DATA ===', ...allTeams.map(t=>`${String(t.abbr).padEnd(5)} ${t.wins}-${t.losses} (${t.winPct.toFixed(3)})`)];
+        console.log('[Lottery] Raw teams from ESPN:', allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses} (${t.winPct.toFixed(3)})`).join(', '));
+
+        if (allTeams.length < 20) {
+            throw new Error(`Only got ${allTeams.length} teams — ESPN response may have changed structure`);
+        }
+
+        // Sort worst-to-best: primary = win%, secondary = most losses, tertiary = fewest wins
         allTeams.sort((a,b)=>{
-            if(a.winPct !== b.winPct) return a.winPct - b.winPct;  // lower win% = worse = first
-            if(b.losses !== a.losses) return b.losses - a.losses;   // more losses = worse
-            return a.wins - b.wins;                                  // fewer wins = worse
+            if(Math.abs(a.winPct - b.winPct) > 0.0001) return a.winPct - b.winPct;
+            if(b.losses !== a.losses) return b.losses - a.losses;
+            return a.wins - b.wins;
         });
-        console.log("[Lottery] Sorted order:", allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(", "));
+
+        console.log('[Lottery] Sorted worst→best:', allTeams.map(t=>`${t.abbr} ${t.wins}-${t.losses}`).join(', '));
+        if (debugEl) {
+            debugLines.push('', '=== SORTED WORST→BEST ===');
+            allTeams.forEach((t,i) => debugLines.push(`#${i+1} ${String(t.abbr).padEnd(5)} ${t.wins}-${t.losses} (${t.winPct.toFixed(3)})`));
+            debugEl.textContent = debugLines.join('\n');
+        }
         const newBottom14=allTeams.slice(0,14);
         // Capture up to 5 teams just outside the lottery for the bubble view
         const newBubble=allTeams.slice(14,19);
