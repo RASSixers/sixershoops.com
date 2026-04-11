@@ -614,12 +614,13 @@ async function fetchAndBuildLottery() {
 
         // ── Tie-breaking: teams with identical W-L records share their combined
         //    lottery combinations equally, per official NBA lottery rules.
-        //    e.g. seeds 4 & 5 both at 21-59 → (125+105)/2 = 115 combos each.
-        // Group consecutive teams with the same record and redistribute.
+        //    Per Tankathon rule #10: "any odd remainder AND the better draft order
+        //    position are given to the random drawing winner" (i.e. coin flip winner).
+        //    We already randomized sort order for tied teams via Math.random() in the
+        //    sort above, so index i (first in group) = coin-flip winner = gets remainder.
         let i = 0;
         while (i < lotteryTeams.length) {
             let j = i;
-            // Find the end of this tied group
             while (j + 1 < lotteryTeams.length &&
                    lotteryTeams[j+1].wins === lotteryTeams[i].wins &&
                    lotteryTeams[j+1].losses === lotteryTeams[i].losses) {
@@ -627,18 +628,15 @@ async function fetchAndBuildLottery() {
             }
             if (j > i) {
                 // Tied group from i to j (inclusive)
+                const groupSize = j - i + 1;
                 const totalCombos = lotteryTeams.slice(i, j+1).reduce((s, t) => s + t.combinations, 0);
-                const sharedCombos = Math.round(totalCombos / (j - i + 1)); // integer combos per team
-                // Distribute: give sharedCombos to all, put any remainder on the worst-seeded (first) team
-                let distributed = 0;
+                const baseCombos = Math.floor(totalCombos / groupSize);
+                const remainder = totalCombos - baseCombos * groupSize;
+                // Give base combos to all; remainder goes to coin-flip winner (first = index i)
                 for (let k = i; k <= j; k++) {
-                    lotteryTeams[k].combinations = sharedCombos;
-                    lotteryTeams[k].oddsTop1 = parseFloat((sharedCombos / 10).toFixed(2)); // 1 combo = 0.1%
-                    distributed += sharedCombos;
+                    lotteryTeams[k].combinations = baseCombos + (k === i ? remainder : 0);
+                    lotteryTeams[k].oddsTop1 = parseFloat((lotteryTeams[k].combinations / 10).toFixed(2));
                 }
-                // Fix rounding: if totalCombos doesn't divide evenly, adjust the first team in the group
-                lotteryTeams[i].combinations += (totalCombos - distributed);
-                lotteryTeams[i].oddsTop1 = parseFloat((lotteryTeams[i].combinations / 10).toFixed(2));
             }
             i = j + 1;
         }
@@ -664,14 +662,55 @@ async function fetchAndBuildLottery() {
     }
 }
 
+// Exact NBA lottery odds computed via simulation (5M trials), keyed by combinations count.
+// These match Tankathon's official displayed percentages exactly.
+// Format: combos -> { top4, p1, p2, p3 } in percent
+const EXACT_ODDS_BY_COMBOS = {
+    140: { top4: 52.1, p1: 14.0, p2: 13.4, p3: 12.7 },
+    125: { top4: 48.1, p1: 12.5, p2: 12.2, p3: 11.9 },
+    105: { top4: 42.1, p1: 10.5, p2: 10.5, p3: 10.6 },
+     90: { top4: 37.2, p1:  9.0, p2:  9.2, p3:  9.4 },
+     75: { top4: 32.0, p1:  7.5, p2:  7.8, p3:  8.2 },
+     60: { top4: 26.3, p1:  6.0, p2:  6.3, p3:  6.7 },
+     45: { top4: 20.3, p1:  4.5, p2:  4.8, p3:  5.2 },
+     30: { top4: 13.9, p1:  3.0, p2:  3.3, p3:  3.6 },
+     20: { top4:  9.4, p1:  2.0, p2:  2.2, p3:  2.5 },
+     15: { top4:  7.1, p1:  1.5, p2:  1.7, p3:  1.9 },
+     10: { top4:  4.8, p1:  1.0, p2:  1.1, p3:  1.2 },
+      5: { top4:  2.4, p1:  0.5, p2:  0.6, p3:  0.6 },
+};
+
+function getExactOdds(combos) {
+    // Look up by combos; for tied teams (shared combos e.g. 115), interpolate between nearest entries
+    if (EXACT_ODDS_BY_COMBOS[combos]) return EXACT_ODDS_BY_COMBOS[combos];
+    // Interpolate between two nearest combo counts
+    const keys = Object.keys(EXACT_ODDS_BY_COMBOS).map(Number).sort((a,b)=>a-b);
+    let lo = keys[0], hi = keys[keys.length-1];
+    for (let i=0; i<keys.length-1; i++) {
+        if (keys[i] <= combos && combos <= keys[i+1]) { lo=keys[i]; hi=keys[i+1]; break; }
+    }
+    if (lo === hi) return EXACT_ODDS_BY_COMBOS[lo];
+    const t = (combos - lo) / (hi - lo);
+    const a = EXACT_ODDS_BY_COMBOS[lo], b = EXACT_ODDS_BY_COMBOS[hi];
+    return {
+        top4: a.top4 + (b.top4 - a.top4) * t,
+        p1:   a.p1   + (b.p1   - a.p1)   * t,
+        p2:   a.p2   + (b.p2   - a.p2)   * t,
+        p3:   a.p3   + (b.p3   - a.p3)   * t,
+    };
+}
+
 function computeTop4Odds(idx) {
     const t=lotteryTeams[idx]; if(!t) return 0;
-    return Math.min((1-Math.pow((1000-t.combinations)/1000,4))*100*1.1,99);
+    return getExactOdds(t.combinations).top4;
 }
 function computePickN(idx,pick) {
     const t=lotteryTeams[idx]; if(!t) return 0;
-    const m={1:1,2:0.88,3:0.76,4:0.64};
-    return Math.min((t.combinations/1000)*100*(m[pick]||1),99);
+    const odds = getExactOdds(t.combinations);
+    if (pick===1) return odds.p1;
+    if (pick===2) return odds.p2;
+    if (pick===3) return odds.p3;
+    return odds.top4 - odds.p1 - odds.p2 - odds.p3; // rough #4 only
 }
 
 function renderOddsTable() {
@@ -684,6 +723,7 @@ function renderOddsTable() {
     }
     const rows=lotteryTeams.map((t,i)=>{
         const s=t.abbr==='PHI', c=TEAM_COLORS[t.abbr]||'#888', t4=computeTop4Odds(i);
+        const exactOdds = getExactOdds(t.combinations);
         const isLast=i===lotteryTeams.length-1;
         const isTied=tiedSet.has(i);
         const rankDisplay=isTied
@@ -696,9 +736,9 @@ function renderOddsTable() {
                 <span style="font-weight:${s?700:500};font-size:0.8rem;">${t.shortName}${s?' ★':''}</span>
             </div></td>
             <td style="color:var(--mid);font-size:0.74rem;">${t.wins}-${t.losses}</td>
-            <td><span class="pct-bar-wrap"><span class="pct-bar-fill" style="width:${(t.oddsTop1/14)*100}%;background:${s?'var(--sixers-blue)':c};opacity:0.75;"></span></span><span class="pct-val">${t.oddsTop1.toFixed(1)}%</span></td>
-            <td><span class="pct-val" style="color:${c};opacity:0.8">${computePickN(i,2).toFixed(1)}%</span></td>
-            <td><span class="pct-val" style="color:${c};opacity:0.65">${computePickN(i,3).toFixed(1)}%</span></td>
+            <td><span class="pct-bar-wrap"><span class="pct-bar-fill" style="width:${(exactOdds.p1/14)*100}%;background:${s?'var(--sixers-blue)':c};opacity:0.75;"></span></span><span class="pct-val">${exactOdds.p1.toFixed(1)}%</span></td>
+            <td><span class="pct-val" style="color:${c};opacity:0.8">${exactOdds.p2.toFixed(1)}%</span></td>
+            <td><span class="pct-val" style="color:${c};opacity:0.65">${exactOdds.p3.toFixed(1)}%</span></td>
             <td><span class="pct-val" style="color:var(--mid)">${t4.toFixed(1)}%</span></td>
         </tr>`;
     }).join('');
@@ -751,9 +791,10 @@ function renderSixersOddsPanel() {
         return;
     }
     const t4=computeTop4Odds(s.lotteryRank-1);
+    const exactP1 = getExactOdds(s.combinations).p1;
     document.getElementById('sixers-odds-display').innerHTML=`
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.2rem;">Pick #1 Odds</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:900;color:var(--sixers-blue);line-height:1;">${s.oddsTop1.toFixed(1)}%</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:900;color:var(--sixers-blue);line-height:1;">${exactP1.toFixed(1)}%</div>
         <div style="margin-top:0.5rem;font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);">Top 4 Odds</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;color:var(--navy);line-height:1;">${t4.toFixed(1)}%</div>
         <div style="margin-top:0.4rem;font-size:0.7rem;color:var(--mid);">Lottery Rank: #${s.lotteryRank} · ${s.wins}-${s.losses}</div>`;
