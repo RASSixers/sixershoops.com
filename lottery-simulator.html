@@ -553,6 +553,7 @@ async function fetchAndBuildLottery() {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
 
+        // Fetch standings — ESPN groups by conference, each entry has stats including playoffSeed
         const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2&_=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
@@ -562,128 +563,158 @@ async function fetchAndBuildLottery() {
             (conf.standings?.entries || []).forEach(entry => {
                 const stats = {};
                 entry.stats.forEach(s => {
-                    if(s.name) stats[s.name] = s;
-                    if(s.type) stats[s.type] = s;
+                    if (s.name) stats[s.name] = s;
+                    if (s.type) stats[s.type] = s;
                 });
-                let wins   = parseInt(stats['wins']?.value   ?? stats['W']?.value   ?? 0);
-                let losses = parseInt(stats['losses']?.value ?? stats['L']?.value   ?? 0);
-                let winPct = parseFloat(stats['winPercent']?.value ?? stats['PCT']?.value ?? 0);
+
+                let wins   = parseInt(stats['wins']?.value   ?? 0);
+                let losses = parseInt(stats['losses']?.value ?? 0);
+                let winPct = parseFloat(stats['winPercent']?.value ?? 0);
                 if (winPct > 1) winPct = winPct / 100;
                 if (wins === 0 && losses === 0) return;
 
-                // ESPN bleeds play-in game results into wins/losses totals.
-                // Regular season = exactly 82 games. Any excess = play-in games.
-                // Strip them: reduce losses (play-in losers get extra losses added).
+                // ESPN includes play-in game results in W/L once play-in starts.
+                // Regular season = exactly 82 games. Strip any excess from losses
+                // (play-in losers absorb the extra loss; winners keep their win).
                 const gamesPlayed = wins + losses;
-                const extraGames = Math.max(0, gamesPlayed - 82);
-                losses -= extraGames;
-                // Recalculate winPct from clean record
-                winPct = (wins + losses) > 0 ? wins / (wins + losses) : 0;
+                if (gamesPlayed > 82) {
+                    // Only subtract from losses — play-in games that were losses
+                    losses = 82 - wins;
+                    if (losses < 0) { wins = 82; losses = 0; } // safety
+                    winPct = wins / 82;
+                }
+
+                // playoffSeed tells us the team's actual conference standing position
+                const playoffSeed = parseInt(stats['playoffSeed']?.value ?? stats['clincher']?.value ?? 99);
 
                 allParsed.push({
                     abbr: entry.team.abbreviation,
                     name: entry.team.displayName,
                     shortName: entry.team.shortDisplayName || entry.team.displayName,
-                    wins, losses, winPct,
+                    wins, losses, winPct, playoffSeed,
+                    conference: conf.abbreviation || (conf.name||'').substring(0,4),
                 });
             });
         });
 
-        if (allParsed.length < 28) throw new Error(`Only got ${allParsed.length} teams`);
+        if (allParsed.length < 28) throw new Error(`Only got ${allParsed.length} teams from ESPN`);
 
-        // Sort all 30 worst→best by clean record
-        allParsed.sort((a,b) => {
-            if (Math.abs(a.winPct - b.winPct) > 0.0001) return a.winPct - b.winPct;
+        // LOTTERY ELIGIBILITY: teams with playoffSeed > 10 in their conference missed
+        // both playoffs AND play-in. Seeds 1-6 = playoff, 7-10 = play-in, 11-15 = lottery.
+        // If playoffSeed isn't available, fall back to record-based bottom 14.
+        const hasSeedData = allParsed.some(t => t.playoffSeed < 90);
+        let lotteryPool, bubblePool;
+
+        if (hasSeedData) {
+            // Use conference seed: seeds 11-15 per conference = missed everything = lottery
+            // That's 5 per conf * 2 = 10... but NBA has 14 lottery teams (not 10).
+            // Actually: seeds 1-6 = playoff bye, 7-10 = play-in (4 per conf * 2 = 8 teams),
+            // seeds 11-15 = eliminated = 5 per conf * 2 = 10... that's still only 10.
+            // Wait — 30 teams total, 16 make playoffs (8 per conf), 14 in lottery.
+            // So lottery = seeds 9-15 per conf... no: seeds 7-10 are play-in (4 per conf),
+            // only 2 of those 4 make playoffs. The 2 that LOSE play-in join lottery.
+            // During regular season, before play-in, ALL of seeds 9-15 = lottery eligible.
+            // Tankathon uses pre-play-in seedings (regular season final standings).
+            // Seeds 1-8 = playoff or play-in qualifier → NOT in lottery
+            // Seeds 9-15 = missed playoffs entirely → IN lottery (7 per conf × 2 = 14 ✓)
+            lotteryPool = allParsed.filter(t => t.playoffSeed >= 9);
+            bubblePool  = allParsed.filter(t => t.playoffSeed <= 8)
+                            .sort((a,b) => b.playoffSeed - a.playoffSeed); // seeds 8,7,6...
+        } else {
+            // Fallback: bottom 14 by record
+            const sorted = [...allParsed].sort((a,b) => a.winPct - b.winPct || b.losses - a.losses);
+            lotteryPool = sorted.slice(0, 14);
+            bubblePool  = sorted.slice(14, 19);
+        }
+
+        // Sort lottery teams worst→best record to assign combo slots
+        lotteryPool.sort((a,b) => {
+            if (Math.abs(a.winPct - b.winPct) > 0.00001) return a.winPct - b.winPct;
             if (b.losses !== a.losses) return b.losses - a.losses;
             return a.wins - b.wins;
         });
 
-        const newBottom14 = allParsed.slice(0, 14);
-        const newBubble   = allParsed.slice(14, 19);
+        // Sort bubble teams worst→best (closest to getting in)
+        bubblePool.sort((a,b) => a.winPct - b.winPct || b.losses - a.losses);
 
-        // Debug
+        // Debug panel
         const debugEl = document.getElementById('debug-panel');
         if (debugEl) {
-            const lines = ['=== ALL TEAMS (worst→best, play-in stripped) ===',
-                ...allParsed.map((t,i) => `#${i+1} ${String(t.abbr).padEnd(5)} ${t.wins}-${t.losses} (.${String(Math.round(t.winPct*1000)).padStart(3,'0')})`),
+            const lines = [
+                `=== LOTTERY TEAMS (${lotteryPool.length}) ===`,
+                ...lotteryPool.map((t,i)=>`#${i+1} ${t.abbr.padEnd(5)} ${t.wins}-${t.losses} seed=${t.playoffSeed} conf=${t.conference}`),
+                '', `=== BUBBLE (${bubblePool.length}) ===`,
+                ...bubblePool.slice(0,5).map(t=>`   ${t.abbr.padEnd(5)} ${t.wins}-${t.losses} seed=${t.playoffSeed}`),
             ];
             debugEl.textContent = lines.join('\n');
         }
 
-        // Detect changes: team composition OR records
-        const newKey=newBottom14.map(t=>`${t.abbr}:${t.wins}-${t.losses}`).join('|');
-        const changed=newKey!==_prevLotteryKey;
+        const newBottom14 = lotteryPool.slice(0, 14);
+        const newBubble   = bubblePool.slice(0, 5);
 
-        if(changed && _prevLotteryKey!==''){
-            // Figure out which teams swapped in/out
-            const oldAbbrs=_prevLotteryKey.split('|').map(s=>s.split(':')[0]);
-            const newAbbrs=newBottom14.map(t=>t.abbr);
-            const entered=newAbbrs.filter(a=>!oldAbbrs.includes(a));
-            const exited=oldAbbrs.filter(a=>!newAbbrs.includes(a));
-            if(entered.length||exited.length){
-                const msgs=[];
-                if(entered.length) msgs.push(`🔥 ${entered.join(', ')} entered lottery`);
-                if(exited.length) msgs.push(`${exited.join(', ')} fell out`);
+        // Change detection
+        const newKey = newBottom14.map(t=>`${t.abbr}:${t.wins}-${t.losses}`).join('|');
+        if (newKey !== _prevLotteryKey && _prevLotteryKey !== '') {
+            const oldAbbrs = _prevLotteryKey.split('|').map(s=>s.split(':')[0]);
+            const newAbbrs = newBottom14.map(t=>t.abbr);
+            const entered  = newAbbrs.filter(a=>!oldAbbrs.includes(a));
+            const exited   = oldAbbrs.filter(a=>!newAbbrs.includes(a));
+            if (entered.length||exited.length) {
+                const msgs = [];
+                if (entered.length) msgs.push(`🔥 ${entered.join(', ')} entered lottery`);
+                if (exited.length)  msgs.push(`${exited.join(', ')} fell out`);
                 showStandingsToast(msgs.join(' · '));
             } else {
                 showStandingsToast('Standings updated');
             }
         }
-        _prevLotteryKey=newKey;
+        _prevLotteryKey = newKey;
 
-        lotteryTeams=newBottom14.map((t,i)=>({
-            ...t, lotteryRank:i+1,
-            combinations:OFFICIAL_LOTTERY_ODDS[i+1].combinations,
-            oddsTop1:OFFICIAL_LOTTERY_ODDS[i+1].pct1,
+        // Assign combo slots by rank
+        lotteryTeams = newBottom14.map((t,i) => ({
+            ...t, lotteryRank: i+1,
+            combinations: OFFICIAL_LOTTERY_ODDS[i+1].combinations,
+            oddsTop1:     OFFICIAL_LOTTERY_ODDS[i+1].pct1,
         }));
 
-        // ── Tie-breaking: teams with identical W-L records share their combined
-        //    lottery combinations equally, per official NBA lottery rules.
-        //    Per Tankathon rule #10: "any odd remainder AND the better draft order
-        //    position are given to the random drawing winner" (i.e. coin flip winner).
-        //    We already randomized sort order for tied teams via Math.random() in the
-        //    sort above, so index i (first in group) = coin-flip winner = gets remainder.
-        let i = 0;
-        while (i < lotteryTeams.length) {
+        // Tie-breaking: teams with identical W-L split combos evenly.
+        // Per NBA rules: odd remainder + better position → coin-flip winner (first in sorted group).
+        for (let i = 0; i < lotteryTeams.length; ) {
             let j = i;
-            while (j + 1 < lotteryTeams.length &&
-                   lotteryTeams[j+1].wins === lotteryTeams[i].wins &&
-                   lotteryTeams[j+1].losses === lotteryTeams[i].losses) {
-                j++;
-            }
+            while (j+1 < lotteryTeams.length &&
+                   lotteryTeams[j+1].wins   === lotteryTeams[i].wins &&
+                   lotteryTeams[j+1].losses === lotteryTeams[i].losses) j++;
             if (j > i) {
-                // Tied group from i to j (inclusive)
-                const groupSize = j - i + 1;
-                const totalCombos = lotteryTeams.slice(i, j+1).reduce((s, t) => s + t.combinations, 0);
-                const baseCombos = Math.floor(totalCombos / groupSize);
-                const remainder = totalCombos - baseCombos * groupSize;
-                // Give base combos to all; remainder goes to coin-flip winner (first = index i)
-                for (let k = i; k <= j; k++) {
-                    lotteryTeams[k].combinations = baseCombos + (k === i ? remainder : 0);
-                    lotteryTeams[k].oddsTop1 = parseFloat((lotteryTeams[k].combinations / 10).toFixed(2));
+                const total = lotteryTeams.slice(i,j+1).reduce((s,t)=>s+t.combinations,0);
+                const base  = Math.floor(total / (j-i+1));
+                const rem   = total - base*(j-i+1);
+                for (let k=i; k<=j; k++) {
+                    lotteryTeams[k].combinations = base + (k===i ? rem : 0);
+                    lotteryTeams[k].oddsTop1 = lotteryTeams[k].combinations / 10;
                 }
             }
-            i = j + 1;
+            i = j+1;
         }
-        // Store bubble teams (just outside lottery, could jump in)
-        bubbleTeams=newBubble.map((t,i)=>({
+
+        bubbleTeams = newBubble.map((t,i) => ({
             ...t, lotteryRank:null, overallRank:i+15, combinations:0, oddsTop1:0,
         }));
-        COMBO_MAP=null; // Reset so buildComboMap() runs fresh on next sim
+
+        COMBO_MAP = null;
         renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard(); renderPastPicks(); populateScenarioSelect();
-        // Populate until-one team select
-        const sel=document.getElementById('until-one-team-select');
-        if(sel){
-            sel.innerHTML=lotteryTeams.map(t=>`<option value="${t.abbr}"${t.abbr==='PHI'?' selected':''}>${t.shortName}</option>`).join('');
-        }
-        // Always show the bubble card
+
+        const sel = document.getElementById('until-one-team-select');
+        if (sel) sel.innerHTML = lotteryTeams.map(t=>`<option value="${t.abbr}"${t.abbr==='PHI'?' selected':''}>${t.shortName}</option>`).join('');
+
         document.getElementById('jump-card').style.display='block';
-        const now=new Date();
-        if(badge) badge.textContent=`Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Live`;
+        const now = new Date();
+        if (badge) badge.textContent = `Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Live`;
+
     } catch(err) {
-        const badge=document.getElementById('odds-updated-badge');
-        if(badge) badge.textContent='Error – retrying in 5 min';
-        document.getElementById('odds-table-wrap').innerHTML=`<div style="padding:1.5rem;text-align:center;color:var(--sixers-red);font-size:0.85rem;">Failed to load. <button onclick="fetchAndBuildLottery()" style="color:var(--sixers-blue);background:none;border:none;cursor:pointer;font-weight:700;text-decoration:underline;">Retry</button></div>`;
+        console.error('[Lottery]', err);
+        const badge = document.getElementById('odds-updated-badge');
+        if (badge) badge.textContent = 'Error – retrying in 5 min';
+        document.getElementById('odds-table-wrap').innerHTML = `<div style="padding:1.5rem;text-align:center;color:var(--sixers-red);font-size:0.85rem;">Failed to load standings. <button onclick="fetchAndBuildLottery()" style="color:var(--sixers-blue);background:none;border:none;cursor:pointer;font-weight:700;text-decoration:underline;">Retry</button></div>`;
     }
 }
 
