@@ -831,36 +831,42 @@ function toggleDraftOrder() {
     chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
+// Non-lottery pick trades: key = original team abbr, value = {newOwner abbr, label}
+const NON_LOTTERY_PICK_TRADES = {
+    'LAC': { newOwner: 'OKC', label: 'OKC (via LAC trade)' },
+    'NO':  { newOwner: 'ATL', label: 'ATL (via NOP trade)' },
+    'NOP': { newOwner: 'ATL', label: 'ATL (via NOP trade)' },
+};
+
 function renderDraftOrder() {
     const card = document.getElementById('draft-order-card');
     const wrap = document.getElementById('draft-order-table-wrap');
     if (!card || !wrap) return;
 
-    // All 30 teams sorted by record (worst first) then non-lottery picks 15–30
-    // bubbleTeams is already sorted overallRank 15+ (worst non-lottery teams)
-    // We need picks 15–30: first up to 16 non-playoff teams in reverse-record order
-    // Picks 15–30 go reverse-record order among teams not in lottery top-4
-    // We combine bubble teams (already ranked 15+) for a clean 15–30 list
     if (!bubbleTeams || bubbleTeams.length === 0) { card.style.display = 'none'; return; }
 
     card.style.display = 'block';
 
-    // Picks 15–30: teams ranked 15–30 overall (bubbleTeams is already sorted ascending by rank)
-    // Some bubble teams may not fill all 30 spots if data is incomplete; cap at 16 entries
     const picks1530 = bubbleTeams.slice(0, 16);
 
     const rows = picks1530.map((t, i) => {
         const pick = 15 + i;
-        const c = TEAM_COLORS[t.abbr] || '#888';
-        const isPHI = t.abbr === 'PHI';
+        const trade = NON_LOTTERY_PICK_TRADES[t.abbr];
+        const ownerAbbr = trade ? trade.newOwner : t.abbr;
+        const c = TEAM_COLORS[ownerAbbr] || TEAM_COLORS[t.abbr] || '#888';
+        const isPHI = ownerAbbr === 'PHI';
+        const displayName = trade ? trade.label : t.shortName + (isPHI ? ' ★' : '');
+        const origLabel = trade
+            ? `<span style="font-size:0.65rem;color:var(--mid);margin-left:4px;">(${t.shortName}'s slot)</span>`
+            : '';
         return `<tr ${isPHI ? 'class="highlight-row" id="sixers-draft-order-row"' : ''}>
             <td style="color:var(--mid);font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;width:28px;text-align:center;">${pick}</td>
             <td><div style="display:flex;align-items:center;gap:6px;">
                 <span class="team-dot" style="background:${c}"></span>
-                <span style="font-weight:${isPHI ? 700 : 500};font-size:0.8rem;">${t.shortName}${isPHI ? ' ★' : ''}</span>
+                <span style="font-weight:${isPHI || trade ? 600 : 500};font-size:0.8rem;">${displayName}</span>${origLabel}
             </div></td>
             <td style="color:var(--mid);font-size:0.74rem;">${t.wins}-${t.losses}</td>
-            <td style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);">Reverse record</td>
+            <td style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${trade ? 'var(--sixers-red)' : 'var(--mid)'};">${trade ? 'Traded' : 'Reverse record'}</td>
         </tr>`;
     }).join('');
 
