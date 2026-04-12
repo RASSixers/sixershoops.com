@@ -334,11 +334,17 @@
             </div>
         </div>
 
+        <!-- DEBUG PANEL - remove once data confirmed correct -->
+        <div id="debug-panel" style="background:#0d0d0d;color:#00ff88;font-family:monospace;font-size:0.65rem;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;white-space:pre-wrap;line-height:1.6;display:none;"></div>
+
         <!-- Odds Table -->
         <div class="card" style="margin-bottom:1.25rem;">
             <div class="card-header">
                 <span class="card-title">2026 Lottery Odds</span>
-                <span class="badge badge-blue" id="odds-updated-badge">Loading...</span>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <button onclick="document.getElementById('debug-panel').style.display=document.getElementById('debug-panel').style.display==='none'?'block':'none'" style="font-size:0.6rem;padding:2px 8px;border:1px solid #ccc;border-radius:4px;background:white;cursor:pointer;font-family:monospace;">debug</button>
+                    <span class="badge badge-blue" id="odds-updated-badge">Loading...</span>
+                </div>
             </div>
             <div id="odds-table-wrap">
                 <div style="padding:1rem 1.5rem;">
@@ -487,7 +493,7 @@
 </main>
 </div>
 
-<script src="nav.js" onerror="console.warn('nav.js not found')"></script>
+<script src="nav.js"></script>
 <script>
 const OFFICIAL_LOTTERY_ODDS = {
     1:{combinations:140,pct1:14.0},2:{combinations:140,pct1:14.0},3:{combinations:140,pct1:14.0},
@@ -506,14 +512,7 @@ const TEAM_COLORS = {
     // Legacy aliases so any hardcoded refs still resolve
     'WAS':'#002B5C','UTA':'#002B5C','NOP':'#0C2340','NYK':'#006BB6','GSW':'#1D428A',
 };
-// Pick ownership trades: which lottery team's pick is owned by another team
-// key = original team abbr (the one whose pick was traded away)
-// value = { owner: abbr of team that owns the pick, ownerShort: display name }
-const PICK_TRADES = {
-    'NO':  { owner: 'ATL', ownerShort: 'ATL', color: '#E03A3E' },
-    'LAC': { owner: 'OKC', ownerShort: 'OKC', color: '#007AC1' },
-};
-
+const PAST_PICKS = [
     {year:2025,picks:[{rnd:1,num:3,player:'V.J. Edgecombe',pos:'SG',school:'Baylor'},{rnd:2,num:35,player:'Johni Broome',pos:'PF/C',school:'Auburn'}]},
     {year:2024,picks:[{rnd:1,num:16,player:'Jared McCain',pos:'PG',school:'Duke'},{rnd:2,num:41,player:'Adem Bona',pos:'PF/C',school:'UCLA'}]},
     {year:2023,picks:[],note:'No picks — second-rounder traded away earlier.'},
@@ -554,6 +553,7 @@ async function fetchAndBuildLottery() {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
 
+        // Fetch standings — ESPN groups by conference, each entry has stats including playoffSeed
         const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2&_=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
@@ -567,14 +567,25 @@ async function fetchAndBuildLottery() {
                     if (s.type) stats[s.type] = s;
                 });
 
-                const wins   = parseInt(stats['wins']?.value   ?? 0);
-                const losses = parseInt(stats['losses']?.value ?? 0);
-                let winPct   = parseFloat(stats['winPercent']?.value ?? 0);
+                let wins   = parseInt(stats['wins']?.value   ?? 0);
+                let losses = parseInt(stats['losses']?.value ?? 0);
+                let winPct = parseFloat(stats['winPercent']?.value ?? 0);
                 if (winPct > 1) winPct = winPct / 100;
                 if (wins === 0 && losses === 0) return;
 
-                // playoffSeed = team's conference standing position (1=best, 15=worst)
-                const playoffSeed = parseInt(stats['playoffSeed']?.value ?? 99);
+                // ESPN includes play-in game results in W/L once play-in starts.
+                // Regular season = exactly 82 games. Strip any excess from losses
+                // (play-in losers absorb the extra loss; winners keep their win).
+                const gamesPlayed = wins + losses;
+                if (gamesPlayed > 82) {
+                    // Only subtract from losses — play-in games that were losses
+                    losses = 82 - wins;
+                    if (losses < 0) { wins = 82; losses = 0; } // safety
+                    winPct = wins / 82;
+                }
+
+                // playoffSeed tells us the team's actual conference standing position
+                const playoffSeed = parseInt(stats['playoffSeed']?.value ?? stats['clincher']?.value ?? 99);
 
                 allParsed.push({
                     abbr: entry.team.abbreviation,
@@ -586,19 +597,60 @@ async function fetchAndBuildLottery() {
             });
         });
 
-        if (allParsed.length < 28) throw new Error(`Only got ${allParsed.length} teams`);
+        if (allParsed.length < 28) throw new Error(`Only got ${allParsed.length} teams from ESPN`);
 
-        // Lottery = the 14 teams with the worst records league-wide.
-        // Sort worst→best: primary win%, secondary most losses, tertiary fewest wins.
-        // This matches Tankathon's ordering exactly — they use full records (incl. play-in).
-        allParsed.sort((a,b) => {
+        // LOTTERY ELIGIBILITY: teams with playoffSeed > 10 in their conference missed
+        // both playoffs AND play-in. Seeds 1-6 = playoff, 7-10 = play-in, 11-15 = lottery.
+        // If playoffSeed isn't available, fall back to record-based bottom 14.
+        const hasSeedData = allParsed.some(t => t.playoffSeed < 90);
+        let lotteryPool, bubblePool;
+
+        if (hasSeedData) {
+            // Use conference seed: seeds 11-15 per conference = missed everything = lottery
+            // That's 5 per conf * 2 = 10... but NBA has 14 lottery teams (not 10).
+            // Actually: seeds 1-6 = playoff bye, 7-10 = play-in (4 per conf * 2 = 8 teams),
+            // seeds 11-15 = eliminated = 5 per conf * 2 = 10... that's still only 10.
+            // Wait — 30 teams total, 16 make playoffs (8 per conf), 14 in lottery.
+            // So lottery = seeds 9-15 per conf... no: seeds 7-10 are play-in (4 per conf),
+            // only 2 of those 4 make playoffs. The 2 that LOSE play-in join lottery.
+            // During regular season, before play-in, ALL of seeds 9-15 = lottery eligible.
+            // Tankathon uses pre-play-in seedings (regular season final standings).
+            // Seeds 1-8 = playoff or play-in qualifier → NOT in lottery
+            // Seeds 9-15 = missed playoffs entirely → IN lottery (7 per conf × 2 = 14 ✓)
+            lotteryPool = allParsed.filter(t => t.playoffSeed >= 9);
+            bubblePool  = allParsed.filter(t => t.playoffSeed <= 8)
+                            .sort((a,b) => b.playoffSeed - a.playoffSeed); // seeds 8,7,6...
+        } else {
+            // Fallback: bottom 14 by record
+            const sorted = [...allParsed].sort((a,b) => a.winPct - b.winPct || b.losses - a.losses);
+            lotteryPool = sorted.slice(0, 14);
+            bubblePool  = sorted.slice(14, 19);
+        }
+
+        // Sort lottery teams worst→best record to assign combo slots
+        lotteryPool.sort((a,b) => {
             if (Math.abs(a.winPct - b.winPct) > 0.00001) return a.winPct - b.winPct;
             if (b.losses !== a.losses) return b.losses - a.losses;
             return a.wins - b.wins;
         });
 
-        const newBottom14 = allParsed.slice(0, 14);
-        const newBubble   = allParsed.slice(14, 19);
+        // Sort bubble teams worst→best (closest to getting in)
+        bubblePool.sort((a,b) => a.winPct - b.winPct || b.losses - a.losses);
+
+        // Debug panel
+        const debugEl = document.getElementById('debug-panel');
+        if (debugEl) {
+            const lines = [
+                `=== LOTTERY TEAMS (${lotteryPool.length}) ===`,
+                ...lotteryPool.map((t,i)=>`#${i+1} ${t.abbr.padEnd(5)} ${t.wins}-${t.losses} seed=${t.playoffSeed} conf=${t.conference}`),
+                '', `=== BUBBLE (${bubblePool.length}) ===`,
+                ...bubblePool.slice(0,5).map(t=>`   ${t.abbr.padEnd(5)} ${t.wins}-${t.losses} seed=${t.playoffSeed}`),
+            ];
+            debugEl.textContent = lines.join('\n');
+        }
+
+        const newBottom14 = lotteryPool.slice(0, 14);
+        const newBubble   = bubblePool.slice(0, 5);
 
         // Change detection
         const newKey = newBottom14.map(t=>`${t.abbr}:${t.wins}-${t.losses}`).join('|');
@@ -654,7 +706,7 @@ async function fetchAndBuildLottery() {
         const sel = document.getElementById('until-one-team-select');
         if (sel) sel.innerHTML = lotteryTeams.map(t=>`<option value="${t.abbr}"${t.abbr==='PHI'?' selected':''}>${t.shortName}</option>`).join('');
 
-        document.getElementById('jump-card') && (document.getElementById('jump-card').style.display='block');
+        document.getElementById('jump-card').style.display='block';
         const now = new Date();
         if (badge) badge.textContent = `Updated ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Live`;
 
@@ -730,18 +782,14 @@ function renderOddsTable() {
         const exactOdds = getExactOdds(t.combinations);
         const isLast=i===lotteryTeams.length-1;
         const isTied=tiedSet.has(i);
-        const trade = PICK_TRADES[t.abbr];
         const rankDisplay=isTied
             ? `<span style="color:var(--sixers-red);font-size:0.7rem;font-weight:900;width:16px;display:inline-block;text-align:center;">—</span>`
             : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--mid);width:16px;display:inline-block;">${t.lotteryRank}</span>`;
-        const tradeTag = trade
-            ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:${trade.color};color:white;padding:1px 5px;border-radius:3px;margin-left:3px;opacity:0.9;">→ ${trade.ownerShort}</span>`
-            : '';
         return `<tr class="${s?'highlight-row':''}" ${s?'id="sixers-table-row"':''}${isLast?' style="border-bottom:2px dashed var(--sixers-red);"':''}>
-            <td style="${isLast?'border-bottom:2px dashed var(--sixers-red);':''}"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <td style="${isLast?'border-bottom:2px dashed var(--sixers-red);':''}"><div style="display:flex;align-items:center;gap:6px;">
                 ${rankDisplay}
                 <span class="team-dot" style="background:${c}"></span>
-                <span style="font-weight:${s?700:500};font-size:0.8rem;">${t.shortName}${s?' ★':''}</span>${tradeTag}
+                <span style="font-weight:${s?700:500};font-size:0.8rem;">${t.shortName}${s?' ★':''}</span>
             </div></td>
             <td style="color:var(--mid);font-size:0.74rem;">${t.wins}-${t.losses}</td>
             <td><span class="pct-bar-wrap"><span class="pct-bar-fill" style="width:${(exactOdds.p1/14)*100}%;background:${s?'var(--sixers-blue)':c};opacity:0.75;"></span></span><span class="pct-val">${exactOdds.p1.toFixed(1)}%</span></td>
@@ -870,22 +918,18 @@ const PICK_PROTECTIONS_2026 = [
 ];
 
 function applyProtections(results) {
+    // results: array of {pick, team} sorted by pick number
+    // After the lottery determines pick slots, check if any pick owner has conveyed their pick.
+    // Non-lottery recipients (e.g. OKC) are shown as a placeholder team object.
     return results.map(r => {
-        // First check unconditional trades (e.g. NO pick → ATL, LAC pick → OKC)
-        const trade = PICK_TRADES[r.team.abbr];
-        if (trade) {
-            const ownerTeam = lotteryTeams.find(t => t.abbr === trade.owner) || {
-                abbr: trade.owner, name: trade.ownerShort, shortName: trade.ownerShort,
-                wins: 0, losses: 0, oddsTop1: 0, lotteryRank: null, combinations: 0,
-            };
-            return { ...r, team: ownerTeam, originalOwner: r.team, protectionNote: `Via ${r.team.shortName} (traded)` };
-        }
-        // Then check conditional protections
         const prot = PICK_PROTECTIONS_2026.find(p => p.owner === r.team.abbr);
         if (!prot) return r;
         if (prot.conveys(r.pick)) {
+            // Find recipient in lottery or build a lightweight placeholder
             const recipientTeam = lotteryTeams.find(t => t.abbr === prot.recipient) || {
-                abbr: prot.recipient, name: prot.recipient, shortName: prot.recipient,
+                abbr: prot.recipient,
+                name: prot.recipient,
+                shortName: prot.recipient,
                 wins: 0, losses: 0, oddsTop1: 0, lotteryRank: null, combinations: 0,
             };
             return { ...r, team: recipientTeam, originalOwner: r.team, protectionNote: `Via ${r.team.shortName} (pick conveyed)` };
