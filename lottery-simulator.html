@@ -334,15 +334,11 @@
             </div>
         </div>
 
-        <!-- DEBUG PANEL - remove once data confirmed correct -->
-        <div id="debug-panel" style="background:#0d0d0d;color:#00ff88;font-family:monospace;font-size:0.65rem;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;white-space:pre-wrap;line-height:1.6;display:none;"></div>
-
         <!-- Odds Table -->
         <div class="card" style="margin-bottom:1.25rem;">
             <div class="card-header">
                 <span class="card-title">2026 Lottery Odds</span>
                 <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <button onclick="document.getElementById('debug-panel').style.display=document.getElementById('debug-panel').style.display==='none'?'block':'none'" style="font-size:0.6rem;padding:2px 8px;border:1px solid #ccc;border-radius:4px;background:white;cursor:pointer;font-family:monospace;">debug</button>
                     <span class="badge badge-blue" id="odds-updated-badge">Loading...</span>
                 </div>
             </div>
@@ -479,6 +475,23 @@
                 <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Jazz</strong> can swap with <strong>Minnesota</strong> or <strong>Cleveland</strong> — often landing the most favorable of the three.</div></div>
                 <div class="swap-row" style="margin-bottom:0;"><span class="swap-arrow">→</span><div class="swap-text"><strong>Minnesota</strong> can swap with <strong>Detroit</strong>. <strong>Cleveland</strong> often ends up with the least favorable outcome.</div></div>
                 <div style="margin-top:0.75rem;padding:0.5rem 0.7rem;background:#f9f7f3;border-radius:7px;font-size:0.72rem;color:var(--mid);line-height:1.55;">Final landing spots can shift dramatically — one pick can chain through multiple teams before settling.</div>
+            </div>
+        </div>
+
+        <!-- Draft Picks #15–30 -->
+        <div class="section-label" style="margin-top:0.5rem;">Draft Picks #15–30</div>
+        <div class="card" style="margin-bottom:1.25rem;">
+            <div class="card-body" style="padding:0;">
+                <button class="explainer-toggle" onclick="togglePicks1530()" style="padding:1rem 1.25rem;width:100%;border-radius:12px;">
+                    Playoff &amp; Play-in Pick Positioning
+                    <svg id="picks1530-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.3s;flex-shrink:0;"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div id="picks1530-body" style="overflow:hidden;max-height:0;transition:max-height 0.4s ease;">
+                    <div id="picks1530-list" style="padding:0 1.25rem 1rem;">
+                        <div class="loading-pulse" style="margin-bottom:8px;width:100%;"></div>
+                        <div class="loading-pulse" style="width:80%;"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -637,18 +650,6 @@ async function fetchAndBuildLottery() {
         // Sort bubble teams worst→best (closest to getting in)
         bubblePool.sort((a,b) => a.winPct - b.winPct || b.losses - a.losses);
 
-        // Debug panel
-        const debugEl = document.getElementById('debug-panel');
-        if (debugEl) {
-            const lines = [
-                `=== LOTTERY TEAMS (${lotteryPool.length}) ===`,
-                ...lotteryPool.map((t,i)=>`#${i+1} ${t.abbr.padEnd(5)} ${t.wins}-${t.losses} seed=${t.playoffSeed} conf=${t.conference}`),
-                '', `=== BUBBLE (${bubblePool.length}) ===`,
-                ...bubblePool.slice(0,5).map(t=>`   ${t.abbr.padEnd(5)} ${t.wins}-${t.losses} seed=${t.playoffSeed}`),
-            ];
-            debugEl.textContent = lines.join('\n');
-        }
-
         const newBottom14 = lotteryPool.slice(0, 14);
         const newBubble   = bubblePool.slice(0, 5);
 
@@ -701,7 +702,7 @@ async function fetchAndBuildLottery() {
         }));
 
         COMBO_MAP = null;
-        renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard(); renderPastPicks(); populateScenarioSelect();
+        renderOddsTable(); renderSixersOddsPanel(); renderBubbleCard(); renderPastPicks(); renderPicks1530(); populateScenarioSelect();
 
         const sel = document.getElementById('until-one-team-select');
         if (sel) sel.innerHTML = lotteryTeams.map(t=>`<option value="${t.abbr}"${t.abbr==='PHI'?' selected':''}>${t.shortName}</option>`).join('');
@@ -1251,6 +1252,65 @@ function toggleOlderPicks() {
     wrap.style.maxHeight=isOpen?'0':'2000px';
     label.textContent=isOpen?'Show Earlier Years (2010–2019)':'Hide Earlier Years';
     chev.style.transform=isOpen?'':'rotate(180deg)';
+}
+
+function togglePicks1530() {
+    const body = document.getElementById('picks1530-body');
+    const chev = document.getElementById('picks1530-chevron');
+    const isOpen = body.style.maxHeight !== '0px' && body.style.maxHeight !== '';
+    body.style.maxHeight = isOpen ? '0' : '1800px';
+    chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function renderPicks1530() {
+    const el = document.getElementById('picks1530-list');
+    if (!el) return;
+
+    // Combine bubble teams (non-lottery) with any remaining playoff teams from allParsed
+    // bubbleTeams holds teams ranked 15+ by record
+    // We'll use bubbleTeams (sorted worst→best among non-lottery) for picks 15–30
+    // Pick 15 = best non-lottery team (worst record among them), pick 30 = best record
+    const nonLottery = [...bubbleTeams].sort((a,b) => a.overallRank - b.overallRank);
+
+    if (!nonLottery.length) {
+        el.innerHTML = '<div style="font-size:0.77rem;color:var(--mid);padding:0.5rem 0;">Standings loading…</div>';
+        return;
+    }
+
+    const dividerPick = 15; // picks 15-30
+    let html = '<div style="font-size:0.72rem;color:var(--mid);margin-bottom:0.65rem;line-height:1.5;">Picks 15–30 go to playoff/play-in teams in reverse order — best record gets #30, worst non-lottery record gets #15.</div>';
+    html += '<table class="lottery-table" style="font-size:0.77rem;">';
+    html += '<thead><tr><th>Pick</th><th>Team</th><th>Record</th><th style="color:var(--mid);font-size:0.57rem;">Status</th></tr></thead><tbody>';
+
+    nonLottery.forEach((t, i) => {
+        const pickNum = 15 + i;
+        const c = TEAM_COLORS[t.abbr] || '#888';
+        const isPHI = t.abbr === 'PHI';
+        // Determine status label from conference seed
+        let statusLabel = '', statusColor = 'var(--mid)';
+        if (t.playoffSeed <= 6) { statusLabel = 'Playoff'; statusColor = '#059669'; }
+        else if (t.playoffSeed <= 10) { statusLabel = 'Play-in'; statusColor = 'var(--sixers-blue)'; }
+        else { statusLabel = 'Bubble'; statusColor = 'var(--sixers-red)'; }
+        html += `<tr class="${isPHI ? 'highlight-row' : ''}">
+            <td><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;color:${pickNum<=20?'var(--sixers-blue)':'var(--mid)'};">#${pickNum}</span></td>
+            <td><div style="display:flex;align-items:center;gap:5px;">
+                <span class="team-dot" style="background:${c};"></span>
+                <span style="font-weight:${isPHI?700:500};">${t.shortName}${isPHI?' ★':''}</span>
+            </div></td>
+            <td style="color:var(--mid);font-size:0.72rem;">${t.wins}-${t.losses}</td>
+            <td><span style="font-family:'Barlow Condensed',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${statusColor};">${statusLabel}</span></td>
+        </tr>`;
+    });
+
+    // Pad to pick 30 if fewer than 16 non-lottery teams available
+    for (let i = nonLottery.length; i < 16; i++) {
+        const pickNum = 15 + i;
+        html += `<tr><td><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;color:var(--mid);">#${pickNum}</span></td><td colspan="3" style="color:var(--mid);font-size:0.72rem;">TBD</td></tr>`;
+    }
+
+    html += '</tbody></table>';
+    html += '<div style="margin-top:0.6rem;font-size:0.65rem;color:var(--mid);line-height:1.45;border-top:1px solid var(--border-light);padding-top:0.5rem;">Order is provisional — updates live as standings change. Play-in results will shift final positioning.</div>';
+    el.innerHTML = html;
 }
 
 function toggleExplainer() {
