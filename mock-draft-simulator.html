@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Mock Draft Simulator 2025</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #001a57; --navy-deep: #000d2e; --nba-blue: #006BB6;
+            --nba-red: #ED174C; --cream: #f5f0e8; --ink: #0d0d0d;
+            --mid: #4a4a5a; --border-light: #e8e4dc; --card-bg: #ffffff;
+            --gold: #c9a84c; --silver: #9ca3af; --bronze: #b45309;
+            --green: #059669;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html { font-family: 'Barlow', sans-serif; margin: 0; background: var(--cream); color: var(--ink); }
+
+        /* HERO */
+        .hero { background: var(--navy-deep); position: relative; overflow: hidden; }
+        .hero::before { content:''; position:absolute; inset:0; background-image:linear-gradient(rgba(0,107,182,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.05) 1px,transparent 1px); background-size:48px 48px; pointer-events:none; z-index:0; }
+        .hero-glow-blue { position:absolute; left:50%; top:-80px; transform:translateX(-50%); width:900px; height:500px; background:radial-gradient(ellipse at center,rgba(0,107,182,0.22) 0%,transparent 65%); pointer-events:none; z-index:0; }
+        .hero-glow-red { position:absolute; right:-100px; bottom:-60px; width:500px; height:400px; background:radial-gradient(ellipse at center,rgba(237,23,76,0.1) 0%,transparent 65%); pointer-events:none; z-index:0; }
+        .hero-inner { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:3rem 2rem 2.5rem; display:flex; flex-direction:column; align-items:center; text-align:center; }
+        .hero-eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--nba-red); margin-bottom:0.75rem; }
+        .hero-title-top { font-family:'Barlow Condensed',sans-serif; font-size:clamp(3rem,8vw,6.5rem); font-weight:900; line-height:0.85; letter-spacing:-0.01em; text-transform:uppercase; color:rgba(255,255,255,0.95); margin:0; }
+        .hero-title-bottom { font-family:'Barlow Condensed',sans-serif; font-size:clamp(3rem,8vw,6.5rem); font-weight:900; line-height:0.85; letter-spacing:-0.01em; text-transform:uppercase; background:linear-gradient(90deg,var(--nba-blue),#4da8ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin:0 0 0.15em; }
+        .hero-divider { width:40px; height:3px; background:var(--nba-red); border-radius:2px; margin:1.1rem auto 1rem; }
+        .hero-sub { font-size:0.9rem; color:rgba(255,255,255,0.38); max-width:500px; line-height:1.65; margin:0 0 1.5rem; }
+        .hero-stats { display:flex; gap:2rem; }
+        .hero-stat { text-align:center; }
+        .hero-stat-val { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:900; color:white; line-height:1; }
+        .hero-stat-label { font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-top:2px; }
+
+        /* LAYOUT */
+        .main-layout { max-width:1200px; margin:0 auto; padding:2rem; display:grid; grid-template-columns:1fr 360px; gap:1.5rem; align-items:start; }
+        .section-label { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.65rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--mid); display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem; }
+        .section-label::after { content:''; flex:1; height:1px; background:var(--border-light); }
+
+        /* CARDS */
+        .card { background:white; border:1px solid var(--border-light); border-radius:12px; overflow:hidden; margin-bottom:1.25rem; }
+        .card-header { padding:1.1rem 1.5rem 0.9rem; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; }
+        .card-title { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink); }
+        .card-body { padding:1.25rem 1.5rem; }
+
+        /* BADGES */
+        .badge { font-family:'Barlow Condensed',sans-serif; font-size:0.6rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+        .badge-blue { background:rgba(0,107,182,0.1); color:var(--nba-blue); border:1px solid rgba(0,107,182,0.2); }
+        .badge-red { background:rgba(237,23,76,0.1); color:var(--nba-red); border:1px solid rgba(237,23,76,0.2); }
+        .badge-green { background:rgba(5,150,105,0.1); color:var(--green); border:1px solid rgba(5,150,105,0.2); }
+        .badge-gold { background:rgba(201,168,76,0.12); color:var(--gold); border:1px solid rgba(201,168,76,0.3); }
+        .badge-gray { background:rgba(74,74,90,0.08); color:var(--mid); border:1px solid rgba(74,74,90,0.15); }
+
+        /* BUTTONS */
+        .btn-run { width:100%; padding:0.9rem 1.5rem; background:var(--nba-blue); color:white; border:none; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+        .btn-run:hover { background:#0080d4; transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,107,182,0.3); }
+        .btn-run:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-run.btn-red { background:var(--nba-red); }
+        .btn-run.btn-red:hover { background:#d01040; box-shadow:0 8px 24px rgba(237,23,76,0.3); }
+        .btn-secondary { padding:0.55rem 1rem; background:white; color:var(--mid); border:1px solid var(--border-light); border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+        .btn-secondary:hover { border-color:var(--nba-blue); color:var(--nba-blue); }
+        .btn-small { padding:0.35rem 0.75rem; background:white; color:var(--mid); border:1px solid var(--border-light); border-radius:6px; font-family:'Barlow Condensed',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+        .btn-small:hover { border-color:var(--nba-blue); color:var(--nba-blue); }
+        .btn-small.active { background:var(--nba-blue); color:white; border-color:var(--nba-blue); }
+
+        /* TABS */
+        .tab-bar { display:flex; border-bottom:2px solid var(--border-light); margin-bottom:1.25rem; gap:0; overflow-x:auto; }
+        .tab-btn { font-family:'Barlow Condensed',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:0.7rem 1.2rem; border:none; background:none; cursor:pointer; color:var(--mid); border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:all 0.2s; }
+        .tab-btn:hover { color:var(--ink); }
+        .tab-btn.active { color:var(--nba-blue); border-bottom-color:var(--nba-blue); }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+
+        /* DRAFT BOARD */
+        .draft-board-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+        .draft-board-table th { font-family:'Barlow Condensed',sans-serif; font-size:0.6rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid); padding:0.5rem 0.75rem; text-align:left; background:#f9f7f3; border-bottom:2px solid var(--border-light); }
+        .draft-board-table td { padding:0; border-bottom:1px solid #f0ede6; vertical-align:middle; }
+        .draft-board-table tr:last-child td { border-bottom:none; }
+        .draft-board-table tr:hover td { background:#faf8f5; }
+        .pick-row-inner { display:flex; align-items:center; padding:0.55rem 0.75rem; gap:0.75rem; }
+        .pick-num-badge { font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; font-weight:900; color:var(--navy); width:32px; text-align:center; flex-shrink:0; }
+        .pick-num-badge.top1 { color:var(--gold); }
+        .pick-num-badge.top2 { color:var(--silver); }
+        .pick-num-badge.top3 { color:var(--bronze); }
+        .pick-num-badge.top5 { color:var(--nba-blue); }
+        .player-avatar { width:38px; height:38px; border-radius:50%; background:var(--navy); display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:0.85rem; color:white; flex-shrink:0; overflow:hidden; }
+        .player-info { flex:1; min-width:0; }
+        .player-name { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.02em; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .player-meta { font-size:0.7rem; color:var(--mid); margin-top:1px; display:flex; gap:0.5rem; flex-wrap:wrap; }
+        .player-pos { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.68rem; letter-spacing:0.1em; padding:1px 6px; border-radius:3px; background:rgba(0,107,182,0.1); color:var(--nba-blue); border:1px solid rgba(0,107,182,0.2); }
+        .team-pick-col { display:flex; align-items:center; gap:0.5rem; min-width:140px; }
+        .team-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .team-name-col { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.8rem; color:var(--ink); }
+        .fit-score { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.9rem; }
+        .fit-bar { width:40px; height:4px; background:#e8e4dc; border-radius:2px; margin-top:2px; }
+        .fit-bar-fill { height:100%; border-radius:2px; background:var(--nba-blue); }
+        .action-cell { display:flex; gap:0.4rem; padding:0.55rem 0.75rem; justify-content:flex-end; }
+
+        /* PROSPECT CARD */
+        .prospect-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; }
+        .prospect-card { background:white; border:1px solid var(--border-light); border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s; }
+        .prospect-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.08); border-color:rgba(0,107,182,0.3); }
+        .prospect-card-top { padding:1.1rem 1.1rem 0.75rem; display:flex; align-items:flex-start; gap:0.75rem; }
+        .prospect-big-avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.2rem; color:white; flex-shrink:0; }
+        .prospect-name { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1rem; text-transform:uppercase; letter-spacing:0.02em; color:var(--ink); line-height:1.2; }
+        .prospect-school { font-size:0.72rem; color:var(--mid); margin-top:2px; }
+        .prospect-card-stats { display:grid; grid-template-columns:1fr 1fr 1fr; border-top:1px solid var(--border-light); }
+        .stat-cell { padding:0.6rem 0.5rem; text-align:center; border-right:1px solid var(--border-light); }
+        .stat-cell:last-child { border-right:none; }
+        .stat-val { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:800; color:var(--ink); }
+        .stat-label { font-size:0.6rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--mid); margin-top:1px; }
+        .rank-chip { font-family:'Barlow Condensed',sans-serif; font-size:0.6rem; font-weight:700; letter-spacing:0.1em; padding:1px 6px; border-radius:3px; margin-top:3px; display:inline-block; }
+
+        /* TRADE MACHINE */
+        .trade-zone { border:2px dashed var(--border-light); border-radius:10px; padding:1rem; min-height:80px; transition:all 0.2s; }
+        .trade-zone.drag-over { border-color:var(--nba-blue); background:rgba(0,107,182,0.03); }
+        .trade-chip { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#f9f7f3; border:1px solid var(--border-light); border-radius:8px; margin:0.2rem; font-size:0.8rem; font-weight:600; }
+        .trade-chip .remove { cursor:pointer; color:var(--nba-red); font-weight:900; font-size:0.9rem; line-height:1; }
+
+        /* ANALYTICS */
+        .analytics-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1.25rem; }
+        .stat-box { background:#f9f7f3; border:1px solid var(--border-light); border-radius:8px; padding:0.85rem 1rem; text-align:center; }
+        .stat-box-val { font-family:'Barlow Condensed',sans-serif; font-size:1.8rem; font-weight:900; color:var(--nba-blue); line-height:1; }
+        .stat-box-label { font-size:0.62rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--mid); margin-top:3px; }
+
+        /* NEED BAR */
+        .need-row { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.5rem; }
+        .need-pos { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.72rem; width:30px; color:var(--ink); }
+        .need-bar-track { flex:1; height:6px; background:#e8e4dc; border-radius:3px; overflow:hidden; }
+        .need-bar-fill { height:100%; border-radius:3px; }
+        .need-pct { font-family:'Barlow Condensed',sans-serif; font-size:0.7rem; font-weight:600; width:32px; text-align:right; color:var(--mid); }
+
+        /* MODAL */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:10000; align-items:center; justify-content:center; padding:1rem; backdrop-filter:blur(4px); }
+        .modal-overlay.open { display:flex; animation:fadeIn 0.2s ease; }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .modal { background:white; border-radius:16px; padding:1.75rem; max-width:560px; width:100%; box-shadow:0 24px 64px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1); max-height:90vh; overflow-y:auto; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        .modal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem; }
+        .modal-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.4rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink); }
+        .modal-close { background:none; border:none; cursor:pointer; font-size:1.3rem; color:var(--mid); line-height:1; padding:0; }
+        .modal-close:hover { color:var(--ink); }
+
+        /* PLAYER DETAIL */
+        .player-detail-top { display:flex; gap:1.25rem; margin-bottom:1.25rem; }
+        .player-detail-avatar { width:80px; height:80px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:2rem; color:white; flex-shrink:0; }
+        .player-detail-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.8rem; text-transform:uppercase; letter-spacing:0.02em; color:var(--ink); line-height:1; margin-bottom:0.3rem; }
+        .player-detail-meta { font-size:0.8rem; color:var(--mid); margin-bottom:0.6rem; }
+        .attribute-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:1.1rem; }
+        .attribute-item { background:#f9f7f3; border-radius:7px; padding:0.6rem 0.8rem; }
+        .attribute-label { font-size:0.62rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--mid); }
+        .attribute-bar-row { display:flex; align-items:center; gap:0.5rem; margin-top:4px; }
+        .attribute-bar-track { flex:1; height:5px; background:#e8e4dc; border-radius:3px; overflow:hidden; }
+        .attribute-bar-fill { height:100%; border-radius:3px; }
+        .attribute-score { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.85rem; width:26px; text-align:right; }
+        .comp-block { background:#f9f7f3; border:1px solid var(--border-light); border-radius:8px; padding:0.8rem 1rem; margin-bottom:0.75rem; }
+        .comp-label { font-size:0.65rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--mid); margin-bottom:0.3rem; }
+        .comp-name { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ink); }
+        .comp-desc { font-size:0.75rem; color:var(--mid); line-height:1.5; margin-top:0.2rem; }
+
+        /* TEAM NEEDS SIDEBAR */
+        .team-select-group { display:flex; align-items:center; gap:0.5rem; }
+        .styled-select { padding:0.45rem 0.7rem; border:1px solid var(--border-light); border-radius:7px; font-size:0.8rem; background:white; color:var(--ink); cursor:pointer; font-family:'Barlow',sans-serif; width:100%; }
+
+        /* SIMULATION */
+        @keyframes slideInRow { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+        .draft-row-new { animation:slideInRow 0.35s ease forwards; }
+        @keyframes spinBall { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        .sim-spinner { width:48px; height:48px; border-radius:50%; border:3px solid var(--nba-blue); position:relative; animation:spinBall 0.7s linear infinite; }
+        .sim-spinner::before { content:'🏀'; font-size:1.4rem; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); animation:spinBall 0.7s linear infinite reverse; }
+
+        /* PROGRESS BAR */
+        .draft-progress-bar { height:6px; background:#e8e4dc; border-radius:3px; overflow:hidden; margin-bottom:1rem; }
+        .draft-progress-fill { height:100%; background:linear-gradient(90deg,var(--nba-blue),#4da8ff); border-radius:3px; transition:width 0.4s ease; }
+
+        /* ON THE CLOCK */
+        .clock-banner { background:linear-gradient(135deg,var(--navy-deep),#00245e); border-radius:10px; padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+        .clock-label { font-size:0.62rem; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.4); }
+        .clock-team { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.3rem; text-transform:uppercase; color:white; }
+        .clock-pick-num { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:2.5rem; color:var(--gold); line-height:1; }
+
+        /* LOADING */
+        .loading-pulse { height:16px; background:linear-gradient(90deg,#e8e4dc 25%,#f0ede6 50%,#e8e4dc 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+        /* CONFETTI */
+        .confetti-piece { position:fixed; bottom:-10px; animation:confettiRise linear forwards; z-index:9999; pointer-events:none; }
+        @keyframes confettiRise { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-110vh) rotate(720deg);opacity:0} }
+
+        /* HISTORY LOG */
+        .log-entry { padding:0.5rem 0; border-bottom:1px solid #f0ede6; display:flex; align-items:flex-start; gap:0.6rem; font-size:0.78rem; }
+        .log-entry:last-child { border-bottom:none; }
+        .log-pick { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.9rem; width:28px; flex-shrink:0; color:var(--mid); }
+        .log-text { line-height:1.45; }
+        .log-text strong { color:var(--ink); }
+
+        /* TIER LABELS */
+        .tier-divider { text-align:center; padding:0.4rem 0; background:linear-gradient(90deg,transparent,rgba(0,107,182,0.08),transparent); font-family:'Barlow Condensed',sans-serif; font-size:0.6rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--nba-blue); }
+
+        /* COMPARISON TABLE */
+        .compare-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+        .compare-table th { font-family:'Barlow Condensed',sans-serif; font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--mid); padding:0.45rem 0.75rem; text-align:left; background:#f9f7f3; border-bottom:1px solid var(--border-light); }
+        .compare-table td { padding:0.5rem 0.75rem; border-bottom:1px solid #f0ede6; }
+        .compare-table tr:last-child td { border-bottom:none; }
+        .compare-table .best { color:var(--green); font-weight:700; }
+
+        /* PICK HISTORY DISPLAY */
+        .round-header { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--navy); display:flex; align-items:center; gap:0.5rem; margin:1rem 0 0.4rem; }
+        .round-header::after { content:''; flex:1; height:1px; background:var(--border-light); }
+
+        /* RESPONSIVE */
+        @media(max-width:860px){
+            .main-layout { grid-template-columns:1fr; }
+            .hero-stats { gap:1.25rem; }
+            .analytics-grid { grid-template-columns:1fr 1fr; }
+            .prospect-grid { grid-template-columns:1fr 1fr; }
+        }
+        @media(max-width:540px){
+            .prospect-grid { grid-template-columns:1fr; }
+            .analytics-grid { grid-template-columns:1fr 1fr; }
+            .hero-inner { padding:2rem 1rem 1.5rem; }
+            .main-layout { padding:1rem; }
+        }
+
+        /* TOOLTIP */
+        [data-tooltip] { position:relative; }
+        [data-tooltip]:hover::after { content:attr(data-tooltip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:var(--navy-deep); color:white; font-size:0.7rem; padding:4px 9px; border-radius:5px; white-space:nowrap; z-index:100; pointer-events:none; font-family:'Barlow',sans-serif; }
+
+        /* STICKY HEADER */
+        .draft-sticky-header { position:sticky; top:0; z-index:20; background:white; border-bottom:2px solid var(--border-light); }
+
+        /* TEAM COLOR CHIPS */
+        .team-chip { display:inline-flex; align-items:center; gap:0.35rem; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.75rem; text-transform:uppercase; }
+        .team-chip-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+        select.styled-select:focus { outline:2px solid var(--nba-blue); outline-offset:2px; }
+
+        .scroll-hint { font-size:0.7rem; color:var(--mid); text-align:center; padding:0.5rem; display:none; }
+        @media(max-width:700px){ .scroll-hint { display:block; } }
+
+        .draft-complete-banner { background:linear-gradient(135deg,var(--navy-deep),#00245e); border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1rem; animation:headlinePop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes headlinePop { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+        .draft-complete-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:2rem; text-transform:uppercase; color:white; }
+        .draft-complete-sub { font-size:0.82rem; color:rgba(255,255,255,0.5); margin-top:0.3rem; }
+    </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-glow-blue"></div>
+    <div class="hero-glow-red"></div>
+    <div class="hero-inner">
+        <div class="hero-eyebrow">🏀 Interactive Simulator</div>
+        <div class="hero-title-top">2025 NBA</div>
+        <div class="hero-title-bottom">Mock Draft</div>
+        <div class="hero-divider"></div>
+        <p class="hero-sub">Simulate every pick across all 30 teams. Explore prospects, analyze needs, execute trades, and build your own draft board.</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-val" id="hero-prospects">60</div>
+                <div class="hero-stat-label">Prospects</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-val">30</div>
+                <div class="hero-stat-label">Teams</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-val">2</div>
+                <div class="hero-stat-label">Rounds</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-val" id="hero-sims">0</div>
+                <div class="hero-stat-label">Sims Run</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-layout">
+    <!-- LEFT COLUMN -->
+    <div>
+        <!-- Draft Board + Controls -->
+        <div class="section-label">Draft Simulator</div>
+
+        <!-- On The Clock Banner -->
+        <div id="clock-banner" class="clock-banner" style="display:none;">
+            <div>
+                <div class="clock-label">On The Clock</div>
+                <div class="clock-team" id="clock-team-name">—</div>
+            </div>
+            <div style="text-align:center;">
+                <div class="clock-label">Pick</div>
+                <div class="clock-pick-num" id="clock-pick-num">1</div>
+            </div>
+            <button class="btn-small" id="auto-pick-btn" onclick="autoPickOne()">Auto Pick</button>
+        </div>
+
+        <!-- Draft Complete Banner -->
+        <div id="draft-complete-banner" class="draft-complete-banner" style="display:none;">
+            <div class="draft-complete-title">🏆 Draft Complete!</div>
+            <div class="draft-complete-sub" id="draft-complete-sub"></div>
+        </div>
+
+        <!-- Draft Controls -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Draft Board</span>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                    <span class="badge badge-blue" id="round-badge">Round 1 — Pick 1</span>
+                    <button class="btn-small" id="view-mode-btn" onclick="toggleViewMode()">Card View</button>
+                </div>
+            </div>
+            <div class="card-body" style="padding:1rem 1.5rem;">
+                <!-- Progress Bar -->
+                <div style="margin-bottom:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;">
+                        <span style="font-size:0.7rem;color:var(--mid);">Draft Progress</span>
+                        <span id="progress-label" style="font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;color:var(--nba-blue);">0 / 60 picks</span>
+                    </div>
+                    <div class="draft-progress-bar"><div class="draft-progress-fill" id="progress-fill" style="width:0%"></div></div>
+                </div>
+                <!-- Action Buttons -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;margin-bottom:0.75rem;">
+                    <button class="btn-run" id="run-sim-btn" onclick="runSimulation()">▶ Simulate Draft</button>
+                    <button class="btn-run" style="background:white;color:var(--nba-blue);border:1.5px solid var(--nba-blue);" onclick="nextPick()" id="next-pick-btn">Next Pick</button>
+                    <button class="btn-secondary" onclick="resetDraft()">↺ Reset</button>
+                </div>
+                <!-- Speed Control -->
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
+                    <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);">Speed:</span>
+                    <div style="display:flex;gap:0.4rem;">
+                        <button class="btn-small active" id="speed-slow" onclick="setSpeed('slow',this)">Slow</button>
+                        <button class="btn-small" id="speed-med" onclick="setSpeed('med',this)">Med</button>
+                        <button class="btn-small" id="speed-fast" onclick="setSpeed('fast',this)">Fast</button>
+                        <button class="btn-small" id="speed-instant" onclick="setSpeed('instant',this)">Instant</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Draft Table -->
+            <div class="scroll-hint">← Scroll horizontally to see all columns →</div>
+            <div style="overflow-x:auto;">
+                <table class="draft-board-table">
+                    <thead class="draft-sticky-header">
+                        <tr>
+                            <th style="width:44px;">#</th>
+                            <th>Player</th>
+                            <th>Pos</th>
+                            <th>Team Picking</th>
+                            <th>Fit</th>
+                            <th style="text-align:right;padding-right:1rem;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="draft-tbody">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabbed Analysis Section -->
+        <div class="section-label">Analysis & Tools</div>
+        <div class="card">
+            <div class="tab-bar" style="padding:0 1rem;">
+                <button class="tab-btn active" onclick="switchTab('prospects',this)">Big Board</button>
+                <button class="tab-btn" onclick="switchTab('compare',this)">Compare</button>
+                <button class="tab-btn" onclick="switchTab('trades',this)">Trade Machine</button>
+                <button class="tab-btn" onclick="switchTab('history',this)">Pick Log</button>
+                <button class="tab-btn" onclick="switchTab('analytics',this)">Analytics</button>
+            </div>
+
+            <!-- BIG BOARD -->
+            <div id="tab-prospects" class="tab-panel active" style="padding:1rem 1.25rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.9rem;flex-wrap:wrap;">
+                    <input type="text" id="player-search" placeholder="Search prospect…" oninput="filterProspects()" style="flex:1;min-width:160px;padding:0.45rem 0.8rem;border:1px solid var(--border-light);border-radius:7px;font-size:0.82rem;font-family:'Barlow',sans-serif;">
+                    <select id="pos-filter" class="styled-select" style="width:auto;" onchange="filterProspects()">
+                        <option value="">All Positions</option>
+                        <option value="PG">PG</option>
+                        <option value="SG">SG</option>
+                        <option value="SF">SF</option>
+                        <option value="PF">PF</option>
+                        <option value="C">C</option>
+                    </select>
+                    <select id="tier-filter" class="styled-select" style="width:auto;" onchange="filterProspects()">
+                        <option value="">All Tiers</option>
+                        <option value="1">Tier 1 — Elite</option>
+                        <option value="2">Tier 2 — Lottery</option>
+                        <option value="3">Tier 3 — Late Lottery</option>
+                        <option value="4">Tier 4 — Second Round</option>
+                    </select>
+                </div>
+                <div class="prospect-grid" id="prospect-grid">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <!-- COMPARE -->
+            <div id="tab-compare" class="tab-panel" style="padding:1rem 1.25rem;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+                    <div>
+                        <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Player A</label>
+                        <select id="compare-a" class="styled-select" onchange="renderComparison()">
+                            <option value="">— Select —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Player B</label>
+                        <select id="compare-b" class="styled-select" onchange="renderComparison()">
+                            <option value="">— Select —</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="comparison-result"></div>
+            </div>
+
+            <!-- TRADE MACHINE -->
+            <div id="tab-trades" class="tab-panel" style="padding:1rem 1.25rem;">
+                <div style="font-size:0.8rem;color:var(--mid);margin-bottom:1rem;line-height:1.55;">Simulate a pick trade between two teams. Drag picks into the zones or use the dropdowns below.</div>
+                <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;align-items:start;margin-bottom:1rem;">
+                    <div>
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.4rem;">Team A Gives</div>
+                        <select id="trade-team-a" class="styled-select" style="margin-bottom:0.5rem;" onchange="updateTradePicks('a')">
+                            <option value="">Select Team</option>
+                        </select>
+                        <select id="trade-pick-a" class="styled-select" style="margin-bottom:0.5rem;">
+                            <option value="">Select Pick</option>
+                        </select>
+                        <button class="btn-small" onclick="addToTrade('a')">Add Pick</button>
+                        <div id="trade-zone-a" class="trade-zone" style="margin-top:0.5rem;min-height:60px;">
+                            <div style="color:var(--mid);font-size:0.75rem;text-align:center;padding-top:0.5rem;" id="trade-zone-a-empty">No picks added</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;padding-top:3.5rem;gap:0.4rem;">
+                        <div style="font-size:1.3rem;">⇄</div>
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);">Trade</div>
+                    </div>
+                    <div>
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.4rem;">Team B Gives</div>
+                        <select id="trade-team-b" class="styled-select" style="margin-bottom:0.5rem;" onchange="updateTradePicks('b')">
+                            <option value="">Select Team</option>
+                        </select>
+                        <select id="trade-pick-b" class="styled-select" style="margin-bottom:0.5rem;">
+                            <option value="">Select Pick</option>
+                        </select>
+                        <button class="btn-small" onclick="addToTrade('b')">Add Pick</button>
+                        <div id="trade-zone-b" class="trade-zone" style="margin-top:0.5rem;min-height:60px;">
+                            <div style="color:var(--mid);font-size:0.75rem;text-align:center;padding-top:0.5rem;" id="trade-zone-b-empty">No picks added</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="trade-value-bar" style="display:none;margin-bottom:0.75rem;"></div>
+                <button class="btn-run" onclick="executeTrade()">Execute Trade</button>
+                <div id="trade-result" style="margin-top:0.75rem;"></div>
+            </div>
+
+            <!-- PICK LOG -->
+            <div id="tab-history" class="tab-panel" style="padding:1rem 1.25rem;">
+                <div id="pick-log-content">
+                    <div style="text-align:center;padding:2rem;color:var(--mid);font-size:0.82rem;">No picks made yet. Start the simulation!</div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS -->
+            <div id="tab-analytics" class="tab-panel" style="padding:1rem 1.25rem;">
+                <div class="analytics-grid" id="analytics-grid">
+                    <div class="stat-box"><div class="stat-box-val" id="an-picks-made">0</div><div class="stat-box-label">Picks Made</div></div>
+                    <div class="stat-box"><div class="stat-box-val" id="an-avg-rank">—</div><div class="stat-box-label">Avg Rank Reached</div></div>
+                    <div class="stat-box"><div class="stat-box-val" id="an-trades">0</div><div class="stat-box-label">Trades Executed</div></div>
+                    <div class="stat-box"><div class="stat-box-val" id="an-steals">0</div><div class="stat-box-label">Draft Steals</div></div>
+                </div>
+                <div class="section-label">Position Distribution</div>
+                <div id="pos-distribution" style="margin-bottom:1.25rem;"></div>
+                <div class="section-label">Best Value Picks</div>
+                <div id="best-value-list"></div>
+                <div class="section-label" style="margin-top:1rem;">Team Grades</div>
+                <div id="team-grades-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div>
+        <!-- Your Team -->
+        <div class="section-label">My Team</div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Your Team</span>
+                <span class="badge badge-green" id="my-picks-count">0 Picks</span>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom:0.75rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Select Your Team</label>
+                    <select id="my-team-select" class="styled-select" onchange="onMyTeamChange()">
+                        <option value="">— Choose a team —</option>
+                    </select>
+                </div>
+                <div id="my-team-needs" style="display:none;">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.6rem;">Team Needs by Position</div>
+                    <div id="my-team-needs-bars"></div>
+                </div>
+                <div id="my-team-picks" style="margin-top:0.75rem;">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.5rem;">Draft Picks</div>
+                    <div id="my-team-picks-list" style="color:var(--mid);font-size:0.78rem;">Select a team to see their picks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="section-label">Draft Settings</div>
+        <div class="card">
+            <div class="card-header"><span class="card-title">Settings</span></div>
+            <div class="card-body">
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Draft Mode</label>
+                    <select id="draft-mode-select" class="styled-select">
+                        <option value="auto">Fully Auto (AI picks all)</option>
+                        <option value="my_team">My Team Only (I pick for my team)</option>
+                        <option value="user">Full User Control (I pick all)</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">AI Draft Strategy</label>
+                    <select id="ai-strategy-select" class="styled-select">
+                        <option value="bpa">Best Player Available</option>
+                        <option value="need">Team Needs Based</option>
+                        <option value="mixed">Mixed (BPA + Needs)</option>
+                        <option value="reach">Boom-or-Bust Reaches</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Trade Frequency</label>
+                    <select id="trade-freq-select" class="styled-select">
+                        <option value="none">No AI Trades</option>
+                        <option value="low">Low (1-2 trades)</option>
+                        <option value="med" selected>Medium (3-5 trades)</option>
+                        <option value="high">High (6+ trades)</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:0.5rem;">
+                    <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+                        <input type="checkbox" id="surprise-toggle" checked style="accent-color:var(--nba-blue);width:14px;height:14px;">
+                        <span style="font-size:0.8rem;color:var(--ink);">Enable draft-day surprises</span>
+                    </label>
+                </div>
+                <div>
+                    <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+                        <input type="checkbox" id="grade-toggle" checked style="accent-color:var(--nba-blue);width:14px;height:14px;">
+                        <span style="font-size:0.8rem;color:var(--ink);">Show pick grades</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Picker (manual pick helper) -->
+        <div class="section-label">Manual Pick Helper</div>
+        <div class="card">
+            <div class="card-header"><span class="card-title">Make A Pick</span><span class="badge badge-blue" id="manual-pick-for">Pick 1</span></div>
+            <div class="card-body">
+                <div style="margin-bottom:0.6rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Select Player</label>
+                    <select id="manual-player-select" class="styled-select">
+                        <option value="">— Available prospects —</option>
+                    </select>
+                </div>
+                <button class="btn-run btn-red" onclick="makeManualPick()">Draft This Player</button>
+            </div>
+        </div>
+
+        <!-- Draft Recap (shown after complete) -->
+        <div id="recap-card" class="card" style="display:none;">
+            <div class="card-header"><span class="card-title">Draft Recap</span><span class="badge badge-gold">Complete</span></div>
+            <div class="card-body" id="recap-body"></div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="section-label" style="margin-top:0.5rem;">Session Stats</div>
+        <div class="card">
+            <div class="card-body">
+                <div class="analytics-grid" style="margin-bottom:0;">
+                    <div class="stat-box"><div class="stat-box-val" id="sess-sims">0</div><div class="stat-box-label">Sims Run</div></div>
+                    <div class="stat-box"><div class="stat-box-val" id="sess-trades">0</div><div class="stat-box-label">Trades Made</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PLAYER DETAIL MODAL -->
+<div class="modal-overlay" id="player-modal">
+    <div class="modal" id="player-modal-content" style="max-width:600px;">
+        <div class="modal-header">
+            <div class="modal-title" id="modal-player-name">Player Name</div>
+            <button class="modal-close" onclick="closeModal('player-modal')">✕</button>
+        </div>
+        <div id="modal-player-body"></div>
+    </div>
+</div>
+
+<!-- MANUAL PICK MODAL (user control mode) -->
+<div class="modal-overlay" id="pick-modal">
+    <div class="modal" id="pick-modal-content" style="max-width:480px;">
+        <div class="modal-header">
+            <div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--mid);margin-bottom:0.2rem;" id="pick-modal-team-label">Team on the Clock</div>
+                <div class="modal-title" id="pick-modal-title">Pick 1</div>
+            </div>
+            <button class="modal-close" onclick="closeModal('pick-modal');autoPickOne()">Auto ✕</button>
+        </div>
+        <div style="font-size:0.78rem;color:var(--mid);margin-bottom:1rem;" id="pick-modal-sub"></div>
+        <div id="pick-modal-options" style="display:flex;flex-direction:column;gap:0.5rem;max-height:400px;overflow-y:auto;padding-right:4px;"></div>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const TEAM_COLORS = {
+    ATL:'#E03A3E',BOS:'#007A33',BKN:'#000000',CHA:'#00788C',CHI:'#CE1141',
+    CLE:'#860038',DAL:'#00538C',DEN:'#FEC524',DET:'#C8102E',GSW:'#1D428A',
+    HOU:'#CE1141',IND:'#002D62',LAC:'#C8102E',LAL:'#552583',MEM:'#5D76A9',
+    MIA:'#98002E',MIL:'#00471B',MIN:'#0C2340',NOP:'#0C2340',NYK:'#F58426',
+    OKC:'#007AC1',ORL:'#0077C0',PHI:'#006BB6',PHX:'#1D1160',POR:'#E03A3E',
+    SAC:'#5A2D81',SAS:'#C4CED4',TOR:'#CE1141',UTA:'#002B5C',WAS:'#002B5C'
+};
+const TEAM_NAMES = {
+    ATL:'Hawks',BOS:'Celtics',BKN:'Nets',CHA:'Hornets',CHI:'Bulls',
+    CLE:'Cavaliers',DAL:'Mavericks',DEN:'Nuggets',DET:'Pistons',GSW:'Warriors',
+    HOU:'Rockets',IND:'Pacers',LAC:'Clippers',LAL:'Lakers',MEM:'Grizzlies',
+    MIA:'Heat',MIL:'Bucks',MIN:'Timberwolves',NOP:'Pelicans',NYK:'Knicks',
+    OKC:'Thunder',ORL:'Magic',PHI:'76ers',PHX:'Suns',POR:'Trail Blazers',
+    SAC:'Kings',SAS:'Spurs',TOR:'Raptors',UTA:'Jazz',WAS:'Wizards'
+};
+const TEAM_FULL = abbr => `${abbr} ${TEAM_NAMES[abbr]||''}`;
+
+// 2025 NBA Draft Order (rough projection)
+const DRAFT_ORDER_R1 = ['DAL','SAS','PHI','CHI','UTA','WAS','CHA','POR','DET','SAS','NOP','ORL','SAC','ATL','BKN','TOR','MIN','MIA','OKC','IND','GSW','BOS','HOU','LAL','LAC','NYK','CLE','MEM','MIL','DEN'];
+const DRAFT_ORDER_R2 = ['DAL','SAS','PHI','CHI','UTA','WAS','CHA','POR','DET','PHX','NOP','ORL','SAC','ATL','BKN','TOR','MIN','MIA','OKC','IND','GSW','BOS','HOU','LAL','LAC','NYK','CLE','MEM','MIL','DEN'];
+
+// Roster needs by position (score 0-100, higher = bigger need)
+const TEAM_NEEDS = {
+    DAL:{PG:80,SG:40,SF:50,PF:60,C:70},SAS:{PG:90,SG:50,SF:60,PF:70,C:80},
+    PHI:{PG:70,SG:80,SF:60,PF:50,C:40},CHI:{PG:60,SG:70,SF:80,PF:50,C:60},
+    UTA:{PG:80,SG:60,SF:70,PF:80,C:90},WAS:{PG:90,SG:80,SF:70,PF:60,C:50},
+    CHA:{PG:60,SG:70,SF:80,PF:90,C:80},POR:{PG:70,SG:60,SF:90,PF:80,C:70},
+    DET:{PG:50,SG:80,SF:70,PF:60,C:80},PHX:{PG:80,SG:70,SF:60,PF:50,C:90},
+    NOP:{PG:70,SG:80,SF:90,PF:60,C:50},ORL:{PG:60,SG:70,SF:80,PF:90,C:60},
+    SAC:{PG:50,SG:60,SF:70,PF:80,C:90},ATL:{PG:80,SG:60,SF:70,PF:80,C:70},
+    BKN:{PG:90,SG:80,SF:70,PF:60,C:50},TOR:{PG:70,SG:90,SF:60,PF:50,C:80},
+    MIN:{PG:60,SG:70,SF:80,PF:60,C:50},MIA:{PG:70,SG:60,SF:80,PF:70,C:60},
+    OKC:{PG:50,SG:80,SF:70,PF:60,C:70},IND:{PG:60,SG:50,SF:70,PF:80,C:90},
+    GSW:{PG:70,SG:80,SF:60,PF:50,C:80},BOS:{PG:50,SG:60,SF:70,PF:80,C:90},
+    HOU:{PG:80,SG:90,SF:60,PF:50,C:70},LAL:{PG:90,SG:70,SF:60,PF:80,C:50},
+    LAC:{PG:70,SG:60,SF:80,PF:90,C:60},NYK:{PG:80,SG:70,SF:60,PF:50,C:90},
+    CLE:{PG:50,SG:80,SF:70,PF:60,C:70},MEM:{PG:60,SG:70,SF:80,PF:60,C:50},
+    MIL:{PG:80,SG:60,SF:70,PF:50,C:80},DEN:{PG:70,SG:80,SF:60,PF:70,C:50}
+};
+
+// 60 Prospects for 2025 NBA Draft
+const PROSPECTS_DATA = [
+    // TIER 1 — Elite
+    {id:1,name:'Cooper Flagg',school:'Duke',pos:'SF',height:"6'9\"",weight:205,age:18,tier:1,ppg:19.2,rpg:8.4,apg:4.1,attrs:{Athleticism:94,Defense:89,Shooting:83,Playmaking:86,IQ:92,Upside:97},comp:'Kevin Durant ceiling',compDesc:'Elite two-way forward with size, skill, and elite basketball IQ',color:'#1D428A'},
+    {id:2,name:'Dylan Harper',school:'Rutgers',pos:'SG',height:"6'6\"",weight:207,age:18,tier:1,ppg:22.1,rpg:5.2,apg:5.8,attrs:{Athleticism:91,Defense:82,Shooting:88,Playmaking:90,IQ:87,Upside:93},comp:'Donovan Mitchell',compDesc:'Elite scorer with playmaking ability and competitive fire',color:'#C8102E'},
+    {id:3,name:'Ace Bailey',school:'Rutgers',pos:'SF',height:"6'9\"",weight:195,age:18,tier:1,ppg:18.5,rpg:7.8,apg:2.4,attrs:{Athleticism:96,Defense:80,Shooting:85,Playmaking:75,IQ:82,Upside:96},comp:'Paul George',compDesc:'Elite athlete with long frame, scoring instincts, and defensive upside',color:'#002D62'},
+    {id:4,name:'VJ Edgecombe',school:'Baylor',pos:'SG',height:"6'5\"",weight:194,age:19,tier:1,ppg:14.8,rpg:4.9,apg:4.2,attrs:{Athleticism:97,Defense:85,Shooting:80,Playmaking:82,IQ:83,Upside:94},comp:'De\'Aaron Fox',compDesc:'Elite athleticism and defense with expanding offensive game',color:'#003478'},
+    {id:5,name:'Jeremiah Fears',school:'Oklahoma',pos:'PG',height:"6'4\"",weight:178,age:18,tier:1,ppg:17.6,rpg:3.8,apg:6.9,attrs:{Athleticism:88,Defense:79,Shooting:84,Playmaking:93,IQ:89,Upside:92},comp:'Tyrese Haliburton',compDesc:'Elite playmaker and floor general with deep shooting range',color:'#CC0000'},
+    // TIER 2 — Lottery
+    {id:6,name:'Nolan Traore',school:'Saint Quentin',pos:'PG',height:"6'3\"",weight:180,age:18,tier:2,ppg:14.2,rpg:3.5,apg:7.8,attrs:{Athleticism:85,Defense:76,Shooting:78,Playmaking:94,IQ:88,Upside:89},comp:'Immanuel Quickley',compDesc:'European PG with elite vision and underrated athleticism',color:'#5A189A'},
+    {id:7,name:'Tre Johnson',school:'Texas',pos:'SG',height:"6'6\"",weight:190,age:19,tier:2,ppg:20.2,rpg:4.1,apg:2.9,attrs:{Athleticism:84,Defense:74,Shooting:92,Playmaking:80,IQ:82,Upside:87},comp:'Desmond Bane',compDesc:'Elite scorer who can create off the dribble or catch-and-shoot',color:'#BF5700'},
+    {id:8,name:'Kon Knueppel',school:'Duke',pos:'SG',height:"6'6\"",weight:210,age:19,tier:2,ppg:15.2,rpg:5.4,apg:3.2,attrs:{Athleticism:80,Defense:82,Shooting:90,Playmaking:79,IQ:91,Upside:86},comp:'Klay Thompson',compDesc:'Off-ball wing with elite shooting, IQ, and defensive capabilities',color:'#003087'},
+    {id:9,name:'Khaman Maluach',school:'Duke',pos:'C',height:"7'2\"",weight:245,age:18,tier:2,ppg:11.5,rpg:9.8,apg:1.2,attrs:{Athleticism:89,Defense:88,Shooting:72,Playmaking:60,IQ:79,Upside:91},comp:'Brook Lopez',compDesc:'Seven-footer with elite mobility and shot-blocking instincts',color:'#003087'},
+    {id:10,name:'Carter Bryant',school:'Arizona',pos:'SF',height:"6'9\"",weight:215,age:18,tier:2,ppg:12.1,rpg:6.2,apg:2.8,attrs:{Athleticism:87,Defense:83,Shooting:82,Playmaking:77,IQ:84,Upside:88},comp:'Mikal Bridges',compDesc:'Long, versatile two-way wing with high floor and elite length',color:'#CC0000'},
+    {id:11,name:'Liam McNeeley',school:'Connecticut',pos:'SF',height:"6'7\"",weight:200,age:18,tier:2,ppg:14.8,rpg:5.6,apg:2.1,attrs:{Athleticism:83,Defense:80,Shooting:88,Playmaking:76,IQ:85,Upside:85},comp:'Tobias Harris',compDesc:'Consistent scorer who can play multiple positions and spaces the floor',color:'#002868'},
+    {id:12,name:'Collin Murray-Boyles',school:'South Carolina',pos:'PF',height:"6'7\"",weight:230,age:19,tier:2,ppg:16.4,rpg:8.9,apg:3.1,attrs:{Athleticism:90,Defense:86,Shooting:72,Playmaking:80,IQ:87,Upside:90},comp:'Draymond Green',compDesc:'Elite defender and connector who elevates teammates',color:'#72000C'},
+    {id:13,name:'Egor Demin',school:'BYU',pos:'PG',height:"6'9\"",weight:185,age:18,tier:2,ppg:9.4,rpg:5.1,apg:6.8,attrs:{Athleticism:82,Defense:75,Shooting:77,Playmaking:88,IQ:86,Upside:90},comp:'Ben Simmons (shooting upside)',compDesc:'Tall, pass-first PG with rare size and court vision for the position',color:'#002E5D'},
+    {id:14,name:'Darryn Peterson',school:'Kansas',pos:'SG',height:"6'5\"",weight:205,age:18,tier:2,ppg:15.7,rpg:4.6,apg:4.3,attrs:{Athleticism:88,Defense:83,Shooting:84,Playmaking:85,IQ:84,Upside:88},comp:'Jalen Suggs',compDesc:'Two-way guard who competes on both ends with playmaking flair',color:'#0051A5'},
+    {id:15,name:'Ian Jackson',school:'NC State',pos:'SG',height:"6'5\"",weight:190,age:18,tier:2,ppg:16.2,rpg:5.0,apg:3.8,attrs:{Athleticism:90,Defense:82,Shooting:81,Playmaking:83,IQ:81,Upside:87},comp:'Anthony Edwards (similar profile)',compDesc:'Shot-creator with elite first step and improving perimeter shot',color:'#CC0000'},
+    // TIER 3 — Late Lottery / Early 2nd
+    {id:16,name:'Rasheer Fleming',school:'Saint Joseph\'s',pos:'PF',height:"6'8\"",weight:220,age:20,tier:3,ppg:17.4,rpg:7.8,apg:2.2,attrs:{Athleticism:86,Defense:84,Shooting:80,Playmaking:71,IQ:82,Upside:83},comp:'Aaron Gordon',compDesc:'Athletic PF who can protect the rim and run the floor',color:'#B0172B'},
+    {id:17,name:'Thomas Sorber',school:'Georgetown',pos:'C',height:"6'10\"",weight:250,age:19,tier:3,ppg:15.2,rpg:9.7,apg:2.4,attrs:{Athleticism:84,Defense:87,Shooting:68,Playmaking:71,IQ:85,Upside:84},comp:'Clint Capela',compDesc:'Skilled big with footwork, passing, and shot-blocking ability',color:'#002D6C'},
+    {id:18,name:'Will Riley',school:'Illinois',pos:'SG',height:"6'6\"",weight:190,age:18,tier:3,ppg:13.6,rpg:4.5,apg:2.6,attrs:{Athleticism:85,Defense:76,Shooting:83,Playmaking:78,IQ:80,Upside:86},comp:'Jordan Poole',compDesc:'Shot creator with fluid mechanics and pull-up 3 capability',color:'#13294B'},
+    {id:19,name:'Jalil Bethea',school:'Indiana',pos:'PG',height:"6'3\"",weight:185,age:18,tier:3,ppg:14.8,rpg:3.9,apg:5.4,attrs:{Athleticism:86,Defense:78,Shooting:80,Playmaking:88,IQ:82,Upside:85},comp:'Cole Anthony',compDesc:'Dynamic playmaker and scorer who can operate in P&R',color:'#990000'},
+    {id:20,name:'Asa Newell',school:'Georgia',pos:'PF',height:"6'10\"",weight:225,age:18,tier:3,ppg:14.1,rpg:8.2,apg:2.0,attrs:{Athleticism:87,Defense:83,Shooting:76,Playmaking:69,IQ:81,Upside:85},comp:'Evan Mobley (early)',compDesc:'Mobile big with defensive versatility and improving offensive game',color:'#BA0C2F'},
+    // TIER 4 — Second Round
+    {id:21,name:'Drake Powell',school:'North Carolina',pos:'SF',height:"6'7\"",weight:200,age:19,tier:4,ppg:10.6,rpg:4.8,apg:2.2,attrs:{Athleticism:92,Defense:81,Shooting:73,Playmaking:72,IQ:79,Upside:87},comp:'OG Anunoby',compDesc:'Athletic, long defender with upside as a spot-up shooter',color:'#4B9CD3'},
+    {id:22,name:'Adou Thiero',school:'Arkansas',pos:'SF',height:"6'7\"",weight:210,age:20,tier:4,ppg:16.0,rpg:6.2,apg:2.5,attrs:{Athleticism:91,Defense:82,Shooting:72,Playmaking:74,IQ:79,Upside:82},comp:'Herb Jones',compDesc:'Elite defender with motor and offensive improvement each season',color:'#9D2235'},
+    {id:23,name:'Noah Penda',school:'France (Le Mans)',pos:'SF',height:"6'8\"",weight:215,age:20,tier:4,ppg:13.2,rpg:6.5,apg:3.2,attrs:{Athleticism:85,Defense:83,Shooting:76,Playmaking:78,IQ:83,Upside:83},comp:'Nicolas Batum',compDesc:'Two-way European wing with basketball IQ and versatility',color:'#002F6C'},
+    {id:24,name:'Johni Broome',school:'Auburn',pos:'C',height:"6'10\"",weight:240,age:22,tier:4,ppg:18.6,rpg:11.4,apg:2.2,attrs:{Athleticism:82,Defense:89,Shooting:71,Playmaking:73,IQ:88,Upside:79},comp:'Nikola Vucevic',compDesc:'Highly productive center with elite rebounding and PnR skill',color:'#0C2340'},
+    {id:25,name:'Nique Clifford',school:'Colorado State',pos:'SF',height:"6'7\"",weight:210,age:22,tier:4,ppg:19.2,rpg:8.3,apg:4.5,attrs:{Athleticism:83,Defense:82,Shooting:78,Playmaking:80,IQ:84,Upside:77},comp:'Kyle Anderson',compDesc:'Slow-twitch forward with elite feel, IQ, and multi-positional value',color:'#1E4D2B'},
+    // Filling picks 26-60
+    {id:26,name:'Marcus Johnson',school:'Gonzaga',pos:'PG',height:"6'2\"",weight:185,age:20,tier:4,ppg:14.6,rpg:3.8,apg:6.2,attrs:{Athleticism:80,Defense:75,Shooting:82,Playmaking:87,IQ:84,Upside:79},comp:'Tyus Jones',compDesc:'Floor general with elite shooting and basketball IQ',color:'#002161'},
+    {id:27,name:'Tyler Williams',school:'Michigan',pos:'C',height:"7'0\"",weight:248,age:21,tier:4,ppg:13.2,rpg:9.1,apg:1.8,attrs:{Athleticism:80,Defense:85,Shooting:68,Playmaking:64,IQ:80,Upside:78},comp:'Daniel Gafford',compDesc:'Defensive big man with high-motor and vertical ability',color:'#00274C'},
+    {id:28,name:'Alex Rivera',school:'Kentucky',pos:'SG',height:"6'5\"",weight:200,age:19,tier:4,ppg:13.8,rpg:4.2,apg:3.5,attrs:{Athleticism:82,Defense:78,Shooting:85,Playmaking:79,IQ:80,Upside:80},comp:'Gary Trent Jr.',compDesc:'Spot-up shooter who can create off screens and attack closeouts',color:'#0033A0'},
+    {id:29,name:'Jordan Thompson',school:'Memphis',pos:'PF',height:"6'9\"",weight:225,age:20,tier:4,ppg:14.9,rpg:7.6,apg:2.1,attrs:{Athleticism:84,Defense:81,Shooting:74,Playmaking:70,IQ:79,Upside:80},comp:'P.J. Tucker era end',compDesc:'Physical PF with motor and defensive versatility',color:'#7F9AB8'},
+    {id:30,name:'Caleb Foster',school:'Duke',pos:'PG',height:"6'3\"",weight:192,age:19,tier:4,ppg:11.4,rpg:3.6,apg:5.8,attrs:{Athleticism:83,Defense:80,Shooting:79,Playmaking:85,IQ:83,Upside:82},comp:'Immanuel Quickley (early)',compDesc:'Crafty PG with deep range and improving playmaking',color:'#003087'},
+    {id:31,name:'Danny Wolf',school:'Michigan',pos:'C',height:"7'1\"",weight:238,age:22,tier:4,ppg:15.3,rpg:8.9,apg:4.1,attrs:{Athleticism:76,Defense:82,Shooting:74,Playmaking:80,IQ:87,Upside:76},comp:'Jonas Valanciunas',compDesc:'Big with elite passing for position and good interior scoring',color:'#00274C'},
+    {id:32,name:'Hugo Gonzalez',school:'Spain',pos:'SG',height:"6'6\"",weight:200,age:19,tier:4,ppg:12.8,rpg:4.4,apg:3.8,attrs:{Athleticism:80,Defense:77,Shooting:86,Playmaking:80,IQ:82,Upside:81},comp:'Svi Mykhailiuk',compDesc:'International combo guard with elite floor spacing',color:'#AA151B'},
+    {id:33,name:'Micah Parrish',school:'Florida',pos:'SG',height:"6'5\"",weight:205,age:21,tier:4,ppg:16.2,rpg:5.1,apg:3.2,attrs:{Athleticism:83,Defense:79,Shooting:83,Playmaking:77,IQ:81,Upside:78},comp:'Marcus Smart (offense)',compDesc:'Tough-minded guard who competes and makes winning plays',color:'#0021A5'},
+    {id:34,name:'Dink Pate',school:'Creighton',pos:'PF',height:"6'9\"",weight:220,age:21,tier:4,ppg:14.1,rpg:7.4,apg:2.6,attrs:{Athleticism:79,Defense:80,Shooting:78,Playmaking:72,IQ:82,Upside:76},comp:'Lauri Markkanen',compDesc:'Stretch big with reliable jumper and defensive IQ',color:'#005CA9'},
+    {id:35,name:'Elijah Moore',school:'Ohio State',pos:'PG',height:"6'1\"",weight:180,age:19,tier:4,ppg:12.4,rpg:3.4,apg:7.2,attrs:{Athleticism:85,Defense:76,Shooting:78,Playmaking:89,IQ:84,Upside:80},comp:'Isaiah Thomas (size)',compDesc:'Undersized PG who maximizes every possession with elite IQ',color:'#BB0000'},
+    {id:36,name:'Bol Bol Jr.',school:'Oregon',pos:'C',height:"7'2\"",weight:232,age:19,tier:4,ppg:11.6,rpg:8.4,apg:2.0,attrs:{Athleticism:78,Defense:84,Shooting:76,Playmaking:67,IQ:80,Upside:84},comp:'Kristaps Porzingis',compDesc:'Mobile big with shooting touch and defensive versatility',color:'#007030'},
+    {id:37,name:'Cam Boozer',school:'Duke',pos:'PF',height:"6'9\"",weight:230,age:18,tier:4,ppg:13.8,rpg:8.1,apg:2.8,attrs:{Athleticism:82,Defense:84,Shooting:74,Playmaking:74,IQ:83,Upside:83},comp:'Marvin Bagley III',compDesc:'High-motor big with elite rebounding and improving shooting',color:'#003087'},
+    {id:38,name:'Ashton Hagans',school:'Alabama',pos:'PG',height:"6'2\"",weight:195,age:23,tier:4,ppg:14.8,rpg:4.2,apg:6.8,attrs:{Athleticism:84,Defense:85,Shooting:74,Playmaking:86,IQ:83,Upside:74},comp:'Pat Beverley',compDesc:'Disruptive defender and playmaker with winning character',color:'#9E1B32'},
+    {id:39,name:'Max Shulga',school:'Virginia',pos:'SG',height:"6'4\"",weight:190,age:21,tier:4,ppg:15.6,rpg:4.8,apg:4.2,attrs:{Athleticism:78,Defense:80,Shooting:86,Playmaking:82,IQ:85,Upside:77},comp:'Duncan Robinson',compDesc:'Elite shooter who plays the right way within a system',color:'#232D4B'},
+    {id:40,name:'Tobi Lawal',school:'Texas A&M',pos:'PF',height:"6'9\"",weight:225,age:21,tier:4,ppg:14.4,rpg:8.1,apg:1.8,attrs:{Athleticism:87,Defense:83,Shooting:70,Playmaking:67,IQ:79,Upside:82},comp:'Jonathan Isaac',compDesc:'Athletic PF with length and defensive upside',color:'#500000'},
+    {id:41,name:'Ryan Kalkbrenner',school:'Creighton',pos:'C',height:"7'1\"",weight:255,age:22,tier:4,ppg:15.8,rpg:9.6,apg:1.6,attrs:{Athleticism:77,Defense:90,Shooting:70,Playmaking:62,IQ:84,Upside:75},comp:'Steven Adams',compDesc:'Rim protector and rebounder who anchors a defensive scheme',color:'#005CA9'},
+    {id:42,name:'Kur Teng',school:'Senegal / G League',pos:'SF',height:"6'8\"",weight:210,age:20,tier:4,ppg:11.2,rpg:5.8,apg:2.4,attrs:{Athleticism:89,Defense:80,Shooting:68,Playmaking:71,IQ:76,Upside:86},comp:'OG Anunoby (raw)',compDesc:'Raw but tantalizing athleticism with international background',color:'#006400'},
+    {id:43,name:'Matas Buzelis',school:'G League Ignite',pos:'SF',height:"6'9\"",weight:195,age:19,tier:4,ppg:13.7,rpg:6.4,apg:3.2,attrs:{Athleticism:88,Defense:78,Shooting:77,Playmaking:79,IQ:82,Upside:85},comp:'Franz Wagner',compDesc:'European-trained wing with skill, length and two-way upside',color:'#001f5b'},
+    {id:44,name:'Walter Clayton Jr.',school:'Florida',pos:'PG',height:"6'2\"",weight:195,age:22,tier:4,ppg:19.6,rpg:4.4,apg:5.3,attrs:{Athleticism:83,Defense:79,Shooting:88,Playmaking:87,IQ:86,Upside:76},comp:'Mike Conley now',compDesc:'Highly efficient scorer and playmaker with excellent decision-making',color:'#0021A5'},
+    {id:45,name:'Bennett Sivertsen',school:'Oakland',pos:'SG',height:"6'6\"",weight:205,age:22,tier:4,ppg:17.4,rpg:5.8,apg:3.5,attrs:{Athleticism:80,Defense:76,Shooting:87,Playmaking:78,IQ:81,Upside:75},comp:'Seth Curry',compDesc:'Volume shooter from mid-major with efficient offensive game',color:'#FFD700'},
+    {id:46,name:'Amari Williams',school:'Drexel',pos:'C',height:"7'0\"",weight:252,age:23,tier:4,ppg:14.6,rpg:10.2,apg:3.2,attrs:{Athleticism:78,Defense:88,Shooting:65,Playmaking:72,IQ:83,Upside:72},comp:'Rudy Gobert (passing)',compDesc:'Elite rim protector with surprising passing ability from the high post',color:'#002147'},
+    {id:47,name:'Adama Bal',school:'France',pos:'PF',height:"6'9\"",weight:218,age:21,tier:4,ppg:14.0,rpg:7.2,apg:2.8,attrs:{Athleticism:86,Defense:79,Shooting:74,Playmaking:73,IQ:80,Upside:80},comp:'Boris Diaw young',compDesc:'Versatile international forward with basketball IQ and athleticism',color:'#002395'},
+    {id:48,name:'Miles Byrd',school:'San Diego State',pos:'SF',height:"6'7\"",weight:205,age:20,tier:4,ppg:13.8,rpg:5.2,apg:2.6,attrs:{Athleticism:84,Defense:81,Shooting:78,Playmaking:75,IQ:80,Upside:79},comp:'Royce O\'Neale',compDesc:'Consistent two-way wing who plays bigger than his measurements',color:'#BA0C2F'},
+    {id:49,name:'Braxton Blackwell',school:'Virginia Tech',pos:'C',height:"6'11\"",weight:240,age:21,tier:4,ppg:13.4,rpg:9.3,apg:2.1,attrs:{Athleticism:82,Defense:85,Shooting:68,Playmaking:65,IQ:81,Upside:78},comp:'Nerlens Noel (health)',compDesc:'Rim protector who altered shots and anchored a top-10 defense',color:'#75172D'},
+    {id:50,name:'Marcus Kubik',school:'Iowa State',pos:'SG',height:"6'4\"",weight:200,age:21,tier:4,ppg:15.2,rpg:5.8,apg:4.4,attrs:{Athleticism:80,Defense:78,Shooting:83,Playmaking:81,IQ:82,Upside:76},comp:'Jordan Nwora',compDesc:'Reliable two-way guard who plays winning basketball',color:'#F1BE48'},
+    {id:51,name:'Ben Saraf',school:'Israel',pos:'PG',height:"6'5\"",weight:188,age:19,tier:4,ppg:12.4,rpg:4.2,apg:7.8,attrs:{Athleticism:79,Defense:74,Shooting:80,Playmaking:89,IQ:86,Upside:82},comp:'Darius Garland',compDesc:'Creative passer and skilled ball handler from European competition',color:'#0038B8'},
+    {id:52,name:'Cedric Coward',school:'Eastern Washington',pos:'SF',height:"6'8\"",weight:215,age:22,tier:4,ppg:17.6,rpg:7.4,apg:2.8,attrs:{Athleticism:85,Defense:79,Shooting:76,Playmaking:73,IQ:78,Upside:80},comp:'Aaron Nesmith',compDesc:'Mid-major player who dominated with athleticism and motor',color:'#CC0000'},
+    {id:53,name:'Alier Maluk',school:'Arizona',pos:'C',height:"7'0\"",weight:228,age:19,tier:4,ppg:10.8,rpg:7.6,apg:1.4,attrs:{Athleticism:84,Defense:82,Shooting:66,Playmaking:63,IQ:79,Upside:82},comp:'Mo Bamba young',compDesc:'Athletic big with elite wingspan and shot-altering ability',color:'#CC0000'},
+    {id:54,name:'Tyler Betsey',school:'Jacksonville State',pos:'PG',height:"6'1\"",weight:185,age:22,tier:4,ppg:22.4,rpg:4.8,apg:7.1,attrs:{Athleticism:83,Defense:74,Shooting:84,Playmaking:88,IQ:82,Upside:74},comp:'Tre Mann',compDesc:'Volume scorer from small conference with elite instincts',color:'#004B8D'},
+    {id:55,name:'Favour Aire',school:'Oregon',pos:'PF',height:"6'8\"",weight:225,age:20,tier:4,ppg:13.2,rpg:7.8,apg:1.8,attrs:{Athleticism:86,Defense:81,Shooting:72,Playmaking:68,IQ:80,Upside:81},comp:'Christian Wood young',compDesc:'Athletic big with quick hands and active motor',color:'#007030'},
+    {id:56,name:'Kasean Pryor',school:'Penn State',pos:'SG',height:"6'5\"",weight:205,age:20,tier:4,ppg:14.8,rpg:5.2,apg:3.6,attrs:{Athleticism:82,Defense:79,Shooting:80,Playmaking:78,IQ:79,Upside:78},comp:'Javonte Green',compDesc:'High-energy wing who impacts games in multiple ways',color:'#1E407C'},
+    {id:57,name:'Noa Essengue',school:'France',pos:'PF',height:"6'9\"",weight:205,age:17,tier:4,ppg:11.4,rpg:5.8,apg:2.2,attrs:{Athleticism:88,Defense:78,Shooting:73,Playmaking:72,IQ:80,Upside:89},comp:'Victor Wembanyama (very distant)',compDesc:'French teenager with elite upside, raw but with special tools',color:'#002395'},
+    {id:58,name:'Zeke Mayo',school:'South Dakota State',pos:'SG',height:"6'5\"",weight:198,age:23,tier:4,ppg:21.6,rpg:4.8,apg:3.4,attrs:{Athleticism:79,Defense:76,Shooting:89,Playmaking:79,IQ:83,Upside:73},comp:'Austin Reaves similar path',compDesc:'Efficient, high-IQ shooter who produces immediately',color:'#003B5C'},
+    {id:59,name:'Dele Haastrup',school:'Overtime Elite',pos:'SF',height:"6'8\"",weight:205,age:19,tier:4,ppg:14.2,rpg:6.4,apg:3.2,attrs:{Athleticism:87,Defense:78,Shooting:74,Playmaking:76,IQ:79,Upside:83},comp:'Jalen Smith',compDesc:'Athletic wing with length and scoring versatility',color:'#008000'},
+    {id:60,name:'Kobe Bufkin',school:'Michigan',pos:'SG',height:"6'4\"",weight:194,age:21,tier:4,ppg:14.6,rpg:4.4,apg:3.6,attrs:{Athleticism:81,Defense:78,Shooting:81,Playmaking:80,IQ:80,Upside:76},comp:'Anfernee Simons',compDesc:'Fluid scorer with high-end touch and athleticism',color:'#00274C'},
+];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let state = {
+    picks: [], // {pickNum, round, teamAbbr, playerId, grade, isSteal, isTrade}
+    availableProspects: [...PROSPECTS_DATA],
+    draftOrder: buildDraftOrder(),
+    currentPick: 0, // index into draftOrder
+    isRunning: false,
+    simSpeed: 'slow',
+    speedMs: {slow:1200, med:600, fast:250, instant:0},
+    totalSims: 0,
+    totalTrades: 0,
+    tradeLog: [],
+    viewMode: 'table', // table | card
+    myTeam: '',
+    tradeQueues: {a: [], b: []},
+};
+
+function buildDraftOrder() {
+    const order = [];
+    DRAFT_ORDER_R1.forEach((t,i) => order.push({pickNum:i+1, round:1, team:t}));
+    DRAFT_ORDER_R2.forEach((t,i) => order.push({pickNum:i+31, round:2, team:t}));
+    return order;
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function init() {
+    populateTeamSelects();
+    renderProspectGrid();
+    renderDraftTable();
+    renderComparisons();
+    updateManualPickSelect();
+    updateClockBanner();
+    updateAnalytics();
+    document.getElementById('hero-prospects').textContent = PROSPECTS_DATA.length;
+}
+
+function populateTeamSelects() {
+    const teams = Object.keys(TEAM_NAMES).sort();
+    ['my-team-select','trade-team-a','trade-team-b'].forEach(id => {
+        const sel = document.getElementById(id);
+        if(!sel) return;
+        teams.forEach(abbr => {
+            const opt = document.createElement('option');
+            opt.value = abbr; opt.textContent = `${abbr} — ${TEAM_NAMES[abbr]}`;
+            sel.appendChild(opt);
+        });
+    });
+    ['compare-a','compare-b'].forEach(id => {
+        const sel = document.getElementById(id);
+        if(!sel) return;
+        PROSPECTS_DATA.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id; opt.textContent = p.name;
+            sel.appendChild(opt);
+        });
+    });
+}
+
+// ══════════════════════════════════════════════
+// DRAFT TABLE RENDER
+// ══════════════════════════════════════════════
+function renderDraftTable() {
+    const tbody = document.getElementById('draft-tbody');
+    tbody.innerHTML = '';
+    const totalPicks = state.draftOrder.length;
+    
+    let currentRound = 0;
+    state.draftOrder.forEach((slot, idx) => {
+        // Insert round divider
+        if(slot.round !== currentRound) {
+            currentRound = slot.round;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="6"><div class="tier-divider">Round ${currentRound}</div></td>`;
+            tbody.appendChild(tr);
+        }
+
+        const pick = state.picks.find(p => p.pickNum === slot.pickNum);
+        const prospect = pick ? PROSPECTS_DATA.find(p => p.id === pick.playerId) : null;
+        const isCurrent = idx === state.currentPick && !state.picks.find(p=>p.pickNum===slot.pickNum);
+        const teamColor = TEAM_COLORS[slot.team] || '#888';
+        
+        const tr = document.createElement('tr');
+        tr.id = `draft-row-${slot.pickNum}`;
+        if(isCurrent) tr.style.background = 'rgba(0,107,182,0.06)';
+
+        if(pick && prospect) {
+            const grade = pick.grade || gradePickNow(idx, prospect);
+            const gradeColor = gradeColor(grade);
+            const fitScore = calcFit(slot.team, prospect);
+            const fitPct = fitScore;
+            tr.classList.add('draft-row-new');
+            tr.innerHTML = `
+            <td><div class="pick-row-inner">
+                <span class="pick-num-badge ${slot.pickNum<=3?'top'+slot.pickNum:slot.pickNum<=5?'top5':''}">${slot.pickNum}</span>
+            </div></td>
+            <td><div class="pick-row-inner" style="padding-left:0;cursor:pointer;" onclick="openPlayerModal(${prospect.id})">
+                <div class="player-avatar" style="background:${prospect.color||'#1D428A'};">${prospect.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+                <div class="player-info">
+                    <div class="player-name">${prospect.name}</div>
+                    <div class="player-meta">${prospect.school} · ${prospect.height} · ${prospect.age} yrs</div>
+                </div>
+                ${pick.isSteal ? '<span class="badge badge-green" style="font-size:0.52rem;margin-left:0.3rem;">🔥 Steal</span>' : ''}
+                ${pick.isTrade ? '<span class="badge badge-red" style="font-size:0.52rem;margin-left:0.3rem;">↔ Via Trade</span>' : ''}
+            </div></td>
+            <td><div class="pick-row-inner" style="padding-left:0;"><span class="player-pos">${prospect.pos}</span></div></td>
+            <td><div class="pick-row-inner" style="padding-left:0;">
+                <div class="team-dot" style="background:${teamColor};"></div>
+                <span class="team-name-col">${TEAM_NAMES[slot.team]||slot.team}</span>
+            </div></td>
+            <td><div class="pick-row-inner" style="padding-left:0;">
+                ${document.getElementById('grade-toggle').checked ? `<span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;color:${gradeColor};">${grade}</span>` : ''}
+                <div style="margin-left:4px;">
+                    <div class="fit-bar"><div class="fit-bar-fill" style="width:${fitPct}%;"></div></div>
+                    <div style="font-size:0.62rem;color:var(--mid);">${fitPct}% fit</div>
+                </div>
+            </div></td>
+            <td><div class="action-cell"><button class="btn-small" onclick="openPlayerModal(${prospect.id})">Profile</button></div></td>`;
+        } else {
+            tr.innerHTML = `
+            <td><div class="pick-row-inner">
+                <span class="pick-num-badge ${slot.pickNum<=3?'top'+slot.pickNum:slot.pickNum<=5?'top5':''}" style="${isCurrent?'color:var(--nba-blue);':''}">${slot.pickNum}</span>
+            </div></td>
+            <td><div class="pick-row-inner" style="padding-left:0;">
+                ${isCurrent ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:0.82rem;color:var(--nba-blue);">On The Clock…</span>' : '<span style="color:var(--mid);font-size:0.78rem;">—</span>'}
+            </div></td>
+            <td></td>
+            <td><div class="pick-row-inner" style="padding-left:0;">
+                <div class="team-dot" style="background:${teamColor};"></div>
+                <span class="team-name-col" style="color:${isCurrent?'var(--ink)':'var(--mid)'};">${TEAM_NAMES[slot.team]||slot.team}</span>
+            </div></td>
+            <td></td>
+            <td><div class="action-cell" style="opacity:${isCurrent?1:0.4};">
+                ${isCurrent ? `<button class="btn-small" onclick="openPickModal(${idx})">Pick</button>` : ''}
+            </div></td>`;
+        }
+        tbody.appendChild(tr);
+    });
+}
+
+// ══════════════════════════════════════════════
+// PROSPECT GRID
+// ══════════════════════════════════════════════
+function renderProspectGrid() {
+    const grid = document.getElementById('prospect-grid');
+    const search = document.getElementById('player-search').value.toLowerCase();
+    const posFilter = document.getElementById('pos-filter').value;
+    const tierFilter = document.getElementById('tier-filter').value;
+
+    const filtered = PROSPECTS_DATA.filter(p => {
+        const drafted = state.picks.find(pick => pick.playerId === p.id);
+        const matchSearch = !search || p.name.toLowerCase().includes(search) || p.school.toLowerCase().includes(search);
+        const matchPos = !posFilter || p.pos === posFilter;
+        const matchTier = !tierFilter || p.tier === parseInt(tierFilter);
+        return matchSearch && matchPos && matchTier;
+    });
+
+    const tierNames = {1:'Tier 1 — Elite Prospects',2:'Tier 2 — Lottery Locks',3:'Tier 3 — Late Lottery / Early 2nd',4:'Tier 4 — Second Round'};
+    let html = '';
+    let curTier = 0;
+
+    // Group by tier
+    const byTier = {};
+    filtered.forEach(p => { if(!byTier[p.tier]) byTier[p.tier]=[];  byTier[p.tier].push(p); });
+    
+    [1,2,3,4].forEach(tier => {
+        if(!byTier[tier] || byTier[tier].length===0) return;
+        html += `<div style="grid-column:1/-1;"><div class="section-label" style="margin-bottom:0.5rem;">${tierNames[tier]}</div></div>`;
+        byTier[tier].forEach(p => {
+            const isDrafted = state.picks.find(pick => pick.playerId === p.id);
+            const draftedPick = isDrafted ? state.picks.find(pick => pick.playerId === p.id) : null;
+            const overallRank = PROSPECTS_DATA.indexOf(p)+1;
+            const tierBadgeColor = tier===1?'badge-gold':tier===2?'badge-blue':tier===3?'badge-green':'badge-gray';
+            html += `
+            <div class="prospect-card ${isDrafted?'':''}\" style="opacity:${isDrafted?0.55:1};" onclick="openPlayerModal(${p.id})">
+                <div class="prospect-card-top">
+                    <div class="prospect-big-avatar" style="background:${p.color||'#1D428A'};">${p.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.3rem;">
+                            <div class="prospect-name">${p.name}</div>
+                            <span class="badge ${tierBadgeColor}" style="flex-shrink:0;">#${overallRank}</span>
+                        </div>
+                        <div class="prospect-school">${p.school} · ${p.pos} · ${p.height}</div>
+                        ${isDrafted ? `<div style="margin-top:3px;"><span class="badge badge-gray" style="font-size:0.52rem;">Pick #${draftedPick.pickNum} — ${TEAM_NAMES[draftedPick.teamAbbr]||draftedPick.teamAbbr}</span></div>` : ''}
+                    </div>
+                </div>
+                <div class="prospect-card-stats">
+                    <div class="stat-cell"><div class="stat-val">${p.ppg}</div><div class="stat-label">PPG</div></div>
+                    <div class="stat-cell"><div class="stat-val">${p.rpg}</div><div class="stat-label">RPG</div></div>
+                    <div class="stat-cell"><div class="stat-val">${p.apg}</div><div class="stat-label">APG</div></div>
+                </div>
+            </div>`;
+        });
+    });
+
+    if(filtered.length === 0) html = `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--mid);font-size:0.82rem;">No prospects match your filters.</div>`;
+    grid.innerHTML = html;
+}
+
+function filterProspects() { renderProspectGrid(); }
+
+// ══════════════════════════════════════════════
+// PLAYER MODAL
+// ══════════════════════════════════════════════
+function openPlayerModal(playerId) {
+    const p = PROSPECTS_DATA.find(x => x.id === playerId);
+    if(!p) return;
+    document.getElementById('modal-player-name').textContent = p.name;
+    const draftInfo = state.picks.find(pick => pick.playerId === playerId);
+    const overallRank = PROSPECTS_DATA.indexOf(p)+1;
+    const tierNames = {1:'Elite — Top 5',2:'Lottery',3:'Late Lottery',4:'Second Round'};
+
+    const attrBar = (label, val) => {
+        const color = val>=90?'#059669':val>=80?'#0080d4':val>=70?'#f59e0b':'#9ca3af';
+        return `<div class="attribute-item">
+            <div class="attribute-label">${label}</div>
+            <div class="attribute-bar-row">
+                <div class="attribute-bar-track"><div class="attribute-bar-fill" style="width:${val}%;background:${color};"></div></div>
+                <div class="attribute-score" style="color:${color};">${val}</div>
+            </div>
+        </div>`;
+    };
+
+    document.getElementById('modal-player-body').innerHTML = `
+    <div class="player-detail-top">
+        <div class="player-detail-avatar" style="background:${p.color||'#1D428A'};">${p.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+        <div>
+            <div class="player-detail-name">${p.name}</div>
+            <div class="player-detail-meta">${p.school} · ${p.pos} · ${p.height}, ${p.weight} lbs · Age ${p.age}</div>
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                <span class="badge badge-blue">Rank #${overallRank}</span>
+                <span class="badge ${p.tier===1?'badge-gold':p.tier===2?'badge-blue':p.tier===3?'badge-green':'badge-gray'}">${tierNames[p.tier]}</span>
+                ${draftInfo ? `<span class="badge badge-red">Drafted — Pick #${draftInfo.pickNum} by ${TEAM_NAMES[draftInfo.teamAbbr]||draftInfo.teamAbbr}</span>` : '<span class="badge badge-green">Available</span>'}
+            </div>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:1.1rem;">
+        <div class="stat-box"><div class="stat-box-val">${p.ppg}</div><div class="stat-box-label">PPG</div></div>
+        <div class="stat-box"><div class="stat-box-val">${p.rpg}</div><div class="stat-box-label">RPG</div></div>
+        <div class="stat-box"><div class="stat-box-val">${p.apg}</div><div class="stat-box-label">APG</div></div>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.6rem;">Player Attributes</div>
+    <div class="attribute-grid" style="margin-bottom:1rem;">
+        ${Object.entries(p.attrs).map(([k,v])=>attrBar(k,v)).join('')}
+    </div>
+    <div class="comp-block">
+        <div class="comp-label">NBA Comparison</div>
+        <div class="comp-name">${p.comp}</div>
+        <div class="comp-desc">${p.compDesc}</div>
+    </div>
+    ${!draftInfo ? `<button class="btn-run btn-red" style="margin-top:0.75rem;" onclick="closeModal('player-modal');makeSpecificPick(${p.id})">Draft ${p.name.split(' ')[0]}</button>` : ''}
+    `;
+    document.getElementById('player-modal').classList.add('open');
+}
+
+function makeSpecificPick(playerId) {
+    if(state.currentPick >= state.draftOrder.length) return;
+    const slot = state.draftOrder[state.currentPick];
+    executePick(slot, playerId, false);
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// PICK LOGIC
+// ══════════════════════════════════════════════
+function calcFit(teamAbbr, prospect) {
+    const needs = TEAM_NEEDS[teamAbbr];
+    if(!needs) return 70;
+    const posNeed = needs[prospect.pos] || 50;
+    const avgAttr = Object.values(prospect.attrs).reduce((a,b)=>a+b,0)/Object.values(prospect.attrs).length;
+    return Math.min(99, Math.round((posNeed * 0.4) + (avgAttr * 0.6)));
+}
+
+function selectPlayerForTeam(teamAbbr, pickIndex) {
+    const available = state.availableProspects;
+    if(available.length === 0) return null;
+    const strategy = document.getElementById('ai-strategy-select').value;
+    const needs = TEAM_NEEDS[teamAbbr] || {};
+
+    if(strategy === 'bpa') {
+        // Best player available (by rank/id)
+        return available[0].id;
+    } else if(strategy === 'need') {
+        // Pure needs based
+        const sorted = [...available].sort((a,b) => {
+            const needA = needs[a.pos]||50;
+            const needB = needs[b.pos]||50;
+            const rankA = PROSPECTS_DATA.indexOf(a)+1;
+            const rankB = PROSPECTS_DATA.indexOf(b)+1;
+            return (needB/rankA) - (needA/rankB);
+        });
+        return sorted[0].id;
+    } else if(strategy === 'mixed') {
+        // Mixed: BPA weighted with needs, slight randomness
+        const pool = available.slice(0, Math.min(5, available.length));
+        const scored = pool.map(p => {
+            const rank = PROSPECTS_DATA.indexOf(p)+1;
+            const need = needs[p.pos]||50;
+            return {id: p.id, score: (100/rank)*0.6 + need*0.4 + Math.random()*15};
+        });
+        scored.sort((a,b)=>b.score-a.score);
+        return scored[0].id;
+    } else if(strategy === 'reach') {
+        // Reach — picks a random player from top 8 available
+        const pool = available.slice(0, Math.min(8, available.length));
+        return pool[Math.floor(Math.random()*pool.length)].id;
+    }
+    return available[0].id;
+}
+
+function gradePickNow(pickIndex, prospect) {
+    const prospectRank = PROSPECTS_DATA.indexOf(prospect)+1;
+    const diff = pickIndex + 1 - prospectRank;
+    if(diff <= -10) return 'A+';
+    if(diff <= -5) return 'A';
+    if(diff <= -2) return 'A-';
+    if(diff <= 1) return 'B+';
+    if(diff <= 3) return 'B';
+    if(diff <= 6) return 'B-';
+    if(diff <= 10) return 'C+';
+    if(diff <= 15) return 'C';
+    return 'D';
+}
+
+function gradeColor(grade) {
+    if(grade.startsWith('A')) return '#059669';
+    if(grade.startsWith('B')) return '#0080d4';
+    if(grade.startsWith('C')) return '#f59e0b';
+    return '#ef4444';
+}
+
+function executePick(slot, playerId, animated=true) {
+    const prospect = state.availableProspects.find(p => p.id === playerId);
+    if(!prospect) return;
+    
+    const prospectRank = PROSPECTS_DATA.indexOf(prospect)+1;
+    const pickIndex = state.currentPick;
+    const grade = gradePickNow(pickIndex, prospect);
+    const isSteal = prospectRank < pickIndex;
+    
+    const pick = {
+        pickNum: slot.pickNum,
+        round: slot.round,
+        teamAbbr: slot.team,
+        playerId: prospect.id,
+        grade,
+        isSteal,
+        isTrade: false,
+    };
+    state.picks.push(pick);
+    state.availableProspects = state.availableProspects.filter(p => p.id !== playerId);
+    state.currentPick++;
+    
+    if(animated) spawnConfettiIfGood(grade);
+    
+    updateUI();
+    addToPickLog(pick, prospect);
+    
+    // Auto-trigger trade if frequency allows
+    maybeAutoTrade();
+}
+
+function spawnConfettiIfGood(grade) {
+    if(!grade.startsWith('A')) return;
+    const colors = ['#006BB6','#ED174C','#FFD700','#00C851','#ffffff'];
+    for(let i=0;i<18;i++){
+        const el=document.createElement('div');
+        el.className='confetti-piece';
+        el.style.left=Math.random()*100+'vw';
+        el.style.width=(Math.random()*8+4)+'px';
+        el.style.height=(Math.random()*8+4)+'px';
+        el.style.background=colors[Math.floor(Math.random()*colors.length)];
+        el.style.borderRadius=Math.random()>0.5?'50%':'0';
+        el.style.animationDuration=(Math.random()*1.5+1)+'s';
+        el.style.animationDelay=Math.random()*0.6+'s';
+        document.body.appendChild(el);
+        setTimeout(()=>el.remove(), 2500);
+    }
+}
+
+// ══════════════════════════════════════════════
+// AUTO TRADE
+// ══════════════════════════════════════════════
+function maybeAutoTrade() {
+    const freq = document.getElementById('trade-freq-select').value;
+    if(freq === 'none') return;
+    const rand = Math.random();
+    const thresholds = {low:0.04, med:0.09, high:0.16};
+    if(rand > (thresholds[freq]||0)) return;
+    
+    // Swap two future picks
+    const remaining = state.draftOrder.slice(state.currentPick);
+    if(remaining.length < 2) return;
+    const i1 = Math.floor(Math.random() * Math.min(5, remaining.length));
+    const i2 = i1 + 1 + Math.floor(Math.random() * Math.min(4, remaining.length - i1 - 1));
+    if(i2 >= remaining.length) return;
+    const idx1 = state.draftOrder.indexOf(remaining[i1]);
+    const idx2 = state.draftOrder.indexOf(remaining[i2]);
+    const t1 = state.draftOrder[idx1].team;
+    const t2 = state.draftOrder[idx2].team;
+    // Swap teams
+    state.draftOrder[idx1] = {...state.draftOrder[idx1], team: t2};
+    state.draftOrder[idx2] = {...state.draftOrder[idx2], team: t1};
+    state.totalTrades++;
+    state.tradeLog.push({pick1: state.draftOrder[idx1].pickNum, pick2: state.draftOrder[idx2].pickNum, team1: t1, team2: t2});
+    document.getElementById('sess-trades').textContent = state.totalTrades;
+    document.getElementById('an-trades').textContent = state.totalTrades;
+}
+
+// ══════════════════════════════════════════════
+// SIMULATION
+// ══════════════════════════════════════════════
+let simInterval = null;
+
+async function runSimulation() {
+    if(state.isRunning) {
+        clearInterval(simInterval);
+        state.isRunning = false;
+        document.getElementById('run-sim-btn').textContent = '▶ Simulate Draft';
+        return;
+    }
+    state.isRunning = true;
+    state.totalSims++;
+    document.getElementById('hero-sims').textContent = state.totalSims;
+    document.getElementById('sess-sims').textContent = state.totalSims;
+    document.getElementById('run-sim-btn').textContent = '⏸ Pause';
+    
+    const speed = state.simSpeed;
+    
+    if(speed === 'instant') {
+        while(state.currentPick < state.draftOrder.length) {
+            const slot = state.draftOrder[state.currentPick];
+            const playerId = selectPlayerForTeam(slot.team, state.currentPick);
+            if(!playerId) break;
+            executePick(slot, playerId, false);
+        }
+        state.isRunning = false;
+        document.getElementById('run-sim-btn').textContent = '▶ Simulate Draft';
+        updateUI();
+        checkDraftComplete();
+        return;
+    }
+    
+    const ms = state.speedMs[speed] || 1200;
+    simInterval = setInterval(() => {
+        if(state.currentPick >= state.draftOrder.length) {
+            clearInterval(simInterval);
+            state.isRunning = false;
+            document.getElementById('run-sim-btn').textContent = '▶ Simulate Draft';
+            checkDraftComplete();
+            return;
+        }
+        const draftMode = document.getElementById('draft-mode-select').value;
+        const slot = state.draftOrder[state.currentPick];
+        // If my-team mode and this is user's team, pause and prompt
+        if(draftMode === 'my_team' && state.myTeam && slot.team === state.myTeam) {
+            clearInterval(simInterval);
+            state.isRunning = false;
+            document.getElementById('run-sim-btn').textContent = '▶ Simulate Draft';
+            openPickModal(state.currentPick);
+            return;
+        }
+        if(draftMode === 'user') {
+            clearInterval(simInterval);
+            state.isRunning = false;
+            document.getElementById('run-sim-btn').textContent = '▶ Simulate Draft';
+            openPickModal(state.currentPick);
+            return;
+        }
+        nextPickAuto();
+        checkDraftComplete();
+    }, ms);
+}
+
+function nextPickAuto() {
+    if(state.currentPick >= state.draftOrder.length) return;
+    const slot = state.draftOrder[state.currentPick];
+    const playerId = selectPlayerForTeam(slot.team, state.currentPick);
+    if(!playerId) return;
+    executePick(slot, playerId, true);
+}
+
+function nextPick() {
+    if(state.currentPick >= state.draftOrder.length) return;
+    const draftMode = document.getElementById('draft-mode-select').value;
+    const slot = state.draftOrder[state.currentPick];
+    if(draftMode === 'user') {
+        openPickModal(state.currentPick);
+    } else if(draftMode === 'my_team' && state.myTeam && slot.team === state.myTeam) {
+        openPickModal(state.currentPick);
+    } else {
+        nextPickAuto();
+        checkDraftComplete();
+    }
+}
+
+function autoPickOne() {
+    closeModal('pick-modal');
+    nextPickAuto();
+    checkDraftComplete();
+    if(state.isRunning) runSimulation(); // resume
+}
+
+function resetDraft() {
+    clearInterval(simInterval);
+    state.isRunning = false;
+    state.picks = [];
+    state.availableProspects = [...PROSPECTS_DATA];
+    state.draftOrder = buildDraftOrder();
+    state.currentPick = 0;
+    state.tradeQueues = {a:[], b:[]};
+    document.getElementById('run-sim-btn').textContent = '▶ Simulate Draft';
+    document.getElementById('draft-complete-banner').style.display = 'none';
+    document.getElementById('clock-banner').style.display = 'none';
+    document.getElementById('recap-card').style.display = 'none';
+    updateUI();
+    renderProspectGrid();
+    document.getElementById('pick-log-content').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--mid);font-size:0.82rem;">No picks made yet. Start the simulation!</div>';
+}
+
+function checkDraftComplete() {
+    if(state.currentPick >= state.draftOrder.length) {
+        document.getElementById('clock-banner').style.display = 'none';
+        document.getElementById('draft-complete-banner').style.display = 'block';
+        const grades = state.picks.map(p=>p.grade);
+        const aCount = grades.filter(g=>g.startsWith('A')).length;
+        document.getElementById('draft-complete-sub').textContent = `All 60 picks complete · ${aCount} A-grade picks · ${state.totalTrades} trades executed`;
+        renderRecap();
+        updateAnalytics();
+        spawnConfetti(40);
+    }
+}
+
+function spawnConfetti(count) {
+    const colors = ['#006BB6','#ED174C','#FFD700','#00C851','#ffffff','#ff6b6b','#4ecdc4'];
+    for(let i=0;i<count;i++){
+        setTimeout(()=>{
+            const el=document.createElement('div');
+            el.className='confetti-piece';
+            el.style.left=Math.random()*100+'vw';
+            el.style.width=(Math.random()*10+4)+'px';
+            el.style.height=(Math.random()*10+4)+'px';
+            el.style.background=colors[Math.floor(Math.random()*colors.length)];
+            el.style.borderRadius=Math.random()>0.5?'50%':'0';
+            el.style.animationDuration=(Math.random()*2+1.5)+'s';
+            document.body.appendChild(el);
+            setTimeout(()=>el.remove(),3500);
+        }, Math.random()*1500);
+    }
+}
+
+// ══════════════════════════════════════════════
+// MANUAL PICK MODAL
+// ══════════════════════════════════════════════
+function openPickModal(pickIndex) {
+    const slot = state.draftOrder[pickIndex];
+    document.getElementById('pick-modal-team-label').textContent = `${TEAM_NAMES[slot.team]||slot.team} on the Clock`;
+    document.getElementById('pick-modal-title').textContent = `Pick #${slot.pickNum} · Round ${slot.round}`;
+    document.getElementById('pick-modal-sub').textContent = `Team Needs: ${Object.entries(TEAM_NEEDS[slot.team]||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([pos])=>pos).join(', ')}`;
+    
+    const needs = TEAM_NEEDS[slot.team] || {};
+    const optionsDiv = document.getElementById('pick-modal-options');
+    const topProspects = state.availableProspects.slice(0, 20);
+    optionsDiv.innerHTML = topProspects.map(p => {
+        const rank = PROSPECTS_DATA.indexOf(p)+1;
+        const fit = calcFit(slot.team, p);
+        const fitColor = fit>=80?'#059669':fit>=65?'#0080d4':'#9ca3af';
+        return `<div onclick="closeModal('pick-modal');makeSpecificPick(${p.id})" style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--nba-blue)';this.style.background='rgba(0,107,182,0.04)'" onmouseout="this.style.borderColor='var(--border-light)';this.style.background='#f9f7f3'">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--mid);width:26px;text-align:center;">${rank}</div>
+            <div class="player-avatar" style="background:${p.color||'#1D428A'};width:34px;height:34px;font-size:0.75rem;">${p.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+            <div style="flex:1;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.9rem;text-transform:uppercase;">${p.name}</div>
+                <div style="font-size:0.7rem;color:var(--mid);">${p.school} · ${p.pos} · ${p.height}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:${fitColor};">${fit}%</div>
+                <div style="font-size:0.6rem;color:var(--mid);">Fit</div>
+            </div>
+        </div>`;
+    }).join('');
+    document.getElementById('pick-modal').classList.add('open');
+}
+
+function makeManualPick() {
+    const sel = document.getElementById('manual-player-select');
+    const playerId = parseInt(sel.value);
+    if(!playerId) return;
+    if(state.currentPick >= state.draftOrder.length) return;
+    const slot = state.draftOrder[state.currentPick];
+    executePick(slot, playerId, true);
+    checkDraftComplete();
+    sel.value = '';
+}
+
+function updateManualPickSelect() {
+    const sel = document.getElementById('manual-player-select');
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">— Available prospects —</option>';
+    state.availableProspects.slice(0, 30).forEach(p => {
+        const rank = PROSPECTS_DATA.indexOf(p)+1;
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `#${rank} ${p.name} (${p.pos}, ${p.school})`;
+        sel.appendChild(opt);
+    });
+    if(currentVal) sel.value = currentVal;
+    
+    const currentPickNum = state.currentPick < state.draftOrder.length ? state.draftOrder[state.currentPick].pickNum : '—';
+    document.getElementById('manual-pick-for').textContent = `Pick ${currentPickNum}`;
+}
+
+// ══════════════════════════════════════════════
+// UI UPDATE
+// ══════════════════════════════════════════════
+function updateUI() {
+    renderDraftTable();
+    renderProspectGrid();
+    updateProgressBar();
+    updateClockBanner();
+    updateManualPickSelect();
+    updateMyTeamPicks();
+    updateAnalytics();
+    updatePickLog();
+}
+
+function updateProgressBar() {
+    const total = state.draftOrder.length;
+    const done = state.picks.length;
+    const pct = (done/total)*100;
+    document.getElementById('progress-fill').style.width = pct+'%';
+    document.getElementById('progress-label').textContent = `${done} / ${total} picks`;
+    
+    if(state.currentPick > 0) {
+        const slot = state.draftOrder[Math.min(state.currentPick-1, state.draftOrder.length-1)];
+        document.getElementById('round-badge').textContent = `Round ${slot.round} — Pick ${slot.pickNum}`;
+    }
+}
+
+function updateClockBanner() {
+    if(state.currentPick >= state.draftOrder.length) return;
+    const slot = state.draftOrder[state.currentPick];
+    document.getElementById('clock-banner').style.display = 'flex';
+    document.getElementById('clock-team-name').textContent = `${TEAM_NAMES[slot.team]||slot.team}`;
+    document.getElementById('clock-pick-num').textContent = slot.pickNum;
+    
+    if(slot.team === state.myTeam) {
+        document.getElementById('clock-team-name').style.color = '#4da8ff';
+    } else {
+        document.getElementById('clock-team-name').style.color = 'white';
+    }
+}
+
+function updatePickLog() {
+    const log = document.getElementById('pick-log-content');
+    if(state.picks.length === 0) {
+        log.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--mid);font-size:0.82rem;">No picks made yet.</div>';
+        return;
+    }
+    let html = '';
+    let curRound = 0;
+    state.picks.forEach(pick => {
+        const prospect = PROSPECTS_DATA.find(p => p.id === pick.playerId);
+        if(!prospect) return;
+        if(pick.round !== curRound) {
+            curRound = pick.round;
+            html += `<div class="round-header">Round ${curRound}</div>`;
+        }
+        const gradeC = gradeColor(pick.grade);
+        html += `<div class="log-entry">
+            <div class="log-pick" style="color:${pick.pickNum<=5?'var(--gold)':'var(--mid)'};">${pick.pickNum}</div>
+            <div class="log-text">
+                <strong>${prospect.name}</strong> <span class="player-pos">${prospect.pos}</span>
+                → <span style="color:var(--ink);">${TEAM_NAMES[pick.teamAbbr]||pick.teamAbbr}</span>
+                ${pick.grade ? `<span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.82rem;color:${gradeC};margin-left:4px;">${pick.grade}</span>` : ''}
+                ${pick.isSteal ? ' 🔥' : ''}${pick.isTrade ? ' ↔' : ''}
+            </div>
+        </div>`;
+    });
+    log.innerHTML = html;
+}
+
+function addToPickLog(pick, prospect) {
+    // Will be re-rendered via updatePickLog
+}
+
+function updateAnalytics() {
+    document.getElementById('an-picks-made').textContent = state.picks.length;
+    document.getElementById('an-trades').textContent = state.totalTrades;
+    const steals = state.picks.filter(p=>p.isSteal).length;
+    document.getElementById('an-steals').textContent = steals;
+    
+    if(state.picks.length > 0) {
+        const avgRank = state.picks.map(p=>{
+            const prospect = PROSPECTS_DATA.find(pr=>pr.id===p.playerId);
+            return prospect ? PROSPECTS_DATA.indexOf(prospect)+1 : 0;
+        }).reduce((a,b)=>a+b,0) / state.picks.length;
+        document.getElementById('an-avg-rank').textContent = avgRank.toFixed(1);
+    }
+    
+    // Position distribution
+    const posCounts = {PG:0,SG:0,SF:0,PF:0,C:0};
+    state.picks.forEach(p => {
+        const pr = PROSPECTS_DATA.find(x=>x.id===p.playerId);
+        if(pr && posCounts[pr.pos]!==undefined) posCounts[pr.pos]++;
+    });
+    const total = state.picks.length || 1;
+    document.getElementById('pos-distribution').innerHTML = Object.entries(posCounts).map(([pos,count])=>{
+        const pct = Math.round((count/total)*100);
+        const colors = {PG:'#006BB6',SG:'#ED174C',SF:'#059669',PF:'#c9a84c',C:'#9ca3af'};
+        return `<div class="need-row">
+            <div class="need-pos">${pos}</div>
+            <div class="need-bar-track"><div class="need-bar-fill" style="width:${pct}%;background:${colors[pos]};"></div></div>
+            <div class="need-pct">${count} (${pct}%)</div>
+        </div>`;
+    }).join('');
+    
+    // Best value
+    const valuePicks = [...state.picks].map(p=>{
+        const pr = PROSPECTS_DATA.find(x=>x.id===p.playerId);
+        const rank = pr ? PROSPECTS_DATA.indexOf(pr)+1 : 60;
+        return {...p, prospect:pr, value: rank - p.pickNum};
+    }).sort((a,b)=>a.value-b.value).slice(0,5);
+    document.getElementById('best-value-list').innerHTML = valuePicks.map(p=>
+        p.prospect ? `<div class="log-entry">
+            <div class="log-pick">${p.pickNum}</div>
+            <div class="log-text"><strong>${p.prospect.name}</strong> (Rank #${PROSPECTS_DATA.indexOf(p.prospect)+1}) → ${TEAM_NAMES[p.teamAbbr]||p.teamAbbr} 
+            <span style="color:${p.value<0?'#059669':'#ef4444'};font-weight:700;">${p.value<0?'🔥 +'+Math.abs(p.value)+' steal':'−'+Math.abs(p.value)+' reach'}</span></div>
+        </div>` : ''
+    ).join('') || '<div style="color:var(--mid);font-size:0.78rem;">No picks yet.</div>';
+    
+    // Team grades
+    if(state.picks.length > 0) {
+        const byTeam = {};
+        state.picks.forEach(p=>{
+            if(!byTeam[p.teamAbbr]) byTeam[p.teamAbbr]=[];
+            byTeam[p.teamAbbr].push(p.grade);
+        });
+        const gradeVal = g=>{if(g==='A+')return 12;if(g==='A')return 11;if(g==='A-')return 10;if(g==='B+')return 9;if(g==='B')return 8;if(g==='B-')return 7;if(g==='C+')return 6;if(g==='C')return 5;return 3;};
+        const teamGrades = Object.entries(byTeam).map(([t,grades])=>{
+            const avg = grades.reduce((a,g)=>a+gradeVal(g),0)/grades.length;
+            const letter = avg>=11?'A+':avg>=10?'A':avg>=9?'A-':avg>=8?'B+':avg>=7?'B':avg>=6?'B-':avg>=5?'C+':'C';
+            return {team:t, grade:letter, avg};
+        }).sort((a,b)=>b.avg-a.avg).slice(0,8);
+        document.getElementById('team-grades-list').innerHTML = teamGrades.map(tg=>`
+            <div class="need-row">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;width:40px;">${tg.team}</div>
+                <div class="need-bar-track"><div class="need-bar-fill" style="width:${(tg.avg/12)*100}%;background:${tg.avg>=10?'#059669':tg.avg>=7?'#0080d4':'#f59e0b'};"></div></div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;width:32px;text-align:right;color:${gradeColor(tg.grade)};">${tg.grade}</div>
+            </div>`).join('') || '<div style="color:var(--mid);font-size:0.78rem;">No picks yet.</div>';
+    }
+}
+
+// ══════════════════════════════════════════════
+// MY TEAM
+// ══════════════════════════════════════════════
+function onMyTeamChange() {
+    state.myTeam = document.getElementById('my-team-select').value;
+    updateMyTeamPicks();
+    
+    if(state.myTeam) {
+        document.getElementById('my-team-needs').style.display = 'block';
+        const needs = TEAM_NEEDS[state.myTeam] || {};
+        document.getElementById('my-team-needs-bars').innerHTML = Object.entries(needs).map(([pos,score])=>{
+            const color = score>=80?'var(--nba-red)':score>=60?'var(--nba-blue)':'var(--silver)';
+            return `<div class="need-row">
+                <div class="need-pos">${pos}</div>
+                <div class="need-bar-track"><div class="need-bar-fill" style="width:${score}%;background:${color};"></div></div>
+                <div class="need-pct">${score}%</div>
+            </div>`;
+        }).join('');
+    } else {
+        document.getElementById('my-team-needs').style.display = 'none';
+    }
+}
+
+function updateMyTeamPicks() {
+    const teamAbbr = state.myTeam;
+    if(!teamAbbr) {
+        document.getElementById('my-team-picks-list').textContent = 'Select a team to see their picks';
+        document.getElementById('my-picks-count').textContent = '0 Picks';
+        return;
+    }
+    const myPicks = state.picks.filter(p => p.teamAbbr === teamAbbr);
+    const upcomingPicks = state.draftOrder.slice(state.currentPick).filter(s=>s.team===teamAbbr);
+    document.getElementById('my-picks-count').textContent = `${myPicks.length} Picks`;
+    
+    let html = '';
+    if(myPicks.length > 0) {
+        html += '<div style="margin-bottom:0.75rem;">';
+        myPicks.forEach(pick => {
+            const pr = PROSPECTS_DATA.find(p=>p.id===pick.playerId);
+            if(!pr) return;
+            const gc = gradeColor(pick.grade||'B');
+            html += `<div style="display:flex;align-items:center;gap:0.6rem;padding:0.4rem 0;border-bottom:1px solid #f0ede6;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9rem;color:var(--mid);width:24px;">${pick.pickNum}</div>
+                <div class="player-avatar" style="background:${pr.color||'#1D428A'};width:30px;height:30px;font-size:0.68rem;">${pr.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+                <div style="flex:1;font-size:0.78rem;"><div style="font-weight:600;">${pr.name}</div><div style="color:var(--mid);font-size:0.68rem;">${pr.pos} · ${pr.school}</div></div>
+                <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9rem;color:${gc};">${pick.grade}</span>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    if(upcomingPicks.length > 0) {
+        html += `<div style="font-size:0.7rem;color:var(--mid);">Upcoming: ${upcomingPicks.map(s=>'#'+s.pickNum).join(', ')}</div>`;
+    }
+    if(!html) html = `<div style="font-size:0.78rem;color:var(--mid);">No picks yet — upcoming: ${upcomingPicks.map(s=>'#'+s.pickNum).join(', ')||'none'}</div>`;
+    document.getElementById('my-team-picks-list').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// TRADE MACHINE
+// ══════════════════════════════════════════════
+function updateTradePicks(side) {
+    const teamSel = document.getElementById(`trade-team-${side}`).value;
+    const pickSel = document.getElementById(`trade-pick-${side}`);
+    pickSel.innerHTML = '<option value="">Select Pick</option>';
+    if(!teamSel) return;
+    state.draftOrder.filter(s=>s.team===teamSel && !state.picks.find(p=>p.pickNum===s.pickNum)).forEach(s=>{
+        const opt = document.createElement('option');
+        opt.value = s.pickNum;
+        opt.textContent = `Pick #${s.pickNum} (Round ${s.round})`;
+        pickSel.appendChild(opt);
+    });
+}
+
+function addToTrade(side) {
+    const pickNum = parseInt(document.getElementById(`trade-pick-${side}`).value);
+    const teamAbbr = document.getElementById(`trade-team-${side}`).value;
+    if(!pickNum || !teamAbbr) return;
+    state.tradeQueues[side].push({pickNum, teamAbbr});
+    renderTradeZones();
+    updateTradeValueBar();
+}
+
+function renderTradeZones() {
+    ['a','b'].forEach(side => {
+        const zone = document.getElementById(`trade-zone-${side}`);
+        const emptyLabel = document.getElementById(`trade-zone-${side}-empty`);
+        if(state.tradeQueues[side].length === 0) {
+            emptyLabel.style.display = 'block';
+            zone.querySelectorAll('.trade-chip').forEach(c=>c.remove());
+        } else {
+            emptyLabel.style.display = 'none';
+            zone.querySelectorAll('.trade-chip').forEach(c=>c.remove());
+            state.tradeQueues[side].forEach((item,i) => {
+                const chip = document.createElement('span');
+                chip.className = 'trade-chip';
+                chip.innerHTML = `Pick #${item.pickNum} (${TEAM_NAMES[item.teamAbbr]||item.teamAbbr}) <span class="remove" onclick="removeFromTrade('${side}',${i})">×</span>`;
+                zone.appendChild(chip);
+            });
+        }
+    });
+}
+
+function removeFromTrade(side, idx) {
+    state.tradeQueues[side].splice(idx,1);
+    renderTradeZones();
+    updateTradeValueBar();
+}
+
+function updateTradeValueBar() {
+    const bar = document.getElementById('trade-value-bar');
+    if(!state.tradeQueues.a.length && !state.tradeQueues.b.length) { bar.style.display='none'; return; }
+    const pickValue = pickNum => Math.max(5, 100 - pickNum*1.5);
+    const valA = state.tradeQueues.a.reduce((s,x)=>s+pickValue(x.pickNum),0);
+    const valB = state.tradeQueues.b.reduce((s,x)=>s+pickValue(x.pickNum),0);
+    const total = valA+valB||1;
+    const pctA = (valA/total)*100;
+    bar.style.display = 'block';
+    bar.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+        <span style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);width:60px;">Side A</span>
+        <div style="flex:1;height:8px;background:#e8e4dc;border-radius:4px;overflow:hidden;position:relative;">
+            <div style="height:100%;background:var(--nba-blue);border-radius:4px;width:${pctA}%;"></div>
+        </div>
+        <span style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);width:60px;text-align:right;">Side B</span>
+    </div>
+    <div style="font-size:0.72rem;color:var(--mid);text-align:center;">${valA>valB?'Side A overpays':valB>valA?'Side B overpays':'Even trade'} (${valA.toFixed(0)} vs ${valB.toFixed(0)})</div>`;
+}
+
+function executeTrade() {
+    if(!state.tradeQueues.a.length && !state.tradeQueues.b.length) {
+        document.getElementById('trade-result').innerHTML = '<div style="color:var(--nba-red);font-size:0.78rem;">Add picks to both sides first.</div>';
+        return;
+    }
+    // Execute: swap pick ownerships
+    state.tradeQueues.a.forEach(({pickNum}) => {
+        const teamB = document.getElementById('trade-team-b').value;
+        if(!teamB) return;
+        const idx = state.draftOrder.findIndex(s=>s.pickNum===pickNum);
+        if(idx>=0) state.draftOrder[idx] = {...state.draftOrder[idx], team:teamB};
+    });
+    state.tradeQueues.b.forEach(({pickNum}) => {
+        const teamA = document.getElementById('trade-team-a').value;
+        if(!teamA) return;
+        const idx = state.draftOrder.findIndex(s=>s.pickNum===pickNum);
+        if(idx>=0) state.draftOrder[idx] = {...state.draftOrder[idx], team:teamA};
+    });
+    state.totalTrades++;
+    document.getElementById('sess-trades').textContent = state.totalTrades;
+    document.getElementById('an-trades').textContent = state.totalTrades;
+    
+    document.getElementById('trade-result').innerHTML = `<div style="padding:0.6rem 0.9rem;background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.2);border-radius:8px;font-size:0.78rem;color:#059669;font-weight:600;">✓ Trade executed successfully! Draft order updated.</div>`;
+    state.tradeQueues = {a:[],b:[]};
+    renderTradeZones();
+    renderDraftTable();
+    setTimeout(()=>{ document.getElementById('trade-result').innerHTML=''; }, 3000);
+}
+
+// ══════════════════════════════════════════════
+// COMPARISON
+// ══════════════════════════════════════════════
+function renderComparisons() {
+    const cmpResult = document.getElementById('comparison-result');
+    if(!cmpResult) return;
+    cmpResult.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--mid);font-size:0.82rem;">Select two players above to compare.</div>`;
+}
+
+function renderComparison() {
+    const idA = parseInt(document.getElementById('compare-a').value);
+    const idB = parseInt(document.getElementById('compare-b').value);
+    if(!idA || !idB) return;
+    const pA = PROSPECTS_DATA.find(p=>p.id===idA);
+    const pB = PROSPECTS_DATA.find(p=>p.id===idB);
+    if(!pA || !pB) return;
+
+    const keys = ['Athleticism','Defense','Shooting','Playmaking','IQ','Upside'];
+    const rows = keys.map(k => {
+        const vA = pA.attrs[k]||0, vB = pB.attrs[k]||0;
+        const bestA = vA>vB, bestB = vB>vA;
+        return `<tr>
+            <td class="${bestA?'best':''}" style="text-align:right;">${vA}</td>
+            <td style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);">${k}</td>
+            <td class="${bestB?'best':''}">${vB}</td>
+        </tr>`;
+    });
+    const statRows = [['PPG','ppg'],['RPG','rpg'],['APG','apg']].map(([label,key])=>{
+        const vA=pA[key]||0, vB=pB[key]||0;
+        const bestA=vA>vB, bestB=vB>vA;
+        return `<tr>
+            <td class="${bestA?'best':''}" style="text-align:right;">${vA}</td>
+            <td style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);">${label}</td>
+            <td class="${bestB?'best':''}">${vB}</td>
+        </tr>`;
+    });
+
+    document.getElementById('comparison-result').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;margin-bottom:1rem;text-align:center;">
+        <div><div class="player-avatar" style="background:${pA.color||'#1D428A'};width:52px;height:52px;font-size:1.1rem;margin:0 auto 0.4rem;">${pA.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.9rem;text-transform:uppercase;">${pA.name}</div>
+        <div style="font-size:0.7rem;color:var(--mid);">${pA.pos} · ${pA.school}</div></div>
+        <div style="display:flex;align-items:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;color:var(--mid);">VS</div>
+        <div><div class="player-avatar" style="background:${pB.color||'#1D428A'};width:52px;height:52px;font-size:1.1rem;margin:0 auto 0.4rem;">${pB.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.9rem;text-transform:uppercase;">${pB.name}</div>
+        <div style="font-size:0.7rem;color:var(--mid);">${pB.pos} · ${pB.school}</div></div>
+    </div>
+    <table class="compare-table">
+        <thead><tr><th style="text-align:right;">${pA.name.split(' ')[0]}</th><th style="text-align:center;">Attr</th><th>${pB.name.split(' ')[0]}</th></tr></thead>
+        <tbody>${rows.join('')}${statRows.join('')}</tbody>
+    </table>`;
+}
+
+// ══════════════════════════════════════════════
+// RECAP
+// ══════════════════════════════════════════════
+function renderRecap() {
+    document.getElementById('recap-card').style.display = 'block';
+    const teamPicks = {};
+    state.picks.forEach(p=>{
+        if(!teamPicks[p.teamAbbr]) teamPicks[p.teamAbbr]=[];
+        teamPicks[p.teamAbbr].push(p);
+    });
+    const gradeVal = g=>{if(g==='A+')return 12;if(g==='A')return 11;if(g==='A-')return 10;if(g==='B+')return 9;if(g==='B')return 8;return 5;};
+    const sorted = Object.entries(teamPicks).sort((a,b)=>{
+        const avgA = a[1].reduce((s,p)=>s+gradeVal(p.grade||'B'),0)/a[1].length;
+        const avgB = b[1].reduce((s,p)=>s+gradeVal(p.grade||'B'),0)/b[1].length;
+        return avgB-avgA;
+    }).slice(0,5);
+    document.getElementById('recap-body').innerHTML = `
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.6rem;">Draft Winners</div>
+    ${sorted.map(([team, picks],i)=>{
+        const avgGrade = picks.reduce((s,p)=>s+gradeVal(p.grade||'B'),0)/picks.length;
+        const gLetters=['A+','A','A-','B+','B','B-','C+','C'];
+        const grade = gLetters[Math.max(0,Math.min(gLetters.length-1, 12-Math.round(avgGrade)))];
+        const gc = gradeColor(grade);
+        const teamDot = TEAM_COLORS[team]||'#888';
+        const topPick = picks[0] ? PROSPECTS_DATA.find(p=>p.id===picks[0].playerId) : null;
+        return `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #f0ede6;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;color:${i===0?'var(--gold)':'var(--mid)'};width:20px;">${i+1}</div>
+            <div class="team-dot" style="background:${teamDot};"></div>
+            <div style="flex:1;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.9rem;">${TEAM_NAMES[team]||team}</div>
+                ${topPick?`<div style="font-size:0.7rem;color:var(--mid);">Key pick: ${topPick.name} (#${picks[0].pickNum})</div>`:''}
+            </div>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:${gc};">${grade}</span>
+        </div>`;
+    }).join('')}`;
+}
+
+// ══════════════════════════════════════════════
+// TABS & MISC
+// ══════════════════════════════════════════════
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+tab).classList.add('active');
+    btn.classList.add('active');
+    if(tab==='analytics') updateAnalytics();
+    if(tab==='history') updatePickLog();
+    if(tab==='prospects') renderProspectGrid();
+}
+
+function setSpeed(speed, btn) {
+    state.simSpeed = speed;
+    document.querySelectorAll('[id^="speed-"]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function toggleViewMode() {
+    state.viewMode = state.viewMode === 'table' ? 'card' : 'table';
+    document.getElementById('view-mode-btn').textContent = state.viewMode === 'table' ? 'Card View' : 'Table View';
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+        if(e.target === overlay) overlay.classList.remove('open');
+    });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+    if(e.code==='Space') { e.preventDefault(); document.getElementById('run-sim-btn').click(); }
+    if(e.code==='KeyN') nextPick();
+    if(e.code==='KeyR' && e.shiftKey) resetDraft();
+    if(e.code==='Escape') { document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); }
+});
+
+// ══════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
