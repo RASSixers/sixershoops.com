@@ -238,7 +238,30 @@
 <script>
 const MOD_EMAIL = 'rhatus13@gmail.com';
 const COLLECTION = 'editorial_articles';
-const GRADES = ['A+','A','A-','B+','B','B-','C+','C','D+','D','F'];
+const SIXERS_ROSTER = [
+    { name: 'Tyrese Maxey', number: 0 },
+    { name: 'Paul George', number: 8 },
+    { name: 'Justin Edwards', number: 11 },
+    { name: 'Dalen Terry', number: 14 },
+    { name: 'Joel Embiid', number: 21 },
+    { name: 'Johni Broome', number: 22 },
+    { name: 'Tyrese Martin', number: 23 },
+    { name: 'Dominick Barlow', number: 25 },
+    { name: 'Adem Bona', number: 30 },
+    { name: 'Jabari Walker', number: 33 },
+    { name: 'Trendon Watford', number: 12 },
+    { name: 'Kyle Lowry', number: 7 },
+    { name: 'Kelly Oubre Jr.', number: 9 },
+    { name: 'Andre Drummond', number: 1 },
+    { name: 'VJ Edgecombe', number: 77 },
+    { name: 'MarJon Beauchamp', number: 16 },
+    { name: 'Quentin Grimes', number: 5 },
+    { name: 'Dalen Terry', number: 14 },
+];
+// Deduplicate roster by name
+const ROSTER = SIXERS_ROSTER.filter((p, i, arr) => arr.findIndex(x => x.name === p.name) === i);
+
+const GRADES = ['DNP','A+','A','A-','B+','B','B-','C+','C','D+','D','F'];
 const GRADE_COLORS = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a'};
 const CATEGORY_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
 const CATEGORY_GRADIENTS = {'Player Grades':'linear-gradient(135deg,rgba(30,125,70,0.55) 0%,rgba(0,13,46,0.9) 100%)','Analysis':'linear-gradient(135deg,rgba(0,107,182,0.55) 0%,rgba(0,13,46,0.9) 100%)','Opinion':'linear-gradient(135deg,rgba(176,107,0,0.5) 0%,rgba(0,13,46,0.9) 100%)','Preview':'linear-gradient(135deg,rgba(237,23,76,0.45) 0%,rgba(0,13,46,0.9) 100%)','Recap':'linear-gradient(135deg,rgba(71,85,105,0.55) 0%,rgba(0,13,46,0.9) 100%)','News':'linear-gradient(135deg,rgba(0,119,204,0.55) 0%,rgba(0,13,46,0.9) 100%)'};
@@ -278,7 +301,7 @@ function updatePreview() {
     const today = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
     document.getElementById('prev-meta').textContent = 'Sixers Hoops Staff · ' + today;
 }
-['f-title','f-category'].forEach(id => {
+['f-title'].forEach(id => {
     document.getElementById(id).addEventListener('input', updatePreview);
     document.getElementById(id).addEventListener('change', updatePreview);
 });
@@ -291,10 +314,55 @@ function addGradeEntry(data = {}) {
     const div = document.createElement('div');
     div.className = 'grade-entry';
     div.id = 'grade-entry-' + id;
-    const gradeOptions = GRADES.map(g => '<option value="' + g + '"' + (data.grade === g ? ' selected' : '') + '>' + g + '</option>').join('');
-    div.innerHTML = '<div class="grade-entry-header"><span class="grade-entry-name">Player ' + id + '</span><button class="grade-entry-remove" onclick="removeGradeEntry(' + id + ')">x</button></div><div class="grade-entry-row"><div class="form-group" style="margin:0;"><label class="form-label">Player Name</label><input type="text" class="form-input ge-name" placeholder="e.g. Tyrese Maxey" value="' + (data.name||'') + '"></div><div class="form-group" style="margin:0;"><label class="form-label">Grade</label><select class="form-select ge-grade">' + gradeOptions + '</select></div></div><div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Stats Line</label><input type="text" class="form-input ge-stats" placeholder="e.g. 26.4 PPG · 6.1 AST · 47% FG" value="' + (data.stats||'') + '"></div><div class="form-group" style="margin:0;"><label class="form-label">Analysis</label><textarea class="form-textarea ge-analysis" style="min-height:80px;" placeholder="Your take on this player...">' + (data.analysis||'') + '</textarea></div>';
+    const selectedGrade = data.grade || 'DNP';
+    const gradeOptions = GRADES.map(g => '<option value="' + g + '"' + (selectedGrade === g ? ' selected' : '') + '>' + g + '</option>').join('');
+    const isDnp = selectedGrade === 'DNP';
+    div.innerHTML = `
+        <div class="grade-entry-header">
+            <span class="grade-entry-name">${data.name || 'Player ' + id}</span>
+            <button class="grade-entry-remove" onclick="removeGradeEntry(${id})">x</button>
+        </div>
+        <div class="grade-entry-row">
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Player Name</label>
+                <input type="text" class="form-input ge-name" value="${data.name||''}" placeholder="Player name" oninput="this.closest('.grade-entry').querySelector('.grade-entry-name').textContent=this.value||'Player'">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Grade</label>
+                <select class="form-select ge-grade" onchange="toggleDnpFields(this)">${gradeOptions}</select>
+            </div>
+        </div>
+        <div class="ge-fields" style="${isDnp ? 'display:none;' : ''}">
+            <div class="form-group" style="margin-bottom:0.5rem;">
+                <label class="form-label">Stats Line</label>
+                <input type="text" class="form-input ge-stats" placeholder="e.g. 26.4 PPG · 6.1 AST · 47% FG" value="${data.stats||''}">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Analysis</label>
+                <textarea class="form-textarea ge-analysis" style="min-height:80px;" placeholder="Your take on this player...">${data.analysis||''}</textarea>
+            </div>
+        </div>
+        ${isDnp ? '<div style="font-size:0.75rem;color:var(--mid);padding:0.25rem 0;">DNP — will not appear in the published article</div>' : ''}
+    `;
     container.appendChild(div);
 }
+
+function toggleDnpFields(select) {
+    const entry = select.closest('.grade-entry');
+    const fields = entry.querySelector('.ge-fields');
+    const hint = entry.querySelector('.ge-dnp-hint');
+    const isDnp = select.value === 'DNP';
+    if (fields) fields.style.display = isDnp ? 'none' : '';
+    if (hint) hint.remove();
+    if (isDnp) {
+        const h = document.createElement('div');
+        h.className = 'ge-dnp-hint';
+        h.style.cssText = 'font-size:0.75rem;color:var(--mid);padding:0.25rem 0;';
+        h.textContent = 'DNP — will not appear in the published article';
+        select.closest('.grade-entry-row').after(h);
+    }
+}
+
 function removeGradeEntry(id) { const el = document.getElementById('grade-entry-' + id); if (el) el.remove(); }
 document.getElementById('add-player-btn').addEventListener('click', () => addGradeEntry());
 
@@ -303,8 +371,10 @@ function collectGrades() {
     document.querySelectorAll('.grade-entry').forEach(el => {
         const name = el.querySelector('.ge-name').value.trim();
         const grade = el.querySelector('.ge-grade').value;
-        const stats = el.querySelector('.ge-stats').value.trim();
-        const analysis = el.querySelector('.ge-analysis').value.trim();
+        const statsEl = el.querySelector('.ge-stats');
+        const analysisEl = el.querySelector('.ge-analysis');
+        const stats = statsEl ? statsEl.value.trim() : '';
+        const analysis = analysisEl ? analysisEl.value.trim() : '';
         if (name) entries.push({ name, grade, stats, analysis });
     });
     return entries;
@@ -338,14 +408,25 @@ function renderArticleList() {
 document.getElementById('new-article-btn').addEventListener('click', () => { clearEditor(); switchTab('editor'); });
 document.getElementById('cancel-editor-btn').addEventListener('click', () => switchTab('list'));
 
-function clearEditor() {
+function clearEditor(keepRoster = false) {
     document.getElementById('editing-doc-id').value = '';
     ['f-title','f-excerpt','f-intro','f-closing'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f-category').value = 'Player Grades';
     document.getElementById('grade-entries').innerHTML = '';
     gradeCount = 0;
+    // Auto-load full roster with DNP as default
+    ROSTER.forEach(p => addGradeEntry({ name: p.name, grade: 'DNP' }));
     updatePreview();
 }
+
+// When category changes to Player Grades and no entries exist, load roster
+document.getElementById('f-category').addEventListener('change', function() {
+    const entries = document.querySelectorAll('.grade-entry');
+    if (this.value === 'Player Grades' && entries.length === 0) {
+        ROSTER.forEach(p => addGradeEntry({ name: p.name, grade: 'DNP' }));
+    }
+    updatePreview();
+});
 
 function editArticle(id) {
     const a = articles.find(x => x.id === id);
