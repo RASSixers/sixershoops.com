@@ -1310,31 +1310,70 @@
         @media (max-width:900px) { .editorial-grid { grid-template-columns:repeat(2,1fr); } }
         @media (max-width:560px) { .editorial-grid { grid-template-columns:1fr; } }
 
-        /* ─── ARTICLE MODAL ─────────────────────────── */
-        #article-modal-overlay {
-            position:fixed;inset:0;background:rgba(0,0,0,0.6);
-            display:flex;align-items:center;justify-content:center;
-            z-index:2000;opacity:0;visibility:hidden;
-            transition:all 0.25s ease;backdrop-filter:blur(4px);
+        /* ─── ARTICLE FULL-PAGE VIEW ─────────────────── */
+        #article-page {
+            position:fixed;inset:0;top:64px;
+            background:var(--cream);
+            z-index:1800;
+            overflow-y:auto;
+            transform:translateX(100%);
+            transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);
+            visibility:hidden;
         }
-        #article-modal-overlay.active{opacity:1;visibility:visible;}
-        #article-modal-box {
-            background:var(--cream);width:95%;max-width:680px;max-height:90vh;
-            border-radius:18px;overflow:hidden;display:flex;flex-direction:column;
-            transform:translateY(16px) scale(0.98);
-            transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1);
-            box-shadow:0 40px 80px rgba(0,0,0,0.3);
+        #article-page.active {
+            transform:translateX(0);
+            visibility:visible;
         }
-        #article-modal-overlay.active #article-modal-box{transform:translateY(0) scale(1);}
-        #article-modal-close {
-            position:absolute;top:1rem;right:1rem;z-index:10;
-            background:rgba(0,0,0,0.4);color:white;border:none;
-            border-radius:50%;width:32px;height:32px;font-size:1.1rem;
-            cursor:pointer;display:flex;align-items:center;justify-content:center;
-            transition:background 0.2s;
+        .art-hero {
+            background:var(--navy-deep);
+            padding:3rem 1.5rem 2.5rem;
+            position:relative;
+            overflow:hidden;
         }
-        #article-modal-close:hover{background:rgba(0,0,0,0.7);}
-        #article-modal-body{overflow-y:auto;padding:1.5rem;position:relative;flex:1;}
+        .art-hero::before {
+            content:'';position:absolute;inset:0;
+            background-image:linear-gradient(rgba(0,107,182,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.05) 1px,transparent 1px);
+            background-size:48px 48px;pointer-events:none;
+        }
+        .art-hero-inner { max-width:760px;margin:0 auto;position:relative;z-index:1; }
+        .art-back-btn {
+            display:inline-flex;align-items:center;gap:0.5rem;
+            background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);
+            color:rgba(255,255,255,0.65);border-radius:8px;
+            padding:0.45rem 1rem;font-family:'Barlow Condensed',sans-serif;
+            font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+            cursor:pointer;margin-bottom:1.5rem;transition:all 0.2s;
+        }
+        .art-back-btn:hover { background:rgba(255,255,255,0.15);color:white; }
+        .art-cat-badge {
+            display:inline-block;font-family:'Barlow Condensed',sans-serif;
+            font-size:0.68rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+            padding:3px 10px;border-radius:4px;margin-bottom:0.9rem;
+        }
+        .art-headline {
+            font-family:'Barlow Condensed',sans-serif;
+            font-size:clamp(2rem,5vw,3rem);font-weight:900;
+            line-height:1.05;color:rgba(255,255,255,0.95);
+            margin:0 0 1rem;text-transform:uppercase;letter-spacing:-0.01em;
+        }
+        .art-byline { font-size:0.8rem;color:rgba(255,255,255,0.35);display:flex;gap:0.6rem;flex-wrap:wrap; }
+        .art-body-wrap { max-width:760px;margin:2.5rem auto;padding:0 1.5rem 4rem; }
+        .art-body p { font-size:1rem;line-height:1.8;color:var(--ink);margin:0 0 1.4rem; }
+        .art-body h2 {
+            font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;
+            text-transform:uppercase;letter-spacing:0.05em;color:var(--ink);
+            margin:2.5rem 0 0.75rem;padding-left:0.75rem;border-left:3px solid var(--sixers-red);
+        }
+        .art-grade-card { background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;padding:1.25rem 1.4rem;margin:1rem 0; }
+        .art-grade-header { display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem; }
+        .art-grade-name { font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;font-weight:900;text-transform:uppercase;color:var(--ink); }
+        .art-grade-badge { font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:900;color:white;padding:4px 14px;border-radius:8px;flex-shrink:0; }
+        .art-grade-stats { font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--mid);padding-bottom:0.6rem;border-bottom:1px dashed var(--border-light);margin-bottom:0.6rem; }
+        .art-grade-analysis { font-size:0.92rem;line-height:1.65;color:#475569; }
+        :root.dark-mode #article-page { background:var(--cream); }
+        :root.dark-mode .art-grade-card { background:var(--card-bg);border-color:var(--border-light); }
+        :root.dark-mode .art-grade-name,:root.dark-mode .art-body p,:root.dark-mode .art-body h2 { color:var(--ink); }
+        :root.dark-mode .art-grade-analysis { color:var(--mid); }
 
         /* Google Analytics & AdSense passthrough */
     </style>
@@ -1779,13 +1818,21 @@
     </div>
 </footer>
 
-<!-- Article Modal -->
-<div id="article-modal-overlay" onclick="if(event.target===this)closeArticleModal()">
-    <div id="article-modal-box">
-        <button id="article-modal-close" onclick="closeArticleModal()">&#x2715;</button>
-        <div id="article-modal-body">
-            <div id="article-modal-content"></div>
+<!-- Full-Page Article View -->
+<div id="article-page">
+    <div class="art-hero" id="art-hero-section">
+        <div class="art-hero-inner">
+            <button class="art-back-btn" onclick="closeArticlePage()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                Back to Sixers Hoops
+            </button>
+            <div id="art-cat-badge" class="art-cat-badge"></div>
+            <h1 id="art-headline" class="art-headline"></h1>
+            <div id="art-byline" class="art-byline"></div>
         </div>
+    </div>
+    <div class="art-body-wrap">
+        <div class="art-body" id="art-body"></div>
     </div>
 </div>
 
@@ -1828,56 +1875,78 @@ function renderEditorialGrid(articles) {
     }).join('');
 }
 
-// ─── ARTICLE MODAL ────────────────────────────────────────────────────────────
+// ─── ARTICLE FULL-PAGE VIEW ───────────────────────────────────────────────────
 function openArticleModal(id) {
     const a = editorialArticlesCache.find(x => x.id === id);
     if (!a) return;
 
     const color = ED_CAT_COLORS[a.category] || '#006BB6';
     const gradient = a.gradient || ED_CAT_GRADIENTS[a.category] || '';
-    const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '';
+    const date = a.createdAt
+        ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt))
+            .toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
+        : '';
 
-    let gradesHtml = '';
+    // Hero
+    const heroSection = document.getElementById('art-hero-section');
+    heroSection.style.background = '';
+    const existingOverlay = heroSection.querySelector('.art-hero-gradient-overlay');
+    if (existingOverlay) existingOverlay.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'art-hero-gradient-overlay';
+    overlay.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;background:' + gradient + ';opacity:0.65;';
+    heroSection.insertBefore(overlay, heroSection.firstChild);
+
+    const badge = document.getElementById('art-cat-badge');
+    badge.textContent = a.category;
+    badge.style.cssText = 'display:inline-block;font-family:\'Barlow Condensed\',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:3px 10px;border-radius:4px;margin-bottom:0.9rem;background:' + color + '33;color:' + color + ';border:1px solid ' + color + '55;';
+
+    document.getElementById('art-headline').textContent = a.title;
+    document.getElementById('art-byline').innerHTML = '<span>Sixers Hoops Staff</span><span>&middot;</span><span>' + date + '</span>' + ((a.grades||[]).length > 0 ? '<span>&middot;</span><span>' + a.grades.length + ' players graded</span>' : '');
+
+    // Body
+    let html = '';
+    if (a.intro) html += '<p>' + a.intro + '</p>';
+
     if (a.grades && a.grades.length > 0) {
-        gradesHtml = '<h2 style="font-family:\'Barlow Condensed\',sans-serif;font-size:1.3rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#0d0d0d;margin:2rem 0 0.75rem;padding-left:0.75rem;border-left:3px solid #ED174C;">Player Grades</h2>';
+        html += '<h2>Player Grades</h2>';
         a.grades.forEach(g => {
             const gc = GRADE_COLORS_ED[g.grade] || '#475569';
-            gradesHtml += `<div style="background:#fff;border:1px solid #e8e4dc;border-radius:14px;padding:1.25rem 1.4rem;margin:1rem 0;">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem;">
-                    <span style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:900;text-transform:uppercase;">${g.name}</span>
-                    <span style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:900;color:white;background:${gc};padding:4px 14px;border-radius:8px;">${g.grade}</span>
-                </div>
-                ${g.stats ? `<div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#4a4a5a;padding-bottom:0.6rem;border-bottom:1px dashed #e8e4dc;margin-bottom:0.6rem;">${g.stats}</div>` : ''}
-                ${g.analysis ? `<div style="font-size:0.9rem;line-height:1.65;color:#475569;">${g.analysis}</div>` : ''}
-            </div>`;
+            html += '<div class="art-grade-card">'
+                + '<div class="art-grade-header"><span class="art-grade-name">' + g.name + '</span><span class="art-grade-badge" style="background:' + gc + ';">' + g.grade + '</span></div>'
+                + (g.stats ? '<div class="art-grade-stats">' + g.stats + '</div>' : '')
+                + (g.analysis ? '<div class="art-grade-analysis">' + g.analysis + '</div>' : '')
+                + '</div>';
         });
     }
 
-    const modal = document.getElementById('article-modal-overlay');
-    document.getElementById('article-modal-content').innerHTML = `
-        <div style="background:var(--navy-deep);padding:2rem 1.5rem;position:relative;overflow:hidden;margin:-1.5rem -1.5rem 1.5rem;">
-            <div style="position:absolute;inset:0;background:${gradient};opacity:0.7;pointer-events:none;"></div>
-            <div style="position:absolute;inset:0;background:var(--navy-deep);opacity:0.5;pointer-events:none;"></div>
-            <div style="position:relative;z-index:1;">
-                <div style="display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:${color}33;color:${color};border:1px solid ${color}55;margin-bottom:0.75rem;">${a.category}</div>
-                <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(1.5rem,4vw,2.2rem);font-weight:900;text-transform:uppercase;color:rgba(255,255,255,0.95);margin:0 0 0.75rem;line-height:1.05;">${a.title}</h2>
-                <div style="font-size:0.78rem;color:rgba(255,255,255,0.35);">Sixers Hoops Staff &middot; ${date}</div>
-            </div>
-        </div>
-        <div style="padding:0 0.25rem;">
-            ${a.intro ? `<p style="font-size:0.95rem;line-height:1.8;color:var(--ink);margin:0 0 1.2rem;">${a.intro}</p>` : ''}
-            ${gradesHtml}
-            ${a.closing ? `<h2 style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#0d0d0d;margin:2rem 0 0.75rem;padding-left:0.75rem;border-left:3px solid #ED174C;">Bottom Line</h2><p style="font-size:0.95rem;line-height:1.8;color:var(--ink);">${a.closing}</p>` : ''}
-        </div>`;
+    if (a.closing) html += '<h2>Bottom Line</h2><p>' + a.closing + '</p>';
+    document.getElementById('art-body').innerHTML = html || '<p>Article content coming soon.</p>';
 
-    modal.classList.add('active');
+    // Show full-page view
+    const page = document.getElementById('article-page');
+    page.classList.add('active');
+    page.scrollTop = 0;
     document.body.style.overflow = 'hidden';
+
+    // Push browser history so back button works
+    history.pushState({ articleId: id }, '', '?article=' + id);
 }
 
-function closeArticleModal() {
-    document.getElementById('article-modal-overlay').classList.remove('active');
+function closeArticlePage() {
+    document.getElementById('article-page').classList.remove('active');
     document.body.style.overflow = '';
+    if (history.state && history.state.articleId) history.back();
 }
+
+// Handle browser back button
+window.addEventListener('popstate', () => {
+    const page = document.getElementById('article-page');
+    if (page && page.classList.contains('active')) {
+        page.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
 
 // Load from Firestore
 (function loadEditorial(tries) {
