@@ -1909,15 +1909,18 @@ function openArticleModal(id) {
     if (a.intro) html += '<p>' + a.intro + '</p>';
 
     if (a.grades && a.grades.length > 0) {
-        html += '<h2>Player Grades</h2>';
-        a.grades.forEach(g => {
+        const visibleGrades = a.grades.filter(g => g.grade !== 'DNP');
+        if (visibleGrades.length > 0) {
+            html += '<h2>Player Grades</h2>';
+            visibleGrades.forEach(g => {
             const gc = GRADE_COLORS_ED[g.grade] || '#475569';
             html += '<div class="art-grade-card">'
                 + '<div class="art-grade-header"><span class="art-grade-name">' + g.name + '</span><span class="art-grade-badge" style="background:' + gc + ';">' + g.grade + '</span></div>'
                 + (g.stats ? '<div class="art-grade-stats">' + g.stats + '</div>' : '')
                 + (g.analysis ? '<div class="art-grade-analysis">' + g.analysis + '</div>' : '')
                 + '</div>';
-        });
+            });
+        }
     }
 
     if (a.closing) html += '<h2>Bottom Line</h2><p>' + a.closing + '</p>';
