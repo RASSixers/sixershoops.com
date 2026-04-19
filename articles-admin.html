@@ -1,236 +1,288 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Articles Admin | Sixers Hoops</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/navbar-styles.css">
-    <style>
-        :root { --navy:#001a57;--navy-deep:#000d2e;--sixers-blue:#006BB6;--sixers-red:#ED174C;--cream:#f5f0e8;--ink:#0d0d0d;--mid:#4a4a5a;--border-light:#e8e4dc;--card-bg:#ffffff; }
-        *,*::before,*::after{box-sizing:border-box}
-        body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream);color:var(--ink)}
-        .admin-wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem}
-        .admin-header{background:var(--navy-deep);padding:2rem 1.5rem;position:relative;overflow:hidden}
-        .admin-header::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,107,182,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.06) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
-        .admin-header-inner{max-width:1100px;margin:0 auto;position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-        .admin-header h1{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:900;text-transform:uppercase;letter-spacing:0.04em;color:white;margin:0}
-        .admin-header p{color:rgba(255,255,255,0.4);font-size:0.82rem;margin:0.25rem 0 0}
-        #auth-gate{display:flex;align-items:center;justify-content:center;min-height:60vh}
-        .auth-card{background:white;border:1px solid var(--border-light);border-radius:16px;padding:2.5rem;text-align:center;max-width:380px;width:100%}
-        .auth-card h2{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;text-transform:uppercase;margin:0 0 0.5rem}
-        .auth-card p{color:var(--mid);font-size:0.85rem;margin:0 0 1.5rem}
-        #sign-in-btn{background:var(--sixers-blue);color:white;border:none;padding:0.75rem 2rem;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.9rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:100%}
-        #sign-in-btn:hover{background:#0080d4}
-        .admin-tabs{display:flex;background:var(--navy-deep);border-bottom:1px solid rgba(255,255,255,0.08)}
-        .admin-tab{font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:0.85rem 1.5rem;background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}
-        .admin-tab:hover{color:rgba(255,255,255,0.75)}
-        .admin-tab.active{color:white;border-bottom-color:var(--sixers-blue)}
-        .tab-panel{display:none}
-        .tab-panel.active{display:block}
-        .article-list{display:flex;flex-direction:column;gap:1rem;margin-top:1.5rem}
-        .article-item{background:var(--card-bg);border:1px solid var(--border-light);border-radius:12px;padding:1.25rem 1.5rem;display:flex;align-items:flex-start;gap:1rem;transition:border-color 0.2s,box-shadow 0.2s}
-        .article-item:hover{border-color:rgba(0,107,182,0.3);box-shadow:0 4px 12px rgba(0,0,0,0.07)}
-        .article-item-body{flex:1;min-width:0}
-        .article-item-tag{font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase}
-        .article-item-title{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);line-height:1.2;margin:0.2rem 0}
-        .article-item-meta{font-size:0.72rem;color:var(--mid)}
-        .article-item-excerpt{font-size:0.82rem;color:var(--mid);line-height:1.5;margin-top:0.35rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-        .article-item-actions{display:flex;gap:0.5rem;flex-shrink:0;align-items:center}
-        .btn-edit{background:rgba(0,107,182,0.1);color:var(--sixers-blue);border:1px solid rgba(0,107,182,0.2);border-radius:8px;padding:0.4rem 0.9rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
-        .btn-edit:hover{background:rgba(0,107,182,0.2)}
-        .btn-delete{background:rgba(237,23,76,0.08);color:var(--sixers-red);border:1px solid rgba(237,23,76,0.15);border-radius:8px;padding:0.4rem 0.9rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
-        .btn-delete:hover{background:rgba(237,23,76,0.15)}
-        .btn-primary{background:var(--sixers-blue);color:white;border:none;border-radius:10px;padding:0.65rem 1.4rem;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
-        .btn-primary:hover{background:#0080d4;transform:translateY(-1px)}
-        .btn-secondary{background:transparent;color:var(--mid);border:1px solid var(--border-light);border-radius:10px;padding:0.65rem 1.4rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
-        .btn-secondary:hover{border-color:var(--mid);color:var(--ink)}
-        .editor-grid{display:grid;grid-template-columns:1fr 300px;gap:1.5rem;margin-top:1.5rem}
-        @media(max-width:800px){.editor-grid{grid-template-columns:1fr}}
-        .editor-card{background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;padding:1.5rem}
-        .editor-card h3{font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);margin:0 0 1rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border-light)}
-        .form-group{margin-bottom:1.1rem}
-        .form-label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);margin-bottom:0.4rem}
-        .form-input,.form-select,.form-textarea{width:100%;padding:0.65rem 0.85rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:9px;font-family:'Barlow',sans-serif;font-size:0.9rem;color:var(--ink);transition:border-color 0.2s,box-shadow 0.2s;outline:none}
-        .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--sixers-blue);box-shadow:0 0 0 3px rgba(0,107,182,0.1)}
-        .form-textarea{resize:vertical;min-height:120px;line-height:1.6}
-        .grade-entry{background:#f9f7f3;border:1px solid var(--border-light);border-radius:10px;padding:1rem;margin-bottom:0.75rem;position:relative}
-        .grade-entry-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
-        .grade-entry-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:var(--ink)}
-        .grade-entry-remove{background:none;border:none;color:#ef4444;cursor:pointer;padding:2px;font-size:1.1rem;line-height:1}
-        .grade-entry-row{display:grid;grid-template-columns:1fr 100px;gap:0.5rem;margin-bottom:0.5rem}
-        .add-player-btn{width:100%;padding:0.6rem;border:1px dashed var(--border-light);border-radius:9px;background:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);transition:all 0.2s;margin-top:0.25rem}
-        .add-player-btn:hover{border-color:var(--sixers-blue);color:var(--sixers-blue);background:rgba(0,107,182,0.04)}
-        .preview-panel{position:sticky;top:84px}
-        .preview-article-card{background:var(--card-bg);border:1px solid var(--border-light);border-radius:12px;overflow:hidden}
-        .preview-thumb{height:100px;background:var(--navy-deep);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-        .preview-category-label{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.7);position:relative;z-index:1}
-        .preview-body{padding:0.9rem 1rem 1rem}
-        .preview-tag{font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase}
-        .preview-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;line-height:1.2;color:var(--ink);margin:0.25rem 0}
-        .preview-meta{font-size:0.68rem;color:var(--mid)}
-        .empty-state{text-align:center;padding:3rem 1rem;color:var(--mid)}
-        .empty-state h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.2rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin:0.75rem 0 0.4rem}
-        .empty-state p{font-size:0.85rem;margin:0}
-        #toast{position:fixed;bottom:2rem;right:2rem;background:#1e293b;color:white;padding:0.75rem 1.25rem;border-radius:10px;font-size:0.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none}
-        #toast.show{opacity:1;transform:translateY(0)}
-        #toast.success{background:#15803d}
-        #toast.error{background:#dc2626}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Articles Admin | Sixers Hoops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/navbar-styles.css">
+<style>
+:root { --navy:#001a57;--navy-deep:#000d2e;--sixers-blue:#006BB6;--sixers-red:#ED174C;--cream:#f5f0e8;--ink:#0d0d0d;--mid:#4a4a5a;--border-light:#e8e4dc;--card-bg:#ffffff; }
+*,*::before,*::after{box-sizing:border-box}
+body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream);color:var(--ink)}
+.admin-wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.admin-header{background:var(--navy-deep);padding:2rem 1.5rem;position:relative;overflow:hidden}
+.admin-header::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,107,182,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.06) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+.admin-header-inner{max-width:1100px;margin:0 auto;position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.admin-header h1{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:900;text-transform:uppercase;letter-spacing:0.04em;color:white;margin:0}
+.admin-header p{color:rgba(255,255,255,0.4);font-size:0.82rem;margin:0.25rem 0 0}
+#auth-gate{display:flex;align-items:center;justify-content:center;min-height:60vh}
+.auth-card{background:white;border:1px solid var(--border-light);border-radius:16px;padding:2.5rem;text-align:center;max-width:380px;width:100%}
+.auth-card h2{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;text-transform:uppercase;margin:0 0 0.5rem}
+.auth-card p{color:var(--mid);font-size:0.85rem;margin:0 0 1.5rem}
+#sign-in-btn{background:var(--sixers-blue);color:white;border:none;padding:0.75rem 2rem;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.9rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:100%}
+#sign-in-btn:hover{background:#0080d4}
+.admin-tabs{display:flex;background:var(--navy-deep);border-bottom:1px solid rgba(255,255,255,0.08)}
+.admin-tab{font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:0.85rem 1.5rem;background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}
+.admin-tab:hover{color:rgba(255,255,255,0.75)}
+.admin-tab.active{color:white;border-bottom-color:var(--sixers-blue)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── ARTICLE LIST CARDS (improved) ── */
+.article-list{display:flex;flex-direction:column;gap:1rem;margin-top:1.5rem}
+.article-item{background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;padding:0;display:flex;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s;position:relative}
+.article-item:hover{border-color:rgba(0,107,182,0.35);box-shadow:0 6px 20px rgba(0,0,0,0.08);transform:translateY(-1px)}
+.article-item-accent{width:4px;flex-shrink:0;border-radius:0}
+.article-item-body{flex:1;min-width:0;padding:1.1rem 1.25rem}
+.article-item-tag-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.35rem}
+.article-item-tag{font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid currentColor;opacity:0.9}
+.article-item-title{font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:800;color:var(--ink);line-height:1.2;margin:0 0 0.2rem}
+.article-item-meta{font-size:0.72rem;color:var(--mid);display:flex;align-items:center;gap:0.4rem}
+.article-item-meta-dot{width:3px;height:3px;border-radius:50%;background:var(--mid);opacity:0.5}
+.article-item-excerpt{font-size:0.82rem;color:var(--mid);line-height:1.55;margin-top:0.4rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.article-item-tweet-badge{font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:#1d9bf0;color:white;padding:2px 7px;border-radius:999px;display:inline-flex;align-items:center;gap:3px}
+.article-item-actions{display:flex;flex-direction:column;gap:0.5rem;flex-shrink:0;align-items:center;justify-content:center;padding:1rem 1.1rem 1rem 0}
+.btn-edit{background:rgba(0,107,182,0.1);color:var(--sixers-blue);border:1px solid rgba(0,107,182,0.2);border-radius:8px;padding:0.4rem 0.9rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-edit:hover{background:rgba(0,107,182,0.2)}
+.btn-delete{background:rgba(237,23,76,0.08);color:var(--sixers-red);border:1px solid rgba(237,23,76,0.15);border-radius:8px;padding:0.4rem 0.9rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-delete:hover{background:rgba(237,23,76,0.15)}
+.btn-primary{background:var(--sixers-blue);color:white;border:none;border-radius:10px;padding:0.65rem 1.4rem;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-primary:hover{background:#0080d4;transform:translateY(-1px)}
+.btn-secondary{background:transparent;color:var(--mid);border:1px solid var(--border-light);border-radius:10px;padding:0.65rem 1.4rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-secondary:hover{border-color:var(--mid);color:var(--ink)}
+
+.editor-grid{display:grid;grid-template-columns:1fr 300px;gap:1.5rem;margin-top:1.5rem}
+@media(max-width:800px){.editor-grid{grid-template-columns:1fr}}
+.editor-card{background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;padding:1.5rem}
+.editor-card h3{font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);margin:0 0 1rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border-light)}
+.form-group{margin-bottom:1.1rem}
+.form-label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);margin-bottom:0.4rem}
+.form-input,.form-select,.form-textarea{width:100%;padding:0.65rem 0.85rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:9px;font-family:'Barlow',sans-serif;font-size:0.9rem;color:var(--ink);transition:border-color 0.2s,box-shadow 0.2s;outline:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--sixers-blue);box-shadow:0 0 0 3px rgba(0,107,182,0.1)}
+.form-textarea{resize:vertical;min-height:120px;line-height:1.6}
+/* Tweet embed section */
+.tweet-embed-section{background:#f0f8ff;border:1px solid #bce0f7;border-radius:10px;padding:1rem;margin-bottom:1.1rem}
+.tweet-embed-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem}
+.tweet-x-icon{width:18px;height:18px;fill:#000;flex-shrink:0}
+.tweet-embed-label{font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#0f1419}
+.tweet-embed-hint{font-size:0.72rem;color:#536471;margin-top:0.4rem;line-height:1.5}
+.tweet-preview-box{background:white;border:1px solid #cfd9de;border-radius:12px;padding:0.75rem 1rem;margin-top:0.75rem;font-size:0.8rem;color:#536471;font-style:italic;display:none}
+.tweet-preview-box.visible{display:block}
+
+.grade-entry{background:#f9f7f3;border:1px solid var(--border-light);border-radius:10px;padding:1rem;margin-bottom:0.75rem;position:relative}
+.grade-entry-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
+.grade-entry-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:var(--ink)}
+.grade-entry-remove{background:none;border:none;color:#ef4444;cursor:pointer;padding:2px;font-size:1.1rem;line-height:1}
+.grade-entry-row{display:grid;grid-template-columns:1fr 100px;gap:0.5rem;margin-bottom:0.5rem}
+.add-player-btn{width:100%;padding:0.6rem;border:1px dashed var(--border-light);border-radius:9px;background:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);transition:all 0.2s;margin-top:0.25rem}
+.add-player-btn:hover{border-color:var(--sixers-blue);color:var(--sixers-blue);background:rgba(0,107,182,0.04)}
+.preview-panel{position:sticky;top:84px}
+
+/* Improved preview card */
+.preview-article-card{background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.preview-thumb{height:110px;display:flex;align-items:flex-end;justify-content:flex-start;position:relative;overflow:hidden;padding:0.75rem 1rem}
+.preview-thumb-bg{position:absolute;inset:0}
+.preview-category-chip{font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;position:relative;z-index:1}
+.preview-body{padding:0.9rem 1rem 1rem}
+.preview-title{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:800;line-height:1.2;color:var(--ink);margin:0 0 0.3rem}
+.preview-meta{font-size:0.68rem;color:var(--mid);display:flex;align-items:center;gap:0.35rem}
+.preview-excerpt{font-size:0.75rem;color:var(--mid);line-height:1.5;margin-top:0.35rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.preview-footer{border-top:1px solid var(--border-light);padding:0.6rem 1rem;display:flex;align-items:center;justify-content:space-between}
+.preview-read-more{font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--sixers-blue)}
+
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--mid)}
+.empty-state h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.2rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin:0.75rem 0 0.4rem}
+.empty-state p{font-size:0.85rem;margin:0}
+#toast{position:fixed;bottom:2rem;right:2rem;background:#1e293b;color:white;padding:0.75rem 1.25rem;border-radius:10px;font-size:0.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.success{background:#15803d}
+#toast.error{background:#dc2626}
+</style>
 </head>
 <body>
-
 <div class="admin-header">
-    <div class="admin-header-inner">
-        <div>
-            <h1>Articles Admin</h1>
-            <p>Create and manage editorial content — separate from the community feed</p>
-        </div>
-        <a href="/" style="font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);text-decoration:none;">Back to Site</a>
+  <div class="admin-header-inner">
+    <div>
+      <h1>Articles Admin</h1>
+      <p>Create and manage editorial content — separate from the community feed</p>
     </div>
+    <a href="/" style="font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);text-decoration:none;">Back to Site</a>
+  </div>
 </div>
 
 <div id="auth-gate" style="display:none;">
-    <div class="auth-card">
-        <h2>Admin Only</h2>
-        <p>Sign in with your admin account to access the article editor.</p>
-        <button id="sign-in-btn">Sign In with Google</button>
-    </div>
+  <div class="auth-card">
+    <h2>Admin Only</h2>
+    <p>Sign in with your admin account to access the article editor.</p>
+    <button id="sign-in-btn">Sign In with Google</button>
+  </div>
 </div>
 
 <div id="admin-ui" style="display:none;">
-    <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="list">All Articles</button>
-        <button class="admin-tab" data-tab="editor">Write Article</button>
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="list">All Articles</button>
+    <button class="admin-tab" data-tab="editor">Write Article</button>
+  </div>
+
+  <div class="admin-wrap">
+    <!-- LIST TAB -->
+    <div class="tab-panel active" id="tab-list">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;text-transform:uppercase;">Published Articles</div>
+          <div style="font-size:0.8rem;color:var(--mid);margin-top:2px;">These appear in the "From the Desk" section on your homepage</div>
+        </div>
+        <button class="btn-primary" id="new-article-btn">+ New Article</button>
+      </div>
+      <div class="article-list" id="article-list">
+        <div class="empty-state">
+          <h3>No articles yet</h3>
+          <p>Click "New Article" to write your first editorial piece.</p>
+        </div>
+      </div>
     </div>
 
-    <div class="admin-wrap">
+    <!-- EDITOR TAB -->
+    <div class="tab-panel" id="tab-editor">
+      <div class="editor-grid">
+        <div>
+          <!-- Article Info -->
+          <div class="editor-card">
+            <h3>Article Info</h3>
+            <input type="hidden" id="editing-doc-id">
+            <div class="form-group">
+              <label class="form-label">Headline *</label>
+              <input type="text" class="form-input" id="f-title" placeholder="e.g. Sixers Player Grades: April 18">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select class="form-select" id="f-category">
+                  <option value="Player Grades">Player Grades</option>
+                  <option value="Analysis">Analysis</option>
+                  <option value="Opinion">Opinion</option>
+                  <option value="Preview">Preview</option>
+                  <option value="Recap">Recap</option>
+                  <option value="News">News</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Excerpt (preview text on homepage card)</label>
+              <textarea class="form-textarea" id="f-excerpt" rows="2" placeholder="A short description of what this article covers..." style="min-height:70px;"></textarea>
+            </div>
+          </div>
 
-        <div class="tab-panel active" id="tab-list">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;">
-                <div>
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;text-transform:uppercase;">Published Articles</div>
-                    <div style="font-size:0.8rem;color:var(--mid);margin-top:2px;">These appear in the "From the Desk" section on your homepage</div>
-                </div>
-                <button class="btn-primary" id="new-article-btn">+ New Article</button>
+          <!-- Article Body -->
+          <div class="editor-card" style="margin-top:1rem;">
+            <h3>Article Body</h3>
+            <div class="form-group">
+              <label class="form-label">Opening Paragraph</label>
+              <textarea class="form-textarea" id="f-intro" placeholder="Set the scene — what's this article about and why does it matter?"></textarea>
             </div>
-            <div class="article-list" id="article-list">
-                <div class="empty-state">
-                    <h3>No articles yet</h3>
-                    <p>Click "New Article" to write your first editorial piece.</p>
-                </div>
+
+            <!-- TWEET EMBED SECTION -->
+            <div class="tweet-embed-section">
+              <div class="tweet-embed-header">
+                <svg class="tweet-x-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                <span class="tweet-embed-label">Embed a Tweet / X Post</span>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <input type="text" class="form-input" id="f-tweet-url" placeholder="https://x.com/user/status/1234567890" oninput="handleTweetInput(this.value)">
+              </div>
+              <div class="tweet-embed-hint">Paste the full URL of a tweet or X post to embed it in the article. Leave blank if not needed.</div>
+              <div class="tweet-preview-box" id="tweet-preview-box">
+                🐦 Tweet will be embedded here in the article. Make sure the URL is a valid x.com or twitter.com post link.
+              </div>
             </div>
+          </div>
+
+          <!-- Player Grades -->
+          <div class="editor-card" id="grades-section" style="margin-top:1rem;">
+            <h3>Player Grade Cards</h3>
+            <p style="font-size:0.8rem;color:var(--mid);margin:0 0 1rem;">Add a card for each player. Leave empty if not a grades article.</p>
+            <div id="grade-entries"></div>
+            <button class="add-player-btn" id="add-player-btn">+ Add Player</button>
+          </div>
+
+          <!-- Bottom Line -->
+          <div class="editor-card" style="margin-top:1rem;">
+            <h3>Bottom Line</h3>
+            <div class="form-group">
+              <label class="form-label">Closing / Summary Paragraph</label>
+              <textarea class="form-textarea" id="f-closing" placeholder="Wrap it up — what's the overall takeaway?"></textarea>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">
+            <button class="btn-primary" id="publish-btn">Publish Article</button>
+            <button class="btn-secondary" id="cancel-editor-btn">Cancel</button>
+          </div>
         </div>
 
-        <div class="tab-panel" id="tab-editor">
-            <div class="editor-grid">
-                <div>
-                    <div class="editor-card">
-                        <h3>Article Info</h3>
-                        <input type="hidden" id="editing-doc-id">
-                        <div class="form-group">
-                            <label class="form-label">Headline *</label>
-                            <input type="text" class="form-input" id="f-title" placeholder="e.g. Sixers Player Grades: April 18">
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                            <div class="form-group">
-                                <label class="form-label">Category *</label>
-                                <select class="form-select" id="f-category">
-                                    <option value="Player Grades">Player Grades</option>
-                                    <option value="Analysis">Analysis</option>
-                                    <option value="Opinion">Opinion</option>
-                                    <option value="Preview">Preview</option>
-                                    <option value="Recap">Recap</option>
-                                    <option value="News">News</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Excerpt (preview text on homepage card)</label>
-                            <textarea class="form-textarea" id="f-excerpt" rows="2" placeholder="A short description of what this article covers..." style="min-height:70px;"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="editor-card" style="margin-top:1rem;">
-                        <h3>Article Body</h3>
-                        <div class="form-group">
-                            <label class="form-label">Opening Paragraph</label>
-                            <textarea class="form-textarea" id="f-intro" placeholder="Set the scene — what's this article about and why does it matter?"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="editor-card" id="grades-section" style="margin-top:1rem;">
-                        <h3>Player Grade Cards</h3>
-                        <p style="font-size:0.8rem;color:var(--mid);margin:0 0 1rem;">Add a card for each player. Leave empty if not a grades article.</p>
-                        <div id="grade-entries"></div>
-                        <button class="add-player-btn" id="add-player-btn">+ Add Player</button>
-                    </div>
-
-                    <div class="editor-card" style="margin-top:1rem;">
-                        <h3>Bottom Line</h3>
-                        <div class="form-group">
-                            <label class="form-label">Closing / Summary Paragraph</label>
-                            <textarea class="form-textarea" id="f-closing" placeholder="Wrap it up — what's the overall takeaway?"></textarea>
-                        </div>
-                    </div>
-
-                    <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">
-                        <button class="btn-primary" id="publish-btn">Publish Article</button>
-                        <button class="btn-secondary" id="cancel-editor-btn">Cancel</button>
-                    </div>
+        <!-- SIDEBAR PREVIEW -->
+        <div class="preview-panel">
+          <div class="editor-card">
+            <h3>Card Preview</h3>
+            <p style="font-size:0.75rem;color:var(--mid);margin:0 0 1rem;">How this will look on the homepage</p>
+            <div class="preview-article-card">
+              <div class="preview-thumb" id="prev-thumb">
+                <div class="preview-thumb-bg" id="prev-gradient" style="background:linear-gradient(135deg,#001a57 0%,#003a8c 60%,rgba(0,107,182,0.6) 100%);"></div>
+                <span class="preview-category-chip" id="prev-cat-label">Player Grades</span>
+              </div>
+              <div class="preview-body">
+                <div class="preview-title" id="prev-title">Your article headline will appear here</div>
+                <div class="preview-meta">
+                  <span>Sixers Hoops Staff</span>
+                  <span style="width:3px;height:3px;border-radius:50%;background:var(--mid);opacity:0.5;display:inline-block;"></span>
+                  <span id="prev-meta-date">Today</span>
                 </div>
-
-                <div class="preview-panel">
-                    <div class="editor-card">
-                        <h3>Card Preview</h3>
-                        <p style="font-size:0.75rem;color:var(--mid);margin:0 0 1rem;">How this will look on the homepage</p>
-                        <div class="preview-article-card">
-                            <div class="preview-thumb" id="prev-thumb">
-                                <div id="prev-gradient" style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,107,182,0.4) 0%,rgba(237,23,76,0.2) 100%);"></div>
-                                <span class="preview-category-label" id="prev-cat-label">Player Grades</span>
-                            </div>
-                            <div class="preview-body">
-                                <div class="preview-tag" id="prev-tag" style="color:#1e7d46;">Player Grades</div>
-                                <div class="preview-title" id="prev-title">Your article headline will appear here</div>
-                                <div class="preview-meta" id="prev-meta">Sixers Hoops Staff · Today</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="editor-card" style="margin-top:1rem;">
-                        <h3>Category Guide</h3>
-                        <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.8rem;">
-                            <div><span style="color:#1e7d46;font-weight:700;">Player Grades</span> — grade cards for each player</div>
-                            <div><span style="color:#006BB6;font-weight:700;">Analysis</span> — deep-dive breakdown</div>
-                            <div><span style="color:#b06b00;font-weight:700;">Opinion</span> — your take on a topic</div>
-                            <div><span style="color:#ED174C;font-weight:700;">Preview</span> — upcoming game/season outlook</div>
-                            <div><span style="color:#475569;font-weight:700;">Recap</span> — post-game breakdown</div>
-                        </div>
-                    </div>
-
-                    <div class="editor-card" style="margin-top:1rem;">
-                        <h3>Grade Reference</h3>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;font-size:0.75rem;">
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#1a6b3c;border-radius:4px;display:inline-block;"></span> A+</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#1e7d46;border-radius:4px;display:inline-block;"></span> A</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#2d8f56;border-radius:4px;display:inline-block;"></span> A-</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#006BB6;border-radius:4px;display:inline-block;"></span> B+</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#0077cc;border-radius:4px;display:inline-block;"></span> B</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#2a85d0;border-radius:4px;display:inline-block;"></span> B-</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#b06b00;border-radius:4px;display:inline-block;"></span> C+</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#c27800;border-radius:4px;display:inline-block;"></span> C</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#b83232;border-radius:4px;display:inline-block;"></span> D+</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#a02828;border-radius:4px;display:inline-block;"></span> D</div>
-                            <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#7a1a1a;border-radius:4px;display:inline-block;"></span> F</div>
-                        </div>
-                    </div>
-                </div>
+                <div class="preview-excerpt" id="prev-excerpt" style="display:none;"></div>
+              </div>
+              <div class="preview-footer">
+                <span class="preview-read-more">Read Article →</span>
+                <span id="prev-tweet-badge" style="display:none;" class="article-item-tweet-badge">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  Tweet
+                </span>
+              </div>
             </div>
-        </div>
+          </div>
 
+          <div class="editor-card" style="margin-top:1rem;">
+            <h3>Category Guide</h3>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.8rem;">
+              <div><span style="color:#1e7d46;font-weight:700;">Player Grades</span> — grade cards for each player</div>
+              <div><span style="color:#006BB6;font-weight:700;">Analysis</span> — deep-dive breakdown</div>
+              <div><span style="color:#b06b00;font-weight:700;">Opinion</span> — your take on a topic</div>
+              <div><span style="color:#ED174C;font-weight:700;">Preview</span> — upcoming game/season outlook</div>
+              <div><span style="color:#475569;font-weight:700;">Recap</span> — post-game breakdown</div>
+            </div>
+          </div>
+
+          <div class="editor-card" style="margin-top:1rem;">
+            <h3>Grade Reference</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;font-size:0.75rem;">
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#1a6b3c;border-radius:4px;display:inline-block;"></span> A+</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#1e7d46;border-radius:4px;display:inline-block;"></span> A</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#2d8f56;border-radius:4px;display:inline-block;"></span> A-</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#006BB6;border-radius:4px;display:inline-block;"></span> B+</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#0077cc;border-radius:4px;display:inline-block;"></span> B</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#2a85d0;border-radius:4px;display:inline-block;"></span> B-</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#b06b00;border-radius:4px;display:inline-block;"></span> C+</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#c27800;border-radius:4px;display:inline-block;"></span> C</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#b83232;border-radius:4px;display:inline-block;"></span> D+</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#a02828;border-radius:4px;display:inline-block;"></span> D</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#7a1a1a;border-radius:4px;display:inline-block;"></span> F</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -238,261 +290,328 @@
 <script>
 const MOD_EMAIL = 'rhatus13@gmail.com';
 const COLLECTION = 'editorial_articles';
-const SIXERS_ROSTER = [
-    { name: 'Tyrese Maxey', number: 0 },
-    { name: 'Paul George', number: 8 },
-    { name: 'Justin Edwards', number: 11 },
-    { name: 'Dalen Terry', number: 14 },
-    { name: 'Joel Embiid', number: 21 },
-    { name: 'Johni Broome', number: 22 },
-    { name: 'Tyrese Martin', number: 23 },
-    { name: 'Dominick Barlow', number: 25 },
-    { name: 'Adem Bona', number: 30 },
-    { name: 'Jabari Walker', number: 33 },
-    { name: 'Trendon Watford', number: 12 },
-    { name: 'Kyle Lowry', number: 7 },
-    { name: 'Kelly Oubre Jr.', number: 9 },
-    { name: 'Andre Drummond', number: 1 },
-    { name: 'VJ Edgecombe', number: 77 },
-    { name: 'MarJon Beauchamp', number: 16 },
-    { name: 'Quentin Grimes', number: 5 },
-    { name: 'Dalen Terry', number: 14 },
+
+// ── ROSTER: first 8 are pinned in order, rest follow ──
+const PINNED_ROSTER = [
+  { name: 'Tyrese Maxey',    number: 0  },
+  { name: 'VJ Edgecombe',   number: 77 },
+  { name: 'Paul George',     number: 8  },
+  { name: 'Kelly Oubre Jr.', number: 9  },
+  { name: 'Adem Bona',       number: 30 },
+  { name: 'Andre Drummond',  number: 1  },
+  { name: 'Quentin Grimes',  number: 5  },
+  { name: 'Dominick Barlow', number: 25 },
+  { name: 'Justin Edwards',  number: 11 },
 ];
-// Deduplicate roster by name
-const ROSTER = SIXERS_ROSTER.filter((p, i, arr) => arr.findIndex(x => x.name === p.name) === i);
+
+const REST_ROSTER = [
+  { name: 'Dalen Terry',      number: 14 },
+  { name: 'Joel Embiid',      number: 21 },
+  { name: 'Johni Broome',     number: 22 },
+  { name: 'Tyrese Martin',    number: 23 },
+  { name: 'Jabari Walker',    number: 33 },
+  { name: 'Trendon Watford',  number: 12 },
+  { name: 'Kyle Lowry',       number: 7  },
+  { name: 'MarJon Beauchamp', number: 16 },
+];
+
+const ROSTER = [...PINNED_ROSTER, ...REST_ROSTER];
 
 const GRADES = ['DNP','A+','A','A-','B+','B','B-','C+','C','D+','D','F'];
 const GRADE_COLORS = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a'};
 const CATEGORY_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
-const CATEGORY_GRADIENTS = {'Player Grades':'linear-gradient(135deg,rgba(30,125,70,0.55) 0%,rgba(0,13,46,0.9) 100%)','Analysis':'linear-gradient(135deg,rgba(0,107,182,0.55) 0%,rgba(0,13,46,0.9) 100%)','Opinion':'linear-gradient(135deg,rgba(176,107,0,0.5) 0%,rgba(0,13,46,0.9) 100%)','Preview':'linear-gradient(135deg,rgba(237,23,76,0.45) 0%,rgba(0,13,46,0.9) 100%)','Recap':'linear-gradient(135deg,rgba(71,85,105,0.55) 0%,rgba(0,13,46,0.9) 100%)','News':'linear-gradient(135deg,rgba(0,119,204,0.55) 0%,rgba(0,13,46,0.9) 100%)'};
+const CATEGORY_GRADIENTS = {
+  'Player Grades':'linear-gradient(135deg,#001a57 0%,#00381a 60%,rgba(30,125,70,0.5) 100%)',
+  'Analysis':'linear-gradient(135deg,#001a57 0%,#003a8c 60%,rgba(0,107,182,0.6) 100%)',
+  'Opinion':'linear-gradient(135deg,#001a57 0%,#3d2500 60%,rgba(176,107,0,0.5) 100%)',
+  'Preview':'linear-gradient(135deg,#001a57 0%,#5a0020 60%,rgba(237,23,76,0.45) 100%)',
+  'Recap':'linear-gradient(135deg,#001a57 0%,#1e2a3a 60%,rgba(71,85,105,0.6) 100%)',
+  'News':'linear-gradient(135deg,#001a57 0%,#003060 60%,rgba(0,119,204,0.5) 100%)'
+};
 
 function toast(msg, type='success') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'show ' + type;
-    setTimeout(() => { el.className = ''; }, 3000);
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  setTimeout(() => { el.className = ''; }, 3000);
 }
 
+// Tabs
 document.querySelectorAll('.admin-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-    });
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
 });
 
 function switchTab(name) {
-    document.querySelectorAll('.admin-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
 }
 
+// Tweet URL handling
+function handleTweetInput(val) {
+  const box = document.getElementById('tweet-preview-box');
+  const badge = document.getElementById('prev-tweet-badge');
+  const clean = val.trim();
+  const valid = /^https?:\/\/(twitter\.com|x\.com)\/.+\/status\/\d+/.test(clean);
+  box.classList.toggle('visible', clean.length > 0);
+  if (badge) badge.style.display = clean.length > 0 ? 'inline-flex' : 'none';
+  if (valid) {
+    box.innerHTML = '✅ Valid tweet URL — will be embedded in article.';
+    box.style.color = '#15803d';
+  } else if (clean.length > 0) {
+    box.innerHTML = '⚠️ Paste a full x.com or twitter.com status URL.';
+    box.style.color = '#b06b00';
+  }
+}
+
+// Preview update
 function updatePreview() {
-    const title = document.getElementById('f-title').value.trim() || 'Your article headline will appear here';
-    const category = document.getElementById('f-category').value;
-    const color = CATEGORY_COLORS[category] || '#006BB6';
-    const gradient = CATEGORY_GRADIENTS[category] || CATEGORY_GRADIENTS['Analysis'];
-    document.getElementById('prev-title').textContent = title;
-    document.getElementById('prev-tag').textContent = category;
-    document.getElementById('prev-tag').style.color = color;
-    document.getElementById('prev-cat-label').textContent = category;
-    document.getElementById('prev-gradient').style.background = gradient;
-    const today = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
-    document.getElementById('prev-meta').textContent = 'Sixers Hoops Staff · ' + today;
+  const title = document.getElementById('f-title').value.trim() || 'Your article headline will appear here';
+  const category = document.getElementById('f-category').value;
+  const excerpt = document.getElementById('f-excerpt').value.trim();
+  const gradient = CATEGORY_GRADIENTS[category] || CATEGORY_GRADIENTS['Analysis'];
+  document.getElementById('prev-title').textContent = title;
+  document.getElementById('prev-cat-label').textContent = category;
+  document.getElementById('prev-gradient').style.background = gradient;
+  const today = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('prev-meta-date').textContent = today;
+  const excerptEl = document.getElementById('prev-excerpt');
+  if (excerpt) { excerptEl.textContent = excerpt; excerptEl.style.display = ''; }
+  else { excerptEl.style.display = 'none'; }
 }
-['f-title'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updatePreview);
-    document.getElementById(id).addEventListener('change', updatePreview);
-});
 
+['f-title','f-excerpt'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updatePreview);
+});
+document.getElementById('f-category').addEventListener('change', updatePreview);
+
+// Grade entries
 let gradeCount = 0;
+
 function addGradeEntry(data = {}) {
-    gradeCount++;
-    const id = gradeCount;
-    const container = document.getElementById('grade-entries');
-    const div = document.createElement('div');
-    div.className = 'grade-entry';
-    div.id = 'grade-entry-' + id;
-    const selectedGrade = data.grade || 'DNP';
-    const gradeOptions = GRADES.map(g => '<option value="' + g + '"' + (selectedGrade === g ? ' selected' : '') + '>' + g + '</option>').join('');
-    const isDnp = selectedGrade === 'DNP';
-    div.innerHTML = `
-        <div class="grade-entry-header">
-            <span class="grade-entry-name">${data.name || 'Player ' + id}</span>
-            <button class="grade-entry-remove" onclick="removeGradeEntry(${id})">x</button>
-        </div>
-        <div class="grade-entry-row">
-            <div class="form-group" style="margin:0;">
-                <label class="form-label">Player Name</label>
-                <input type="text" class="form-input ge-name" value="${data.name||''}" placeholder="Player name" oninput="this.closest('.grade-entry').querySelector('.grade-entry-name').textContent=this.value||'Player'">
-            </div>
-            <div class="form-group" style="margin:0;">
-                <label class="form-label">Grade</label>
-                <select class="form-select ge-grade" onchange="toggleDnpFields(this)">${gradeOptions}</select>
-            </div>
-        </div>
-        <div class="ge-fields" style="${isDnp ? 'display:none;' : ''}">
-            <div class="form-group" style="margin-bottom:0.5rem;">
-                <label class="form-label">Stats Line</label>
-                <input type="text" class="form-input ge-stats" placeholder="e.g. 26.4 PPG · 6.1 AST · 47% FG" value="${data.stats||''}">
-            </div>
-            <div class="form-group" style="margin:0;">
-                <label class="form-label">Analysis</label>
-                <textarea class="form-textarea ge-analysis" style="min-height:80px;" placeholder="Your take on this player...">${data.analysis||''}</textarea>
-            </div>
-        </div>
-        ${isDnp ? '<div style="font-size:0.75rem;color:var(--mid);padding:0.25rem 0;">DNP — will not appear in the published article</div>' : ''}
-    `;
-    container.appendChild(div);
+  gradeCount++;
+  const id = gradeCount;
+  const container = document.getElementById('grade-entries');
+  const div = document.createElement('div');
+  div.className = 'grade-entry';
+  div.id = 'grade-entry-' + id;
+  const selectedGrade = data.grade || 'DNP';
+  const gradeOptions = GRADES.map(g => '<option value="' + g + '"' + (selectedGrade === g ? ' selected' : '') + '>' + g + '</option>').join('');
+  const isDnp = selectedGrade === 'DNP';
+  div.innerHTML = `
+    <div class="grade-entry-header">
+      <span class="grade-entry-name">${data.name || 'Player ' + id}</span>
+      <button class="grade-entry-remove" onclick="removeGradeEntry(${id})">✕</button>
+    </div>
+    <div class="grade-entry-row">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Player Name</label>
+        <input type="text" class="form-input ge-name" value="${data.name||''}" placeholder="Player name" oninput="this.closest('.grade-entry').querySelector('.grade-entry-name').textContent=this.value||'Player'">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Grade</label>
+        <select class="form-select ge-grade" onchange="toggleDnpFields(this)">${gradeOptions}</select>
+      </div>
+    </div>
+    <div class="ge-fields" style="${isDnp ? 'display:none;' : ''}">
+      <div class="form-group" style="margin-bottom:0.5rem;">
+        <label class="form-label">Stats Line</label>
+        <input type="text" class="form-input ge-stats" placeholder="e.g. 26.4 PPG · 6.1 AST · 47% FG" value="${data.stats||''}">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Analysis</label>
+        <textarea class="form-textarea ge-analysis" style="min-height:80px;" placeholder="Your take on this player...">${data.analysis||''}</textarea>
+      </div>
+    </div>
+    ${isDnp ? '<div class="ge-dnp-hint" style="font-size:0.75rem;color:var(--mid);padding:0.25rem 0;">DNP — will not appear in the published article</div>' : ''}
+  `;
+  container.appendChild(div);
 }
 
 function toggleDnpFields(select) {
-    const entry = select.closest('.grade-entry');
-    const fields = entry.querySelector('.ge-fields');
-    const hint = entry.querySelector('.ge-dnp-hint');
-    const isDnp = select.value === 'DNP';
-    if (fields) fields.style.display = isDnp ? 'none' : '';
-    if (hint) hint.remove();
-    if (isDnp) {
-        const h = document.createElement('div');
-        h.className = 'ge-dnp-hint';
-        h.style.cssText = 'font-size:0.75rem;color:var(--mid);padding:0.25rem 0;';
-        h.textContent = 'DNP — will not appear in the published article';
-        select.closest('.grade-entry-row').after(h);
-    }
+  const entry = select.closest('.grade-entry');
+  const fields = entry.querySelector('.ge-fields');
+  const hint = entry.querySelector('.ge-dnp-hint');
+  const isDnp = select.value === 'DNP';
+  if (fields) fields.style.display = isDnp ? 'none' : '';
+  if (hint) hint.remove();
+  if (isDnp) {
+    const h = document.createElement('div');
+    h.className = 'ge-dnp-hint';
+    h.style.cssText = 'font-size:0.75rem;color:var(--mid);padding:0.25rem 0;';
+    h.textContent = 'DNP — will not appear in the published article';
+    select.closest('.grade-entry-row').after(h);
+  }
 }
 
 function removeGradeEntry(id) { const el = document.getElementById('grade-entry-' + id); if (el) el.remove(); }
 document.getElementById('add-player-btn').addEventListener('click', () => addGradeEntry());
 
 function collectGrades() {
-    const entries = [];
-    document.querySelectorAll('.grade-entry').forEach(el => {
-        const name = el.querySelector('.ge-name').value.trim();
-        const grade = el.querySelector('.ge-grade').value;
-        const statsEl = el.querySelector('.ge-stats');
-        const analysisEl = el.querySelector('.ge-analysis');
-        const stats = statsEl ? statsEl.value.trim() : '';
-        const analysis = analysisEl ? analysisEl.value.trim() : '';
-        if (name) entries.push({ name, grade, stats, analysis });
-    });
-    return entries;
+  const entries = [];
+  document.querySelectorAll('.grade-entry').forEach(el => {
+    const name = el.querySelector('.ge-name').value.trim();
+    const grade = el.querySelector('.ge-grade').value;
+    const statsEl = el.querySelector('.ge-stats');
+    const analysisEl = el.querySelector('.ge-analysis');
+    const stats = statsEl ? statsEl.value.trim() : '';
+    const analysis = analysisEl ? analysisEl.value.trim() : '';
+    if (name) entries.push({ name, grade, stats, analysis });
+  });
+  return entries;
 }
 
+// Firestore
 let articles = [];
 function waitForDb(cb, tries = 0) { if (window.db) { cb(); return; } if (tries > 40) return; setTimeout(() => waitForDb(cb, tries + 1), 250); }
 
 function listenToArticles() {
-    waitForDb(() => {
-        window.db.collection(COLLECTION).orderBy('createdAt', 'desc').onSnapshot(snap => {
-            articles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderArticleList();
-        }, err => console.error(err));
-    });
+  waitForDb(() => {
+    window.db.collection(COLLECTION).orderBy('createdAt', 'desc').onSnapshot(snap => {
+      articles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderArticleList();
+    }, err => console.error(err));
+  });
 }
 
 function renderArticleList() {
-    const list = document.getElementById('article-list');
-    if (articles.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h3>No articles yet</h3><p>Click "New Article" to write your first editorial piece.</p></div>';
-        return;
-    }
-    list.innerHTML = articles.map(a => {
-        const color = CATEGORY_COLORS[a.category] || '#006BB6';
-        const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
-        return '<div class="article-item"><div class="article-item-body"><div class="article-item-tag" style="color:' + color + ';">' + a.category + '</div><div class="article-item-title">' + a.title + '</div><div class="article-item-meta">' + date + ' &middot; ' + (a.grades||[]).length + ' player' + ((a.grades||[]).length !== 1 ? 's' : '') + ' graded</div>' + (a.excerpt ? '<div class="article-item-excerpt">' + a.excerpt + '</div>' : '') + '</div><div class="article-item-actions"><button class="btn-edit" onclick="editArticle(\'' + a.id + '\')">Edit</button><button class="btn-delete" onclick="deleteArticle(\'' + a.id + '\')">Delete</button></div></div>';
-    }).join('');
+  const list = document.getElementById('article-list');
+  if (articles.length === 0) {
+    list.innerHTML = '<div class="empty-state"><h3>No articles yet</h3><p>Click "New Article" to write your first editorial piece.</p></div>';
+    return;
+  }
+  list.innerHTML = articles.map(a => {
+    const color = CATEGORY_COLORS[a.category] || '#006BB6';
+    const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Draft';
+    const playerCount = (a.grades||[]).filter(g => g.grade && g.grade !== 'DNP').length;
+    const tweetBadge = a.tweetUrl ? `<span class="article-item-tweet-badge"><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Tweet</span>` : '';
+    const gradeInfo = playerCount > 0 ? `<span class="article-item-meta-dot"></span><span>${playerCount} player${playerCount !== 1 ? 's' : ''} graded</span>` : '';
+    return `
+      <div class="article-item">
+        <div class="article-item-accent" style="background:${color};"></div>
+        <div class="article-item-body">
+          <div class="article-item-tag-row">
+            <span class="article-item-tag" style="color:${color};border-color:${color};">${a.category}</span>
+            ${tweetBadge}
+          </div>
+          <div class="article-item-title">${a.title}</div>
+          <div class="article-item-meta">
+            <span>${date}</span>
+            ${gradeInfo}
+          </div>
+          ${a.excerpt ? `<div class="article-item-excerpt">${a.excerpt}</div>` : ''}
+        </div>
+        <div class="article-item-actions">
+          <button class="btn-edit" onclick="editArticle('${a.id}')">Edit</button>
+          <button class="btn-delete" onclick="deleteArticle('${a.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 document.getElementById('new-article-btn').addEventListener('click', () => { clearEditor(); switchTab('editor'); });
 document.getElementById('cancel-editor-btn').addEventListener('click', () => switchTab('list'));
 
-function clearEditor(keepRoster = false) {
-    document.getElementById('editing-doc-id').value = '';
-    ['f-title','f-excerpt','f-intro','f-closing'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-category').value = 'Player Grades';
-    document.getElementById('grade-entries').innerHTML = '';
-    gradeCount = 0;
-    // Auto-load full roster with DNP as default
-    ROSTER.forEach(p => addGradeEntry({ name: p.name, grade: 'DNP' }));
-    updatePreview();
+function clearEditor() {
+  document.getElementById('editing-doc-id').value = '';
+  ['f-title','f-excerpt','f-intro','f-closing','f-tweet-url'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-category').value = 'Player Grades';
+  document.getElementById('grade-entries').innerHTML = '';
+  document.getElementById('tweet-preview-box').classList.remove('visible');
+  document.getElementById('prev-tweet-badge').style.display = 'none';
+  gradeCount = 0;
+  ROSTER.forEach(p => addGradeEntry({ name: p.name, grade: 'DNP' }));
+  updatePreview();
 }
 
-// When category changes to Player Grades and no entries exist, load roster
-document.getElementById('f-category').addEventListener('change', function() {
-    const entries = document.querySelectorAll('.grade-entry');
-    if (this.value === 'Player Grades' && entries.length === 0) {
-        ROSTER.forEach(p => addGradeEntry({ name: p.name, grade: 'DNP' }));
-    }
-    updatePreview();
-});
-
 function editArticle(id) {
-    const a = articles.find(x => x.id === id);
-    if (!a) return;
-    clearEditor();
-    document.getElementById('editing-doc-id').value = id;
-    document.getElementById('f-title').value = a.title || '';
-    document.getElementById('f-category').value = a.category || 'Analysis';
-    document.getElementById('f-excerpt').value = a.excerpt || '';
-    document.getElementById('f-intro').value = a.intro || '';
-    document.getElementById('f-closing').value = a.closing || '';
-    (a.grades || []).forEach(g => addGradeEntry(g));
-    updatePreview();
-    switchTab('editor');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const a = articles.find(x => x.id === id);
+  if (!a) return;
+  clearEditor();
+  document.getElementById('editing-doc-id').value = id;
+  document.getElementById('f-title').value = a.title || '';
+  document.getElementById('f-category').value = a.category || 'Analysis';
+  document.getElementById('f-excerpt').value = a.excerpt || '';
+  document.getElementById('f-intro').value = a.intro || '';
+  document.getElementById('f-closing').value = a.closing || '';
+  if (a.tweetUrl) {
+    document.getElementById('f-tweet-url').value = a.tweetUrl;
+    handleTweetInput(a.tweetUrl);
+  }
+  // Clear auto-loaded roster, load saved grades
+  document.getElementById('grade-entries').innerHTML = '';
+  gradeCount = 0;
+  (a.grades || []).forEach(g => addGradeEntry(g));
+  updatePreview();
+  switchTab('editor');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function deleteArticle(id) {
-    if (!confirm('Delete this article? This cannot be undone.')) return;
-    try { await window.db.collection(COLLECTION).doc(id).delete(); toast('Article deleted'); }
-    catch (e) { toast('Error: ' + e.message, 'error'); }
+  if (!confirm('Delete this article? This cannot be undone.')) return;
+  try { await window.db.collection(COLLECTION).doc(id).delete(); toast('Article deleted'); }
+  catch (e) { toast('Error: ' + e.message, 'error'); }
 }
 
 document.getElementById('publish-btn').addEventListener('click', async () => {
-    const title = document.getElementById('f-title').value.trim();
-    const category = document.getElementById('f-category').value;
-    if (!title) { toast('Please add a headline', 'error'); return; }
-    const docId = document.getElementById('editing-doc-id').value;
-    const grades = collectGrades();
-    const gradient = CATEGORY_GRADIENTS[category] || CATEGORY_GRADIENTS['Analysis'];
-    const data = { title, category, excerpt: document.getElementById('f-excerpt').value.trim(), intro: document.getElementById('f-intro').value.trim(), closing: document.getElementById('f-closing').value.trim(), grades, gradient, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp() };
-    const btn = document.getElementById('publish-btn');
-    btn.textContent = 'Publishing...';
-    btn.disabled = true;
-    try {
-        if (docId) { await window.db.collection(COLLECTION).doc(docId).update(data); toast('Article updated'); }
-        else { data.createdAt = window.firebase.firestore.FieldValue.serverTimestamp(); await window.db.collection(COLLECTION).add(data); toast('Article published'); }
-        clearEditor(); switchTab('list');
-    } catch (e) { toast('Error: ' + e.message, 'error'); }
-    finally { btn.textContent = 'Publish Article'; btn.disabled = false; }
+  const title = document.getElementById('f-title').value.trim();
+  const category = document.getElementById('f-category').value;
+  if (!title) { toast('Please add a headline', 'error'); return; }
+  const docId = document.getElementById('editing-doc-id').value;
+  const grades = collectGrades();
+  const tweetUrl = document.getElementById('f-tweet-url').value.trim();
+  const gradient = CATEGORY_GRADIENTS[category] || CATEGORY_GRADIENTS['Analysis'];
+  const data = {
+    title, category,
+    excerpt: document.getElementById('f-excerpt').value.trim(),
+    intro: document.getElementById('f-intro').value.trim(),
+    closing: document.getElementById('f-closing').value.trim(),
+    tweetUrl: tweetUrl || '',
+    grades, gradient,
+    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  };
+  const btn = document.getElementById('publish-btn');
+  btn.textContent = 'Publishing...';
+  btn.disabled = true;
+  try {
+    if (docId) { await window.db.collection(COLLECTION).doc(docId).update(data); toast('Article updated'); }
+    else { data.createdAt = window.firebase.firestore.FieldValue.serverTimestamp(); await window.db.collection(COLLECTION).add(data); toast('Article published'); }
+    clearEditor(); switchTab('list');
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+  finally { btn.textContent = 'Publish Article'; btn.disabled = false; }
 });
 
 function initAdmin() {
-    function tryAuth(tries = 0) {
-        if (!window.auth) { if (tries < 40) setTimeout(() => tryAuth(tries + 1), 250); else document.getElementById('auth-gate').style.display = 'flex'; return; }
-        window.auth.onAuthStateChanged(user => {
-            if (user && user.email && user.email.toLowerCase() === MOD_EMAIL.toLowerCase()) {
-                document.getElementById('auth-gate').style.display = 'none';
-                document.getElementById('admin-ui').style.display = 'block';
-                listenToArticles();
-            } else {
-                document.getElementById('auth-gate').style.display = 'flex';
-                document.getElementById('admin-ui').style.display = 'none';
-                if (user) { document.querySelector('.auth-card p').textContent = 'This page is restricted to the site admin.'; document.getElementById('sign-in-btn').style.display = 'none'; }
-            }
-        });
-    }
-    tryAuth();
-    document.getElementById('sign-in-btn').addEventListener('click', () => {
-        function trySignIn(tries = 0) {
-            if (window.auth && window.firebase) { const p = new window.firebase.auth.GoogleAuthProvider(); window.auth.signInWithPopup(p).catch(e => toast(e.message, 'error')); }
-            else if (tries < 20) setTimeout(() => trySignIn(tries + 1), 300);
-        }
-        trySignIn();
+  function tryAuth(tries = 0) {
+    if (!window.auth) { if (tries < 40) setTimeout(() => tryAuth(tries + 1), 250); else document.getElementById('auth-gate').style.display = 'flex'; return; }
+    window.auth.onAuthStateChanged(user => {
+      if (user && user.email && user.email.toLowerCase() === MOD_EMAIL.toLowerCase()) {
+        document.getElementById('auth-gate').style.display = 'none';
+        document.getElementById('admin-ui').style.display = 'block';
+        listenToArticles();
+      } else {
+        document.getElementById('auth-gate').style.display = 'flex';
+        document.getElementById('admin-ui').style.display = 'none';
+        if (user) { document.querySelector('.auth-card p').textContent = 'This page is restricted to the site admin.'; document.getElementById('sign-in-btn').style.display = 'none'; }
+      }
     });
+  }
+  tryAuth();
+  document.getElementById('sign-in-btn').addEventListener('click', () => {
+    function trySignIn(tries = 0) {
+      if (window.auth && window.firebase) { const p = new window.firebase.auth.GoogleAuthProvider(); window.auth.signInWithPopup(p).catch(e => toast(e.message, 'error')); }
+      else if (tries < 20) setTimeout(() => trySignIn(tries + 1), 300);
+    }
+    trySignIn();
+  });
 }
+
 document.getElementById('auth-gate').style.display = 'flex';
 document.addEventListener('DOMContentLoaded', initAdmin);
 </script>
