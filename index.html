@@ -1260,20 +1260,132 @@
         .editorial-grid.count-3 { grid-template-columns:3fr 2fr; }
         .editorial-grid.count-3 .article-card:first-child { grid-row:1/3; }
         .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height:220px; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.3rem; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.35rem; line-height:1.15; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-excerpt { -webkit-line-clamp:3; }
 
-        .article-card { background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s; }
-        .article-card:hover { transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,0.1);border-color:rgba(0,107,182,0.3); }
-        .article-card-thumb { height:160px;background:var(--navy-deep);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0; }
-        .article-card-thumb-cat { font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.5);position:relative;z-index:1; }
-        .article-card-body { padding:1.1rem 1.2rem 1.3rem;flex:1;display:flex;flex-direction:column;gap:0.4rem; }
-        .article-card-tag { font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase; }
-        .article-card-title { font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:800;line-height:1.2;color:var(--ink); }
-        .article-card-excerpt { font-size:0.8rem;color:var(--mid);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
-        .article-card-meta { margin-top:auto;padding-top:0.5rem;font-size:0.7rem;color:var(--mid);font-weight:500;border-top:1px solid var(--border-light); }
+        /* ── Article Cards — improved ── */
+        .article-card {
+            background:var(--card-bg);
+            border:1px solid var(--border-light);
+            border-radius:16px;
+            overflow:hidden;
+            cursor:pointer;
+            display:flex;
+            flex-direction:column;
+            transition:transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .article-card:hover {
+            transform:translateY(-4px);
+            box-shadow:0 14px 36px rgba(0,0,0,0.11);
+            border-color:rgba(0,107,182,0.35);
+        }
+        /* Thumb */
+        .article-card-thumb {
+            height:140px;
+            background:var(--navy-deep);
+            position:relative;
+            overflow:hidden;
+            flex-shrink:0;
+            display:flex;
+            align-items:flex-end;
+            padding:0.8rem 1rem;
+        }
+        .article-card-thumb::after {
+            content:'';
+            position:absolute;
+            inset:0;
+            background:linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%);
+            pointer-events:none;
+            z-index:1;
+        }
+        /* The old centered category text — now hidden; pill takes its place */
+        .article-card-thumb-cat { display:none; }
+        /* Category pill overlaid on thumb */
+        .article-card-cat-pill {
+            position:relative;
+            z-index:2;
+            font-family:'Barlow Condensed',sans-serif;
+            font-size:0.6rem;
+            font-weight:700;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            padding:3px 10px;
+            border-radius:999px;
+            background:rgba(255,255,255,0.18);
+            border:1px solid rgba(255,255,255,0.3);
+            color:#fff;
+            backdrop-filter:blur(4px);
+            -webkit-backdrop-filter:blur(4px);
+        }
+        /* Body */
+        .article-card-body {
+            padding:1rem 1.15rem 0;
+            flex:1;
+            display:flex;
+            flex-direction:column;
+            gap:0.35rem;
+        }
+        /* Hide old tag — pill on thumb replaces it */
+        .article-card-tag { display:none; }
+        .article-card-title {
+            font-family:'Barlow Condensed',sans-serif;
+            font-size:1.08rem;
+            font-weight:800;
+            line-height:1.2;
+            color:var(--ink);
+        }
+        .article-card-excerpt {
+            font-size:0.79rem;
+            color:var(--mid);
+            line-height:1.55;
+            display:-webkit-box;
+            -webkit-line-clamp:2;
+            -webkit-box-orient:vertical;
+            overflow:hidden;
+            flex:1;
+        }
+        /* Old meta — replaced by footer */
+        .article-card-meta { display:none; }
+        /* Footer with date + read link */
+        .article-card-footer {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            border-top:1px solid var(--border-light);
+            padding:0.6rem 1.15rem 0.7rem;
+            margin-top:0.75rem;
+        }
+        .article-card-footer-meta {
+            font-size:0.68rem;
+            color:var(--mid);
+            font-weight:500;
+            display:flex;
+            align-items:center;
+            gap:0.35rem;
+        }
+        .article-card-footer-dot {
+            width:3px;height:3px;border-radius:50%;
+            background:var(--mid);opacity:0.45;display:inline-block;
+        }
+        .article-card-read {
+            font-family:'Barlow Condensed',sans-serif;
+            font-size:0.68rem;
+            font-weight:700;
+            letter-spacing:0.08em;
+            text-transform:uppercase;
+            color:var(--sixers-blue);
+            white-space:nowrap;
+        }
+
+        .article-card:hover .article-card-thumb-bg { transform:scale(1.05); }
         :root.dark-mode .article-card { background:var(--card-bg);border-color:var(--border-light); }
         :root.dark-mode .article-card-title { color:var(--ink); }
-        @media(max-width:700px) { .editorial-grid.count-2,.editorial-grid.count-3{grid-template-columns:1fr;} .editorial-grid.count-3 .article-card:first-child{grid-row:auto;} }
+        :root.dark-mode .article-card-footer { border-color:var(--border-light); }
+        @media(max-width:700px) {
+            .editorial-grid.count-2,.editorial-grid.count-3 { grid-template-columns:1fr; }
+            .editorial-grid.count-3 .article-card:first-child { grid-row:auto; }
+        }
 
         /* ─── ARTICLE FULL-PAGE VIEW ─────────────────── */
         #article-page {
@@ -1803,7 +1915,14 @@
 // ─── EDITORIAL ARTICLES (Firestore-driven) ────────────────────────────────────
 const EDITORIAL_COLLECTION = 'editorial_articles';
 const ED_CAT_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
-const ED_CAT_GRADIENTS = {'Player Grades':'linear-gradient(135deg,rgba(30,125,70,0.55) 0%,rgba(0,13,46,0.9) 100%)','Analysis':'linear-gradient(135deg,rgba(0,107,182,0.55) 0%,rgba(0,13,46,0.9) 100%)','Opinion':'linear-gradient(135deg,rgba(176,107,0,0.5) 0%,rgba(0,13,46,0.9) 100%)','Preview':'linear-gradient(135deg,rgba(237,23,76,0.45) 0%,rgba(0,13,46,0.9) 100%)','Recap':'linear-gradient(135deg,rgba(71,85,105,0.55) 0%,rgba(0,13,46,0.9) 100%)','News':'linear-gradient(135deg,rgba(0,119,204,0.55) 0%,rgba(0,13,46,0.9) 100%)'};
+const ED_CAT_GRADIENTS = {
+    'Player Grades':'linear-gradient(135deg,#001a57 0%,#00381a 60%,rgba(30,125,70,0.55) 100%)',
+    'Analysis':     'linear-gradient(135deg,#001a57 0%,#003a8c 60%,rgba(0,107,182,0.6) 100%)',
+    'Opinion':      'linear-gradient(135deg,#001a57 0%,#3d2500 60%,rgba(176,107,0,0.55) 100%)',
+    'Preview':      'linear-gradient(135deg,#001a57 0%,#5a0020 60%,rgba(237,23,76,0.5) 100%)',
+    'Recap':        'linear-gradient(135deg,#001a57 0%,#1e2a3a 60%,rgba(71,85,105,0.6) 100%)',
+    'News':         'linear-gradient(135deg,#001a57 0%,#003060 60%,rgba(0,119,204,0.55) 100%)'
+};
 const GRADE_COLORS_ED = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a'};
 
 let editorialArticlesCache = [];
@@ -1821,23 +1940,29 @@ function renderEditorialGrid(articles) {
 
     grid.innerHTML = articles.slice(0, 3).map(a => {
         const color = ED_CAT_COLORS[a.category] || '#006BB6';
-        const gradient = a.gradient || ED_CAT_GRADIENTS[a.category] || 'linear-gradient(135deg,rgba(0,107,182,0.4) 0%,rgba(237,23,76,0.2) 100%)';
-        const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
-        const playerCount = (a.grades||[]).filter(g => g.grade !== 'DNP').length;
-        const meta = 'Sixers Hoops Staff · ' + date + (playerCount > 0 ? ' · ' + playerCount + ' graded' : '');
+        const gradient = a.gradient || ED_CAT_GRADIENTS[a.category] || ED_CAT_GRADIENTS['Analysis'];
+        const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+        const playerCount = (a.grades||[]).filter(g => g.grade && g.grade !== 'DNP').length;
         const title = (a.title || '').replace(/</g,'&lt;');
         const excerpt = (a.excerpt || '').replace(/</g,'&lt;');
         const category = (a.category || '').replace(/</g,'&lt;');
+        const tweetBadge = a.tweetUrl ? `<span style="display:inline-flex;align-items:center;gap:3px;background:#1d9bf0;color:white;font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Tweet</span>` : '';
+        const footerLeft = [date, playerCount > 0 ? playerCount + ' graded' : ''].filter(Boolean).join(' · ');
         return `<div class="article-card" onclick="openArticleModal('${a.id}')">
             <div class="article-card-thumb">
-                <div style="position:absolute;inset:0;background:${gradient};"></div>
-                <span class="article-card-thumb-cat">${category}</span>
+                <div style="position:absolute;inset:0;background:${gradient};transition:transform 0.4s ease;" class="article-card-thumb-bg"></div>
+                <span class="article-card-cat-pill">${category}</span>
             </div>
             <div class="article-card-body">
-                <span class="article-card-tag" style="color:${color};">${category}</span>
                 <div class="article-card-title">${title}</div>
                 ${excerpt ? `<div class="article-card-excerpt">${excerpt}</div>` : ''}
-                <div class="article-card-meta">${meta}</div>
+            </div>
+            <div class="article-card-footer">
+                <div class="article-card-footer-meta">
+                    <span>${footerLeft}</span>
+                    ${tweetBadge ? `<span class="article-card-footer-dot"></span>${tweetBadge}` : ''}
+                </div>
+                <span class="article-card-read">Read →</span>
             </div>
         </div>`;
     }).join('');
