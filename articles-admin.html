@@ -100,6 +100,12 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
 #toast.show{opacity:1;transform:translateY(0)}
 #toast.success{background:#15803d}
 #toast.error{background:#dc2626}
+
+/* Per-player tweet embed */
+.ge-tweet-section{margin-top:0.6rem;background:#f0f8ff;border:1px solid #bce0f7;border-radius:8px;padding:0.65rem 0.75rem;}
+.ge-tweet-header{display:flex;align-items:center;gap:0.4rem;margin-bottom:0.45rem;}
+.ge-tweet-label{font-family:'Barlow Condensed',sans-serif;font-size:0.67rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#0f1419;}
+.ge-tweet-hint{font-size:0.7rem;margin-top:0.35rem;line-height:1.4;padding:0.3rem 0.5rem;border-radius:5px;background:rgba(255,255,255,0.7);}
 </style>
 </head>
 <body>
@@ -403,6 +409,7 @@ function addGradeEntry(data = {}) {
   const selectedGrade = data.grade || 'DNP';
   const gradeOptions = GRADES.map(g => '<option value="' + g + '"' + (selectedGrade === g ? ' selected' : '') + '>' + g + '</option>').join('');
   const isDnp = selectedGrade === 'DNP';
+  const tweetVal = data.tweetUrl || '';
   div.innerHTML = `
     <div class="grade-entry-header">
       <span class="grade-entry-name">${data.name || 'Player ' + id}</span>
@@ -423,13 +430,26 @@ function addGradeEntry(data = {}) {
         <label class="form-label">Stats Line</label>
         <input type="text" class="form-input ge-stats" placeholder="e.g. 26.4 PPG · 6.1 AST · 47% FG" value="${data.stats||''}">
       </div>
-      <div class="form-group" style="margin:0;">
+      <div class="form-group" style="margin-bottom:0.5rem;">
         <label class="form-label">Analysis</label>
         <textarea class="form-textarea ge-analysis" style="min-height:80px;" placeholder="Your take on this player...">${data.analysis||''}</textarea>
+      </div>
+      <div class="ge-tweet-section">
+        <div class="ge-tweet-header">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <span class="ge-tweet-label">Embed Tweet (optional)</span>
+        </div>
+        <input type="text" class="form-input ge-tweet-url" placeholder="https://x.com/user/status/..." value="${tweetVal}" oninput="validatePlayerTweet(this)" style="font-size:0.82rem;">
+        <div class="ge-tweet-hint"></div>
       </div>
     </div>
     ${isDnp ? '<div class="ge-dnp-hint" style="font-size:0.75rem;color:var(--mid);padding:0.25rem 0;">DNP — will not appear in the published article</div>' : ''}
   `;
+  // Validate pre-filled tweet URL when editing
+  if (tweetVal) {
+    const inp = div.querySelector('.ge-tweet-url');
+    if (inp) validatePlayerTweet(inp);
+  }
   container.appendChild(div);
 }
 
@@ -449,6 +469,21 @@ function toggleDnpFields(select) {
   }
 }
 
+function validatePlayerTweet(input) {
+  const hint = input.closest('.ge-tweet-section').querySelector('.ge-tweet-hint');
+  const val = input.value.trim();
+  if (!val) { hint.style.display = 'none'; hint.textContent = ''; return; }
+  const valid = /^https?:\/\/(twitter\.com|x\.com)\/.+\/status\/\d+/.test(val);
+  hint.style.display = 'block';
+  if (valid) {
+    hint.textContent = '✅ Valid — tweet will be embedded below this player\'s grade card.';
+    hint.style.color = '#15803d';
+  } else {
+    hint.textContent = '⚠️ Paste a full x.com or twitter.com status URL.';
+    hint.style.color = '#b06b00';
+  }
+}
+
 function removeGradeEntry(id) { const el = document.getElementById('grade-entry-' + id); if (el) el.remove(); }
 document.getElementById('add-player-btn').addEventListener('click', () => addGradeEntry());
 
@@ -461,7 +496,9 @@ function collectGrades() {
     const analysisEl = el.querySelector('.ge-analysis');
     const stats = statsEl ? statsEl.value.trim() : '';
     const analysis = analysisEl ? analysisEl.value.trim() : '';
-    if (name) entries.push({ name, grade, stats, analysis });
+    const tweetEl = el.querySelector('.ge-tweet-url');
+    const tweetUrl = tweetEl ? tweetEl.value.trim() : '';
+    if (name) entries.push({ name, grade, stats, analysis, tweetUrl });
   });
   return entries;
 }
