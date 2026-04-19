@@ -131,6 +131,7 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
   <div class="admin-tabs">
     <button class="admin-tab active" data-tab="list">All Articles</button>
     <button class="admin-tab" data-tab="editor">Write Article</button>
+    <button class="admin-tab" data-tab="polls">Fan Polls</button>
   </div>
 
   <div class="admin-wrap">
@@ -288,6 +289,67 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
         </div>
       </div>
     </div>
+
+    <!-- POLLS TAB -->
+    <div class="tab-panel" id="tab-polls">
+      <!-- Create Poll Form -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;text-transform:uppercase;">Fan Polls</div>
+          <div style="font-size:0.8rem;color:var(--mid);margin-top:2px;">Create polls that appear in the sidebar on your homepage</div>
+        </div>
+        <button class="btn-primary" id="new-poll-btn" onclick="showPollEditor()">+ New Poll</button>
+      </div>
+
+      <!-- Poll Editor (hidden by default) -->
+      <div id="poll-editor" style="display:none;margin-top:1.5rem;">
+        <div class="editor-card">
+          <h3>Create / Edit Poll</h3>
+          <input type="hidden" id="poll-editing-id">
+          <div class="form-group">
+            <label class="form-label">Poll Question *</label>
+            <input type="text" class="form-input" id="poll-question" placeholder="e.g. Who will lead the Sixers in scoring this season?">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Poll Options *</label>
+            <div id="poll-options-list"></div>
+            <button class="add-player-btn" id="add-poll-option-btn" onclick="addPollOption()" style="margin-top:0.5rem;">+ Add Option</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Date (optional)</label>
+            <input type="date" class="form-input" id="poll-end-date">
+            <div style="font-size:0.72rem;color:var(--mid);margin-top:0.3rem;">Leave blank for no expiry. Polls past their end date auto-archive.</div>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:0.5rem;align-items:center;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-family:'Barlow',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;">
+              <input type="checkbox" id="poll-is-active" checked style="width:16px;height:16px;accent-color:var(--sixers-blue);">
+              Set as active (shows on homepage sidebar)
+            </label>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">
+            <button class="btn-primary" id="save-poll-btn" onclick="savePoll()">Save Poll</button>
+            <button class="btn-secondary" onclick="hidePollEditor()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Polls List -->
+      <div style="margin-top:1.5rem;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;">
+          Active <span style="flex:1;height:1px;background:var(--border-light);display:inline-block;"></span>
+        </div>
+        <div id="active-poll-list"><p style="font-size:0.82rem;color:var(--mid);padding:1rem 0;">Loading…</p></div>
+      </div>
+
+      <!-- Past Polls List -->
+      <div style="margin-top:1.5rem;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;">
+          Past / Archived <span style="flex:1;height:1px;background:var(--border-light);display:inline-block;"></span>
+        </div>
+        <div id="past-poll-list"><p style="font-size:0.82rem;color:var(--mid);padding:1rem 0;">Loading…</p></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -632,6 +694,7 @@ function initAdmin() {
         document.getElementById('auth-gate').style.display = 'none';
         document.getElementById('admin-ui').style.display = 'block';
         listenToArticles();
+        listenToPolls();
       } else {
         document.getElementById('auth-gate').style.display = 'flex';
         document.getElementById('admin-ui').style.display = 'none';
@@ -647,6 +710,176 @@ function initAdmin() {
     }
     trySignIn();
   });
+}
+
+// ─── FAN POLLS ────────────────────────────────────────────────────────────────
+const POLLS_COLLECTION = 'fan_polls';
+let pollsCache = [];
+let pollOptionCount = 0;
+
+function showPollEditor(poll) {
+  const editor = document.getElementById('poll-editor');
+  editor.style.display = '';
+  document.getElementById('poll-editing-id').value = poll ? poll.id : '';
+  document.getElementById('poll-question').value = poll ? poll.question || '' : '';
+  document.getElementById('poll-end-date').value = poll && poll.endDate ? poll.endDate : '';
+  document.getElementById('poll-is-active').checked = poll ? !!poll.isActive : true;
+  // Clear and rebuild options
+  document.getElementById('poll-options-list').innerHTML = '';
+  pollOptionCount = 0;
+  const opts = poll && poll.options && poll.options.length ? poll.options : [{text:'',votes:0},{text:'',votes:0}];
+  opts.forEach(o => addPollOption(o.text, o.votes || 0));
+  editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hidePollEditor() {
+  document.getElementById('poll-editor').style.display = 'none';
+}
+
+function addPollOption(text = '', votes = 0) {
+  pollOptionCount++;
+  const idx = pollOptionCount;
+  const wrap = document.createElement('div');
+  wrap.className = 'grade-entry';
+  wrap.id = 'poll-opt-' + idx;
+  wrap.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.75rem;margin-bottom:0.5rem;';
+  wrap.innerHTML = `
+    <input type="text" class="form-input poll-opt-text" placeholder="Option ${idx}" value="${text.replace(/"/g,'&quot;')}" style="flex:1;">
+    <span style="font-size:0.72rem;color:var(--mid);white-space:nowrap;">${votes > 0 ? votes + ' vote' + (votes !== 1 ? 's' : '') : 'No votes yet'}</span>
+    <button type="button" onclick="removePollOption(${idx})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 4px;flex-shrink:0;" title="Remove option">&times;</button>
+  `;
+  document.getElementById('poll-options-list').appendChild(wrap);
+}
+
+function removePollOption(idx) {
+  const el = document.getElementById('poll-opt-' + idx);
+  if (el) el.remove();
+}
+
+async function savePoll() {
+  const question = document.getElementById('poll-question').value.trim();
+  if (!question) { toast('Please enter a poll question', 'error'); return; }
+
+  const optEls = document.querySelectorAll('#poll-options-list .poll-opt-text');
+  const options = [];
+  optEls.forEach(el => {
+    const t = el.value.trim();
+    if (t) {
+      // Preserve existing vote count by matching text to cache
+      const existingId = document.getElementById('poll-editing-id').value;
+      const existing = pollsCache.find(p => p.id === existingId);
+      const existingOpt = existing && existing.options ? existing.options.find(o => o.text === t) : null;
+      options.push({ text: t, votes: existingOpt ? (existingOpt.votes || 0) : 0 });
+    }
+  });
+  if (options.length < 2) { toast('Please add at least 2 options', 'error'); return; }
+
+  const isActive = document.getElementById('poll-is-active').checked;
+  const endDate = document.getElementById('poll-end-date').value || null;
+  const docId = document.getElementById('poll-editing-id').value;
+
+  const btn = document.getElementById('save-poll-btn');
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  try {
+    const data = {
+      question, options, isActive,
+      endDate: endDate || null,
+      updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (docId) {
+      await window.db.collection(POLLS_COLLECTION).doc(docId).update(data);
+      toast('Poll updated');
+    } else {
+      data.createdAt = window.firebase.firestore.FieldValue.serverTimestamp();
+      await window.db.collection(POLLS_COLLECTION).add(data);
+      toast('Poll created');
+    }
+    hidePollEditor();
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+  finally { btn.textContent = 'Save Poll'; btn.disabled = false; }
+}
+
+async function deletePoll(id) {
+  if (!confirm('Delete this poll permanently? This cannot be undone.')) return;
+  try {
+    await window.db.collection(POLLS_COLLECTION).doc(id).delete();
+    toast('Poll deleted');
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function archivePoll(id) {
+  try {
+    await window.db.collection(POLLS_COLLECTION).doc(id).update({ isActive: false, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp() });
+    toast('Poll archived — it will now appear in Past Polls on the homepage');
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function activatePoll(id) {
+  try {
+    await window.db.collection(POLLS_COLLECTION).doc(id).update({ isActive: true, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp() });
+    toast('Poll set as active');
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+function renderPollCard(poll, isActive) {
+  const totalVotes = (poll.options || []).reduce((s, o) => s + (o.votes || 0), 0);
+  const q = (poll.question || '').replace(/</g, '&lt;');
+  const optsHtml = (poll.options || []).map(o => {
+    const pct = totalVotes > 0 ? Math.round(((o.votes || 0) / totalVotes) * 100) : 0;
+    const label = (o.text || '').replace(/</g, '&lt;');
+    return `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">
+      <span style="font-size:0.72rem;color:var(--mid);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</span>
+      <div style="flex:2;height:6px;background:var(--border-light);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--sixers-blue);border-radius:99px;"></div></div>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;color:var(--mid);min-width:32px;text-align:right;">${pct}%</span>
+      <span style="font-size:0.65rem;color:var(--mid);min-width:50px;">${o.votes || 0} vote${(o.votes || 0) !== 1 ? 's' : ''}</span>
+    </div>`;
+  }).join('');
+  const endBadge = poll.endDate ? `<span style="font-size:0.65rem;color:var(--mid);font-style:italic;">Ends ${poll.endDate}</span>` : '';
+  const actionBtns = isActive
+    ? `<button class="btn-edit" onclick="showPollEditor(pollsCache.find(p=>p.id==='${poll.id}'))">Edit</button>
+       <button class="btn-delete" style="background:rgba(100,100,100,0.08);color:var(--mid);border-color:rgba(100,100,100,0.15);" onclick="archivePoll('${poll.id}')">Archive</button>
+       <button class="btn-delete" onclick="deletePoll('${poll.id}')">Delete</button>`
+    : `<button class="btn-edit" onclick="activatePoll('${poll.id}')">Re-activate</button>
+       <button class="btn-edit" onclick="showPollEditor(pollsCache.find(p=>p.id==='${poll.id}'))">Edit</button>
+       <button class="btn-delete" onclick="deletePoll('${poll.id}')">Delete</button>`;
+
+  return `<div class="article-item" style="display:flex;">
+    <div class="article-item-accent" style="background:${isActive ? 'var(--sixers-blue)' : 'var(--border-light)'};"></div>
+    <div class="article-item-body">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">
+            ${isActive ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:rgba(0,107,182,0.1);color:var(--sixers-blue);border:1px solid rgba(0,107,182,0.2);">Active</span>` : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--border-light);color:var(--mid);">Archived</span>`}
+            ${endBadge}
+          </div>
+          <div class="article-item-title">${q}</div>
+          <div style="margin-top:0.6rem;">${optsHtml}</div>
+          <div style="font-size:0.7rem;color:var(--mid);margin-top:0.3rem;font-style:italic;">${totalVotes} total vote${totalVotes !== 1 ? 's' : ''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;flex-shrink:0;">${actionBtns}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function listenToPolls() {
+  window.db.collection(POLLS_COLLECTION).orderBy('createdAt', 'desc').onSnapshot(snap => {
+    pollsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const active = pollsCache.filter(p => p.isActive);
+    const past = pollsCache.filter(p => !p.isActive);
+
+    const activeEl = document.getElementById('active-poll-list');
+    activeEl.innerHTML = active.length
+      ? `<div class="article-list">${active.map(p => renderPollCard(p, true)).join('')}</div>`
+      : `<div class="empty-state" style="padding:1rem 0;text-align:left;"><p style="font-size:0.82rem;margin:0;">No active poll. Create one above — it will show in the sidebar on your homepage.</p></div>`;
+
+    const pastEl = document.getElementById('past-poll-list');
+    pastEl.innerHTML = past.length
+      ? `<div class="article-list">${past.map(p => renderPollCard(p, false)).join('')}</div>`
+      : `<div style="font-size:0.82rem;color:var(--mid);padding:0.5rem 0;">No archived polls yet. Archive an active poll to move it here — past polls are shown on the homepage sidebar.</div>`;
+  }, e => { toast('Could not load polls: ' + e.message, 'error'); });
 }
 
 document.getElementById('auth-gate').style.display = 'flex';
