@@ -1444,6 +1444,8 @@
         .art-grade-badge { font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:900;color:white;padding:4px 14px;border-radius:8px;flex-shrink:0; }
         .art-grade-stats { font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--mid);padding-bottom:0.6rem;border-bottom:1px dashed var(--border-light);margin-bottom:0.6rem; }
         .art-grade-analysis { font-size:0.92rem;line-height:1.65;color:#475569; }
+        .art-grade-tweet { margin-top:1rem;border-top:1px solid var(--border-light);padding-top:1rem; }
+        .art-grade-tweet .twitter-tweet { margin:0 auto !important; }
         :root.dark-mode #article-page { background:var(--cream); }
         :root.dark-mode .art-grade-card { background:var(--card-bg);border-color:var(--border-light); }
         :root.dark-mode .art-grade-name,:root.dark-mode .art-body p,:root.dark-mode .art-body h2 { color:var(--ink); }
@@ -2012,18 +2014,36 @@ function openArticleModal(id) {
         if (visibleGrades.length > 0) {
             html += '<h2>Player Grades</h2>';
             visibleGrades.forEach(g => {
-            const gc = GRADE_COLORS_ED[g.grade] || '#475569';
-            html += '<div class="art-grade-card">'
-                + '<div class="art-grade-header"><span class="art-grade-name">' + g.name + '</span><span class="art-grade-badge" style="background:' + gc + ';">' + g.grade + '</span></div>'
-                + (g.stats ? '<div class="art-grade-stats">' + g.stats + '</div>' : '')
-                + (g.analysis ? '<div class="art-grade-analysis">' + g.analysis + '</div>' : '')
-                + '</div>';
+                const gc = GRADE_COLORS_ED[g.grade] || '#475569';
+                // Build tweet embed block if tweetUrl present
+                let tweetBlock = '';
+                if (g.tweetUrl && g.tweetUrl.trim()) {
+                    const tweetId = (g.tweetUrl.trim().match(/\/status\/(\d+)/) || [])[1];
+                    if (tweetId) {
+                        tweetBlock = '<div class="art-grade-tweet" data-tweet-id="' + tweetId + '">'
+                            + '<blockquote class="twitter-tweet" data-dnt="true" data-theme="light">'
+                            + '<a href="' + g.tweetUrl.trim() + '"></a>'
+                            + '</blockquote>'
+                            + '</div>';
+                    }
+                }
+                html += '<div class="art-grade-card">'
+                    + '<div class="art-grade-header"><span class="art-grade-name">' + g.name + '</span><span class="art-grade-badge" style="background:' + gc + ';">' + g.grade + '</span></div>'
+                    + (g.stats ? '<div class="art-grade-stats">' + g.stats + '</div>' : '')
+                    + (g.analysis ? '<div class="art-grade-analysis">' + g.analysis + '</div>' : '')
+                    + tweetBlock
+                    + '</div>';
             });
         }
     }
 
     if (a.closing) html += '<h2>Bottom Line</h2><p>' + a.closing + '</p>';
     document.getElementById('art-body').innerHTML = html || '<p>Article content coming soon.</p>';
+
+    // Re-run Twitter widget loader so embedded tweets render
+    if (window.twttr && window.twttr.widgets) {
+        window.twttr.widgets.load(document.getElementById('art-body'));
+    }
 
     // Show full-page view
     const page = document.getElementById('article-page');
