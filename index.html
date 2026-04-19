@@ -1444,8 +1444,10 @@
         .art-grade-badge { font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:900;color:white;padding:4px 14px;border-radius:8px;flex-shrink:0; }
         .art-grade-stats { font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--mid);padding-bottom:0.6rem;border-bottom:1px dashed var(--border-light);margin-bottom:0.6rem; }
         .art-grade-analysis { font-size:0.92rem;line-height:1.65;color:#475569; }
-        .art-grade-tweet { margin-top:1rem;border-top:1px solid var(--border-light);padding-top:1rem; }
-        .art-grade-tweet .twitter-tweet { margin:0 auto !important; }
+        .art-grade-tweet { margin-top:1rem;border-top:1px solid var(--border-light);padding-top:1rem;min-height:32px; }
+        .art-grade-tweet iframe { border-radius:12px !important; }
+        .art-grade-tweet-loading { font-size:0.78rem;color:var(--mid);padding:0.5rem 0;font-style:italic; }
+        .art-grade-tweet-error { font-size:0.78rem;color:#b83232;padding:0.5rem 0; }
         :root.dark-mode #article-page { background:var(--cream); }
         :root.dark-mode .art-grade-card { background:var(--card-bg);border-color:var(--border-light); }
         :root.dark-mode .art-grade-name,:root.dark-mode .art-body p,:root.dark-mode .art-body h2 { color:var(--ink); }
@@ -2009,29 +2011,25 @@ function openArticleModal(id) {
     let html = '';
     if (a.intro) html += '<p>' + a.intro + '</p>';
 
+    // Collect tweet IDs per player so we can render them after innerHTML is set
+    const playerTweets = [];
+
     if (a.grades && a.grades.length > 0) {
         const visibleGrades = a.grades.filter(g => g.grade !== 'DNP');
         if (visibleGrades.length > 0) {
             html += '<h2>Player Grades</h2>';
-            visibleGrades.forEach(g => {
+            visibleGrades.forEach((g, idx) => {
                 const gc = GRADE_COLORS_ED[g.grade] || '#475569';
-                // Build tweet embed block if tweetUrl present
-                let tweetBlock = '';
-                if (g.tweetUrl && g.tweetUrl.trim()) {
-                    const tweetId = (g.tweetUrl.trim().match(/\/status\/(\d+)/) || [])[1];
-                    if (tweetId) {
-                        tweetBlock = '<div class="art-grade-tweet" data-tweet-id="' + tweetId + '">'
-                            + '<blockquote class="twitter-tweet" data-dnt="true" data-theme="light">'
-                            + '<a href="' + g.tweetUrl.trim() + '"></a>'
-                            + '</blockquote>'
-                            + '</div>';
-                    }
-                }
+                const tweetId = g.tweetUrl && g.tweetUrl.trim()
+                    ? (g.tweetUrl.trim().match(/\/status\/(\d+)/) || [])[1]
+                    : null;
+                const tweetContainerId = tweetId ? 'tweet-container-' + idx : '';
+                if (tweetId) playerTweets.push({ id: tweetId, containerId: tweetContainerId });
                 html += '<div class="art-grade-card">'
                     + '<div class="art-grade-header"><span class="art-grade-name">' + g.name + '</span><span class="art-grade-badge" style="background:' + gc + ';">' + g.grade + '</span></div>'
                     + (g.stats ? '<div class="art-grade-stats">' + g.stats + '</div>' : '')
                     + (g.analysis ? '<div class="art-grade-analysis">' + g.analysis + '</div>' : '')
-                    + tweetBlock
+                    + (tweetId ? '<div class="art-grade-tweet" id="' + tweetContainerId + '"><div class="art-grade-tweet-loading">Loading tweet…</div></div>' : '')
                     + '</div>';
             });
         }
@@ -2040,9 +2038,31 @@ function openArticleModal(id) {
     if (a.closing) html += '<h2>Bottom Line</h2><p>' + a.closing + '</p>';
     document.getElementById('art-body').innerHTML = html || '<p>Article content coming soon.</p>';
 
-    // Re-run Twitter widget loader so embedded tweets render
-    if (window.twttr && window.twttr.widgets) {
-        window.twttr.widgets.load(document.getElementById('art-body'));
+    // Use createTweet (most reliable method — works inside overflow/fixed containers)
+    if (playerTweets.length > 0) {
+        function renderTweets() {
+            playerTweets.forEach(({ id, containerId }) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = ''; // clear loading text
+                window.twttr.widgets.createTweet(id, container, {
+                    dnt: true,
+                    theme: 'light',
+                    align: 'center',
+                    width: 500
+                }).catch(() => {
+                    container.innerHTML = '<div class="art-grade-tweet-error">Could not load tweet.</div>';
+                });
+            });
+        }
+        if (window.twttr && window.twttr.widgets && window.twttr.widgets.createTweet) {
+            renderTweets();
+        } else {
+            // Twitter script not ready yet — wait for it
+            window.twttr = window.twttr || {};
+            window.twttr._e = window.twttr._e || [];
+            window.twttr._e.push(renderTweets);
+        }
     }
 
     // Show full-page view
