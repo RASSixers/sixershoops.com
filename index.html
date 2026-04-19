@@ -1252,22 +1252,28 @@
         .editorial-title::before { content:'';display:inline-block;width:3px;height:1em;background:var(--sixers-red);border-radius:2px; }
         .editorial-view-all { font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--sixers-blue);text-decoration:none; }
         .editorial-view-all:hover { text-decoration:underline; }
-        .editorial-grid { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+
+        /* Grid adapts: 1 card = full width, 2 = side by side, 3 = featured left + 2 stacked */
+        .editorial-grid { display:grid;gap:1rem; }
+        .editorial-grid.count-1 { grid-template-columns:1fr;max-width:640px; }
+        .editorial-grid.count-2 { grid-template-columns:1fr 1fr; }
+        .editorial-grid.count-3 { grid-template-columns:3fr 2fr; }
+        .editorial-grid.count-3 .article-card:first-child { grid-row:1/3; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height:220px; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.3rem; }
+
         .article-card { background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s; }
         .article-card:hover { transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,0.1);border-color:rgba(0,107,182,0.3); }
-        .article-card:first-child { grid-row:1/3; }
-        .article-card:first-child .article-card-thumb { height:220px; }
-        .article-card:first-child .article-card-title { font-size:1.3rem; }
-        .article-card-thumb { height:130px;background:var(--navy-deep);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0; }
+        .article-card-thumb { height:160px;background:var(--navy-deep);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0; }
         .article-card-thumb-cat { font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.5);position:relative;z-index:1; }
         .article-card-body { padding:1.1rem 1.2rem 1.3rem;flex:1;display:flex;flex-direction:column;gap:0.4rem; }
         .article-card-tag { font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase; }
         .article-card-title { font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:800;line-height:1.2;color:var(--ink); }
         .article-card-excerpt { font-size:0.8rem;color:var(--mid);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
-        .article-card-meta { margin-top:auto;padding-top:0.5rem;font-size:0.7rem;color:var(--mid);font-weight:500; }
+        .article-card-meta { margin-top:auto;padding-top:0.5rem;font-size:0.7rem;color:var(--mid);font-weight:500;border-top:1px solid var(--border-light); }
         :root.dark-mode .article-card { background:var(--card-bg);border-color:var(--border-light); }
         :root.dark-mode .article-card-title { color:var(--ink); }
-        @media(max-width:700px) { .editorial-grid{grid-template-columns:1fr;} .article-card:first-child{grid-row:auto;} .article-card:first-child .article-card-thumb{height:160px;} }
+        @media(max-width:700px) { .editorial-grid.count-2,.editorial-grid.count-3{grid-template-columns:1fr;} .editorial-grid.count-3 .article-card:first-child{grid-row:auto;} }
 
         /* ─── ARTICLE FULL-PAGE VIEW ─────────────────── */
         #article-page {
@@ -1806,23 +1812,28 @@ function renderEditorialGrid(articles) {
     if (!articles || articles.length === 0) { if (section) section.style.display = 'none'; return; }
     if (section) section.style.display = '';
 
+    // Set count class for adaptive grid layout
+    grid.className = 'editorial-grid count-' + Math.min(articles.length, 3);
+
     grid.innerHTML = articles.slice(0, 3).map(a => {
         const color = ED_CAT_COLORS[a.category] || '#006BB6';
         const gradient = a.gradient || ED_CAT_GRADIENTS[a.category] || 'linear-gradient(135deg,rgba(0,107,182,0.4) 0%,rgba(237,23,76,0.2) 100%)';
         const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
         const playerCount = (a.grades||[]).filter(g => g.grade !== 'DNP').length;
-        const metaParts = ['Sixers Hoops Staff', date];
-        if (playerCount > 0) metaParts.push(playerCount + ' players graded');
+        const meta = 'Sixers Hoops Staff · ' + date + (playerCount > 0 ? ' · ' + playerCount + ' graded' : '');
+        const title = (a.title || '').replace(/</g,'&lt;');
+        const excerpt = (a.excerpt || '').replace(/</g,'&lt;');
+        const category = (a.category || '').replace(/</g,'&lt;');
         return `<div class="article-card" onclick="openArticleModal('${a.id}')">
             <div class="article-card-thumb">
                 <div style="position:absolute;inset:0;background:${gradient};"></div>
-                <span class="article-card-thumb-cat">${a.category}</span>
+                <span class="article-card-thumb-cat">${category}</span>
             </div>
             <div class="article-card-body">
-                <span class="article-card-tag" style="color:${color};">${a.category}</span>
-                <div class="article-card-title">${a.title}</div>
-                ${a.excerpt ? `<div class="article-card-excerpt">${a.excerpt}</div>` : ''}
-                <div class="article-card-meta">${metaParts.join(' · ')}</div>
+                <span class="article-card-tag" style="color:${color};">${category}</span>
+                <div class="article-card-title">${title}</div>
+                ${excerpt ? `<div class="article-card-excerpt">${excerpt}</div>` : ''}
+                <div class="article-card-meta">${meta}</div>
             </div>
         </div>`;
     }).join('');
