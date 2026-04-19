@@ -1259,14 +1259,9 @@
         .editorial-grid.count-2 { grid-template-columns:1fr 1fr; }
         .editorial-grid.count-3 { grid-template-columns:3fr 2fr; }
         .editorial-grid.count-3 .article-card:first-child { grid-row:1/3; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height:240px; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.5rem; line-height:1.1; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-excerpt { -webkit-line-clamp:3; font-size:0.85rem; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-body { padding:1.25rem 1.35rem 0; }
-        /* Secondary cards in 3-col layout */
-        .editorial-grid.count-3 .article-card:not(:first-child) .article-card-thumb { height:110px; }
-        .editorial-grid.count-3 .article-card:not(:first-child) .article-card-title { font-size:0.95rem; }
-        .editorial-grid.count-3 .article-card:not(:first-child) .article-card-excerpt { display:none; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height:220px; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.35rem; line-height:1.15; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-excerpt { -webkit-line-clamp:3; }
 
         /* ── Article Cards — improved ── */
         .article-card {
@@ -1458,70 +1453,6 @@
         :root.dark-mode .art-grade-name,:root.dark-mode .art-body p,:root.dark-mode .art-body h2 { color:var(--ink); }
         :root.dark-mode .art-grade-analysis { color:var(--mid); }
 
-        /* ─── PAST POLLS ────────────────────────────── */
-        .past-poll-item {
-            padding: 0.85rem 0;
-            border-bottom: 1px solid var(--border-light);
-        }
-        .past-poll-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .past-poll-question {
-            font-family: 'Barlow', sans-serif;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--ink);
-            margin-bottom: 0.5rem;
-            line-height: 1.4;
-        }
-        .past-poll-bar-wrap {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-        }
-        .past-poll-bar-row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .past-poll-bar-label {
-            font-size: 0.7rem;
-            color: var(--mid);
-            min-width: 0;
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .past-poll-bar-track {
-            flex: 2;
-            height: 6px;
-            background: var(--border-light);
-            border-radius: 99px;
-            overflow: hidden;
-        }
-        .past-poll-bar-fill {
-            height: 100%;
-            background: var(--sixers-blue);
-            border-radius: 99px;
-            transition: width 0.5s ease;
-        }
-        .past-poll-bar-fill.winner { background: var(--sixers-red); }
-        .past-poll-bar-pct {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--mid);
-            min-width: 32px;
-            text-align: right;
-        }
-        .past-poll-total {
-            font-size: 0.65rem;
-            color: var(--mid);
-            margin-top: 0.35rem;
-            font-style: italic;
-        }
-        :root.dark-mode .past-poll-question { color: var(--ink); }
-        :root.dark-mode .past-poll-bar-track { background: var(--border-light); }
-
         /* Google Analytics & AdSense passthrough */
     </style>
 
@@ -1680,15 +1611,6 @@
             <div id="poll-container">
                 <p style="font-size:0.8rem;color:var(--mid);text-align:center;padding:1rem 0;">Loading poll…</p>
             </div>
-        </div>
-
-        <!-- Past Polls -->
-        <div class="sidebar-card" id="past-polls-card" style="display:none;">
-            <div class="sidebar-heading">
-                Past Polls
-                <button id="toggle-past-polls-btn" class="sidebar-view-all" onclick="togglePastPolls()">Show</button>
-            </div>
-            <div id="past-polls-container" style="display:none;"></div>
         </div>
 
         <!-- Trending Headlines -->
@@ -2149,13 +2071,28 @@ function openArticleModal(id) {
     page.scrollTop = 0;
     document.body.style.overflow = 'hidden';
 
-    // Push URL so it's shareable on GitHub Pages
-    history.pushState({ articleId: id }, '', '/article.html?id=' + id);
+    // Push URL so it's shareable — use ?article= so the auto-open listener matches
+    history.pushState({ articleId: id, _pushed: true }, '', window.location.pathname + '?article=' + id);
 }
 
 function shareArticle() {
-    const url = window.location.origin + '/article.html?id=' + (history.state && history.state.articleId ? history.state.articleId : '');
+    const id = history.state && history.state.articleId ? history.state.articleId : new URLSearchParams(window.location.search).get('article');
+    const url = window.location.origin + window.location.pathname + (id ? '?article=' + id : '');
     navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('art-share-btn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+        btn.style.color = '#5dbf88';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = 'rgba(255,255,255,0.6)'; }, 2000);
+    }).catch(() => {
+        // Fallback for browsers that block clipboard without HTTPS focus
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.cssText = 'position:fixed;opacity:0;';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
         const btn = document.getElementById('art-share-btn');
         const orig = btn.innerHTML;
         btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
@@ -2167,30 +2104,74 @@ function shareArticle() {
 function closeArticlePage() {
     document.getElementById('article-page').classList.remove('active');
     document.body.style.overflow = '';
-    if (history.state && history.state.articleId) history.back();
+    // Only go back if we pushed this state ourselves (not a direct shared link visit)
+    if (history.state && history.state.articleId && history.state._pushed) {
+        history.back();
+    } else {
+        // Clean URL without reloading
+        history.replaceState({}, '', window.location.pathname);
+    }
 }
 
 // Handle browser back button
-window.addEventListener('popstate', () => {
+window.addEventListener('popstate', (e) => {
     const page = document.getElementById('article-page');
     if (page && page.classList.contains('active')) {
         page.classList.remove('active');
         document.body.style.overflow = '';
+    }
+    // If popped back to a state with an article, re-open it
+    if (e.state && e.state.articleId) {
+        const found = editorialArticlesCache.find(a => a.id === e.state.articleId);
+        if (found) openArticleModal(e.state.articleId);
     }
 });
 
 // If someone navigates directly to index.html?article=ID, open it once articles load
 (function() {
     const id = new URLSearchParams(window.location.search).get('article');
-    if (id) {
-        const interval = setInterval(() => {
-            if (editorialArticlesCache.length > 0) {
-                clearInterval(interval);
+    if (!id) return;
+
+    // Show the article page shell immediately with a loading state so there's no flash
+    const page = document.getElementById('article-page');
+    const body = document.getElementById('art-body');
+    const headline = document.getElementById('art-headline');
+    const badge = document.getElementById('art-cat-badge');
+
+    headline.textContent = '';
+    badge.textContent = '';
+    if (body) body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:4rem 0;gap:0.75rem;color:rgba(255,255,255,0.4);font-family:\'Barlow\',sans-serif;font-size:0.9rem;"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'18\' height=\'18\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\' style=\'animation:spin 1s linear infinite\'><path d=\'M21 12a9 9 0 1 1-6.219-8.56\'/></svg>Loading article…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+    page.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Wait for Firestore data, then populate — no hard timeout
+    function tryOpen() {
+        if (editorialArticlesCache.length > 0) {
+            const found = editorialArticlesCache.find(a => a.id === id);
+            if (found) {
                 openArticleModal(id);
+            } else {
+                // Article ID not in the top-3 cache — fetch it directly
+                (function fetchDirect(tries) {
+                    if (window.db) {
+                        window.db.collection(EDITORIAL_COLLECTION).doc(id).get().then(doc => {
+                            if (doc.exists) {
+                                editorialArticlesCache = [{ id: doc.id, ...doc.data() }, ...editorialArticlesCache];
+                                openArticleModal(id);
+                            } else {
+                                if (body) body.innerHTML = '<p style="color:var(--mid);text-align:center;padding:3rem 0;">Article not found.</p>';
+                            }
+                        }).catch(() => {
+                            if (body) body.innerHTML = '<p style="color:var(--mid);text-align:center;padding:3rem 0;">Could not load article.</p>';
+                        });
+                    } else if (tries < 40) { setTimeout(() => fetchDirect(tries + 1), 250); }
+                })(0);
             }
-        }, 200);
-        setTimeout(() => clearInterval(interval), 8000);
+        } else {
+            setTimeout(tryOpen, 150);
+        }
     }
+    setTimeout(tryOpen, 150);
 })();
 
 // Load from Firestore
@@ -2212,63 +2193,5 @@ window.addEventListener('popstate', () => {
         });
     });
 </script>
-
-<script>
-// ─── PAST POLLS (Firestore-driven) ────────────────────────────────────────────
-const POLLS_COLLECTION = 'fan_polls';
-let pastPollsCache = [];
-let pastPollsExpanded = false;
-
-function togglePastPolls() {
-    pastPollsExpanded = !pastPollsExpanded;
-    document.getElementById('past-polls-container').style.display = pastPollsExpanded ? '' : 'none';
-    document.getElementById('toggle-past-polls-btn').textContent = pastPollsExpanded ? 'Hide' : 'Show';
-}
-
-function renderPastPolls(polls) {
-    pastPollsCache = polls;
-    const card = document.getElementById('past-polls-card');
-    const container = document.getElementById('past-polls-container');
-    if (!card || !container) return;
-
-    if (!polls || polls.length === 0) { card.style.display = 'none'; return; }
-    card.style.display = '';
-
-    container.innerHTML = polls.map(poll => {
-        const options = poll.options || [];
-        const totalVotes = options.reduce((s, o) => s + (o.votes || 0), 0);
-        const maxVotes = Math.max(...options.map(o => o.votes || 0), 1);
-        const q = (poll.question || '').replace(/</g, '&lt;');
-        const barsHtml = options.map(o => {
-            const v = o.votes || 0;
-            const pct = totalVotes > 0 ? Math.round((v / totalVotes) * 100) : 0;
-            const isWinner = v === maxVotes && totalVotes > 0;
-            const label = (o.text || o.label || '').replace(/</g, '&lt;');
-            return `<div class="past-poll-bar-row">
-                <span class="past-poll-bar-label">${label}</span>
-                <div class="past-poll-bar-track"><div class="past-poll-bar-fill${isWinner ? ' winner' : ''}" style="width:${pct}%"></div></div>
-                <span class="past-poll-bar-pct">${pct}%</span>
-            </div>`;
-        }).join('');
-        return `<div class="past-poll-item">
-            <div class="past-poll-question">${q}</div>
-            <div class="past-poll-bar-wrap">${barsHtml}</div>
-            <div class="past-poll-total">${totalVotes} vote${totalVotes !== 1 ? 's' : ''}</div>
-        </div>`;
-    }).join('');
-}
-
-// Load past polls (polls with isActive = false, ordered by createdAt desc)
-(function loadPastPolls(tries) {
-    if (window.db) {
-        window.db.collection(POLLS_COLLECTION)
-            .where('isActive', '==', false)
-            .orderBy('createdAt', 'desc')
-            .limit(10)
-            .onSnapshot(snap => {
-                renderPastPolls(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-            }, () => {});
-    } else if (tries < 40) { setTimeout(() => loadPastPolls(tries + 1), 250); }
-})(0);
-</script>
+</body>
 </html>
