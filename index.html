@@ -1259,9 +1259,14 @@
         .editorial-grid.count-2 { grid-template-columns:1fr 1fr; }
         .editorial-grid.count-3 { grid-template-columns:3fr 2fr; }
         .editorial-grid.count-3 .article-card:first-child { grid-row:1/3; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height:220px; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.35rem; line-height:1.15; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-excerpt { -webkit-line-clamp:3; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height:240px; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.5rem; line-height:1.1; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-excerpt { -webkit-line-clamp:3; font-size:0.85rem; }
+        .editorial-grid.count-3 .article-card:first-child .article-card-body { padding:1.25rem 1.35rem 0; }
+        /* Secondary cards in 3-col layout */
+        .editorial-grid.count-3 .article-card:not(:first-child) .article-card-thumb { height:110px; }
+        .editorial-grid.count-3 .article-card:not(:first-child) .article-card-title { font-size:0.95rem; }
+        .editorial-grid.count-3 .article-card:not(:first-child) .article-card-excerpt { display:none; }
 
         /* ── Article Cards — improved ── */
         .article-card {
@@ -1453,6 +1458,70 @@
         :root.dark-mode .art-grade-name,:root.dark-mode .art-body p,:root.dark-mode .art-body h2 { color:var(--ink); }
         :root.dark-mode .art-grade-analysis { color:var(--mid); }
 
+        /* ─── PAST POLLS ────────────────────────────── */
+        .past-poll-item {
+            padding: 0.85rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .past-poll-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .past-poll-question {
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .past-poll-bar-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .past-poll-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .past-poll-bar-label {
+            font-size: 0.7rem;
+            color: var(--mid);
+            min-width: 0;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .past-poll-bar-track {
+            flex: 2;
+            height: 6px;
+            background: var(--border-light);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .past-poll-bar-fill {
+            height: 100%;
+            background: var(--sixers-blue);
+            border-radius: 99px;
+            transition: width 0.5s ease;
+        }
+        .past-poll-bar-fill.winner { background: var(--sixers-red); }
+        .past-poll-bar-pct {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--mid);
+            min-width: 32px;
+            text-align: right;
+        }
+        .past-poll-total {
+            font-size: 0.65rem;
+            color: var(--mid);
+            margin-top: 0.35rem;
+            font-style: italic;
+        }
+        :root.dark-mode .past-poll-question { color: var(--ink); }
+        :root.dark-mode .past-poll-bar-track { background: var(--border-light); }
+
         /* Google Analytics & AdSense passthrough */
     </style>
 
@@ -1611,6 +1680,15 @@
             <div id="poll-container">
                 <p style="font-size:0.8rem;color:var(--mid);text-align:center;padding:1rem 0;">Loading poll…</p>
             </div>
+        </div>
+
+        <!-- Past Polls -->
+        <div class="sidebar-card" id="past-polls-card" style="display:none;">
+            <div class="sidebar-heading">
+                Past Polls
+                <button id="toggle-past-polls-btn" class="sidebar-view-all" onclick="togglePastPolls()">Show</button>
+            </div>
+            <div id="past-polls-container" style="display:none;"></div>
         </div>
 
         <!-- Trending Headlines -->
@@ -2134,5 +2212,63 @@ window.addEventListener('popstate', () => {
         });
     });
 </script>
-</body>
+
+<script>
+// ─── PAST POLLS (Firestore-driven) ────────────────────────────────────────────
+const POLLS_COLLECTION = 'fan_polls';
+let pastPollsCache = [];
+let pastPollsExpanded = false;
+
+function togglePastPolls() {
+    pastPollsExpanded = !pastPollsExpanded;
+    document.getElementById('past-polls-container').style.display = pastPollsExpanded ? '' : 'none';
+    document.getElementById('toggle-past-polls-btn').textContent = pastPollsExpanded ? 'Hide' : 'Show';
+}
+
+function renderPastPolls(polls) {
+    pastPollsCache = polls;
+    const card = document.getElementById('past-polls-card');
+    const container = document.getElementById('past-polls-container');
+    if (!card || !container) return;
+
+    if (!polls || polls.length === 0) { card.style.display = 'none'; return; }
+    card.style.display = '';
+
+    container.innerHTML = polls.map(poll => {
+        const options = poll.options || [];
+        const totalVotes = options.reduce((s, o) => s + (o.votes || 0), 0);
+        const maxVotes = Math.max(...options.map(o => o.votes || 0), 1);
+        const q = (poll.question || '').replace(/</g, '&lt;');
+        const barsHtml = options.map(o => {
+            const v = o.votes || 0;
+            const pct = totalVotes > 0 ? Math.round((v / totalVotes) * 100) : 0;
+            const isWinner = v === maxVotes && totalVotes > 0;
+            const label = (o.text || o.label || '').replace(/</g, '&lt;');
+            return `<div class="past-poll-bar-row">
+                <span class="past-poll-bar-label">${label}</span>
+                <div class="past-poll-bar-track"><div class="past-poll-bar-fill${isWinner ? ' winner' : ''}" style="width:${pct}%"></div></div>
+                <span class="past-poll-bar-pct">${pct}%</span>
+            </div>`;
+        }).join('');
+        return `<div class="past-poll-item">
+            <div class="past-poll-question">${q}</div>
+            <div class="past-poll-bar-wrap">${barsHtml}</div>
+            <div class="past-poll-total">${totalVotes} vote${totalVotes !== 1 ? 's' : ''}</div>
+        </div>`;
+    }).join('');
+}
+
+// Load past polls (polls with isActive = false, ordered by createdAt desc)
+(function loadPastPolls(tries) {
+    if (window.db) {
+        window.db.collection(POLLS_COLLECTION)
+            .where('isActive', '==', false)
+            .orderBy('createdAt', 'desc')
+            .limit(10)
+            .onSnapshot(snap => {
+                renderPastPolls(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            }, () => {});
+    } else if (tries < 40) { setTimeout(() => loadPastPolls(tries + 1), 250); }
+})(0);
+</script>
 </html>
