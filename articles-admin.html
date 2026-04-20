@@ -284,6 +284,7 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
               <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#b83232;border-radius:4px;display:inline-block;"></span> D+</div>
               <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#a02828;border-radius:4px;display:inline-block;"></span> D</div>
               <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#7a1a1a;border-radius:4px;display:inline-block;"></span> F</div>
+              <div style="display:flex;align-items:center;gap:0.4rem;"><span style="width:20px;height:20px;background:#6b21a8;border-radius:4px;display:inline-block;"></span> INC</div>
             </div>
           </div>
         </div>
@@ -385,8 +386,8 @@ const REST_ROSTER = [
 
 const ROSTER = [...PINNED_ROSTER, ...REST_ROSTER];
 
-const GRADES = ['DNP','A+','A','A-','B+','B','B-','C+','C','D+','D','F'];
-const GRADE_COLORS = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a'};
+const GRADES = ['DNP','INC','A+','A','A-','B+','B','B-','C+','C','D+','D','F'];
+const GRADE_COLORS = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a','INC':'#6b21a8'};
 const CATEGORY_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
 const CATEGORY_GRADIENTS = {
   'Player Grades':'linear-gradient(135deg,#001a57 0%,#00381a 60%,rgba(30,125,70,0.5) 100%)',
@@ -470,7 +471,7 @@ function addGradeEntry(data = {}) {
   div.id = 'grade-entry-' + id;
   const selectedGrade = data.grade || 'DNP';
   const gradeOptions = GRADES.map(g => '<option value="' + g + '"' + (selectedGrade === g ? ' selected' : '') + '>' + g + '</option>').join('');
-  const isDnp = selectedGrade === 'DNP';
+  const isDnp = selectedGrade === 'DNP' || selectedGrade === 'INC';
   const tweetVal = data.tweetUrl || '';
   div.innerHTML = `
     <div class="grade-entry-header">
@@ -505,7 +506,7 @@ function addGradeEntry(data = {}) {
         <div class="ge-tweet-hint"></div>
       </div>
     </div>
-    ${isDnp ? '<div class="ge-dnp-hint" style="font-size:0.75rem;color:var(--mid);padding:0.25rem 0;">DNP — will not appear in the published article</div>' : ''}
+    ${isDnp ? `<div class="ge-dnp-hint" style="font-size:0.75rem;color:var(--mid);padding:0.25rem 0;">${selectedGrade === 'INC' ? 'INC — Incomplete. Stats/analysis fields hidden.' : 'DNP — will not appear in the published article'}</div>` : ''}
   `;
   // Validate pre-filled tweet URL when editing
   if (tweetVal) {
@@ -520,13 +521,15 @@ function toggleDnpFields(select) {
   const fields = entry.querySelector('.ge-fields');
   const hint = entry.querySelector('.ge-dnp-hint');
   const isDnp = select.value === 'DNP';
-  if (fields) fields.style.display = isDnp ? 'none' : '';
+  const isInc = select.value === 'INC';
+  const hideFields = isDnp || isInc;
+  if (fields) fields.style.display = hideFields ? 'none' : '';
   if (hint) hint.remove();
-  if (isDnp) {
+  if (hideFields) {
     const h = document.createElement('div');
     h.className = 'ge-dnp-hint';
     h.style.cssText = 'font-size:0.75rem;color:var(--mid);padding:0.25rem 0;';
-    h.textContent = 'DNP — will not appear in the published article';
+    h.textContent = isDnp ? 'DNP — will not appear in the published article' : 'INC — Incomplete. Stats/analysis fields hidden.';
     select.closest('.grade-entry-row').after(h);
   }
 }
@@ -587,7 +590,7 @@ function renderArticleList() {
   list.innerHTML = articles.map(a => {
     const color = CATEGORY_COLORS[a.category] || '#006BB6';
     const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Draft';
-    const playerCount = (a.grades||[]).filter(g => g.grade && g.grade !== 'DNP').length;
+    const playerCount = (a.grades||[]).filter(g => g.grade && g.grade !== 'DNP' && g.grade !== 'INC').length;
     const tweetBadge = a.tweetUrl ? `<span class="article-item-tweet-badge"><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Tweet</span>` : '';
     const gradeInfo = playerCount > 0 ? `<span class="article-item-meta-dot"></span><span>${playerCount} player${playerCount !== 1 ? 's' : ''} graded</span>` : '';
     return `
