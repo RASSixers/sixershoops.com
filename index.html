@@ -864,10 +864,57 @@
         }
 
         @media (max-width: 600px) {
-            .main-layout { padding: 1rem; }
+            .main-layout { padding: 0.75rem; gap: 1rem; }
             .hero-inner { padding: 2rem 1.25rem 1.75rem; }
-            .feature-cards-inner { grid-template-columns: repeat(2, 1fr); }
+            .feature-cards-inner {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 0.75rem !important;
+                gap: 0.5rem;
+            }
             .feature-cards-section { padding: 0; }
+            .feature-card { padding: 1rem; }
+            .feature-card-desc { display: none; }
+
+            /* Hero CTA buttons stack and go full width */
+            .hero-cta-row {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+                gap: 0.6rem;
+                margin-top: 1.5rem;
+            }
+            .hero-cta-primary,
+            .hero-cta-secondary {
+                justify-content: center;
+                width: 100%;
+                font-size: 0.9rem;
+                padding: 0.8rem 1rem;
+            }
+
+            /* Feed filters: allow horizontal scroll */
+            .feed-filters {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .feed-filters::-webkit-scrollbar { display: none; }
+            .filter-btn { white-space: nowrap; flex-shrink: 0; }
+
+            /* Create post box */
+            .create-post-box { padding: 0.75rem; gap: 0.5rem; }
+            #create-post-btn { padding: 0.5rem 0.85rem; font-size: 0.8rem; }
+
+            /* Sidebar appears below feed on mobile */
+            aside { position: static !important; top: auto !important; }
+
+            /* Editorial section padding */
+            .editorial-section { padding: 0 0.75rem; margin-top: 1.5rem; }
+        }
+
+        @media (max-width: 380px) {
+            .feature-cards-inner { grid-template-columns: 1fr 1fr; }
+            .hero-title-top, .hero-title-bottom { font-size: 2.8rem; }
         }
 
         /* ─── DARK MODE ────────────────────────────── */
@@ -918,6 +965,31 @@
         /* Feed post cards (dynamically injected) */
         :root.dark-mode [class*="post-card"],
         :root.dark-mode .feed-post { background: var(--card-bg); border-color: var(--border-light); }
+        /* Inline-style bg-white on feed posts */
+        :root.dark-mode #feed-container .bg-white { background-color: var(--card-bg) !important; }
+        :root.dark-mode #feed-container .border-slate-200,
+        :root.dark-mode #feed-container .border-slate-100 { border-color: var(--border-light) !important; }
+        :root.dark-mode #feed-container .text-slate-900,
+        :root.dark-mode #feed-container .text-slate-800,
+        :root.dark-mode #feed-container .font-bold { color: var(--ink) !important; }
+        :root.dark-mode #feed-container .text-slate-500,
+        :root.dark-mode #feed-container .text-slate-600 { color: var(--mid) !important; }
+        :root.dark-mode #feed-container .bg-slate-50,
+        :root.dark-mode #feed-container .bg-slate-100 { background-color: #1e2130 !important; }
+        :root.dark-mode #feed-container .hover\:bg-slate-50:hover,
+        :root.dark-mode #feed-container .hover\:bg-slate-100:hover { background-color: #252a3a !important; }
+        /* Feed action bar (vote, comment buttons) */
+        :root.dark-mode #feed-container button {
+            color: var(--mid);
+        }
+        :root.dark-mode #feed-container button:hover { color: var(--ink); }
+        /* Post body text */
+        :root.dark-mode #feed-container p,
+        :root.dark-mode #feed-container span { color: inherit; }
+        /* Create post box dark mode input area */
+        :root.dark-mode #create-post-avatar-container { background: #1e2130; border-color: var(--border-light); }
+        /* Feed filters border */
+        :root.dark-mode .feed-filters { border-color: var(--border-light); }
         /* Section label line */
         :root.dark-mode .section-label::after { background: var(--border-light); }
         :root.dark-mode .section-label { color: var(--mid); }
