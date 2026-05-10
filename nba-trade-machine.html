@@ -1504,74 +1504,394 @@
         if (e.target === document.getElementById('tradeModal')) closeModal();
     }
 
-    // ── Share Graphic ────────────────────────────────────────────────────
-    function shareGraphic() {
-        const panel = document.getElementById('resultPanel');
-        if (!panel) return;
+    // ── Share Graphic (Canvas-drawn, no external deps) ──────────────────
+    let _lastTradeCanvas = null; // store last generated canvas for copy/download
 
-        // Use html2canvas to capture the result panel
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        script.onload = function() {
-            panel.style.display = 'block';
-            html2canvas(panel, {
-                backgroundColor: '#f5f0e8',
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                windowWidth: panel.scrollWidth + 60,
-                width: panel.scrollWidth,
-            }).then(canvas => {
-                // Try native share API first
-                canvas.toBlob(blob => {
-                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'trade.png', { type: 'image/png' })] })) {
-                        navigator.share({
-                            title: 'NBA Trade Machine — Sixers Hoops',
-                            text: 'Check out this trade analysis!',
-                            files: [new File([blob], 'trade.png', { type: 'image/png' })]
-                        }).catch(() => fallbackDownload(canvas));
-                    } else {
-                        fallbackDownload(canvas);
-                    }
-                }, 'image/png');
+    function shareGraphic() {
+        const canvas = drawTradeCard();
+        _lastTradeCanvas = canvas;
+        showSharePreview(canvas);
+    }
+
+    // ── Draw the trade card onto a 1200×630 canvas ────────────────────────
+    function drawTradeCard() {
+        const W = 1200, H = 630;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // ── Background ────────────────────────────────────────────────────
+        ctx.fillStyle = '#000d2e';
+        ctx.fillRect(0, 0, W, H);
+
+        // Subtle grid
+        ctx.strokeStyle = 'rgba(0,107,182,0.06)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+        for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+        // Top accent bar
+        const accentGrad = ctx.createLinearGradient(0,0,W,0);
+        accentGrad.addColorStop(0,'#006BB6');
+        accentGrad.addColorStop(1,'#4da8ff');
+        ctx.fillStyle = accentGrad;
+        ctx.fillRect(0, 0, W, 4);
+
+        // ── Header section ────────────────────────────────────────────────
+        const isValid = document.getElementById('modalBadge').classList.contains('valid');
+        const tradeTitle = document.getElementById('modalTitle').textContent;
+
+        // Big status pill
+        const pillColor = isValid ? '#16a34a' : '#dc2626';
+        const pillBg    = isValid ? 'rgba(22,163,74,0.15)' : 'rgba(220,38,38,0.15)';
+        roundRect(ctx, 48, 36, 140, 38, 8);
+        ctx.fillStyle = pillBg;
+        ctx.fill();
+        ctx.strokeStyle = pillColor;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = pillColor;
+        ctx.font = 'bold 14px "Arial Narrow", Arial, sans-serif';
+        ctx.letterSpacing = '2px';
+        ctx.textAlign = 'center';
+        ctx.fillText(isValid ? 'VALID' : 'INVALID', 118, 61);
+        ctx.letterSpacing = '0px';
+
+        // Title
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.font = 'bold 42px "Arial Narrow", Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(tradeTitle.toUpperCase(), 48, 120);
+
+        // Divider
+        ctx.fillStyle = '#ED174C';
+        ctx.fillRect(48, 132, 52, 3);
+
+        // Subtitle / season
+        ctx.fillStyle = 'rgba(255,255,255,0.38)';
+        ctx.font = '15px Arial, sans-serif';
+        ctx.fillText('2026\u201327 Season  \u2022  CBA Analysis  \u2022  Sixers Hoops', 48, 158);
+
+        // ── Team cards ────────────────────────────────────────────────────
+        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
+        const totalSalaryMoving = activeTeams.reduce((sum, t) => {
+            const d = TEAM_DATA[t.abbr];
+            return sum + t.selectedPlayers.reduce((s, pid) => {
+                const p = d.players.find(p => p.id === pid);
+                return s + (p ? p.salary : 0);
+            }, 0);
+        }, 0);
+
+        const maxCards = Math.min(activeTeams.length, 5);
+        const cardW = maxCards > 0 ? Math.min(220, (W - 96 - (maxCards-1)*16) / maxCards) : 220;
+        const cardX0 = 48;
+        const cardY  = 182;
+        const cardH  = H - cardY - 72;
+
+        activeTeams.slice(0, 5).forEach((t, i) => {
+            const d = TEAM_DATA[t.abbr];
+            const teamInfo = NBA_TEAMS[t.abbr];
+            const x = cardX0 + i * (cardW + 16);
+
+            const sendSal = t.selectedPlayers.reduce((s, pid) => {
+                const p = d.players.find(p => p.id === pid);
+                return s + (p ? p.salary : 0);
+            }, 0);
+            const recvSal = totalSalaryMoving - sendSal;
+            const postSal = d.teamSalary - sendSal + recvSal;
+            const salDiff = recvSal - sendSal;
+
+            // Card background
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            roundRect(ctx, x, cardY, cardW, cardH, 10);
+            ctx.fill();
+
+            // Team color stripe
+            ctx.fillStyle = teamInfo ? teamInfo.color : '#4a4a5a';
+            roundRect(ctx, x, cardY, cardW, 5, [10, 10, 0, 0]);
+            ctx.fill();
+
+            // Team name
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = 'bold 13px "Arial Narrow", Arial, sans-serif';
+            ctx.textAlign = 'left';
+            const teamShort = (teamInfo ? teamInfo.name : t.abbr).toUpperCase();
+            // Truncate if needed
+            const maxW = cardW - 16;
+            let tName = teamShort;
+            ctx.font = 'bold 13px Arial, sans-serif';
+            while (ctx.measureText(tName).width > maxW && tName.length > 3) tName = tName.slice(0, -1);
+            ctx.fillText(tName, x + 10, cardY + 26);
+
+            // Divider
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x + 10, cardY + 34); ctx.lineTo(x + cardW - 10, cardY + 34); ctx.stroke();
+
+            // Stats rows
+            const rows = [
+                { label: 'Sending',  val: sendSal > 0 ? '$'+(sendSal/1e6).toFixed(1)+'M' : '—', color: 'rgba(255,255,255,0.55)' },
+                { label: 'Taking In',val: recvSal > 0 ? '$'+(recvSal/1e6).toFixed(1)+'M' : '—', color: 'rgba(255,255,255,0.55)' },
+                { label: 'Change',   val: (salDiff >= 0 ? '+' : '') + '$'+(salDiff/1e6).toFixed(1)+'M', color: salDiff > 0 ? '#f87171' : salDiff < 0 ? '#4ade80' : 'rgba(255,255,255,0.55)' },
+                { label: 'Post-Trade', val: '$'+(postSal/1e6).toFixed(1)+'M', color: postSal > CBA.secondApron ? '#f87171' : postSal > CBA.firstApron ? '#fb923c' : 'rgba(255,255,255,0.7)' },
+                { label: 'Players',  val: String(t.selectedPlayers.length), color: 'rgba(255,255,255,0.55)' },
+                { label: 'Picks',    val: String(t.selectedPicks.length),   color: 'rgba(255,255,255,0.55)' },
+            ];
+            rows.forEach((row, ri) => {
+                const ry = cardY + 48 + ri * 34;
+                ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                ctx.font = '10px Arial, sans-serif';
+                ctx.fillText(row.label.toUpperCase(), x + 10, ry);
+                ctx.fillStyle = row.color;
+                ctx.font = 'bold 15px Arial, sans-serif';
+                ctx.fillText(row.val, x + 10, ry + 15);
             });
-        };
-        if (!window.html2canvas) {
-            document.head.appendChild(script);
-        } else {
-            script.onload();
+
+            // Apron badge
+            const apron = getApronStatus(postSal);
+            const apronColors = { under:'#4ade80', tax:'#facc15', first:'#fb923c', second:'#f87171' };
+            ctx.fillStyle = apronColors[apron.cls] || 'white';
+            ctx.font = 'bold 10px Arial, sans-serif';
+            ctx.fillText(apron.label.toUpperCase(), x + 10, cardY + cardH - 18);
+        });
+
+        // ── Violations / messages ─────────────────────────────────────────
+        const msgs = document.getElementById('modalViolations');
+        if (msgs) {
+            const items = msgs.querySelectorAll('.violation-item');
+            let my = H - 60;
+            const maxMsgs = Math.min(items.length, 3);
+            // Draw them from bottom up
+            [...items].slice(0, maxMsgs).reverse().forEach(item => {
+                const type = [...item.classList].find(c => ['error','warning','ok','info'].includes(c));
+                const msgText = item.querySelectorAll('span')[1]?.textContent || '';
+                const colors = { error:'#f87171', warning:'#fb923c', ok:'#4ade80', info:'#60a5fa' };
+                const c = colors[type] || 'rgba(255,255,255,0.5)';
+
+                // Truncate message
+                ctx.font = '12px Arial, sans-serif';
+                let txt = msgText;
+                while (ctx.measureText(txt).width > W - 120 && txt.length > 10) txt = txt.slice(0, -1);
+                if (txt.length < msgText.length) txt += '...';
+
+                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                roundRect(ctx, 48, my - 18, W - 96, 22, 4);
+                ctx.fill();
+
+                ctx.fillStyle = c;
+                ctx.font = 'bold 10px Arial, sans-serif';
+                ctx.fillText(type ? type.toUpperCase() : '', 58, my - 1);
+                ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                ctx.font = '11px Arial, sans-serif';
+                ctx.fillText(txt, 105, my - 1);
+                my -= 28;
+            });
+        }
+
+        // ── Footer branding ───────────────────────────────────────────────
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(0, H - 38, W, 38);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = 'bold 13px Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('SIXERS HOOPS', 48, H - 16);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.font = '12px Arial, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('NBA Trade Machine \u2022 2026\u201327 Season', W - 48, H - 16);
+
+        return canvas;
+    }
+
+    // Helper: rounded rectangle path
+    function roundRect(ctx, x, y, w, h, r) {
+        if (typeof r === 'number') r = [r,r,r,r];
+        const [tl,tr,br,bl] = r;
+        ctx.beginPath();
+        ctx.moveTo(x + tl, y);
+        ctx.lineTo(x + w - tr, y); ctx.arcTo(x+w, y, x+w, y+tr, tr);
+        ctx.lineTo(x + w, y + h - br); ctx.arcTo(x+w, y+h, x+w-br, y+h, br);
+        ctx.lineTo(x + bl, y + h); ctx.arcTo(x, y+h, x, y+h-bl, bl);
+        ctx.lineTo(x, y + tl); ctx.arcTo(x, y, x+tl, y, tl);
+        ctx.closePath();
+    }
+
+    // ── Show share preview modal ──────────────────────────────────────────
+    function showSharePreview(canvas) {
+        const url = canvas.toDataURL('image/png');
+
+        let overlay = document.getElementById('sharePreviewModal');
+        if (overlay) overlay.remove();
+
+        overlay = document.createElement('div');
+        overlay.id = 'sharePreviewModal';
+        overlay.style.cssText = [
+            'position:fixed;inset:0;z-index:100000',
+            'background:rgba(0,0,0,.78);backdrop-filter:blur(6px)',
+            'display:flex;align-items:center;justify-content:center;padding:1rem'
+        ].join(';');
+        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+        overlay.innerHTML = `
+        <div style="background:white;border-radius:16px;overflow:hidden;width:100%;max-width:700px;
+                    display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.4);">
+
+            <!-- Header -->
+            <div style="padding:.9rem 1.25rem;background:#000d2e;display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                <div>
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;letter-spacing:.12em;text-transform:uppercase;color:white;">Share Graphic</div>
+                    <div style="font-family:'Barlow',sans-serif;font-size:.68rem;color:rgba(255,255,255,.35);margin-top:2px;">1200 x 630 px — ready for social media</div>
+                </div>
+                <button onclick="document.getElementById('sharePreviewModal').remove()"
+                        style="background:rgba(255,255,255,.1);border:none;border-radius:8px;color:white;cursor:pointer;
+                               width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
+                    &times;
+                </button>
+            </div>
+
+            <!-- Preview image -->
+            <div style="padding:1rem 1rem .5rem;background:#f5f0e8;text-align:center;">
+                <img id="shareImgPreview" src="${url}"
+                     style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.18);display:block;margin:0 auto;cursor:pointer;"
+                     title="Click to select all for copy"
+                     onclick="selectImage(this)">
+                <div style="font-family:'Barlow',sans-serif;font-size:.68rem;color:#888;margin-top:.5rem;">
+                    Click image to select &bull; Right-click to copy image
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div style="padding:.9rem 1.25rem;display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;border-top:1px solid #e8e4dc;background:#fafaf8;">
+
+                <!-- Download -->
+                <a id="shareDownloadLink" href="${url}" download="sixers-hoops-trade-${Date.now()}.png"
+                   style="display:inline-flex;align-items:center;gap:.45rem;
+                          background:#006BB6;color:white;text-decoration:none;
+                          font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;
+                          letter-spacing:.1em;text-transform:uppercase;
+                          padding:.6rem 1.3rem;border-radius:8px;transition:all .2s;"
+                   onmouseover="this.style.background='#0080d4'"
+                   onmouseout="this.style.background='#006BB6'">
+                    Download PNG
+                </a>
+
+                <!-- Copy to clipboard -->
+                <button id="copyImgBtn" onclick="copyImageToClipboard('${url}')"
+                        style="display:inline-flex;align-items:center;gap:.45rem;
+                               background:white;color:#0d0d0d;
+                               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;
+                               letter-spacing:.1em;text-transform:uppercase;
+                               padding:.6rem 1.3rem;border-radius:8px;
+                               border:1px solid #e8e4dc;cursor:pointer;transition:all .2s;"
+                        onmouseover="this.style.borderColor='#006BB6';this.style.color='#006BB6'"
+                        onmouseout="this.style.borderColor='#e8e4dc';this.style.color='#0d0d0d'">
+                    Copy Image
+                </button>
+
+                <!-- Copy data URL (for embedding) -->
+                <button onclick="copyDataURL('${url}')"
+                        style="display:inline-flex;align-items:center;gap:.45rem;
+                               background:white;color:#4a4a5a;
+                               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;
+                               letter-spacing:.1em;text-transform:uppercase;
+                               padding:.6rem 1.3rem;border-radius:8px;
+                               border:1px solid #e8e4dc;cursor:pointer;transition:all .2s;"
+                        onmouseover="this.style.borderColor='#4a4a5a'"
+                        onmouseout="this.style.borderColor='#e8e4dc'">
+                    Copy Embed URL
+                </button>
+
+                <span style="margin-left:auto;font-family:'Barlow',sans-serif;font-size:.7rem;color:#999;">
+                    1200 &times; 630
+                </span>
+            </div>
+
+            <!-- Embed code block -->
+            <div style="padding:0 1.25rem .9rem;background:#fafaf8;border-top:1px solid #f0ece4;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:.4rem;margin-top:.75rem;">
+                    Embed on your site
+                </div>
+                <div style="position:relative;">
+                    <textarea id="embedCodeArea" readonly
+                        onclick="this.select()"
+                        style="width:100%;font-family:monospace;font-size:.72rem;line-height:1.5;
+                               background:#001a57;color:#7dd3fc;border:1px solid rgba(0,107,182,.3);
+                               border-radius:8px;padding:.6rem .85rem;resize:none;height:48px;
+                               box-sizing:border-box;outline:none;cursor:text;">&lt;img src="[use Copy Embed URL above]" alt="NBA Trade Analysis — Sixers Hoops" style="max-width:100%;border-radius:8px;"&gt;</textarea>
+                    <button onclick="copyEmbedCode()"
+                        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
+                               background:rgba(0,107,182,.2);border:1px solid rgba(0,107,182,.3);
+                               border-radius:5px;color:#7dd3fc;font-family:'Barlow Condensed',sans-serif;
+                               font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+                               padding:.25rem .6rem;cursor:pointer;">
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>`;
+
+        document.body.appendChild(overlay);
+
+        // Store url on overlay for embed helpers
+        overlay.dataset.imgUrl = url;
+    }
+
+    function selectImage(img) {
+        if (window.getSelection) {
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.selectNode(img);
+            sel.removeAllRanges();
+            sel.addRange(range);
         }
     }
 
-    function fallbackDownload(canvas) {
-        // Show image preview in a new modal layer, allow download
-        const url = canvas.toDataURL('image/png');
-
-        // Create a temporary download link + preview
-        let preview = document.getElementById('sharePreviewModal');
-        if (!preview) {
-            preview = document.createElement('div');
-            preview.id = 'sharePreviewModal';
-            preview.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;padding:1rem;';
-            preview.onclick = e => { if (e.target === preview) preview.remove(); };
-            document.body.appendChild(preview);
+    async function copyImageToClipboard(dataUrl) {
+        const btn = document.getElementById('copyImgBtn');
+        try {
+            const res  = await fetch(dataUrl);
+            const blob = await res.blob();
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy Image'; }, 2000); }
+        } catch(e) {
+            // Fallback: open in new tab so user can right-click copy
+            const win = window.open();
+            if (win) { win.document.write(`<img src="${dataUrl}" style="max-width:100%">`); win.document.title = 'Right-click to Copy Image'; }
+            else if (btn) { btn.textContent = 'Open Tab (Right-click Copy)'; setTimeout(() => { btn.textContent = 'Copy Image'; }, 3000); }
         }
-        preview.innerHTML = `
-            <div style="background:white;border-radius:14px;overflow:hidden;max-width:680px;width:100%;display:flex;flex-direction:column;gap:0;">
-                <div style="padding:.9rem 1.25rem;background:var(--navy-deep);display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:white;">Trade Graphic Preview</span>
-                    <button onclick="document.getElementById('sharePreviewModal').remove()" style="background:rgba(255,255,255,.12);border:none;border-radius:6px;color:white;cursor:pointer;padding:.3rem .55rem;font-size:.85rem;">Close</button>
-                </div>
-                <div style="padding:1rem;overflow:auto;max-height:60vh;text-align:center;background:#f5f0e8;">
-                    <img src="${url}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);">
-                </div>
-                <div style="padding:.85rem 1.25rem;display:flex;gap:.75rem;justify-content:flex-end;border-top:1px solid #e8e4dc;background:#fafaf8;">
-                    <a href="${url}" download="nba-trade-sixers-hoops.png"
-                       style="display:inline-flex;align-items:center;gap:.45rem;background:var(--sixers-blue);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;padding:.6rem 1.3rem;border-radius:8px;text-decoration:none;">
-                        Download PNG
-                    </a>
-                </div>
-            </div>`;
+    }
+
+    function copyDataURL(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Data URL copied to clipboard. Paste it as the src of an <img> tag on your site.');
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = url;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            alert('Data URL copied. Paste it as the src of an <img> tag on your site.');
+        });
+    }
+
+    function copyEmbedCode() {
+        const overlay = document.getElementById('sharePreviewModal');
+        const url = overlay ? overlay.dataset.imgUrl : '';
+        const code = `<img src="${url}" alt="NBA Trade Analysis — Sixers Hoops" style="max-width:100%;border-radius:8px;">`;
+        navigator.clipboard.writeText(code).then(() => {
+            alert('Embed code copied! Paste directly into your site HTML.');
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = code;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            alert('Embed code copied!');
+        });
     }
 
 
