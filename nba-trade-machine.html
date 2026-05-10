@@ -1512,9 +1512,12 @@
     let _lastTradeCanvas = null; // store last generated canvas for copy/download
 
     function shareGraphic() {
-        const canvas = drawTradeCard();
+        const defaultTitle = document.getElementById('modalTitle').textContent;
+        const customTitle = prompt('Give this graphic a title (or press OK to use the default):', defaultTitle);
+        if (customTitle === null) return; // user cancelled
+        const canvas = drawTradeCard(customTitle || defaultTitle);
         _lastTradeCanvas = canvas;
-        showSharePreview(canvas);
+        showSharePreview(canvas, customTitle || defaultTitle);
     }
 
     // ── Post trade graphic to the Community Wall ──────────────────────────
@@ -1538,16 +1541,22 @@
             return;
         }
 
+        // Prompt for a custom title
+        const isValid    = document.getElementById('modalBadge').classList.contains('valid');
+        const teamAbbrs  = activeTeams.map(t => t.abbr).join(' ↔ ');
+        const defaultTitle = `Trade: ${teamAbbrs} — ${isValid ? 'CBA Valid ✅' : 'CBA Invalid ❌'}`;
+        const customTitle = prompt('Give this post a title (or press OK to use the default):', defaultTitle);
+        if (customTitle === null) return; // user cancelled
+        const finalTitle = customTitle.trim() || defaultTitle;
+
         const btn = document.getElementById('postToCommunityBtn');
         btn.disabled = true;
         btn.textContent = 'Posting…';
 
-        const isValid    = document.getElementById('modalBadge').classList.contains('valid');
-        const teamAbbrs  = activeTeams.map(t => t.abbr).join(' ↔ ');
-        const imageUrl   = drawTradeCard().toDataURL('image/png');
+        const imageUrl   = drawTradeCard(finalTitle).toDataURL('image/png');
 
         const post = {
-            title:      `Trade: ${teamAbbrs} — ${isValid ? 'CBA Valid ✅' : 'CBA Invalid ❌'}`,
+            title:      finalTitle,
             content:    '',
             tag:        'Discussion',
             tagClass:   'bg-blue-100 text-blue-700 border border-blue-200',
@@ -1588,65 +1597,14 @@
     }
 
     // ── Draw the trade card onto a 1200×630 canvas ────────────────────────
-    function drawTradeCard() {
+    function drawTradeCard(customTitle) {
         const W = 1200, H = 630;
         const canvas = document.createElement('canvas');
         canvas.width = W; canvas.height = H;
         const ctx = canvas.getContext('2d');
 
-        // ── Background ────────────────────────────────────────────────────
-        ctx.fillStyle = '#000d2e';
-        ctx.fillRect(0, 0, W, H);
-
-        // Subtle grid
-        ctx.strokeStyle = 'rgba(0,107,182,0.06)';
-        ctx.lineWidth = 1;
-        for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-        for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-        // Top accent bar
-        const accentGrad = ctx.createLinearGradient(0,0,W,0);
-        accentGrad.addColorStop(0,'#006BB6');
-        accentGrad.addColorStop(1,'#4da8ff');
-        ctx.fillStyle = accentGrad;
-        ctx.fillRect(0, 0, W, 4);
-
-        // ── Header section ────────────────────────────────────────────────
         const isValid = document.getElementById('modalBadge').classList.contains('valid');
-        const tradeTitle = document.getElementById('modalTitle').textContent;
-
-        // Big status pill
-        const pillColor = isValid ? '#16a34a' : '#dc2626';
-        const pillBg    = isValid ? 'rgba(22,163,74,0.15)' : 'rgba(220,38,38,0.15)';
-        roundRect(ctx, 48, 36, 140, 38, 8);
-        ctx.fillStyle = pillBg;
-        ctx.fill();
-        ctx.strokeStyle = pillColor;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = pillColor;
-        ctx.font = 'bold 14px "Arial Narrow", Arial, sans-serif';
-        ctx.letterSpacing = '2px';
-        ctx.textAlign = 'center';
-        ctx.fillText(isValid ? 'VALID' : 'INVALID', 118, 61);
-        ctx.letterSpacing = '0px';
-
-        // Title
-        ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.font = 'bold 42px "Arial Narrow", Arial, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(tradeTitle.toUpperCase(), 48, 120);
-
-        // Divider
-        ctx.fillStyle = '#ED174C';
-        ctx.fillRect(48, 132, 52, 3);
-
-        // Subtitle / season
-        ctx.fillStyle = 'rgba(255,255,255,0.38)';
-        ctx.font = '15px Arial, sans-serif';
-        ctx.fillText('2026\u201327 Season  \u2022  CBA Analysis  \u2022  Sixers Hoops', 48, 158);
-
-        // ── Team cards ────────────────────────────────────────────────────
+        const tradeTitle = customTitle || document.getElementById('modalTitle').textContent;
         const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
         const totalSalaryMoving = activeTeams.reduce((sum, t) => {
             const d = TEAM_DATA[t.abbr];
@@ -1656,16 +1614,121 @@
             }, 0);
         }, 0);
 
-        const maxCards = Math.min(activeTeams.length, 5);
-        const cardW = maxCards > 0 ? Math.min(220, (W - 96 - (maxCards-1)*16) / maxCards) : 220;
-        const cardX0 = 48;
-        const cardY  = 182;
-        const cardH  = H - cardY - 72;
+        // ── Background: deep navy with radial glow ────────────────────────
+        ctx.fillStyle = '#000d2e';
+        ctx.fillRect(0, 0, W, H);
+
+        // Radial glow from top-left
+        const bgGlow = ctx.createRadialGradient(160, 0, 0, 160, 0, 600);
+        bgGlow.addColorStop(0, 'rgba(0,107,182,0.22)');
+        bgGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = bgGlow;
+        ctx.fillRect(0, 0, W, H);
+
+        // Second glow bottom-right
+        const bgGlow2 = ctx.createRadialGradient(W - 100, H, 0, W - 100, H, 500);
+        bgGlow2.addColorStop(0, isValid ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.10)');
+        bgGlow2.addColorStop(1, 'transparent');
+        ctx.fillStyle = bgGlow2;
+        ctx.fillRect(0, 0, W, H);
+
+        // Fine dot grid
+        ctx.fillStyle = 'rgba(255,255,255,0.028)';
+        for (let gx = 48; gx < W; gx += 48) {
+            for (let gy = 48; gy < H; gy += 48) {
+                ctx.beginPath();
+                ctx.arc(gx, gy, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // ── Left accent stripe ────────────────────────────────────────────
+        const leftStripe = ctx.createLinearGradient(0, 0, 0, H);
+        leftStripe.addColorStop(0, '#006BB6');
+        leftStripe.addColorStop(0.5, '#4da8ff');
+        leftStripe.addColorStop(1, '#ED174C');
+        ctx.fillStyle = leftStripe;
+        ctx.fillRect(0, 0, 5, H);
+
+        // Top horizontal line (very thin, subtle)
+        ctx.fillStyle = 'rgba(0,107,182,0.3)';
+        ctx.fillRect(5, 0, W - 5, 1);
+
+        // ── Header section ────────────────────────────────────────────────
+        const headerY = 52;
+
+        // Status badge (pill) — larger, more premium
+        const pillW = 160, pillH = 44;
+        const pillX = 52, pillY = headerY - 30;
+        const pillColor = isValid ? '#22c55e' : '#ef4444';
+        const pillBorder = isValid ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)';
+        const pillGlow   = isValid ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
+
+        // Glow behind pill
+        ctx.shadowColor = pillColor;
+        ctx.shadowBlur = 18;
+        roundRect(ctx, pillX, pillY, pillW, pillH, 22);
+        ctx.fillStyle = pillGlow;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Pill border
+        roundRect(ctx, pillX, pillY, pillW, pillH, 22);
+        ctx.strokeStyle = pillBorder;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Status dot
+        ctx.beginPath();
+        ctx.arc(pillX + 22, pillY + pillH / 2, 5, 0, Math.PI * 2);
+        ctx.fillStyle = pillColor;
+        ctx.fill();
+
+        // Pill text
+        ctx.fillStyle = pillColor;
+        ctx.font = '800 13px Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText((isValid ? '✓  CBA VALID' : '✗  CBA INVALID'), pillX + 34, pillY + pillH / 2 + 5);
+
+        // ── Trade title ───────────────────────────────────────────────────
+        const titleY = headerY + 42;
+        ctx.fillStyle = 'rgba(255,255,255,0.96)';
+        ctx.font = '900 52px Arial, sans-serif';
+        ctx.textAlign = 'left';
+
+        // Truncate title if too wide
+        let displayTitle = tradeTitle.toUpperCase();
+        while (ctx.measureText(displayTitle).width > W - 140 && displayTitle.length > 6) {
+            displayTitle = displayTitle.slice(0, -1);
+        }
+        if (displayTitle.length < tradeTitle.toUpperCase().length) displayTitle += '…';
+        ctx.fillText(displayTitle, 52, titleY);
+
+        // Accent underline — red + blue gradient
+        const ulGrad = ctx.createLinearGradient(52, 0, 220, 0);
+        ulGrad.addColorStop(0, '#ED174C');
+        ulGrad.addColorStop(1, '#006BB6');
+        ctx.fillStyle = ulGrad;
+        ctx.fillRect(52, titleY + 10, 80, 4);
+
+        // Subtitle
+        ctx.fillStyle = 'rgba(255,255,255,0.32)';
+        ctx.font = '400 16px Arial, sans-serif';
+        ctx.fillText('2026–27 SEASON  ·  CBA ANALYSIS  ·  SIXERS HOOPS', 52, titleY + 36);
+
+        // ── Team cards ────────────────────────────────────────────────────
+        const cardAreaY  = titleY + 60;
+        const cardAreaH  = H - cardAreaY - 72;
+        const maxCards   = Math.min(activeTeams.length, 5);
+        const gap        = 14;
+        const cardW      = maxCards > 0 ? Math.min(210, (W - 104 - (maxCards - 1) * gap) / maxCards) : 210;
+        const cardX0     = 52;
 
         activeTeams.slice(0, 5).forEach((t, i) => {
             const d = TEAM_DATA[t.abbr];
             const teamInfo = NBA_TEAMS[t.abbr];
-            const x = cardX0 + i * (cardW + 16);
+            const x = cardX0 + i * (cardW + gap);
+            const teamColor = teamInfo ? teamInfo.color : '#4a4a5a';
 
             const sendSal = t.selectedPlayers.reduce((s, pid) => {
                 const p = d.players.find(p => p.id === pid);
@@ -1675,106 +1738,154 @@
             const postSal = d.teamSalary - sendSal + recvSal;
             const salDiff = recvSal - sendSal;
 
-            // Card background
+            // Card glass background
+            roundRect(ctx, x, cardAreaY, cardW, cardAreaH, 12);
             ctx.fillStyle = 'rgba(255,255,255,0.05)';
-            roundRect(ctx, x, cardY, cardW, cardH, 10);
             ctx.fill();
-
-            // Team color stripe
-            ctx.fillStyle = teamInfo ? teamInfo.color : '#4a4a5a';
-            roundRect(ctx, x, cardY, cardW, 5, [10, 10, 0, 0]);
-            ctx.fill();
-
-            // Team name
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = 'bold 13px "Arial Narrow", Arial, sans-serif';
-            ctx.textAlign = 'left';
-            const teamShort = (teamInfo ? teamInfo.name : t.abbr).toUpperCase();
-            // Truncate if needed
-            const maxW = cardW - 16;
-            let tName = teamShort;
-            ctx.font = 'bold 13px Arial, sans-serif';
-            while (ctx.measureText(tName).width > maxW && tName.length > 3) tName = tName.slice(0, -1);
-            ctx.fillText(tName, x + 10, cardY + 26);
-
-            // Divider
-            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
             ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(x + 10, cardY + 34); ctx.lineTo(x + cardW - 10, cardY + 34); ctx.stroke();
+            ctx.stroke();
 
-            // Stats rows
+            // Team color top stripe (full rounded top)
+            roundRect(ctx, x, cardAreaY, cardW, 6, [12, 12, 0, 0]);
+            ctx.fillStyle = teamColor;
+            ctx.fill();
+
+            // Team color glow on top of card
+            ctx.shadowColor = teamColor;
+            ctx.shadowBlur = 14;
+            roundRect(ctx, x, cardAreaY, cardW, 6, [12, 12, 0, 0]);
+            ctx.fillStyle = teamColor;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Team abbr (big, top-left of card)
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '800 15px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            const teamShort = t.abbr.toUpperCase();
+            ctx.fillText(teamShort, x + 12, cardAreaY + 28);
+
+            // Full name smaller
+            const fullName = teamInfo ? teamInfo.name : t.abbr;
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '400 10px Arial, sans-serif';
+            let fName = fullName.toUpperCase();
+            while (ctx.measureText(fName).width > cardW - 24 && fName.length > 3) fName = fName.slice(0,-1);
+            ctx.fillText(fName, x + 12, cardAreaY + 43);
+
+            // Thin divider
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + 12, cardAreaY + 52);
+            ctx.lineTo(x + cardW - 12, cardAreaY + 52);
+            ctx.stroke();
+
+            // Data rows — two-column micro layout
             const rows = [
-                { label: 'Sending',  val: sendSal > 0 ? '$'+(sendSal/1e6).toFixed(1)+'M' : '—', color: 'rgba(255,255,255,0.55)' },
-                { label: 'Taking In',val: recvSal > 0 ? '$'+(recvSal/1e6).toFixed(1)+'M' : '—', color: 'rgba(255,255,255,0.55)' },
-                { label: 'Change',   val: (salDiff >= 0 ? '+' : '') + '$'+(salDiff/1e6).toFixed(1)+'M', color: salDiff > 0 ? '#f87171' : salDiff < 0 ? '#4ade80' : 'rgba(255,255,255,0.55)' },
-                { label: 'Post-Trade', val: '$'+(postSal/1e6).toFixed(1)+'M', color: postSal > CBA.secondApron ? '#f87171' : postSal > CBA.firstApron ? '#fb923c' : 'rgba(255,255,255,0.7)' },
-                { label: 'Players',  val: String(t.selectedPlayers.length), color: 'rgba(255,255,255,0.55)' },
-                { label: 'Picks',    val: String(t.selectedPicks.length),   color: 'rgba(255,255,255,0.55)' },
+                { label: 'SENDING',     val: sendSal > 0 ? '$'+(sendSal/1e6).toFixed(1)+'M' : '—',  color: '#94a3b8' },
+                { label: 'RECEIVING',   val: recvSal > 0 ? '$'+(recvSal/1e6).toFixed(1)+'M' : '—',  color: '#94a3b8' },
+                { label: 'NET CHANGE',  val: (salDiff >= 0 ? '+' : '')+'$'+(salDiff/1e6).toFixed(1)+'M', color: salDiff > 0 ? '#f87171' : salDiff < 0 ? '#4ade80' : '#94a3b8' },
+                { label: 'POST-TRADE',  val: '$'+(postSal/1e6).toFixed(1)+'M', color: postSal > CBA.secondApron ? '#f87171' : postSal > CBA.firstApron ? '#fb923c' : '#e2e8f0' },
+                { label: 'PLAYERS',     val: String(t.selectedPlayers.length), color: '#93c5fd' },
+                { label: 'PICKS',       val: String(t.selectedPicks.length),   color: '#93c5fd' },
             ];
+
+            const rowStartY = cardAreaY + 64;
+            const rowGap    = (cardAreaH - 84 - 28) / rows.length;
+
             rows.forEach((row, ri) => {
-                const ry = cardY + 48 + ri * 34;
+                const ry = rowStartY + ri * rowGap;
+                // Label
                 ctx.fillStyle = 'rgba(255,255,255,0.25)';
-                ctx.font = '10px Arial, sans-serif';
-                ctx.fillText(row.label.toUpperCase(), x + 10, ry);
+                ctx.font = '600 9px Arial, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(row.label, x + 12, ry);
+                // Value
                 ctx.fillStyle = row.color;
-                ctx.font = 'bold 15px Arial, sans-serif';
-                ctx.fillText(row.val, x + 10, ry + 15);
+                ctx.font = '700 14px Arial, sans-serif';
+                ctx.fillText(row.val, x + 12, ry + 15);
             });
 
-            // Apron badge
+            // Apron status badge at bottom of card
             const apron = getApronStatus(postSal);
             const apronColors = { under:'#4ade80', tax:'#facc15', first:'#fb923c', second:'#f87171' };
-            ctx.fillStyle = apronColors[apron.cls] || 'white';
-            ctx.font = 'bold 10px Arial, sans-serif';
-            ctx.fillText(apron.label.toUpperCase(), x + 10, cardY + cardH - 18);
+            const apronC = apronColors[apron.cls] || '#e2e8f0';
+            const badgeY = cardAreaY + cardAreaH - 24;
+            const badgeText = apron.label.toUpperCase();
+            ctx.font = '700 9px Arial, sans-serif';
+            const bw = ctx.measureText(badgeText).width + 16;
+            roundRect(ctx, x + 12, badgeY - 11, bw, 18, 4);
+            ctx.fillStyle = apronC + '22';
+            ctx.fill();
+            ctx.strokeStyle = apronC + '66';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = apronC;
+            ctx.textAlign = 'left';
+            ctx.fillText(badgeText, x + 20, badgeY + 1);
         });
 
-        // ── Violations / messages ─────────────────────────────────────────
+        // ── CBA violations / notes (right panel if space, else bottom) ───
         const msgs = document.getElementById('modalViolations');
-        if (msgs) {
+        if (msgs && activeTeams.length <= 3) {
             const items = msgs.querySelectorAll('.violation-item');
-            let my = H - 60;
-            const maxMsgs = Math.min(items.length, 3);
-            // Draw them from bottom up
-            [...items].slice(0, maxMsgs).reverse().forEach(item => {
-                const type = [...item.classList].find(c => ['error','warning','ok','info'].includes(c));
-                const msgText = item.querySelectorAll('span')[1]?.textContent || '';
-                const colors = { error:'#f87171', warning:'#fb923c', ok:'#4ade80', info:'#60a5fa' };
-                const c = colors[type] || 'rgba(255,255,255,0.5)';
-
-                // Truncate message
-                ctx.font = '12px Arial, sans-serif';
-                let txt = msgText;
-                while (ctx.measureText(txt).width > W - 120 && txt.length > 10) txt = txt.slice(0, -1);
-                if (txt.length < msgText.length) txt += '...';
-
-                ctx.fillStyle = 'rgba(255,255,255,0.06)';
-                roundRect(ctx, 48, my - 18, W - 96, 22, 4);
+            const panelX = cardX0 + maxCards * (cardW + gap) + 20;
+            const panelW = W - panelX - 52;
+            if (panelW > 120 && items.length > 0) {
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                roundRect(ctx, panelX, cardAreaY, panelW, cardAreaH, 12);
                 ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
 
-                ctx.fillStyle = c;
-                ctx.font = 'bold 10px Arial, sans-serif';
-                ctx.fillText(type ? type.toUpperCase() : '', 58, my - 1);
-                ctx.fillStyle = 'rgba(255,255,255,0.65)';
-                ctx.font = '11px Arial, sans-serif';
-                ctx.fillText(txt, 105, my - 1);
-                my -= 28;
-            });
+                ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                ctx.font = '700 10px Arial, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('CBA NOTES', panelX + 14, cardAreaY + 20);
+
+                [...items].slice(0, 6).forEach((item, ii) => {
+                    const type = [...item.classList].find(c => ['error','warning','ok','info'].includes(c));
+                    const msgText = item.querySelectorAll('span')[1]?.textContent || '';
+                    const colors = { error:'#f87171', warning:'#fb923c', ok:'#4ade80', info:'#60a5fa' };
+                    const c = colors[type] || 'rgba(255,255,255,0.5)';
+                    const ny = cardAreaY + 36 + ii * 32;
+
+                    ctx.font = '12px Arial, sans-serif';
+                    let txt = msgText;
+                    while (ctx.measureText(txt).width > panelW - 28 && txt.length > 8) txt = txt.slice(0,-1);
+                    if (txt.length < msgText.length) txt += '…';
+
+                    ctx.fillStyle = c;
+                    ctx.font = '700 9px Arial, sans-serif';
+                    ctx.fillText('●', panelX + 14, ny + 1);
+                    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                    ctx.font = '400 11px Arial, sans-serif';
+                    ctx.fillText(txt, panelX + 26, ny + 1);
+                });
+            }
         }
 
-        // ── Footer branding ───────────────────────────────────────────────
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
-        ctx.fillRect(0, H - 38, W, 38);
+        // ── Footer bar ────────────────────────────────────────────────────
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, H - 46, W, 46);
 
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.font = 'bold 13px Arial, sans-serif';
+        // Footer left — branding
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 18px Arial, sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText('SIXERS HOOPS', 48, H - 16);
+        ctx.fillText('SIXERS HOOPS', 52, H - 17);
 
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.font = '12px Arial, sans-serif';
+        ctx.fillStyle = 'rgba(0,107,182,0.8)';
+        ctx.fillRect(52, H - 10, 130, 3);
+
+        // Footer right — page label
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.font = '400 13px Arial, sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText('NBA Trade Machine \u2022 2026\u201327 Season', W - 48, H - 16);
+        ctx.fillText('NBA Trade Machine  ·  2026–27 Season', W - 52, H - 17);
 
         return canvas;
     }
@@ -1793,7 +1904,7 @@
     }
 
     // ── Show share preview modal ──────────────────────────────────────────
-    function showSharePreview(canvas) {
+    function showSharePreview(canvas, titleLabel) {
         const url = canvas.toDataURL('image/png');
 
         let overlay = document.getElementById('sharePreviewModal');
@@ -1803,103 +1914,117 @@
         overlay.id = 'sharePreviewModal';
         overlay.style.cssText = [
             'position:fixed;inset:0;z-index:100000',
-            'background:rgba(0,0,0,.78);backdrop-filter:blur(6px)',
+            'background:rgba(0,5,20,.88);backdrop-filter:blur(8px)',
             'display:flex;align-items:center;justify-content:center;padding:1rem'
         ].join(';');
         overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
 
         overlay.innerHTML = `
-        <div style="background:white;border-radius:16px;overflow:hidden;width:100%;max-width:700px;
-                    display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.4);">
+        <div style="background:#000d2e;border:1px solid rgba(0,107,182,0.25);border-radius:20px;overflow:hidden;width:100%;max-width:720px;
+                    display:flex;flex-direction:column;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,0.04);">
 
             <!-- Header -->
-            <div style="padding:.9rem 1.25rem;background:#000d2e;display:flex;justify-content:space-between;align-items:center;gap:1rem;">
-                <div>
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;letter-spacing:.12em;text-transform:uppercase;color:white;">Share Graphic</div>
-                    <div style="font-family:'Barlow',sans-serif;font-size:.68rem;color:rgba(255,255,255,.35);margin-top:2px;">1200 x 630 px — ready for social media</div>
+            <div style="padding:1rem 1.4rem;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,107,182,0.2);border:1px solid rgba(0,107,182,0.3);display:flex;align-items:center;justify-content:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.95);">${titleLabel ? titleLabel.toUpperCase() : 'SHARE GRAPHIC'}</div>
+                        <div style="font-family:'Barlow',sans-serif;font-size:.68rem;color:rgba(255,255,255,.3);margin-top:2px;">1200 × 630 px — optimized for social media</div>
+                    </div>
                 </div>
                 <button onclick="document.getElementById('sharePreviewModal').remove()"
-                        style="background:rgba(255,255,255,.1);border:none;border-radius:8px;color:white;cursor:pointer;
-                               width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
+                        style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:rgba(255,255,255,0.6);cursor:pointer;
+                               width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;transition:all .2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.color='white'"
+                        onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,0.6)'">
                     &times;
                 </button>
             </div>
 
             <!-- Preview image -->
-            <div style="padding:1rem 1rem .5rem;background:#f5f0e8;text-align:center;">
-                <img id="shareImgPreview" src="${url}"
-                     style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.18);display:block;margin:0 auto;cursor:pointer;"
-                     title="Click to select all for copy"
-                     onclick="selectImage(this)">
-                <div style="font-family:'Barlow',sans-serif;font-size:.68rem;color:#888;margin-top:.5rem;">
+            <div style="padding:1.25rem 1.4rem .85rem;background:rgba(0,0,0,0.3);text-align:center;">
+                <div style="border-radius:12px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,0.06);">
+                    <img id="shareImgPreview" src="${url}"
+                         style="max-width:100%;display:block;margin:0 auto;cursor:pointer;"
+                         title="Click to select all for copy"
+                         onclick="selectImage(this)">
+                </div>
+                <div style="font-family:'Barlow',sans-serif;font-size:.65rem;color:rgba(255,255,255,.22);margin-top:.7rem;">
                     Click image to select &bull; Right-click to copy image
                 </div>
             </div>
 
             <!-- Action buttons -->
-            <div style="padding:.9rem 1.25rem;display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;border-top:1px solid #e8e4dc;background:#fafaf8;">
+            <div style="padding:.85rem 1.4rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,0.2);">
 
                 <!-- Download -->
                 <a id="shareDownloadLink" href="${url}" download="sixers-hoops-trade-${Date.now()}.png"
                    style="display:inline-flex;align-items:center;gap:.45rem;
-                          background:#006BB6;color:white;text-decoration:none;
-                          font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;
-                          letter-spacing:.1em;text-transform:uppercase;
-                          padding:.6rem 1.3rem;border-radius:8px;transition:all .2s;"
-                   onmouseover="this.style.background='#0080d4'"
-                   onmouseout="this.style.background='#006BB6'">
+                          background:linear-gradient(135deg,#006BB6,#0080d4);color:white;text-decoration:none;
+                          font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
+                          letter-spacing:.12em;text-transform:uppercase;
+                          padding:.6rem 1.3rem;border-radius:10px;transition:all .2s;
+                          box-shadow:0 2px 12px rgba(0,107,182,0.4);"
+                   onmouseover="this.style.boxShadow='0 4px 20px rgba(0,107,182,0.6)';this.style.transform='translateY(-1px)'"
+                   onmouseout="this.style.boxShadow='0 2px 12px rgba(0,107,182,0.4)';this.style.transform='translateY(0)'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                     Download PNG
                 </a>
 
                 <!-- Copy to clipboard -->
                 <button id="copyImgBtn" onclick="copyImageToClipboard('${url}')"
                         style="display:inline-flex;align-items:center;gap:.45rem;
-                               background:white;color:#0d0d0d;
-                               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;
-                               letter-spacing:.1em;text-transform:uppercase;
-                               padding:.6rem 1.3rem;border-radius:8px;
-                               border:1px solid #e8e4dc;cursor:pointer;transition:all .2s;"
-                        onmouseover="this.style.borderColor='#006BB6';this.style.color='#006BB6'"
-                        onmouseout="this.style.borderColor='#e8e4dc';this.style.color='#0d0d0d'">
+                               background:rgba(255,255,255,.07);color:rgba(255,255,255,0.85);
+                               font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
+                               letter-spacing:.12em;text-transform:uppercase;
+                               padding:.6rem 1.3rem;border-radius:10px;
+                               border:1px solid rgba(255,255,255,.12);cursor:pointer;transition:all .2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,.14)';this.style.borderColor='rgba(255,255,255,.25)'"
+                        onmouseout="this.style.background='rgba(255,255,255,.07)';this.style.borderColor='rgba(255,255,255,.12)'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     Copy Image
                 </button>
 
-                <!-- Copy data URL (for embedding) -->
+                <!-- Copy embed URL -->
                 <button onclick="copyDataURL('${url}')"
                         style="display:inline-flex;align-items:center;gap:.45rem;
-                               background:white;color:#4a4a5a;
-                               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;
+                               background:rgba(255,255,255,.04);color:rgba(255,255,255,0.45);
+                               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;
                                letter-spacing:.1em;text-transform:uppercase;
-                               padding:.6rem 1.3rem;border-radius:8px;
-                               border:1px solid #e8e4dc;cursor:pointer;transition:all .2s;"
-                        onmouseover="this.style.borderColor='#4a4a5a'"
-                        onmouseout="this.style.borderColor='#e8e4dc'">
+                               padding:.6rem 1.1rem;border-radius:10px;
+                               border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:all .2s;"
+                        onmouseover="this.style.color='rgba(255,255,255,0.7)'"
+                        onmouseout="this.style.color='rgba(255,255,255,0.45)'">
                     Copy Embed URL
                 </button>
 
-                <span style="margin-left:auto;font-family:'Barlow',sans-serif;font-size:.7rem;color:#999;">
-                    1200 &times; 630
+                <span style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.2);">
+                    1200 × 630
                 </span>
             </div>
 
             <!-- Embed code block -->
-            <div style="padding:0 1.25rem .9rem;background:#fafaf8;border-top:1px solid #f0ece4;">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:.4rem;margin-top:.75rem;">
+            <div style="padding:.2rem 1.4rem .95rem;background:rgba(0,0,0,0.2);border-top:1px solid rgba(255,255,255,.05);">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:.4rem;margin-top:.75rem;">
                     Embed on your site
                 </div>
                 <div style="position:relative;">
                     <textarea id="embedCodeArea" readonly
                         onclick="this.select()"
                         style="width:100%;font-family:monospace;font-size:.72rem;line-height:1.5;
-                               background:#001a57;color:#7dd3fc;border:1px solid rgba(0,107,182,.3);
-                               border-radius:8px;padding:.6rem .85rem;resize:none;height:48px;
+                               background:rgba(0,10,40,0.6);color:#7dd3fc;border:1px solid rgba(0,107,182,.2);
+                               border-radius:10px;padding:.65rem 3.5rem .65rem .9rem;resize:none;height:48px;
                                box-sizing:border-box;outline:none;cursor:text;">&lt;img src="[use Copy Embed URL above]" alt="NBA Trade Analysis — Sixers Hoops" style="max-width:100%;border-radius:8px;"&gt;</textarea>
                     <button onclick="copyEmbedCode()"
                         style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
                                background:rgba(0,107,182,.2);border:1px solid rgba(0,107,182,.3);
-                               border-radius:5px;color:#7dd3fc;font-family:'Barlow Condensed',sans-serif;
-                               font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-                               padding:.25rem .6rem;cursor:pointer;">
+                               border-radius:7px;color:#7dd3fc;font-family:'Barlow Condensed',sans-serif;
+                               font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+                               padding:.3rem .65rem;cursor:pointer;transition:background .2s;"
+                        onmouseover="this.style.background='rgba(0,107,182,.35)'"
+                        onmouseout="this.style.background='rgba(0,107,182,.2)'">
                         Copy
                     </button>
                 </div>
