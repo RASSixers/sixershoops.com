@@ -628,7 +628,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                     Share Graphic
                 </button>
-                <button class="btn-analyze" id="postToCommunityBtn" onclick="postToCommunity()" style="font-size:.82rem;padding:.6rem 1.3rem;">
+                <button class="btn-analyze" id="postToCommunityBtn" onclick="postToCommunity()" style="font-size:.82rem;padding:.6rem 1.3rem;box-shadow:none;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     Post to Community
                 </button>
@@ -1517,162 +1517,70 @@
         showSharePreview(canvas);
     }
 
-    // ── Post Trade to Community Wall ──────────────────────────────────────
+    // ── Post trade graphic to the Community Wall ──────────────────────────
     async function postToCommunity() {
-        // Must be signed in
         const user = window.auth ? window.auth.currentUser : null;
         if (!user) {
-            alert('You must be signed in to post to the community wall.');
+            alert('Sign in to post to the community wall.');
+            return;
+        }
+        if (!window.db || !window.firebase) {
+            alert('Community database not available on this page.');
             return;
         }
 
-        // Must have Firestore
-        if (!window.db) {
-            alert('Community database not connected. Make sure Firebase is loaded on this page.');
-            return;
-        }
-
-        const btn = document.getElementById('postToCommunityBtn');
-
-        // Gather active teams (those with players or picks selected)
         const activeTeams = teams.filter(t =>
             t.abbr && TEAM_DATA[t.abbr] &&
             (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0)
         );
-
         if (activeTeams.length < 2) {
-            alert('Select players or picks for at least 2 teams before posting.');
+            alert('Select players or picks for at least 2 teams first.');
             return;
         }
 
-        // Read validity from the modal badge
-        const isValid   = document.getElementById('modalBadge').classList.contains('valid');
-        const tradeTitle = document.getElementById('modalTitle').textContent.trim();
-
-        // Build a human-readable content summary of the trade
-        const totalSalaryMoving = activeTeams.reduce((sum, t) => {
-            const d = TEAM_DATA[t.abbr];
-            return sum + t.selectedPlayers.reduce((s, pid) => {
-                const p = d.players.find(pl => pl.id === pid);
-                return s + (p ? p.salary : 0);
-            }, 0);
-        }, 0);
-
-        const lines = activeTeams.map(t => {
-            const d = TEAM_DATA[t.abbr];
-            const teamInfo = NBA_TEAMS[t.abbr];
-            const teamName = teamInfo ? teamInfo.name : t.abbr;
-
-            const playerNames = t.selectedPlayers.map(pid => {
-                const p = d.players.find(pl => pl.id === pid);
-                return p ? `${p.name} (${fmtM(p.salary)})` : pid;
-            });
-            const pickNames = t.selectedPicks.map(pkid => {
-                const pk = d.picks.find(pk => pk.id === pkid);
-                return pk ? pk.name : pkid;
-            });
-            const tpeNames = t.selectedTPEs.map(tid => {
-                const tpe = d.tpes.find(tp => tp.id === tid);
-                return tpe ? `TPE $${(tpe.amount / 1e6).toFixed(1)}M` : tid;
-            });
-
-            const sendSal = t.selectedPlayers.reduce((s, pid) => {
-                const p = d.players.find(pl => pl.id === pid);
-                return s + (p ? p.salary : 0);
-            }, 0);
-            const recvSal = totalSalaryMoving - sendSal;
-            const postSal = d.teamSalary - sendSal + recvSal;
-            const apron   = getApronStatus(postSal);
-
-            const sending = [...playerNames, ...pickNames, ...tpeNames].join(', ') || '(nothing)';
-            return `${teamName} sends out: ${sending}\nPost-trade salary: ${fmtM(postSal)} — ${apron.label}`;
-        });
-
-        // Violation messages
-        const violItems = document.getElementById('modalViolations')
-            ? [...document.getElementById('modalViolations').querySelectorAll('.violation-item')]
-                .map(el => el.querySelectorAll('span')[1]?.textContent?.trim())
-                .filter(Boolean)
-            : [];
-
-        const content = [
-            isValid ? '✅ This trade is CBA-valid.' : '❌ This trade has CBA violations.',
-            '',
-            ...lines,
-            '',
-            violItems.length > 0 ? 'CBA Notes:\n' + violItems.map(v => `• ${v}`).join('\n') : '',
-            '',
-            `Total salary moving: ${fmtM(totalSalaryMoving)}`,
-            '',
-            '— Built with the SixersHoops Trade Machine'
-        ].filter(l => l !== undefined).join('\n').trim();
-
-        // Generate the share graphic canvas → data URL for imageUrl
-        btn.textContent = 'Generating…';
+        const btn = document.getElementById('postToCommunityBtn');
         btn.disabled = true;
+        btn.textContent = 'Posting…';
 
-        let imageUrl = '';
-        try {
-            const canvas = drawTradeCard();
-            _lastTradeCanvas = canvas;
-            imageUrl = canvas.toDataURL('image/png');
-        } catch (e) {
-            console.warn('Could not generate trade graphic:', e);
-        }
+        const isValid    = document.getElementById('modalBadge').classList.contains('valid');
+        const teamAbbrs  = activeTeams.map(t => t.abbr).join(' ↔ ');
+        const imageUrl   = drawTradeCard().toDataURL('image/png');
 
-        // Build the post document — matches community.js COLLECTION_NAME schema exactly
-        const teamAbbrs = activeTeams.map(t => t.abbr).join(' ↔ ');
-        const postDoc = {
-            title:     `Trade: ${teamAbbrs} — ${isValid ? 'CBA Valid ✅' : 'CBA Invalid ❌'}`,
-            content:   content,
-            tag:       'Discussion',
-            tagClass:  'bg-blue-100 text-blue-700 border border-blue-200',
-            authorId:  user.uid,
-            author:    user.displayName || (user.email ? user.email.split('@')[0] : 'Fan'),
+        const post = {
+            title:      `Trade: ${teamAbbrs} — ${isValid ? 'CBA Valid ✅' : 'CBA Invalid ❌'}`,
+            content:    '',
+            tag:        'Discussion',
+            tagClass:   'bg-blue-100 text-blue-700 border border-blue-200',
+            authorId:   user.uid,
+            author:     user.displayName || (user.email ? user.email.split('@')[0] : 'Fan'),
             authorPhoto: user.photoURL || '',
-            votes:     0,
-            voters:    {},
-            comments:  [],
-            imageUrl:  imageUrl,
-            isPinned:  false,
-            createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-            // Extra trade metadata (stored for reference, not rendered by community.js)
-            tradeMeta: {
-                isValid,
-                teams: activeTeams.map(t => ({
-                    abbr: t.abbr,
-                    players: t.selectedPlayers,
-                    picks:   t.selectedPicks,
-                    tpes:    t.selectedTPEs,
-                })),
-                totalSalaryMoving,
-            }
+            votes:      0,
+            voters:     {},
+            comments:   [],
+            imageUrl:   imageUrl,
+            isPinned:   false,
+            createdAt:  window.firebase.firestore.FieldValue.serverTimestamp(),
         };
 
         try {
-            btn.textContent = 'Posting…';
-            const docRef = await window.db.collection('community_posts').add(postDoc);
-
-            // Success — close modal and redirect to community page
-            btn.textContent = 'Posted! ✓';
+            const ref = await window.db.collection('community_posts').add(post);
+            btn.textContent = 'Posted ✓';
             btn.style.background = '#16a34a';
 
             setTimeout(() => {
                 closeModal();
-                // If there's a community page, go there; otherwise just show an alert
-                const communityPage = 'index.html'; // ← update to your community page path if different
-                if (confirm('Trade posted to the community wall! Go there now?')) {
-                    window.location.href = communityPage + '?post=' + docRef.id;
+                // ← update 'index.html' to your community page path if different
+                if (confirm('Trade posted! Go to the community wall?')) {
+                    window.location.href = 'index.html?post=' + ref.id;
                 } else {
                     btn.textContent = 'Post to Community';
                     btn.style.background = '';
                     btn.disabled = false;
                 }
-            }, 800);
-
+            }, 700);
         } catch (err) {
-            console.error('Error posting to community:', err);
-            alert('Failed to post: ' + err.message);
+            console.error('Post failed:', err);
+            alert('Could not post: ' + err.message);
             btn.textContent = 'Post to Community';
             btn.style.background = '';
             btn.disabled = false;
