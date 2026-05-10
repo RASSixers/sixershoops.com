@@ -1614,136 +1614,93 @@
             }, 0);
         }, 0);
 
-        // ── Font helpers — use system fonts that render crisply on canvas ──
-        const FONT_BLACK  = (sz) => `900 ${sz}px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif`;
-        const FONT_BOLD   = (sz) => `700 ${sz}px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif`;
-        const FONT_MEDIUM = (sz) => `500 ${sz}px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif`;
-        const FONT_REG    = (sz) => `400 ${sz}px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif`;
+        // ── Fonts ─────────────────────────────────────────────────────────
+        const F = (w, sz) => `${w} ${sz}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+
+        // ── Palette ───────────────────────────────────────────────────────
+        const BG         = '#0d1117';   // near-black background
+        const SURFACE    = '#161b22';   // slightly lighter card surface
+        const BORDER     = '#21262d';   // subtle border
+        const TEXT_PRI   = '#e6edf3';   // primary text
+        const TEXT_SEC   = '#7d8590';   // secondary / muted text
+        const ACCENT     = '#006BB6';   // Sixers blue — used sparingly
+        const STATUS_OK  = '#3fb950';   // clean green
+        const STATUS_ERR = '#f85149';   // clean red
 
         // ── Background ────────────────────────────────────────────────────
-        // Deep navy base
-        const bgGrad = ctx.createLinearGradient(0, 0, W * 0.6, H);
-        bgGrad.addColorStop(0, '#020c24');
-        bgGrad.addColorStop(1, '#000d2e');
-        ctx.fillStyle = bgGrad;
+        ctx.fillStyle = BG;
         ctx.fillRect(0, 0, W, H);
 
-        // Large radial glow — upper-left, Sixers blue
-        const glow1 = ctx.createRadialGradient(0, 0, 0, 0, 0, 700);
-        glow1.addColorStop(0, 'rgba(0,107,182,0.28)');
-        glow1.addColorStop(1, 'transparent');
-        ctx.fillStyle = glow1;
-        ctx.fillRect(0, 0, W, H);
+        // Single-pixel top accent line in Sixers blue
+        ctx.fillStyle = ACCENT;
+        ctx.fillRect(0, 0, W, 3);
 
-        // Secondary glow — lower-right, status-colored
-        const glow2 = ctx.createRadialGradient(W, H, 0, W, H, 560);
-        glow2.addColorStop(0, isValid ? 'rgba(22,163,74,0.18)' : 'rgba(220,38,38,0.15)');
-        glow2.addColorStop(1, 'transparent');
-        ctx.fillStyle = glow2;
-        ctx.fillRect(0, 0, W, H);
+        // ── Header area (top ~220px) ──────────────────────────────────────
+        const PAD = 56;
 
-        // Subtle dot-grid texture
-        ctx.fillStyle = 'rgba(255,255,255,0.022)';
-        for (let gx = 40; gx < W; gx += 40) {
-            for (let gy = 40; gy < H; gy += 40) {
-                ctx.beginPath();
-                ctx.arc(gx, gy, 1.2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        // Eyebrow — source label
+        ctx.fillStyle = TEXT_SEC;
+        ctx.font = F(500, 13);
+        ctx.textAlign = 'left';
+        ctx.fillText('SIXERS HOOPS  ·  NBA TRADE MACHINE', PAD, 54);
 
-        // ── Left accent bar — gradient stripe ────────────────────────────
-        const stripe = ctx.createLinearGradient(0, 0, 0, H);
-        stripe.addColorStop(0,   '#006BB6');
-        stripe.addColorStop(0.45,'#4da8ff');
-        stripe.addColorStop(1,   '#ED174C');
-        ctx.fillStyle = stripe;
-        ctx.fillRect(0, 0, 6, H);
-
-        // Subtle top border line
-        const topLine = ctx.createLinearGradient(6, 0, W, 0);
-        topLine.addColorStop(0,   'rgba(0,107,182,0.5)');
-        topLine.addColorStop(0.5, 'rgba(0,107,182,0.12)');
-        topLine.addColorStop(1,   'transparent');
-        ctx.fillStyle = topLine;
-        ctx.fillRect(6, 0, W - 6, 1);
-
-        // ── Status badge ──────────────────────────────────────────────────
-        const PILL_X = 52, PILL_Y = 46;
-        const PILL_W = 154, PILL_H = 36;
-        const statusColor  = isValid ? '#22c55e' : '#f87171';
-        const statusBg     = isValid ? 'rgba(34,197,94,0.10)'  : 'rgba(248,113,113,0.10)';
-        const statusBorder = isValid ? 'rgba(34,197,94,0.30)'  : 'rgba(248,113,113,0.30)';
-
-        // Pill glow halo
-        ctx.shadowColor = statusColor;
-        ctx.shadowBlur = 24;
-        roundRect(ctx, PILL_X, PILL_Y, PILL_W, PILL_H, 18);
-        ctx.fillStyle = statusBg;
+        // Status chip
+        const chipColor = isValid ? STATUS_OK : STATUS_ERR;
+        const chipLabel = isValid ? 'CBA VALID' : 'CBA INVALID';
+        ctx.font = F(700, 11);
+        const chipW = ctx.measureText(chipLabel).width + 28;
+        const chipX = W - PAD - chipW;
+        const chipY = 36;
+        const chipH = 26;
+        roundRect(ctx, chipX, chipY, chipW, chipH, 6);
+        ctx.fillStyle = chipColor + '22';
         ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // Pill border
-        roundRect(ctx, PILL_X, PILL_Y, PILL_W, PILL_H, 18);
-        ctx.strokeStyle = statusBorder;
-        ctx.lineWidth = 1.2;
+        roundRect(ctx, chipX, chipY, chipW, chipH, 6);
+        ctx.strokeStyle = chipColor + '66';
+        ctx.lineWidth = 1;
         ctx.stroke();
-
-        // Dot inside pill
-        ctx.beginPath();
-        ctx.arc(PILL_X + 18, PILL_Y + PILL_H / 2, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = statusColor;
-        ctx.fill();
-
-        // Pill label
-        ctx.fillStyle = statusColor;
-        ctx.font = FONT_BOLD(11.5);
+        ctx.fillStyle = chipColor;
         ctx.textAlign = 'left';
-        ctx.letterSpacing = '0.12em';
-        ctx.fillText(isValid ? 'CBA VALID' : 'CBA INVALID', PILL_X + 30, PILL_Y + PILL_H / 2 + 4);
-        ctx.letterSpacing = '0';
+        ctx.fillText(chipLabel, chipX + 14, chipY + chipH / 2 + 4);
 
-        // ── Trade title ───────────────────────────────────────────────────
-        const TITLE_Y = PILL_Y + PILL_H + 38;
-        ctx.font = FONT_BLACK(56);
-        ctx.fillStyle = 'rgba(255,255,255,0.97)';
+        // Divider below header meta
+        ctx.fillStyle = BORDER;
+        ctx.fillRect(PAD, 70, W - PAD * 2, 1);
+
+        // Trade title
+        ctx.font = F(700, 52);
+        ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
-
         let displayTitle = tradeTitle.toUpperCase();
-        while (ctx.measureText(displayTitle).width > W - 160 && displayTitle.length > 6) {
+        while (ctx.measureText(displayTitle).width > W - PAD * 2 && displayTitle.length > 4) {
             displayTitle = displayTitle.slice(0, -1);
         }
         if (displayTitle.length < tradeTitle.toUpperCase().length) displayTitle += '…';
-        ctx.fillText(displayTitle, 52, TITLE_Y);
+        ctx.fillText(displayTitle, PAD, 152);
 
-        // Gradient underline beneath title
-        const ulW = Math.min(ctx.measureText(displayTitle).width * 0.35, 200);
-        const ulGrad = ctx.createLinearGradient(52, 0, 52 + ulW, 0);
-        ulGrad.addColorStop(0, '#ED174C');
-        ulGrad.addColorStop(1, '#006BB6');
-        ctx.fillStyle = ulGrad;
-        ctx.fillRect(52, TITLE_Y + 12, ulW, 4);
+        // Subtitle — season
+        ctx.font = F(400, 15);
+        ctx.fillStyle = TEXT_SEC;
+        ctx.fillText('2026–27 Season  ·  CBA Analysis', PAD, 182);
 
-        // Season / site subtitle
-        ctx.font = FONT_MEDIUM(14);
-        ctx.fillStyle = 'rgba(255,255,255,0.28)';
-        ctx.letterSpacing = '0.16em';
-        ctx.fillText('2026–27 SEASON  ·  CBA ANALYSIS  ·  SIXERS HOOPS', 52, TITLE_Y + 40);
-        ctx.letterSpacing = '0';
+        // Divider before cards
+        ctx.fillStyle = BORDER;
+        ctx.fillRect(PAD, 204, W - PAD * 2, 1);
 
         // ── Team cards ────────────────────────────────────────────────────
-        const cardAreaY  = TITLE_Y + 62;
-        const cardAreaH  = H - cardAreaY - 72;
-        const maxCards   = Math.min(activeTeams.length, 5);
-        const gap        = 14;
-        const cardW      = maxCards > 0 ? Math.min(210, (W - 104 - (maxCards - 1) * gap) / maxCards) : 210;
-        const cardX0     = 52;
+        const CARD_TOP = 224;
+        const CARD_BOT = H - 72;
+        const CARD_H   = CARD_BOT - CARD_TOP;
+        const maxCards = Math.min(activeTeams.length, 5);
+        const GAP      = 12;
+        const CARD_W   = maxCards > 0
+            ? Math.floor((W - PAD * 2 - GAP * (maxCards - 1)) / maxCards)
+            : W - PAD * 2;
 
         activeTeams.slice(0, 5).forEach((t, i) => {
             const d = TEAM_DATA[t.abbr];
             const teamInfo = NBA_TEAMS[t.abbr];
-            const x = cardX0 + i * (cardW + gap);
-            const teamColor = teamInfo ? teamInfo.color : '#4a4a5a';
+            const cx = PAD + i * (CARD_W + GAP);
 
             const sendSal = t.selectedPlayers.reduce((s, pid) => {
                 const p = d.players.find(p => p.id === pid);
@@ -1753,164 +1710,86 @@
             const postSal = d.teamSalary - sendSal + recvSal;
             const salDiff = recvSal - sendSal;
 
-            // Card glass background with subtle inner glow
-            roundRect(ctx, x, cardAreaY, cardW, cardAreaH, 14);
-            const cardBg = ctx.createLinearGradient(x, cardAreaY, x, cardAreaY + cardAreaH);
-            cardBg.addColorStop(0, 'rgba(255,255,255,0.07)');
-            cardBg.addColorStop(1, 'rgba(255,255,255,0.03)');
-            ctx.fillStyle = cardBg;
+            // Card background
+            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 8);
+            ctx.fillStyle = SURFACE;
             ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.11)';
+            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 8);
+            ctx.strokeStyle = BORDER;
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Team color top bar with glow
-            ctx.shadowColor = teamColor;
-            ctx.shadowBlur = 16;
-            roundRect(ctx, x, cardAreaY, cardW, 5, [14, 14, 0, 0]);
+            // Team color accent — left edge bar
+            const teamColor = (teamInfo && teamInfo.color) ? teamInfo.color : ACCENT;
             ctx.fillStyle = teamColor;
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.fillRect(cx, CARD_TOP, 3, CARD_H);
 
-            // Team abbr
-            ctx.fillStyle = 'rgba(255,255,255,0.95)';
-            ctx.font = FONT_BLACK(15);
+            // Team abbreviation
+            ctx.font = F(700, 16);
+            ctx.fillStyle = TEXT_PRI;
             ctx.textAlign = 'left';
-            const teamShort = t.abbr.toUpperCase();
-            ctx.fillText(teamShort, x + 13, cardAreaY + 28);
+            ctx.fillText(t.abbr.toUpperCase(), cx + 18, CARD_TOP + 30);
 
-            // Full name smaller
-            const fullName = teamInfo ? teamInfo.name : t.abbr;
-            ctx.fillStyle = 'rgba(255,255,255,0.38)';
-            ctx.font = FONT_MEDIUM(9.5);
-            let fName = fullName.toUpperCase();
-            while (ctx.measureText(fName).width > cardW - 26 && fName.length > 3) fName = fName.slice(0,-1);
-            ctx.fillText(fName, x + 13, cardAreaY + 42);
+            // Team full name
+            ctx.font = F(400, 10);
+            ctx.fillStyle = TEXT_SEC;
+            const fullName = (teamInfo ? teamInfo.name : t.abbr).toUpperCase();
+            let fName = fullName;
+            while (ctx.measureText(fName).width > CARD_W - 36 && fName.length > 3) fName = fName.slice(0,-1);
+            ctx.fillText(fName, cx + 18, CARD_TOP + 46);
 
-            // Thin divider
-            ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(x + 12, cardAreaY + 52);
-            ctx.lineTo(x + cardW - 12, cardAreaY + 52);
-            ctx.stroke();
+            // Divider
+            ctx.fillStyle = BORDER;
+            ctx.fillRect(cx + 18, CARD_TOP + 56, CARD_W - 36, 1);
 
-            // Data rows — two-column micro layout
+            // Stat rows
             const rows = [
-                { label: 'SENDING',     val: sendSal > 0 ? '$'+(sendSal/1e6).toFixed(1)+'M' : '—',  color: '#94a3b8' },
-                { label: 'RECEIVING',   val: recvSal > 0 ? '$'+(recvSal/1e6).toFixed(1)+'M' : '—',  color: '#94a3b8' },
-                { label: 'NET CHANGE',  val: (salDiff >= 0 ? '+' : '')+'$'+(salDiff/1e6).toFixed(1)+'M', color: salDiff > 0 ? '#f87171' : salDiff < 0 ? '#4ade80' : '#94a3b8' },
-                { label: 'POST-TRADE',  val: '$'+(postSal/1e6).toFixed(1)+'M', color: postSal > CBA.secondApron ? '#f87171' : postSal > CBA.firstApron ? '#fb923c' : '#e2e8f0' },
-                { label: 'PLAYERS',     val: String(t.selectedPlayers.length), color: '#93c5fd' },
-                { label: 'PICKS',       val: String(t.selectedPicks.length),   color: '#93c5fd' },
+                { label: 'Sending',    val: sendSal > 0 ? '$'+(sendSal/1e6).toFixed(1)+'M' : '—' },
+                { label: 'Receiving',  val: recvSal > 0 ? '$'+(recvSal/1e6).toFixed(1)+'M' : '—' },
+                { label: 'Net',        val: (salDiff >= 0 ? '+' : '') + '$'+(Math.abs(salDiff)/1e6).toFixed(1)+'M',
+                                       color: salDiff > 0 ? STATUS_ERR : salDiff < 0 ? STATUS_OK : TEXT_SEC },
+                { label: 'Post-Trade', val: '$'+(postSal/1e6).toFixed(1)+'M' },
+                { label: 'Players',    val: String(t.selectedPlayers.length) },
+                { label: 'Picks',      val: String(t.selectedPicks.length) },
             ];
 
-            const rowStartY = cardAreaY + 64;
-            const rowGap    = (cardAreaH - 84 - 28) / rows.length;
+            const ROW_START = CARD_TOP + 70;
+            const ROW_STEP  = Math.min(34, (CARD_H - 90) / rows.length);
 
             rows.forEach((row, ri) => {
-                const ry = rowStartY + ri * rowGap;
-                // Label
-                ctx.fillStyle = 'rgba(255,255,255,0.22)';
-                ctx.font = FONT_BOLD(8.5);
+                const ry = ROW_START + ri * ROW_STEP;
+                ctx.font = F(400, 10);
+                ctx.fillStyle = TEXT_SEC;
                 ctx.textAlign = 'left';
-                ctx.fillText(row.label, x + 13, ry);
-                // Value
-                ctx.fillStyle = row.color;
-                ctx.font = FONT_BLACK(13.5);
-                ctx.fillText(row.val, x + 13, ry + 16);
+                ctx.fillText(row.label, cx + 18, ry);
+                ctx.font = F(600, 14);
+                ctx.fillStyle = row.color || TEXT_PRI;
+                ctx.fillText(row.val, cx + 18, ry + 17);
             });
 
-            // Apron status badge at bottom of card
+            // Apron status — bottom of card
             const apron = getApronStatus(postSal);
-            const apronColors = { under:'#4ade80', tax:'#facc15', first:'#fb923c', second:'#f87171' };
-            const apronC = apronColors[apron.cls] || '#e2e8f0';
-            const badgeY = cardAreaY + cardAreaH - 24;
-            const badgeText = apron.label.toUpperCase();
-            ctx.font = FONT_BOLD(8.5);
-            const bw = ctx.measureText(badgeText).width + 16;
-            roundRect(ctx, x + 12, badgeY - 11, bw, 18, 5);
-            ctx.fillStyle = apronC + '20';
-            ctx.fill();
-            ctx.strokeStyle = apronC + '55';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            const apronColorMap = { under: STATUS_OK, tax: '#d29922', first: '#e3b341', second: STATUS_ERR };
+            const apronC = apronColorMap[apron.cls] || TEXT_SEC;
+            ctx.font = F(600, 10);
             ctx.fillStyle = apronC;
             ctx.textAlign = 'left';
-            ctx.fillText(badgeText, x + 20, badgeY + 1);
+            ctx.fillText(apron.label.toUpperCase(), cx + 18, CARD_TOP + CARD_H - 14);
         });
 
-        // ── CBA violations / notes (right panel if space) ─────────────────
-        const msgs = document.getElementById('modalViolations');
-        if (msgs && activeTeams.length <= 3) {
-            const items = msgs.querySelectorAll('.violation-item');
-            const panelX = cardX0 + maxCards * (cardW + gap) + 20;
-            const panelW = W - panelX - 52;
-            if (panelW > 120 && items.length > 0) {
-                roundRect(ctx, panelX, cardAreaY, panelW, cardAreaH, 14);
-                ctx.fillStyle = 'rgba(255,255,255,0.04)';
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
+        // ── Footer ────────────────────────────────────────────────────────
+        ctx.fillStyle = BORDER;
+        ctx.fillRect(PAD, H - 56, W - PAD * 2, 1);
 
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                ctx.font = FONT_BOLD(9.5);
-                ctx.textAlign = 'left';
-                ctx.fillText('CBA NOTES', panelX + 14, cardAreaY + 22);
-
-                [...items].slice(0, 6).forEach((item, ii) => {
-                    const type = [...item.classList].find(c => ['error','warning','ok','info'].includes(c));
-                    const msgText = item.querySelectorAll('span')[1]?.textContent || '';
-                    const colors = { error:'#f87171', warning:'#fb923c', ok:'#4ade80', info:'#60a5fa' };
-                    const c = colors[type] || 'rgba(255,255,255,0.5)';
-                    const ny = cardAreaY + 38 + ii * 32;
-
-                    ctx.font = FONT_MEDIUM(11);
-                    let txt = msgText;
-                    while (ctx.measureText(txt).width > panelW - 30 && txt.length > 8) txt = txt.slice(0,-1);
-                    if (txt.length < msgText.length) txt += '…';
-
-                    ctx.fillStyle = c;
-                    ctx.font = FONT_BOLD(8);
-                    ctx.fillText('●', panelX + 14, ny + 1);
-                    ctx.fillStyle = 'rgba(255,255,255,0.62)';
-                    ctx.font = FONT_REG(11);
-                    ctx.fillText(txt, panelX + 26, ny + 1);
-                });
-            }
-        }
-
-        // ── Footer bar ────────────────────────────────────────────────────
-        // Footer glass panel
-        const footerGrad = ctx.createLinearGradient(0, H - 52, 0, H);
-        footerGrad.addColorStop(0, 'rgba(0,0,0,0.0)');
-        footerGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-        ctx.fillStyle = footerGrad;
-        ctx.fillRect(0, H - 52, W, 52);
-
-        // Thin top border for footer
-        ctx.fillStyle = 'rgba(255,255,255,0.07)';
-        ctx.fillRect(0, H - 52, W, 1);
-
-        // Branding — left
-        ctx.fillStyle = '#ffffff';
-        ctx.font = FONT_BLACK(17);
+        ctx.font = F(700, 14);
+        ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
-        ctx.fillText('SIXERS HOOPS', 52, H - 18);
+        ctx.fillText('SIXERS HOOPS', PAD, H - 24);
 
-        // Blue accent bar under branding
-        const bGrad = ctx.createLinearGradient(52, 0, 52 + 120, 0);
-        bGrad.addColorStop(0, '#006BB6');
-        bGrad.addColorStop(1, 'rgba(0,107,182,0)');
-        ctx.fillStyle = bGrad;
-        ctx.fillRect(52, H - 11, 120, 2.5);
-
-        // Right — page label
-        ctx.fillStyle = 'rgba(255,255,255,0.28)';
-        ctx.font = FONT_MEDIUM(12);
+        ctx.font = F(400, 13);
+        ctx.fillStyle = TEXT_SEC;
         ctx.textAlign = 'right';
-        ctx.fillText('NBA Trade Machine  ·  2026–27 Season', W - 52, H - 18);
+        ctx.fillText('sixershoops.com', W - PAD, H - 24);
 
         return canvas;
     }
