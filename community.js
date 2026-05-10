@@ -1116,10 +1116,25 @@ ANALYSIS: [Analysis]
 
     function createPostElement(post) {
         const isPlayerGrade = post.tag === 'Player Grade';
+        const isDiscussion = post.tag === 'Discussion';
         const div = document.createElement('div');
-        div.className = `bg-white rounded-xl shadow-sm border ${isPlayerGrade ? 'border-slate-200' : 'border-slate-200'} overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md`;
+
+        // Tag accent color map
+        const tagAccentMap = {
+            'Discussion': { bg: 'rgba(37,99,235,0.06)', border: '#bfdbfe', dot: '#2563eb', badge: 'background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe' },
+            'Highlight':  { bg: 'rgba(234,88,12,0.05)',  border: '#fed7aa', dot: '#ea580c', badge: 'background:#ffedd5;color:#c2410c;border:1px solid #fed7aa' },
+            'News':       { bg: 'rgba(22,163,74,0.05)',  border: '#bbf7d0', dot: '#16a34a', badge: 'background:#dcfce7;color:#15803d;border:1px solid #bbf7d0' },
+            'Question':   { bg: 'rgba(124,58,237,0.05)', border: '#ddd6fe', dot: '#7c3aed', badge: 'background:#ede9fe;color:#6d28d9;border:1px solid #ddd6fe' },
+            'Player Grade':{ bg:'rgba(0,107,182,0.05)', border:'#bae6fd',  dot:'#006BB6',  badge:'background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd' },
+        };
+        const accent = tagAccentMap[post.tag] || { bg: 'rgba(100,116,139,0.04)', border: '#e2e8f0', dot: '#64748b', badge: 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0' };
+
+        div.style.cssText = `background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);border:1.5px solid #f0f2f5;overflow:hidden;display:flex;cursor:pointer;transition:border-color 0.18s,box-shadow 0.18s;margin-bottom:0;`;
         div.dataset.id = post.id;
-        
+
+        div.addEventListener('mouseenter', () => { div.style.borderColor = accent.border; div.style.boxShadow = '0 4px 16px rgba(0,0,0,0.09),0 1px 4px rgba(0,0,0,0.05)'; });
+        div.addEventListener('mouseleave', () => { div.style.borderColor = '#f0f2f5'; div.style.boxShadow = '0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04)'; });
+
         const user = window.auth ? window.auth.currentUser : null;
         const userVote = (user && post.voters) ? post.voters[user.uid] : post.voted;
         const isUpvoted = userVote === 'up';
@@ -1129,77 +1144,102 @@ ANALYSIS: [Analysis]
         const isAdmin = isMod();
 
         const twitterId = extractTwitterId(post.content);
-        
+
         // Helper to check if imageUrl is valid and not just a placeholder
         const hasValidImage = post.imageUrl && 
                              post.imageUrl !== '#' && 
                              !post.imageUrl.startsWith('window.') &&
                              !(post.imageUrl.includes(window.location.host) && post.imageUrl.endsWith('/#'));
 
-        const tagClass = isPlayerGrade ? 'bg-blue-100 text-blue-700 border border-blue-200' : (post.tagClass || 'bg-slate-100 text-slate-700');
+        // Build post share/deep-link URL
+        const postSlug = generateSlug(post.title || '');
+        const postUrl = `${window.location.origin}${window.location.pathname}?post=${post.id}${postSlug ? '/' + postSlug : ''}`;
+
+        // For Discussion posts, suppress text body — image is sufficient
+        const showTextBody = !isDiscussion && post.content && !isPlayerGrade;
 
         div.innerHTML = `
-            <!-- Vote Sidebar -->
-            <div class="w-12 bg-slate-50/50 p-2 flex flex-col items-center gap-1 border-r border-slate-100">
-                <button class="p-1 hover:bg-slate-200 rounded transition-colors vote-up ${isUpvoted ? 'text-orange-600' : 'text-slate-400'}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+            <!-- Vote Sidebar — refined pill style -->
+            <div style="width:52px;background:${accent.bg};padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;border-right:1.5px solid ${accent.border};flex-shrink:0;">
+                <button class="vote-up" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:${isUpvoted ? 'rgba(234,88,12,0.1)' : 'transparent'};color:${isUpvoted ? '#ea580c' : '#94a3b8'};cursor:pointer;transition:background 0.15s,color 0.15s;" title="Upvote">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                 </button>
-                <span class="text-xs font-bold ${isUpvoted ? 'text-orange-600' : isDownvoted ? 'text-blue-600' : 'text-slate-900'}">${formatVotes(post.votes)}</span>
-                <button class="p-1 hover:bg-slate-200 rounded transition-colors vote-down ${isDownvoted ? 'text-blue-600' : 'text-slate-400'}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isDownvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:0.02em;color:${isUpvoted ? '#ea580c' : isDownvoted ? '#2563eb' : '#0f172a'};min-width:20px;text-align:center;line-height:1;">${formatVotes(post.votes)}</span>
+                <button class="vote-down" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:${isDownvoted ? 'rgba(37,99,235,0.1)' : 'transparent'};color:${isDownvoted ? '#2563eb' : '#94a3b8'};cursor:pointer;transition:background 0.15s,color 0.15s;" title="Downvote">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${isDownvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
             </div>
+
             <!-- Content -->
-            <div class="flex-1 p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-2 text-xs text-slate-500">
+            <div style="flex:1;padding:14px 16px 12px;min-width:0;display:flex;flex-direction:column;gap:0;">
+
+                <!-- Top meta row -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                         ${post.isPinned ? `
-                            <span class="flex items-center gap-1 text-blue-600 font-bold">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="15"/><poly-line points="12 15 17 21 7 21 12 15"/><path d="M7 3h10"/></svg>
+                            <span style="display:inline-flex;align-items:center;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;border-radius:20px;padding:2px 7px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
                                 Pinned
                             </span>
-                            <span>•</span>
                         ` : ''}
-                        <span class="font-bold text-slate-900 author-link" data-author-id="${post.authorId}" data-author-name="${post.author}">${post.author}${getMostActiveBadge(post.authorId)}</span>
-                        <span>•</span>
-                        <span>${post.time}</span>
-                        <span class="${tagClass} px-2 py-0.5 rounded-full font-black uppercase text-[9px] tracking-tight flex items-center gap-1">
+                        <span style="${accent.badge};border-radius:20px;padding:2px 8px;font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px;">
                             ${isPlayerGrade ? '★ ' : ''}${post.tag}
                         </span>
+                        <span class="author-link" data-author-id="${post.authorId}" data-author-name="${post.author}" style="font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;color:#334155;cursor:pointer;transition:color 0.15s;" onmouseenter="this.style.color='${accent.dot}'" onmouseleave="this.style.color='#334155'">${post.author}${getMostActiveBadge(post.authorId)}</span>
+                        <span style="font-size:0.65rem;color:#cbd5e1;">·</span>
+                        <span style="font-family:'Barlow',sans-serif;font-size:0.68rem;color:#94a3b8;">${post.time}</span>
                     </div>
-                    <div class="flex items-center gap-1">
+                    <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
                         ${isAdmin ? `
-                            <button class="pin-post-btn p-1 ${post.isPinned ? 'text-blue-600' : 'text-slate-400'} hover:text-blue-700 transition-colors" title="${post.isPinned ? 'Unpin Post' : 'Pin Post'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${post.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
+                            <button class="pin-post-btn" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:none;background:transparent;color:${post.isPinned ? '#2563eb' : '#cbd5e1'};cursor:pointer;transition:background 0.15s,color 0.15s;" title="${post.isPinned ? 'Unpin' : 'Pin'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${post.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
                             </button>
                         ` : ''}
                         ${canDelete ? `
-                            <button class="delete-post-btn p-1 text-red-500 hover:text-red-700 transition-colors" title="Delete Post">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            <button class="delete-post-btn" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:none;background:transparent;color:#fca5a5;cursor:pointer;transition:background 0.15s,color 0.15s;" title="Delete" onmouseenter="this.style.background='#fef2f2';this.style.color='#dc2626'" onmouseleave="this.style.background='transparent';this.style.color='#fca5a5'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </button>
                         ` : ''}
                     </div>
                 </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2 leading-snug">${post.title}</h3>
-                ${post.content ? `
-                    <div class="mb-3">
-                        ${isPlayerGrade ? renderPlayerGrades(post.content) : `<p class="text-sm text-slate-500 leading-relaxed line-clamp-3" style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${formatTwitterContent(post.content)}</p>`}
-                    </div>` : ''}
-                ${twitterId ? `<div class="mb-4 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
-                ${hasValidImage ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto max-h-96 object-cover block" onerror="this.parentElement.style.display='none'"></div>` : ''}
-                <div class="flex gap-4">
-                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm comment-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+
+                <!-- Title -->
+                <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:800;color:#0f172a;line-height:1.3;letter-spacing:-0.01em;margin:0 0 8px;">${post.title}</h3>
+
+                <!-- Body text (hidden for Discussion — image is sufficient) -->
+                ${showTextBody ? `
+                    <p style="font-family:'Barlow',sans-serif;font-size:0.82rem;color:#64748b;line-height:1.55;margin:0 0 10px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${formatTwitterContent(post.content)}</p>
+                ` : ''}
+                ${isPlayerGrade && post.content ? `<div style="margin-bottom:10px;">${renderPlayerGrades(post.content)}</div>` : ''}
+
+                <!-- Twitter embed -->
+                ${twitterId ? `<div style="margin-bottom:12px;" class="twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
+
+                <!-- Image (prominent, clean) -->
+                ${hasValidImage ? `
+                    <div style="margin-bottom:12px;border-radius:10px;overflow:hidden;border:1px solid #f1f5f9;background:#f8fafc;">
+                        <img src="${post.imageUrl}" style="width:100%;height:auto;max-height:340px;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'">
+                    </div>
+                ` : ''}
+
+                <!-- Action bar -->
+                <div style="display:flex;align-items:center;gap:2px;margin-top:auto;padding-top:4px;">
+                    <button class="comment-btn" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;color:#64748b;background:transparent;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#f1f5f9';this.style.color='#334155'" onmouseleave="this.style.background='transparent';this.style.color='#64748b'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         ${countTotalComments(post.comments)} Comments
                     </button>
-                    <button class="flex items-center gap-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors text-sm jump-to-comments-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                    <button class="jump-to-comments-btn" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;color:#64748b;background:transparent;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#eff6ff';this.style.color='#2563eb'" onmouseleave="this.style.background='transparent';this.style.color='#64748b'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
                         Jump to Comments
                     </button>
-                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm share-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                    <button class="share-btn" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;color:#64748b;background:transparent;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#f1f5f9';this.style.color='#334155'" onmouseleave="this.style.background='transparent';this.style.color='#64748b'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                         Share
                     </button>
+                    <a href="${postUrl}" class="goto-post-btn" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:0.68rem;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:${accent.dot};background:${accent.bg};border:1.5px solid ${accent.border};border-radius:7px;padding:4px 10px;text-decoration:none;transition:opacity 0.15s;margin-left:auto;" onmouseenter="this.style.opacity='0.75'" onmouseleave="this.style.opacity='1'" title="Open post link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                        Go to Post
+                    </a>
                 </div>
             </div>
         `;
@@ -1219,6 +1259,9 @@ ANALYSIS: [Analysis]
             } else if (e.target.closest('.share-btn')) {
                 e.stopPropagation();
                 handleSharePost(post.id, post.title);
+            } else if (e.target.closest('.goto-post-btn')) {
+                e.stopPropagation();
+                // allow the anchor's default navigation
             } else if (e.target.closest('.jump-to-comments-btn')) {
                 e.stopPropagation();
                 openDetailedView(post.id);
@@ -2037,36 +2080,58 @@ ANALYSIS: [Analysis]
             scrollPos = existingCommentsList.scrollTop;
         }
 
+        // Tag accent colors for modal
+        const modalTagAccentMap = {
+            'Discussion': { bg: 'rgba(37,99,235,0.06)', border: '#bfdbfe', dot: '#2563eb', badge: 'background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe' },
+            'Highlight':  { bg: 'rgba(234,88,12,0.05)',  border: '#fed7aa', dot: '#ea580c', badge: 'background:#ffedd5;color:#c2410c;border:1px solid #fed7aa' },
+            'News':       { bg: 'rgba(22,163,74,0.05)',  border: '#bbf7d0', dot: '#16a34a', badge: 'background:#dcfce7;color:#15803d;border:1px solid #bbf7d0' },
+            'Question':   { bg: 'rgba(124,58,237,0.05)', border: '#ddd6fe', dot: '#7c3aed', badge: 'background:#ede9fe;color:#6d28d9;border:1px solid #ddd6fe' },
+            'Player Grade':{ bg:'rgba(0,107,182,0.05)', border:'#bae6fd',  dot:'#006BB6',  badge:'background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd' },
+        };
+        const mAccent = modalTagAccentMap[post.tag] || { bg: 'rgba(100,116,139,0.04)', border: '#e2e8f0', dot: '#64748b', badge: 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0' };
+
+        const modalPostSlug = generateSlug(post.title || '');
+        const modalPostUrl = `${window.location.origin}${window.location.pathname}?post=${post.id}${modalPostSlug ? '/' + modalPostSlug : ''}`;
+        const isDiscussionModal = post.tag === 'Discussion';
+
         contentContainer.innerHTML = `
             <div class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-xs text-slate-500">
-                        <span class="font-bold text-slate-900 author-link" data-author-id="${post.authorId}" data-author-name="${post.author}">${post.author}${getMostActiveBadge(post.authorId)}</span>
-                        <span>•</span>
-                        <span>${post.time}</span>
-                        <span class="${post.tagClass} px-2 py-0.5 rounded-full font-bold">${post.tag}</span>
+                <!-- Modern post header -->
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="${mAccent.badge};border-radius:20px;padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;">
+                            ${isPlayerGrade ? '★ ' : ''}${post.tag}
+                        </span>
+                        <span class="author-link" data-author-id="${post.authorId}" data-author-name="${post.author}" style="font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:700;color:#334155;cursor:pointer;">${post.author}${getMostActiveBadge(post.authorId)}</span>
+                        <span style="font-size:0.65rem;color:#cbd5e1;">·</span>
+                        <span style="font-family:'Barlow',sans-serif;font-size:0.72rem;color:#94a3b8;">${post.time}</span>
+                        ${post.isPinned ? `<span style="display:inline-flex;align-items:center;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;border-radius:20px;padding:2px 7px;">📌 Pinned</span>` : ''}
                     </div>
-                    <div class="flex items-center gap-2 mr-10">
-                        <button class="modal-share-post-btn text-slate-500 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-slate-100" title="Share Post">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                    <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-right:40px;">
+                        <a href="${modalPostUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:${mAccent.dot};background:${mAccent.bg};border:1.5px solid ${mAccent.border};border-radius:8px;padding:5px 10px;text-decoration:none;transition:opacity 0.15s;" title="Open post in new tab">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                            Go to Post
+                        </a>
+                        <button class="modal-share-post-btn" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;color:#94a3b8;cursor:pointer;transition:background 0.15s,color 0.15s;" title="Share Post">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                         </button>
                         ${isAdmin ? `
-                            <button class="modal-pin-post-btn ${post.isPinned ? 'text-blue-600' : 'text-slate-400'} hover:text-blue-700 transition-colors p-2 rounded-full hover:bg-blue-50" title="${post.isPinned ? 'Unpin Post' : 'Pin Post'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${post.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
+                            <button class="modal-pin-post-btn" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;color:${post.isPinned ? '#2563eb' : '#cbd5e1'};cursor:pointer;transition:background 0.15s,color 0.15s;" title="${post.isPinned ? 'Unpin' : 'Pin'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${post.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
                             </button>
                         ` : ''}
                         ${canDelete ? `
-                            <button class="modal-delete-post-btn text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50" title="Delete Post">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            <button class="modal-delete-post-btn" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;color:#fca5a5;cursor:pointer;transition:background 0.15s,color 0.15s;" title="Delete Post">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </button>
                         ` : ''}
                     </div>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900">${post.title}</h2>
+                <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:1.65rem;font-weight:900;color:#0f172a;line-height:1.2;letter-spacing:-0.02em;margin:0;">${post.title}</h2>
                 ${twitterId ? `<div class="mb-6 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
-                ${hasValidImage ? `<div class="mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-sm"><img src="${post.imageUrl}" class="w-full h-auto object-contain bg-slate-100" onerror="this.parentElement.style.display='none'"></div>` : ''}
+                ${hasValidImage ? `<div style="border-radius:14px;overflow:hidden;border:1px solid #f0f2f5;box-shadow:0 2px 8px rgba(0,0,0,0.06);"><img src="${post.imageUrl}" style="width:100%;height:auto;object-contain;background:#f8fafc;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
                 <div class="${isPlayerGrade ? '' : 'text-slate-700 leading-relaxed whitespace-pre-wrap'}">
-                    ${isPlayerGrade ? renderPlayerGrades(post.content) : formatTwitterContent(post.content)}
+                    ${isDiscussionModal ? '' : (isPlayerGrade ? renderPlayerGrades(post.content) : formatTwitterContent(post.content))}
                 </div>
                 
                 <div class="border-t pt-6">
