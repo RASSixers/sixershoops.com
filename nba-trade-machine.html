@@ -171,38 +171,188 @@
         }
         .team-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); }
 
+        /* ─── TEAM CARD HEADER — CUSTOM DROPDOWN ─────────────────── */
         .team-card-header {
             background: var(--navy-deep);
-            padding: 1rem 1.25rem;
-            display: flex; align-items: center; gap: .75rem;
+            display: flex; align-items: stretch;
+            position: relative;
+            min-height: 54px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .team-card-header:hover .team-header-inner { background: rgba(255,255,255,.03); }
+
+        .team-color-bar {
+            width: 5px;
+            flex-shrink: 0;
+            transition: background .25s;
+        }
+
+        .team-header-inner {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .65rem .85rem .65rem .75rem;
+            min-width: 0;
+            transition: background .15s;
+        }
+
+        .team-header-text { flex: 1; min-width: 0; }
+
+        .team-header-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .52rem;
+            font-weight: 800;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.28);
+            line-height: 1;
+            margin-bottom: 3px;
+        }
+
+        .team-header-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            color: white;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .team-header-name.placeholder {
+            color: rgba(255,255,255,.3);
+            font-weight: 600;
+            font-size: .88rem;
+            font-style: italic;
+        }
+
+        .team-header-chevron {
+            color: rgba(255,255,255,.25);
+            flex-shrink: 0;
+            transition: transform .2s, color .15s;
+        }
+        .team-card-header.open .team-header-chevron { transform: rotate(180deg); color: rgba(255,255,255,.5); }
+
+        /* ── Custom dropdown panel ── */
+        .team-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            z-index: 999;
+            background: #0b1f4a;
+            border: 1px solid rgba(0,107,182,.35);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 16px 48px rgba(0,0,0,.55);
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            max-height: 320px;
+        }
+        .team-dropdown.open { display: flex; }
+
+        .team-dropdown-search {
+            padding: .55rem .75rem;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            flex-shrink: 0;
             position: relative;
         }
-        .team-card-header::before {
-            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
-            height: 2px;
+        .team-dropdown-search input {
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 6px;
+            color: white;
+            font-family: 'Barlow', sans-serif;
+            font-size: .82rem;
+            padding: .38rem .75rem .38rem 2rem;
+            outline: none;
+            transition: border-color .15s;
         }
-        .team-color-bar { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
-        .team-select-wrapper { flex: 1; }
-        .team-select {
-            width: 100%; background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.12); border-radius: 8px;
-            color: white; font-family: 'Barlow Condensed', sans-serif;
-            font-weight: 700; font-size: .95rem; letter-spacing: .04em;
-            text-transform: uppercase; padding: .5rem .85rem;
-            cursor: pointer; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right .75rem center;
-            padding-right: 2rem; transition: border-color .2s;
+        .team-dropdown-search input::placeholder { color: rgba(255,255,255,.3); }
+        .team-dropdown-search input:focus { border-color: rgba(0,107,182,.6); background: rgba(255,255,255,.1); }
+        .team-dropdown-search-icon {
+            position: absolute;
+            left: 1.2rem; top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,.28);
+            pointer-events: none;
         }
-        .team-select:focus { outline: none; border-color: rgba(0,107,182,.6); }
-        .team-select option { background: #001a57; color: white; }
+
+        .team-dropdown-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+        .team-dropdown-list::-webkit-scrollbar { width: 4px; }
+        .team-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+        .team-dropdown-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+
+        .team-dropdown-section {
+            padding: .3rem 0 .1rem;
+        }
+        .team-dropdown-section-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .55rem;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.2);
+            padding: .25rem .85rem .2rem;
+        }
+
+        .team-dropdown-option {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .45rem .85rem;
+            cursor: pointer;
+            transition: background .1s;
+        }
+        .team-dropdown-option:hover { background: rgba(0,107,182,.2); }
+        .team-dropdown-option.selected { background: rgba(0,107,182,.15); }
+        .team-dropdown-option.disabled { opacity: .3; pointer-events: none; }
+
+        .team-dropdown-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .team-dropdown-option-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .88rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: rgba(255,255,255,.88);
+            flex: 1;
+        }
+        .team-dropdown-option-abbr {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .65rem;
+            font-weight: 800;
+            letter-spacing: .1em;
+            color: rgba(255,255,255,.25);
+        }
+
         .team-remove-btn {
-            background: rgba(237,23,76,.15); border: 1px solid rgba(237,23,76,.2);
-            border-radius: 7px; color: rgba(237,23,76,.8); cursor: pointer;
-            padding: .4rem .5rem; transition: all .2s; flex-shrink: 0;
-            font-size: .75rem; display: flex; align-items: center;
+            background: transparent;
+            border: none;
+            border-left: 1px solid rgba(255,255,255,.06);
+            color: rgba(255,255,255,.22);
+            cursor: pointer;
+            padding: 0 .8rem;
+            display: flex; align-items: center;
+            transition: all .2s;
+            flex-shrink: 0;
+            align-self: stretch;
+            z-index: 1000;
         }
-        .team-remove-btn:hover { background: rgba(237,23,76,.25); color: var(--sixers-red); }
+        .team-remove-btn:hover { background: rgba(237,23,76,.14); color: rgba(237,23,76,.85); }
 
         /* Roster Tabs */
         .team-tabs {
@@ -667,34 +817,17 @@
             <div class="cba-stat"><span class="cba-stat-val">$6.0M</span><span class="cba-stat-key">Cash Limit/Year</span></div>
         </div>
 
-        <!-- Trade Stats Mini Bar -->
-        <div style="display:flex;align-items:center;gap:1.5rem;padding:.6rem 0;margin-bottom:.75rem;border-bottom:1px solid var(--border-light);">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);">Trade Summary</span>
-            <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;color:var(--ink);"><span id="teamCountLabel">2</span> <span style="color:var(--mid);font-weight:500;">teams</span></span>
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;color:var(--ink);"><span id="totalPlayers">0</span> <span style="color:var(--mid);font-weight:500;">players</span></span>
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;color:var(--ink);"><span id="totalPicks">0</span> <span style="color:var(--mid);font-weight:500;">picks</span></span>
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;color:var(--sixers-blue);"><span id="totalSalary">$0</span> <span style="color:var(--mid);font-weight:500;">moving</span></span>
-            </div>
-            <span style="margin-left:auto;font-family:'Barlow',sans-serif;font-size:.72rem;color:var(--mid);"><span id="totalTeams">2</span>/5 teams</span>
-        </div>
+        <!-- hidden stat holders for JS references that still exist -->
+        <span id="teamCountLabel" style="display:none">2</span>
+        <span id="totalPlayers" style="display:none">0</span>
+        <span id="totalPicks" style="display:none">0</span>
+        <span id="totalSalary" style="display:none">$0</span>
+        <span id="totalTeams" style="display:none">2</span>
 
         <!-- Team Cards Grid -->
         <div class="trade-grid" id="tradeGrid"></div>
 
-        <!-- Analyze Bar (bottom repeat for convenience) -->
-        <div class="analyze-bar">
-            <div class="analyze-bar-info">
-                <div class="analyze-stat"><span class="analyze-stat-val" id="totalTeams2">2</span><span class="analyze-stat-key">Teams</span></div>
-                <div class="analyze-stat"><span class="analyze-stat-val" id="totalPlayers2">0</span><span class="analyze-stat-key">Players</span></div>
-                <div class="analyze-stat"><span class="analyze-stat-val" id="totalPicks2">0</span><span class="analyze-stat-key">Picks</span></div>
-                <div class="analyze-stat"><span class="analyze-stat-val" id="totalSalary2">$0</span><span class="analyze-stat-key">Salary Moving</span></div>
-            </div>
-            <button class="btn-analyze" onclick="analyzeTrade()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                Analyze Trade
-            </button>
-        </div>
+
 
         <!-- Result Panel -->
         <div class="result-panel" id="resultPanel">
@@ -736,18 +869,8 @@
                 <div class="breakdown-grid" id="modalBreakdown"></div>
                 <div id="modalRestrictions"></div>
             </div>
-            <div class="modal-footer" style="flex-direction:column;align-items:stretch;gap:.65rem;">
-                <div style="display:flex;flex-direction:column;gap:.3rem;">
-                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);">Trade Name <span style="font-weight:500;text-transform:none;letter-spacing:0;">(for graphic)</span></label>
-                    <input id="tradeNameInput" type="text" placeholder="e.g. Sixers land Giannis"
-                        style="font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:700;
-                               border:1px solid var(--border-light);border-radius:8px;
-                               padding:.5rem .85rem;outline:none;color:var(--ink);background:white;
-                               transition:border-color .15s;width:100%;box-sizing:border-box;"
-                        onfocus="this.style.borderColor='var(--sixers-blue)'"
-                        onblur="this.style.borderColor='var(--border-light)'" />
-                </div>
-                <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+            <div class="modal-footer">
+                <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;width:100%;">
                     <button class="btn-share" id="shareBtn" onclick="shareGraphic()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                         Share Graphic
@@ -756,7 +879,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         Post to Community
                     </button>
-                    <button class="btn-ghost" onclick="closeModal()">Close</button>
+                    <button class="btn-ghost" onclick="closeModal()" style="margin-left:auto;">Close</button>
                 </div>
             </div>
         </div>
@@ -1571,6 +1694,7 @@
                 { id:'lal-08', name:'Gabe Vincent',          position:'PG', salary: 6_000_000, contractType:'Guaranteed' },
                 { id:'lal-09', name:'Jaxson Hayes',          position:'C',  salary: 6_000_000, contractType:'Guaranteed' },
                 { id:'lal-10', name:'Shake Milton',          position:'SG', salary: 3_000_000, contractType:'Guaranteed' },
+                { id:'lal-11', name:'2026 Pick #25',         position:'—',  salary: 3_221_280, contractType:'Rookie Scale Est.' },
             ],
             picks: [
                 { id:'lal-pk01', name:'2026 Own 1st',  round:1, protections:'Unprotected', owner:'LAL' },
@@ -1595,6 +1719,7 @@
                 { id:'mem-07', name:'Jake LaRavia',          position:'SF', salary: 6_000_000, contractType:'Guaranteed' },
                 { id:'mem-08', name:'Scotty Pippen Jr.',     position:'PG', salary: 4_000_000, contractType:'Guaranteed' },
                 { id:'mem-09', name:'2026 Pick #3',          position:'—',  salary:12_022_920, contractType:'Rookie Scale Est.' },
+                { id:'mem-10', name:'2026 Pick #16 (ORL)',   position:'—',  salary: 4_680_120, contractType:'Rookie Scale Est.' },
                 { id:'mem-10', name:'Jaylen Wells',          position:'SG', salary: 2_150_917, contractType:'Guaranteed' },
             ],
             picks: [
@@ -2028,7 +2153,7 @@
         });
         updateStats();
         document.getElementById('addTeamBtn').disabled = teams.length >= 5;
-        ['teamCountLabel','totalTeams','totalTeams2'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = teams.length; });
+        ['teamCountLabel','totalTeams'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = teams.length; });
     }
 
     function renderTeamCard(teamId) {
@@ -2049,16 +2174,6 @@
             const p = data.players.find(p => p.id === pid);
             return sum + (p ? p.salary : 0);
         }, 0);
-
-        // Build team select options — alphabetical order
-        const usedAbbrs = teams.filter(x => x.id !== t.id && x.abbr).map(x => x.abbr);
-        let opts = `<option value="">— Select Team —</option>`;
-        const allTeamsSorted = Object.entries(NBA_TEAMS).sort((a, b) => a[1].name.localeCompare(b[1].name));
-        allTeamsSorted.forEach(([abbr, info]) => {
-            const disabled = usedAbbrs.includes(abbr) ? 'disabled' : '';
-            const selected = t.abbr === abbr ? 'selected' : '';
-            opts += `<option value="${abbr}" ${disabled} ${selected}>${info.name}</option>`;
-        });
 
         // Tab bar
         const rosterCount = t.selectedPlayers.length;
@@ -2285,16 +2400,59 @@
             </div>`;
         }
 
+        const displayName = teamInfo ? teamInfo.name.toUpperCase() : null;
+        const usedAbbrSet = new Set(teams.filter(x => x.id !== t.id && x.abbr).map(x => x.abbr));
+
+        const eastTeams = Object.entries(NBA_TEAMS).filter(([,v]) => v.conference === 'East').sort((a,b) => a[1].name.localeCompare(b[1].name));
+        const westTeams = Object.entries(NBA_TEAMS).filter(([,v]) => v.conference === 'West').sort((a,b) => a[1].name.localeCompare(b[1].name));
+        function makeOptions(list) {
+            return list.map(([abbr, info]) => {
+                const isUsed = usedAbbrSet.has(abbr);
+                const isSelected = t.abbr === abbr;
+                return `<div class="team-dropdown-option${isUsed?' disabled':''}${isSelected?' selected':''}"
+                    ${!isUsed ? `onclick="setTeam(${t.id},'${abbr}');closeDropdown(${t.id})"` : ''}
+                    data-name="${info.name.toLowerCase()}">
+                    <div class="team-dropdown-dot" style="background:${info.color};box-shadow:0 0 0 1px rgba(255,255,255,.1);"></div>
+                    <span class="team-dropdown-option-name">${info.name}</span>
+                    <span class="team-dropdown-option-abbr">${abbr}</span>
+                </div>`;
+            }).join('');
+        }
+
         return `
-        <div class="team-card-header" style="--team-color:${color}">
-            <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:${color};"></div>
+        <div class="team-card-header" id="hdr-${t.id}" onclick="toggleDropdown(${t.id},event)">
             <div class="team-color-bar" style="background:${color};"></div>
-            <div class="team-select-wrapper">
-                <select class="team-select" onchange="setTeam(${t.id}, this.value)">${opts}</select>
+            <div class="team-header-inner">
+                <div class="team-header-text">
+                    <div class="team-header-label">${teamInfo ? t.abbr + ' · tap to change' : 'Team'}</div>
+                    <div class="team-header-name ${teamInfo ? '' : 'placeholder'}">${displayName || 'Select a team…'}</div>
+                </div>
+                <div class="team-header-chevron">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
             </div>
-            ${teams.length > 2 ? `<button class="team-remove-btn" onclick="removeTeam(${t.id})" title="Remove team">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            ${teams.length > 2 ? `<button class="team-remove-btn" onclick="event.stopPropagation();removeTeam(${t.id})" title="Remove team">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>` : ''}
+            <div class="team-dropdown" id="dd-${t.id}" onclick="event.stopPropagation()">
+                <div class="team-dropdown-search">
+                    <svg class="team-dropdown-search-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" placeholder="Filter teams…" id="ddsearch-${t.id}"
+                        oninput="filterDropdown(${t.id},this.value)"
+                        onclick="event.stopPropagation()"
+                        autocomplete="off" />
+                </div>
+                <div class="team-dropdown-list" id="ddlist-${t.id}">
+                    <div class="team-dropdown-section">
+                        <div class="team-dropdown-section-label">Eastern Conference</div>
+                        ${makeOptions(eastTeams)}
+                    </div>
+                    <div class="team-dropdown-section">
+                        <div class="team-dropdown-section-label">Western Conference</div>
+                        ${makeOptions(westTeams)}
+                    </div>
+                </div>
+            </div>
         </div>
         ${capBarHtml}
         ${tabBar}
@@ -2324,9 +2482,7 @@
         setEl('totalPlayers', totalPlayers);
         setEl('totalPicks', totalPicks);
         setEl('totalSalary', fmtM(totalSalary));
-        setEl('totalPlayers2', totalPlayers);
-        setEl('totalPicks2', totalPicks);
-        setEl('totalSalary2', fmtM(totalSalary));
+
     }
 
     // ─── CBA TRADE ANALYSIS ──────────────────────────────────────────────────
@@ -2676,14 +2832,6 @@
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
 
-        // Auto-populate trade name field with default
-        const nameInput = document.getElementById('tradeNameInput');
-        if (nameInput && !nameInput.value.trim()) {
-            const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
-            const teamAbbrs = activeTeams.map(t => t.abbr).join(' ↔ ');
-            nameInput.value = teamAbbrs || title || '';
-        }
-
         // Also update the inline result panel (hidden but kept for share canvas)
         const panel    = document.getElementById('resultPanel');
         const rHeader  = document.getElementById('resultHeader');
@@ -2713,6 +2861,18 @@
             const color = t.teamInfo ? t.teamInfo.color : '#4a4a5a';
             const name  = t.teamInfo ? t.teamInfo.name  : t.abbr;
 
+            // ── Distance rows ──
+            function distRow(label, threshold, salary) {
+                const dist = threshold - salary;
+                const over = dist < 0;
+                const cls  = over ? 'negative' : 'positive';
+                const sign = over ? '+' : '-';
+                return `<div class="breakdown-row">
+                    <span class="breakdown-row-label">${label}</span>
+                    <span class="breakdown-row-val ${cls}" style="font-size:.75rem;">${over ? 'OVER by ' : 'Under by '}${fmtM(Math.abs(dist))}</span>
+                </div>`;
+            }
+
             return `<div class="breakdown-card">
                 <div class="breakdown-card-header">
                     <div class="breakdown-dot" style="background:${color}"></div>
@@ -2721,15 +2881,22 @@
                 <div class="breakdown-body">
                     <div class="breakdown-row"><span class="breakdown-row-label">Sending out</span><span class="breakdown-row-val">${t.sendingSalary > 0 ? fmtM(t.sendingSalary) : '—'}</span></div>
                     <div class="breakdown-row"><span class="breakdown-row-label">Taking in</span><span class="breakdown-row-val">${t.receivingSalary > 0 ? fmtM(t.receivingSalary) : '—'}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Net change</span><span class="breakdown-row-val ${salDiff > 0 ? 'negative' : salDiff < 0 ? 'positive' : ''}">${salDiff >= 0 ? '+' : ''}${fmtM(salDiff)}</span></div>
                     <div class="breakdown-divider"></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Salary change</span><span class="breakdown-row-val ${salDiff > 0 ? 'negative' : salDiff < 0 ? 'positive' : ''}">${salDiff >= 0 ? '+' : ''}${fmtM(salDiff)}</span></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Pre-trade salary</span><span class="breakdown-row-val">${t.currentSalary > 0 ? fmtM(t.currentSalary) : '—'}</span></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Post-trade salary</span><span class="breakdown-row-val ${postSalary > CBA.secondApron ? 'negative' : postSalary > CBA.firstApron ? 'warning' : ''}">${postSalary > 0 ? fmtM(postSalary) : '—'}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Pre-trade payroll</span><span class="breakdown-row-val">${t.currentSalary > 0 ? fmtM(t.currentSalary) : '—'}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Post-trade payroll</span><span class="breakdown-row-val ${postSalary > CBA.secondApron ? 'negative' : postSalary > CBA.firstApron ? 'warning' : ''}">${postSalary > 0 ? fmtM(postSalary) : '—'}</span></div>
+                    <div class="breakdown-divider"></div>
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin-bottom:.4rem;">Distance from Thresholds</div>
+                    ${distRow('Salary Cap ($153M)', CBA.salaryCap, postSalary)}
+                    ${distRow('Luxury Tax ($187.9M)', CBA.luxuryTax, postSalary)}
+                    ${distRow('1st Apron ($206.7M)', CBA.firstApron, postSalary)}
+                    ${distRow('2nd Apron ($219.2M)', CBA.secondApron, postSalary)}
+                    <div class="breakdown-divider"></div>
                     <div class="breakdown-row"><span class="breakdown-row-label">Players sent</span><span class="breakdown-row-val">${t.selectedPlayers.length}</span></div>
                     <div class="breakdown-row"><span class="breakdown-row-label">Picks sent</span><span class="breakdown-row-val">${t.selectedPicks.length}</span></div>
                     ${t.selectedTPEs.length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">TPEs used</span><span class="breakdown-row-val">${t.selectedTPEs.length}</span></div>` : ''}
                     ${(t.faSignings||[]).length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">FA signings</span><span class="breakdown-row-val">${(t.faSignings||[]).filter(s=>s.type==='direct').length} direct${(t.faSignings||[]).filter(s=>s.type==='sat').length > 0 ? ', '+(t.faSignings||[]).filter(s=>s.type==='sat').length+' S&T' : ''}</span></div>` : ''}
-                    <div><span class="apron-pill ${apronStatus.cls}">${apronStatus.label}</span></div>
+                    <div style="margin-top:.5rem;"><span class="apron-pill ${apronStatus.cls}">${apronStatus.label}</span></div>
                 </div>
             </div>`;
         }).join('');
@@ -2775,11 +2942,12 @@
         const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
         const teamAbbrs = activeTeams.map(t => t.abbr).join(' ↔ ');
         const defaultTitle = teamAbbrs || document.getElementById('modalTitle').textContent;
-        const inputEl = document.getElementById('tradeNameInput');
-        const customTitle = inputEl ? (inputEl.value.trim() || defaultTitle) : defaultTitle;
-        const canvas = drawTradeCard(customTitle);
+        const customTitle = prompt('Name this trade graphic:', defaultTitle);
+        if (customTitle === null) return; // cancelled
+        const finalTitle = customTitle.trim() || defaultTitle;
+        const canvas = drawTradeCard(finalTitle);
         _lastTradeCanvas = canvas;
-        showSharePreview(canvas, customTitle);
+        showSharePreview(canvas, finalTitle);
     }
 
     // ── Post trade graphic to the Community Wall ──────────────────────────
@@ -3351,6 +3519,68 @@
         if (salary > CBA.salaryCap)   return { label: 'Over Cap', cls: 'tax' };
         return { label: 'Under Cap', cls: 'under' };
     }
+
+    // ─── CUSTOM DROPDOWN ─────────────────────────────────────────────────────
+    let openDropdownId = null;
+
+    function toggleDropdown(teamId, e) {
+        if (e) e.stopPropagation();
+        const dd = document.getElementById('dd-' + teamId);
+        const hdr = document.getElementById('hdr-' + teamId);
+        if (!dd) return;
+        const isOpen = dd.classList.contains('open');
+        closeAllDropdowns();
+        if (!isOpen) {
+            dd.classList.add('open');
+            hdr.classList.add('open');
+            openDropdownId = teamId;
+            // focus search
+            setTimeout(() => {
+                const inp = document.getElementById('ddsearch-' + teamId);
+                if (inp) inp.focus();
+            }, 50);
+        }
+    }
+
+    function closeDropdown(teamId) {
+        const dd = document.getElementById('dd-' + teamId);
+        const hdr = document.getElementById('hdr-' + teamId);
+        if (dd) dd.classList.remove('open');
+        if (hdr) hdr.classList.remove('open');
+        if (openDropdownId === teamId) openDropdownId = null;
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.team-dropdown.open').forEach(el => el.classList.remove('open'));
+        document.querySelectorAll('.team-card-header.open').forEach(el => el.classList.remove('open'));
+        openDropdownId = null;
+    }
+
+    function filterDropdown(teamId, query) {
+        const list = document.getElementById('ddlist-' + teamId);
+        if (!list) return;
+        const q = query.toLowerCase().trim();
+        list.querySelectorAll('.team-dropdown-option').forEach(opt => {
+            const name = opt.dataset.name || '';
+            const abbr = opt.querySelector('.team-dropdown-option-abbr')?.textContent?.toLowerCase() || '';
+            opt.style.display = (!q || name.includes(q) || abbr.includes(q)) ? '' : 'none';
+        });
+        // Show/hide section labels based on visible options
+        list.querySelectorAll('.team-dropdown-section').forEach(sec => {
+            const hasVisible = [...sec.querySelectorAll('.team-dropdown-option')].some(o => o.style.display !== 'none');
+            sec.querySelector('.team-dropdown-section-label').style.display = hasVisible ? '' : 'none';
+        });
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (openDropdownId !== null) {
+            const hdr = document.getElementById('hdr-' + openDropdownId);
+            if (hdr && !hdr.contains(e.target)) {
+                closeAllDropdowns();
+            }
+        }
+    });
 
     // ─── BOOTSTRAP ───────────────────────────────────────────────────────────
     init();
