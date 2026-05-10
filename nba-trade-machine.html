@@ -1767,6 +1767,8 @@
 
             });  // end FA/S&T checks
 
+        });  // end tradeSummary.forEach FA/S&T
+
         // ── Minimum player count check ─────────────────────────────────────
         // Each team must end with at least 8 players on active roster (not enforced without full roster data)
 
@@ -2009,126 +2011,154 @@
         const F = (w, sz, fam) => `${w} ${sz}px ${fam || '"Helvetica Neue", Helvetica, Arial, sans-serif'}`;
 
         // ── Palette ───────────────────────────────────────────────────────
-        const BG         = '#050c1a';
-        const SURFACE    = '#0d1a2e';
-        const SURFACE2   = '#111f35';
-        const BORDER     = 'rgba(255,255,255,0.07)';
+        const BG         = '#030812';
+        const SURFACE    = '#0a1525';
+        const SURFACE2   = '#0e1c30';
+        const BORDER     = 'rgba(255,255,255,0.06)';
         const TEXT_PRI   = '#f0f6ff';
-        const TEXT_SEC   = '#6b8099';
-        const TEXT_MID   = '#a0b8cc';
+        const TEXT_SEC   = '#5a7490';
+        const TEXT_MID   = '#8faec8';
         const ACCENT     = '#006BB6';
-        const ACCENT2    = '#4da8ff';
-        const STATUS_OK  = '#22c55e';
-        const STATUS_ERR = '#ef4444';
+        const ACCENT2    = '#3d9fe8';
+        const STATUS_OK  = '#10b981';
+        const STATUS_ERR = '#f43f5e';
         const RED_BADGE  = '#ED174C';
 
-        // ── Background gradient ────────────────────────────────────────────
-        const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-        bgGrad.addColorStop(0, '#040b18');
-        bgGrad.addColorStop(0.5, '#060e1e');
-        bgGrad.addColorStop(1, '#030913');
-        ctx.fillStyle = bgGrad;
+        // ── Background ────────────────────────────────────────────────────
+        // Deep dark base
+        ctx.fillStyle = BG;
         ctx.fillRect(0, 0, W, H);
 
-        // Subtle grid lines
+        // Diagonal halftone-style dot grid (very subtle)
         ctx.save();
-        ctx.globalAlpha = 0.035;
-        ctx.strokeStyle = '#4da8ff';
-        ctx.lineWidth = 1;
-        for (let x = 0; x <= W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-        for (let y = 0; y <= H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+        ctx.globalAlpha = 0.018;
+        for (let x = 0; x < W; x += 28) {
+            for (let y = 0; y < H; y += 28) {
+                ctx.fillStyle = '#4da8ff';
+                ctx.beginPath();
+                ctx.arc(x, y, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
         ctx.restore();
 
-        // Radial glow center-left
-        const glow = ctx.createRadialGradient(W*0.25, H*0.3, 0, W*0.25, H*0.3, 480);
-        glow.addColorStop(0, 'rgba(0,107,182,0.12)');
-        glow.addColorStop(1, 'rgba(0,107,182,0)');
-        ctx.fillStyle = glow;
+        // Large atmospheric glow — top left
+        const glowL = ctx.createRadialGradient(120, 0, 0, 120, 0, 520);
+        glowL.addColorStop(0, 'rgba(0,107,182,0.18)');
+        glowL.addColorStop(1, 'rgba(0,107,182,0)');
+        ctx.fillStyle = glowL;
         ctx.fillRect(0, 0, W, H);
 
-        // ── Top accent bar ─────────────────────────────────────────────────
-        // Full-width gradient bar at top
-        const topBar = ctx.createLinearGradient(0, 0, W, 0);
-        topBar.addColorStop(0, ACCENT);
-        topBar.addColorStop(0.5, ACCENT2);
-        topBar.addColorStop(1, RED_BADGE);
-        ctx.fillStyle = topBar;
-        ctx.fillRect(0, 0, W, 4);
+        // Subtle right glow (red accent)
+        const glowR = ctx.createRadialGradient(W, H, 0, W, H, 400);
+        glowR.addColorStop(0, 'rgba(237,23,76,0.07)');
+        glowR.addColorStop(1, 'rgba(237,23,76,0)');
+        ctx.fillStyle = glowR;
+        ctx.fillRect(0, 0, W, H);
 
-        const PAD = 52;
+        // ── Top accent bar — tricolor gradient ────────────────────────────
+        const topBar = ctx.createLinearGradient(0, 0, W, 0);
+        topBar.addColorStop(0,   ACCENT);
+        topBar.addColorStop(0.45, ACCENT2);
+        topBar.addColorStop(0.75, ACCENT);
+        topBar.addColorStop(1,   RED_BADGE);
+        ctx.fillStyle = topBar;
+        ctx.fillRect(0, 0, W, 5);
+
+        // Bottom accent bar — thinner
+        const botBar = ctx.createLinearGradient(0, 0, W, 0);
+        botBar.addColorStop(0, 'rgba(0,107,182,0)');
+        botBar.addColorStop(0.3, 'rgba(0,107,182,0.4)');
+        botBar.addColorStop(0.7, 'rgba(61,159,232,0.4)');
+        botBar.addColorStop(1, 'rgba(237,23,76,0.4)');
+        ctx.fillStyle = botBar;
+        ctx.fillRect(0, H - 3, W, 3);
+
+        const PAD = 48;
 
         // ── Header row ────────────────────────────────────────────────────
-        // Eyebrow left
-        ctx.font = F(600, 11);
-        ctx.fillStyle = TEXT_SEC;
-        ctx.textAlign = 'left';
-        ctx.letterSpacing = '0.15em';
-        ctx.fillText('SIXERS HOOPS', PAD, 42);
-        ctx.letterSpacing = '0';
+        // Brand pill (left)
+        const brandPillW = 210, brandPillH = 30, brandPillX = PAD, brandPillY = 18;
+        roundRect(ctx, brandPillX, brandPillY, brandPillW, brandPillH, 15);
+        ctx.fillStyle = 'rgba(0,107,182,0.15)';
+        ctx.fill();
+        roundRect(ctx, brandPillX, brandPillY, brandPillW, brandPillH, 15);
+        ctx.strokeStyle = 'rgba(0,107,182,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
-        // Dot separator
+        // Red dot inside pill
         ctx.fillStyle = RED_BADGE;
-        ctx.beginPath(); ctx.arc(PAD + ctx.measureText('SIXERS HOOPS').width + 16, 38, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(brandPillX + 16, brandPillY + 15, 4, 0, Math.PI*2); ctx.fill();
 
-        ctx.font = F(500, 11);
-        ctx.fillStyle = TEXT_SEC;
+        ctx.font = F(700, 11);
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
         ctx.textAlign = 'left';
-        const afterDot = PAD + ctx.measureText('SIXERS HOOPS').width + 32;
-        ctx.fillText('NBA TRADE MACHINE', afterDot, 42);
+        ctx.fillText('SIXERS HOOPS', brandPillX + 28, brandPillY + 19.5);
+
+        // Separator dot
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath(); ctx.arc(brandPillX + 130, brandPillY + 15, 2, 0, Math.PI*2); ctx.fill();
+
+        ctx.font = F(500, 10);
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillText('TRADE MACHINE', brandPillX + 140, brandPillY + 19.5);
 
         // ── Status badge (top right) ───────────────────────────────────────
         const chipColor = isValid ? STATUS_OK : STATUS_ERR;
-        const chipLabel = isValid ? '✓  CBA VALID' : '✗  CBA INVALID';
-        ctx.font = F(700, 12);
-        const chipW = ctx.measureText(chipLabel).width + 32;
+        const chipLabel = isValid ? '✓  CBA COMPLIANT' : '✗  CBA VIOLATION';
+        ctx.font = F(700, 11);
+        const chipW = ctx.measureText(chipLabel).width + 28;
         const chipX = W - PAD - chipW;
-        const chipY = 22;
-        const chipH = 28;
+        const chipY = 18;
+        const chipH = 30;
 
         // Chip glow
         ctx.save();
         ctx.shadowColor = chipColor;
-        ctx.shadowBlur = 16;
-        roundRect(ctx, chipX, chipY, chipW, chipH, 7);
-        ctx.fillStyle = chipColor + '18';
+        ctx.shadowBlur = 20;
+        roundRect(ctx, chipX, chipY, chipW, chipH, 15);
+        ctx.fillStyle = chipColor + '20';
         ctx.fill();
         ctx.restore();
 
-        roundRect(ctx, chipX, chipY, chipW, chipH, 7);
-        ctx.strokeStyle = chipColor + '80';
-        ctx.lineWidth = 1.5;
+        roundRect(ctx, chipX, chipY, chipW, chipH, 15);
+        ctx.strokeStyle = chipColor + '70';
+        ctx.lineWidth = 1;
         ctx.stroke();
         ctx.fillStyle = chipColor;
         ctx.textAlign = 'left';
-        ctx.fillText(chipLabel, chipX + 16, chipY + chipH/2 + 4.5);
+        ctx.fillText(chipLabel, chipX + 14, chipY + chipH/2 + 4);
 
-        // ── Thin divider ──────────────────────────────────────────────────
+        // ── Thin divider line ─────────────────────────────────────────────
         const grad1 = ctx.createLinearGradient(PAD, 0, W-PAD, 0);
         grad1.addColorStop(0, 'rgba(255,255,255,0)');
-        grad1.addColorStop(0.2, 'rgba(255,255,255,0.12)');
-        grad1.addColorStop(0.8, 'rgba(255,255,255,0.12)');
+        grad1.addColorStop(0.15, 'rgba(255,255,255,0.1)');
+        grad1.addColorStop(0.85, 'rgba(255,255,255,0.1)');
         grad1.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = grad1;
-        ctx.fillRect(PAD, 58, W - PAD*2, 1);
+        ctx.fillRect(PAD, 60, W - PAD*2, 1);
 
         // ── Trade title ────────────────────────────────────────────────────
-        ctx.font = F(800, 44);
+        ctx.font = F(900, 46);
         ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
         let displayTitle = tradeTitle.toUpperCase();
-        while (ctx.measureText(displayTitle).width > W - PAD*2 - 20 && displayTitle.length > 4) {
+        // Truncate if too wide
+        const maxTitleW = W - PAD*2 - 40;
+        while (ctx.measureText(displayTitle).width > maxTitleW && displayTitle.length > 4) {
             displayTitle = displayTitle.slice(0, -1);
         }
         if (displayTitle.length < tradeTitle.toUpperCase().length) displayTitle += '…';
 
-        // Slight text shadow for depth
+        // Title with blue glow
         ctx.save();
-        ctx.shadowColor = 'rgba(0,107,182,0.4)';
-        ctx.shadowBlur = 20;
-        ctx.fillText(displayTitle, PAD, 118);
+        ctx.shadowColor = 'rgba(0,107,182,0.5)';
+        ctx.shadowBlur = 24;
+        ctx.fillText(displayTitle, PAD, 122);
         ctx.restore();
 
-        // Subtitle line
+        // Subtitle — season + salary + branding
         const totalSalaryMoving = activeTeams.reduce((sum, t) => {
             const d = TEAM_DATA[t.abbr];
             return sum + t.selectedPlayers.reduce((s, pid) => {
@@ -2136,120 +2166,160 @@
                 return s + (p ? p.salary : 0);
             }, 0);
         }, 0);
-        const salStr = totalSalaryMoving > 0 ? '  ·  $' + (totalSalaryMoving / 1e6).toFixed(1) + 'M total salary' : '';
-        ctx.font = F(400, 14);
+        const salStr = totalSalaryMoving > 0 ? '  ·  $' + (totalSalaryMoving / 1e6).toFixed(1) + 'M salary' : '';
+
+        ctx.font = F(400, 13);
         ctx.fillStyle = TEXT_SEC;
-        ctx.fillText('2026–27 Season' + salStr + '  ·  sixershoops.com', PAD, 146);
+        ctx.fillText('2026–27 NBA Season' + salStr + '  ·  sixershoops.com', PAD, 148);
+
+        // ── Blue accent underline below title ─────────────────────────────
+        const titleW = Math.min(ctx.measureText(displayTitle).width, maxTitleW);
+        const underGrad = ctx.createLinearGradient(PAD, 0, PAD + titleW, 0);
+        underGrad.addColorStop(0, ACCENT);
+        underGrad.addColorStop(0.6, ACCENT2);
+        underGrad.addColorStop(1, 'rgba(61,159,232,0)');
+        ctx.fillStyle = underGrad;
+        ctx.fillRect(PAD, 128, Math.min(titleW, 480), 2);
 
         // ── Section divider ───────────────────────────────────────────────
         const grad2 = ctx.createLinearGradient(PAD, 0, W-PAD, 0);
         grad2.addColorStop(0, ACCENT + '00');
-        grad2.addColorStop(0.15, ACCENT + 'cc');
-        grad2.addColorStop(0.85, ACCENT + '44');
+        grad2.addColorStop(0.12, ACCENT + 'bb');
+        grad2.addColorStop(0.88, ACCENT + '33');
         grad2.addColorStop(1, ACCENT + '00');
         ctx.fillStyle = grad2;
-        ctx.fillRect(PAD, 164, W - PAD*2, 1.5);
+        ctx.fillRect(PAD, 166, W - PAD*2, 1.5);
 
         // ── TRADE LAYOUT ──────────────────────────────────────────────────
-        // For 2 teams: side-by-side with centered arrow column
-        // For 3+ teams: compact multi-column
-        const CARD_TOP = 182;
-        const CARD_BOT = H - 64;
+        const CARD_TOP = 184;
+        const CARD_BOT = H - 48;
         const CARD_H   = CARD_BOT - CARD_TOP;
         const maxCards = Math.min(activeTeams.length, 5);
 
         if (maxCards === 2) {
             // ── 2-team layout: large cards with central arrow ─────────────
-            const ARROW_COL = 80;
-            const CARD_W = Math.floor((W - PAD*2 - ARROW_COL - 16) / 2);
+            const ARROW_COL = 72;
+            const CARD_W = Math.floor((W - PAD*2 - ARROW_COL - 12) / 2);
 
             activeTeams.slice(0, 2).forEach((t, i) => {
                 const d = TEAM_DATA[t.abbr];
                 const teamInfo = NBA_TEAMS[t.abbr];
                 const teamColor = (teamInfo && teamInfo.color) ? teamInfo.color : ACCENT;
                 const teamName  = teamInfo ? teamInfo.name.toUpperCase() : t.abbr;
-                const cx = i === 0 ? PAD : PAD + CARD_W + ARROW_COL + 16;
+                const cx = i === 0 ? PAD : PAD + CARD_W + ARROW_COL + 12;
 
                 const selectedPlayers = t.selectedPlayers.map(pid => d.players.find(p => p.id === pid)).filter(Boolean);
                 const selectedPicks   = t.selectedPicks.map(pkid => (d.picks||[]).find(pk => pk.id === pkid)).filter(Boolean);
                 const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary||0), 0);
 
-                // Card bg with subtle gradient
-                const cardGrad = ctx.createLinearGradient(cx, CARD_TOP, cx + CARD_W, CARD_TOP + CARD_H);
-                cardGrad.addColorStop(0, '#0e1e33');
-                cardGrad.addColorStop(1, '#0a1628');
-                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 12);
+                // Card shadow/glow
+                ctx.save();
+                ctx.shadowColor = teamColor + '25';
+                ctx.shadowBlur = 30;
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 14);
+                ctx.fillStyle = '#0b1829';
+                ctx.fill();
+                ctx.restore();
+
+                // Card bg
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 14);
+                const cardGrad = ctx.createLinearGradient(cx, CARD_TOP, cx, CARD_TOP + CARD_H);
+                cardGrad.addColorStop(0, '#0f1f35');
+                cardGrad.addColorStop(1, '#090f1c');
                 ctx.fillStyle = cardGrad;
                 ctx.fill();
 
-                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 12);
-                ctx.strokeStyle = teamColor + '40';
+                // Card border
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 14);
+                ctx.strokeStyle = teamColor + '35';
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
 
-                // Team color top bar
-                const topGradBar = ctx.createLinearGradient(cx, CARD_TOP, cx + CARD_W, CARD_TOP);
-                topGradBar.addColorStop(0, teamColor);
-                topGradBar.addColorStop(1, teamColor + '66');
-                roundRect(ctx, cx, CARD_TOP, CARD_W, 5, [12,12,0,0]);
-                ctx.fillStyle = topGradBar;
+                // Team color left edge bar
+                roundRect(ctx, cx, CARD_TOP + 14, 4, CARD_H - 28, 2);
+                const leftBarGrad = ctx.createLinearGradient(0, CARD_TOP, 0, CARD_TOP + CARD_H);
+                leftBarGrad.addColorStop(0, teamColor);
+                leftBarGrad.addColorStop(0.6, teamColor + 'aa');
+                leftBarGrad.addColorStop(1, teamColor + '22');
+                ctx.fillStyle = leftBarGrad;
                 ctx.fill();
 
-                // Team abbr — big
-                ctx.font = F(900, 38);
+                // Team header area background
+                roundRect(ctx, cx, CARD_TOP, CARD_W, 78, [14,14,0,0]);
+                ctx.fillStyle = teamColor + '12';
+                ctx.fill();
+
+                // Team abbr — large
+                ctx.save();
+                ctx.shadowColor = teamColor + '60';
+                ctx.shadowBlur = 16;
+                ctx.font = F(900, 42);
                 ctx.fillStyle = TEXT_PRI;
                 ctx.textAlign = 'left';
-                ctx.fillText(t.abbr, cx + 22, CARD_TOP + 56);
+                ctx.fillText(t.abbr, cx + 20, CARD_TOP + 52);
+                ctx.restore();
 
-                // Salary sending chip
-                if (sendSal > 0) {
-                    const chipTxt = '$' + (sendSal / 1e6).toFixed(1) + 'M';
-                    ctx.font = F(600, 13);
-                    const cw = ctx.measureText(chipTxt).width + 18;
-                    const cxc = cx + CARD_W - cw - 16, cyc = CARD_TOP + 34, chc = 24;
-                    roundRect(ctx, cxc, cyc, cw, chc, 6);
-                    ctx.fillStyle = teamColor + '25';
-                    ctx.fill();
-                    roundRect(ctx, cxc, cyc, cw, chc, 6);
-                    ctx.strokeStyle = teamColor + '60';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    ctx.fillStyle = teamColor === '#000000' ? '#aaaaaa' : teamColor;
-                    ctx.textAlign = 'left';
-                    ctx.fillText(chipTxt, cxc + 9, cyc + chc/2 + 4.5);
-                }
-
-                // "SENDS" label
-                ctx.font = F(700, 9);
+                // Full team name below abbr
+                ctx.font = F(400, 10);
                 ctx.fillStyle = TEXT_SEC;
                 ctx.textAlign = 'left';
-                ctx.fillText('SENDS', cx + 22, CARD_TOP + 74);
+                ctx.fillText(teamName, cx + 20, CARD_TOP + 67);
+
+                // Salary sending chip — top right of card
+                if (sendSal > 0) {
+                    const chipTxt = '$' + (sendSal / 1e6).toFixed(1) + 'M';
+                    ctx.font = F(700, 12);
+                    const cw = ctx.measureText(chipTxt).width + 16;
+                    const cxc = cx + CARD_W - cw - 16, cyc = CARD_TOP + 24, chc = 26;
+                    roundRect(ctx, cxc, cyc, cw, chc, 13);
+                    ctx.fillStyle = teamColor + '22';
+                    ctx.fill();
+                    roundRect(ctx, cxc, cyc, cw, chc, 13);
+                    ctx.strokeStyle = teamColor + '55';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    const safeColor = (teamColor === '#000000' || teamColor === '#000') ? '#aaaaaa' : teamColor;
+                    ctx.fillStyle = safeColor;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(chipTxt, cxc + cw/2, cyc + chc/2 + 4.5);
+                }
+
+                // "SENDS" label with pill
+                ctx.font = F(800, 8.5);
+                ctx.fillStyle = TEXT_SEC;
+                ctx.textAlign = 'left';
+                ctx.fillText('SENDS', cx + 20, CARD_TOP + 83);
 
                 // Divider
-                ctx.fillStyle = 'rgba(255,255,255,0.06)';
-                ctx.fillRect(cx + 16, CARD_TOP + 82, CARD_W - 32, 1);
+                const divGrad = ctx.createLinearGradient(cx + 16, 0, cx + CARD_W - 16, 0);
+                divGrad.addColorStop(0, 'rgba(255,255,255,0)');
+                divGrad.addColorStop(0.2, 'rgba(255,255,255,0.07)');
+                divGrad.addColorStop(0.8, 'rgba(255,255,255,0.07)');
+                divGrad.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = divGrad;
+                ctx.fillRect(cx + 16, CARD_TOP + 90, CARD_W - 32, 1);
 
                 // Player + pick list
-                let cursor = CARD_TOP + 100;
-                const LINE_H = 36;
-                const MAX_ITEMS = Math.floor((CARD_H - 95) / LINE_H);
+                let cursor = CARD_TOP + 105;
+                const LINE_H = 38;
+                const MAX_ITEMS = Math.floor((CARD_H - 108) / LINE_H);
                 const totalItems = selectedPlayers.length + selectedPicks.length;
                 const showCount  = Math.min(totalItems, MAX_ITEMS);
                 let shown = 0;
 
-                selectedPlayers.forEach((p, pi) => {
+                selectedPlayers.forEach((p) => {
                     if (shown >= showCount) return;
                     if (shown === showCount - 1 && totalItems > showCount) {
                         ctx.font = F(500, 12);
                         ctx.fillStyle = TEXT_SEC;
                         ctx.textAlign = 'left';
-                        ctx.fillText(`+${totalItems - shown} more`, cx + 22, cursor + 16);
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 20, cursor + 17);
                         shown++; return;
                     }
-                    // Alternating row bg
+                    // Row bg on alternating rows
                     if (shown % 2 === 0) {
-                        roundRect(ctx, cx + 12, cursor + 2, CARD_W - 24, LINE_H - 4, 6);
-                        ctx.fillStyle = 'rgba(255,255,255,0.025)';
+                        roundRect(ctx, cx + 12, cursor + 2, CARD_W - 24, LINE_H - 4, 7);
+                        ctx.fillStyle = 'rgba(255,255,255,0.03)';
                         ctx.fill();
                     }
                     // Name
@@ -2259,65 +2329,94 @@
                     let pName = p.name;
                     while (ctx.measureText(pName).width > CARD_W - 110 && pName.length > 4) pName = pName.slice(0,-1);
                     if (pName.length < p.name.length) pName += '…';
-                    ctx.fillText(pName, cx + 22, cursor + 18);
-                    // Position pill
+                    ctx.fillText(pName, cx + 20, cursor + 19);
+                    // Position badge
                     if (p.position && p.position !== '—') {
-                        ctx.font = F(700, 9);
+                        ctx.font = F(700, 8.5);
                         ctx.fillStyle = TEXT_SEC;
-                        ctx.fillText(p.position, cx + 22, cursor + 31);
+                        ctx.fillText(p.position, cx + 20, cursor + 32);
                     }
                     // Salary
                     if (p.salary) {
-                        ctx.font = F(500, 12);
-                        ctx.fillStyle = TEXT_MID;
+                        ctx.font = F(600, 12);
+                        ctx.fillStyle = ACCENT2;
                         ctx.textAlign = 'right';
-                        ctx.fillText('$' + (p.salary/1e6).toFixed(1) + 'M', cx + CARD_W - 18, cursor + 18);
+                        ctx.fillText('$' + (p.salary/1e6).toFixed(1) + 'M', cx + CARD_W - 16, cursor + 19);
                     }
                     cursor += LINE_H; shown++;
                 });
 
-                selectedPicks.forEach((pk, pki) => {
+                selectedPicks.forEach((pk) => {
                     if (shown >= showCount) return;
                     if (shown === showCount - 1 && totalItems > showCount) {
                         ctx.font = F(500, 12); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'left';
-                        ctx.fillText(`+${totalItems - shown} more`, cx + 22, cursor + 16);
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 20, cursor + 17);
                         shown++; return;
                     }
                     if (shown % 2 === 0) {
-                        roundRect(ctx, cx + 12, cursor + 2, CARD_W - 24, LINE_H - 4, 6);
-                        ctx.fillStyle = 'rgba(255,255,255,0.025)';
+                        roundRect(ctx, cx + 12, cursor + 2, CARD_W - 24, LINE_H - 4, 7);
+                        ctx.fillStyle = 'rgba(255,255,255,0.03)';
                         ctx.fill();
                     }
-                    // Draft pick icon
-                    ctx.font = F(500, 10); ctx.fillStyle = ACCENT2; ctx.textAlign = 'left';
-                    ctx.fillText('📋', cx + 22, cursor + 20);
+                    // Pick diamond icon
+                    ctx.save();
+                    ctx.fillStyle = ACCENT2 + '80';
+                    ctx.translate(cx + 23, cursor + 18);
+                    ctx.rotate(Math.PI/4);
+                    ctx.fillRect(-4, -4, 8, 8);
+                    ctx.restore();
+
                     ctx.font = F(600, 13);
                     ctx.fillStyle = TEXT_MID;
+                    ctx.textAlign = 'left';
                     let pkName = pk.name;
                     while (ctx.measureText(pkName).width > CARD_W - 60 && pkName.length > 4) pkName = pkName.slice(0,-1);
                     if (pkName.length < pk.name.length) pkName += '…';
-                    ctx.fillText(pkName, cx + 38, cursor + 19);
+                    ctx.fillText(pkName, cx + 36, cursor + 20);
                     cursor += LINE_H; shown++;
                 });
+
+                // Empty state
+                if (totalItems === 0) {
+                    ctx.font = F(400, 13);
+                    ctx.fillStyle = TEXT_SEC + '80';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No assets selected', cx + CARD_W/2, CARD_TOP + CARD_H/2);
+                }
             });
 
             // ── Central arrow column ───────────────────────────────────────
-            const arrX = PAD + CARD_W + 8;
+            const arrX = PAD + CARD_W + 6;
             const arrCX = arrX + ARROW_COL / 2;
             const arrCY = CARD_TOP + CARD_H / 2;
-            const arrowSize = 18;
 
-            // Arrow circle bg
-            const cirGrad = ctx.createRadialGradient(arrCX, arrCY, 0, arrCX, arrCY, 32);
-            cirGrad.addColorStop(0, '#112244');
-            cirGrad.addColorStop(1, '#060e1e');
-            ctx.beginPath(); ctx.arc(arrCX, arrCY, 30, 0, Math.PI*2);
-            ctx.fillStyle = cirGrad; ctx.fill();
-            ctx.strokeStyle = 'rgba(77,168,255,0.3)'; ctx.lineWidth = 1.5; ctx.stroke();
+            // Connecting line
+            ctx.strokeStyle = 'rgba(0,107,182,0.2)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 6]);
+            ctx.beginPath();
+            ctx.moveTo(arrCX, CARD_TOP + 20);
+            ctx.lineTo(arrCX, arrCY - 36);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(arrCX, arrCY + 36);
+            ctx.lineTo(arrCX, CARD_TOP + CARD_H - 20);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
-            // Double arrow ↔
+            // Arrow circle
+            ctx.save();
+            ctx.shadowColor = ACCENT;
+            ctx.shadowBlur = 20;
+            ctx.beginPath(); ctx.arc(arrCX, arrCY, 28, 0, Math.PI*2);
+            ctx.fillStyle = '#0f1f38'; ctx.fill();
+            ctx.restore();
+            ctx.beginPath(); ctx.arc(arrCX, arrCY, 28, 0, Math.PI*2);
+            ctx.strokeStyle = 'rgba(0,107,182,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            // Double arrow ⇄
             ctx.fillStyle = ACCENT2;
-            ctx.font = F(700, 26);
+            ctx.font = F(700, 24);
             ctx.textAlign = 'center';
             ctx.fillText('⇄', arrCX, arrCY + 9);
 
@@ -2336,45 +2435,63 @@
                 const selectedPicks   = t.selectedPicks.map(pkid => (d.picks||[]).find(pk => pk.id === pkid)).filter(Boolean);
                 const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary||0), 0);
 
-                // Card
-                const cardGrad = ctx.createLinearGradient(cx, CARD_TOP, cx+CARD_W, CARD_TOP+CARD_H);
-                cardGrad.addColorStop(0, '#0e1e33');
-                cardGrad.addColorStop(1, '#0a1628');
-                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 10);
-                ctx.fillStyle = cardGrad; ctx.fill();
-                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 10);
+                // Card shadow
+                ctx.save();
+                ctx.shadowColor = teamColor + '20';
+                ctx.shadowBlur = 18;
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 12);
+                ctx.fillStyle = '#0b1829'; ctx.fill();
+                ctx.restore();
+
+                // Card bg
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 12);
+                const cg = ctx.createLinearGradient(cx, CARD_TOP, cx, CARD_TOP + CARD_H);
+                cg.addColorStop(0, '#0f1f35'); cg.addColorStop(1, '#090f1c');
+                ctx.fillStyle = cg; ctx.fill();
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 12);
                 ctx.strokeStyle = teamColor + '35'; ctx.lineWidth = 1.5; ctx.stroke();
 
-                // Top color bar
-                roundRect(ctx, cx, CARD_TOP, CARD_W, 4, [10,10,0,0]);
-                ctx.fillStyle = teamColor; ctx.fill();
+                // Left edge bar
+                roundRect(ctx, cx, CARD_TOP + 10, 4, CARD_H - 20, 2);
+                const lbg = ctx.createLinearGradient(0, CARD_TOP, 0, CARD_TOP + CARD_H);
+                lbg.addColorStop(0, teamColor); lbg.addColorStop(1, teamColor + '22');
+                ctx.fillStyle = lbg; ctx.fill();
+
+                // Header bg
+                roundRect(ctx, cx, CARD_TOP, CARD_W, 56, [12,12,0,0]);
+                ctx.fillStyle = teamColor + '10'; ctx.fill();
 
                 // Team abbr
-                ctx.font = F(900, 22);
-                ctx.fillStyle = TEXT_PRI;
-                ctx.textAlign = 'left';
-                ctx.fillText(t.abbr, cx + 14, CARD_TOP + 38);
+                ctx.save();
+                ctx.shadowColor = teamColor + '50'; ctx.shadowBlur = 12;
+                ctx.font = F(900, 24); ctx.fillStyle = TEXT_PRI; ctx.textAlign = 'left';
+                ctx.fillText(t.abbr, cx + 13, CARD_TOP + 36);
+                ctx.restore();
 
                 // Salary chip
                 if (sendSal > 0) {
-                    ctx.font = F(500, 10);
-                    ctx.fillStyle = TEXT_MID;
+                    ctx.font = F(700, 10);
+                    const safeColor = (teamColor === '#000000' || teamColor === '#000') ? '#aaaaaa' : teamColor;
+                    ctx.fillStyle = safeColor;
                     ctx.textAlign = 'right';
-                    ctx.fillText('$' + (sendSal/1e6).toFixed(1) + 'M', cx + CARD_W - 12, CARD_TOP + 35);
+                    ctx.fillText('$' + (sendSal/1e6).toFixed(1) + 'M', cx + CARD_W - 10, CARD_TOP + 32);
                 }
 
                 // Sends label
-                ctx.font = F(600, 8);
-                ctx.fillStyle = TEXT_SEC;
-                ctx.textAlign = 'left';
-                ctx.fillText('SENDS', cx + 14, CARD_TOP + 50);
+                ctx.font = F(700, 7.5); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'left';
+                ctx.fillText('SENDS', cx + 13, CARD_TOP + 50);
 
-                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                const divG = ctx.createLinearGradient(cx+10, 0, cx+CARD_W-10, 0);
+                divG.addColorStop(0, 'rgba(255,255,255,0)');
+                divG.addColorStop(0.3, 'rgba(255,255,255,0.06)');
+                divG.addColorStop(0.7, 'rgba(255,255,255,0.06)');
+                divG.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = divG;
                 ctx.fillRect(cx + 10, CARD_TOP + 58, CARD_W - 20, 1);
 
-                let cursor = CARD_TOP + 73;
+                let cursor = CARD_TOP + 72;
                 const LINE_H = 28;
-                const MAX_ITEMS = Math.floor((CARD_H - 68) / LINE_H);
+                const MAX_ITEMS = Math.floor((CARD_H - 70) / LINE_H);
                 const totalItems = selectedPlayers.length + selectedPicks.length;
                 const showCount  = Math.min(totalItems, MAX_ITEMS);
                 let shown = 0;
@@ -2383,24 +2500,26 @@
                     if (shown >= showCount) return;
                     if (shown === showCount - 1 && totalItems > showCount) {
                         ctx.font = F(400, 10); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'left';
-                        ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + 13);
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 13, cursor + 13);
                         shown++; return;
+                    }
+                    if (shown % 2 === 0) {
+                        roundRect(ctx, cx + 8, cursor + 1, CARD_W - 16, LINE_H - 2, 5);
+                        ctx.fillStyle = 'rgba(255,255,255,0.025)'; ctx.fill();
                     }
                     ctx.font = F(700, 12); ctx.fillStyle = TEXT_PRI; ctx.textAlign = 'left';
                     let pName = p.name;
                     while (ctx.measureText(pName).width > CARD_W - 80 && pName.length > 4) pName = pName.slice(0,-1);
                     if (pName.length < p.name.length) pName += '…';
-                    ctx.fillText(pName, cx + 14, cursor + 13);
+                    ctx.fillText(pName, cx + 13, cursor + 13);
                     if (p.position && p.position !== '—') {
-                        ctx.font = F(600, 8); ctx.fillStyle = TEXT_SEC;
-                        ctx.fillText(p.position, cx + 14, cursor + 23);
+                        ctx.font = F(600, 7.5); ctx.fillStyle = TEXT_SEC;
+                        ctx.fillText(p.position, cx + 13, cursor + 22);
                     }
                     if (p.salary) {
-                        ctx.font = F(400, 10); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'right';
+                        ctx.font = F(500, 9.5); ctx.fillStyle = ACCENT2; ctx.textAlign = 'right';
                         ctx.fillText('$'+(p.salary/1e6).toFixed(1)+'M', cx+CARD_W-10, cursor+13);
                     }
-                    ctx.fillStyle = 'rgba(255,255,255,0.04)';
-                    ctx.fillRect(cx+10, cursor+LINE_H-3, CARD_W-20, 1);
                     cursor += LINE_H; shown++;
                 });
 
@@ -2408,16 +2527,18 @@
                     if (shown >= showCount) return;
                     if (shown === showCount - 1 && totalItems > showCount) {
                         ctx.font = F(400, 10); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'left';
-                        ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + 13);
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 13, cursor + 13);
                         shown++; return;
+                    }
+                    if (shown % 2 === 0) {
+                        roundRect(ctx, cx + 8, cursor + 1, CARD_W - 16, LINE_H - 2, 5);
+                        ctx.fillStyle = 'rgba(255,255,255,0.025)'; ctx.fill();
                     }
                     ctx.font = F(600, 11); ctx.fillStyle = TEXT_MID; ctx.textAlign = 'left';
                     let pkName = pk.name;
                     while (ctx.measureText(pkName).width > CARD_W - 28 && pkName.length > 4) pkName = pkName.slice(0,-1);
                     if (pkName.length < pk.name.length) pkName += '…';
-                    ctx.fillText(pkName, cx + 14, cursor + 13);
-                    ctx.fillStyle = 'rgba(255,255,255,0.04)';
-                    ctx.fillRect(cx+10, cursor+LINE_H-3, CARD_W-20, 1);
+                    ctx.fillText(pkName, cx + 13, cursor + 13);
                     cursor += LINE_H; shown++;
                 });
 
@@ -2425,35 +2546,43 @@
                 if (i < maxCards - 1) {
                     const axCX = cx + CARD_W + GAP/2;
                     const axCY = CARD_TOP + CARD_H/2;
-                    ctx.font = F(600, 16);
-                    ctx.fillStyle = 'rgba(77,168,255,0.5)';
+                    ctx.font = F(600, 14);
+                    ctx.fillStyle = 'rgba(61,159,232,0.55)';
                     ctx.textAlign = 'center';
-                    ctx.fillText('⇄', axCX, axCY + 6);
+                    ctx.fillText('⇄', axCX, axCY + 5);
                 }
             });
         }
 
-        // ── Footer ────────────────────────────────────────────────────────
+        // ── Footer bar ────────────────────────────────────────────────────
+        const footY = H - 44;
         const footGrad = ctx.createLinearGradient(PAD, 0, W-PAD, 0);
         footGrad.addColorStop(0, 'rgba(255,255,255,0)');
-        footGrad.addColorStop(0.2, 'rgba(255,255,255,0.08)');
-        footGrad.addColorStop(0.8, 'rgba(255,255,255,0.08)');
+        footGrad.addColorStop(0.15, 'rgba(255,255,255,0.07)');
+        footGrad.addColorStop(0.85, 'rgba(255,255,255,0.07)');
         footGrad.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = footGrad;
-        ctx.fillRect(PAD, H - 52, W - PAD*2, 1);
+        ctx.fillRect(PAD, footY, W - PAD*2, 1);
 
-        // Logo mark — colored dot + brand
+        // Logo mark left
         ctx.fillStyle = RED_BADGE;
-        ctx.beginPath(); ctx.arc(PAD + 6, H - 25, 5, 0, Math.PI*2); ctx.fill();
-        ctx.font = F(800, 13);
-        ctx.fillStyle = TEXT_PRI;
+        ctx.beginPath(); ctx.arc(PAD + 7, footY + 18, 5, 0, Math.PI*2); ctx.fill();
+        ctx.font = F(800, 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
         ctx.textAlign = 'left';
-        ctx.fillText('SIXERS HOOPS', PAD + 18, H - 20);
+        ctx.fillText('SIXERS HOOPS', PAD + 20, footY + 22);
 
-        ctx.font = F(400, 12);
+        // Season label center
+        ctx.font = F(400, 11);
+        ctx.fillStyle = TEXT_SEC;
+        ctx.textAlign = 'center';
+        ctx.fillText('2026–27 NBA SEASON', W/2, footY + 22);
+
+        // URL right
+        ctx.font = F(400, 11);
         ctx.fillStyle = TEXT_SEC;
         ctx.textAlign = 'right';
-        ctx.fillText('sixershoops.com', W - PAD, H - 20);
+        ctx.fillText('sixershoops.com', W - PAD, footY + 22);
 
         return canvas;
     }
