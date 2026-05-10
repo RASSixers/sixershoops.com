@@ -1006,17 +1006,39 @@ ANALYSIS: [Analysis]
 
         container.innerHTML = '';
 
-        // Add a "Sign in to participate" prompt at the TOP for guests
+        // Add a compact "Sign in" banner for guests — styled to match site theme
         if (!user) {
             const guestPrompt = document.createElement('div');
-            guestPrompt.className = 'mb-6 bg-white rounded-xl p-8 text-center border border-slate-200 shadow-sm transition-all hover:border-blue-200';
+            guestPrompt.style.cssText = `
+                margin-bottom:1rem;
+                background:var(--navy-deep,#000d2e);
+                border:1px solid rgba(0,107,182,0.22);
+                border-radius:12px;
+                padding:0.75rem 1rem;
+                display:flex;
+                align-items:center;
+                gap:0.85rem;
+            `;
             guestPrompt.innerHTML = `
-                <div class="h-12 w-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <div style="width:34px;height:34px;border-radius:8px;background:rgba(0,107,182,0.18);border:1px solid rgba(0,107,182,0.28);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-1">Want to join the conversation?</h3>
-                <p class="text-slate-500 mb-4 text-sm">Sign in to vote, comment, and share your own thoughts with the community!</p>
-                <button onclick="CommunityFeed.triggerLogin()" class="bg-blue-600 text-white px-8 py-2.5 rounded-full font-bold hover:bg-blue-700 transition-all text-sm shadow-md hover:shadow-lg">Sign In to Participate</button>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:800;letter-spacing:0.04em;color:rgba(255,255,255,0.85);text-transform:uppercase;">Sign in to join the conversation</div>
+                    <div style="font-family:'Barlow',sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);margin-top:1px;">Vote, comment, and share your takes with the community</div>
+                </div>
+                <button onclick="CommunityFeed.triggerLogin()" style="
+                    flex-shrink:0;
+                    display:inline-flex;align-items:center;gap:0.35rem;
+                    background:var(--sixers-blue,#006BB6);color:white;
+                    font-family:'Barlow Condensed',sans-serif;font-weight:700;
+                    font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;
+                    padding:0.45rem 1rem;border-radius:7px;border:none;cursor:pointer;
+                    transition:background 0.2s;white-space:nowrap;
+                " onmouseover="this.style.background='#0080d4'" onmouseout="this.style.background='var(--sixers-blue,#006BB6)'">
+                    Sign In
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                </button>
             `;
             container.appendChild(guestPrompt);
         }
