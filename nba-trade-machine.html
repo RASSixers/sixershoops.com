@@ -1687,7 +1687,7 @@
         ctx.fillStyle = BORDER;
         ctx.fillRect(PAD, 204, W - PAD * 2, 1);
 
-        // ── Team cards ────────────────────────────────────────────────────
+        // ── Team cards — show players & picks being traded ────────────────
         const CARD_TOP = 224;
         const CARD_BOT = H - 72;
         const CARD_H   = CARD_BOT - CARD_TOP;
@@ -1701,14 +1701,17 @@
             const d = TEAM_DATA[t.abbr];
             const teamInfo = NBA_TEAMS[t.abbr];
             const cx = PAD + i * (CARD_W + GAP);
+            const teamColor = (teamInfo && teamInfo.color) ? teamInfo.color : ACCENT;
 
-            const sendSal = t.selectedPlayers.reduce((s, pid) => {
-                const p = d.players.find(p => p.id === pid);
-                return s + (p ? p.salary : 0);
-            }, 0);
-            const recvSal = totalSalaryMoving - sendSal;
-            const postSal = d.teamSalary - sendSal + recvSal;
-            const salDiff = recvSal - sendSal;
+            // Resolve selected players and picks
+            const selectedPlayers = t.selectedPlayers
+                .map(pid => d.players.find(p => p.id === pid))
+                .filter(Boolean);
+            const selectedPicks = t.selectedPicks
+                .map(pkid => (d.picks || []).find(pk => pk.id === pkid))
+                .filter(Boolean);
+
+            const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary || 0), 0);
 
             // Card background
             roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 8);
@@ -1719,62 +1722,118 @@
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Team color accent — left edge bar
-            const teamColor = (teamInfo && teamInfo.color) ? teamInfo.color : ACCENT;
+            // Team color left edge bar
             ctx.fillStyle = teamColor;
             ctx.fillRect(cx, CARD_TOP, 3, CARD_H);
 
-            // Team abbreviation
-            ctx.font = F(700, 16);
+            // ── Card header: team name + salary ──────────────────────────
+            ctx.font = F(700, 15);
             ctx.fillStyle = TEXT_PRI;
             ctx.textAlign = 'left';
-            ctx.fillText(t.abbr.toUpperCase(), cx + 18, CARD_TOP + 30);
+            ctx.fillText(t.abbr.toUpperCase(), cx + 16, CARD_TOP + 28);
 
-            // Team full name
-            ctx.font = F(400, 10);
-            ctx.fillStyle = TEXT_SEC;
-            const fullName = (teamInfo ? teamInfo.name : t.abbr).toUpperCase();
-            let fName = fullName;
-            while (ctx.measureText(fName).width > CARD_W - 36 && fName.length > 3) fName = fName.slice(0,-1);
-            ctx.fillText(fName, cx + 18, CARD_TOP + 46);
+            // Salary sending — right-aligned in header
+            if (sendSal > 0) {
+                const salStr = '$' + (sendSal / 1e6).toFixed(1) + 'M';
+                ctx.font = F(400, 11);
+                ctx.fillStyle = TEXT_SEC;
+                ctx.textAlign = 'right';
+                ctx.fillText(salStr, cx + CARD_W - 14, CARD_TOP + 28);
+            }
 
             // Divider
             ctx.fillStyle = BORDER;
-            ctx.fillRect(cx + 18, CARD_TOP + 56, CARD_W - 36, 1);
+            ctx.fillRect(cx + 16, CARD_TOP + 36, CARD_W - 32, 1);
 
-            // Stat rows
-            const rows = [
-                { label: 'Sending',    val: sendSal > 0 ? '$'+(sendSal/1e6).toFixed(1)+'M' : '—' },
-                { label: 'Receiving',  val: recvSal > 0 ? '$'+(recvSal/1e6).toFixed(1)+'M' : '—' },
-                { label: 'Net',        val: (salDiff >= 0 ? '+' : '') + '$'+(Math.abs(salDiff)/1e6).toFixed(1)+'M',
-                                       color: salDiff > 0 ? STATUS_ERR : salDiff < 0 ? STATUS_OK : TEXT_SEC },
-                { label: 'Post-Trade', val: '$'+(postSal/1e6).toFixed(1)+'M' },
-                { label: 'Players',    val: String(t.selectedPlayers.length) },
-                { label: 'Picks',      val: String(t.selectedPicks.length) },
-            ];
+            // ── Players list ──────────────────────────────────────────────
+            let cursor = CARD_TOP + 52;
+            const LINE_H = 30;
+            const MAX_ITEMS = Math.floor((CARD_H - 56) / LINE_H);
 
-            const ROW_START = CARD_TOP + 70;
-            const ROW_STEP  = Math.min(34, (CARD_H - 90) / rows.length);
+            // How many players vs picks to show
+            const totalItems = selectedPlayers.length + selectedPicks.length;
+            const showCount  = Math.min(totalItems, MAX_ITEMS);
+            let shown = 0;
 
-            rows.forEach((row, ri) => {
-                const ry = ROW_START + ri * ROW_STEP;
-                ctx.font = F(400, 10);
-                ctx.fillStyle = TEXT_SEC;
+            selectedPlayers.forEach((p, pi) => {
+                if (shown >= showCount) return;
+                const isLast = shown === showCount - 1 && shown < totalItems - 1;
+
+                if (isLast && totalItems > showCount) {
+                    // "+N more" row
+                    ctx.font = F(400, 11);
+                    ctx.fillStyle = TEXT_SEC;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`+${totalItems - shown} more`, cx + 16, cursor + 14);
+                    shown++;
+                    return;
+                }
+
+                // Player name
+                ctx.font = F(600, 13);
+                ctx.fillStyle = TEXT_PRI;
                 ctx.textAlign = 'left';
-                ctx.fillText(row.label, cx + 18, ry);
-                ctx.font = F(600, 14);
-                ctx.fillStyle = row.color || TEXT_PRI;
-                ctx.fillText(row.val, cx + 18, ry + 17);
+                let pName = p.name;
+                while (ctx.measureText(pName).width > CARD_W - 90 && pName.length > 4) pName = pName.slice(0, -1);
+                if (pName.length < p.name.length) pName += '…';
+                ctx.fillText(pName, cx + 16, cursor + 14);
+
+                // Position tag
+                if (p.position && p.position !== '—') {
+                    ctx.font = F(500, 9);
+                    ctx.fillStyle = TEXT_SEC;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(p.position, cx + 16, cursor + 24);
+                }
+
+                // Salary — right aligned
+                if (p.salary) {
+                    ctx.font = F(400, 11);
+                    ctx.fillStyle = TEXT_SEC;
+                    ctx.textAlign = 'right';
+                    ctx.fillText('$' + (p.salary / 1e6).toFixed(1) + 'M', cx + CARD_W - 14, cursor + 14);
+                }
+
+                // Thin row separator
+                if (pi < selectedPlayers.length - 1 || selectedPicks.length > 0) {
+                    ctx.fillStyle = BORDER;
+                    ctx.fillRect(cx + 16, cursor + LINE_H - 2, CARD_W - 32, 1);
+                }
+
+                cursor += LINE_H;
+                shown++;
             });
 
-            // Apron status — bottom of card
-            const apron = getApronStatus(postSal);
-            const apronColorMap = { under: STATUS_OK, tax: '#d29922', first: '#e3b341', second: STATUS_ERR };
-            const apronC = apronColorMap[apron.cls] || TEXT_SEC;
-            ctx.font = F(600, 10);
-            ctx.fillStyle = apronC;
-            ctx.textAlign = 'left';
-            ctx.fillText(apron.label.toUpperCase(), cx + 18, CARD_TOP + CARD_H - 14);
+            selectedPicks.forEach((pk, pki) => {
+                if (shown >= showCount) return;
+                const isLast = shown === showCount - 1 && shown < totalItems - 1;
+
+                if (isLast && totalItems > showCount) {
+                    ctx.font = F(400, 11);
+                    ctx.fillStyle = TEXT_SEC;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`+${totalItems - shown} more`, cx + 16, cursor + 14);
+                    shown++;
+                    return;
+                }
+
+                // Pick label
+                ctx.font = F(500, 12);
+                ctx.fillStyle = TEXT_SEC;
+                ctx.textAlign = 'left';
+                let pkName = pk.name;
+                while (ctx.measureText(pkName).width > CARD_W - 36 && pkName.length > 4) pkName = pkName.slice(0, -1);
+                if (pkName.length < pk.name.length) pkName += '…';
+                ctx.fillText(pkName, cx + 16, cursor + 14);
+
+                if (pki < selectedPicks.length - 1) {
+                    ctx.fillStyle = BORDER;
+                    ctx.fillRect(cx + 16, cursor + LINE_H - 2, CARD_W - 32, 1);
+                }
+
+                cursor += LINE_H;
+                shown++;
+            });
         });
 
         // ── Footer ────────────────────────────────────────────────────────
