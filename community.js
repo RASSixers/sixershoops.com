@@ -975,6 +975,160 @@ ANALYSIS: [Analysis]
         localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
     }
 
+    // ── TRADE MACHINE PINNED POST ─────────────────────────────
+    const TM_URL      = 'nba-trade-machine.html'; // ← update to your actual path
+    const TM_VOTES    = 247;
+    const TM_COMMENTS = 38;
+
+    function createTradeMachinePost() {
+        const div = document.createElement('div');
+        div.id = 'trade-machine-pinned-post';
+        div.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md';
+        div.style.cssText = 'border-color:rgba(0,107,182,0.25);';
+
+        div.innerHTML = `
+            <!-- Vote Sidebar -->
+            <div class="w-12 bg-slate-50/50 p-2 flex flex-col items-center gap-1 border-r border-slate-100">
+                <button class="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400" disabled style="cursor:default;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                </button>
+                <span class="text-xs font-bold text-orange-600">${TM_VOTES}</span>
+                <button class="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400" disabled style="cursor:default;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 p-4">
+                <!-- Meta row -->
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span class="flex items-center gap-1 text-blue-600 font-bold">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
+                            Pinned
+                        </span>
+                        <span>•</span>
+                        <span class="font-bold text-slate-900">SixersHoops</span>
+                        <span>•</span>
+                        <span>Official</span>
+                        <span class="bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-black uppercase text-[9px] tracking-tight flex items-center gap-1">
+                            🏀 Tool
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <h3 class="text-base font-bold text-slate-900 mb-2 leading-snug">
+                    NBA Trade Machine — Build &amp; Check Any Deal Instantly
+                </h3>
+
+                <!-- Snippet -->
+                <div class="mb-3">
+                    <p class="text-sm text-slate-500 leading-relaxed" style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+                        Run any trade scenario for the 76ers or any other team. The machine checks CBA salary matching, apron thresholds, TPE usage, draft pick rules, and flags violations in real time.
+                    </p>
+                </div>
+
+                <!-- Graphic -->
+                <div onclick="window.location.href='${TM_URL}'" style="
+                    position:relative;width:100%;aspect-ratio:1200/630;
+                    background:linear-gradient(140deg,#000d2e 0%,#001a57 45%,#00102e 100%);
+                    border-radius:12px;overflow:hidden;cursor:pointer;
+                    margin-bottom:14px;
+                    box-shadow:0 4px 24px rgba(0,13,46,0.18);
+                    border:1px solid rgba(0,107,182,0.18);
+                " class="tm-graphic-wrap">
+                    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,107,182,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.07) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;"></div>
+                    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ED174C 0%,#006BB6 50%,#ED174C 100%);"></div>
+                    <div style="position:absolute;left:50%;top:-40px;transform:translateX(-50%);width:70%;height:260px;background:radial-gradient(ellipse at center,rgba(0,107,182,0.22) 0%,transparent 65%);pointer-events:none;"></div>
+                    <!-- Brand -->
+                    <div style="position:absolute;top:14px;left:18px;z-index:3;display:flex;align-items:center;gap:7px;">
+                        <div style="width:28px;height:28px;border-radius:7px;background:rgba(0,107,182,0.28);border:1px solid rgba(0,107,182,0.5);display:flex;align-items:center;justify-content:center;">
+                            <svg width="16" height="16" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="11" stroke="white" stroke-width="1.6"/><path d="M13 2C13 2 9 7 9 13C9 19 13 24 13 24" stroke="white" stroke-width="1.4"/><path d="M13 2C13 2 17 7 17 13C17 19 13 24 13 24" stroke="white" stroke-width="1.4"/><path d="M2 13H24" stroke="white" stroke-width="1.4"/></svg>
+                        </div>
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(0.6rem,2vw,0.82rem);letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.9);">Sixers<span style="color:#ED174C;">Hoops</span></span>
+                    </div>
+                    <!-- Season badge -->
+                    <div style="position:absolute;top:14px;right:18px;z-index:3;background:rgba(0,107,182,0.18);border:1px solid rgba(0,107,182,0.35);border-radius:999px;padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:clamp(0.45rem,1.3vw,0.6rem);font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:5px;">
+                        <span style="width:5px;height:5px;border-radius:50%;background:#ED174C;display:inline-block;animation:tm-pulse 2s ease-in-out infinite;"></span>
+                        2026–27 Season
+                    </div>
+                    <!-- Centre -->
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;padding:1rem;text-align:center;">
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(0.45rem,1.4vw,0.65rem);font-weight:800;letter-spacing:0.24em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px;">Interactive Tool</div>
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(1.4rem,5.5vw,3.6rem);line-height:0.88;text-transform:uppercase;color:rgba(255,255,255,0.95);letter-spacing:-0.01em;margin:0;">NBA</div>
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(1.4rem,5.5vw,3.6rem);line-height:0.88;text-transform:uppercase;background:linear-gradient(90deg,#006BB6,#4da8ff 60%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.01em;margin:0 0 6px;">Trade Machine</div>
+                        <div style="width:36px;height:3px;background:#ED174C;border-radius:2px;margin:0 auto 8px;"></div>
+                        <div style="font-family:'Barlow',sans-serif;font-size:clamp(0.45rem,1.3vw,0.72rem);color:rgba(255,255,255,0.28);letter-spacing:0.04em;">CBA-compliant · Salary matching · Apron rules · TPEs · Draft picks</div>
+                        <div style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(0,107,182,0.22);border:1px solid rgba(0,107,182,0.45);border-radius:999px;padding:5px 14px;font-family:'Barlow Condensed',sans-serif;font-size:clamp(0.45rem,1.3vw,0.65rem);font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#7dd3fc;">
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 12 5 19 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
+                            Open &amp; Run Your Trade
+                        </div>
+                    </div>
+                    <!-- Team strip -->
+                    <div style="position:absolute;bottom:0;left:0;right:0;z-index:3;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;padding:7px 16px;">
+                        <div style="flex:1;text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(0.5rem,1.8vw,0.78rem);letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.9);">PHI</div><div style="font-family:'Barlow',sans-serif;font-size:clamp(0.4rem,1.2vw,0.58rem);color:rgba(255,255,255,0.28);">76ers</div></div>
+                        <div style="color:rgba(255,255,255,0.18);font-size:clamp(0.7rem,2vw,1.1rem);padding:0 8px;">⇄</div>
+                        <div style="flex:1;text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(0.5rem,1.8vw,0.78rem);letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.9);">Select</div><div style="font-family:'Barlow',sans-serif;font-size:clamp(0.4rem,1.2vw,0.58rem);color:rgba(255,255,255,0.28);">Team</div></div>
+                        <div style="color:rgba(255,255,255,0.18);font-size:clamp(0.7rem,2vw,1.1rem);padding:0 8px;">⇄</div>
+                        <div style="flex:1;text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(0.5rem,1.8vw,0.78rem);letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.9);">Select</div><div style="font-family:'Barlow',sans-serif;font-size:clamp(0.4rem,1.2vw,0.58rem);color:rgba(255,255,255,0.28);">Team</div></div>
+                    </div>
+                    <!-- Hover overlay -->
+                    <div class="tm-hover-overlay" style="position:absolute;inset:0;z-index:10;background:rgba(0,13,46,0.62);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.18s;">
+                        <div style="display:inline-flex;align-items:center;gap:8px;background:#006BB6;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:clamp(0.7rem,2vw,0.9rem);letter-spacing:0.1em;text-transform:uppercase;padding:9px 22px;border-radius:10px;box-shadow:0 8px 28px rgba(0,107,182,0.45);">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 12 5 19 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
+                            Open Trade Machine
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action row -->
+                <div class="flex gap-4">
+                    <a href="${TM_URL}" onclick="event.stopPropagation()" class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm" style="text-decoration:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        Open Tool
+                    </a>
+                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        ${TM_COMMENTS} Comments
+                    </button>
+                    <button class="flex items-center gap-2 text-slate-500 hover:bg-slate-50 px-2 py-1 rounded transition-colors text-sm tm-share-btn" onclick="event.stopPropagation()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                        Share
+                    </button>
+                </div>
+            </div>
+
+            <style>
+                @keyframes tm-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
+                .tm-graphic-wrap:hover .tm-hover-overlay{opacity:1!important;}
+            </style>
+        `;
+
+        div.addEventListener('click', (e) => {
+            if (e.target.closest('.tm-share-btn')) {
+                showSharePopup(window.location.origin + '/' + TM_URL);
+            } else if (!e.target.closest('a')) {
+                window.location.href = TM_URL;
+            }
+        });
+
+        return div;
+    }
+
+    function injectTradeMachinePost(container) {
+        const existing = document.getElementById('trade-machine-pinned-post');
+        if (existing) existing.remove();
+        const postEl = createTradeMachinePost();
+        // Insert after guest prompt (first child) if present, otherwise at top
+        const firstPost = container.querySelector('.bg-white.rounded-xl.shadow-sm');
+        if (firstPost) {
+            container.insertBefore(postEl, firstPost);
+        } else {
+            container.insertBefore(postEl, container.firstChild);
+        }
+    }
+
     function renderFeed() {
         const container = document.getElementById('feed-container');
         const createPostBox = document.getElementById('create-post-box');
@@ -992,7 +1146,9 @@ ANALYSIS: [Analysis]
         }
 
         if (posts.length === 0) {
-            container.innerHTML = `
+            container.innerHTML = '';
+            container.appendChild(createTradeMachinePost());
+            container.insertAdjacentHTML('beforeend', `
                 <div class="bg-white rounded-xl p-12 text-center border border-slate-200">
                     <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1001,7 +1157,7 @@ ANALYSIS: [Analysis]
                     <p class="text-slate-500">Be the first to start a conversation in the community!</p>
                     ${!user ? `<button onclick="CommunityFeed.triggerLogin()" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all text-sm">Sign In to Post</button>` : ''}
                 </div>
-            `;
+            `);
             return;
         }
 
@@ -1033,6 +1189,9 @@ ANALYSIS: [Analysis]
             const postEl = createPostElement(post);
             container.appendChild(postEl);
         });
+
+        // Inject the pinned Trade Machine post at the top
+        injectTradeMachinePost(container);
 
         // Load Twitter widgets if any were added
         if (window.twttr && window.twttr.widgets) {
