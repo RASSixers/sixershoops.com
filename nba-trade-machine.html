@@ -1382,10 +1382,11 @@
         const hasWarnings = warnings.length > 0;
 
         const isValid = !hasErrors;
-        const title = isValid ? 'Trade Appears Valid' : 'Trade Has CBA Violations';
+        const teamAbbrList = tradeSummary.filter(t => t.abbr).map(t => t.abbr).join(' ↔ ');
+        const title = teamAbbrList ? teamAbbrList : (isValid ? 'Trade Appears Valid' : 'Trade Has Violations');
         const sub = isValid
-            ? `${hasWarnings ? 'Review warnings before finalizing.' : 'No violations detected. Review breakdown below.'}`
-            : `${violations.length} violation${violations.length > 1 ? 's' : ''} found. Trade cannot proceed.`;
+            ? `${hasWarnings ? '⚠ Review warnings before finalizing.' : '✓ No CBA violations detected — trade can proceed.'}`
+            : `${violations.length} violation${violations.length > 1 ? 's' : ''} found — trade cannot proceed as structured.`;
 
         showResult(isValid, title, sub, allMessages, tradeSummary);
     }
@@ -1512,7 +1513,10 @@
     let _lastTradeCanvas = null; // store last generated canvas for copy/download
 
     function shareGraphic() {
-        const defaultTitle = document.getElementById('modalTitle').textContent;
+        const isValid = document.getElementById('modalBadge').classList.contains('valid');
+        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
+        const teamAbbrs = activeTeams.map(t => t.abbr).join(' ↔ ');
+        const defaultTitle = teamAbbrs || document.getElementById('modalTitle').textContent;
         const customTitle = prompt('Give this graphic a title (or press OK to use the default):', defaultTitle);
         if (customTitle === null) return; // user cancelled
         const canvas = drawTradeCard(customTitle || defaultTitle);
@@ -1606,6 +1610,130 @@
         const isValid = document.getElementById('modalBadge').classList.contains('valid');
         const tradeTitle = customTitle || document.getElementById('modalTitle').textContent;
         const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
+
+        const F = (w, sz, fam) => `${w} ${sz}px ${fam || '"Helvetica Neue", Helvetica, Arial, sans-serif'}`;
+
+        // ── Palette ───────────────────────────────────────────────────────
+        const BG         = '#050c1a';
+        const SURFACE    = '#0d1a2e';
+        const SURFACE2   = '#111f35';
+        const BORDER     = 'rgba(255,255,255,0.07)';
+        const TEXT_PRI   = '#f0f6ff';
+        const TEXT_SEC   = '#6b8099';
+        const TEXT_MID   = '#a0b8cc';
+        const ACCENT     = '#006BB6';
+        const ACCENT2    = '#4da8ff';
+        const STATUS_OK  = '#22c55e';
+        const STATUS_ERR = '#ef4444';
+        const RED_BADGE  = '#ED174C';
+
+        // ── Background gradient ────────────────────────────────────────────
+        const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+        bgGrad.addColorStop(0, '#040b18');
+        bgGrad.addColorStop(0.5, '#060e1e');
+        bgGrad.addColorStop(1, '#030913');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Subtle grid lines
+        ctx.save();
+        ctx.globalAlpha = 0.035;
+        ctx.strokeStyle = '#4da8ff';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+        for (let y = 0; y <= H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+        ctx.restore();
+
+        // Radial glow center-left
+        const glow = ctx.createRadialGradient(W*0.25, H*0.3, 0, W*0.25, H*0.3, 480);
+        glow.addColorStop(0, 'rgba(0,107,182,0.12)');
+        glow.addColorStop(1, 'rgba(0,107,182,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, H);
+
+        // ── Top accent bar ─────────────────────────────────────────────────
+        // Full-width gradient bar at top
+        const topBar = ctx.createLinearGradient(0, 0, W, 0);
+        topBar.addColorStop(0, ACCENT);
+        topBar.addColorStop(0.5, ACCENT2);
+        topBar.addColorStop(1, RED_BADGE);
+        ctx.fillStyle = topBar;
+        ctx.fillRect(0, 0, W, 4);
+
+        const PAD = 52;
+
+        // ── Header row ────────────────────────────────────────────────────
+        // Eyebrow left
+        ctx.font = F(600, 11);
+        ctx.fillStyle = TEXT_SEC;
+        ctx.textAlign = 'left';
+        ctx.letterSpacing = '0.15em';
+        ctx.fillText('SIXERS HOOPS', PAD, 42);
+        ctx.letterSpacing = '0';
+
+        // Dot separator
+        ctx.fillStyle = RED_BADGE;
+        ctx.beginPath(); ctx.arc(PAD + ctx.measureText('SIXERS HOOPS').width + 16, 38, 3, 0, Math.PI*2); ctx.fill();
+
+        ctx.font = F(500, 11);
+        ctx.fillStyle = TEXT_SEC;
+        ctx.textAlign = 'left';
+        const afterDot = PAD + ctx.measureText('SIXERS HOOPS').width + 32;
+        ctx.fillText('NBA TRADE MACHINE', afterDot, 42);
+
+        // ── Status badge (top right) ───────────────────────────────────────
+        const chipColor = isValid ? STATUS_OK : STATUS_ERR;
+        const chipLabel = isValid ? '✓  CBA VALID' : '✗  CBA INVALID';
+        ctx.font = F(700, 12);
+        const chipW = ctx.measureText(chipLabel).width + 32;
+        const chipX = W - PAD - chipW;
+        const chipY = 22;
+        const chipH = 28;
+
+        // Chip glow
+        ctx.save();
+        ctx.shadowColor = chipColor;
+        ctx.shadowBlur = 16;
+        roundRect(ctx, chipX, chipY, chipW, chipH, 7);
+        ctx.fillStyle = chipColor + '18';
+        ctx.fill();
+        ctx.restore();
+
+        roundRect(ctx, chipX, chipY, chipW, chipH, 7);
+        ctx.strokeStyle = chipColor + '80';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = chipColor;
+        ctx.textAlign = 'left';
+        ctx.fillText(chipLabel, chipX + 16, chipY + chipH/2 + 4.5);
+
+        // ── Thin divider ──────────────────────────────────────────────────
+        const grad1 = ctx.createLinearGradient(PAD, 0, W-PAD, 0);
+        grad1.addColorStop(0, 'rgba(255,255,255,0)');
+        grad1.addColorStop(0.2, 'rgba(255,255,255,0.12)');
+        grad1.addColorStop(0.8, 'rgba(255,255,255,0.12)');
+        grad1.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = grad1;
+        ctx.fillRect(PAD, 58, W - PAD*2, 1);
+
+        // ── Trade title ────────────────────────────────────────────────────
+        ctx.font = F(800, 44);
+        ctx.fillStyle = TEXT_PRI;
+        ctx.textAlign = 'left';
+        let displayTitle = tradeTitle.toUpperCase();
+        while (ctx.measureText(displayTitle).width > W - PAD*2 - 20 && displayTitle.length > 4) {
+            displayTitle = displayTitle.slice(0, -1);
+        }
+        if (displayTitle.length < tradeTitle.toUpperCase().length) displayTitle += '…';
+
+        // Slight text shadow for depth
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,107,182,0.4)';
+        ctx.shadowBlur = 20;
+        ctx.fillText(displayTitle, PAD, 118);
+        ctx.restore();
+
+        // Subtitle line
         const totalSalaryMoving = activeTeams.reduce((sum, t) => {
             const d = TEAM_DATA[t.abbr];
             return sum + t.selectedPlayers.reduce((s, pid) => {
@@ -1613,242 +1741,324 @@
                 return s + (p ? p.salary : 0);
             }, 0);
         }, 0);
-
-        // ── Fonts ─────────────────────────────────────────────────────────
-        const F = (w, sz) => `${w} ${sz}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
-
-        // ── Palette ───────────────────────────────────────────────────────
-        const BG         = '#0d1117';   // near-black background
-        const SURFACE    = '#161b22';   // slightly lighter card surface
-        const BORDER     = '#21262d';   // subtle border
-        const TEXT_PRI   = '#e6edf3';   // primary text
-        const TEXT_SEC   = '#7d8590';   // secondary / muted text
-        const ACCENT     = '#006BB6';   // Sixers blue — used sparingly
-        const STATUS_OK  = '#3fb950';   // clean green
-        const STATUS_ERR = '#f85149';   // clean red
-
-        // ── Background ────────────────────────────────────────────────────
-        ctx.fillStyle = BG;
-        ctx.fillRect(0, 0, W, H);
-
-        // Single-pixel top accent line in Sixers blue
-        ctx.fillStyle = ACCENT;
-        ctx.fillRect(0, 0, W, 3);
-
-        // ── Header area (top ~220px) ──────────────────────────────────────
-        const PAD = 56;
-
-        // Eyebrow — source label
+        const salStr = totalSalaryMoving > 0 ? '  ·  $' + (totalSalaryMoving / 1e6).toFixed(1) + 'M total salary' : '';
+        ctx.font = F(400, 14);
         ctx.fillStyle = TEXT_SEC;
-        ctx.font = F(500, 13);
-        ctx.textAlign = 'left';
-        ctx.fillText('SIXERS HOOPS  ·  NBA TRADE MACHINE', PAD, 54);
+        ctx.fillText('2026–27 Season' + salStr + '  ·  sixershoops.com', PAD, 146);
 
-        // Status chip
-        const chipColor = isValid ? STATUS_OK : STATUS_ERR;
-        const chipLabel = isValid ? 'CBA VALID' : 'CBA INVALID';
-        ctx.font = F(700, 11);
-        const chipW = ctx.measureText(chipLabel).width + 28;
-        const chipX = W - PAD - chipW;
-        const chipY = 36;
-        const chipH = 26;
-        roundRect(ctx, chipX, chipY, chipW, chipH, 6);
-        ctx.fillStyle = chipColor + '22';
-        ctx.fill();
-        roundRect(ctx, chipX, chipY, chipW, chipH, 6);
-        ctx.strokeStyle = chipColor + '66';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = chipColor;
-        ctx.textAlign = 'left';
-        ctx.fillText(chipLabel, chipX + 14, chipY + chipH / 2 + 4);
+        // ── Section divider ───────────────────────────────────────────────
+        const grad2 = ctx.createLinearGradient(PAD, 0, W-PAD, 0);
+        grad2.addColorStop(0, ACCENT + '00');
+        grad2.addColorStop(0.15, ACCENT + 'cc');
+        grad2.addColorStop(0.85, ACCENT + '44');
+        grad2.addColorStop(1, ACCENT + '00');
+        ctx.fillStyle = grad2;
+        ctx.fillRect(PAD, 164, W - PAD*2, 1.5);
 
-        // Divider below header meta
-        ctx.fillStyle = BORDER;
-        ctx.fillRect(PAD, 70, W - PAD * 2, 1);
-
-        // Trade title
-        ctx.font = F(700, 52);
-        ctx.fillStyle = TEXT_PRI;
-        ctx.textAlign = 'left';
-        let displayTitle = tradeTitle.toUpperCase();
-        while (ctx.measureText(displayTitle).width > W - PAD * 2 && displayTitle.length > 4) {
-            displayTitle = displayTitle.slice(0, -1);
-        }
-        if (displayTitle.length < tradeTitle.toUpperCase().length) displayTitle += '…';
-        ctx.fillText(displayTitle, PAD, 152);
-
-        // Subtitle — season
-        ctx.font = F(400, 15);
-        ctx.fillStyle = TEXT_SEC;
-        ctx.fillText('2026–27 Season  ·  CBA Analysis', PAD, 182);
-
-        // Divider before cards
-        ctx.fillStyle = BORDER;
-        ctx.fillRect(PAD, 204, W - PAD * 2, 1);
-
-        // ── Team cards — show players & picks being traded ────────────────
-        const CARD_TOP = 224;
-        const CARD_BOT = H - 72;
+        // ── TRADE LAYOUT ──────────────────────────────────────────────────
+        // For 2 teams: side-by-side with centered arrow column
+        // For 3+ teams: compact multi-column
+        const CARD_TOP = 182;
+        const CARD_BOT = H - 64;
         const CARD_H   = CARD_BOT - CARD_TOP;
         const maxCards = Math.min(activeTeams.length, 5);
-        const GAP      = 12;
-        const CARD_W   = maxCards > 0
-            ? Math.floor((W - PAD * 2 - GAP * (maxCards - 1)) / maxCards)
-            : W - PAD * 2;
 
-        activeTeams.slice(0, 5).forEach((t, i) => {
-            const d = TEAM_DATA[t.abbr];
-            const teamInfo = NBA_TEAMS[t.abbr];
-            const cx = PAD + i * (CARD_W + GAP);
-            const teamColor = (teamInfo && teamInfo.color) ? teamInfo.color : ACCENT;
+        if (maxCards === 2) {
+            // ── 2-team layout: large cards with central arrow ─────────────
+            const ARROW_COL = 80;
+            const CARD_W = Math.floor((W - PAD*2 - ARROW_COL - 16) / 2);
 
-            // Resolve selected players and picks
-            const selectedPlayers = t.selectedPlayers
-                .map(pid => d.players.find(p => p.id === pid))
-                .filter(Boolean);
-            const selectedPicks = t.selectedPicks
-                .map(pkid => (d.picks || []).find(pk => pk.id === pkid))
-                .filter(Boolean);
+            activeTeams.slice(0, 2).forEach((t, i) => {
+                const d = TEAM_DATA[t.abbr];
+                const teamInfo = NBA_TEAMS[t.abbr];
+                const teamColor = (teamInfo && teamInfo.color) ? teamInfo.color : ACCENT;
+                const teamName  = teamInfo ? teamInfo.name.toUpperCase() : t.abbr;
+                const cx = i === 0 ? PAD : PAD + CARD_W + ARROW_COL + 16;
 
-            const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary || 0), 0);
+                const selectedPlayers = t.selectedPlayers.map(pid => d.players.find(p => p.id === pid)).filter(Boolean);
+                const selectedPicks   = t.selectedPicks.map(pkid => (d.picks||[]).find(pk => pk.id === pkid)).filter(Boolean);
+                const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary||0), 0);
 
-            // Card background
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 8);
-            ctx.fillStyle = SURFACE;
-            ctx.fill();
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 8);
-            ctx.strokeStyle = BORDER;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+                // Card bg with subtle gradient
+                const cardGrad = ctx.createLinearGradient(cx, CARD_TOP, cx + CARD_W, CARD_TOP + CARD_H);
+                cardGrad.addColorStop(0, '#0e1e33');
+                cardGrad.addColorStop(1, '#0a1628');
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 12);
+                ctx.fillStyle = cardGrad;
+                ctx.fill();
 
-            // Team color left edge bar
-            ctx.fillStyle = teamColor;
-            ctx.fillRect(cx, CARD_TOP, 3, CARD_H);
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 12);
+                ctx.strokeStyle = teamColor + '40';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
 
-            // ── Card header: team name + salary ──────────────────────────
-            ctx.font = F(700, 15);
-            ctx.fillStyle = TEXT_PRI;
-            ctx.textAlign = 'left';
-            ctx.fillText(t.abbr.toUpperCase(), cx + 16, CARD_TOP + 28);
+                // Team color top bar
+                const topGradBar = ctx.createLinearGradient(cx, CARD_TOP, cx + CARD_W, CARD_TOP);
+                topGradBar.addColorStop(0, teamColor);
+                topGradBar.addColorStop(1, teamColor + '66');
+                roundRect(ctx, cx, CARD_TOP, CARD_W, 5, [12,12,0,0]);
+                ctx.fillStyle = topGradBar;
+                ctx.fill();
 
-            // Salary sending — right-aligned in header
-            if (sendSal > 0) {
-                const salStr = '$' + (sendSal / 1e6).toFixed(1) + 'M';
-                ctx.font = F(400, 11);
-                ctx.fillStyle = TEXT_SEC;
-                ctx.textAlign = 'right';
-                ctx.fillText(salStr, cx + CARD_W - 14, CARD_TOP + 28);
-            }
-
-            // Divider
-            ctx.fillStyle = BORDER;
-            ctx.fillRect(cx + 16, CARD_TOP + 36, CARD_W - 32, 1);
-
-            // ── Players list ──────────────────────────────────────────────
-            let cursor = CARD_TOP + 52;
-            const LINE_H = 30;
-            const MAX_ITEMS = Math.floor((CARD_H - 56) / LINE_H);
-
-            // How many players vs picks to show
-            const totalItems = selectedPlayers.length + selectedPicks.length;
-            const showCount  = Math.min(totalItems, MAX_ITEMS);
-            let shown = 0;
-
-            selectedPlayers.forEach((p, pi) => {
-                if (shown >= showCount) return;
-                const isLast = shown === showCount - 1 && shown < totalItems - 1;
-
-                if (isLast && totalItems > showCount) {
-                    // "+N more" row
-                    ctx.font = F(400, 11);
-                    ctx.fillStyle = TEXT_SEC;
-                    ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 16, cursor + 14);
-                    shown++;
-                    return;
-                }
-
-                // Player name
-                ctx.font = F(600, 13);
+                // Team abbr — big
+                ctx.font = F(900, 38);
                 ctx.fillStyle = TEXT_PRI;
                 ctx.textAlign = 'left';
-                let pName = p.name;
-                while (ctx.measureText(pName).width > CARD_W - 90 && pName.length > 4) pName = pName.slice(0, -1);
-                if (pName.length < p.name.length) pName += '…';
-                ctx.fillText(pName, cx + 16, cursor + 14);
+                ctx.fillText(t.abbr, cx + 22, CARD_TOP + 56);
 
-                // Position tag
-                if (p.position && p.position !== '—') {
-                    ctx.font = F(500, 9);
-                    ctx.fillStyle = TEXT_SEC;
+                // Salary sending chip
+                if (sendSal > 0) {
+                    const chipTxt = '$' + (sendSal / 1e6).toFixed(1) + 'M';
+                    ctx.font = F(600, 13);
+                    const cw = ctx.measureText(chipTxt).width + 18;
+                    const cxc = cx + CARD_W - cw - 16, cyc = CARD_TOP + 34, chc = 24;
+                    roundRect(ctx, cxc, cyc, cw, chc, 6);
+                    ctx.fillStyle = teamColor + '25';
+                    ctx.fill();
+                    roundRect(ctx, cxc, cyc, cw, chc, 6);
+                    ctx.strokeStyle = teamColor + '60';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    ctx.fillStyle = teamColor === '#000000' ? '#aaaaaa' : teamColor;
                     ctx.textAlign = 'left';
-                    ctx.fillText(p.position, cx + 16, cursor + 24);
+                    ctx.fillText(chipTxt, cxc + 9, cyc + chc/2 + 4.5);
                 }
 
-                // Salary — right aligned
-                if (p.salary) {
-                    ctx.font = F(400, 11);
-                    ctx.fillStyle = TEXT_SEC;
-                    ctx.textAlign = 'right';
-                    ctx.fillText('$' + (p.salary / 1e6).toFixed(1) + 'M', cx + CARD_W - 14, cursor + 14);
-                }
-
-                // Thin row separator
-                if (pi < selectedPlayers.length - 1 || selectedPicks.length > 0) {
-                    ctx.fillStyle = BORDER;
-                    ctx.fillRect(cx + 16, cursor + LINE_H - 2, CARD_W - 32, 1);
-                }
-
-                cursor += LINE_H;
-                shown++;
-            });
-
-            selectedPicks.forEach((pk, pki) => {
-                if (shown >= showCount) return;
-                const isLast = shown === showCount - 1 && shown < totalItems - 1;
-
-                if (isLast && totalItems > showCount) {
-                    ctx.font = F(400, 11);
-                    ctx.fillStyle = TEXT_SEC;
-                    ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 16, cursor + 14);
-                    shown++;
-                    return;
-                }
-
-                // Pick label
-                ctx.font = F(500, 12);
+                // "SENDS" label
+                ctx.font = F(700, 9);
                 ctx.fillStyle = TEXT_SEC;
                 ctx.textAlign = 'left';
-                let pkName = pk.name;
-                while (ctx.measureText(pkName).width > CARD_W - 36 && pkName.length > 4) pkName = pkName.slice(0, -1);
-                if (pkName.length < pk.name.length) pkName += '…';
-                ctx.fillText(pkName, cx + 16, cursor + 14);
+                ctx.fillText('SENDS', cx + 22, CARD_TOP + 74);
 
-                if (pki < selectedPicks.length - 1) {
-                    ctx.fillStyle = BORDER;
-                    ctx.fillRect(cx + 16, cursor + LINE_H - 2, CARD_W - 32, 1);
+                // Divider
+                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                ctx.fillRect(cx + 16, CARD_TOP + 82, CARD_W - 32, 1);
+
+                // Player + pick list
+                let cursor = CARD_TOP + 100;
+                const LINE_H = 36;
+                const MAX_ITEMS = Math.floor((CARD_H - 95) / LINE_H);
+                const totalItems = selectedPlayers.length + selectedPicks.length;
+                const showCount  = Math.min(totalItems, MAX_ITEMS);
+                let shown = 0;
+
+                selectedPlayers.forEach((p, pi) => {
+                    if (shown >= showCount) return;
+                    if (shown === showCount - 1 && totalItems > showCount) {
+                        ctx.font = F(500, 12);
+                        ctx.fillStyle = TEXT_SEC;
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 22, cursor + 16);
+                        shown++; return;
+                    }
+                    // Alternating row bg
+                    if (shown % 2 === 0) {
+                        roundRect(ctx, cx + 12, cursor + 2, CARD_W - 24, LINE_H - 4, 6);
+                        ctx.fillStyle = 'rgba(255,255,255,0.025)';
+                        ctx.fill();
+                    }
+                    // Name
+                    ctx.font = F(700, 14);
+                    ctx.fillStyle = TEXT_PRI;
+                    ctx.textAlign = 'left';
+                    let pName = p.name;
+                    while (ctx.measureText(pName).width > CARD_W - 110 && pName.length > 4) pName = pName.slice(0,-1);
+                    if (pName.length < p.name.length) pName += '…';
+                    ctx.fillText(pName, cx + 22, cursor + 18);
+                    // Position pill
+                    if (p.position && p.position !== '—') {
+                        ctx.font = F(700, 9);
+                        ctx.fillStyle = TEXT_SEC;
+                        ctx.fillText(p.position, cx + 22, cursor + 31);
+                    }
+                    // Salary
+                    if (p.salary) {
+                        ctx.font = F(500, 12);
+                        ctx.fillStyle = TEXT_MID;
+                        ctx.textAlign = 'right';
+                        ctx.fillText('$' + (p.salary/1e6).toFixed(1) + 'M', cx + CARD_W - 18, cursor + 18);
+                    }
+                    cursor += LINE_H; shown++;
+                });
+
+                selectedPicks.forEach((pk, pki) => {
+                    if (shown >= showCount) return;
+                    if (shown === showCount - 1 && totalItems > showCount) {
+                        ctx.font = F(500, 12); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'left';
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 22, cursor + 16);
+                        shown++; return;
+                    }
+                    if (shown % 2 === 0) {
+                        roundRect(ctx, cx + 12, cursor + 2, CARD_W - 24, LINE_H - 4, 6);
+                        ctx.fillStyle = 'rgba(255,255,255,0.025)';
+                        ctx.fill();
+                    }
+                    // Draft pick icon
+                    ctx.font = F(500, 10); ctx.fillStyle = ACCENT2; ctx.textAlign = 'left';
+                    ctx.fillText('📋', cx + 22, cursor + 20);
+                    ctx.font = F(600, 13);
+                    ctx.fillStyle = TEXT_MID;
+                    let pkName = pk.name;
+                    while (ctx.measureText(pkName).width > CARD_W - 60 && pkName.length > 4) pkName = pkName.slice(0,-1);
+                    if (pkName.length < pk.name.length) pkName += '…';
+                    ctx.fillText(pkName, cx + 38, cursor + 19);
+                    cursor += LINE_H; shown++;
+                });
+            });
+
+            // ── Central arrow column ───────────────────────────────────────
+            const arrX = PAD + CARD_W + 8;
+            const arrCX = arrX + ARROW_COL / 2;
+            const arrCY = CARD_TOP + CARD_H / 2;
+            const arrowSize = 18;
+
+            // Arrow circle bg
+            const cirGrad = ctx.createRadialGradient(arrCX, arrCY, 0, arrCX, arrCY, 32);
+            cirGrad.addColorStop(0, '#112244');
+            cirGrad.addColorStop(1, '#060e1e');
+            ctx.beginPath(); ctx.arc(arrCX, arrCY, 30, 0, Math.PI*2);
+            ctx.fillStyle = cirGrad; ctx.fill();
+            ctx.strokeStyle = 'rgba(77,168,255,0.3)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            // Double arrow ↔
+            ctx.fillStyle = ACCENT2;
+            ctx.font = F(700, 26);
+            ctx.textAlign = 'center';
+            ctx.fillText('⇄', arrCX, arrCY + 9);
+
+        } else {
+            // ── Multi-team compact layout ──────────────────────────────────
+            const GAP    = 10;
+            const CARD_W = Math.floor((W - PAD*2 - GAP*(maxCards-1)) / maxCards);
+
+            activeTeams.slice(0, 5).forEach((t, i) => {
+                const d = TEAM_DATA[t.abbr];
+                const teamInfo = NBA_TEAMS[t.abbr];
+                const teamColor = (teamInfo && teamInfo.color) ? teamInfo.color : ACCENT;
+                const cx = PAD + i * (CARD_W + GAP);
+
+                const selectedPlayers = t.selectedPlayers.map(pid => d.players.find(p => p.id === pid)).filter(Boolean);
+                const selectedPicks   = t.selectedPicks.map(pkid => (d.picks||[]).find(pk => pk.id === pkid)).filter(Boolean);
+                const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary||0), 0);
+
+                // Card
+                const cardGrad = ctx.createLinearGradient(cx, CARD_TOP, cx+CARD_W, CARD_TOP+CARD_H);
+                cardGrad.addColorStop(0, '#0e1e33');
+                cardGrad.addColorStop(1, '#0a1628');
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 10);
+                ctx.fillStyle = cardGrad; ctx.fill();
+                roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 10);
+                ctx.strokeStyle = teamColor + '35'; ctx.lineWidth = 1.5; ctx.stroke();
+
+                // Top color bar
+                roundRect(ctx, cx, CARD_TOP, CARD_W, 4, [10,10,0,0]);
+                ctx.fillStyle = teamColor; ctx.fill();
+
+                // Team abbr
+                ctx.font = F(900, 22);
+                ctx.fillStyle = TEXT_PRI;
+                ctx.textAlign = 'left';
+                ctx.fillText(t.abbr, cx + 14, CARD_TOP + 38);
+
+                // Salary chip
+                if (sendSal > 0) {
+                    ctx.font = F(500, 10);
+                    ctx.fillStyle = TEXT_MID;
+                    ctx.textAlign = 'right';
+                    ctx.fillText('$' + (sendSal/1e6).toFixed(1) + 'M', cx + CARD_W - 12, CARD_TOP + 35);
                 }
 
-                cursor += LINE_H;
-                shown++;
+                // Sends label
+                ctx.font = F(600, 8);
+                ctx.fillStyle = TEXT_SEC;
+                ctx.textAlign = 'left';
+                ctx.fillText('SENDS', cx + 14, CARD_TOP + 50);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                ctx.fillRect(cx + 10, CARD_TOP + 58, CARD_W - 20, 1);
+
+                let cursor = CARD_TOP + 73;
+                const LINE_H = 28;
+                const MAX_ITEMS = Math.floor((CARD_H - 68) / LINE_H);
+                const totalItems = selectedPlayers.length + selectedPicks.length;
+                const showCount  = Math.min(totalItems, MAX_ITEMS);
+                let shown = 0;
+
+                selectedPlayers.forEach((p) => {
+                    if (shown >= showCount) return;
+                    if (shown === showCount - 1 && totalItems > showCount) {
+                        ctx.font = F(400, 10); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'left';
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + 13);
+                        shown++; return;
+                    }
+                    ctx.font = F(700, 12); ctx.fillStyle = TEXT_PRI; ctx.textAlign = 'left';
+                    let pName = p.name;
+                    while (ctx.measureText(pName).width > CARD_W - 80 && pName.length > 4) pName = pName.slice(0,-1);
+                    if (pName.length < p.name.length) pName += '…';
+                    ctx.fillText(pName, cx + 14, cursor + 13);
+                    if (p.position && p.position !== '—') {
+                        ctx.font = F(600, 8); ctx.fillStyle = TEXT_SEC;
+                        ctx.fillText(p.position, cx + 14, cursor + 23);
+                    }
+                    if (p.salary) {
+                        ctx.font = F(400, 10); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'right';
+                        ctx.fillText('$'+(p.salary/1e6).toFixed(1)+'M', cx+CARD_W-10, cursor+13);
+                    }
+                    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+                    ctx.fillRect(cx+10, cursor+LINE_H-3, CARD_W-20, 1);
+                    cursor += LINE_H; shown++;
+                });
+
+                selectedPicks.forEach((pk) => {
+                    if (shown >= showCount) return;
+                    if (shown === showCount - 1 && totalItems > showCount) {
+                        ctx.font = F(400, 10); ctx.fillStyle = TEXT_SEC; ctx.textAlign = 'left';
+                        ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + 13);
+                        shown++; return;
+                    }
+                    ctx.font = F(600, 11); ctx.fillStyle = TEXT_MID; ctx.textAlign = 'left';
+                    let pkName = pk.name;
+                    while (ctx.measureText(pkName).width > CARD_W - 28 && pkName.length > 4) pkName = pkName.slice(0,-1);
+                    if (pkName.length < pk.name.length) pkName += '…';
+                    ctx.fillText(pkName, cx + 14, cursor + 13);
+                    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+                    ctx.fillRect(cx+10, cursor+LINE_H-3, CARD_W-20, 1);
+                    cursor += LINE_H; shown++;
+                });
+
+                // Arrow between cards (not after last)
+                if (i < maxCards - 1) {
+                    const axCX = cx + CARD_W + GAP/2;
+                    const axCY = CARD_TOP + CARD_H/2;
+                    ctx.font = F(600, 16);
+                    ctx.fillStyle = 'rgba(77,168,255,0.5)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⇄', axCX, axCY + 6);
+                }
             });
-        });
+        }
 
         // ── Footer ────────────────────────────────────────────────────────
-        ctx.fillStyle = BORDER;
-        ctx.fillRect(PAD, H - 56, W - PAD * 2, 1);
+        const footGrad = ctx.createLinearGradient(PAD, 0, W-PAD, 0);
+        footGrad.addColorStop(0, 'rgba(255,255,255,0)');
+        footGrad.addColorStop(0.2, 'rgba(255,255,255,0.08)');
+        footGrad.addColorStop(0.8, 'rgba(255,255,255,0.08)');
+        footGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = footGrad;
+        ctx.fillRect(PAD, H - 52, W - PAD*2, 1);
 
-        ctx.font = F(700, 14);
+        // Logo mark — colored dot + brand
+        ctx.fillStyle = RED_BADGE;
+        ctx.beginPath(); ctx.arc(PAD + 6, H - 25, 5, 0, Math.PI*2); ctx.fill();
+        ctx.font = F(800, 13);
         ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
-        ctx.fillText('SIXERS HOOPS', PAD, H - 24);
+        ctx.fillText('SIXERS HOOPS', PAD + 18, H - 20);
 
-        ctx.font = F(400, 13);
+        ctx.font = F(400, 12);
         ctx.fillStyle = TEXT_SEC;
         ctx.textAlign = 'right';
-        ctx.fillText('sixershoops.com', W - PAD, H - 24);
+        ctx.fillText('sixershoops.com', W - PAD, H - 20);
 
         return canvas;
     }
@@ -1950,47 +2160,9 @@
                     Copy Image
                 </button>
 
-                <!-- Copy embed URL -->
-                <button onclick="copyDataURL('${url}')"
-                        style="display:inline-flex;align-items:center;gap:.45rem;
-                               background:rgba(255,255,255,.04);color:rgba(255,255,255,0.45);
-                               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;
-                               letter-spacing:.1em;text-transform:uppercase;
-                               padding:.6rem 1.1rem;border-radius:10px;
-                               border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:all .2s;"
-                        onmouseover="this.style.color='rgba(255,255,255,0.7)'"
-                        onmouseout="this.style.color='rgba(255,255,255,0.45)'">
-                    Copy Embed URL
-                </button>
-
                 <span style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.2);">
                     1200 × 630
                 </span>
-            </div>
-
-            <!-- Embed code block -->
-            <div style="padding:.2rem 1.4rem .95rem;background:rgba(0,0,0,0.2);border-top:1px solid rgba(255,255,255,.05);">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:.4rem;margin-top:.75rem;">
-                    Embed on your site
-                </div>
-                <div style="position:relative;">
-                    <textarea id="embedCodeArea" readonly
-                        onclick="this.select()"
-                        style="width:100%;font-family:monospace;font-size:.72rem;line-height:1.5;
-                               background:rgba(0,10,40,0.6);color:#7dd3fc;border:1px solid rgba(0,107,182,.2);
-                               border-radius:10px;padding:.65rem 3.5rem .65rem .9rem;resize:none;height:48px;
-                               box-sizing:border-box;outline:none;cursor:text;">&lt;img src="[use Copy Embed URL above]" alt="NBA Trade Analysis — Sixers Hoops" style="max-width:100%;border-radius:8px;"&gt;</textarea>
-                    <button onclick="copyEmbedCode()"
-                        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
-                               background:rgba(0,107,182,.2);border:1px solid rgba(0,107,182,.3);
-                               border-radius:7px;color:#7dd3fc;font-family:'Barlow Condensed',sans-serif;
-                               font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-                               padding:.3rem .65rem;cursor:pointer;transition:background .2s;"
-                        onmouseover="this.style.background='rgba(0,107,182,.35)'"
-                        onmouseout="this.style.background='rgba(0,107,182,.2)'">
-                        Copy
-                    </button>
-                </div>
             </div>
         </div>`;
 
