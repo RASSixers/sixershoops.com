@@ -409,6 +409,81 @@
         .apron-pill.first { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
         .apron-pill.second { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
+        /* ─── SPOTRAC-STYLE BREAKDOWN CARDS ──────────────────────────── */
+        .breakdown-grid { display: flex; flex-direction: column; gap: 1rem; margin-top: .5rem; }
+        .bk2-card {
+            border: 1px solid var(--border-light); border-radius: 12px;
+            overflow: hidden; background: #fff;
+        }
+        .bk2-header {
+            padding: .85rem 1.1rem .7rem;
+            background: #fafaf8;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .bk2-header-top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+        .bk2-team-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+        .bk2-cap-impact { font-family: 'Barlow Condensed', sans-serif; font-size: .78rem; font-weight: 800; letter-spacing: .05em; }
+        .bk2-cap-impact.positive { color: var(--green); }
+        .bk2-cap-impact.negative { color: var(--red); }
+        .bk2-apron-label { font-family: 'Barlow', sans-serif; font-size: .72rem; color: var(--mid); margin-top: 3px; }
+
+        .bk2-assets-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border-light); }
+        .bk2-col { padding: .75rem 1rem; }
+        .bk2-col:first-child { border-right: 1px solid var(--border-light); }
+        .bk2-col-label {
+            display: flex; align-items: center; gap: .35rem;
+            font-family: 'Barlow Condensed', sans-serif; font-size: .63rem; font-weight: 800;
+            letter-spacing: .13em; text-transform: uppercase; margin-bottom: .55rem;
+        }
+        .send-label { color: var(--red); }
+        .recv-label { color: var(--green); }
+
+        .trade-asset-row {
+            padding: .45rem 0;
+            border-bottom: 1px solid #f0ede8;
+        }
+        .trade-asset-row:last-child { border-bottom: none; }
+        .trade-asset-name {
+            font-family: 'Barlow Condensed', sans-serif; font-size: .85rem; font-weight: 800;
+            color: var(--ink); letter-spacing: .01em;
+        }
+        .trade-asset-meta {
+            font-family: 'Barlow', sans-serif; font-size: .68rem; color: var(--mid); margin-top: 1px;
+        }
+        .trade-asset-sal { font-weight: 700; color: var(--red); }
+        .recv .trade-asset-sal { color: var(--green); }
+        .recv-sal { color: var(--green) !important; }
+        .pick-row .trade-asset-name { color: #374151; font-size: .78rem; }
+        .bk2-empty { font-family: 'Barlow', sans-serif; font-size: .75rem; color: #d1d5db; padding: .25rem 0; }
+
+        .bk2-fin {
+            padding: .7rem 1rem;
+            background: #fafaf8;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .bk2-fin-row {
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: 'Barlow', sans-serif; font-size: .72rem; color: var(--mid);
+            padding: .2rem 0;
+        }
+        .bk2-fin-row span:last-child { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: var(--ink); font-size: .75rem; }
+        .bk2-fin-diff { margin-top: .2rem; padding-top: .35rem; border-top: 1px solid var(--border-light); font-weight: 700; }
+        .bk2-fin-diff span { font-family: 'Barlow Condensed', sans-serif; font-size: .8rem; font-weight: 900; }
+        .bk2-fin-diff.pos span:last-child { color: var(--green); }
+        .bk2-fin-diff.neg span:last-child { color: var(--red); }
+        .bk2-fin-match {
+            font-family: 'Barlow', sans-serif; font-size: .68rem; color: var(--mid);
+            margin-top: .35rem; padding-top: .35rem; border-top: 1px solid var(--border-light);
+        }
+        .bk2-verdict {
+            padding: .6rem 1rem;
+            display: flex; align-items: flex-start; gap: .45rem;
+            font-family: 'Barlow', sans-serif; font-size: .75rem; font-weight: 600; line-height: 1.4;
+        }
+        .bk2-verdict svg { flex-shrink: 0; margin-top: 2px; }
+        .bk2-verdict.pass { background: rgba(22,163,74,.06); color: #15803d; }
+        .bk2-verdict.fail { background: rgba(220,38,38,.06); color: #b91c1c; }
+
         /* Cash section */
         .cash-row {
             background: rgba(0,107,182,.04); border: 1px solid rgba(0,107,182,.12);
@@ -729,7 +804,6 @@
             </div>
             <div class="modal-body">
                 <div id="modalViolations" class="violations-list"></div>
-                <div class="section-label" style="margin-top:1.25rem;">Team Breakdown</div>
                 <div class="breakdown-grid" id="modalBreakdown"></div>
                 <div id="modalRestrictions"></div>
             </div>
@@ -2353,30 +2427,146 @@
 
     function buildBreakdown(breakdownEl, restrictionsEl, tradeSummary) {
         if (!Array.isArray(tradeSummary)) return;
-        breakdownEl.innerHTML = tradeSummary.filter(t => t.abbr).map(t => {
-            const postSalary = t.currentSalary - t.sendingSalary + t.receivingSalary;
-            const apronStatus = getApronStatus(postSalary);
-            const salDiff = t.receivingSalary - t.sendingSalary;
-            const color = t.teamInfo ? t.teamInfo.color : '#4a4a5a';
-            const name  = t.teamInfo ? t.teamInfo.name  : t.abbr;
 
-            return `<div class="breakdown-card">
-                <div class="breakdown-card-header">
-                    <div class="breakdown-dot" style="background:${color}"></div>
-                    ${name}
+        // Build a map: for each team, what players/picks are they RECEIVING (from all other teams)
+        const allTeams = tradeSummary.filter(t => t.abbr && t.data);
+        allTeams.forEach(t => {
+            // Players this team receives = players other teams are sending
+            t.receivingPlayers = [];
+            t.receivingPicks   = [];
+            allTeams.forEach(other => {
+                if (other.id === t.id) return;
+                other.selectedPlayers.forEach(pid => {
+                    const p = other.data.players.find(p => p.id === pid);
+                    if (p) t.receivingPlayers.push({ ...p, fromTeam: other.abbr });
+                });
+                other.selectedPicks.forEach(pkid => {
+                    const pk = (other.data.picks || []).find(pk => pk.id === pkid);
+                    if (pk) t.receivingPicks.push({ ...pk, fromTeam: other.abbr });
+                });
+            });
+        });
+
+        breakdownEl.innerHTML = allTeams.map(t => {
+            const postSalary  = t.currentSalary - t.sendingSalary + t.receivingSalary;
+            const apronStatus = getApronStatus(postSalary);
+            const capImpact   = t.receivingSalary - t.sendingSalary;
+            const color       = t.teamInfo ? t.teamInfo.color : '#4a4a5a';
+            const name        = t.teamInfo ? t.teamInfo.name  : t.abbr;
+
+            // Apron status label (post-trade)
+            const apronLabel = postSalary > CBA.secondApron ? '2nd Apron Team'
+                             : postSalary > CBA.firstApron  ? '1st Apron Team'
+                             : postSalary > CBA.luxuryTax   ? 'Luxury Tax Team'
+                             : 'Under Tax';
+
+            // Cap impact color
+            const impactCls = capImpact > 0 ? 'negative' : capImpact < 0 ? 'positive' : '';
+            const impactStr = (capImpact >= 0 ? '+' : '') + fmtM(capImpact);
+
+            // Players SENDING out
+            const sendingPlayerRows = t.selectedPlayers.map(pid => {
+                const p = t.data.players.find(p => p.id === pid);
+                if (!p) return '';
+                return `<div class="trade-asset-row">
+                    <div class="trade-asset-name">${p.name}</div>
+                    <div class="trade-asset-meta">${p.position || '—'} · <span class="trade-asset-sal">${fmtM(p.salary)}</span></div>
+                </div>`;
+            }).join('');
+
+            const sendingPickRows = t.selectedPicks.map(pkid => {
+                const pk = (t.data.picks || []).find(pk => pk.id === pkid);
+                if (!pk) return '';
+                return `<div class="trade-asset-row pick-row">
+                    <div class="trade-asset-name">${pk.name}</div>
+                    <div class="trade-asset-meta">${pk.round === 1 ? '1st Round' : '2nd Round'} · <span style="color:#6b7280">${pk.protections || 'Unprotected'}</span></div>
+                </div>`;
+            }).join('');
+
+            // Players RECEIVING
+            const recvPlayerRows = t.receivingPlayers.map(p => {
+                return `<div class="trade-asset-row recv">
+                    <div class="trade-asset-name">${p.name}</div>
+                    <div class="trade-asset-meta">${p.position || '—'} · <span class="trade-asset-sal recv-sal">${fmtM(p.salary)}</span></div>
+                </div>`;
+            }).join('');
+
+            const recvPickRows = t.receivingPicks.map(pk => {
+                return `<div class="trade-asset-row pick-row recv">
+                    <div class="trade-asset-name">${pk.name}</div>
+                    <div class="trade-asset-meta">${pk.round === 1 ? '1st Round' : '2nd Round'} · <span style="color:#6b7280">${pk.protections || 'Unprotected'}</span></div>
+                </div>`;
+            }).join('');
+
+            // Check if this team passes/fails CBA
+            const isAboveSecondApron = t.currentSalary > CBA.secondApron;
+            const isAboveFirstApron  = t.currentSalary > CBA.firstApron;
+            let teamPasses = true;
+            let failReason = '';
+            if (isAboveSecondApron && t.receivingSalary > t.sendingSalary) {
+                teamPasses = false;
+                failReason = `2nd Apron teams can only take back 100% of outgoing salary. Max incoming: ${fmtM(t.sendingSalary)}.`;
+            } else if (isAboveFirstApron && t.sendingSalary > 0 && t.receivingSalary > 1.1 * t.sendingSalary) {
+                teamPasses = false;
+                failReason = `1st Apron teams limited to 110% salary matching. Max incoming: ${fmtM(1.1 * t.sendingSalary)}.`;
+            }
+
+            const allowableIn = isAboveSecondApron ? t.sendingSalary
+                               : isAboveFirstApron  ? Math.round(1.1 * t.sendingSalary)
+                               : t.sendingSalary > 0 ? Math.round(Math.min(2.0 * t.sendingSalary + 250_000, t.sendingSalary + 7_500_000)) : 0;
+
+            const salaryMatchLine = t.sendingSalary > 0
+                ? `Incoming &lt; ${fmtM(allowableIn)} × 1 + $0`
+                : '—';
+
+            return `<div class="bk2-card" style="--team-clr:${color}">
+                <!-- Team header -->
+                <div class="bk2-header" style="border-left:4px solid ${color}">
+                    <div class="bk2-header-top">
+                        <div class="bk2-team-name" style="color:${color}">${name}</div>
+                        <div class="bk2-cap-impact ${impactCls}">${impactStr} cap impact</div>
+                    </div>
+                    <div class="bk2-apron-label">${apronLabel} after trade</div>
                 </div>
-                <div class="breakdown-body">
-                    <div class="breakdown-row"><span class="breakdown-row-label">Sending out</span><span class="breakdown-row-val">${t.sendingSalary > 0 ? fmtM(t.sendingSalary) : '—'}</span></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Taking in</span><span class="breakdown-row-val">${t.receivingSalary > 0 ? fmtM(t.receivingSalary) : '—'}</span></div>
-                    <div class="breakdown-divider"></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Salary change</span><span class="breakdown-row-val ${salDiff > 0 ? 'negative' : salDiff < 0 ? 'positive' : ''}">${salDiff >= 0 ? '+' : ''}${fmtM(salDiff)}</span></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Pre-trade salary</span><span class="breakdown-row-val">${t.currentSalary > 0 ? fmtM(t.currentSalary) : '—'}</span></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Post-trade salary</span><span class="breakdown-row-val ${postSalary > CBA.secondApron ? 'negative' : postSalary > CBA.firstApron ? 'warning' : ''}">${postSalary > 0 ? fmtM(postSalary) : '—'}</span></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Players sent</span><span class="breakdown-row-val">${t.selectedPlayers.length}</span></div>
-                    <div class="breakdown-row"><span class="breakdown-row-label">Picks sent</span><span class="breakdown-row-val">${t.selectedPicks.length}</span></div>
-                    ${t.selectedTPEs.length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">TPEs used</span><span class="breakdown-row-val">${t.selectedTPEs.length}</span></div>` : ''}
-                    ${(t.faSignings||[]).length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">FA signings</span><span class="breakdown-row-val">${(t.faSignings||[]).filter(s=>s.type==='direct').length} direct${(t.faSignings||[]).filter(s=>s.type==='sat').length > 0 ? ', '+(t.faSignings||[]).filter(s=>s.type==='sat').length+' S&T' : ''}</span></div>` : ''}
-                    <div><span class="apron-pill ${apronStatus.cls}">${apronStatus.label}</span></div>
+
+                <!-- Sending / Receiving columns -->
+                <div class="bk2-assets-grid">
+                    <div class="bk2-col">
+                        <div class="bk2-col-label send-label">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            Sending Out
+                        </div>
+                        ${sendingPlayerRows || '<div class="bk2-empty">—</div>'}
+                        ${sendingPickRows}
+                    </div>
+                    <div class="bk2-col">
+                        <div class="bk2-col-label recv-label">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                            Receiving
+                        </div>
+                        ${recvPlayerRows || '<div class="bk2-empty">—</div>'}
+                        ${recvPickRows}
+                    </div>
+                </div>
+
+                <!-- Financial details -->
+                <div class="bk2-fin">
+                    <div class="bk2-fin-row"><span>Outgoing Cap</span><span>${t.sendingSalary > 0 ? '$' + t.sendingSalary.toLocaleString() : '—'}</span></div>
+                    <div class="bk2-fin-row"><span>Incoming Cap</span><span>${t.receivingSalary > 0 ? '$' + t.receivingSalary.toLocaleString() : '—'}</span></div>
+                    <div class="bk2-fin-row"><span>Allowable Incoming</span><span>${allowableIn > 0 ? '$' + allowableIn.toLocaleString() : '—'}</span></div>
+                    <div class="bk2-fin-row bk2-fin-diff ${capImpact > 0 ? 'neg' : capImpact < 0 ? 'pos' : ''}">
+                        <span>Cap Difference</span>
+                        <span>${capImpact >= 0 ? '+' : ''}$${Math.abs(capImpact).toLocaleString()}</span>
+                    </div>
+                    ${t.sendingSalary > 0 ? `<div class="bk2-fin-match">Salary Matching: ${salaryMatchLine}</div>` : ''}
+                </div>
+
+                <!-- Pass/Fail for this team -->
+                <div class="bk2-verdict ${teamPasses ? 'pass' : 'fail'}">
+                    ${teamPasses
+                        ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> ${name} can complete this trade`
+                        : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${failReason}`
+                    }
                 </div>
             </div>`;
         }).join('');
@@ -2507,311 +2697,384 @@
 
     // ── Draw the trade card onto a 1200×630 canvas ────────────────────────
     function drawTradeCard(customTitle) {
-        const W = 1200, H = 630;
-        const canvas = document.createElement('canvas');
-        canvas.width = W; canvas.height = H;
-        const ctx = canvas.getContext('2d');
+        // ── Gather data (same logic as buildBreakdown) ────────────────────
+        const isValid      = document.getElementById('modalBadge').classList.contains('valid');
+        const tradeTitle   = customTitle || document.getElementById('modalTitle').textContent;
+        const activeTeams  = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] &&
+                              (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
 
-        const isValid = document.getElementById('modalBadge').classList.contains('valid');
-        const tradeTitle = customTitle || document.getElementById('modalTitle').textContent;
-        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
-
-        const F = (w, sz, fam) => `${w} ${sz}px ${fam || '"Helvetica Neue", Helvetica, Arial, sans-serif'}`;
-
-        // ── Palette — clean dark newspaper look ───────────────────────────
-        const BG       = '#0c0f14';
-        const CARD_BG  = '#13181f';
-        const CARD_BG2 = '#0f1318';
-        const RULE     = 'rgba(255,255,255,0.07)';
-        const TEXT_PRI = '#eef2f7';
-        const TEXT_SEC = '#6b7f94';
-        const TEXT_DIM = '#3d4e5e';
-        const ACCENT   = '#006BB6';
-        const RED      = '#ED174C';
-        const GREEN    = '#10b981';
-        const ERR      = '#f43f5e';
-
-        // ── Solid background ─────────────────────────────────────────────
-        ctx.fillStyle = BG;
-        ctx.fillRect(0, 0, W, H);
-
-        // Very subtle noise texture
-        ctx.save();
-        ctx.globalAlpha = 0.012;
-        for (let x = 0; x < W; x += 4) {
-            for (let y = 0; y < H; y += 4) {
-                if (Math.random() > 0.5) {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-        }
-        ctx.restore();
-
-        const PAD = 44;
-
-        // ── Left accent bar (full height) ────────────────────────────────
-        ctx.fillStyle = ACCENT;
-        ctx.fillRect(0, 0, 5, H);
-
-        // ── Top header area ──────────────────────────────────────────────
-        const HDR_H = 110;
-        ctx.fillStyle = CARD_BG;
-        ctx.fillRect(0, 0, W, HDR_H);
-
-        // Header bottom rule
-        ctx.fillStyle = RULE;
-        ctx.fillRect(0, HDR_H, W, 1);
-
-        // Sixers Hoops branding — top left
-        ctx.font = F(900, 11);
-        ctx.fillStyle = ACCENT;
-        ctx.textAlign = 'left';
-        ctx.letterSpacing = '0.15em';
-        ctx.fillText('SIXERS HOOPS', PAD, 34);
-        ctx.letterSpacing = '0';
-
-        // Red separator dot
-        ctx.fillStyle = RED;
-        ctx.beginPath(); ctx.arc(PAD + ctx.measureText('SIXERS HOOPS').width + 16, 30, 3, 0, Math.PI * 2); ctx.fill();
-
-        // Season
-        ctx.font = F(600, 10);
-        ctx.fillStyle = TEXT_SEC;
-        ctx.textAlign = 'left';
-        ctx.fillText('2026–27 NBA SEASON', PAD + ctx.measureText('SIXERS HOOPS').width + 30, 34);
-
-        // CBA status badge — top right
-        const statusColor = isValid ? GREEN : ERR;
-        const statusLabel = isValid ? 'CBA VALID' : 'CBA VIOLATION';
-        ctx.font = F(700, 10);
-        const badgeW = ctx.measureText(statusLabel).width + 24;
-        const badgeX = W - PAD - badgeW;
-        const badgeY = 16;
-        const badgeH = 24;
-
-        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 4);
-        ctx.fillStyle = statusColor + '18';
-        ctx.fill();
-        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 4);
-        ctx.strokeStyle = statusColor + '60';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = statusColor;
-        ctx.textAlign = 'left';
-        ctx.fillText(statusLabel, badgeX + 12, badgeY + badgeH/2 + 3.5);
-
-        // ── Trade title ──────────────────────────────────────────────────
-        let displayTitle = tradeTitle.toUpperCase();
-        ctx.font = F(900, 40);
-        const maxTitleW = W - PAD*2 - 40;
-        while (ctx.measureText(displayTitle).width > maxTitleW && displayTitle.length > 4) {
-            displayTitle = displayTitle.slice(0, -1);
-        }
-        if (displayTitle.length < tradeTitle.toUpperCase().length) displayTitle += '…';
-
-        ctx.fillStyle = TEXT_PRI;
-        ctx.textAlign = 'left';
-        ctx.fillText(displayTitle, PAD, 88);
-
-        // Thin accent underline
-        const titleW = Math.min(ctx.measureText(displayTitle).width, maxTitleW);
-        ctx.fillStyle = ACCENT;
-        ctx.fillRect(PAD, 96, Math.min(titleW * 0.28, 120), 2);
-
-        // ── TEAM CARDS AREA ──────────────────────────────────────────────
-        const CARD_TOP = HDR_H + 18;
-        const CARD_BOT = H - 56;
-        const CARD_H   = CARD_BOT - CARD_TOP;
-        const maxCards = Math.min(activeTeams.length, 5);
-        const GAP      = maxCards >= 4 ? 8 : 12;
-        const CARD_W   = Math.floor((W - PAD*2 - GAP*(maxCards-1)) / maxCards);
-
-        activeTeams.slice(0, 5).forEach((t, i) => {
-            const d = TEAM_DATA[t.abbr];
-            const teamInfo = NBA_TEAMS[t.abbr];
-            const teamColor = (teamInfo && teamInfo.color && teamInfo.color !== '#000000') ? teamInfo.color : '#334155';
-            const teamName  = teamInfo ? teamInfo.name : t.abbr;
-            const cx = PAD + i * (CARD_W + GAP);
-
-            const selectedPlayers = t.selectedPlayers.map(pid => d.players.find(p => p.id === pid)).filter(Boolean);
-            const selectedPicks   = t.selectedPicks.map(pkid => (d.picks||[]).find(pk => pk.id === pkid)).filter(Boolean);
-            const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary||0), 0);
-            const totalItems = selectedPlayers.length + selectedPicks.length;
-
-            // Card background
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 8);
-            ctx.fillStyle = CARD_BG;
-            ctx.fill();
-
-            // Team color top bar
-            roundRect(ctx, cx, CARD_TOP, CARD_W, 4, [8,8,0,0]);
-            ctx.fillStyle = teamColor;
-            ctx.fill();
-
-            // Card border
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 8);
-            ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Card header bg
-            roundRect(ctx, cx, CARD_TOP + 4, CARD_W, 52, [0,0,0,0]);
-            ctx.fillStyle = CARD_BG2;
-            ctx.fill();
-            ctx.fillStyle = RULE;
-            ctx.fillRect(cx, CARD_TOP + 56, CARD_W, 1);
-
-            // Team abbr
-            const isSmall = maxCards >= 4;
-            ctx.font = F(900, isSmall ? 22 : 28);
-            ctx.fillStyle = TEXT_PRI;
-            ctx.textAlign = 'left';
-            ctx.fillText(t.abbr, cx + 14, CARD_TOP + (isSmall ? 34 : 40));
-
-            // Salary chip — top right of header
-            if (sendSal > 0) {
-                const chipTxt = '$' + (sendSal/1e6).toFixed(1) + 'M';
-                ctx.font = F(700, isSmall ? 9 : 10);
-                const cw = ctx.measureText(chipTxt).width + 14;
-                const chY = CARD_TOP + 14, chH = 20;
-                const chX = cx + CARD_W - cw - 10;
-                roundRect(ctx, chX, chY, cw, chH, 3);
-                ctx.fillStyle = 'rgba(255,255,255,0.06)';
-                ctx.fill();
-                ctx.fillStyle = TEXT_SEC;
-                ctx.textAlign = 'left';
-                ctx.fillText(chipTxt, chX + 7, chY + chH/2 + 3.5);
-            }
-
-            // "SENDS" label
-            ctx.font = F(600, isSmall ? 7 : 8);
-            ctx.fillStyle = TEXT_DIM;
-            ctx.textAlign = 'left';
-            ctx.letterSpacing = '0.1em';
-            ctx.fillText('SENDS', cx + 14, CARD_TOP + 53);
-            ctx.letterSpacing = '0';
-
-            // Player / pick rows
-            let cursor = CARD_TOP + 70;
-            const LINE_H = isSmall ? 26 : 32;
-            const innerW = CARD_W - 28;
-            const MAX_ITEMS = Math.floor((CARD_H - 74) / LINE_H);
-            const showCount = Math.min(totalItems, MAX_ITEMS);
-            let shown = 0;
-
-            selectedPlayers.forEach((p) => {
-                if (shown >= showCount) return;
-                if (shown === showCount - 1 && totalItems > showCount) {
-                    ctx.font = F(500, isSmall ? 9 : 10);
-                    ctx.fillStyle = TEXT_DIM;
-                    ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + LINE_H/2 + 3.5);
-                    shown++; return;
-                }
-                // Row separator
-                if (shown > 0) {
-                    ctx.fillStyle = RULE;
-                    ctx.fillRect(cx + 14, cursor, CARD_W - 28, 1);
-                }
-                // Name
-                ctx.font = F(700, isSmall ? 11 : 13);
-                ctx.fillStyle = TEXT_PRI;
-                ctx.textAlign = 'left';
-                let pName = p.name;
-                while (ctx.measureText(pName).width > innerW - 60 && pName.length > 4) pName = pName.slice(0,-1);
-                if (pName.length < p.name.length) pName += '…';
-                ctx.fillText(pName, cx + 14, cursor + LINE_H/2 + (isSmall ? 2 : 3));
-                // Position
-                if (p.position && p.position !== '—' && !isSmall) {
-                    ctx.font = F(600, 8.5);
-                    ctx.fillStyle = TEXT_DIM;
-                    ctx.fillText(p.position, cx + 14, cursor + LINE_H/2 + 14);
-                }
-                // Salary
-                if (p.salary) {
-                    ctx.font = F(600, isSmall ? 9 : 10.5);
-                    ctx.fillStyle = TEXT_SEC;
-                    ctx.textAlign = 'right';
-                    ctx.fillText('$'+(p.salary/1e6).toFixed(1)+'M', cx + CARD_W - 12, cursor + LINE_H/2 + 3.5);
-                }
-                cursor += LINE_H; shown++;
+        // Build receiving map
+        activeTeams.forEach(t => {
+            t._recv = { players: [], picks: [] };
+            activeTeams.forEach(other => {
+                if (other.id === t.id) return;
+                const od = TEAM_DATA[other.abbr];
+                other.selectedPlayers.forEach(pid => {
+                    const p = od.players.find(p => p.id === pid);
+                    if (p) t._recv.players.push(p);
+                });
+                other.selectedPicks.forEach(pkid => {
+                    const pk = (od.picks || []).find(pk => pk.id === pkid);
+                    if (pk) t._recv.picks.push(pk);
+                });
             });
-
-            selectedPicks.forEach((pk) => {
-                if (shown >= showCount) return;
-                if (shown === showCount - 1 && totalItems > showCount) {
-                    ctx.font = F(500, isSmall ? 9 : 10); ctx.fillStyle = TEXT_DIM; ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + LINE_H/2 + 3.5);
-                    shown++; return;
-                }
-                if (shown > 0) { ctx.fillStyle = RULE; ctx.fillRect(cx + 14, cursor, CARD_W - 28, 1); }
-
-                // Pick label — yellow-ish tint
-                ctx.font = F(600, isSmall ? 10 : 11.5);
-                ctx.fillStyle = '#a3b8cc';
-                ctx.textAlign = 'left';
-                let pkName = pk.name;
-                while (ctx.measureText(pkName).width > innerW && pkName.length > 4) pkName = pkName.slice(0,-1);
-                if (pkName.length < pk.name.length) pkName += '…';
-                ctx.fillText(pkName, cx + 14, cursor + LINE_H/2 + 3.5);
-                cursor += LINE_H; shown++;
-            });
-
-            // Empty state
-            if (totalItems === 0) {
-                ctx.font = F(400, 11);
-                ctx.fillStyle = TEXT_DIM;
-                ctx.textAlign = 'center';
-                ctx.fillText('No assets selected', cx + CARD_W/2, CARD_TOP + CARD_H/2);
-            }
-
-            // ── Arrow connector (between cards) ──────────────────────────
-            if (i < maxCards - 1) {
-                const axX = cx + CARD_W + GAP/2;
-                const axY = CARD_TOP + CARD_H/2;
-                ctx.fillStyle = TEXT_DIM;
-                ctx.font = F(400, 14);
-                ctx.textAlign = 'center';
-                ctx.fillText('⇄', axX, axY + 5);
-            }
         });
 
-        // ── Footer ───────────────────────────────────────────────────────
-        const footY = H - 48;
-        ctx.fillStyle = CARD_BG;
-        ctx.fillRect(0, footY, W, 48);
-        ctx.fillStyle = RULE;
+        // ── Canvas sizing ─────────────────────────────────────────────────
+        // Measure how tall the cards need to be
+        const nTeams  = Math.min(activeTeams.length, 4);
+        const PAD     = 36;
+        const GAP     = 12;
+        const CARD_W  = Math.floor((1200 - PAD * 2 - GAP * (nTeams - 1)) / nTeams);
+
+        // Estimate height needed
+        const rowsPerTeam = activeTeams.slice(0, nTeams).map(t => {
+            const sends = t.selectedPlayers.length + t.selectedPicks.length;
+            const recvs = t._recv.players.length + t._recv.picks.length;
+            return Math.max(sends, 1) + Math.max(recvs, 1);
+        });
+        const maxRows = Math.max(...rowsPerTeam);
+        const ROW_H   = 48;
+        const CARD_H  = 64   // top color bar + header
+                      + 26   // "SENDS" label
+                      + maxRows * ROW_H
+                      + 26   // "RECEIVES" label
+                      + maxRows * ROW_H
+                      + 12   // gap before fin
+                      + 90   // financial section
+                      + 36;  // verdict + padding
+
+        const HDR_H   = 88;  // title/status bar
+        const FOOT_H  = 44;
+        const W       = 1200;
+        const H       = HDR_H + CARD_H + PAD * 2 + FOOT_H;
+
+        const canvas  = document.createElement('canvas');
+        canvas.width  = W;
+        canvas.height = H;
+        const ctx     = canvas.getContext('2d');
+
+        // ── Palette — matches modal UI ────────────────────────────────────
+        const C = {
+            bg:       '#f5f0e8',   // page cream background
+            surface:  '#ffffff',   // card white
+            surface2: '#fafaf8',   // slightly off-white (header, footer of card)
+            ink:      '#0d0d0d',
+            mid:      '#4a4a5a',
+            border:   '#e8e4dc',
+            green:    '#16a34a',
+            red:      '#dc2626',
+            orange:   '#ea580c',
+            blue:     '#006BB6',
+            sred:     '#ED174C',   // sixers red
+            greenBg:  'rgba(22,163,74,0.07)',
+            redBg:    'rgba(220,38,38,0.06)',
+        };
+
+        // ── Helpers ───────────────────────────────────────────────────────
+        const font  = (w, sz) => `${w} ${sz}px "Barlow Condensed", "Arial Narrow", Arial, sans-serif`;
+        const fontN = (w, sz) => `${w} ${sz}px "Barlow", Helvetica, Arial, sans-serif`;
+        const rr    = (x, y, w, h, r) => {
+            if (typeof r === 'number') r = [r,r,r,r];
+            const [tl,tr,br,bl] = r;
+            ctx.beginPath();
+            ctx.moveTo(x+tl,y);
+            ctx.lineTo(x+w-tr,y); ctx.arcTo(x+w,y,x+w,y+tr,tr);
+            ctx.lineTo(x+w,y+h-br); ctx.arcTo(x+w,y+h,x+w-br,y+h,br);
+            ctx.lineTo(x+bl,y+h); ctx.arcTo(x,y+h,x,y+h-bl,bl);
+            ctx.lineTo(x,y+tl); ctx.arcTo(x,y,x+tl,y,tl);
+            ctx.closePath();
+        };
+        const fillRR = (x,y,w,h,r,fill) => { rr(x,y,w,h,r); ctx.fillStyle=fill; ctx.fill(); };
+        const strokeRR = (x,y,w,h,r,stroke,lw) => { rr(x,y,w,h,r); ctx.strokeStyle=stroke; ctx.lineWidth=lw||1; ctx.stroke(); };
+        const clip = (text, maxW) => {
+            let t = text;
+            while (ctx.measureText(t).width > maxW && t.length > 2) t = t.slice(0,-1);
+            return t.length < text.length ? t.trimEnd()+'…' : t;
+        };
+
+        // ── Background ────────────────────────────────────────────────────
+        ctx.fillStyle = C.bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // ── Header bar ────────────────────────────────────────────────────
+        const hBg = isValid ? C.greenBg : C.redBg;
+        const hBorder = isValid ? C.green : C.red;
+        ctx.fillStyle = hBg;
+        ctx.fillRect(0, 0, W, HDR_H);
+        ctx.fillStyle = hBorder;
+        ctx.fillRect(0, HDR_H - 2, W, 2);
+
+        // Status badge
+        const badgeTxt  = isValid ? 'VALID' : 'INVALID';
+        const badgeClr  = isValid ? C.green : C.red;
+        const badgeBgC  = isValid ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.1)';
+        ctx.font = font(800, 13);
+        const badgeW2   = ctx.measureText(badgeTxt).width + 24;
+        fillRR(PAD, 22, badgeW2, 28, 6, badgeBgC);
+        strokeRR(PAD, 22, badgeW2, 28, 6, badgeClr+'40');
+        ctx.fillStyle = badgeClr;
+        ctx.textAlign = 'left';
+        ctx.fillText(badgeTxt, PAD + 12, 22 + 19);
+
+        // Trade title
+        ctx.font = font(900, 28);
+        ctx.fillStyle = C.ink;
+        ctx.textAlign = 'left';
+        const maxTitleW = W - PAD * 2 - badgeW2 - 16;
+        ctx.fillText(clip(tradeTitle.toUpperCase(), maxTitleW), PAD + badgeW2 + 14, 42);
+
+        // Sub-text
+        const sub = document.getElementById('modalSub')?.textContent || '';
+        ctx.font = fontN(400, 12);
+        ctx.fillStyle = C.mid;
+        ctx.fillText(clip(sub, W - PAD * 2), PAD, 66);
+
+        // Branding — right
+        ctx.font = font(900, 11);
+        ctx.fillStyle = C.blue;
+        ctx.textAlign = 'right';
+        ctx.fillText('SIXERS HOOPS', W - PAD, 36);
+        ctx.font = fontN(500, 10);
+        ctx.fillStyle = '#888';
+        ctx.fillText('2026–27 NBA Trade Analyzer', W - PAD, 52);
+
+        // ── Team cards ────────────────────────────────────────────────────
+        const CARDS_TOP = HDR_H + PAD;
+
+        activeTeams.slice(0, nTeams).forEach((t, i) => {
+            const d        = TEAM_DATA[t.abbr];
+            const ti       = NBA_TEAMS[t.abbr];
+            const tc       = ti?.color && ti.color !== '#000000' ? ti.color : '#334155';
+            const tName    = ti ? ti.name : t.abbr;
+            const cx       = PAD + i * (CARD_W + GAP);
+            const cy       = CARDS_TOP;
+
+            const sendP    = t.selectedPlayers.map(id => d.players.find(p => p.id === id)).filter(Boolean);
+            const sendPk   = t.selectedPicks.map(id => (d.picks||[]).find(p => p.id === id)).filter(Boolean);
+            const recvP    = t._recv.players;
+            const recvPk   = t._recv.picks;
+            const sendSal  = sendP.reduce((s,p) => s+(p.salary||0), 0);
+            const recvSal  = recvP.reduce((s,p) => s+(p.salary||0), 0);
+            const capDiff  = recvSal - sendSal;
+
+            // ── Card shell ────────────────────────────────────────────────
+            fillRR(cx, cy, CARD_W, CARD_H, 10, C.surface);
+            strokeRR(cx, cy, CARD_W, CARD_H, 10, C.border);
+
+            // ── Team color top strip (4px) ────────────────────────────────
+            fillRR(cx, cy, CARD_W, 4, [10,10,0,0], tc);
+
+            // ── Card header (team name + cap impact) ──────────────────────
+            const CHEAD_H = 56;
+            ctx.fillStyle = C.surface2;
+            ctx.fillRect(cx, cy+4, CARD_W, CHEAD_H);
+            ctx.fillStyle = C.border;
+            ctx.fillRect(cx, cy+4+CHEAD_H, CARD_W, 1);
+
+            // Left border bar matching team color
+            ctx.fillStyle = tc;
+            ctx.fillRect(cx, cy+4, 4, CHEAD_H);
+
+            // Team name
+            ctx.font = font(900, 14);
+            ctx.fillStyle = tc;
+            ctx.textAlign = 'left';
+            ctx.fillText(clip(tName.toUpperCase(), CARD_W - 120), cx + 14, cy + 4 + 22);
+
+            // Apron status label
+            const postSal   = (d.teamSalary||0) - sendSal + recvSal;
+            const apronLbl  = postSal > CBA.secondApron ? '2nd Apron after trade'
+                            : postSal > CBA.firstApron  ? '1st Apron after trade'
+                            : postSal > CBA.luxuryTax   ? 'Luxury Tax after trade'
+                            : 'Under Tax after trade';
+            ctx.font = fontN(400, 10);
+            ctx.fillStyle = C.mid;
+            ctx.fillText(apronLbl, cx + 14, cy + 4 + 38);
+
+            // Cap impact chip — right side of header
+            const impSign = capDiff >= 0 ? '+' : '';
+            const impTxt  = impSign + fmtM(capDiff) + ' cap impact';
+            const impClr  = capDiff > 0 ? C.red : capDiff < 0 ? C.green : C.mid;
+            ctx.font = fontN(600, 10);
+            ctx.fillStyle = impClr;
+            ctx.textAlign = 'right';
+            ctx.fillText(impTxt, cx + CARD_W - 12, cy + 4 + 30);
+
+            // ── Asset area ────────────────────────────────────────────────
+            let ay = cy + 4 + CHEAD_H + 10;
+
+            const drawSectionLabel = (label, clr, y) => {
+                // small arrow icon implied by color
+                ctx.font = font(800, 9);
+                ctx.fillStyle = clr;
+                ctx.textAlign = 'left';
+                ctx.letterSpacing = '0.12em';
+                ctx.fillText(label, cx + 14, y + 12);
+                ctx.letterSpacing = '0';
+            };
+
+            const drawAsset = (name, meta, salStr, isSend, y) => {
+                const stripClr = isSend ? C.red : C.green;
+                const salClr   = isSend ? C.red : C.green;
+
+                // Row separator line
+                ctx.fillStyle = C.border;
+                ctx.fillRect(cx + 10, y, CARD_W - 20, 1);
+
+                // Left pip strip
+                ctx.fillStyle = stripClr;
+                ctx.fillRect(cx + 10, y + 1, 3, ROW_H - 2);
+
+                // Subtle row tint
+                ctx.fillStyle = isSend ? 'rgba(220,38,38,0.03)' : 'rgba(22,163,74,0.03)';
+                ctx.fillRect(cx + 13, y + 1, CARD_W - 23, ROW_H - 2);
+
+                // Player name
+                ctx.font = font(800, 13);
+                ctx.fillStyle = C.ink;
+                ctx.textAlign = 'left';
+                ctx.fillText(clip(name, CARD_W - 100), cx + 20, y + 18);
+
+                // Position/meta
+                if (meta) {
+                    ctx.font = fontN(400, 9);
+                    ctx.fillStyle = C.mid;
+                    ctx.fillText(clip(meta, CARD_W - 110), cx + 20, y + 33);
+                }
+
+                // Salary
+                if (salStr) {
+                    ctx.font = font(700, 12);
+                    ctx.fillStyle = salClr;
+                    ctx.textAlign = 'right';
+                    ctx.fillText(salStr, cx + CARD_W - 12, y + 18);
+                }
+            };
+
+            // SENDS label
+            drawSectionLabel('SENDING OUT', C.red, ay);
+            ay += 20;
+            if (sendP.length === 0 && sendPk.length === 0) {
+                ctx.font = fontN(400, 10); ctx.fillStyle = '#d1d5db'; ctx.textAlign = 'left';
+                ctx.fillText('—', cx + 20, ay + 14); ay += ROW_H;
+            }
+            sendP.forEach(p => {
+                drawAsset(p.name, p.position && p.position !== '—' ? p.position : null,
+                    '$'+(p.salary/1e6).toFixed(1)+'M', true, ay);
+                ay += ROW_H;
+            });
+            sendPk.forEach(pk => {
+                drawAsset(pk.name, pk.round === 1 ? '1st Round Pick' : '2nd Round Pick', null, true, ay);
+                ay += ROW_H;
+            });
+
+            ay += 8;
+
+            // RECEIVES label
+            drawSectionLabel('RECEIVING', C.green, ay);
+            ay += 20;
+            if (recvP.length === 0 && recvPk.length === 0) {
+                ctx.font = fontN(400, 10); ctx.fillStyle = '#d1d5db'; ctx.textAlign = 'left';
+                ctx.fillText('—', cx + 20, ay + 14); ay += ROW_H;
+            }
+            recvP.forEach(p => {
+                drawAsset(p.name, p.position && p.position !== '—' ? p.position : null,
+                    '$'+(p.salary/1e6).toFixed(1)+'M', false, ay);
+                ay += ROW_H;
+            });
+            recvPk.forEach(pk => {
+                drawAsset(pk.name, pk.round === 1 ? '1st Round Pick' : '2nd Round Pick', null, false, ay);
+                ay += ROW_H;
+            });
+
+            // ── Financial section ─────────────────────────────────────────
+            ay += 8;
+            ctx.fillStyle = C.surface2;
+            ctx.fillRect(cx+1, ay, CARD_W-2, 88);
+            ctx.fillStyle = C.border;
+            ctx.fillRect(cx+1, ay, CARD_W-2, 1);
+
+            const isAbove2nd = (d.teamSalary||0) > CBA.secondApron;
+            const isAbove1st = (d.teamSalary||0) > CBA.firstApron;
+            const allowIn    = isAbove2nd ? sendSal
+                             : isAbove1st ? Math.round(1.1 * sendSal)
+                             : sendSal > 0 ? Math.round(Math.min(2.0*sendSal+250000, sendSal+7500000)) : 0;
+
+            const finRows = [
+                ['Outgoing Cap (Trades)', sendSal > 0 ? '$'+sendSal.toLocaleString() : '—', C.ink],
+                ['Incoming Cap (Trades)', recvSal > 0 ? '$'+recvSal.toLocaleString() : '—', C.ink],
+                ['Allowable Incoming Cap', allowIn > 0 ? '$'+allowIn.toLocaleString() : '—', C.ink],
+            ];
+            ctx.font = fontN(400, 10);
+            finRows.forEach(([lbl, val, valClr], ri) => {
+                const fy = ay + 14 + ri * 18;
+                ctx.fillStyle = C.mid; ctx.textAlign = 'left'; ctx.fillText(lbl, cx+12, fy);
+                ctx.fillStyle = valClr; ctx.textAlign = 'right'; ctx.fillText(val, cx+CARD_W-12, fy);
+            });
+            // Cap diff row
+            const cdY = ay + 14 + finRows.length * 18 + 2;
+            ctx.fillStyle = C.border; ctx.fillRect(cx+10, cdY - 4, CARD_W-20, 1);
+            ctx.font = font(800, 11);
+            ctx.fillStyle = C.mid; ctx.textAlign = 'left'; ctx.fillText('Cap Difference', cx+12, cdY+10);
+            const cdClr = capDiff > 0 ? C.red : capDiff < 0 ? C.green : C.mid;
+            ctx.fillStyle = cdClr; ctx.textAlign = 'right';
+            ctx.fillText((capDiff >= 0 ? '+' : '') + '$' + Math.abs(capDiff).toLocaleString(), cx+CARD_W-12, cdY+10);
+
+            // ── Pass/Fail verdict strip at bottom of card ─────────────────
+            let colPass = true;
+            let failMsg = '';
+            if (isAbove2nd && sendSal > 0 && recvSal > sendSal) {
+                colPass = false; failMsg = `Over allowable by $${(recvSal-sendSal).toLocaleString()}`;
+            } else if (isAbove1st && sendSal > 0 && recvSal > 1.1 * sendSal) {
+                colPass = false; failMsg = `Over 110% match by $${(recvSal - Math.round(1.1*sendSal)).toLocaleString()}`;
+            }
+            const VERD_Y = cy + CARD_H - 30;
+            const verdBg = colPass ? 'rgba(22,163,74,0.06)' : 'rgba(220,38,38,0.06)';
+            const verdClr = colPass ? C.green : C.red;
+            ctx.fillStyle = verdBg;
+            ctx.fillRect(cx+1, VERD_Y, CARD_W-2, 28);
+            ctx.fillStyle = C.border;
+            ctx.fillRect(cx+1, VERD_Y, CARD_W-2, 1);
+            ctx.font = fontN(600, 10);
+            ctx.fillStyle = verdClr;
+            ctx.textAlign = 'left';
+            const verdTxt = colPass
+                ? `✓ ${tName} can complete this trade`
+                : `⚠ ${failMsg || tName + ' cannot complete this trade'}`;
+            ctx.fillText(clip(verdTxt, CARD_W - 24), cx + 12, VERD_Y + 18);
+
+            // ── Bottom border line on card (full card outline) ────────────
+            strokeRR(cx, cy, CARD_W, CARD_H, 10, C.border, 1);
+        });
+
+        // ── Footer ────────────────────────────────────────────────────────
+        const footY = H - FOOT_H;
+        ctx.fillStyle = '#ede9e0';
+        ctx.fillRect(0, footY, W, FOOT_H);
+        ctx.fillStyle = C.border;
         ctx.fillRect(0, footY, W, 1);
 
-        // Total salary moving
-        const totalSalaryMoving = activeTeams.reduce((sum, t) => {
-            const d = TEAM_DATA[t.abbr];
-            return sum + t.selectedPlayers.reduce((s, pid) => {
-                const p = d.players.find(p => p.id === pid);
-                return s + (p ? p.salary : 0);
-            }, 0);
-        }, 0);
-
-        ctx.font = F(600, 10);
-        ctx.fillStyle = TEXT_DIM;
+        ctx.font = font(900, 10);
+        ctx.fillStyle = C.blue;
         ctx.textAlign = 'left';
-        ctx.fillText('SIXERS HOOPS  ·  sixershoops.com', PAD, footY + 28);
+        ctx.fillText('SIXERS HOOPS', PAD, footY + 26);
 
-        if (totalSalaryMoving > 0) {
-            const salStr = '$' + (totalSalaryMoving/1e6).toFixed(1) + 'M salary moving  ·  ' + activeTeams.length + ' teams';
-            ctx.textAlign = 'center';
-            ctx.fillText(salStr, W/2, footY + 28);
-        }
+        ctx.font = fontN(400, 10);
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'center';
+        const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        ctx.fillText(`sixershoops.com  ·  ${today}  ·  2026–27 NBA CBA`, W/2, footY + 26);
 
-        const statusStr = isValid ? '✓ CBA Compliant' : '✗ CBA Violation';
-        ctx.fillStyle = isValid ? GREEN : ERR;
-        ctx.font = F(700, 10);
+        const fTxt = isValid ? '✓ CBA COMPLIANT' : '✗ CBA VIOLATION';
+        ctx.font = font(800, 10);
+        ctx.fillStyle = isValid ? C.green : C.red;
         ctx.textAlign = 'right';
-        ctx.fillText(statusStr, W - PAD, footY + 28);
+        ctx.fillText(fTxt, W - PAD, footY + 26);
 
         return canvas;
     }
+
 
     // Helper: rounded rectangle path
     function roundRect(ctx, x, y, w, h, r) {
