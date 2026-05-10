@@ -582,6 +582,45 @@
         }
         .fa-remove-btn:hover { background: rgba(220,38,38,.08); color: var(--red); }
 
+        /* FA search results dropdown */
+        .fa-result-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: .45rem .75rem; cursor: pointer; transition: background .1s;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .fa-result-item:last-child { border-bottom: none; }
+        .fa-result-item:hover { background: rgba(0,107,182,.06); }
+        .fa-result-name {
+            font-family: 'Barlow Condensed', sans-serif; font-size: .88rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink);
+        }
+        .fa-result-pos {
+            font-family: 'Barlow', sans-serif; font-size: .7rem;
+            font-weight: 600; color: var(--mid); background: var(--border-light);
+            border-radius: 4px; padding: 1px 6px;
+        }
+
+        /* Salary slider */
+        .fa-slider {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 4px; border-radius: 2px;
+            background: linear-gradient(to right, var(--sixers-blue) 0%, var(--border-light) 0%);
+            outline: none; cursor: pointer;
+        }
+        .fa-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--sixers-blue); cursor: pointer;
+            border: 2px solid white; box-shadow: 0 1px 4px rgba(0,107,182,.4);
+            transition: transform .15s;
+        }
+        .fa-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .fa-slider::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--sixers-blue); cursor: pointer;
+            border: 2px solid white; box-shadow: 0 1px 4px rgba(0,107,182,.4);
+        }
+
     </style>
 </head>
 <body>
@@ -1209,20 +1248,116 @@
     // ─── FA SIGNING FUNCTIONS ─────────────────────────────────────────────────
     let nextFAId = 0;
 
+    // 2026 notable free agents (salary = estimated AAV for slider default)
+    const FA_PLAYERS = [
+        { name: 'Giannis Antetokounmpo', position: 'PF', salary: 55000000 },
+        { name: 'Jimmy Butler',           position: 'SF', salary: 48000000 },
+        { name: 'Devin Booker',           position: 'SG', salary: 47000000 },
+        { name: 'Bam Adebayo',            position: 'C',  salary: 43000000 },
+        { name: 'Jaylen Brown',           position: 'SF', salary: 40000000 },
+        { name: 'Draymond Green',         position: 'PF', salary: 28000000 },
+        { name: 'Mikal Bridges',          position: 'SF', salary: 25000000 },
+        { name: 'Karl-Anthony Towns',     position: 'C',  salary: 40000000 },
+        { name: 'Chris Paul',             position: 'PG', salary: 5000000  },
+        { name: 'Damian Lillard',         position: 'PG', salary: 46000000 },
+        { name: 'CJ McCollum',            position: 'SG', salary: 30000000 },
+        { name: 'Zach LaVine',            position: 'SG', salary: 35000000 },
+        { name: 'Pascal Siakam',          position: 'PF', salary: 38000000 },
+        { name: 'Andrew Wiggins',         position: 'SF', salary: 24000000 },
+        { name: 'Khris Middleton',        position: 'SF', salary: 22000000 },
+        { name: 'Brook Lopez',            position: 'C',  salary: 14000000 },
+        { name: 'Mike Conley',            position: 'PG', salary: 5000000  },
+        { name: 'Kyle Lowry',             position: 'PG', salary: 3000000  },
+        { name: 'Gordon Hayward',         position: 'SF', salary: 3000000  },
+        { name: 'Kelly Oubre Jr.',        position: 'SF', salary: 8000000  },
+        { name: 'Norman Powell',          position: 'SG', salary: 18000000 },
+        { name: 'Max Strus',              position: 'SG', salary: 12000000 },
+        { name: 'Taurean Prince',         position: 'SF', salary: 7000000  },
+        { name: 'Delon Wright',           position: 'PG', salary: 5000000  },
+        { name: 'Kevon Looney',           position: 'C',  salary: 6000000  },
+        { name: 'P.J. Tucker',            position: 'PF', salary: 4000000  },
+        { name: 'Nic Batum',              position: 'PF', salary: 3000000  },
+        { name: 'Patty Mills',            position: 'PG', salary: 3000000  },
+        { name: 'Bogdan Bogdanovic',      position: 'SG', salary: 16000000 },
+        { name: 'De\'Andre Hunter',       position: 'SF', salary: 18000000 },
+        { name: 'Clint Capela',           position: 'C',  salary: 16000000 },
+        { name: 'Domantas Sabonis',       position: 'C',  salary: 22000000 },
+        { name: 'Harrison Barnes',        position: 'PF', salary: 14000000 },
+        { name: 'Jaden Ivey',             position: 'PG', salary: 8000000  },
+        { name: 'Josh Giddey',            position: 'PG', salary: 16000000 },
+        { name: 'Anfernee Simons',        position: 'PG', salary: 28000000 },
+        { name: 'Malcolm Brogdon',        position: 'PG', salary: 12000000 },
+        { name: 'Shake Milton',           position: 'SG', salary: 5000000  },
+        { name: 'Georges Niang',          position: 'PF', salary: 6000000  },
+        { name: 'Joe Ingles',             position: 'SF', salary: 3000000  },
+    ].sort((a, b) => a.name.localeCompare(b.name));
+
+    // State: which FA is selected in each team's search
+    const faSearchState = {}; // teamId -> { query, selectedFa }
+
+    function faSearch(teamId) {
+        const query = document.getElementById(`fa-search-${teamId}`)?.value?.toLowerCase() || '';
+        const results = document.getElementById(`fa-results-${teamId}`);
+        if (!results) return;
+        if (!query) { results.style.display = 'none'; return; }
+        const matches = FA_PLAYERS.filter(p => p.name.toLowerCase().includes(query)).slice(0, 8);
+        if (!matches.length) { results.style.display = 'none'; return; }
+        results.innerHTML = matches.map(p => `
+            <div class="fa-result-item" onclick="selectFA(${teamId}, '${p.name.replace(/'/g,"\\'")}', '${p.position}', ${p.salary})">
+                <span class="fa-result-name">${p.name}</span>
+                <span class="fa-result-pos">${p.position}</span>
+            </div>`).join('');
+        results.style.display = 'block';
+    }
+
+    function selectFA(teamId, name, position, defaultSalary) {
+        if (!faSearchState[teamId]) faSearchState[teamId] = {};
+        faSearchState[teamId].selectedFa = { name, position, salary: defaultSalary };
+        const searchEl = document.getElementById(`fa-search-${teamId}`);
+        const results  = document.getElementById(`fa-results-${teamId}`);
+        const chip     = document.getElementById(`fa-selected-chip-${teamId}`);
+        const slider   = document.getElementById(`fa-salary-${teamId}`);
+        const salLabel = document.getElementById(`fa-sal-label-${teamId}`);
+        if (searchEl) searchEl.value = '';
+        if (results)  results.style.display = 'none';
+        if (chip) {
+            chip.textContent = `${name} · ${position}`;
+            chip.style.display = 'inline-flex';
+        }
+        if (slider) {
+            slider.value = defaultSalary;
+            if (salLabel) salLabel.textContent = fmtM(defaultSalary) + '/yr';
+        }
+    }
+
+    function clearFASelection(teamId) {
+        if (faSearchState[teamId]) faSearchState[teamId].selectedFa = null;
+        const chip = document.getElementById(`fa-selected-chip-${teamId}`);
+        if (chip) chip.style.display = 'none';
+    }
+
+    function updateSalLabel(teamId) {
+        const slider = document.getElementById(`fa-salary-${teamId}`);
+        const label  = document.getElementById(`fa-sal-label-${teamId}`);
+        if (!slider) return;
+        if (label) label.textContent = fmtM(parseInt(slider.value)) + '/yr';
+        const pct = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+        slider.style.background = `linear-gradient(to right, var(--sixers-blue) ${pct}%, var(--border-light) ${pct}%)`;
+    }
+
     function addFASigning(teamId) {
         const t = teams.find(t => t.id === teamId);
         if (!t) return;
-        const name   = document.getElementById(`fa-name-${teamId}`)?.value?.trim();
-        const pos    = document.getElementById(`fa-pos-${teamId}`)?.value?.trim() || '—';
+        const state    = faSearchState[teamId] || {};
+        const selected = state.selectedFa;
+        if (!selected) { alert('Search and select a player first.'); return; }
         const salary = parseInt(document.getElementById(`fa-salary-${teamId}`)?.value || '0');
         const type   = document.getElementById(`fa-type-${teamId}`)?.value || 'direct';
         const years  = parseInt(document.getElementById(`fa-years-${teamId}`)?.value || '3');
-
-        if (!name) { alert('Enter the player\'s name.'); return; }
-        if (!salary || salary < 1) { alert('Enter a valid salary (annual value in dollars, e.g. 15000000).'); return; }
-
+        if (!salary || salary < 1) { alert('Set a valid salary.'); return; }
         if (!t.faSignings) t.faSignings = [];
-        t.faSignings.push({ id: 'fa-' + (nextFAId++), name, position: pos, salary, type, years });
+        t.faSignings.push({ id: 'fa-' + (nextFAId++), name: selected.name, position: selected.position, salary, type, years });
+        faSearchState[teamId] = {};
         updateStats();
         renderTeamCard(teamId);
     }
@@ -1397,16 +1532,58 @@
             faContent = `<div class="empty-state"><div class="empty-state-icon"></div><div class="empty-state-text">Select a team first</div></div>`;
         } else {
             const signings = t.faSignings || [];
+            const selectedFa = (faSearchState[t.id] || {}).selectedFa;
+            const defaultSalary = selectedFa ? selectedFa.salary : 10000000;
             faContent = `<div class="fa-panel">
                 <div class="fa-info-bar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     Sign a FA directly or include in a Sign-and-Trade. CBA rules are enforced on analysis.
                 </div>
                 <div class="fa-add-form" id="fa-form-${t.id}">
-                    <input class="fa-input" id="fa-name-${t.id}" placeholder="Player name" type="text" />
-                    <input class="fa-input fa-input-sm" id="fa-pos-${t.id}" placeholder="Pos" type="text" maxlength="3" />
-                    <input class="fa-input" id="fa-salary-${t.id}" placeholder="Salary (e.g. 15000000)" type="number" min="0" />
-                    <div class="fa-type-row">
+
+                    <!-- Searchable player picker -->
+                    <div style="position:relative;">
+                        <div style="display:flex;align-items:center;gap:.4rem;">
+                            <div style="position:relative;flex:1;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#9ca3af;pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <input class="fa-input" id="fa-search-${t.id}" placeholder="Search free agents…" type="text"
+                                    style="padding-left:28px;"
+                                    oninput="faSearch(${t.id})"
+                                    autocomplete="off" />
+                            </div>
+                            <span id="fa-selected-chip-${t.id}"
+                                style="display:${selectedFa ? 'inline-flex' : 'none'};align-items:center;gap:.3rem;
+                                       background:rgba(0,107,182,.12);border:1px solid rgba(0,107,182,.25);border-radius:6px;
+                                       padding:.25rem .55rem;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;
+                                       font-weight:700;letter-spacing:.04em;color:var(--sixers-blue);white-space:nowrap;cursor:pointer;"
+                                onclick="clearFASelection(${t.id});renderTeamCard(${t.id})"
+                                title="Clear selection">
+                                ${selectedFa ? selectedFa.name + ' · ' + selectedFa.position : ''}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </span>
+                        </div>
+                        <!-- Dropdown results -->
+                        <div id="fa-results-${t.id}" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:200;
+                             background:white;border:1px solid var(--border-light);border-radius:8px;
+                             box-shadow:0 8px 24px rgba(0,0,0,.12);margin-top:3px;overflow:hidden;"></div>
+                    </div>
+
+                    <!-- Salary slider -->
+                    <div style="margin-top:.5rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;">
+                            <span style="font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);">Annual Salary</span>
+                            <span id="fa-sal-label-${t.id}" style="font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:800;color:var(--sixers-blue);">${fmtM(defaultSalary)}/yr</span>
+                        </div>
+                        <input type="range" id="fa-salary-${t.id}" class="fa-slider"
+                            min="1121040" max="62000000" step="100000" value="${defaultSalary}"
+                            oninput="updateSalLabel(${t.id})" />
+                        <div style="display:flex;justify-content:space-between;font-family:'Barlow',sans-serif;font-size:.6rem;color:var(--mid);margin-top:2px;">
+                            <span>Min (~$1.1M)</span><span>MLE (~$14.5M)</span><span>Max (~$62M)</span>
+                        </div>
+                    </div>
+
+                    <!-- Type + Years dropdowns -->
+                    <div class="fa-type-row" style="margin-top:.4rem;">
                         <select class="fa-select" id="fa-type-${t.id}">
                             <option value="direct">Direct Signing</option>
                             <option value="sat">Sign-and-Trade (incoming)</option>
@@ -1418,7 +1595,8 @@
                             <option value="4">4 yr</option>
                         </select>
                     </div>
-                    <button class="fa-add-btn" onclick="addFASigning(${t.id})">
+
+                    <button class="fa-add-btn" onclick="addFASigning(${t.id})" style="margin-top:.4rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Signing
                     </button>
