@@ -731,16 +731,28 @@
                 <div class="breakdown-grid" id="modalBreakdown"></div>
                 <div id="modalRestrictions"></div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-share" id="shareBtn" onclick="shareGraphic()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                    Share Graphic
-                </button>
-                <button class="btn-analyze" id="postToCommunityBtn" onclick="postToCommunity()" style="font-size:.82rem;padding:.6rem 1.3rem;box-shadow:none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Post to Community
-                </button>
-                <button class="btn-ghost" onclick="closeModal()">Close</button>
+            <div class="modal-footer" style="flex-direction:column;align-items:stretch;gap:.65rem;">
+                <div style="display:flex;flex-direction:column;gap:.3rem;">
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);">Trade Name <span style="font-weight:500;text-transform:none;letter-spacing:0;">(for graphic)</span></label>
+                    <input id="tradeNameInput" type="text" placeholder="e.g. Sixers land Giannis"
+                        style="font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:700;
+                               border:1px solid var(--border-light);border-radius:8px;
+                               padding:.5rem .85rem;outline:none;color:var(--ink);background:white;
+                               transition:border-color .15s;width:100%;box-sizing:border-box;"
+                        onfocus="this.style.borderColor='var(--sixers-blue)'"
+                        onblur="this.style.borderColor='var(--border-light)'" />
+                </div>
+                <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+                    <button class="btn-share" id="shareBtn" onclick="shareGraphic()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        Share Graphic
+                    </button>
+                    <button class="btn-analyze" id="postToCommunityBtn" onclick="postToCommunity()" style="font-size:.82rem;padding:.6rem 1.3rem;box-shadow:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Post to Community
+                    </button>
+                    <button class="btn-ghost" onclick="closeModal()">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1295,12 +1307,13 @@
     // State: which FA is selected in each team's search
     const faSearchState = {}; // teamId -> { query, selectedFa }
 
-    function faSearch(teamId) {
+    function faSearch(teamId, showAll) {
         const query = document.getElementById(`fa-search-${teamId}`)?.value?.toLowerCase() || '';
         const results = document.getElementById(`fa-results-${teamId}`);
         if (!results) return;
-        if (!query) { results.style.display = 'none'; return; }
-        const matches = FA_PLAYERS.filter(p => p.name.toLowerCase().includes(query)).slice(0, 8);
+        const matches = query
+            ? FA_PLAYERS.filter(p => p.name.toLowerCase().includes(query))
+            : FA_PLAYERS;
         if (!matches.length) { results.style.display = 'none'; return; }
         results.innerHTML = matches.map(p => `
             <div class="fa-result-item" onclick="selectFA(${teamId}, '${p.name.replace(/'/g,"\\'")}', '${p.position}', ${p.salary})">
@@ -1308,6 +1321,18 @@
                 <span class="fa-result-pos">${p.position}</span>
             </div>`).join('');
         results.style.display = 'block';
+    }
+
+    function faSearchFocus(teamId) {
+        faSearch(teamId, true);
+    }
+
+    function faSearchBlur(teamId) {
+        // Delay so onclick on result fires first
+        setTimeout(() => {
+            const results = document.getElementById(`fa-results-${teamId}`);
+            if (results) results.style.display = 'none';
+        }, 180);
     }
 
     function selectFA(teamId, name, position, defaultSalary) {
@@ -1549,6 +1574,8 @@
                                 <input class="fa-input" id="fa-search-${t.id}" placeholder="Search free agents…" type="text"
                                     style="padding-left:28px;"
                                     oninput="faSearch(${t.id})"
+                                    onfocus="faSearchFocus(${t.id})"
+                                    onblur="faSearchBlur(${t.id})"
                                     autocomplete="off" />
                             </div>
                             <span id="fa-selected-chip-${t.id}"
@@ -1565,7 +1592,7 @@
                         <!-- Dropdown results -->
                         <div id="fa-results-${t.id}" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:200;
                              background:white;border:1px solid var(--border-light);border-radius:8px;
-                             box-shadow:0 8px 24px rgba(0,0,0,.12);margin-top:3px;overflow:hidden;"></div>
+                             box-shadow:0 8px 24px rgba(0,0,0,.12);margin-top:3px;overflow-y:auto;max-height:220px;"></div>
                     </div>
 
                     <!-- Salary slider -->
@@ -2001,6 +2028,14 @@
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
 
+        // Auto-populate trade name field with default
+        const nameInput = document.getElementById('tradeNameInput');
+        if (nameInput && !nameInput.value.trim()) {
+            const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
+            const teamAbbrs = activeTeams.map(t => t.abbr).join(' ↔ ');
+            nameInput.value = teamAbbrs || title || '';
+        }
+
         // Also update the inline result panel (hidden but kept for share canvas)
         const panel    = document.getElementById('resultPanel');
         const rHeader  = document.getElementById('resultHeader');
@@ -2092,11 +2127,11 @@
         const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
         const teamAbbrs = activeTeams.map(t => t.abbr).join(' ↔ ');
         const defaultTitle = teamAbbrs || document.getElementById('modalTitle').textContent;
-        const customTitle = prompt('Give this graphic a title (or press OK to use the default):', defaultTitle);
-        if (customTitle === null) return; // user cancelled
-        const canvas = drawTradeCard(customTitle || defaultTitle);
+        const inputEl = document.getElementById('tradeNameInput');
+        const customTitle = inputEl ? (inputEl.value.trim() || defaultTitle) : defaultTitle;
+        const canvas = drawTradeCard(customTitle);
         _lastTradeCanvas = canvas;
-        showSharePreview(canvas, customTitle || defaultTitle);
+        showSharePreview(canvas, customTitle);
     }
 
     // ── Post trade graphic to the Community Wall ──────────────────────────
