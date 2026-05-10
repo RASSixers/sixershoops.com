@@ -451,6 +451,68 @@
             font-family: 'Barlow', sans-serif; font-size: .65rem; font-weight: 700;
             margin-left: .3rem; vertical-align: middle;
         }
+        /* ─── MODAL ──────────────────────────────── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center; padding: 1rem;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: white; border-radius: 16px; overflow: hidden;
+            width: 100%; max-width: 780px; max-height: 88vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 32px 80px rgba(0,0,0,.35);
+            animation: modalIn .22s cubic-bezier(.34,1.3,.64,1) both;
+        }
+        @keyframes modalIn { from { opacity:0; transform:scale(.94) translateY(16px); } to { opacity:1; transform:none; } }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            flex-shrink: 0;
+        }
+        .modal-header.valid { background: rgba(22,163,74,.07); border-bottom: 2px solid var(--green); }
+        .modal-header.invalid { background: rgba(220,38,38,.06); border-bottom: 2px solid var(--red); }
+
+        .modal-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .modal-badge {
+            display: inline-flex; align-items: center; gap: .4rem;
+            font-family: 'Barlow Condensed', sans-serif; font-size: .75rem; font-weight: 800;
+            letter-spacing: .12em; text-transform: uppercase;
+            padding: .35rem .9rem; border-radius: 6px; flex-shrink: 0;
+        }
+        .modal-badge.valid { background: rgba(22,163,74,.12); color: var(--green); }
+        .modal-badge.invalid { background: rgba(220,38,38,.1); color: var(--red); }
+        .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; color: var(--ink); }
+        .modal-sub { font-family: 'Barlow', sans-serif; font-size: .82rem; color: var(--mid); margin-top: 2px; }
+
+        .modal-close-btn {
+            background: rgba(0,0,0,.06); border: none; border-radius: 8px;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--mid); flex-shrink: 0; transition: all .15s;
+        }
+        .modal-close-btn:hover { background: rgba(220,38,38,.1); color: var(--sixers-red); }
+
+        .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+
+        .modal-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid var(--border-light);
+            display: flex; align-items: center; gap: .75rem; justify-content: flex-end;
+            flex-shrink: 0; background: #fafaf8;
+        }
+
+        .btn-share {
+            display: inline-flex; align-items: center; gap: .45rem;
+            background: var(--navy-deep); color: white;
+            font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+            font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
+            padding: .6rem 1.3rem; border-radius: 8px; border: none; cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-share:hover { background: var(--navy); transform: translateY(-1px); }
+
     </style>
 </head>
 <body>
@@ -539,6 +601,40 @@
         </div>
 
     </div>
+
+    <!-- Trade Result Modal -->
+    <div id="tradeModal" class="modal-overlay" onclick="closeModalOverlay(event)">
+        <div class="modal-box" id="modalBox">
+            <div class="modal-header" id="modalHeader">
+                <div class="modal-header-left">
+                    <span class="modal-badge" id="modalBadge">Valid</span>
+                    <div>
+                        <div class="modal-title" id="modalTitle">Trade Analysis</div>
+                        <div class="modal-sub" id="modalSub"></div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="modalViolations" class="violations-list"></div>
+                <div class="section-label" style="margin-top:1.25rem;">Team Breakdown</div>
+                <div class="breakdown-grid" id="modalBreakdown"></div>
+                <div id="modalRestrictions"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-share" id="shareBtn" onclick="shareGraphic()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Share Graphic
+                </button>
+                <button class="btn-ghost" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share preview canvas (hidden) -->
+    <canvas id="shareCanvas" style="display:none;"></canvas>
 
     <script>
     // ─── CBA CONSTANTS 2026-27 ──────────────────────────────────────────────
@@ -1094,7 +1190,7 @@
         // Basic checks
         const teamsWithSelections = teams.filter(t => t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || t.selectedTPEs.length > 0);
         if (teamsWithSelections.length < 2) {
-            showResult(false, 'Incomplete Trade', 'At least 2 teams must have selected players, picks, or TPEs.', violations, warnings, infos);
+            showResult(false, 'Incomplete Trade', 'At least 2 teams must have selected players, picks, or TPEs.', [{ type:'error', msg:'At least 2 teams must have selected players, picks, or TPEs.' }], []);
             return;
         }
         const teamsWithoutAbbr = teams.filter(t => !t.abbr && (t.selectedPlayers.length > 0));
@@ -1180,13 +1276,90 @@
             }
         });
 
-        // ── Cash check: no more than $3M per team per trade (CBA Art. VII Sec. 8) ─
-        // (handled by user input — just inform)
-        infos.push({ type: 'info', msg: 'Cash considerations: maximum $3M per team per trade (aggregate $6M/yr). Second Apron teams cannot send or receive cash.' });
 
-        // ── Two-month rule: aggregated contracts can't include recently acquired players ─
-        // (static info since we don't have acquisition dates)
-        infos.push({ type: 'info', msg: 'Aggregation rule: Players acquired via an exception within the past 2 months cannot be aggregated with other contracts (except on/after Dec 15 through trade deadline).' });
+
+        // ── Draft Pick Trading Rules ──────────────────────────────────────
+        const CURRENT_DRAFT_YEAR = 2027; // 2026-27 season, next draft is 2027
+
+        tradeSummary.forEach(t => {
+            if (!t.abbr || !t.data) return;
+            const name = t.teamInfo ? t.teamInfo.name : t.abbr;
+            const isAboveSecondApron = t.currentSalary > CBA.secondApron;
+
+            const picksBeingSent = t.selectedPicks
+                .map(pid => t.data.picks.find(p => p.id === pid))
+                .filter(Boolean);
+
+            if (picksBeingSent.length === 0) return;
+
+            // ── Frozen picks cannot be traded ─────────────────────────────
+            picksBeingSent.forEach(p => {
+                if (p.protections === 'Frozen') {
+                    violations.push({ type: 'error', msg: `${name}: Cannot trade ${p.name} — this pick is frozen and cannot be traded per CBA Art. VII Sec. 6.` });
+                }
+            });
+
+            // ── Second Apron: cannot trade 1st-round picks more than 2 draft classes out ──
+            if (isAboveSecondApron) {
+                picksBeingSent.forEach(p => {
+                    if (p.round !== 1) return;
+                    const yearMatch = p.name.match(/(\d{4})/);
+                    if (!yearMatch) return;
+                    const pickYear = parseInt(yearMatch[1]);
+                    if (pickYear > CURRENT_DRAFT_YEAR + 1) {
+                        violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot trade first-round picks more than 2 draft classes away (${p.name} is ${pickYear - CURRENT_DRAFT_YEAR + 1} years out).` });
+                    }
+                });
+            }
+
+            // ── Stepien Rule: cannot have no 1st-round pick in consecutive years ──
+            // Get all own first-round picks currently owned by this team
+            const allOwnFirsts = t.data.picks.filter(p => p.round === 1 && (p.name.includes('Own') || p.owner === t.abbr));
+            const sentOwnFirsts = picksBeingSent.filter(p => p.round === 1 && (p.name.includes('Own') || p.owner === t.abbr));
+
+            if (sentOwnFirsts.length > 0) {
+                // Get years that would remain after sending these picks
+                const sentIds = new Set(sentOwnFirsts.map(p => p.id));
+                const remainingOwnFirsts = allOwnFirsts.filter(p => !sentIds.has(p.id));
+
+                // Build set of years the team will own a first after the trade
+                const ownedYears = new Set();
+                remainingOwnFirsts.forEach(p => {
+                    const m = p.name.match(/(\d{4})/);
+                    if (m) ownedYears.add(parseInt(m[1]));
+                });
+
+                // Also credit any incoming 1st-round picks from the trade
+                tradeSummary.forEach(other => {
+                    if (other.id === t.id || !other.data) return;
+                    other.selectedPicks.forEach(pid => {
+                        const pk = other.data.picks.find(p => p.id === pid);
+                        if (pk && pk.round === 1 && pk.owner === t.abbr) {
+                            const m = pk.name.match(/(\d{4})/);
+                            if (m) ownedYears.add(parseInt(m[1]));
+                        }
+                    });
+                });
+
+                // Check for consecutive missing own picks in upcoming 6 years
+                const checkStart = CURRENT_DRAFT_YEAR;
+                const checkEnd = CURRENT_DRAFT_YEAR + 5;
+                for (let yr = checkStart; yr < checkEnd; yr++) {
+                    if (!ownedYears.has(yr) && !ownedYears.has(yr + 1)) {
+                        violations.push({ type: 'error', msg: `${name}: Stepien Rule violation — after this trade, team would have no first-round pick in consecutive years ${yr} and ${yr + 1}.` });
+                        break;
+                    }
+                }
+            }
+
+            // ── Cannot trade unowned picks ─────────────────────────────────
+            // Warn if a team is trying to send a pick that belongs to another team
+            picksBeingSent.forEach(p => {
+                if (p.owner && p.owner !== t.abbr) {
+                    warnings.push({ type: 'warning', msg: `${name}: ${p.name} is owned by ${p.owner} — verify this pick is legitimately tradeable by ${name}.` });
+                }
+            });
+        });
 
         // ── Non-aggregation: teams can't combine exceptions ───────────────
         const teamsUsingTPEAndPlayer = tradeSummary.filter(t => t.selectedTPEs.length > 0 && t.selectedPlayers.length > 0);
@@ -1214,86 +1387,193 @@
     }
 
     function showResult(isValid, title, sub, messages, tradeSummary) {
-        const panel = document.getElementById('resultPanel');
-        const header = document.getElementById('resultHeader');
-        const badge = document.getElementById('resultBadge');
-        const titleEl = document.getElementById('resultTitle');
-        const subEl = document.getElementById('resultSub');
-        const violList = document.getElementById('violationsList');
-        const breakdown = document.getElementById('breakdownGrid');
-        const restrictions = document.getElementById('restrictionSection');
+        // ── Populate modal ───────────────────────────────────────────────
+        const modal      = document.getElementById('tradeModal');
+        const header     = document.getElementById('modalHeader');
+        const badge      = document.getElementById('modalBadge');
+        const titleEl    = document.getElementById('modalTitle');
+        const subEl      = document.getElementById('modalSub');
+        const violList   = document.getElementById('modalViolations');
+        const breakdown  = document.getElementById('modalBreakdown');
+        const restrictions = document.getElementById('modalRestrictions');
 
-        panel.classList.add('visible');
-        header.className = 'result-header ' + (isValid ? 'valid' : 'invalid');
-        badge.className = 'result-badge ' + (isValid ? 'valid' : 'invalid');
+        header.className = 'modal-header ' + (isValid ? 'valid' : 'invalid');
+        badge.className  = 'modal-badge '  + (isValid ? 'valid' : 'invalid');
         badge.textContent = isValid ? 'Valid' : 'Invalid';
         titleEl.textContent = title;
-        subEl.textContent = sub;
+        subEl.textContent   = sub;
 
         // Messages
         violList.innerHTML = messages.map(m => `
             <div class="violation-item ${m.type}">
-                <span>${m.type === 'error' ? '[X]' : m.type === 'warning' ? '[!]' : m.type === 'ok' ? '[OK]' : '[i]'}</span>
+                <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;flex-shrink:0">${
+                    m.type === 'error'   ? 'ERR'  :
+                    m.type === 'warning' ? 'WARN' :
+                    m.type === 'ok'      ? 'OK'   : 'INFO'
+                }</span>
                 <span>${m.msg}</span>
             </div>
         `).join('');
 
         // Team breakdown
-        if (Array.isArray(tradeSummary)) {
-            breakdown.innerHTML = tradeSummary.filter(t => t.abbr).map(t => {
-                const postSalary = t.currentSalary - t.sendingSalary + t.receivingSalary;
-                const apronStatus = getApronStatus(postSalary);
-                const salDiff = t.receivingSalary - t.sendingSalary;
-                const color = t.teamInfo ? t.teamInfo.color : '#4a4a5a';
-                const name = t.teamInfo ? t.teamInfo.name : t.abbr;
+        buildBreakdown(breakdown, restrictions, tradeSummary);
 
-                return `<div class="breakdown-card">
-                    <div class="breakdown-card-header">
-                        <div class="breakdown-dot" style="background:${color}"></div>
-                        ${name}
-                    </div>
-                    <div class="breakdown-body">
-                        <div class="breakdown-row"><span class="breakdown-row-label">Sending out</span><span class="breakdown-row-val">${t.sendingSalary > 0 ? fmtM(t.sendingSalary) : '—'}</span></div>
-                        <div class="breakdown-row"><span class="breakdown-row-label">Taking in</span><span class="breakdown-row-val">${t.receivingSalary > 0 ? fmtM(t.receivingSalary) : '—'}</span></div>
-                        <div class="breakdown-divider"></div>
-                        <div class="breakdown-row"><span class="breakdown-row-label">Salary change</span><span class="breakdown-row-val ${salDiff > 0 ? 'negative' : salDiff < 0 ? 'positive' : ''}">${salDiff >= 0 ? '+' : ''}${fmtM(salDiff)}</span></div>
-                        <div class="breakdown-row"><span class="breakdown-row-label">Pre-trade salary</span><span class="breakdown-row-val">${t.currentSalary > 0 ? fmtM(t.currentSalary) : '—'}</span></div>
-                        <div class="breakdown-row"><span class="breakdown-row-label">Post-trade salary</span><span class="breakdown-row-val ${postSalary > CBA.secondApron ? 'negative' : postSalary > CBA.firstApron ? 'warning' : ''}">${postSalary > 0 ? fmtM(postSalary) : '—'}</span></div>
-                        <div class="breakdown-row"><span class="breakdown-row-label">Players sent</span><span class="breakdown-row-val">${t.selectedPlayers.length}</span></div>
-                        <div class="breakdown-row"><span class="breakdown-row-label">Picks sent</span><span class="breakdown-row-val">${t.selectedPicks.length}</span></div>
-                        ${t.selectedTPEs.length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">TPEs used</span><span class="breakdown-row-val">${t.selectedTPEs.length}</span></div>` : ''}
-                        <div><span class="apron-pill ${apronStatus.cls}">${apronStatus.label}</span></div>
-                    </div>
-                </div>`;
-            }).join('');
+        // Open modal
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
 
-            // Apron restrictions summary
-            const anyFirstApron = tradeSummary.some(t => t.abbr && t.data && (t.currentSalary > CBA.firstApron));
-            const anySecondApron = tradeSummary.some(t => t.abbr && t.data && (t.currentSalary > CBA.secondApron));
-            if (anyFirstApron || anySecondApron) {
-                const items = [
-                    { cond: anyFirstApron, label: 'No sign-and-trade acquisitions', type: 'blocked' },
-                    { cond: anyFirstApron, label: 'Salary matching limited to 110%', type: 'blocked' },
-                    { cond: anyFirstApron, label: 'Cannot sign waived players above TMLE', type: 'blocked' },
-                    { cond: anySecondApron, label: 'No non-taxpayer mid-level exception', type: 'blocked' },
-                    { cond: anySecondApron, label: 'Cannot aggregate salaries in trades', type: 'blocked' },
-                    { cond: anySecondApron, label: 'No cash in trades', type: 'blocked' },
-                    { cond: anySecondApron, label: 'Cannot use prior Traded Player Exceptions', type: 'blocked' },
-                    { cond: anySecondApron, label: 'Draft pick trade restrictions apply', type: 'blocked' },
-                    { cond: anySecondApron, label: 'Hard cap at Second Apron level', type: 'blocked' },
-                ];
-                restrictions.innerHTML = `
-                    <div class="section-label" style="margin-top:1.5rem;">Active Apron Restrictions</div>
-                    <div class="restrictions-grid">
-                        ${items.filter(i => i.cond).map(i => `<div class="restriction-item ${i.type}"><span class="restriction-icon">—</span><span>${i.label}</span></div>`).join('')}
-                    </div>`;
-            } else {
-                restrictions.innerHTML = '';
-            }
-        }
+        // Also update the inline result panel (hidden but kept for share canvas)
+        const panel    = document.getElementById('resultPanel');
+        const rHeader  = document.getElementById('resultHeader');
+        const rBadge   = document.getElementById('resultBadge');
+        const rTitle   = document.getElementById('resultTitle');
+        const rSub     = document.getElementById('resultSub');
+        const rViol    = document.getElementById('violationsList');
+        const rBreak   = document.getElementById('breakdownGrid');
+        const rRestr   = document.getElementById('restrictionSection');
 
-        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        panel.classList.add('visible');
+        rHeader.className = 'result-header ' + (isValid ? 'valid' : 'invalid');
+        rBadge.className  = 'result-badge '  + (isValid ? 'valid' : 'invalid');
+        rBadge.textContent = isValid ? 'Valid' : 'Invalid';
+        rTitle.textContent = title;
+        rSub.textContent   = sub;
+        rViol.innerHTML    = violList.innerHTML;
+        buildBreakdown(rBreak, rRestr, tradeSummary);
     }
+
+    function buildBreakdown(breakdownEl, restrictionsEl, tradeSummary) {
+        if (!Array.isArray(tradeSummary)) return;
+        breakdownEl.innerHTML = tradeSummary.filter(t => t.abbr).map(t => {
+            const postSalary = t.currentSalary - t.sendingSalary + t.receivingSalary;
+            const apronStatus = getApronStatus(postSalary);
+            const salDiff = t.receivingSalary - t.sendingSalary;
+            const color = t.teamInfo ? t.teamInfo.color : '#4a4a5a';
+            const name  = t.teamInfo ? t.teamInfo.name  : t.abbr;
+
+            return `<div class="breakdown-card">
+                <div class="breakdown-card-header">
+                    <div class="breakdown-dot" style="background:${color}"></div>
+                    ${name}
+                </div>
+                <div class="breakdown-body">
+                    <div class="breakdown-row"><span class="breakdown-row-label">Sending out</span><span class="breakdown-row-val">${t.sendingSalary > 0 ? fmtM(t.sendingSalary) : '—'}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Taking in</span><span class="breakdown-row-val">${t.receivingSalary > 0 ? fmtM(t.receivingSalary) : '—'}</span></div>
+                    <div class="breakdown-divider"></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Salary change</span><span class="breakdown-row-val ${salDiff > 0 ? 'negative' : salDiff < 0 ? 'positive' : ''}">${salDiff >= 0 ? '+' : ''}${fmtM(salDiff)}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Pre-trade salary</span><span class="breakdown-row-val">${t.currentSalary > 0 ? fmtM(t.currentSalary) : '—'}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Post-trade salary</span><span class="breakdown-row-val ${postSalary > CBA.secondApron ? 'negative' : postSalary > CBA.firstApron ? 'warning' : ''}">${postSalary > 0 ? fmtM(postSalary) : '—'}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Players sent</span><span class="breakdown-row-val">${t.selectedPlayers.length}</span></div>
+                    <div class="breakdown-row"><span class="breakdown-row-label">Picks sent</span><span class="breakdown-row-val">${t.selectedPicks.length}</span></div>
+                    ${t.selectedTPEs.length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">TPEs used</span><span class="breakdown-row-val">${t.selectedTPEs.length}</span></div>` : ''}
+                    <div><span class="apron-pill ${apronStatus.cls}">${apronStatus.label}</span></div>
+                </div>
+            </div>`;
+        }).join('');
+
+        const anyFirstApron  = tradeSummary.some(t => t.abbr && t.data && t.currentSalary > CBA.firstApron);
+        const anySecondApron = tradeSummary.some(t => t.abbr && t.data && t.currentSalary > CBA.secondApron);
+        if (anyFirstApron || anySecondApron) {
+            const items = [
+                { cond: anyFirstApron,  label: 'No sign-and-trade acquisitions',          type: 'blocked' },
+                { cond: anyFirstApron,  label: 'Salary matching limited to 110%',         type: 'blocked' },
+                { cond: anyFirstApron,  label: 'Cannot sign waived players above TMLE',   type: 'blocked' },
+                { cond: anySecondApron, label: 'No non-taxpayer mid-level exception',      type: 'blocked' },
+                { cond: anySecondApron, label: 'Cannot aggregate salaries in trades',     type: 'blocked' },
+                { cond: anySecondApron, label: 'No cash in trades',                       type: 'blocked' },
+                { cond: anySecondApron, label: 'Cannot use prior Traded Player Exceptions', type: 'blocked' },
+                { cond: anySecondApron, label: 'Draft pick trade restrictions apply',     type: 'blocked' },
+                { cond: anySecondApron, label: 'Hard cap at Second Apron level',          type: 'blocked' },
+            ];
+            restrictionsEl.innerHTML = `
+                <div class="section-label" style="margin-top:1.5rem;">Active Apron Restrictions</div>
+                <div class="restrictions-grid">
+                    ${items.filter(i => i.cond).map(i => `<div class="restriction-item ${i.type}"><span class="restriction-icon">—</span><span>${i.label}</span></div>`).join('')}
+                </div>`;
+        } else {
+            restrictionsEl.innerHTML = '';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('tradeModal').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function closeModalOverlay(e) {
+        if (e.target === document.getElementById('tradeModal')) closeModal();
+    }
+
+    // ── Share Graphic ────────────────────────────────────────────────────
+    function shareGraphic() {
+        const panel = document.getElementById('resultPanel');
+        if (!panel) return;
+
+        // Use html2canvas to capture the result panel
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = function() {
+            panel.style.display = 'block';
+            html2canvas(panel, {
+                backgroundColor: '#f5f0e8',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                windowWidth: panel.scrollWidth + 60,
+                width: panel.scrollWidth,
+            }).then(canvas => {
+                // Try native share API first
+                canvas.toBlob(blob => {
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'trade.png', { type: 'image/png' })] })) {
+                        navigator.share({
+                            title: 'NBA Trade Machine — Sixers Hoops',
+                            text: 'Check out this trade analysis!',
+                            files: [new File([blob], 'trade.png', { type: 'image/png' })]
+                        }).catch(() => fallbackDownload(canvas));
+                    } else {
+                        fallbackDownload(canvas);
+                    }
+                }, 'image/png');
+            });
+        };
+        if (!window.html2canvas) {
+            document.head.appendChild(script);
+        } else {
+            script.onload();
+        }
+    }
+
+    function fallbackDownload(canvas) {
+        // Show image preview in a new modal layer, allow download
+        const url = canvas.toDataURL('image/png');
+
+        // Create a temporary download link + preview
+        let preview = document.getElementById('sharePreviewModal');
+        if (!preview) {
+            preview = document.createElement('div');
+            preview.id = 'sharePreviewModal';
+            preview.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;padding:1rem;';
+            preview.onclick = e => { if (e.target === preview) preview.remove(); };
+            document.body.appendChild(preview);
+        }
+        preview.innerHTML = `
+            <div style="background:white;border-radius:14px;overflow:hidden;max-width:680px;width:100%;display:flex;flex-direction:column;gap:0;">
+                <div style="padding:.9rem 1.25rem;background:var(--navy-deep);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:white;">Trade Graphic Preview</span>
+                    <button onclick="document.getElementById('sharePreviewModal').remove()" style="background:rgba(255,255,255,.12);border:none;border-radius:6px;color:white;cursor:pointer;padding:.3rem .55rem;font-size:.85rem;">Close</button>
+                </div>
+                <div style="padding:1rem;overflow:auto;max-height:60vh;text-align:center;background:#f5f0e8;">
+                    <img src="${url}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);">
+                </div>
+                <div style="padding:.85rem 1.25rem;display:flex;gap:.75rem;justify-content:flex-end;border-top:1px solid #e8e4dc;background:#fafaf8;">
+                    <a href="${url}" download="nba-trade-sixers-hoops.png"
+                       style="display:inline-flex;align-items:center;gap:.45rem;background:var(--sixers-blue);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;padding:.6rem 1.3rem;border-radius:8px;text-decoration:none;">
+                        Download PNG
+                    </a>
+                </div>
+            </div>`;
+    }
+
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────
     function fmtM(val) {
