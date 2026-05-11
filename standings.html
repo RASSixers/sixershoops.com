@@ -23,368 +23,376 @@
   </script>
 
   <style>
+    /* ── Design tokens — exact match to trade machine ── */
     :root {
-      --color-navy: #001a57; --color-navy-dark: #000d2e;
-      --color-sky: #006BB6; --color-sky-light: #4da8ff;
-      --color-ice: #f5f0e8; --color-white: #ffffff;
-      --color-slate-900: #0d0d0d; --color-slate-700: #334155;
-      --color-slate-500: #4a4a5a; --color-gold: #c9a84c;
-      --sixers-red: #ED174C; --border-light: #e8e4dc;
-      --transition: all 0.35s ease;
+      --navy: #001a57;
+      --navy-deep: #0b0f1a;
+      --sixers-blue: #006BB6;
+      --sixers-red: #ED174C;
+      --cream: #f7f8fc;
+      --ink: #0d0f1a;
+      --mid: #64748b;
+      --border-light: #e4e8f0;
+      --card-bg: #ffffff;
+      --green: #16a34a;
+      --red: #dc2626;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: 'Barlow', sans-serif;
-      background: var(--color-ice);
-      color: var(--color-slate-900);
-      line-height: 1.6; padding-top: 64px; overflow-x: hidden;
+      background: var(--cream);
+      color: var(--ink);
+      line-height: 1.6;
+      padding-top: 64px;
+      overflow-x: hidden;
     }
-    /* Hero */
-    .page-header { background: var(--color-navy-dark); position: relative; overflow: hidden; }
-    .page-header::before { content:''; position:absolute; inset:0; background-image: linear-gradient(rgba(0,107,182,0.05) 1px,transparent 1px), linear-gradient(90deg,rgba(0,107,182,0.05) 1px,transparent 1px); background-size:48px 48px; pointer-events:none; z-index:0; }
-    .hero-glow-blue { position:absolute; left:50%; top:-80px; transform:translateX(-50%); width:800px; height:500px; background:radial-gradient(ellipse at center,rgba(0,107,182,0.22) 0%,transparent 65%); pointer-events:none; z-index:0; }
-    .hero-glow-red { position:absolute; left:50%; bottom:-40px; transform:translateX(-50%); width:500px; height:300px; background:radial-gradient(ellipse at center,rgba(237,23,76,0.12) 0%,transparent 65%); pointer-events:none; z-index:0; }
-    .hero-inner { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:4.5rem 2rem 3rem; display:flex; flex-direction:column; align-items:center; text-align:center; }
-    .page-title { font-family:'Barlow Condensed',sans-serif; font-size:clamp(3rem,9vw,6.5rem); font-weight:900; line-height:0.85; letter-spacing:-0.01em; text-transform:uppercase; color:rgba(255,255,255,0.95); margin:0; }
-    .page-title .highlight { display:block; background:linear-gradient(90deg,var(--color-sky),var(--color-sky-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .hero-divider { width:40px; height:3px; background:var(--sixers-red); border-radius:2px; margin:1.2rem auto 1rem; }
-    .page-subtitle { font-size:0.95rem; color:rgba(255,255,255,0.38); max-width:420px; line-height:1.65; margin:0; }
 
-    .content-wrapper { max-width:1200px; margin:0 auto; padding:0 20px; }
-    .standings-container { background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,26,87,0.05); padding:clamp(1.5rem,3vw,3rem); border:1px solid var(--border-light); margin-bottom:8rem; }
-    .conference-section { margin-bottom:4rem; }
-    .conference-section:last-child { margin-bottom:0; }
-    .conference-title { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-navy); margin-bottom:2rem; padding-bottom:0.6rem; border-bottom:3px solid var(--color-sky); display:inline-block; }
-    .table-responsive { overflow-x:auto; border-radius:12px; border:1px solid var(--border-light); }
-    table { width:100%; border-collapse:collapse; font-size:0.9rem; font-family:'Barlow',sans-serif; }
-    th { background:#f9f7f3; color:var(--color-slate-500); font-family:'Barlow Condensed',sans-serif; font-weight:700; text-transform:uppercase; font-size:0.68rem; letter-spacing:0.1em; padding:0.9rem 1rem; text-align:left; border-bottom:2px solid var(--border-light); }
-    th:last-child, td:last-child { text-align:center; }
-    td { padding:0.85rem 1rem; border-bottom:1px solid #f0ede6; color:var(--color-slate-900); font-weight:500; }
-    tr:last-child td { border-bottom:none; }
-    tr:hover td { background:#faf8f5; }
-    .team-info { display:flex; align-items:center; gap:0.75rem; font-family:'Barlow Condensed',sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; font-size:0.88rem; }
-    .sixers-highlight { background:rgba(0,107,182,0.05) !important; border-left:3px solid var(--color-sky); }
-    .rank { color:var(--color-slate-500); font-weight:700; width:30px; display:inline-block; }
-    .pct, .gb { font-family:'Barlow Condensed',sans-serif; font-weight:700; }
-    .status-badge { display:inline-flex; align-items:center; justify-content:center; padding:0; width:42px; height:22px; border-radius:4px; font-family:'Barlow Condensed',sans-serif; font-size:0.72rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; }
-    .streak-w { background:rgba(22,163,74,0.1); color:#15803d; border:1px solid rgba(22,163,74,0.25); }
-    .streak-l { background:rgba(220,38,38,0.08); color:#b91c1c; border:1px solid rgba(220,38,38,0.2); }
-    .loader { text-align:center; padding:4rem; }
-    .loader-spinner { border:4px solid #e8e4dc; border-top:4px solid var(--color-sky); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto 1rem; }
-    @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-    .export-container { text-align:center; margin-bottom:3rem; background:#f9f7f3; padding:2rem; border-radius:12px; border:1px solid var(--border-light); }
-    .export-btns-group { display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; }
-    .export-btn { background:var(--color-navy); color:#fff; border:none; padding:0.75rem 1.4rem; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:0.9rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:var(--transition); display:flex; align-items:center; gap:8px; }
-    .export-btn:hover { background:var(--color-sky); transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,107,182,0.25); }
-    .export-btn.primary { background:var(--color-sky); }
-    .export-btn.primary:hover { background:#0080d4; }
-    @media(max-width:768px){ .hero-inner{padding:3rem 1rem 2rem;} .standings-container{padding:1rem;} th,td{padding:0.65rem 0.5rem;font-size:0.8rem;} }
-
-    /* Social Media Export Styling */
-    #social-export-container {
-      position: fixed;
-      left: -9999px;
-      top: -9999px;
-      width: 1200px;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      padding: 60px;
-      color: #0f172a;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    #social-export-container * {
-      box-sizing: border-box;
-    }
-    .social-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-      border-bottom: 5px solid #003da6;
-      padding-bottom: 25px;
-      width: 100%;
+    /* ── PAGE HERO — matches trade machine exactly ── */
+    .page-header {
+      background: var(--cream);
       position: relative;
+      overflow: hidden;
     }
-    .social-title-box {
-      flex: 1;
-      padding-top: 0;
+    .page-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(0,107,182,0.12) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
     }
-    .social-title-box h1 {
-      font-size: 48px;
-      margin: 0 0 10px 0;
-      font-weight: 900;
-      color: #003da6;
-      letter-spacing: -2px;
-      line-height: 1;
+    .hero-glow-blue {
+      position: absolute;
+      right: -120px; top: -80px;
+      width: 600px; height: 500px;
+      background: radial-gradient(ellipse at center, rgba(0,107,182,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
     }
-    .social-title-box p {
-      font-size: 18px;
-      color: #64748b;
-      margin: 0;
-      font-weight: 600;
-      line-height: 1;
+    .hero-glow-red {
+      position: absolute;
+      left: -60px; bottom: -40px;
+      width: 400px; height: 300px;
+      background: radial-gradient(ellipse at center, rgba(237,23,76,0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
     }
-    .social-branding {
-      text-align: right;
-      flex-shrink: 0;
+    .hero-inner {
       position: relative;
-      top: 0;
-      right: -15px;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4.5rem 2rem 3.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
     }
-    .social-branding .domain {
-      font-size: 44px;
+    .page-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(3.2rem, 8vw, 6rem);
       font-weight: 900;
-      color: #dc2626;
-      line-height: 1;
+      line-height: 0.9;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      color: var(--ink);
       margin: 0;
-      padding: 0;
     }
-    .social-sixers-row td {
-      background: #fef3c7 !important;
+    .page-title .highlight {
+      display: block;
+      color: var(--sixers-blue);
     }
-    .social-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 45px;
+    .hero-divider {
+      width: 32px; height: 3px;
+      background: var(--sixers-red);
+      border-radius: 2px;
+      margin: 1.4rem auto 1.2rem;
     }
-    .social-conference {
-      background: white;
-      border-radius: 18px;
-      padding: 32px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    }
-    .social-conf-title {
-      font-size: 30px;
-      font-weight: 900;
-      color: #003da6;
-      margin-bottom: 28px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    /* Center conference title in single conference mode */
-    .social-content.mode-east .social-conf-title,
-    .social-content.mode-west .social-conf-title {
-      text-align: center;
-    }
-    .social-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    .social-table th {
-      background: #f1f5f9;
-      padding: 15px 12px;
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #64748b;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      border-bottom: 2px solid #e2e8f0;
-      text-align: center;
-    }
-    .social-table th:first-child {
-      border-radius: 10px 0 0 0;
-      text-align: left;
-    }
-    .social-table th:nth-child(2) {
-      text-align: center;
-    }
-    .social-table th:nth-child(3) {
-      text-align: center;
-    }
-    .social-table th:last-child {
-      border-radius: 0 10px 0 0;
-      text-align: center;
-    }
-    .social-table td {
-      padding: 0;
-      font-size: 15px;
-      font-weight: 600;
-      border-bottom: 1px solid #f1f5f9;
-      background: white;
-      height: 50px;
-    }
-    .social-table td .cell-content {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 50px;
-      padding: 0 12px;
-    }
-    .social-table td:first-child .cell-content {
-      justify-content: flex-start;
-    }
-    .social-table tr:last-child td:first-child {
-      border-radius: 0 0 0 10px;
-    }
-    .social-table tr:last-child td:last-child {
-      border-radius: 0 0 10px 0;
-    }
-    .social-table tr:last-child td {
-      border-bottom: none;
-    }
-    .social-team {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .social-team-rank {
-      min-width: 24px;
-      font-size: 13px;
-      color: #94a3b8;
-      font-weight: 700;
-      text-align: center;
-    }
-    .social-team-name {
-      font-weight: 700;
-      color: #0f172a;
-    }
-    .social-streak-badge {
-      font-size: 13px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-    .social-streak-w {
-      color: #16a34a;
-    }
-    .social-streak-l {
-      color: #dc2626;
-    }
-    .social-footer {
-      margin-top: 45px;
-      text-align: center;
-      font-size: 18px;
-      color: #64748b;
-      font-weight: 700;
-    }
-
-    .social-content.mode-east, .social-content.mode-west {
-      grid-template-columns: 1fr;
-      max-width: 920px;
+    .page-subtitle {
+      font-family: 'Barlow', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--mid);
+      max-width: 420px;
+      line-height: 1.65;
       margin: 0 auto;
     }
-    .social-content.mode-east .social-conference,
-    .social-content.mode-west .social-conference {
-      padding: 40px;
-    }
-    
-    /* Single Conference Mode Header */
-    .social-header.single-conf-mode {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding-bottom: 30px;
-    }
-    .social-header.single-conf-mode .social-title-box {
-      width: 100%;
-      margin-bottom: 18px;
-    }
-    .social-header.single-conf-mode .social-title-box h1 {
-      font-size: 52px;
-      margin-bottom: 28px;
-    }
-    .social-header.single-conf-mode .social-title-box p {
-      font-size: 22px;
-      color: #003da6;
-      margin-bottom: 0;
-    }
-    .social-header.single-conf-mode .social-branding {
-      position: static;
-      text-align: center;
-      margin-top: 0;
-      right: 0;
-    }
-    .social-header.single-conf-mode .social-branding .domain {
-      font-size: 36px;
+
+    /* ── CONTENT WRAPPER ── */
+    .content-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
     }
 
-    /* Export Button & Modal */
-    .export-container {
-      text-align: center;
-      margin-bottom: 3rem;
+    /* ── BOARD CARD — matches trade machine tm-board ── */
+    .standings-container {
+      position: relative;
       background: #ffffff;
-      padding: 2rem;
-      border-radius: 20px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e6eaf2;
+      border-radius: 14px;
+      padding: 1.5rem 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
+      overflow: hidden;
     }
-    .export-btns-group {
+    .standings-container::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+    }
+
+    /* ── CONFERENCE SECTIONS ── */
+    .conference-section { margin-bottom: 3rem; }
+    .conference-section:last-child { margin-bottom: 0; }
+
+    .conference-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .65rem; font-weight: 800;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--mid);
+      display: flex; align-items: center; gap: .6rem;
+      margin-bottom: 1rem;
+    }
+    .conference-title::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+    /* ── TABLE ── */
+    .table-responsive { overflow-x: auto; border-radius: 10px; border: 1px solid #e6eaf2; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-family: 'Barlow', sans-serif; }
+
+    th {
+      background: #f8f9fc;
+      color: #8693a8;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      padding: 0.8rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e6eaf2;
+    }
+    th:not(:first-child) { text-align: center; }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #eef1f6;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    td:not(:first-child) { text-align: center; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(0,107,182,.03); }
+
+    .team-info {
+      display: flex; align-items: center; gap: 0.65rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.03em; font-size: 0.9rem;
+    }
+    .sixers-highlight { background: rgba(0,107,182,0.05) !important; border-left: 3px solid var(--sixers-blue); }
+    .rank {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1rem; font-weight: 900;
+      color: #0d1530; width: 28px; display: inline-block;
+    }
+    .pct, .gb {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 0.95rem; color: #0d1530;
+    }
+    .gb { color: var(--mid); font-weight: 700; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0; width: 40px; height: 20px;
+      border-radius: 4px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem; font-weight: 800;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .streak-w { background: rgba(22,163,74,0.1); color: #15803d; border: 1px solid rgba(22,163,74,0.25); }
+    .streak-l { background: rgba(220,38,38,0.08); color: #b91c1c; border: 1px solid rgba(220,38,38,0.2); }
+
+    /* ── LOADER ── */
+    .loader { text-align: center; padding: 4rem; }
+    .loader-spinner {
+      border: 3px solid #e6eaf2;
+      border-top: 3px solid var(--sixers-blue);
+      border-radius: 50%; width: 36px; height: 36px;
+      animation: spin 1s linear infinite; margin: 0 auto 1rem;
+    }
+    .loader p { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--mid); }
+    @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+    /* ── EXPORT CONTAINER — matches trade machine btn styling ── */
+    .export-container {
+      margin-bottom: 1.5rem;
+      background: #ffffff;
+      border: 1px solid #e6eaf2;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
       display: flex;
-      justify-content: center;
+      align-items: center;
       gap: 1rem;
       flex-wrap: wrap;
+      box-shadow: 0 1px 2px rgba(15,23,42,.04);
     }
+    .export-btns-group { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+
+    /* Ghost button */
     .export-btn {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #fff;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: white; color: var(--mid);
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
+      padding: .6rem 1.3rem; border-radius: 8px;
+      border: 1px solid var(--border-light); cursor: pointer; transition: all .2s;
     }
-    .export-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
-    }
+    .export-btn:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+
+    /* Primary blue button */
     .export-btn.primary {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: var(--sixers-blue); color: white;
+      border-color: var(--sixers-blue);
+      box-shadow: 0 2px 12px rgba(0,107,182,0.25);
     }
+    .export-btn.primary:hover { background: #0080d4; border-color: #0080d4; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,107,182,.35); }
+
+    /* ── EXPORT MODAL — dark overlay matches trade machine ── */
     .export-modal {
       display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5,8,20,.88);
       z-index: 2000;
-      justify-content: center;
-      align-items: center;
+      justify-content: center; align-items: center;
     }
+    .export-modal.open { display: flex; }
     .export-modal-content {
-      background: #ffffff;
-      border-radius: 24px;
-      padding: 2rem;
-      max-width: 95vw;
-      width: auto;
-      max-height: 95vh;
-      overflow-y: auto;
+      background: #0d1530;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 1.75rem;
+      max-width: 95vw; width: auto;
+      max-height: 95vh; overflow-y: auto;
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 1.25rem;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6);
+    }
+    .export-modal-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .65rem; font-weight: 800;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: rgba(255,255,255,.35);
+      align-self: flex-start;
     }
     .export-preview {
-      max-width: 100%;
-      max-height: calc(95vh - 200px);
-      width: auto;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-      margin-bottom: 1.5rem;
+      max-width: 100%; max-height: calc(95vh - 220px);
+      border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.5);
       object-fit: contain;
     }
     .export-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
+      display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; width: 100%;
     }
-    .copy-btn, .download-btn, .close-btn {
-      padding: 0.8rem 1.5rem;
-      border: none;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
+    .modal-btn {
+      display: inline-flex; align-items: center; gap: .45rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: .78rem;
+      letter-spacing: .12em; text-transform: uppercase;
+      padding: .6rem 1.3rem; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.85);
+      cursor: pointer; transition: all .2s;
     }
-    .copy-btn { background: #3b82f6; color: #fff; }
-    .download-btn { background: #059669; color: #fff; }
-    .close-btn { background: #64748b; color: #fff; }
+    .modal-btn:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.25); }
+    .modal-btn.btn-download { background: var(--sixers-blue); border-color: var(--sixers-blue); color: white; box-shadow: 0 2px 12px rgba(0,107,182,.3); text-decoration: none; }
+    .modal-btn.btn-download:hover { background: #0080d4; transform: translateY(-1px); }
+    .modal-btn.btn-close { color: rgba(255,255,255,.45); }
+
+    /* ── Social export (hidden off-screen) ── */
+    #social-export-container {
+      position: fixed; left: -9999px; top: -9999px;
+      width: 1200px;
+      background: var(--cream);
+      padding: 60px;
+      font-family: 'Barlow', sans-serif;
+      color: var(--ink);
+    }
+    #social-export-container * { box-sizing: border-box; }
+    .social-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 40px;
+      border-bottom: 3px solid var(--sixers-blue);
+      padding-bottom: 24px; width: 100%;
+    }
+    .social-title-box h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 52px; font-weight: 900; color: var(--ink);
+      letter-spacing: -1px; line-height: 1; margin: 0 0 8px;
+    }
+    .social-title-box p { font-size: 16px; color: var(--mid); margin: 0; font-weight: 600; }
+    .social-branding .domain {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 40px; font-weight: 900; color: var(--sixers-red);
+      line-height: 1;
+    }
+    .social-sixers-row td { background: rgba(0,107,182,0.06) !important; border-left: 3px solid var(--sixers-blue); }
+    .social-content { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .social-conference {
+      background: white; border-radius: 12px; padding: 28px;
+      border: 1px solid #e6eaf2;
+      box-shadow: 0 4px 20px rgba(15,23,42,0.06);
+    }
+    .social-conf-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.62rem; font-weight: 800; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--mid);
+      margin-bottom: 20px; padding-bottom: 10px;
+      border-bottom: 1px solid #e6eaf2;
+    }
+    .social-content.mode-east, .social-content.mode-west {
+      grid-template-columns: 1fr; max-width: 920px; margin: 0 auto;
+    }
+    .social-header.single-conf-mode { flex-direction: column; align-items: center; text-align: center; }
+    .social-header.single-conf-mode .social-title-box { width: 100%; margin-bottom: 16px; }
+    .social-header.single-conf-mode .social-branding { position: static; text-align: center; }
+    .social-table { width: 100%; border-collapse: collapse; }
+    .social-table th {
+      background: #f8f9fc; padding: 12px 10px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; text-transform: uppercase;
+      color: #8693a8; font-weight: 800; letter-spacing: 0.14em;
+      border-bottom: 1px solid #e6eaf2; text-align: center;
+    }
+    .social-table th:first-child { text-align: left; }
+    .social-table td {
+      padding: 0; font-size: 14px; font-weight: 600;
+      border-bottom: 1px solid #eef1f6; background: white; height: 46px;
+    }
+    .social-table td .cell-content {
+      display: flex; align-items: center; justify-content: center; height: 46px;
+    }
+    .social-streak-w { color: #15803d; }
+    .social-streak-l { color: #b91c1c; }
+    .social-footer {
+      margin-top: 40px; text-align: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; color: var(--mid); font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+
+    @media(max-width:768px){
+      .hero-inner { padding: 3rem 1rem 2rem; }
+      .standings-container { padding: 1rem; }
+      th, td { padding: 0.6rem 0.5rem; font-size: 0.78rem; }
+      .export-container { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
@@ -403,11 +411,14 @@
 
   <div class="content-wrapper">
     <div class="export-container">
-      <h3 style="margin-bottom: 1.2rem; color: var(--color-navy); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800;">Standings Graphics</h3>
+      <span class="export-label">Export Graphic</span>
       <div class="export-btns-group">
-        <button class="export-btn primary" data-export-mode="both">📸 Full League</button>
-        <button class="export-btn" data-export-mode="east">📸 Eastern Conference</button>
-        <button class="export-btn" data-export-mode="west">📸 Western Conference</button>
+        <button class="export-btn primary" data-export-mode="both">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Full League
+        </button>
+        <button class="export-btn" data-export-mode="east">Eastern Conf</button>
+        <button class="export-btn" data-export-mode="west">Western Conf</button>
       </div>
     </div>
 
@@ -441,16 +452,81 @@
   <!-- Export Modal -->
   <div id="exportModal" class="export-modal">
     <div class="export-modal-content">
+      <span class="export-modal-title">Standings Export — SixersHoops</span>
       <img id="exportPreview" class="export-preview" alt="Standings export">
       <div class="export-actions">
-        <button class="download-btn" id="downloadBtn">Download Image</button>
-        <button class="copy-btn" id="copyBtn">Copy to Clipboard</button>
-        <button class="close-btn" id="closeModal">Close</button>
+        <a class="modal-btn btn-download" id="downloadBtn" download="standings.png">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PNG
+        </a>
+        <button class="modal-btn" id="copyBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Image
+        </button>
+        <button class="modal-btn btn-close" id="closeModal">✕ Close</button>
       </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="standings.js"></script>
+  <script>
+    // Bridge: patch modal open/close to use .open class (new dark modal style)
+    (function() {
+      const modal = document.getElementById('exportModal');
+      if (!modal) return;
+
+      // Observe style.display changes made by standings.js and sync to .open class
+      const observer = new MutationObserver(() => {
+        if (modal.style.display === 'flex') {
+          modal.classList.add('open');
+          modal.style.display = '';
+        } else if (modal.style.display === 'none') {
+          modal.classList.remove('open');
+          modal.style.display = '';
+        }
+      });
+      observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+
+      // Close button
+      const closeBtn = document.getElementById('closeModal');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+      }
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+      // Patch downloadBtn: standings.js sets href on an <a> or triggers click; we keep it working
+      const dlBtn = document.getElementById('downloadBtn');
+      if (dlBtn) {
+        // standings.js may call dlBtn.href = dataUrl and dlBtn.click()
+        // Since it's already an <a>, that works natively. Just ensure it gets the src from the preview.
+        const preview = document.getElementById('exportPreview');
+        if (preview) {
+          const imgObserver = new MutationObserver(() => {
+            if (preview.src && preview.src !== window.location.href) {
+              dlBtn.href = preview.src;
+            }
+          });
+          imgObserver.observe(preview, { attributes: true, attributeFilter: ['src'] });
+        }
+      }
+
+      // Copy button
+      const copyBtn = document.getElementById('copyBtn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          const preview = document.getElementById('exportPreview');
+          if (!preview || !preview.src) return;
+          try {
+            const res = await fetch(preview.src);
+            const blob = await res.blob();
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => { copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Image'; }, 2000);
+          } catch(e) { copyBtn.textContent = 'Copy failed'; }
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
