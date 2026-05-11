@@ -50,6 +50,9 @@
             margin-top: 60px;
             background: var(--cream);
             color: var(--ink);
+            /* Prevent horizontal overflow on mobile */
+            overflow-x: hidden;
+            max-width: 100%;
         }
 
         /* ─── HERO ──────────────────────────────────── */
@@ -861,31 +864,38 @@
         @media (max-width: 900px) {
             .main-layout {
                 grid-template-columns: 1fr;
-                padding: 1.25rem;
-                gap: 1.25rem;
+                padding: 1rem;
+                gap: 1rem;
             }
             .feature-cards-inner { grid-template-columns: repeat(2, 1fr); }
-            /* Sidebar loses sticky, flows below feed */
+            /* Sidebar loses sticky and flows below feed */
             aside { position: static !important; top: auto !important; }
         }
 
         @media (max-width: 600px) {
+            /* ── Global containment — stops horizontal scroll ── */
+            .hero, .feature-cards-section, .main-layout,
+            .editorial-section, #feed-container,
+            #feed-container > *, #feed-container > * > * {
+                max-width: 100%;
+                min-width: 0;
+                overflow-x: hidden;
+            }
+
             /* ── Hero ── */
-            .hero-inner { padding: 2rem 1.1rem 1.5rem; }
-            .hero-sub { font-size: 0.9rem; }
-            .hero-eyebrow { margin-bottom: 1.1rem; }
+            .hero-inner { padding: 1.75rem 1rem 1.5rem; }
+            .hero-sub { font-size: 0.88rem; max-width: 100%; }
+            .hero-eyebrow { margin-bottom: 1rem; }
             .hero-cta-row {
                 flex-direction: column;
                 align-items: stretch;
                 width: 100%;
                 gap: 0.6rem;
-                margin-top: 1.4rem;
+                margin-top: 1.25rem;
             }
-            .hero-cta-primary,
-            .hero-cta-secondary {
+            .hero-cta-primary, .hero-cta-secondary {
                 justify-content: center;
                 width: 100%;
-                font-size: 0.9rem;
                 padding: 0.8rem 1rem;
             }
 
@@ -896,94 +906,59 @@
                 padding: 0.75rem !important;
                 gap: 0.5rem;
             }
-            .feature-card { padding: 0.9rem; gap: 0.4rem; }
+            .feature-card { padding: 0.85rem; gap: 0.35rem; }
             .feature-card-desc { display: none; }
-            .feature-card-title { font-size: 0.78rem; }
-            .feature-card-icon { width: 30px; height: 30px; border-radius: 7px; }
+            .feature-card-title { font-size: 0.75rem; }
+            .feature-card-icon { width: 28px; height: 28px; }
 
             /* ── Main layout ── */
-            .main-layout { padding: 0.75rem; gap: 0.85rem; }
+            .main-layout { padding: 0.75rem; gap: 0.75rem; }
 
             /* ── Community feed heading ── */
-            .community-feed-heading { margin-bottom: 0.75rem; }
-            .community-feed-title { font-size: 1.35rem; }
+            .community-feed-title { font-size: 1.3rem; }
+            .community-feed-heading { margin-bottom: 0.65rem; }
 
             /* ── Create post box ── */
-            .create-post-box {
-                padding: 0.7rem 0.85rem;
-                gap: 0.5rem;
-                border-radius: 12px;
-                margin-bottom: 0.75rem;
-            }
+            .create-post-box { padding: 0.65rem 0.85rem; gap: 0.5rem; margin-bottom: 0.65rem; }
             #create-post-avatar-container { width: 32px; height: 32px; flex-shrink: 0; }
-            #create-post-trigger {
-                font-size: 0.82rem;
-                padding: 0.45rem 0.75rem;
-                min-width: 0;
-            }
-            #create-post-btn {
-                padding: 0.45rem 0.85rem;
-                font-size: 0.78rem;
-                border-radius: 7px;
-                flex-shrink: 0;
-            }
+            #create-post-trigger { font-size: 0.82rem; padding: 0.4rem 0.7rem; min-width: 0; }
+            #create-post-btn { padding: 0.42rem 0.85rem; font-size: 0.78rem; flex-shrink: 0; }
 
-            /* ── Feed filter tabs: horizontally scrollable ── */
+            /* ── Feed filters: horizontal scroll, no wrap ── */
             .feed-filters {
                 overflow-x: auto;
                 flex-wrap: nowrap;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
                 padding: 0.3rem;
-                gap: 0.15rem;
-                margin-bottom: 0.85rem;
+                margin-bottom: 0.65rem;
             }
             .feed-filters::-webkit-scrollbar { display: none; }
             .filter-btn {
                 white-space: nowrap;
                 flex-shrink: 0;
-                padding: 0.4rem 0.75rem;
+                padding: 0.38rem 0.7rem;
                 font-size: 0.78rem;
-                gap: 0.3rem;
                 min-height: 36px;
             }
-            .filter-btn svg { width: 12px; height: 12px; }
 
-            /* ── Feed container: full-bleed cards ── */
-            #feed-container { gap: 0.75rem; }
+            /* ── Feed cards — clamp everything inside ── */
+            #feed-container { gap: 0.65rem; }
 
-            /* ── Sidebar cards ── */
-            .sidebar-card {
-                padding: 1rem;
-                border-radius: 10px;
-                margin-bottom: 0.85rem;
-            }
-            .sidebar-heading { font-size: 0.7rem; }
+            /* ── Sidebar ── */
+            .sidebar-card { padding: 0.9rem; margin-bottom: 0.65rem; }
 
-            /* ── Editorial section ── */
-            .editorial-section { padding: 0 0.75rem; margin-top: 1.25rem; }
+            /* ── Editorial ── */
+            .editorial-section { padding: 0 0.75rem; margin-top: 1rem; }
             .editorial-grid.count-2,
             .editorial-grid.count-3 { grid-template-columns: 1fr; }
             .editorial-grid.count-3 .article-card:first-child { grid-row: auto; }
             .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height: 140px; }
             .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size: 1.08rem; }
-            .article-card-footer { flex-wrap: wrap; gap: 0.3rem; }
-
-            /* ── Modals full-screen on mobile ── */
-            .post-modal {
-                width: 100%;
-                max-width: 100%;
-                max-height: 95vh;
-                border-radius: 16px 16px 0 0;
-                padding: 1.5rem 1.25rem;
-                margin-top: auto;
-            }
-            .post-modal-overlay { align-items: flex-end; }
-            .create-post-modal { padding: 1.5rem 1.25rem; }
 
             /* ── Pagination ── */
-            .pagination { padding: 0.5rem; gap: 4px; margin-top: 1rem; }
-            .pagination button { padding: 6px 10px; font-size: 0.82rem; }
+            .pagination { padding: 0.5rem; gap: 3px; margin-top: 0.75rem; }
+            .pagination button { padding: 5px 9px; font-size: 0.8rem; }
         }
 
         @media (max-width: 380px) {
