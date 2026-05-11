@@ -117,6 +117,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const navbarHTML = `
     <nav class="navbar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
         <a href="/" class="nav-brand">
             <img src="https://sixershoops.com/sixershoopslogonew.png" alt="Sixers Hoops Logo" class="nav-logo">
             <span class="brand-name">SIXERS HOOPS</span>
@@ -175,12 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </svg>
             </button>
         </div>
-
-        <button class="mobile-menu-btn" id="mobileMenuBtn">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
         <style>
             .notification-item {
                 padding: 12px 16px;
