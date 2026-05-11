@@ -235,23 +235,55 @@
         }
         .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
 
-        /* ─── CBA INFO BAR ────────────────────── */
-        .cba-bar {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
+        /* ─── BOARD (unified surface containing cap bar + teams) ─── */
+        .tm-board {
+            position: relative;
+            background: #ffffff;
+            border: 1px solid #e6eaf2;
+            border-radius: 14px;
+            padding: 1.25rem 1.25rem 1.5rem;
             margin-bottom: 1.5rem;
-            display: flex; flex-wrap: wrap; gap: .5rem 2rem;
-            align-items: center;
-            border: 1px solid var(--border-light);
-            border-top: 3px solid var(--navy);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
+            overflow: hidden;
         }
-        .cba-bar-title { font-family: 'Barlow Condensed', sans-serif; font-size: .7rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; color: var(--mid); flex-shrink: 0; margin-right: .5rem; }
-        .cba-stat { display: flex; flex-direction: column; gap: 1px; }
-        .cba-stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: .9rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--ink); }
-        .cba-stat-key { font-family: 'Barlow', sans-serif; font-size: .6rem; font-weight: 500; color: var(--mid); text-transform: uppercase; letter-spacing: .1em; }
-        .cba-divider { width: 1px; height: 30px; background: var(--border-light); flex-shrink: 0; }
+        .tm-board::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+        }
+
+        /* ─── CBA INFO BAR (flat inside board) ─── */
+        .cba-bar {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding: .5rem .25rem 1rem;
+            margin: 0 0 1.25rem;
+            display: flex; flex-wrap: wrap; gap: .5rem 2.25rem;
+            align-items: center;
+            border-bottom: 1px solid #eef1f6;
+        }
+        .cba-bar-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .8rem; font-weight: 800;
+            letter-spacing: .18em; text-transform: uppercase;
+            color: #1f2a44; flex-shrink: 0; margin-right: 1rem;
+        }
+        .cba-stat { display: flex; flex-direction: column; gap: 3px; }
+        .cba-stat-val {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.1rem; font-weight: 900;
+            letter-spacing: .01em; color: #0d1530;
+            line-height: 1;
+        }
+        .cba-stat-key {
+            font-family: 'Barlow', sans-serif;
+            font-size: .62rem; font-weight: 600;
+            color: #8693a8; text-transform: uppercase; letter-spacing: .14em;
+        }
+        .cba-divider { width: 1px; height: 28px; background: #e6eaf2; flex-shrink: 0; }
 
         /* ─── CONTROLS ────────────────────────── */
         .tm-controls {
@@ -307,42 +339,32 @@
         /* ─── TEAM CARD ───────────────────────── */
         .team-card {
             background: white;
-            border: 1px solid var(--border-light);
+            border: 1px solid #e6eaf2;
             border-radius: 12px;
-            overflow: hidden;
+            overflow: visible;
             transition: box-shadow .2s, border-color .22s, transform .22s;
             position: relative;
+            box-shadow: 0 1px 2px rgba(15,23,42,.03);
         }
-        .team-card::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: var(--sixers-blue);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform .28s ease;
-            z-index: 2;
+        .team-card::after { content: none; }
+        .team-card:hover {
+            box-shadow: 0 8px 26px -14px rgba(0,107,182,.25);
+            border-color: #d6dde9;
         }
-        .team-card:hover::after { transform: scaleX(1); }
-        .team-card:hover { box-shadow: 0 6px 24px rgba(0,107,182,0.09); border-color: rgba(0,107,182,0.25); transform: translateY(-2px); }
 
         /* ─── TEAM CARD HEADER — CUSTOM DROPDOWN ─────────────────── */
         .team-card-header {
             background: var(--navy-deep);
             display: flex; align-items: stretch;
             position: relative;
-            min-height: 54px;
+            min-height: 58px;
             cursor: pointer;
             user-select: none;
+            border-radius: 11px 11px 0 0;
         }
         .team-card-header:hover .team-header-inner { background: rgba(255,255,255,.03); }
 
-        .team-color-bar {
-            width: 5px;
-            flex-shrink: 0;
-            transition: background .25s;
-        }
+        .team-color-bar { display: none; }
 
         .team-header-inner {
             flex: 1;
@@ -407,7 +429,7 @@
             overflow: hidden;
             display: none;
             flex-direction: column;
-            max-height: 320px;
+            max-height: min(620px, calc(100vh - 200px));
         }
         .team-dropdown.open { display: flex; }
 
@@ -528,6 +550,25 @@
         /* Tab Panels */
         .team-tab-panel { display: none; }
         .team-tab-panel.active { display: block; }
+
+
+        /* ─── PLAYER HEADSHOTS ─── */
+        .player-headshot {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: #eef2f7 center/cover no-repeat;
+            border: 1.5px solid var(--border-light);
+            flex-shrink: 0;
+            object-fit: cover;
+            object-position: center 12%;
+            display: block;
+        }
+        .player-headshot.fallback {
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800; font-size: .68rem;
+            color: #fff; letter-spacing: .04em;
+        }
 
         /* Player List */
         .player-list { padding: .75rem; max-height: 340px; overflow-y: auto; }
@@ -923,12 +964,12 @@
         }
 
         /* ─── NEW: Logo-grid team picker ─── */
-        .team-dropdown { max-height: 480px; }
+        .team-dropdown { max-height: min(620px, calc(100vh - 200px)); }
         .team-grid-picker {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: .4rem;
-            padding: .55rem .7rem .85rem;
+            grid-template-columns: repeat(5, 1fr);
+            gap: .35rem;
+            padding: .5rem .7rem .8rem;
         }
         .team-grid-section-label {
             grid-column: 1 / -1;
@@ -963,7 +1004,7 @@
         }
         .team-tile.disabled { opacity: .2; pointer-events: none; filter: grayscale(.7); }
         .team-tile-logo {
-            width: 40px; height: 40px;
+            width: 34px; height: 34px;
             object-fit: contain;
             filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
             pointer-events: none;
@@ -1114,9 +1155,332 @@
             .swap-grid,
             .swap-grid[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
             .swap-arrow { transform: rotate(90deg); padding: .15rem 0; }
-            .team-grid-picker { grid-template-columns: repeat(3, 1fr); }
+            .team-grid-picker { grid-template-columns: repeat(4, 1fr); }
         }
 
+
+        /* ═══════════════════════════════════════════════════════════════════
+           MODERN REDESIGN OVERRIDES — Trade Machine
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* Board: lighter, more refined surface */
+        .tm-board {
+            background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+            border: 1px solid #e8ecf3;
+            border-radius: 18px;
+            padding: 1.5rem 1.5rem 1.75rem;
+            box-shadow: 0 1px 0 rgba(255,255,255,.8) inset,
+                        0 2px 4px rgba(15,23,42,.04),
+                        0 24px 48px -28px rgba(0,26,87,.18);
+        }
+        .tm-board::before {
+            height: 4px;
+            background: linear-gradient(90deg, #ED174C 0%, #006BB6 35%, #00A3FF 65%, #006BB6 100%);
+            border-radius: 18px 18px 0 0;
+        }
+
+        /* CBA bar: airy pills with vertical accents */
+        .cba-bar {
+            gap: .75rem;
+            padding: .25rem .25rem 1.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px dashed #e6eaf2;
+        }
+        .cba-bar-title {
+            background: linear-gradient(135deg, #001a57, #006BB6);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+            font-size: .9rem; letter-spacing: .22em;
+            margin-right: 1.5rem;
+        }
+        .cba-stat {
+            padding: .35rem 1rem .35rem 1rem;
+            border-left: 2px solid #e6eaf2;
+            transition: border-color .2s;
+        }
+        .cba-stat:hover { border-left-color: var(--sixers-blue); }
+        .cba-stat-val { font-size: 1.25rem; }
+        .cba-stat-key { font-size: .58rem; letter-spacing: .18em; color: #93a0b5; margin-top: 4px; }
+        .cba-divider { display: none; }
+
+        /* Team grid: a touch more breathing room */
+        .trade-grid { gap: 1.5rem; margin-bottom: 0; }
+
+        /* Team card: cleaner, lifted, branded */
+        .team-card {
+            border: 1px solid #e8ecf3;
+            border-radius: 16px;
+            box-shadow: 0 1px 2px rgba(15,23,42,.04),
+                        0 12px 32px -20px rgba(0,26,87,.18);
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .team-card:hover {
+            border-color: #d2dbeb;
+            box-shadow: 0 1px 2px rgba(15,23,42,.04),
+                        0 18px 44px -22px rgba(0,107,182,.32);
+            transform: translateY(-1px);
+        }
+
+        /* Team card HEADER — replace flat navy-deep with branded gradient */
+        .team-card-header {
+            background: linear-gradient(135deg, #0a1538 0%, #0f2a6a 55%, #0b3d8f 100%);
+            min-height: 68px;
+            border-radius: 16px 16px 0 0;
+            box-shadow: inset 0 -1px 0 rgba(255,255,255,.06);
+        }
+        .team-card-header::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(120% 80% at 100% 0%, rgba(0,163,255,.18) 0%, transparent 60%);
+            pointer-events: none;
+            border-radius: inherit;
+        }
+        .team-header-inner { padding: .9rem 1rem .9rem 1.1rem; gap: 1rem; position: relative; z-index: 1; }
+        .team-header-label {
+            font-size: .58rem;
+            letter-spacing: .24em;
+            color: rgba(180,210,255,.55);
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        .team-header-name { font-size: 1.15rem; letter-spacing: .04em; }
+        .team-header-name.placeholder {
+            color: rgba(255,255,255,.55);
+            font-style: normal;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .team-header-chevron {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 8px;
+            padding: 6px;
+            color: rgba(255,255,255,.7);
+        }
+        .team-card-header:hover .team-header-chevron { background: rgba(0,163,255,.2); color: #fff; border-color: rgba(0,163,255,.4); }
+        .team-card-header.open .team-header-chevron { background: var(--sixers-blue); color: #fff; border-color: var(--sixers-blue); }
+        .team-remove-btn { border-left: 1px solid rgba(255,255,255,.08); position: relative; z-index: 2; }
+
+        /* Tabs: modern segmented control */
+        .team-tabs {
+            background: #f6f8fc;
+            padding: .35rem;
+            margin: .85rem .85rem 0;
+            border-radius: 10px;
+            border: 1px solid #eaeef5;
+            gap: .15rem;
+        }
+        .team-tab {
+            border-radius: 7px;
+            padding: .55rem .9rem;
+            font-size: .68rem;
+            top: 0;
+            border-bottom: none !important;
+            color: #6b7790;
+        }
+        .team-tab.active {
+            background: #ffffff;
+            color: var(--sixers-blue);
+            box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 2px 8px -4px rgba(0,107,182,.25);
+        }
+        .team-tab:hover:not(.active) { background: rgba(255,255,255,.6); color: var(--ink); }
+
+        /* Empty state: real icon + better hierarchy */
+        .empty-state {
+            padding: 3.5rem 1.5rem;
+            gap: 1rem;
+        }
+        .empty-state-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f1f5fc, #e6edfa);
+            border: 1px solid #e1e8f3;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 1;
+            position: relative;
+        }
+        .empty-state-icon::before {
+            content: '';
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: 2.5px solid var(--sixers-blue);
+            opacity: .4;
+            background:
+                linear-gradient(var(--sixers-blue), var(--sixers-blue)) center/100% 2px no-repeat,
+                linear-gradient(var(--sixers-blue), var(--sixers-blue)) center/2px 100% no-repeat;
+        }
+        .empty-state-text {
+            font-size: .85rem;
+            color: #6b7790;
+            font-weight: 500;
+        }
+
+        /* Footer: cleaner, branded link */
+        .team-card-footer {
+            background: linear-gradient(180deg, #ffffff 0%, #f7f9fd 100%);
+            border-top: 1px solid #eef1f6;
+            padding: .9rem 1.25rem;
+        }
+        .footer-label { font-size: .62rem; letter-spacing: .16em; color: #93a0b5; }
+        .footer-value { font-size: 1.05rem; color: var(--ink); margin-top: 2px; }
+        .footer-sending { color: var(--sixers-blue); font-weight: 700; font-size: .78rem; letter-spacing: .04em; }
+
+        /* ═══ TEAM DROPDOWN → FULLSCREEN COMMAND PALETTE MODAL ═══ */
+        body:has(.team-dropdown.open) { overflow: hidden; }
+        body:has(.team-dropdown.open)::before {
+            content: '';
+            position: fixed; inset: 0;
+            background: rgba(8, 14, 32, .72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9000;
+            animation: tmFadeIn .18s ease-out;
+        }
+        @keyframes tmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes tmModalIn {
+            from { opacity: 0; transform: translate(-50%, -48%) scale(.96); }
+            to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .team-dropdown {
+            /* Override absolute positioning */
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translate(-50%, -50%);
+            width: min(960px, calc(100vw - 32px));
+            max-width: 960px;
+            max-height: min(720px, calc(100vh - 64px)) !important;
+            z-index: 9999;
+            background: linear-gradient(180deg, #0d1a3f 0%, #0a1330 100%);
+            border: 1px solid rgba(0,163,255,.22);
+            border-top: 1px solid rgba(0,163,255,.22);
+            border-radius: 18px;
+            box-shadow: 0 40px 100px rgba(0,0,0,.6),
+                        0 0 0 1px rgba(255,255,255,.04) inset,
+                        0 1px 0 rgba(255,255,255,.06) inset;
+            padding-bottom: .5rem;
+        }
+        .team-dropdown.open { animation: tmModalIn .22s cubic-bezier(.2,.9,.3,1.1); }
+
+        .team-dropdown-search {
+            padding: 1.1rem 1.25rem .9rem;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .team-dropdown-search input {
+            font-size: 1rem;
+            padding: .85rem 1rem .85rem 2.6rem;
+            border-radius: 10px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.08);
+        }
+        .team-dropdown-search input:focus {
+            background: rgba(255,255,255,.08);
+            border-color: rgba(0,163,255,.5);
+            box-shadow: 0 0 0 4px rgba(0,107,182,.18);
+        }
+        .team-dropdown-search-icon { left: 1.85rem; }
+        .team-dropdown-search-icon svg, .team-dropdown-search svg { width: 16px; height: 16px; }
+
+        /* Switch dropdown list to a clean grid showing all teams without scroll */
+        .team-dropdown-list {
+            padding: .5rem 1.25rem 1.25rem;
+            overflow-y: auto;
+        }
+        .team-grid-picker { padding: 1rem 0 .25rem; }
+        .team-grid-section-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .7rem;
+            font-weight: 800;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: rgba(180,210,255,.5);
+            padding: 0 .25rem .75rem;
+            display: flex; align-items: center; gap: .75rem;
+        }
+        .team-grid-section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0,163,255,.25), transparent);
+        }
+
+        /* The actual team grid — 5 cols desktop, responsive */
+        .team-grid-picker {
+            display: block;
+        }
+        .team-grid-picker .team-grid-section-label { grid-column: 1 / -1; }
+        .team-grid-picker {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: .6rem;
+            row-gap: .6rem;
+        }
+        @media (max-width: 720px) {
+            .team-grid-picker { grid-template-columns: repeat(3, 1fr); }
+            .team-dropdown { width: calc(100vw - 16px); max-height: calc(100vh - 32px) !important; }
+        }
+        @media (max-width: 420px) {
+            .team-grid-picker { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .team-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .45rem;
+            padding: .9rem .5rem .75rem;
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.06);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform .15s ease, background .15s, border-color .15s, box-shadow .15s;
+            position: relative;
+        }
+        .team-tile:hover {
+            background: rgba(0,107,182,.18);
+            border-color: rgba(0,163,255,.45);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -8px rgba(0,107,182,.5);
+        }
+        .team-tile.selected {
+            background: rgba(0,107,182,.22);
+            border-color: rgba(0,163,255,.7);
+            box-shadow: 0 0 0 2px rgba(0,163,255,.4) inset;
+        }
+        .team-tile.disabled {
+            opacity: .25;
+            pointer-events: none;
+            filter: grayscale(.6);
+        }
+        .team-tile-logo {
+            width: 44px; height: 44px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+        }
+        .team-tile-abbr {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            font-size: .7rem;
+            letter-spacing: .14em;
+            color: rgba(255,255,255,.78);
+            text-transform: uppercase;
+        }
+
+        /* Mobile: stack cap stats nicely */
+        @media (max-width: 640px) {
+            .cba-bar { gap: .5rem; }
+            .cba-stat { padding: .25rem .75rem; }
+            .cba-stat-val { font-size: 1.05rem; }
+            .tm-board { padding: 1.1rem 1rem 1.25rem; border-radius: 14px; }
+            .team-card-header { min-height: 60px; }
+            .team-header-inner { padding: .75rem .85rem; }
+        }
     </style>
 </head>
 <body>
@@ -1153,29 +1517,32 @@
 
     <div class="tm-wrapper">
 
-        <!-- CBA Numbers Bar -->
-        <div class="cba-bar">
-            <span class="cba-bar-title">2026–27</span>
-            <div class="cba-stat"><span class="cba-stat-val" id="cba-cap">$153.0M</span><span class="cba-stat-key">Salary Cap</span></div>
-            <div class="cba-divider"></div>
-            <div class="cba-stat"><span class="cba-stat-val" id="cba-tax">$187.9M</span><span class="cba-stat-key">Luxury Tax</span></div>
-            <div class="cba-divider"></div>
-            <div class="cba-stat"><span class="cba-stat-val" id="cba-first">$206.7M</span><span class="cba-stat-key">First Apron</span></div>
-            <div class="cba-divider"></div>
-            <div class="cba-stat"><span class="cba-stat-val" id="cba-second">$219.2M</span><span class="cba-stat-key">Second Apron</span></div>
-            <div class="cba-divider"></div>
-            <div class="cba-stat"><span class="cba-stat-val">$6.0M</span><span class="cba-stat-key">Cash Limit/Year</span></div>
+        <!-- Unified board: cap bar + team cards -->
+        <div class="tm-board">
+            <!-- CBA Numbers Bar -->
+            <div class="cba-bar">
+                <span class="cba-bar-title">2026–27</span>
+                <div class="cba-stat"><span class="cba-stat-val" id="cba-cap">$153.0M</span><span class="cba-stat-key">Salary Cap</span></div>
+                <div class="cba-divider"></div>
+                <div class="cba-stat"><span class="cba-stat-val" id="cba-tax">$187.9M</span><span class="cba-stat-key">Luxury Tax</span></div>
+                <div class="cba-divider"></div>
+                <div class="cba-stat"><span class="cba-stat-val" id="cba-first">$206.7M</span><span class="cba-stat-key">First Apron</span></div>
+                <div class="cba-divider"></div>
+                <div class="cba-stat"><span class="cba-stat-val" id="cba-second">$219.2M</span><span class="cba-stat-key">Second Apron</span></div>
+                <div class="cba-divider"></div>
+                <div class="cba-stat"><span class="cba-stat-val">$6.0M</span><span class="cba-stat-key">Cash Limit/Year</span></div>
+            </div>
+
+            <!-- hidden stat holders for JS references that still exist -->
+            <span id="teamCountLabel" style="display:none">2</span>
+            <span id="totalPlayers" style="display:none">0</span>
+            <span id="totalPicks" style="display:none">0</span>
+            <span id="totalSalary" style="display:none">$0</span>
+            <span id="totalTeams" style="display:none">2</span>
+
+            <!-- Team Cards Grid -->
+            <div class="trade-grid" id="tradeGrid"></div>
         </div>
-
-        <!-- hidden stat holders for JS references that still exist -->
-        <span id="teamCountLabel" style="display:none">2</span>
-        <span id="totalPlayers" style="display:none">0</span>
-        <span id="totalPicks" style="display:none">0</span>
-        <span id="totalSalary" style="display:none">$0</span>
-        <span id="totalTeams" style="display:none">2</span>
-
-        <!-- Team Cards Grid -->
-        <div class="trade-grid" id="tradeGrid"></div>
 
 
 
@@ -1299,6 +1666,24 @@
         'UTA': { name: 'Utah Jazz',               color: '#002B5C', conference: 'West' },
         'WAS': { name: 'Washington Wizards',      color: '#002B5C', conference: 'East' },
     };
+
+
+    // ─── NBA HEADSHOT IDS (auto-built from nba_api active roster) ──────────
+    const NBA_PLAYER_IDS = {"jalenjohnson":1630552,"dysondaniels":1630700,"jonathankuminga":1630228,"onyekaokongwu":1630168,"nickeilalexanderwalker":1629638,"coreykispert":1630557,"zacharierisacher":1642259,"buddyhield":1627741,"asanewell":1642854,"mouhamedgueye":1631243,"jaysontatum":1628369,"jaylenbrown":1627759,"derrickwhite":1628401,"samhauser":1630573,"paytonpritchard":1630202,"hugogonzalez":1642864,"dalanobanton":1630633,"lukagarza":1630568,"baylorscheierman":1631248,"neemiasqueta":1629674,"ronharperjr":1631199,"jordanwalsh":1641775,"maxshulga":1642917,"amariwilliams":1642873,"michaelporterjr":1629008,"nicolasclaxton":1629651,"terancemann":1629611,"egordemin":1642856,"ziairewilliams":1630533,"noahclowney":1641730,"nolantraore":1642849,"drakepowell":1642962,"bensaraf":1642879,"dannywolf":1642874,"joshminott":1631169,"malachismith":1631260,"lameloball":1630163,"milesbridges":1628970,"brandonmiller":1641706,"joshgreen":1630182,"grantwilliams":1629684,"konkneuppel":1642280,"tidjanesalaun":1642275,"tremann":1630544,"patconnaughton":1626192,"liammcneeley":1642862,"moussadiabate":1631217,"sionjames":1642883,"ryankalkbrenner":1641750,"joshgiddey":1630581,"patrickwilliams":1630172,"isaacokoro":1630171,"jalensmith":1630188,"trejones":1630200,"robdillingham":1642265,"matasbuzelis":1641824,"noaessengue":1642855,"leonardmiller":1631159,"donovanmitchell":1628378,"evanmobley":1630596,"jamesharden":201935,"jarrettallen":1628386,"maxstrus":1629622,"dennisschroder":203471,"sammerrill":1630241,"jaylontyson":1642281,"naeqwantomlin":1641772,"craigporterjr":1641854,"tyreseproctor":1642878,"kyrieirving":202681,"pjwashington":1629023,"klaythompson":202691,"danielgafford":1629655,"cooperflagg":1642843,"calebmartin":1628997,"najimarshall":1630230,"maxchristie":1631108,"derecklivelyii":1641726,"ajjohnson":1642358,"ryannembhard":1642948,"nikolajokic":203999,"jamalmurray":1627750,"aarongordon":203932,"cameronjohnson":1629661,"christianbraun":1631128,"jonasvalanciunas":202685,"zekennaji":1630192,"julianstrawther":1631124,"daronholmes":1642260,"jalenpickett":1629618,"cadecunningham":1630595,"duncanrobinson":1629130,"isaiahstewart":1630191,"carislevert":1627747,"ausarthompson":1641709,"ronholland":1641723,"paulreed":1630194,"marcussasser":1631204,"danissjenkins":1642450,"tolusmithiii":1641962,"chazlanier":1642404,"stephencurry":201939,"jimmybutler":202710,"draymondgreen":203110,"mosesmoody":1630541,"alhorford":201143,"brandinpodziemski":1641764,"guisantos":1630611,"deanthonymelton":1629001,"willrichard":1642954,"bamadebayo":1628389,"tylerherro":1629639,"andrewwiggins":203952,"nikolajovic":1631107,"davionmitchell":1630558,"jaimejaquezjr":1631170,"kasparasjakucionis":1642857,"drusmith":1630696,"jahmiryoung":1642443,"pellelarsson":1641796,"myrongardner":1642066,"giannisantetokounmpo":203507,"mylesturner":1626167,"kylekuzma":1628398,"bobbyportis":1626171,"ajgreen":1631260,"kevinporterjr":1629645,"ryanrollins":1631157,"garytrentjr":1629018,"garyharris":203914,"taureanprince":1627752,"jerichosims":1630579,"petenance":1631250,"andrejacksonjr":1641748,"anthonyedwards":1630162,"rudygobert":203497,"juliusrandle":203944,"jadenmcdaniels":1630183,"nazreid":1629675,"dontedivincenzo":1628978,"joanberinger":1642866,"terrenceshannonjr":1630545,"julianphillips":1641763,"zionwilliamson":1629627,"jordanpoole":1629673,"dejountemurray":1627749,"treymurphyiii":1630530,"herbjones":1630529,"kevonlooney":1626172,"jeremiahfears":1642847,"jordanhawkins":1641722,"saddiqbey":1630180,"derikqueen":1642852,"yvesmissi":1642274,"brycemcgowens":1631121,"karlomatkovic":1631255,"micahpeavy":1642877,"karlanthonytowns":1626157,"oganunoby":1628384,"jalenbrunson":1628973,"mikalbridges":1628969,"joshhart":1628404,"josealvarado":1630631,"milesmcbride":1630540,"pacomedadiet":1642359,"tylerkolek":1642278,"zachlavine":203897,"domantassabonis":1627734,"demarderozan":201942,"keeganmurray":1631099,"malikmonk":1628370,"devincarter":1642269,"niqueclifford":1642363,"killianhayes":1630165,"dylancardwell":1642928,"maximeraynaud":1642875,"devinvassell":1630170,"keldonjohnson":1629640,"victorwembanyama":1641705,"dylanharper":1642844,"lukekornet":1628436,"stephoncastle":1642264,"carterbryant":1642868,"julianchampagnie":1630577,"scottiebarnes":1630567,"brandoningram":1627742,"immanuelquickley":1630193,"rjbarrett":1629628,"jakobpoeltl":1627751,"gradeydick":1641711,"collinmurrayboyles":1642867,"sandromamukelashvili":1630572,"traycejacksondavis":1631218,"jamisonbattle":1642419,"jonathanmogbo":1642367,"jamalshead":1642347,"jarenjacksonjr":1628991,"laurimarkkanen":1628374,"acebailey":1642846,"keyontegeorge":1641718,"johnkonchar":1629723,"codywilliams":1642262,"bricesensabaugh":1641729,"svimykhailiuk":1629004,"kylefilipowski":1642271,"isaiahcollier":1642268,"bezmbeng":1642526,"alperensengun":1630578,"jalengreen":1630224,"dillonbrooks":1628415,"fredvanvleet":1627832,"jabarismithjr":1631095,"amenthompson":1641708,"tarieason":1631106,"aaronholiday":1628988,"reedsheppard":1642263,"tytywashingtonjr":1630537,"camwhitmore":1641715,"tyresehaliburton":1630169,"pascalsiakam":1627783,"andrewnembhard":1629614,"obitoppin":1630167,"bennedictmathurin":1631097,"bensheppard":1641767,"isaiahjackson":1630543,"enriquefreeman":1642402,"kawhileonard":202695,"normanpowell":1626181,"ivicazubac":1627826,"derrickjonesjr":1627884,"bogdanbogdanovic":203992,"jordanmiller":1641757,"lebronjames":2544,"anthonydavis":203076,"austinreaves":1630559,"ruihachimura":1629060,"dorianfinneysmith":1627827,"bronnyjames":1642355,"daltonknecht":1642261,"gabevincent":1629216,"jaxsonhayes":1629637,"shakemilton":1629003,"jamorant":1629630,"desmondbane":1630217,"marcussmart":203935,"zachedey":1641744,"ggjacksonii":1641718,"jakelaravia":1631222,"scottypippenjr":1630590,"jaylenwells":1642377,"chetholmgren":1631096,"jalenwilliams":1631114,"shaigilgeousalexander":1628983,"isaiahhartenstein":1628392,"alexcaruso":1627936,"luguentzdort":1629652,"isaiahjoe":1630198,"aaronwiggins":1630598,"jaylinwilliams":1631119,"casonwallace":1641717,"kenrichwilliams":1629026,"nikolatopic":1642260,"thomassorber":1642850,"jaredmccain":1642272,"ajaymitchell":1642349,"franzwagner":1630532,"paolobanchero":1631094,"jalensuggs":1630591,"wendellcarterjr":1628976,"jonathanisaac":1628371,"anthonyblack":1641710,"gogabitadze":1629048,"tristandasilva":1641783,"jaserichardson":1642859,"jamalcain":1631288,"noahpenda":1642869,"joelembiid":203954,"paulgeorge":202331,"tyresemaxey":1630178,"vjedgecombe":1642845,"dominickbarlow":1631230,"trendonwatford":1630570,"dalenterry":1631207,"jabariwalker":1631133,"justinedwards":1642348,"adembona":1641737,"johnibroome":1641780,"devinbooker":1626164,"graysonallen":1628960,"royceoneale":1626220,"khamanmaluach":1642863,"haywoodhighsmith":1629312,"ryandunn":1642346,"osoighodaro":1642345,"rasheerfleming":1642853,"jrueholiday":201950,"jeramigrant":203924,"shaedonsharpe":1631101,"toumanicamara":1641739,"scoothenderson":1630703,"damianlillard":203081,"deniavdija":1630166,"donovanclingan":1642270,"krismurray":1631200,"yanghansen":1642905,"vitkrejci":1630249,"sidycissoko":1631321,"alexandresarr":1642258,"bilalcoulibaly":1641731,"carltoncarrington":1642345,"malcolmbrogdon":1627763,"kyshawngeorge":1642273};
+    function _normName(s){
+        return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+            .toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,'');
+    }
+    function playerHeadshotHtml(name, abbr){
+        const id = NBA_PLAYER_IDS[_normName(name)];
+        const initials = (name||'').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
+        const teamColor = (abbr && NBA_TEAMS[abbr] && NBA_TEAMS[abbr].color) || '#64748b';
+        const fallback = `<div class="player-headshot fallback" style="background:${teamColor};">${initials}</div>`;
+        if (!id) return fallback;
+        const url = `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`;
+        const onerr = `this.outerHTML='<div class=\\'player-headshot fallback\\' style=\\'background:${teamColor};\\'>${initials}</div>'`;
+        return `<img class="player-headshot" src="${url}" alt="${name}" loading="lazy" onerror="${onerr}">`;
+    }
 
     // ─── TEAM DATA 2026-27 ──────────────────────────────────────────────────
     let TEAM_DATA = {
@@ -2577,6 +2962,7 @@
                     p.contractType === 'Player Option' ? '#7c3aed' :
                     p.contractType === 'Estimated' ? '#ea580c' : '#6b7280';
                 rosterContent += `<div class="player-item ${sel}" onclick="togglePlayer(${t.id},'${p.id}')">
+                    ${playerHeadshotHtml(p.name, t.abbr)}
                     <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
                     <div class="player-info">
                         <div style="display:flex;align-items:center;gap:.4rem;">
