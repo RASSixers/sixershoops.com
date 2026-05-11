@@ -117,16 +117,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const navbarHTML = `
     <nav class="navbar">
-        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-
-        <a href="/" class="nav-brand">
-            <img src="https://sixershoops.com/sixershoopslogonew.png" alt="Sixers Hoops Logo" class="nav-logo">
-            <span class="brand-name">SIXERS HOOPS</span>
-        </a>
+        <div class="nav-left">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <a href="/" class="nav-brand">
+                <span class="brand-name">SIXERS HOOPS</span>
+            </a>
+        </div>
 
         <ul class="nav-menu">
             <li class="nav-item">
