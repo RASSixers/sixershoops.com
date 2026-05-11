@@ -11,13 +11,13 @@
     <style>
         :root {
             --navy: #001a57;
-            --navy-deep: #000d2e;
+            --navy-deep: #0b0f1a;
             --sixers-blue: #006BB6;
             --sixers-red: #ED174C;
-            --cream: #f5f0e8;
-            --ink: #0d0d0d;
-            --mid: #4a4a5a;
-            --border-light: #e8e4dc;
+            --cream: #f7f8fc;
+            --ink: #0d0f1a;
+            --mid: #64748b;
+            --border-light: #e4e8f0;
             --card-bg: #ffffff;
             --green: #16a34a;
             --red: #dc2626;
@@ -36,46 +36,187 @@
 
         body { padding-top: 64px; }
 
-        /* ─── PAGE HERO ─────────────────────────── */
+        /* ─── PAGE HERO — identical to index.html ─── */
         .page-hero {
-            background: var(--navy-deep);
+            background: var(--cream);
             position: relative;
             overflow: hidden;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid rgba(0,107,182,.2);
+            padding: 0;
         }
 
+        /* Subtle dot-grid texture */
         .page-hero::before {
             content: '';
             position: absolute;
             inset: 0;
-            background-image:
-                linear-gradient(rgba(0,107,182,0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,107,182,0.04) 1px, transparent 1px);
-            background-size: 48px 48px;
+            background-image: radial-gradient(circle, rgba(0,107,182,0.12) 1px, transparent 1px);
+            background-size: 28px 28px;
             pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
         }
 
-        .hero-glow { display: none; }
-
-        .page-hero-inner { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; }
-
-        .page-hero-eyebrow {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(0,107,182,0.15);
-            border: 1px solid rgba(0,107,182,0.3);
-            border-radius: 999px;
-            padding: 2px 10px 2px 6px;
-            margin-bottom: 0;
+        .hero-glow-blue {
+            position: absolute;
+            right: -120px; top: -80px;
+            width: 600px; height: 500px;
+            background: radial-gradient(ellipse at center, rgba(0,107,182,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
-        .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sixers-red); animation: pulse-dot 2s ease-in-out infinite; }
-        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.8)} }
-        .eyebrow-text { font-family: 'Barlow Condensed', sans-serif; font-size: .62rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.45); }
 
-        .page-title-top { display: none; }
-        .page-title-bottom { display: none; }
-        .page-hero-divider { display: none; }
-        .page-hero-sub { display: none; }
+        .hero-glow-red {
+            position: absolute;
+            left: -60px; bottom: -40px;
+            width: 400px; height: 300px;
+            background: radial-gradient(ellipse at center, rgba(237,23,76,0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 4.5rem 2rem 3.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0;
+        }
+
+        .hero-wordmark {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+        }
+
+        .hero-title-top {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(3.2rem, 8vw, 6rem);
+            font-weight: 900;
+            line-height: 0.9;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            color: var(--ink);
+            margin: 0;
+        }
+
+        .hero-title-bottom {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(3.2rem, 8vw, 6rem);
+            font-weight: 900;
+            line-height: 0.9;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            color: var(--sixers-blue);
+            margin: 0 0 0.2em;
+        }
+
+        .hero-divider {
+            width: 32px; height: 3px;
+            background: var(--sixers-red);
+            border-radius: 2px;
+            margin: 1.4rem auto 1.2rem;
+        }
+
+        .hero-sub {
+            font-family: 'Barlow', sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--mid);
+            max-width: 420px;
+            line-height: 1.65;
+            margin: 0 auto;
+        }
+
+        .hero-cta-row {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hero-cta-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: var(--sixers-blue);
+            color: white;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 0.84rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.7rem 1.5rem;
+            border-radius: 9px;
+            text-decoration: none;
+            border: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,107,182,0.25);
+        }
+
+        .hero-cta-primary:hover {
+            background: #0057a0;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,107,182,0.35);
+        }
+
+        .hero-cta-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: transparent;
+            color: var(--sixers-blue);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 0.84rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.7rem 1.5rem;
+            border-radius: 9px;
+            text-decoration: none;
+            border: 1px solid var(--sixers-blue);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .hero-cta-secondary:hover {
+            background: var(--sixers-blue);
+            color: white;
+        }
+
+        .hero-cta-analyze {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: var(--navy);
+            color: white;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 0.84rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.7rem 1.5rem;
+            border-radius: 9px;
+            border: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,26,87,0.2);
+        }
+
+        .hero-cta-analyze:hover {
+            background: #001240;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,26,87,0.3);
+        }
 
         /* ─── MAIN LAYOUT ─────────────────────── */
         .tm-wrapper {
@@ -96,19 +237,21 @@
 
         /* ─── CBA INFO BAR ────────────────────── */
         .cba-bar {
-            background: var(--navy-deep);
+            background: white;
             border-radius: 12px;
             padding: 1rem 1.5rem;
             margin-bottom: 1.5rem;
             display: flex; flex-wrap: wrap; gap: .5rem 2rem;
             align-items: center;
-            border: 1px solid rgba(0,107,182,.25);
+            border: 1px solid var(--border-light);
+            border-top: 3px solid var(--navy);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
-        .cba-bar-title { font-family: 'Barlow Condensed', sans-serif; font-size: .7rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; color: rgba(255,255,255,.4); flex-shrink: 0; margin-right: .5rem; }
+        .cba-bar-title { font-family: 'Barlow Condensed', sans-serif; font-size: .7rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; color: var(--mid); flex-shrink: 0; margin-right: .5rem; }
         .cba-stat { display: flex; flex-direction: column; gap: 1px; }
-        .cba-stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: .9rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: rgba(255,255,255,.9); }
-        .cba-stat-key { font-family: 'Barlow', sans-serif; font-size: .6rem; font-weight: 500; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: .1em; }
-        .cba-divider { width: 1px; height: 30px; background: rgba(255,255,255,.08); flex-shrink: 0; }
+        .cba-stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: .9rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--ink); }
+        .cba-stat-key { font-family: 'Barlow', sans-serif; font-size: .6rem; font-weight: 500; color: var(--mid); text-transform: uppercase; letter-spacing: .1em; }
+        .cba-divider { width: 1px; height: 30px; background: var(--border-light); flex-shrink: 0; }
 
         /* ─── CONTROLS ────────────────────────── */
         .tm-controls {
@@ -167,9 +310,22 @@
             border: 1px solid var(--border-light);
             border-radius: 12px;
             overflow: hidden;
-            transition: box-shadow .2s;
+            transition: box-shadow .2s, border-color .22s, transform .22s;
+            position: relative;
         }
-        .team-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+        .team-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--sixers-blue);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .28s ease;
+            z-index: 2;
+        }
+        .team-card:hover::after { transform: scaleX(1); }
+        .team-card:hover { box-shadow: 0 6px 24px rgba(0,107,182,0.09); border-color: rgba(0,107,182,0.25); transform: translateY(-2px); }
 
         /* ─── TEAM CARD HEADER — CUSTOM DROPDOWN ─────────────────── */
         .team-card-header {
@@ -357,7 +513,7 @@
         /* Roster Tabs */
         .team-tabs {
             display: flex; border-bottom: 1px solid var(--border-light);
-            background: #fafaf8; overflow-x: auto;
+            background: #f8f9fc; overflow-x: auto;
         }
         .team-tab {
             font-family: 'Barlow Condensed', sans-serif; font-size: .7rem; font-weight: 800;
@@ -526,7 +682,7 @@
             background: white;
         }
         .breakdown-card-header {
-            background: #f8f7f4; padding: .7rem 1rem;
+            background: #f4f6fb; padding: .7rem 1rem;
             font-family: 'Barlow Condensed', sans-serif; font-size: .78rem; font-weight: 900;
             text-transform: uppercase; letter-spacing: .08em; color: var(--ink);
             display: flex; align-items: center; gap: .5rem;
@@ -645,7 +801,7 @@
         .modal-footer {
             padding: 1rem 1.5rem; border-top: 1px solid var(--border-light);
             display: flex; align-items: center; gap: .75rem; justify-content: flex-end;
-            flex-shrink: 0; background: #fafaf8;
+            flex-shrink: 0; background: #f8f9fc;
         }
 
         .btn-share {
@@ -670,7 +826,7 @@
         .fa-info-bar svg { flex-shrink: 0; margin-top: 1px; color: var(--sixers-blue); }
         .fa-add-form {
             display: flex; flex-direction: column; gap: .45rem;
-            background: #fafaf8; border: 1px solid var(--border-light);
+            background: #f8f9fc; border: 1px solid var(--border-light);
             border-radius: 10px; padding: .7rem;
             margin-bottom: .6rem;
         }
@@ -772,28 +928,27 @@
     <!-- Navigation injected by nav.js -->
     <script src="nav.js"></script>
 
-    <!-- Compact Header Bar -->
+    <!-- HERO — identical structure to index.html -->
     <header class="page-hero">
-        <div class="page-hero-inner">
-            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-                <div>
-                    <div class="page-hero-eyebrow" style="margin-bottom:.3rem;">
-                        <span class="eyebrow-dot"></span>
-                        <span class="eyebrow-text">2026–27 CBA Compliant</span>
-                    </div>
-                    <h1 style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:white;margin:0;line-height:1;">NBA Trade Machine</h1>
-                </div>
-                <div style="margin-left:auto;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
-                    <button class="btn-ghost" onclick="clearAll()" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.7);">
+        <div class="hero-glow-blue"></div>
+        <div class="hero-glow-red"></div>
+        <div class="hero-inner">
+            <div class="hero-wordmark">
+                <p class="hero-title-top">NBA Trade</p>
+                <p class="hero-title-bottom">Machine</p>
+                <div class="hero-divider"></div>
+                <p class="hero-sub">Model any deal across all 30 teams. Salary matching, apron thresholds, and draft picks checked in real time.</p>
+                <div class="hero-cta-row">
+                    <button class="hero-cta-secondary" onclick="clearAll()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.31"/></svg>
                         Reset
                     </button>
-                    <button class="btn-primary" id="addTeamBtn" onclick="addTeam()">
+                    <button class="hero-cta-primary" id="addTeamBtn" onclick="addTeam()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Team
                     </button>
-                    <button class="btn-analyze" onclick="analyzeTrade()" style="padding:.6rem 1.4rem;font-size:.85rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <button class="hero-cta-analyze" onclick="analyzeTrade()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                         Analyze Trade
                     </button>
                 </div>
