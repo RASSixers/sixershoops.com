@@ -1,456 +1,451 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>NBA Standings | SixersHoops</title>
-  <link rel="icon" href="/favicon.ico"/>
-  <link rel="apple-touch-icon" href="/favicon.ico"/>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NBA Standings — Sixers Hoops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --navy: #001a57;
+    --navy-deep: #0b0f1a;
+    --sixers-blue: #006BB6;
+    --sixers-red: #ED174C;
+    --cream: #f7f8fc;
+    --ink: #0d0f1a;
+    --mid: #64748b;
+    --border-light: #e4e8f0;
+    --green: #16a34a;
+    --red: #dc2626;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body, html { font-family: 'Barlow', sans-serif; margin: 0; background: var(--cream); color: var(--ink); }
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css"/>
-  <link rel="stylesheet" href="navbar-styles.css"/>
+  /* HERO */
+  .page-hero { background: var(--cream); position: relative; overflow: hidden; }
+  .page-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(0,107,182,0.12) 1px, transparent 1px);
+    background-size: 28px 28px; opacity: .6; pointer-events: none; z-index: 0;
+  }
+  .hero-glow-blue {
+    position: absolute; right: -120px; top: -80px; width: 600px; height: 500px;
+    background: radial-gradient(ellipse at center, rgba(0,107,182,0.08) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .hero-glow-red {
+    position: absolute; left: -60px; bottom: -40px; width: 400px; height: 300px;
+    background: radial-gradient(ellipse at center, rgba(237,23,76,0.05) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .hero-inner {
+    position: relative; z-index: 1; max-width: 860px; margin: 0 auto;
+    padding: 4.5rem 2rem 3.5rem; display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+  }
+  .hero-title-top, .hero-title-bottom {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(3.2rem, 8vw, 6rem); font-weight: 900;
+    line-height: .9; letter-spacing: -0.01em; text-transform: uppercase; margin: 0;
+  }
+  .hero-title-top { color: var(--ink); }
+  .hero-title-bottom { color: var(--sixers-blue); margin: 0 0 .2em; }
+  .hero-divider { width: 32px; height: 3px; background: var(--sixers-red); border-radius: 2px; margin: 1.4rem auto 1.2rem; }
+  .hero-sub { font-size: 1rem; color: var(--mid); max-width: 460px; line-height: 1.65; margin: 0 auto; }
+  .hero-cta-row { display: flex; align-items: center; gap: .7rem; margin-top: 2rem; flex-wrap: wrap; justify-content: center; }
 
-  <!-- Google Tag Manager -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-T1V9Q0MNEM');
-  </script>
+  .hero-btn-primary, .hero-btn-secondary, .hero-btn-analyze {
+    display: inline-flex; align-items: center; gap: .45rem;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: .84rem; letter-spacing: .08em; text-transform: uppercase;
+    padding: .7rem 1.5rem; border-radius: 9px; cursor: pointer;
+    transition: all .2s; border: none;
+  }
+  .hero-btn-primary { background: var(--sixers-blue); color: #fff; box-shadow: 0 2px 12px rgba(0,107,182,.25); }
+  .hero-btn-primary:hover:not(:disabled) { background: #0057a0; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,107,182,.35); }
+  .hero-btn-secondary { background: transparent; color: var(--sixers-blue); border: 1px solid var(--sixers-blue); }
+  .hero-btn-secondary:hover:not(:disabled) { background: var(--sixers-blue); color: #fff; }
+  .hero-btn-analyze { background: var(--navy); color: #fff; box-shadow: 0 2px 12px rgba(0,26,87,.2); }
+  .hero-btn-analyze:hover:not(:disabled) { background: #001240; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,26,87,.3); }
+  .hero-btn-primary:disabled, .hero-btn-secondary:disabled, .hero-btn-analyze:disabled { opacity: .55; cursor: not-allowed; }
 
-  <style>
-    :root {
-      --color-navy: #001a57; --color-navy-dark: #000d2e;
-      --color-sky: #006BB6; --color-sky-light: #4da8ff;
-      --color-ice: #f5f0e8; --color-white: #ffffff;
-      --color-slate-900: #0d0d0d; --color-slate-700: #334155;
-      --color-slate-500: #4a4a5a; --color-gold: #c9a84c;
-      --sixers-red: #ED174C; --border-light: #e8e4dc;
-      --transition: all 0.35s ease;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Barlow', sans-serif;
-      background: var(--color-ice);
-      color: var(--color-slate-900);
-      line-height: 1.6; padding-top: 64px; overflow-x: hidden;
-    }
-    /* Hero — trade machine style */
-    .page-header { background: #f7f8fc; position: relative; overflow: hidden; }
-    .page-header::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(0,107,182,0.12) 1px,transparent 1px); background-size:28px 28px; pointer-events:none; z-index:0; opacity:0.6; }
-    .hero-glow-blue { position:absolute; right:-120px; top:-80px; width:600px; height:500px; background:radial-gradient(ellipse at center,rgba(0,107,182,0.08) 0%,transparent 70%); pointer-events:none; z-index:0; }
-    .hero-glow-red { position:absolute; left:-60px; bottom:-40px; width:400px; height:300px; background:radial-gradient(ellipse at center,rgba(237,23,76,0.05) 0%,transparent 70%); pointer-events:none; z-index:0; }
-    .hero-inner { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:4.5rem 2rem 3.5rem; display:flex; flex-direction:column; align-items:center; text-align:center; }
-    .page-title { font-family:'Barlow Condensed',sans-serif; font-size:clamp(3.2rem,8vw,6rem); font-weight:900; line-height:0.9; letter-spacing:-0.01em; text-transform:uppercase; color:#0d0f1a; margin:0; }
-    .page-title .highlight { display:block; color:#006BB6; -webkit-text-fill-color:#006BB6; background:none; }
-    .hero-divider { width:32px; height:3px; background:var(--sixers-red); border-radius:2px; margin:1.4rem auto 1.2rem; }
-    .page-subtitle { font-size:1rem; color:#64748b; max-width:420px; line-height:1.65; margin:0 auto; }
+  /* MAIN */
+  .tm-wrapper { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 
-    .content-wrapper { max-width:1200px; margin:0 auto; padding:0 20px; }
-    .standings-container { background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,26,87,0.05); padding:clamp(1.5rem,3vw,3rem); border:1px solid var(--border-light); margin-bottom:8rem; }
-    .conference-section { margin-bottom:4rem; }
-    .conference-section:last-child { margin-bottom:0; }
-    .conference-title { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-navy); margin-bottom:2rem; padding-bottom:0.6rem; border-bottom:3px solid var(--color-sky); display:inline-block; }
-    .table-responsive { overflow-x:auto; border-radius:12px; border:1px solid var(--border-light); }
-    table { width:100%; border-collapse:collapse; font-size:0.9rem; font-family:'Barlow',sans-serif; }
-    th { background:#f9f7f3; color:var(--color-slate-500); font-family:'Barlow Condensed',sans-serif; font-weight:700; text-transform:uppercase; font-size:0.68rem; letter-spacing:0.1em; padding:0.9rem 1rem; text-align:left; border-bottom:2px solid var(--border-light); }
-    th:last-child, td:last-child { text-align:center; }
-    td { padding:0.85rem 1rem; border-bottom:1px solid #f0ede6; color:var(--color-slate-900); font-weight:500; }
-    tr:last-child td { border-bottom:none; }
-    tr:hover td { background:#faf8f5; }
-    .team-info { display:flex; align-items:center; gap:0.75rem; font-family:'Barlow Condensed',sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; font-size:0.88rem; }
-    .sixers-highlight { background:rgba(0,107,182,0.05) !important; border-left:3px solid var(--color-sky); }
-    .rank { color:var(--color-slate-500); font-weight:700; width:30px; display:inline-block; }
-    .pct, .gb { font-family:'Barlow Condensed',sans-serif; font-weight:700; }
-    .status-badge { display:inline-flex; align-items:center; justify-content:center; padding:0; width:42px; height:22px; border-radius:4px; font-family:'Barlow Condensed',sans-serif; font-size:0.72rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; }
-    .streak-w { background:rgba(22,163,74,0.1); color:#15803d; border:1px solid rgba(22,163,74,0.25); }
-    .streak-l { background:rgba(220,38,38,0.08); color:#b91c1c; border:1px solid rgba(220,38,38,0.2); }
-    .loader { text-align:center; padding:4rem; }
-    .loader-spinner { border:4px solid #e8e4dc; border-top:4px solid var(--color-sky); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto 1rem; }
-    @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-    .export-container { text-align:center; margin-bottom:3rem; background:#f9f7f3; padding:2rem; border-radius:12px; border:1px solid var(--border-light); }
-    .export-btns-group { display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; }
-    .export-btn { background:var(--color-navy); color:#fff; border:none; padding:0.75rem 1.4rem; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:0.9rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:var(--transition); display:flex; align-items:center; gap:8px; }
-    .export-btn:hover { background:var(--color-sky); transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,107,182,0.25); }
-    .export-btn.primary { background:var(--color-sky); }
-    .export-btn.primary:hover { background:#0080d4; }
-    @media(max-width:768px){ .hero-inner{padding:3rem 1rem 2rem;} .standings-container{padding:1rem;} th,td{padding:0.65rem 0.5rem;font-size:0.8rem;} }
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: .65rem; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--mid);
+    display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
 
-    /* Social Media Export Styling */
-    #social-export-container {
-      position: fixed;
-      left: -9999px;
-      top: -9999px;
-      width: 1200px;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      padding: 60px;
-      color: #0f172a;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    #social-export-container * {
-      box-sizing: border-box;
-    }
-    .social-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-      border-bottom: 5px solid #003da6;
-      padding-bottom: 25px;
-      width: 100%;
-      position: relative;
-    }
-    .social-title-box {
-      flex: 1;
-      padding-top: 0;
-    }
-    .social-title-box h1 {
-      font-size: 48px;
-      margin: 0 0 10px 0;
-      font-weight: 900;
-      color: #003da6;
-      letter-spacing: -2px;
-      line-height: 1;
-    }
-    .social-title-box p {
-      font-size: 18px;
-      color: #64748b;
-      margin: 0;
-      font-weight: 600;
-      line-height: 1;
-    }
-    .social-branding {
-      text-align: right;
-      flex-shrink: 0;
-      position: relative;
-      top: 0;
-      right: -15px;
-    }
-    .social-branding .domain {
-      font-size: 44px;
-      font-weight: 900;
-      color: #dc2626;
-      line-height: 1;
-      margin: 0;
-      padding: 0;
-    }
-    .social-sixers-row td {
-      background: #fef3c7 !important;
-    }
-    .social-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 45px;
-    }
-    .social-conference {
-      background: white;
-      border-radius: 18px;
-      padding: 32px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    }
-    .social-conf-title {
-      font-size: 30px;
-      font-weight: 900;
-      color: #003da6;
-      margin-bottom: 28px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    /* Center conference title in single conference mode */
-    .social-content.mode-east .social-conf-title,
-    .social-content.mode-west .social-conf-title {
-      text-align: center;
-    }
-    .social-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    .social-table th {
-      background: #f1f5f9;
-      padding: 15px 12px;
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #64748b;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      border-bottom: 2px solid #e2e8f0;
-      text-align: center;
-    }
-    .social-table th:first-child {
-      border-radius: 10px 0 0 0;
-      text-align: left;
-    }
-    .social-table th:nth-child(2) {
-      text-align: center;
-    }
-    .social-table th:nth-child(3) {
-      text-align: center;
-    }
-    .social-table th:last-child {
-      border-radius: 0 10px 0 0;
-      text-align: center;
-    }
-    .social-table td {
-      padding: 0;
-      font-size: 15px;
-      font-weight: 600;
-      border-bottom: 1px solid #f1f5f9;
-      background: white;
-      height: 50px;
-    }
-    .social-table td .cell-content {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 50px;
-      padding: 0 12px;
-    }
-    .social-table td:first-child .cell-content {
-      justify-content: flex-start;
-    }
-    .social-table tr:last-child td:first-child {
-      border-radius: 0 0 0 10px;
-    }
-    .social-table tr:last-child td:last-child {
-      border-radius: 0 0 10px 0;
-    }
-    .social-table tr:last-child td {
-      border-bottom: none;
-    }
-    .social-team {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .social-team-rank {
-      min-width: 24px;
-      font-size: 13px;
-      color: #94a3b8;
-      font-weight: 700;
-      text-align: center;
-    }
-    .social-team-name {
-      font-weight: 700;
-      color: #0f172a;
-    }
-    .social-streak-badge {
-      font-size: 13px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-    .social-streak-w {
-      color: #16a34a;
-    }
-    .social-streak-l {
-      color: #dc2626;
-    }
-    .social-footer {
-      margin-top: 45px;
-      text-align: center;
-      font-size: 18px;
-      color: #64748b;
-      font-weight: 700;
-    }
+  .standings-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+  @media (min-width: 1024px) { .standings-grid { grid-template-columns: 1fr 1fr; } }
 
-    .social-content.mode-east, .social-content.mode-west {
-      grid-template-columns: 1fr;
-      max-width: 920px;
-      margin: 0 auto;
-    }
-    .social-content.mode-east .social-conference,
-    .social-content.mode-west .social-conference {
-      padding: 40px;
-    }
-    
-    /* Single Conference Mode Header */
-    .social-header.single-conf-mode {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding-bottom: 30px;
-    }
-    .social-header.single-conf-mode .social-title-box {
-      width: 100%;
-      margin-bottom: 18px;
-    }
-    .social-header.single-conf-mode .social-title-box h1 {
-      font-size: 52px;
-      margin-bottom: 28px;
-    }
-    .social-header.single-conf-mode .social-title-box p {
-      font-size: 22px;
-      color: #003da6;
-      margin-bottom: 0;
-    }
-    .social-header.single-conf-mode .social-branding {
-      position: static;
-      text-align: center;
-      margin-top: 0;
-      right: 0;
-    }
-    .social-header.single-conf-mode .social-branding .domain {
-      font-size: 36px;
-    }
+  .tm-board {
+    position: relative; background: #fff;
+    border: 1px solid #e6eaf2; border-radius: 14px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
+    overflow: hidden;
+  }
+  .tm-board::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+  }
 
-    /* Export Button & Modal */
-    .export-container {
-      text-align: center;
-      margin-bottom: 3rem;
-      background: #ffffff;
-      padding: 2rem;
-      border-radius: 20px;
-      border: 1px solid #e2e8f0;
-    }
-    .export-btns-group {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .export-btn {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #fff;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .export-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
-    }
-    .export-btn.primary {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    }
-    .export-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 2000;
-      justify-content: center;
-      align-items: center;
-    }
-    .export-modal-content {
-      background: #ffffff;
-      border-radius: 24px;
-      padding: 2rem;
-      max-width: 95vw;
-      width: auto;
-      max-height: 95vh;
-      overflow-y: auto;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .export-preview {
-      max-width: 100%;
-      max-height: calc(95vh - 200px);
-      width: auto;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-      margin-bottom: 1.5rem;
-      object-fit: contain;
-    }
-    .export-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .copy-btn, .download-btn, .close-btn {
-      padding: 0.8rem 1.5rem;
-      border: none;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .copy-btn { background: #3b82f6; color: #fff; }
-    .download-btn { background: #059669; color: #fff; }
-    .close-btn { background: #64748b; color: #fff; }
-  </style>
+  .conference-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.5rem; font-weight: 900; text-transform: uppercase;
+    letter-spacing: .02em; color: var(--ink);
+    margin: .35rem 0 1rem; line-height: 1;
+  }
+
+  .table-responsive { overflow-x: auto; }
+  table.standings-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .standings-table thead th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: .68rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--mid);
+    text-align: right; padding: .55rem .5rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .standings-table thead th:first-child { text-align: left; }
+  .standings-table tbody td {
+    padding: .65rem .5rem; text-align: right;
+    border-bottom: 1px solid #f1f3f8;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  .standings-table tbody td:first-child { text-align: left; }
+  .standings-table tbody tr:hover { background: #f9fbff; }
+  .standings-table tbody tr.sixers-highlight {
+    background: linear-gradient(90deg, rgba(0,107,182,.07), transparent 70%);
+  }
+  .standings-table tbody tr.sixers-highlight td { font-weight: 700; }
+
+  .team-info { display: flex; align-items: center; gap: .65rem; font-weight: 600; }
+  .rank {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: .78rem; color: var(--mid);
+    width: 22px; text-align: center; background: #f1f3f8;
+    border-radius: 4px; padding: 2px 0;
+  }
+  .team-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+  .pct { font-weight: 700; }
+  .gb { color: var(--mid); }
+
+  .status-badge {
+    display: inline-block; min-width: 36px; padding: 3px 8px;
+    border-radius: 6px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: .72rem; letter-spacing: .04em;
+    background: #f1f3f8; color: var(--mid);
+  }
+  .streak-w { background: rgba(22,163,74,.12); color: var(--green); }
+  .streak-l { background: rgba(220,38,38,.12); color: var(--red); }
+
+  /* OFFSCREEN SOCIAL EXPORT */
+  .social-offscreen { position: fixed; left: -10000px; top: 0; pointer-events: none; }
+  .social-card {
+    background: var(--cream); padding: 40px;
+    font-family: 'Barlow', sans-serif;
+  }
+  .social-header { text-align: center; margin-bottom: 28px; }
+  .social-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 800; letter-spacing: .22em;
+    color: var(--sixers-red); text-transform: uppercase;
+  }
+  .social-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 52px; font-weight: 900; color: var(--ink);
+    text-transform: uppercase; margin: 6px 0 4px; letter-spacing: -.01em;
+  }
+  .social-divider { width: 48px; height: 4px; background: var(--sixers-red); border-radius: 2px; margin: 10px auto; }
+  .social-date { font-size: 13px; color: var(--mid); letter-spacing: .05em; }
+  .social-grid { display: grid; gap: 24px; }
+  .social-conference {
+    background: #fff; border: 1px solid #e6eaf2; border-radius: 14px;
+    padding: 18px; position: relative; overflow: hidden;
+    box-shadow: 0 8px 28px -18px rgba(15,23,42,.18);
+  }
+  .social-conference::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+  }
+  .social-conf-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 900; text-transform: uppercase;
+    color: var(--ink); margin: 4px 0 12px;
+  }
+  .social-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .social-table thead th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--mid);
+    text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--border-light);
+  }
+  .social-table thead th:first-child { text-align: left; }
+  .social-table tbody td {
+    padding: 8px 4px; border-bottom: 1px solid #f1f3f8;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .social-table tbody td:first-child { text-align: left; font-weight: 600; }
+  .social-table tbody tr.social-sixers-row { background: rgba(0,107,182,.07); }
+  .social-table tbody tr.social-sixers-row td:first-child { font-weight: 800; }
+  .social-team { display: flex; align-items: center; gap: 8px; }
+  .social-team-rank {
+    display: inline-block; width: 22px; text-align: center;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 12px; color: var(--mid); background: #f1f3f8;
+    border-radius: 4px; padding: 2px 0;
+  }
+  .social-team-logo { width: 20px; height: 20px; object-fit: contain; }
+  .social-streak-badge {
+    display: inline-block; min-width: 36px; padding: 3px 8px;
+    border-radius: 6px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 12px; letter-spacing: .04em;
+    background: #f1f3f8; color: var(--mid);
+  }
+  .social-streak-w { background: rgba(22,163,74,.14); color: var(--green); }
+  .social-streak-l { background: rgba(220,38,38,.14); color: var(--red); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 50;
+    background: rgba(11,15,26,.78); align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-card { width: 100%; max-width: 768px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.4); }
+  .modal-head, .modal-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-light);
+  }
+  .modal-foot { border-bottom: none; border-top: 1px solid var(--border-light); justify-content: flex-end; gap: .5rem; }
+  .modal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 1.1rem; letter-spacing: .08em; text-transform: uppercase;
+  }
+  .modal-body { padding: 1rem; background: var(--cream); max-height: 70vh; overflow: auto; }
+  .modal-body img { width: 100%; display: block; }
+  .btn-primary {
+    background: var(--sixers-blue); color: #fff; border: none;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
+    padding: .6rem 1.3rem; border-radius: 8px; cursor: pointer; transition: all .2s;
+  }
+  .btn-primary:hover { background: #0080d4; transform: translateY(-1px); }
+  .btn-ghost {
+    background: #fff; color: var(--mid);
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
+    padding: .55rem 1.1rem; border-radius: 8px;
+    border: 1px solid var(--border-light); cursor: pointer; transition: all .2s;
+  }
+  .btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+
+  .empty-state { text-align: center; padding: 3rem; }
+</style>
 </head>
 <body>
-  <script src="nav.js"></script>
-
-  <section class="page-header">
+  <section class="page-hero">
     <div class="hero-glow-blue"></div>
     <div class="hero-glow-red"></div>
     <div class="hero-inner">
-      <p class="page-title">NBA</p>
-      <p class="page-title"><span class="highlight">Standings</span></p>
+      <h1 class="hero-title-top">NBA</h1>
+      <h2 class="hero-title-bottom">Standings</h2>
       <div class="hero-divider"></div>
-      <p class="page-subtitle">Real-time Eastern & Western Conference Rankings</p>
+      <p class="hero-sub">Live Eastern and Western Conference standings, refreshed automatically. Export any view as a share-ready graphic.</p>
+      <div class="hero-cta-row">
+        <button class="hero-btn-primary" data-export-mode="east">Export East</button>
+        <button class="hero-btn-secondary" data-export-mode="west">Export West</button>
+        <button class="hero-btn-analyze" data-export-mode="both">Export Full Image</button>
+      </div>
     </div>
   </section>
 
-  <div class="content-wrapper">
-    <div class="export-container">
-      <h3 style="margin-bottom: 1.2rem; color: var(--color-navy); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800;">Standings Graphics</h3>
-      <div class="export-btns-group">
-        <button class="export-btn primary" data-export-mode="both">📸 Full League</button>
-        <button class="export-btn" data-export-mode="east">📸 Eastern Conference</button>
-        <button class="export-btn" data-export-mode="west">📸 Western Conference</button>
-      </div>
+  <main class="tm-wrapper">
+    <div class="section-label">Conference Standings</div>
+    <div id="standings" class="standings-grid">
+      <div class="tm-board empty-state"><p style="color:var(--mid)">Loading standings…</p></div>
     </div>
+  </main>
 
-    <main class="standings-container" id="standings">
-      <div class="loader">
-        <div class="loader-spinner"></div>
-        <p>Fetching latest standings...</p>
+  <div class="social-offscreen">
+    <div id="social-export-container" class="social-card" style="width: 1200px;">
+      <div class="social-header">
+        <div class="social-eyebrow">Sixers Hoops</div>
+        <div class="social-title-box"><h1 class="social-title">NBA Standings</h1></div>
+        <div class="social-divider"></div>
+        <div class="social-date" id="social-date"></div>
       </div>
-    </main>
-  </div>
-
-  <!-- Social Media Export Hidden Container -->
-  <div id="social-export-container">
-    <div class="social-header">
-      <div class="social-title-box">
-        <h1>NBA Standings</h1>
-        <p id="export-date">2025-26 Season</p>
-      </div>
-      <div class="social-branding">
-        <div class="domain">SixersHoops.com</div>
-      </div>
-    </div>
-    <div class="social-content" id="social-export-content">
-      <!-- Populated by JS -->
-    </div>
-    <div class="social-footer">
-      Real-time updates & analysis at SixersHoops.com
+      <div class="social-grid" id="social-export-content"></div>
     </div>
   </div>
 
-  <!-- Export Modal -->
-  <div id="exportModal" class="export-modal">
-    <div class="export-modal-content">
-      <img id="exportPreview" class="export-preview" alt="Standings export">
-      <div class="export-actions">
-        <button class="download-btn" id="downloadBtn">Download Image</button>
-        <button class="copy-btn" id="copyBtn">Copy to Clipboard</button>
-        <button class="close-btn" id="closeModal">Close</button>
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Share Preview</div>
+        <button class="btn-ghost" id="closeModal">Close</button>
+      </div>
+      <div class="modal-body"><img id="exportPreview" alt="Standings preview" /></div>
+      <div class="modal-foot">
+        <button class="btn-ghost" id="copyBtn">Copy to Clipboard</button>
+        <button class="btn-primary" id="downloadBtn">Download PNG</button>
       </div>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="standings.js"></script>
+<script>
+async function getNBAStandings() {
+  const url = "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings";
+  const container = document.getElementById("standings");
+  const socialContainer = document.getElementById("social-export-content");
+  const dateEl = document.getElementById("social-date");
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+
+    const conferences = data.children || [];
+    if (!conferences.length) {
+      container.innerHTML = '<div class="tm-board empty-state"><p>No standings data available.</p></div>';
+      return;
+    }
+
+    let html = "", socialHtml = "";
+    if (dateEl) dateEl.textContent = "Updated " + new Date().toLocaleDateString();
+
+    conferences.forEach(conf => {
+      const entries = (conf.standings && conf.standings.entries) || [];
+      entries.sort((a, b) => {
+        const get = (e, n) => (e.stats.find(s => s.name === n) || {}).value || 0;
+        return get(b, "winPercent") - get(a, "winPercent");
+      });
+
+      html += '<div class="tm-board"><h2 class="conference-title">' + conf.name + '</h2><div class="table-responsive"><table class="standings-table"><thead><tr><th>Team</th><th>W</th><th>L</th><th>PCT</th><th>GB</th><th>L10</th><th>STRK</th></tr></thead><tbody>';
+
+      const confKey = conf.name.toLowerCase().includes("east") ? "east" : "west";
+      socialHtml += '<div class="social-conference" data-conf="' + confKey + '"><h3 class="social-conf-title">' + conf.name + '</h3><table class="social-table"><thead><tr><th>Team</th><th>W-L</th><th>PCT</th><th>STRK</th></tr></thead><tbody>';
+
+      entries.forEach((t, idx) => {
+        const stats = {};
+        t.stats.forEach(s => { if (s.name) stats[s.name] = s; if (s.type) stats[s.type] = s; });
+        const isSixers = t.team.abbreviation === "PHI";
+        const wins = (stats.wins || {}).displayValue || "-";
+        const losses = (stats.losses || {}).displayValue || "-";
+        const pct = (stats.winPercent || {}).displayValue || "-";
+        const gb = (stats.gamesBehind || {}).displayValue || "-";
+        const l10 = (stats.lasttengames || stats.lastTenGames || {}).summary || "-";
+        const streak = (stats.streak || {}).displayValue || "-";
+        const sCls = streak.startsWith("W") ? "streak-w" : streak.startsWith("L") ? "streak-l" : "";
+        const sSocial = streak.startsWith("W") ? "social-streak-w" : streak.startsWith("L") ? "social-streak-l" : "";
+        const logo = (t.team.logos && t.team.logos[0] && t.team.logos[0].href) || "";
+
+        html += '<tr class="' + (isSixers ? "sixers-highlight" : "") + '"><td><div class="team-info"><span class="rank">' + (idx + 1) + '</span>' + (logo ? '<img class="team-logo" src="' + logo + '" alt="" loading="lazy" />' : '') + '<span>' + t.team.displayName + '</span></div></td><td>' + wins + '</td><td>' + losses + '</td><td class="pct">' + pct + '</td><td class="gb">' + gb + '</td><td>' + l10 + '</td><td><span class="status-badge ' + sCls + '">' + streak + '</span></td></tr>';
+
+        socialHtml += '<tr class="' + (isSixers ? "social-sixers-row" : "") + '"><td><div class="social-team"><span class="social-team-rank">' + (idx + 1) + '</span>' + (logo ? '<img class="social-team-logo" src="' + logo + '" alt="" crossorigin="anonymous" />' : '') + '<span>' + t.team.displayName + '</span></div></td><td>' + wins + '-' + losses + '</td><td style="font-weight:700">' + pct + '</td><td><span class="social-streak-badge ' + sSocial + '">' + streak + '</span></td></tr>';
+      });
+
+      html += '</tbody></table></div></div>';
+      socialHtml += '</tbody></table></div>';
+    });
+
+    container.innerHTML = html;
+    socialContainer.innerHTML = socialHtml;
+    initExport();
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = '<div class="tm-board empty-state"><p style="color:var(--red);font-weight:700">Error loading standings.</p><p style="color:var(--mid);font-size:.9rem;margin-top:.5rem">' + err.message + '</p><button class="btn-primary" style="margin-top:1.25rem" onclick="getNBAStandings()">Try again</button></div>';
+  }
+}
+
+function initExport() {
+  const btns = document.querySelectorAll("[data-export-mode]");
+  const modal = document.getElementById("exportModal");
+  const preview = document.getElementById("exportPreview");
+  const closeBtn = document.getElementById("closeModal");
+  const dlBtn = document.getElementById("downloadBtn");
+  const copyBtn = document.getElementById("copyBtn");
+
+  btns.forEach(btn => {
+    btn.onclick = async () => {
+      const mode = btn.dataset.exportMode;
+      const original = btn.textContent;
+      btn.textContent = "Generating…";
+      btn.disabled = true;
+
+      try {
+        const grid = document.getElementById("social-export-container");
+        const content = document.getElementById("social-export-content");
+        const titleH1 = grid.querySelector(".social-title");
+        const east = content.querySelector('[data-conf="east"]');
+        const west = content.querySelector('[data-conf="west"]');
+
+        if (mode === "east") {
+          grid.style.width = "800px";
+          content.style.gridTemplateColumns = "1fr";
+          if (east) east.style.display = "block";
+          if (west) west.style.display = "none";
+          titleH1.textContent = "Eastern Conference";
+        } else if (mode === "west") {
+          grid.style.width = "800px";
+          content.style.gridTemplateColumns = "1fr";
+          if (east) east.style.display = "none";
+          if (west) west.style.display = "block";
+          titleH1.textContent = "Western Conference";
+        } else {
+          grid.style.width = "1200px";
+          content.style.gridTemplateColumns = "1fr 1fr";
+          if (east) east.style.display = "block";
+          if (west) west.style.display = "block";
+          titleH1.textContent = "NBA Standings";
+        }
+
+        const canvas = await html2canvas(grid, {
+          backgroundColor: "#f7f8fc",
+          scale: 2, useCORS: true, allowTaint: true, logging: false
+        });
+        preview.src = canvas.toDataURL("image/png");
+        modal.classList.add("open");
+
+        dlBtn.onclick = () => {
+          const a = document.createElement("a");
+          a.download = "nba-" + mode + "-standings-" + new Date().toISOString().split("T")[0] + ".png";
+          a.href = canvas.toDataURL("image/png");
+          a.click();
+        };
+        copyBtn.onclick = () => {
+          canvas.toBlob(blob => {
+            navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(() => {
+              copyBtn.textContent = "Copied!";
+              setTimeout(() => { copyBtn.textContent = "Copy to Clipboard"; }, 2000);
+            });
+          });
+        };
+      } catch (e) {
+        console.error(e);
+        alert("Failed to generate image.");
+      } finally {
+        btn.textContent = original;
+        btn.disabled = false;
+      }
+    };
+  });
+
+  closeBtn.onclick = () => modal.classList.remove("open");
+  modal.onclick = (e) => { if (e.target === modal) modal.classList.remove("open"); };
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  getNBAStandings();
+  setInterval(getNBAStandings, 300000);
+});
+</script>
 </body>
 </html>
