@@ -1,41 +1,938 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Mock Drafts | SixersHoops – Coming Soon</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/favicon.ico" />
-  <link rel="stylesheet" href="navbar-styles.css" />
-  <style>
-    /* reset + center */
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-      background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);
-      color:#1e293b;
-      padding-top:80px;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-    }
-    .coming-soon{max-width:600px;padding:2rem;}
-    .coming-soon-icon{font-size:4rem;margin-bottom:1rem;animation:bounce 2s infinite;}
-    @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-20px);}}
-    .coming-soon h1{font-size:3rem;font-weight:900;margin:0 0 .5rem;letter-spacing:-1px;}
-    .coming-soon p{font-size:1.25rem;color:#475569;margin:0;}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>2026 NBA Mock Draft Simulator — Sixers Hoops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="navbar-styles.css">
+<style>
+  :root{
+    --navy:#001a57; --navy-deep:#0b0f1a;
+    --sixers-blue:#006BB6; --sixers-red:#ED174C;
+    --cream:#f7f8fc; --ink:#0d0f1a; --mid:#64748b;
+    --border-light:#e4e8f0; --green:#16a34a; --red:#dc2626;
+    --soft:#f1f3f8;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body,html{font-family:'Barlow',sans-serif;margin:0;background:var(--cream);color:var(--ink)}
+  body{padding-top:64px}
+  button{font-family:inherit}
+
+  /* HERO (matches standings) */
+  .page-hero{background:var(--cream);position:relative;overflow:hidden}
+  .page-hero::before{content:'';position:absolute;inset:0;
+    background-image:radial-gradient(circle,rgba(0,107,182,.12) 1px,transparent 1px);
+    background-size:28px 28px;opacity:.6;pointer-events:none;z-index:0}
+  .hero-glow-blue{position:absolute;right:-120px;top:-80px;width:600px;height:500px;
+    background:radial-gradient(ellipse at center,rgba(0,107,182,.08) 0%,transparent 70%);z-index:0;pointer-events:none}
+  .hero-glow-red{position:absolute;left:-60px;bottom:-40px;width:400px;height:300px;
+    background:radial-gradient(ellipse at center,rgba(237,23,76,.05) 0%,transparent 70%);z-index:0;pointer-events:none}
+  .hero-inner{position:relative;z-index:1;max-width:860px;margin:0 auto;
+    padding:4rem 2rem 3rem;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .hero-title-top,.hero-title-bottom{font-family:'Barlow Condensed',sans-serif;
+    font-size:clamp(3rem,7.5vw,5.5rem);font-weight:900;line-height:.9;
+    letter-spacing:-.01em;text-transform:uppercase;margin:0}
+  .hero-title-top{color:var(--ink)}
+  .hero-title-bottom{color:var(--sixers-blue);margin:0 0 .2em}
+  .hero-divider{width:32px;height:3px;background:var(--sixers-red);border-radius:2px;margin:1.2rem auto 1rem}
+  .hero-sub{font-size:1rem;color:var(--mid);max-width:520px;line-height:1.6;margin:0 auto}
+  .hero-cta-row{display:flex;align-items:center;gap:.6rem;margin-top:1.8rem;flex-wrap:wrap;justify-content:center}
+
+  .hero-btn-primary,.hero-btn-secondary,.hero-btn-analyze{
+    display:inline-flex;align-items:center;gap:.45rem;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:.84rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:.7rem 1.4rem;border-radius:9px;cursor:pointer;transition:all .2s;border:none}
+  .hero-btn-primary{background:var(--sixers-blue);color:#fff;box-shadow:0 2px 12px rgba(0,107,182,.25)}
+  .hero-btn-primary:hover:not(:disabled){background:#0057a0;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,107,182,.35)}
+  .hero-btn-secondary{background:transparent;color:var(--sixers-blue);border:1px solid var(--sixers-blue)}
+  .hero-btn-secondary:hover:not(:disabled){background:var(--sixers-blue);color:#fff}
+  .hero-btn-analyze{background:var(--navy);color:#fff;box-shadow:0 2px 12px rgba(0,26,87,.2)}
+  .hero-btn-analyze:hover:not(:disabled){background:#001240;transform:translateY(-1px)}
+  .hero-btn-primary:disabled,.hero-btn-secondary:disabled,.hero-btn-analyze:disabled{opacity:.55;cursor:not-allowed}
+
+  .md-wrap{max-width:1400px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+  .section-label{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.65rem;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--mid);
+    display:flex;align-items:center;gap:.6rem;margin:1.5rem 0 .9rem}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border-light)}
+
+  /* status bar above board */
+  .draft-status{
+    background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:1rem 1.25rem;
+    box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 28px -18px rgba(15,23,42,.18);
+    display:flex;flex-wrap:wrap;align-items:center;gap:1rem;justify-content:space-between;
+    position:relative;overflow:hidden;margin-bottom:1.25rem}
+  .draft-status::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--sixers-blue),#1e90d8 60%,var(--sixers-blue))}
+  .ds-meta{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+  .ds-pill{display:inline-flex;align-items:center;gap:.45rem;background:var(--soft);
+    color:var(--ink);padding:.4rem .75rem;border-radius:8px;font-weight:700;font-size:.85rem}
+  .ds-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--sixers-blue)}
+  .ds-pill.live .dot{background:var(--green);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .ds-clock{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;letter-spacing:.04em}
+  .ds-clock.warn{color:var(--sixers-red)}
+
+  /* layout */
+  .md-grid{display:grid;gap:1.25rem;grid-template-columns:1fr;align-items:start}
+  @media(min-width:1100px){.md-grid{grid-template-columns:1.6fr 1fr}}
+
+  .panel{background:#fff;border:1px solid #e6eaf2;border-radius:14px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 28px -18px rgba(15,23,42,.18);
+    position:relative;overflow:hidden}
+  .panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--sixers-blue),#1e90d8 60%,var(--sixers-blue))}
+  .panel-head{padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+  .panel-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;
+    font-size:1.25rem;text-transform:uppercase;letter-spacing:.02em}
+  .panel-body{padding:.75rem 0}
+
+  /* picks list */
+  .pick-row{display:grid;grid-template-columns:46px 36px 1fr auto;gap:.75rem;
+    align-items:center;padding:.6rem 1rem;border-bottom:1px solid #f1f3f8;transition:background .15s}
+  .pick-row:hover{background:#f9fbff}
+  .pick-row.on-clock{background:linear-gradient(90deg,rgba(237,23,76,.08),transparent 70%)}
+  .pick-row.completed .pick-num{background:#e8f1fb;color:var(--sixers-blue)}
+  .pick-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;
+    background:var(--soft);color:var(--mid);text-align:center;padding:.4rem 0;border-radius:6px}
+  .pick-logo{width:36px;height:36px;object-fit:contain}
+  .pick-team{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+  .pick-team .team{font-weight:700;font-size:.95rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pick-team .via{font-size:.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:.06em}
+  .pick-player{text-align:right;min-width:0}
+  .pick-player .name{font-weight:700;color:var(--ink);font-size:.95rem}
+  .pick-player .school{font-size:.75rem;color:var(--mid)}
+  .pick-player.empty .name{color:#cbd5e1;font-style:italic;font-weight:500}
+  .pick-row.user-team{background:linear-gradient(90deg,rgba(0,107,182,.07),transparent 70%)}
+
+  /* on-clock card */
+  .clock-card{padding:1rem 1.25rem 1.25rem;background:linear-gradient(180deg,#fff,#f7faff)}
+  .clock-team{display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem}
+  .clock-team img{width:48px;height:48px;object-fit:contain}
+  .clock-team .ct-info .pill{font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:.7rem;letter-spacing:.16em;color:var(--sixers-red);text-transform:uppercase}
+  .clock-team .ct-info .name{font-family:'Barlow Condensed',sans-serif;font-weight:900;
+    font-size:1.4rem;text-transform:uppercase;line-height:1}
+
+  /* search */
+  .search-box{display:flex;gap:.5rem;padding:.75rem 1rem;border-bottom:1px solid var(--border-light);background:#fff}
+  .search-box input,.search-box select{
+    flex:1;padding:.55rem .75rem;border:1px solid var(--border-light);border-radius:8px;
+    font-family:'Barlow',sans-serif;font-size:.9rem;outline:none;background:#fff}
+  .search-box input:focus,.search-box select:focus{border-color:var(--sixers-blue)}
+  .search-box select{flex:0 0 auto;max-width:140px}
+
+  .player-list{max-height:560px;overflow-y:auto}
+  .player-row{display:grid;grid-template-columns:30px 1fr auto;gap:.6rem;align-items:center;
+    padding:.55rem 1rem;border-bottom:1px solid #f1f3f8;cursor:pointer;transition:background .15s}
+  .player-row:hover{background:#f9fbff}
+  .player-row.taken{opacity:.35;cursor:not-allowed;background:#fafbfd}
+  .player-rk{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
+    color:var(--mid);text-align:center;background:var(--soft);border-radius:5px;padding:2px 0}
+  .player-info .pname{font-weight:700;font-size:.92rem;color:var(--ink)}
+  .player-info .pschool{font-size:.74rem;color:var(--mid)}
+  .draft-btn{background:var(--sixers-blue);color:#fff;border:none;font-family:'Barlow Condensed',sans-serif;
+    font-weight:700;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:.4rem .75rem;border-radius:6px;cursor:pointer;transition:all .15s}
+  .draft-btn:hover{background:#0057a0;transform:translateY(-1px)}
+  .draft-btn:disabled{background:#cbd5e1;cursor:not-allowed;transform:none}
+
+  /* mode tabs */
+  .mode-tabs{display:flex;gap:.4rem;background:var(--soft);padding:.3rem;border-radius:10px;margin-bottom:1rem}
+  .mode-tab{flex:1;background:transparent;border:none;padding:.55rem .75rem;
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--mid);border-radius:7px;cursor:pointer;transition:all .15s}
+  .mode-tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(15,23,42,.08)}
+
+  /* setup card */
+  .setup-card{background:#fff;border:1px solid #e6eaf2;border-radius:14px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 28px -18px rgba(15,23,42,.18);
+    padding:1.5rem;margin-bottom:1.25rem;position:relative;overflow:hidden}
+  .setup-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--sixers-blue),#1e90d8 60%,var(--sixers-blue))}
+  .setup-grid{display:grid;gap:1rem;grid-template-columns:1fr;align-items:end}
+  @media(min-width:768px){.setup-grid{grid-template-columns:1fr 1fr 1fr auto}}
+  .field label{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin-bottom:.4rem}
+  .field input,.field select{width:100%;padding:.65rem .85rem;border:1px solid var(--border-light);
+    border-radius:9px;font-family:'Barlow',sans-serif;font-size:.95rem;background:#fff;outline:none}
+  .field input:focus,.field select:focus{border-color:var(--sixers-blue)}
+
+  .room-banner{background:linear-gradient(135deg,var(--navy),#0a2470);color:#fff;
+    border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;
+    gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+  .room-banner .code{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;letter-spacing:.18em}
+  .room-banner .label{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;
+    letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .copy-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;
+    padding:.5rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem;transition:background .15s}
+  .copy-btn:hover{background:rgba(255,255,255,.22)}
+
+  .participants{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
+  .pchip{background:var(--soft);color:var(--ink);padding:.35rem .7rem;border-radius:999px;
+    font-size:.8rem;font-weight:600;display:inline-flex;align-items:center;gap:.35rem}
+  .pchip .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .pchip.host .dot{background:var(--sixers-red)}
+
+  /* assignment table */
+  .assign-table{width:100%;border-collapse:collapse;font-size:.88rem}
+  .assign-table th,.assign-table td{padding:.5rem .6rem;border-bottom:1px solid #f1f3f8;text-align:left}
+  .assign-table th{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.68rem;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+  .assign-table select{padding:.35rem .5rem;border:1px solid var(--border-light);border-radius:6px;font-size:.82rem;background:#fff}
+
+  /* modal */
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:60;background:rgba(11,15,26,.78);
+    align-items:center;justify-content:center;padding:1rem}
+  .modal-overlay.open{display:flex}
+  .modal-card{width:100%;max-width:720px;background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.4);max-height:90vh;display:flex;flex-direction:column}
+  .modal-head,.modal-foot{display:flex;align-items:center;justify-content:space-between;
+    padding:1rem 1.25rem;border-bottom:1px solid var(--border-light)}
+  .modal-foot{border-bottom:none;border-top:1px solid var(--border-light);justify-content:flex-end;gap:.5rem}
+  .modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;
+    letter-spacing:.08em;text-transform:uppercase}
+  .modal-body{padding:1.25rem;background:var(--cream);overflow:auto;flex:1}
+  .btn-primary{background:var(--sixers-blue);color:#fff;border:none;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;
+    text-transform:uppercase;padding:.65rem 1.3rem;border-radius:8px;cursor:pointer;transition:all .2s}
+  .btn-primary:hover{background:#0080d4;transform:translateY(-1px)}
+  .btn-ghost{background:#fff;color:var(--mid);font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;padding:.6rem 1.1rem;border-radius:8px;
+    border:1px solid var(--border-light);cursor:pointer;transition:all .2s}
+  .btn-ghost:hover{border-color:var(--sixers-blue);color:var(--sixers-blue)}
+  .btn-danger{background:var(--sixers-red);color:#fff;border:none;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;
+    text-transform:uppercase;padding:.6rem 1.1rem;border-radius:8px;cursor:pointer}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:.75rem 1.2rem;border-radius:10px;font-weight:600;font-size:.9rem;z-index:100;
+    opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 8px 28px rgba(0,0,0,.2)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+
+  .grade-A{color:var(--green);font-weight:800}
+  .grade-B{color:var(--sixers-blue);font-weight:800}
+  .grade-C{color:#d97706;font-weight:800}
+  .grade-D{color:var(--sixers-red);font-weight:800}
+
+  .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--mid)}
+</style>
 </head>
 <body>
-  <!-- Navbar will be automatically inserted here by nav.js -->
   <script src="nav.js"></script>
 
-  <div class="coming-soon">
-    <div class="coming-soon-icon">🎯</div>
-    <h1>Coming Soon</h1>
-    <p>Fresh Sixers mock-drafts are on the way.</p>
+  <section class="page-hero">
+    <div class="hero-glow-blue"></div>
+    <div class="hero-glow-red"></div>
+    <div class="hero-inner">
+      <h1 class="hero-title-top">2026 Mock</h1>
+      <h2 class="hero-title-bottom">Draft Sim</h2>
+      <div class="hero-divider"></div>
+      <p class="hero-sub">Run a full 30-pick first round solo, or schedule a live group draft with friends. Grade your board, then post the final mock straight to the community.</p>
+      <div class="hero-cta-row">
+        <button class="hero-btn-primary" id="cta-solo">Start Solo Draft</button>
+        <button class="hero-btn-secondary" id="cta-group">Create Group Room</button>
+        <button class="hero-btn-analyze" id="cta-join">Join With Code</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="md-wrap">
+    <!-- SETUP -->
+    <div id="setup-pane">
+      <div class="section-label">Draft Setup</div>
+      <div class="setup-card">
+        <div class="mode-tabs" id="mode-tabs">
+          <button class="mode-tab active" data-mode="solo">Solo Mock</button>
+          <button class="mode-tab" data-mode="group">Group Mock</button>
+          <button class="mode-tab" data-mode="join">Join Room</button>
+        </div>
+
+        <div id="setup-solo">
+          <div class="setup-grid">
+            <div class="field">
+              <label>Your Team</label>
+              <select id="solo-team"></select>
+            </div>
+            <div class="field">
+              <label>Pick Clock</label>
+              <select id="solo-clock">
+                <option value="0">No timer</option>
+                <option value="60">60 seconds</option>
+                <option value="120" selected>2 minutes</option>
+                <option value="300">5 minutes</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>CPU Style</label>
+              <select id="solo-cpu">
+                <option value="bpa" selected>Best Player Available</option>
+                <option value="random">Chaos (random top-15)</option>
+              </select>
+            </div>
+            <div class="field">
+              <button class="hero-btn-primary" id="start-solo">Start Draft →</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="setup-group" style="display:none">
+          <div class="setup-grid">
+            <div class="field">
+              <label>Your Display Name</label>
+              <input id="group-name" placeholder="e.g. RhatusGM" />
+            </div>
+            <div class="field">
+              <label>Draft Time</label>
+              <input id="group-time" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label>Pick Clock</label>
+              <select id="group-clock">
+                <option value="60">60s</option>
+                <option value="120" selected>2 min</option>
+                <option value="300">5 min</option>
+              </select>
+            </div>
+            <div class="field">
+              <button class="hero-btn-primary" id="create-room">Create Room →</button>
+            </div>
+          </div>
+          <p style="color:var(--mid);font-size:.85rem;margin:.85rem 0 0">
+            You'll get a 6-character code to share. Friends pick their teams when they join. Auto-pick fills any unowned team on the clock.
+          </p>
+        </div>
+
+        <div id="setup-join" style="display:none">
+          <div class="setup-grid">
+            <div class="field">
+              <label>Your Display Name</label>
+              <input id="join-name" placeholder="e.g. PhillyFan" />
+            </div>
+            <div class="field">
+              <label>Room Code</label>
+              <input id="join-code" maxlength="6" style="text-transform:uppercase;letter-spacing:.18em;font-weight:800" placeholder="ABC123" />
+            </div>
+            <div class="field"></div>
+            <div class="field">
+              <button class="hero-btn-primary" id="join-room">Join Room →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOBBY (group only) -->
+    <div id="lobby-pane" style="display:none">
+      <div class="section-label">Draft Lobby</div>
+      <div class="setup-card">
+        <div class="room-banner">
+          <div>
+            <div class="label">Room Code</div>
+            <div class="code" id="lobby-code">------</div>
+          </div>
+          <div>
+            <div class="label">Scheduled For</div>
+            <div style="font-weight:700" id="lobby-time">—</div>
+          </div>
+          <button class="copy-btn" id="copy-link">Copy Invite Link</button>
+        </div>
+
+        <div class="section-label" style="margin-top:.25rem">Participants</div>
+        <div class="participants" id="lobby-participants"></div>
+
+        <div class="section-label" style="margin-top:1.25rem">Team Assignments</div>
+        <div style="overflow:auto;max-height:340px;border:1px solid var(--border-light);border-radius:10px">
+          <table class="assign-table" id="assign-table"></table>
+        </div>
+
+        <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn-ghost" id="leave-room">Leave Room</button>
+          <button class="btn-primary" id="start-group">Start Draft Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DRAFT BOARD -->
+    <div id="draft-pane" style="display:none">
+      <div class="draft-status">
+        <div class="ds-meta">
+          <div class="ds-pill live"><span class="dot"></span><span id="ds-mode">Solo Mock</span></div>
+          <div class="ds-pill"><span>Pick</span> <strong id="ds-pick">1 / 30</strong></div>
+          <div class="ds-pill" id="ds-room-pill" style="display:none"><span>Room</span> <strong id="ds-room">------</strong></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <div class="ds-clock" id="ds-clock">--:--</div>
+          <button class="btn-ghost" id="reset-draft">Reset</button>
+        </div>
+      </div>
+
+      <div class="md-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">First Round Order</div>
+            <button class="btn-ghost" id="post-community" disabled>Post to Community</button>
+          </div>
+          <div class="panel-body" id="picks-list"></div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:1.25rem">
+            <div class="panel-head"><div class="panel-title">On The Clock</div></div>
+            <div class="clock-card" id="clock-card"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Big Board</div>
+              <span style="font-size:.78rem;color:var(--mid)" id="board-count"></span>
+            </div>
+            <div class="search-box">
+              <input id="player-search" placeholder="Search players or schools…" />
+              <select id="player-pos">
+                <option value="">All Pos</option>
+                <option>G</option><option>F</option><option>C</option>
+              </select>
+            </div>
+            <div class="player-list" id="player-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:2rem">Draft Grades</div>
+      <div class="panel">
+        <div class="panel-body" id="grades-panel" style="padding:1rem 1.25rem;color:var(--mid)">
+          Finish the draft to see AI-style grades for every team's haul.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- POST MODAL -->
+  <div class="modal-overlay" id="post-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Post Mock Draft</div>
+        <button class="btn-ghost" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="field" style="margin-bottom:1rem">
+          <label>Title</label>
+          <input id="post-title" />
+        </div>
+        <div class="field">
+          <label>Preview</label>
+          <textarea id="post-content" rows="14" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-light);border-radius:9px;font-family:'Barlow',sans-serif;font-size:.9rem"></textarea>
+        </div>
+        <p style="color:var(--mid);font-size:.8rem;margin-top:.5rem">Will be posted as a Discussion in the community feed.</p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" data-close>Cancel</button>
+        <button class="btn-primary" id="confirm-post">Post to Feed</button>
+      </div>
+    </div>
   </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="firebase-init.js"></script>
+
+<script>
+/* ============================================================
+   2026 NBA DRAFT — first round order + via-team logos
+   Logo source: ESPN CDN (https://a.espncdn.com/i/teamlogos/nba/500/{abbrev}.png)
+============================================================ */
+const TEAMS = {
+  ATL:'Atlanta Hawks', BOS:'Boston Celtics', BKN:'Brooklyn Nets', CHA:'Charlotte Hornets',
+  CHI:'Chicago Bulls', CLE:'Cleveland Cavaliers', DAL:'Dallas Mavericks', DEN:'Denver Nuggets',
+  DET:'Detroit Pistons', GS:'Golden State Warriors', HOU:'Houston Rockets', IND:'Indiana Pacers',
+  LAC:'LA Clippers', LAL:'Los Angeles Lakers', MEM:'Memphis Grizzlies', MIA:'Miami Heat',
+  MIL:'Milwaukee Bucks', MIN:'Minnesota Timberwolves', NOP:'New Orleans Pelicans',
+  NY:'New York Knicks', OKC:'Oklahoma City Thunder', ORL:'Orlando Magic', PHI:'Philadelphia 76ers',
+  PHX:'Phoenix Suns', POR:'Portland Trail Blazers', SAC:'Sacramento Kings', SA:'San Antonio Spurs',
+  TOR:'Toronto Raptors', UTAH:'Utah Jazz', WSH:'Washington Wizards'
+};
+const logo = abbr => `https://a.espncdn.com/i/teamlogos/nba/500/${abbr.toLowerCase()}.png`;
+
+const DRAFT_ORDER = [
+  {team:'WSH'},{team:'UTAH'},{team:'MEM'},{team:'CHI'},
+  {team:'LAC',via:'IND'},{team:'BKN'},{team:'SAC'},{team:'ATL',via:'NOP'},
+  {team:'DAL'},{team:'MIL'},{team:'GS'},{team:'OKC',via:'LAC'},
+  {team:'MIA'},{team:'CHA'},{team:'CHI',via:'POR'},{team:'MEM',via:'ORL'},
+  {team:'OKC',via:'PHI'},{team:'CHA',via:'PHX'},{team:'TOR'},{team:'SA',via:'ATL'},
+  {team:'DET',via:'MIN'},{team:'PHI',via:'HOU'},{team:'ATL',via:'CLE'},{team:'NY'},
+  {team:'LAL'},{team:'DEN'},{team:'BOS'},{team:'MIN',via:'DET'},
+  {team:'CLE',via:'SAS'},{team:'DAL',via:'OKC'}
+];
+// fix SAS -> SA
+DRAFT_ORDER.forEach(p=>{if(p.via==='SAS')p.via='SA';});
+
+/* prospect board */
+const RAW_PROSPECTS = [
+  ['AJ Dybantsa','BYU','F'],['Cameron Boozer','Duke','F'],['Darryn Peterson','Kansas','G'],
+  ['Nate Ament','Tennessee','F'],['Mikel Brown Jr.','Louisville','G'],['Caleb Wilson','North Carolina','F'],
+  ['Yaxel Lendeborg','Michigan','F'],['Koa Peat','Arizona','F'],['Karim López','New Zealand Breakers','F'],
+  ['Chris Cenac Jr.','Houston','C'],['Jayden Quaintance','Kentucky','C'],['Labaron Philon Jr.','Alabama','G'],
+  ['Darius Acuff Jr.','Arkansas','G'],['Tounde Yessoufou','Baylor','F'],['Brayden Burries','Arizona','G'],
+  ['Meleek Thomas','Arkansas','G'],['Isaiah Evans','Duke','G'],['Flory Bidunga','Kansas','C'],
+  ['Alex Karaban','UConn','F'],['Otega Oweh','Kentucky','G'],['Bennett Stirtz','Iowa','G'],
+  ['Hannes Steinbach','Washington','C'],['Jeremy Fears Jr.','Michigan State','G'],['Jack Kayil','Alba Berlin','G'],
+  ['Sergio de Larrea','Valencia','G'],['Henri Veesaar','North Carolina','C'],['Aday Mara','Michigan','C'],
+  ['Tarris Reed Jr.','UConn','C'],['Morez Johnson Jr.','Michigan','F'],['Bruce Thornton','Ohio State','G'],
+  ['Milos Uzan','Houston','G'],['Kingston Flemings','Houston','G'],['Christian Anderson Jr.','Texas Tech','G'],
+  ['Kylan Boswell','Illinois','G'],['Andrej Stojaković','Illinois','G'],['Joshua Jefferson','Iowa State','F'],
+  ['Milan Momcilovic','Iowa State','F'],['Billy Richmond III','Arkansas','F'],['Richie Saunders','BYU','F'],
+  ['Emanuel Sharp','Houston','G'],['Braden Smith','Purdue','G'],['Tyler Bilodeau','UCLA','F'],
+  ['John Blackwell','Wisconsin','G'],['Nick Boyd','Wisconsin','G'],['Jaden Bradley','Arizona','G'],
+  ['Trevon Brazile','Arkansas','F'],['Maliq Brown','Duke','F'],['Cameron Carr','Baylor','G'],
+  ['Rueben Chinyelu','Florida','C'],['Ryan Conwell','Louisville','G'],['Zuby Ejiofor','St. John\u2019s','F'],
+  ['Ja\u2019Kobi Gillespie','Tennessee','G'],['Allen Graves','Santa Clara','F'],['Keyshawn Hall','Auburn','F'],
+  ['Tobi Lawal','Virginia Tech','F'],['Nick Martinelli','Northwestern','F'],['Baba Miller','Cincinnati','F'],
+  ['Dillon Mitchell','St. John\u2019s','F'],['Malachi Moreno','Kentucky','C'],['Izaiyah Nelson','South Florida','C'],
+  ['Tyler Nickel','Vanderbilt','F'],['Ebuka Okorie','Stanford','G'],['Felix Okpara','Tennessee','C'],
+  ['Ugonna Onyenso','Virginia','C'],['Tobe Awaka','Arizona','F'],['Matt Able','North Carolina State','G'],
+  ['Amari Allen','Alabama','F'],['Luigi Suigo','Mega','C'],['Peter Suder','Miami (OH)','G'],
+  ['Dailyn Swain','Texas','F'],['Tyler Tanner','Vanderbilt','G'],['Keaton Wagler','Illinois','G']
+];
+const PROSPECTS = RAW_PROSPECTS.map((p,i)=>({rank:i+1,name:p[0],school:p[1],pos:p[2]}));
+
+/* ============================================================ STATE */
+const State = {
+  mode:'solo',           // solo | group
+  userTeam:'PHI',
+  clockSec:120,
+  cpuStyle:'bpa',
+  picks:[],              // [{prospect}|null]
+  currentPick:0,
+  timer:null,
+  timeLeft:0,
+  started:false,
+  // group
+  roomCode:null,
+  roomRef:null,
+  roomUnsub:null,
+  isHost:false,
+  myName:'',
+  participants:[],       // [{id,name,host}]
+  assignments:{},        // {pickIndex:userId}  -> who controls each pick
+};
+
+/* ============================================================ UTIL */
+const $ = id => document.getElementById(id);
+const toast = msg => { const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); };
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const uid = () => Math.random().toString(36).slice(2,10);
+const code6 = () => Math.random().toString(36).slice(2,8).toUpperCase();
+
+/* ============================================================ SETUP UI */
+function populateTeamSelect(){
+  const sel = $('solo-team');
+  const teams = [...new Set(DRAFT_ORDER.map(p=>p.team))].sort();
+  sel.innerHTML = teams.map(a=>`<option value="${a}" ${a==='PHI'?'selected':''}>${TEAMS[a]}</option>`).join('');
+}
+function switchMode(mode){
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  $('setup-solo').style.display = mode==='solo'?'':'none';
+  $('setup-group').style.display = mode==='group'?'':'none';
+  $('setup-join').style.display = mode==='join'?'':'none';
+}
+
+/* ============================================================ DRAFT ENGINE */
+function startDraft({mode,userTeam,clockSec,cpuStyle}){
+  State.mode=mode; State.userTeam=userTeam; State.clockSec=Number(clockSec)||0;
+  State.cpuStyle=cpuStyle||'bpa';
+  State.picks = DRAFT_ORDER.map(()=>null);
+  State.currentPick = 0;
+  State.started = true;
+
+  $('setup-pane').style.display='none';
+  $('lobby-pane').style.display='none';
+  $('draft-pane').style.display='';
+  $('ds-mode').textContent = mode==='group'?'Group Draft':'Solo Mock';
+  $('ds-room-pill').style.display = mode==='group'?'':'none';
+  if(mode==='group') $('ds-room').textContent=State.roomCode;
+
+  renderAll();
+  tickStart();
+}
+
+function isUserPick(idx){
+  if(State.mode==='solo') return DRAFT_ORDER[idx].team === State.userTeam;
+  // group: assignments map pick->userId
+  return State.assignments[idx] === window.__myId;
+}
+
+function tickStart(){
+  clearInterval(State.timer);
+  if(!State.clockSec){ $('ds-clock').textContent='--:--'; return; }
+  State.timeLeft = State.clockSec;
+  $('ds-clock').textContent = fmt(State.timeLeft);
+  $('ds-clock').classList.remove('warn');
+  State.timer = setInterval(()=>{
+    State.timeLeft--;
+    $('ds-clock').textContent = fmt(Math.max(0,State.timeLeft));
+    if(State.timeLeft<=10) $('ds-clock').classList.add('warn');
+    if(State.timeLeft<=0){ clearInterval(State.timer); autoPick(); }
+  },1000);
+}
+
+function takenSet(){ return new Set(State.picks.filter(Boolean).map(p=>p.name)); }
+
+function bestAvailable(){
+  const taken=takenSet();
+  return PROSPECTS.find(p=>!taken.has(p.name));
+}
+function chaosPick(){
+  const taken=takenSet();
+  const pool=PROSPECTS.filter(p=>!taken.has(p.name)).slice(0,15);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function autoPick(){
+  const p = State.cpuStyle==='random'?chaosPick():bestAvailable();
+  if(p) makePick(p,true);
+}
+
+function makePick(prospect, auto=false){
+  if(!State.started || State.currentPick>=DRAFT_ORDER.length) return;
+  if(State.picks[State.currentPick]) return;
+  State.picks[State.currentPick] = {...prospect, auto};
+  // sync to room
+  if(State.mode==='group' && State.roomRef){
+    State.roomRef.update({[`picks.${State.currentPick}`]:{...prospect, auto}, currentPick: State.currentPick+1})
+      .catch(e=>console.warn(e));
+  }
+  advance();
+}
+function advance(){
+  State.currentPick++;
+  renderAll();
+  if(State.currentPick>=DRAFT_ORDER.length){ finishDraft(); return; }
+  tickStart();
+}
+function finishDraft(){
+  clearInterval(State.timer);
+  $('ds-clock').textContent='DONE';
+  $('post-community').disabled=false;
+  renderGrades();
+  toast('Draft complete!');
+}
+
+/* ============================================================ RENDER */
+function renderAll(){
+  renderStatus();
+  renderPicks();
+  renderClock();
+  renderBoard();
+}
+function renderStatus(){
+  $('ds-pick').textContent = `${Math.min(State.currentPick+1,30)} / 30`;
+}
+function renderPicks(){
+  const list = DRAFT_ORDER.map((slot,i)=>{
+    const pick = State.picks[i];
+    const onClock = i===State.currentPick && State.started;
+    const completed = !!pick;
+    const userTeam = isUserPick(i);
+    return `<div class="pick-row ${onClock?'on-clock':''} ${completed?'completed':''} ${userTeam?'user-team':''}" data-idx="${i}">
+      <div class="pick-num">${i+1}</div>
+      <img class="pick-logo" src="${logo(slot.team)}" alt="${slot.team}" onerror="this.style.opacity=.3"/>
+      <div class="pick-team">
+        <span class="team">${TEAMS[slot.team]||slot.team}</span>
+        ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
+      </div>
+      <div class="pick-player ${pick?'':'empty'}">
+        ${pick?`<div class="name">${pick.name}</div><div class="school">${pick.school} · ${pick.pos}${pick.auto?' · auto':''}</div>`
+              :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
+      </div>
+    </div>`;
+  }).join('');
+  $('picks-list').innerHTML = list;
+}
+function renderClock(){
+  const i = State.currentPick;
+  if(i>=DRAFT_ORDER.length){
+    $('clock-card').innerHTML = `<div class="empty-state">Draft complete — scroll for grades.</div>`;
+    return;
+  }
+  const slot = DRAFT_ORDER[i];
+  const mine = isUserPick(i);
+  $('clock-card').innerHTML = `
+    <div class="clock-team">
+      <img src="${logo(slot.team)}" alt="${slot.team}"/>
+      <div class="ct-info">
+        <div class="pill">Pick #${i+1}${slot.via?` · via ${slot.via}`:''}</div>
+        <div class="name">${TEAMS[slot.team]}</div>
+      </div>
+    </div>
+    <div style="font-size:.85rem;color:var(--mid)">
+      ${mine?'<strong style="color:var(--sixers-blue)">You\\'re on the clock.</strong> Pick from the big board.'
+            :'CPU/other GM is picking. Auto-pick fires when the clock hits zero.'}
+    </div>
+    ${!mine && State.mode==='solo'?'<button class="btn-ghost" id="skip-cpu" style="margin-top:.75rem">Make CPU Pick Now</button>':''}
+  `;
+  const skip = $('skip-cpu'); if(skip) skip.onclick=()=>{ clearInterval(State.timer); autoPick(); };
+}
+function renderBoard(){
+  const q = $('player-search').value.toLowerCase();
+  const pos = $('player-pos').value;
+  const taken = takenSet();
+  const filtered = PROSPECTS.filter(p=>{
+    if(pos && p.pos!==pos) return false;
+    if(q && !`${p.name} ${p.school}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  $('board-count').textContent = `${filtered.length} prospects`;
+  $('player-list').innerHTML = filtered.map(p=>{
+    const t = taken.has(p.name);
+    const canDraft = State.started && !t && isUserPick(State.currentPick);
+    return `<div class="player-row ${t?'taken':''}" data-name="${p.name}">
+      <div class="player-rk">${p.rank}</div>
+      <div class="player-info"><div class="pname">${p.name}</div><div class="pschool">${p.school} · ${p.pos}</div></div>
+      <button class="draft-btn" ${canDraft?'':'disabled'} data-pick="${p.name}">${t?'Picked':'Draft'}</button>
+    </div>`;
+  }).join('');
+  $('player-list').querySelectorAll('button[data-pick]').forEach(b=>{
+    b.onclick = e=>{
+      const name = b.dataset.pick;
+      const p = PROSPECTS.find(x=>x.name===name);
+      clearInterval(State.timer);
+      makePick(p,false);
+    };
+  });
+}
+function renderGrades(){
+  // group picks by team and grade by avg rank acquired
+  const byTeam = {};
+  State.picks.forEach((pk,i)=>{
+    if(!pk) return;
+    const t = DRAFT_ORDER[i].team;
+    (byTeam[t]=byTeam[t]||[]).push({...pk,pickNum:i+1});
+  });
+  const rows = Object.entries(byTeam).map(([t,arr])=>{
+    const avgRank = arr.reduce((s,p)=>s+(p.rank-(arr[0].pickNum)),0)/arr.length;
+    // value = sum of (pick# - bigBoardRank); positive = steal, negative = reach
+    const value = arr.reduce((s,p)=>s+(p.pickNum - p.rank),0);
+    let g='C',cls='grade-C';
+    if(value>=8){g='A';cls='grade-A';}
+    else if(value>=2){g='B';cls='grade-B';}
+    else if(value<=-8){g='D';cls='grade-D';}
+    return {t,arr,value,g,cls};
+  }).sort((a,b)=>b.value-a.value);
+
+  $('grades-panel').innerHTML = rows.length===0
+    ? '<div class="empty-state">No picks yet.</div>'
+    : `<table class="assign-table">
+        <thead><tr><th>Team</th><th>Picks</th><th>Value</th><th>Grade</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td><div style="display:flex;align-items:center;gap:.5rem"><img src="${logo(r.t)}" style="width:22px;height:22px"/>${TEAMS[r.t]}</div></td>
+          <td style="font-size:.85rem">${r.arr.map(p=>`#${p.pickNum} ${p.name}`).join(', ')}</td>
+          <td style="font-weight:700;color:${r.value>0?'var(--green)':r.value<0?'var(--red)':'var(--mid)'}">${r.value>0?'+':''}${r.value}</td>
+          <td class="${r.cls}" style="font-size:1.1rem">${r.g}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+}
+
+/* ============================================================ GROUP / FIRESTORE */
+async function createRoom(){
+  const name = $('group-name').value.trim();
+  const time = $('group-time').value;
+  const clock = Number($('group-clock').value);
+  if(!name) return toast('Enter a display name');
+  if(!window.db) return toast('Database unavailable');
+  const code = code6();
+  const myId = uid();
+  window.__myId = myId;
+  State.myName = name;
+  State.isHost = true;
+  State.roomCode = code;
+  State.clockSec = clock;
+  const room = {
+    code, host:myId, scheduledFor:time||null, clockSec:clock,
+    participants:[{id:myId,name,host:true}],
+    assignments:{}, picks:{}, currentPick:0, started:false, createdAt:Date.now()
+  };
+  try{
+    await window.db.collection('mock_draft_rooms').doc(code).set(room);
+    listenRoom(code);
+    showLobby();
+  }catch(e){ console.error(e); toast('Could not create room'); }
+}
+async function joinRoom(){
+  const name = $('join-name').value.trim();
+  const code = $('join-code').value.trim().toUpperCase();
+  if(!name||!code) return toast('Need name and code');
+  if(!window.db) return toast('Database unavailable');
+  const ref = window.db.collection('mock_draft_rooms').doc(code);
+  const snap = await ref.get();
+  if(!snap.exists) return toast('Room not found');
+  const myId = uid();
+  window.__myId = myId;
+  State.myName = name;
+  State.roomCode = code;
+  const data = snap.data();
+  const participants = [...(data.participants||[]),{id:myId,name,host:false}];
+  await ref.update({participants});
+  listenRoom(code);
+  showLobby();
+}
+function listenRoom(code){
+  const ref = window.db.collection('mock_draft_rooms').doc(code);
+  State.roomRef = ref;
+  if(State.roomUnsub) State.roomUnsub();
+  State.roomUnsub = ref.onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const d = snap.data();
+    State.participants = d.participants||[];
+    State.assignments = d.assignments||{};
+    State.clockSec = d.clockSec||120;
+    // sync picks
+    if(d.started){
+      if(!State.started){
+        State.mode='group';
+        startDraft({mode:'group',userTeam:null,clockSec:d.clockSec,cpuStyle:'bpa'});
+      }
+      // overwrite picks from remote
+      const newPicks = DRAFT_ORDER.map((_,i)=> d.picks?.[i] || null);
+      State.picks = newPicks;
+      State.currentPick = d.currentPick||0;
+      renderAll();
+      if(State.currentPick>=DRAFT_ORDER.length) finishDraft();
+    } else {
+      renderLobby(d);
+    }
+  });
+}
+function showLobby(){
+  $('setup-pane').style.display='none';
+  $('lobby-pane').style.display='';
+}
+function renderLobby(d){
+  $('lobby-code').textContent = d.code;
+  $('lobby-time').textContent = d.scheduledFor ? new Date(d.scheduledFor).toLocaleString() : 'On Demand';
+  $('lobby-participants').innerHTML = (d.participants||[]).map(p=>
+    `<span class="pchip ${p.host?'host':''}"><span class="dot"></span>${p.name}${p.host?' · host':''}</span>`).join('');
+  // assignments table
+  const teams = [...new Set(DRAFT_ORDER.map(p=>p.team))];
+  $('assign-table').innerHTML = `
+    <thead><tr><th>Pick</th><th>Team</th><th>Assigned GM</th></tr></thead>
+    <tbody>${DRAFT_ORDER.map((slot,i)=>{
+      const owner = (d.assignments||{})[i];
+      const ownerName = (d.participants||[]).find(p=>p.id===owner)?.name || '— auto —';
+      return `<tr>
+        <td><strong>#${i+1}</strong></td>
+        <td><div style="display:flex;align-items:center;gap:.4rem"><img src="${logo(slot.team)}" style="width:20px;height:20px"/>${TEAMS[slot.team]}${slot.via?` <span style="color:var(--mid);font-size:.7rem">via ${slot.via}</span>`:''}</div></td>
+        <td>
+          <select data-pick="${i}" class="assign-sel">
+            <option value="">— auto —</option>
+            ${(d.participants||[]).map(p=>`<option value="${p.id}" ${p.id===owner?'selected':''}>${p.name}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`;
+    }).join('')}</tbody>`;
+  $('assign-table').querySelectorAll('.assign-sel').forEach(s=>{
+    s.onchange = async ()=>{
+      const pickIdx = s.dataset.pick;
+      const val = s.value;
+      const a = {...(d.assignments||{})};
+      if(val) a[pickIdx]=val; else delete a[pickIdx];
+      await State.roomRef.update({assignments:a});
+    };
+  });
+  $('start-group').style.display = State.isHost?'':'none';
+}
+
+async function startGroupNow(){
+  if(!State.roomRef) return;
+  await State.roomRef.update({started:true, currentPick:0});
+}
+async function leaveRoom(){
+  if(State.roomUnsub) State.roomUnsub();
+  State.roomRef=null; State.roomCode=null;
+  $('lobby-pane').style.display='none';
+  $('setup-pane').style.display='';
+}
+
+/* ============================================================ POST TO COMMUNITY */
+function buildPostContent(){
+  const lines = ['**2026 NBA Mock Draft — First Round**',''];
+  State.picks.forEach((p,i)=>{
+    const slot = DRAFT_ORDER[i];
+    lines.push(`${i+1}. ${TEAMS[slot.team]}${slot.via?` (via ${slot.via})`:''} — ${p?p.name:'—'}${p?` (${p.school})`:''}`);
+  });
+  lines.push('','Built with the Sixers Hoops Mock Draft Simulator.');
+  return lines.join('\n');
+}
+function openPostModal(){
+  $('post-title').value = `My 2026 NBA Mock Draft (1st Round)`;
+  $('post-content').value = buildPostContent();
+  $('post-modal').classList.add('open');
+}
+async function submitPost(){
+  if(!window.db || !window.firebase){ toast('Database unavailable'); return; }
+  const user = (window.auth && window.auth.currentUser) || null;
+  if(!user){ toast('Sign in on the community page first'); return; }
+  const authorName = user.displayName || (user.email?user.email.split('@')[0]:'User');
+  const post = {
+    author:'u/'+authorName, authorId:user.uid,
+    createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+    tag:'Discussion', tagClass:'bg-blue-100 text-blue-700',
+    title:$('post-title').value.trim()||'My 2026 NBA Mock Draft',
+    content:$('post-content').value,
+    imageUrl:null, votes:1, voters:{[user.uid]:'up'}, comments:[]
+  };
+  try{
+    await window.db.collection('community_posts').add(post);
+    $('post-modal').classList.remove('open');
+    toast('Posted to community!');
+  }catch(e){ console.error(e); toast('Post failed'); }
+}
+
+/* ============================================================ WIRE UP */
+document.addEventListener('DOMContentLoaded',()=>{
+  populateTeamSelect();
+
+  document.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>switchMode(b.dataset.mode));
+  $('cta-solo').onclick = ()=>{switchMode('solo'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
+  $('cta-group').onclick= ()=>{switchMode('group'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
+  $('cta-join').onclick = ()=>{switchMode('join'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
+
+  $('start-solo').onclick = ()=>startDraft({mode:'solo',userTeam:$('solo-team').value,clockSec:$('solo-clock').value,cpuStyle:$('solo-cpu').value});
+  $('create-room').onclick = createRoom;
+  $('join-room').onclick = joinRoom;
+  $('start-group').onclick = startGroupNow;
+  $('leave-room').onclick = leaveRoom;
+  $('copy-link').onclick = ()=>{
+    const url = `${location.origin}${location.pathname}?room=${State.roomCode}`;
+    navigator.clipboard.writeText(url); toast('Invite link copied');
+  };
+  $('reset-draft').onclick = ()=>{
+    if(!confirm('Reset draft and return to setup?')) return;
+    clearInterval(State.timer);
+    State.started=false; State.picks=[]; State.currentPick=0;
+    if(State.roomUnsub){State.roomUnsub();State.roomUnsub=null;}
+    State.roomRef=null;State.roomCode=null;
+    $('draft-pane').style.display='none';
+    $('setup-pane').style.display='';
+  };
+  $('player-search').oninput = renderBoard;
+  $('player-pos').onchange = renderBoard;
+  $('post-community').onclick = openPostModal;
+  $('confirm-post').onclick = submitPost;
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('post-modal').classList.remove('open'));
+
+  // deep link ?room=CODE
+  const params = new URLSearchParams(location.search);
+  const r = params.get('room');
+  if(r){ switchMode('join'); $('join-code').value = r.toUpperCase(); }
+});
+</script>
 </body>
 </html>
