@@ -11,62 +11,94 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --navy: #001a57; --navy-deep: #000d2e; --sixers-blue: #006BB6;
-            --sixers-red: #ED174C; --cream: #f5f0e8; --ink: #0d0d0d;
-            --mid: #4a4a5a; --border-light: #e8e4dc; --card-bg: #ffffff;
+            --navy: #001a57; --navy-deep: #0b0f1a; --sixers-blue: #006BB6;
+            --sixers-red: #ED174C; --cream: #f7f8fc; --ink: #0d0f1a;
+            --mid: #64748b; --border-light: #e4e8f0; --card-bg: #ffffff;
             --gold: #c9a84c; --silver: #9ca3af; --bronze: #b45309;
+            --green: #16a34a; --red: #dc2626;
         }
         *, *::before, *::after { box-sizing: border-box; }
-        body, html { font-family: 'Barlow', sans-serif; margin-top: 64px; background: var(--cream); color: var(--ink); }
+        body, html { font-family: 'Barlow', sans-serif; margin: 0; background: var(--cream); color: var(--ink); }
+        body { padding-top: 64px; }
 
-        .hero { background: var(--navy-deep); position: relative; overflow: hidden; }
-        .hero::before { content:''; position:absolute; inset:0; background-image:linear-gradient(rgba(0,107,182,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.05) 1px,transparent 1px); background-size:48px 48px; pointer-events:none; z-index:0; }
-        .hero-glow-blue { position:absolute; left:50%; top:-80px; transform:translateX(-50%); width:800px; height:500px; background:radial-gradient(ellipse at center,rgba(0,107,182,0.2) 0%,transparent 65%); pointer-events:none; z-index:0; }
-        .hero-glow-red { position:absolute; left:50%; bottom:-40px; transform:translateX(-50%); width:500px; height:300px; background:radial-gradient(ellipse at center,rgba(237,23,76,0.1) 0%,transparent 65%); pointer-events:none; z-index:0; }
-        .hero-inner { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:4rem 2rem 2.5rem; display:flex; flex-direction:column; align-items:center; text-align:center; }
-        .hero-title-top { font-family:'Barlow Condensed',sans-serif; font-size:clamp(3rem,8vw,6rem); font-weight:900; line-height:0.85; letter-spacing:-0.01em; text-transform:uppercase; color:rgba(255,255,255,0.95); margin:0; }
-        .hero-title-bottom { font-family:'Barlow Condensed',sans-serif; font-size:clamp(3rem,8vw,6rem); font-weight:900; line-height:0.85; letter-spacing:-0.01em; text-transform:uppercase; background:linear-gradient(90deg,var(--sixers-blue),#4da8ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin:0 0 0.15em; }
-        .hero-divider { width:40px; height:3px; background:var(--sixers-red); border-radius:2px; margin:1.1rem auto 1rem; }
-        .hero-sub { font-size:0.95rem; color:rgba(255,255,255,0.38); max-width:420px; line-height:1.65; margin:0; }
+        /* HERO - matches standings.html */
+        .hero { background: var(--cream); position: relative; overflow: hidden; }
+        .hero::before {
+            content:''; position:absolute; inset:0;
+            background-image: radial-gradient(circle, rgba(0,107,182,0.12) 1px, transparent 1px);
+            background-size: 28px 28px; opacity:.6; pointer-events:none; z-index:0;
+        }
+        .hero-glow-blue {
+            position:absolute; right:-120px; top:-80px; width:600px; height:500px;
+            background:radial-gradient(ellipse at center,rgba(0,107,182,0.08) 0%,transparent 70%);
+            pointer-events:none; z-index:0;
+        }
+        .hero-glow-red {
+            position:absolute; left:-60px; bottom:-40px; width:400px; height:300px;
+            background:radial-gradient(ellipse at center,rgba(237,23,76,0.05) 0%,transparent 70%);
+            pointer-events:none; z-index:0;
+        }
+        .hero-inner {
+            position:relative; z-index:1; max-width:860px; margin:0 auto;
+            padding:4.5rem 2rem 3.5rem; display:flex; flex-direction:column;
+            align-items:center; text-align:center;
+        }
+        .hero-title-top, .hero-title-bottom {
+            font-family:'Barlow Condensed',sans-serif;
+            font-size:clamp(3.2rem,8vw,6rem); font-weight:900;
+            line-height:.9; letter-spacing:-0.01em; text-transform:uppercase; margin:0;
+        }
+        .hero-title-top { color: var(--ink); }
+        .hero-title-bottom { color: var(--sixers-blue); margin: 0 0 .2em; }
+        .hero-divider { width:32px; height:3px; background:var(--sixers-red); border-radius:2px; margin:1.4rem auto 1.2rem; }
+        .hero-sub { font-size:1rem; color:var(--mid); max-width:480px; line-height:1.65; margin:0 auto; }
 
-        .main-layout { max-width:1200px; margin:0 auto; padding:2rem; display:grid; grid-template-columns:1fr 340px; gap:1.5rem; align-items:start; }
+        .main-layout { max-width:1300px; margin:0 auto; padding:2.5rem 1.5rem 4rem; display:grid; grid-template-columns:1fr 360px; gap:1.75rem; align-items:start; }
         .section-label { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.65rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--mid); display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem; }
         .section-label::after { content:''; flex:1; height:1px; background:var(--border-light); }
 
-        .card { background:white; border:1px solid var(--border-light); border-radius:12px; overflow:hidden; }
-        .card-header { padding:1.1rem 1.5rem 0.9rem; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; }
-        .card-title { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink); }
+        .card {
+            position:relative; background:#fff;
+            border:1px solid #e6eaf2; border-radius:14px; overflow:hidden;
+            box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
+        }
+        .card::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+        }
+        .card-header { padding:1.1rem 1.5rem 0.9rem; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; gap:0.5rem; }
+        .card-title { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.05rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink); }
         .card-body { padding:1.25rem 1.5rem; }
 
-        .badge { font-family:'Barlow Condensed',sans-serif; font-size:0.6rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; padding:2px 8px; border-radius:4px; }
+        .badge { font-family:'Barlow Condensed',sans-serif; font-size:0.62rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; padding:3px 9px; border-radius:6px; }
         .badge-blue { background:rgba(0,107,182,0.1); color:var(--sixers-blue); border:1px solid rgba(0,107,182,0.2); }
         .badge-red { background:rgba(237,23,76,0.1); color:var(--sixers-red); border:1px solid rgba(237,23,76,0.2); }
-        .badge-green { background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.2); }
+        .badge-green { background:rgba(22,163,74,0.12); color:var(--green); border:1px solid rgba(22,163,74,0.22); }
         .badge-gold { background:rgba(201,168,76,0.12); color:var(--gold); border:1px solid rgba(201,168,76,0.3); }
 
-        .btn-run { width:100%; padding:0.9rem 1.5rem; background:var(--sixers-blue); color:white; border:none; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
-        .btn-run:hover { background:#0080d4; transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,107,182,0.3); }
-        .btn-run:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-run { width:100%; padding:0.9rem 1.5rem; background:var(--sixers-blue); color:white; border:none; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:0.95rem; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:0.5rem; box-shadow: 0 2px 12px rgba(0,107,182,.25); }
+        .btn-run:hover { background:#0057a0; transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,107,182,0.35); }
+        .btn-run:disabled { opacity:0.55; cursor:not-allowed; transform:none; box-shadow:none; }
         .btn-secondary { padding:0.55rem 1rem; background:white; color:var(--mid); border:1px solid var(--border-light); border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
         .btn-secondary:hover { border-color:var(--sixers-blue); color:var(--sixers-blue); }
         .btn-secondary:disabled { opacity:0.5; cursor:not-allowed; }
 
-        .lottery-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
-        .lottery-table th { font-family:'Barlow Condensed',sans-serif; font-size:0.6rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid); padding:0.5rem 0.6rem; text-align:left; background:#f9f7f3; border-bottom:1px solid var(--border-light); }
-        .lottery-table td { padding:0.55rem 0.6rem; border-bottom:1px solid #f0ede6; vertical-align:middle; }
+        .lottery-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+        .lottery-table th { font-family:'Barlow Condensed',sans-serif; font-size:0.65rem; font-weight:800; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid); padding:0.6rem 0.7rem; text-align:left; background:transparent; border-bottom:1px solid var(--border-light); }
+        .lottery-table td { padding:0.65rem 0.7rem; border-bottom:1px solid #f1f3f8; vertical-align:middle; font-variant-numeric: tabular-nums; }
         .lottery-table tr:last-child td { border-bottom:none; }
-        .lottery-table tr:hover td { background:#faf8f5; }
-        .lottery-table tr.highlight-row td { background:rgba(0,107,182,0.05) !important; }
+        .lottery-table tr:hover td { background:#f9fbff; }
+        .lottery-table tr.highlight-row td { background:linear-gradient(90deg, rgba(0,107,182,.07), transparent 70%) !important; font-weight:700; }
         .lottery-table tr.highlight-row td:first-child { border-left:3px solid var(--sixers-blue); }
-        @keyframes sixers-pulse { 0%,100%{background:rgba(0,107,182,0.05)} 50%{background:rgba(0,107,182,0.13)} }
+        @keyframes sixers-pulse { 0%,100%{background:rgba(0,107,182,0.07)} 50%{background:rgba(0,107,182,0.18)} }
         #sixers-table-row.pulse td { animation:sixers-pulse 1.1s ease 3; }
         .team-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-        .pct-bar-wrap { width:48px; height:4px; background:#e8e4dc; border-radius:2px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:5px; }
+        .pct-bar-wrap { width:48px; height:4px; background:#e4e8f0; border-radius:2px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:5px; }
         .pct-bar-fill { height:100%; border-radius:2px; }
-        .pct-val { font-family:'Barlow Condensed',sans-serif; font-size:0.78rem; font-weight:700; }
+        .pct-val { font-family:'Barlow Condensed',sans-serif; font-size:0.8rem; font-weight:800; }
 
         .result-picks { display:flex; flex-direction:column; gap:0.4rem; }
-        .result-pick { display:flex; align-items:center; gap:0.65rem; padding:0.6rem 0.9rem; background:#f9f7f3; border:1px solid var(--border-light); border-radius:10px; opacity:0; transform:translateY(8px); transition:opacity 0.3s,transform 0.3s; }
+        .result-pick { display:flex; align-items:center; gap:0.65rem; padding:0.6rem 0.9rem; background:#f7f8fc; border:1px solid var(--border-light); border-radius:10px; opacity:0; transform:translateY(8px); transition:opacity 0.3s,transform 0.3s; }
         .result-pick.revealed { opacity:1; transform:translateY(0); }
         .result-pick.sixers-pick { background:rgba(0,107,182,0.06); border-color:rgba(0,107,182,0.25); }
         .result-pick.pick-gold { background:rgba(201,168,76,0.08); border-color:rgba(201,168,76,0.3); }
@@ -82,11 +114,10 @@
         .pick-team-sub { font-size:0.68rem; color:var(--mid); margin-top:1px; }
         .pick-sixers-tag { font-family:'Barlow Condensed',sans-serif; font-size:0.55rem; font-weight:800; letter-spacing:0.14em; text-transform:uppercase; background:var(--sixers-blue); color:white; padding:2px 7px; border-radius:4px; }
 
-        .spinner-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; gap:1rem; }
-        .lottery-drum { width:70px; height:70px; border-radius:50%; border:3px solid var(--sixers-blue); position:relative; animation:spin 0.8s linear infinite; }
+        .spinner-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2.5rem 1rem; gap:1rem; }
+        .lottery-drum { width:48px; height:48px; border-radius:50%; border:3px solid #e4e8f0; border-top-color:var(--sixers-blue); border-right-color:var(--sixers-blue); animation:spin 0.7s linear infinite; }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        .lottery-drum::before { content:'🏀'; font-size:1.8rem; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); animation:spin 0.8s linear infinite reverse; }
-        .spinner-text { font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--mid); font-size:0.82rem; }
+        .spinner-text { font-family:'Barlow Condensed',sans-serif; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:var(--mid); font-size:0.78rem; }
 
         .session-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
         .session-bar-label { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.72rem; width:26px; text-align:right; color:var(--ink); flex-shrink:0; }
@@ -100,15 +131,15 @@
         .odds-explainer { font-size:0.78rem; color:var(--mid); line-height:1.6; margin-top:0.75rem; }
         .odds-explainer strong { color:var(--ink); font-weight:600; }
 
-        .history-item { display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid #f0ede6; }
+        .history-item { display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid #f1f3f8; }
         .history-item:last-child { border-bottom:none; }
 
         .sim-count-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1rem; }
-        .sim-stat-box { background:#f9f7f3; border:1px solid var(--border-light); border-radius:8px; padding:0.75rem 1rem; text-align:center; }
+        .sim-stat-box { background:#f7f8fc; border:1px solid var(--border-light); border-radius:8px; padding:0.75rem 1rem; text-align:center; }
         .sim-stat-val { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:900; color:var(--sixers-blue); line-height:1; }
         .sim-stat-label { font-size:0.62rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--mid); margin-top:2px; }
 
-        .loading-pulse { height:16px; background:linear-gradient(90deg,#e8e4dc 25%,#f0ede6 50%,#e8e4dc 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+        .loading-pulse { height:16px; background:linear-gradient(90deg,#e8e4dc 25%,#f1f3f8 50%,#e8e4dc 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
         @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 
         /* Past picks */
@@ -128,7 +159,7 @@
         .confetti-piece { position:fixed; bottom:-10px; animation:confetti-rise linear forwards; z-index:9999; pointer-events:none; }
         @keyframes confetti-rise { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-110vh) rotate(720deg);opacity:0} }
 
-        .protection-item { padding:0.6rem 0; border-bottom:1px solid #f0ede6; margin-bottom:0.1rem; }
+        .protection-item { padding:0.6rem 0; border-bottom:1px solid #f1f3f8; margin-bottom:0.1rem; }
         .protection-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; gap:0.4rem; flex-wrap:wrap; }
         .protection-teams { font-family:"Barlow Condensed",sans-serif; font-weight:800; font-size:0.82rem; color:var(--ink); }
         .protection-tag { font-family:"Barlow Condensed",sans-serif; font-size:0.55rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(0,107,182,0.08); color:var(--sixers-blue); border:1px solid rgba(0,107,182,0.18); padding:2px 6px; border-radius:4px; white-space:nowrap; }
@@ -154,32 +185,33 @@
             .result-pick { padding:0.5rem 0.7rem; }
         }
 
-        /* ── Result Headline ── */
+        /* Result Headline - light, modern */
         .result-headline {
             display:none;
-            background:linear-gradient(135deg,var(--navy-deep) 0%,#00245e 100%);
-            border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1rem;
+            background:#fff;
+            border:1px solid #e6eaf2;
+            border-radius:14px; padding:1.5rem 1.5rem 1.4rem; margin-bottom:1rem;
             text-align:center; position:relative; overflow:hidden;
+            box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
         }
         .result-headline::before {
-            content:''; position:absolute; inset:0;
-            background-image:linear-gradient(rgba(0,107,182,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.08) 1px,transparent 1px);
-            background-size:32px 32px; pointer-events:none;
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
         }
         .result-headline.show { display:block; animation:headlinePop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
-        @keyframes headlinePop { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+        @keyframes headlinePop { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
         .headline-pick-num {
             font-family:'Barlow Condensed',sans-serif; font-weight:900;
             font-size:clamp(3.5rem,12vw,6rem); line-height:1;
-            color:white; position:relative; z-index:1;
+            color:var(--ink); position:relative; z-index:1; margin: 0.2rem 0;
         }
         .headline-pick-num.pick-1 { background:linear-gradient(135deg,#f5c842,#c9a84c); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .headline-pick-num.pick-2 { background:linear-gradient(135deg,#d0d5db,#9ca3af); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .headline-pick-num.pick-3 { background:linear-gradient(135deg,#e8a56a,#b45309); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .headline-pick-num.top4 { color:rgba(255,255,255,0.95); }
-        .headline-label { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.45); position:relative; z-index:1; }
-        .headline-sub { font-size:0.82rem; color:rgba(255,255,255,0.55); margin-top:0.3rem; position:relative; z-index:1; }
-        .headline-miss { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.3rem; color:var(--sixers-red); position:relative; z-index:1; }
+        .headline-pick-num.pick-2 { background:linear-gradient(135deg,#a0a8b3,#64748b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .headline-pick-num.pick-3 { background:linear-gradient(135deg,#d97a3a,#b45309); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .headline-pick-num.top4 { color: var(--sixers-blue); }
+        .headline-label { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--mid); position:relative; z-index:1; }
+        .headline-sub { font-size:0.85rem; color:var(--mid); margin-top:0.4rem; position:relative; z-index:1; }
+        .headline-miss { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.6rem; color:var(--sixers-red); position:relative; z-index:1; margin: .25rem 0; }
 
         /* ── Social Card Modal ── */
         .social-modal-overlay {
@@ -198,7 +230,7 @@
         .social-modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
         .social-modal-title { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink); }
         .social-modal-close { background:none; border:none; cursor:pointer; color:var(--mid); font-size:1.2rem; padding:2px 6px; border-radius:6px; transition:background 0.15s; }
-        .social-modal-close:hover { background:#f0ede6; }
+        .social-modal-close:hover { background:#f1f3f8; }
         #social-card-canvas { border-radius:10px; width:100%; height:auto; display:block; box-shadow:0 4px 20px rgba(0,0,0,0.15); margin-bottom:1rem; }
         .social-action-btns { display:flex; gap:0.6rem; }
         .btn-social-action {
@@ -209,7 +241,7 @@
         }
         .btn-dl { background:var(--sixers-blue); color:white; }
         .btn-dl:hover { background:#0080d4; transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,107,182,0.35); }
-        .btn-copy-img { background:#f0ede6; color:var(--ink); }
+        .btn-copy-img { background:#f1f3f8; color:var(--ink); }
         .btn-copy-img:hover { background:#e8e4dc; }
 
         /* ── Envelope Flip Reveal ── */
@@ -245,14 +277,26 @@
         /* Suspense placeholder shown before flip */
         .envelope-sealed {
             display:flex; align-items:center; justify-content:center;
-            background: linear-gradient(135deg, var(--navy-deep), #00245e);
-            border: 1px solid rgba(0,107,182,0.3);
+            background: linear-gradient(135deg, #f7f8fc, #eef2f8);
+            border: 1px solid var(--border-light);
             border-radius:10px; min-height:72px;
             font-family:'Barlow Condensed',sans-serif;
-            font-size:1rem; font-weight:800; letter-spacing:0.12em;
-            text-transform:uppercase; color:rgba(255,255,255,0.3);
+            font-size:0.95rem; font-weight:800; letter-spacing:0.18em;
+            text-transform:uppercase; color: var(--mid);
             position:absolute; inset:0;
         }
+
+        /* Announced order card */
+        .announced-list { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; }
+        .announced-row { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:8px; background:#f7f8fc; border:1px solid var(--border-light); transition: background .15s; }
+        .announced-row:hover { background:#eef3fb; }
+        .announced-row.is-sixers { background: rgba(0,107,182,.08); border-color: rgba(0,107,182,.25); }
+        .announced-pick { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:0.9rem; color:var(--sixers-blue); width:24px; text-align:center; flex-shrink:0; font-variant-numeric: tabular-nums; }
+        .announced-pick.gold { color: var(--gold); }
+        .announced-pick.silver { color: var(--silver); }
+        .announced-pick.bronze { color: var(--bronze); }
+        .announced-team { font-family:'Barlow',sans-serif; font-weight:600; font-size:0.85rem; color:var(--ink); }
+        @media (max-width:560px){ .announced-list { grid-template-columns:1fr; } }
     </style>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-T1V9Q0MNEM');</script>
@@ -277,6 +321,33 @@
 
     <!-- LEFT -->
     <div>
+        <div class="section-label">Announced 2026 NBA Draft Lottery Order</div>
+        <div class="card" style="margin-bottom:1.5rem;">
+            <div class="card-header">
+                <span class="card-title">Official Lottery Seeding</span>
+                <span class="badge badge-blue">Confirmed</span>
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.8rem;color:var(--mid);margin:0 0 1rem;line-height:1.55;">The 14 lottery teams entering the 2026 NBA Draft Lottery, in order of pre-lottery seed (worst record first). Combination odds are assigned by these positions.</p>
+                <ol class="announced-list" style="list-style:none;margin:0;padding:0;counter-reset:none;">
+                    <li class="announced-row"><span class="announced-pick gold">1</span><span class="announced-team">Washington Wizards</span></li>
+                    <li class="announced-row"><span class="announced-pick silver">2</span><span class="announced-team">Utah Jazz</span></li>
+                    <li class="announced-row"><span class="announced-pick bronze">3</span><span class="announced-team">Memphis Grizzlies</span></li>
+                    <li class="announced-row"><span class="announced-pick">4</span><span class="announced-team">Chicago Bulls</span></li>
+                    <li class="announced-row"><span class="announced-pick">5</span><span class="announced-team">LA Clippers</span></li>
+                    <li class="announced-row"><span class="announced-pick">6</span><span class="announced-team">Brooklyn Nets</span></li>
+                    <li class="announced-row"><span class="announced-pick">7</span><span class="announced-team">Sacramento Kings</span></li>
+                    <li class="announced-row"><span class="announced-pick">8</span><span class="announced-team">Atlanta Hawks</span></li>
+                    <li class="announced-row"><span class="announced-pick">9</span><span class="announced-team">Dallas Mavericks</span></li>
+                    <li class="announced-row"><span class="announced-pick">10</span><span class="announced-team">Milwaukee Bucks</span></li>
+                    <li class="announced-row"><span class="announced-pick">11</span><span class="announced-team">Golden State Warriors</span></li>
+                    <li class="announced-row"><span class="announced-pick">12</span><span class="announced-team">OKC Thunder</span></li>
+                    <li class="announced-row"><span class="announced-pick">13</span><span class="announced-team">Miami Heat</span></li>
+                    <li class="announced-row"><span class="announced-pick">14</span><span class="announced-team">Charlotte Hornets</span></li>
+                </ol>
+            </div>
+        </div>
+
         <div class="section-label">Draft Lottery Simulator</div>
 
         <!-- Run Simulator -->
@@ -311,7 +382,7 @@
                         </select>
                         <button class="btn-secondary" id="until-one-btn" onclick="runUntilPickOne()" style="white-space:nowrap;padding:0.38rem 0.9rem;">Run</button>
                     </div>
-                    <div id="until-one-result" style="display:none;padding:0.5rem 0.75rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.8rem;color:var(--ink);font-weight:600;" id="until-one-text"></div>
+                    <div id="until-one-result" style="display:none;padding:0.5rem 0.75rem;background:#f7f8fc;border:1px solid var(--border-light);border-radius:8px;font-size:0.8rem;color:var(--ink);font-weight:600;" id="until-one-text"></div>
                 </div>
             </div>
         </div>
@@ -400,7 +471,7 @@
                 </button>
                 <div class="explainer-body" id="explainer-body">
                     <div class="odds-explainer">
-                        <strong>14 teams compete for the top 4 picks.</strong> Each team is assigned lottery combinations based on their record — worst team gets 140 of 1,000 (14%), best lottery team gets 5 (0.5%). Four balls are drawn for picks 1–4. Picks 5–14 go in reverse-record order to the remaining teams.
+                        <strong>14 teams compete for the top 4 picks.</strong> Each team is assigned lottery combinations based on their record - worst team gets 140 of 1,000 (14%), best lottery team gets 5 (0.5%). Four balls are drawn for picks 1–4. Picks 5–14 go in reverse-record order to the remaining teams.
                         <br><br>Odds here update <strong>automatically daily</strong> from live standings.
                     </div>
                 </div>
@@ -413,7 +484,7 @@
                     </div>
                 </div>
 
-                <div id="lottery-date-note" style="margin-top:0.75rem;padding:0.6rem 0.9rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.75rem;color:var(--mid);text-align:center;">
+                <div id="lottery-date-note" style="margin-top:0.75rem;padding:0.6rem 0.9rem;background:#f7f8fc;border:1px solid var(--border-light);border-radius:8px;font-size:0.75rem;color:var(--mid);text-align:center;">
                     <strong style="color:var(--ink);">Lottery Date:</strong> May 10, 2026
                 </div>
             </div>
@@ -427,14 +498,14 @@
                 <div style="margin-bottom:0.65rem;">
                     <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Team</label>
                     <select id="scenario-team-select" style="width:100%;padding:0.4rem 0.6rem;border:1px solid var(--border-light);border-radius:7px;font-size:0.8rem;background:white;color:var(--ink);cursor:pointer;">
-                        <option value="">— select team —</option>
+                        <option value="">- select team -</option>
                     </select>
                 </div>
                 <div style="margin-bottom:0.75rem;">
-                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Override Lottery Seed: <span id="scenario-seed-val" style="color:var(--sixers-blue);">—</span></label>
+                    <label style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:0.3rem;">Override Lottery Seed: <span id="scenario-seed-val" style="color:var(--sixers-blue);">-</span></label>
                     <input type="range" id="scenario-seed-range" min="1" max="14" value="1" style="width:100%;accent-color:var(--sixers-blue);" oninput="onScenarioSlider()" disabled>
                 </div>
-                <div id="scenario-odds-preview" style="display:none;padding:0.55rem 0.8rem;background:#f9f7f3;border:1px solid var(--border-light);border-radius:8px;font-size:0.78rem;color:var(--mid);margin-bottom:0.65rem;line-height:1.6;"></div>
+                <div id="scenario-odds-preview" style="display:none;padding:0.55rem 0.8rem;background:#f7f8fc;border:1px solid var(--border-light);border-radius:8px;font-size:0.78rem;color:var(--mid);margin-bottom:0.65rem;line-height:1.6;"></div>
                 <div style="display:flex;gap:0.5rem;">
                     <button class="btn-run" style="flex:1;padding:0.6rem;" onclick="applyScenario()">Apply Scenario</button>
                     <button class="btn-secondary" onclick="clearScenario()" title="Reset to live standings">Reset</button>
@@ -486,9 +557,9 @@
                 <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.5rem;">ATL · SAS · CLE · UTA · MIN · DET Chain</div>
                 <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Spurs</strong> take the better of their pick vs. <strong>Hawks</strong>'.</div></div>
                 <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Hawks</strong> can then swap the result with <strong>Cavaliers</strong> (or further down the chain).</div></div>
-                <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Jazz</strong> can swap with <strong>Minnesota</strong> or <strong>Cleveland</strong> — often landing the most favorable of the three.</div></div>
+                <div class="swap-row"><span class="swap-arrow">→</span><div class="swap-text"><strong>Jazz</strong> can swap with <strong>Minnesota</strong> or <strong>Cleveland</strong> - often landing the most favorable of the three.</div></div>
                 <div class="swap-row" style="margin-bottom:0;"><span class="swap-arrow">→</span><div class="swap-text"><strong>Minnesota</strong> can swap with <strong>Detroit</strong>. <strong>Cleveland</strong> often ends up with the least favorable outcome.</div></div>
-                <div style="margin-top:0.75rem;padding:0.5rem 0.7rem;background:#f9f7f3;border-radius:7px;font-size:0.72rem;color:var(--mid);line-height:1.55;">Final landing spots can shift dramatically — one pick can chain through multiple teams before settling.</div>
+                <div style="margin-top:0.75rem;padding:0.5rem 0.7rem;background:#f7f8fc;border-radius:7px;font-size:0.72rem;color:var(--mid);line-height:1.55;">Final landing spots can shift dramatically - one pick can chain through multiple teams before settling.</div>
             </div>
         </div>
 
@@ -525,7 +596,7 @@ const TEAM_COLORS = {
 const PAST_PICKS = [
     {year:2025,picks:[{rnd:1,num:3,player:'V.J. Edgecombe',pos:'SG',school:'Baylor'},{rnd:2,num:35,player:'Johni Broome',pos:'PF/C',school:'Auburn'}]},
     {year:2024,picks:[{rnd:1,num:16,player:'Jared McCain',pos:'PG',school:'Duke'},{rnd:2,num:41,player:'Adem Bona',pos:'PF/C',school:'UCLA'}]},
-    {year:2023,picks:[],note:'No picks — second-rounder traded away earlier.'},
+    {year:2023,picks:[],note:'No picks - second-rounder traded away earlier.'},
     {year:2022,picks:[{rnd:1,num:23,player:'David Roddy',pos:'SF',school:'Colorado State',traded:'Memphis (De\'Anthony Melton)'}]},
     {year:2021,picks:[{rnd:1,num:28,player:'Jaden Springer',pos:'SG',school:'Tennessee'},{rnd:2,num:50,player:'Filip Petrušev',pos:'C',school:'Gonzaga'},{rnd:2,num:53,player:'Charles Bassey',pos:'C',school:'Western Kentucky'}]},
     {year:2020,picks:[{rnd:1,num:21,player:'Tyrese Maxey',pos:'PG',school:'Kentucky'},{rnd:2,num:34,player:'Théo Maledon',pos:'PG',school:'ASVEL',traded:'Oklahoma City'},{rnd:2,num:36,player:'Tyler Bey',pos:'PF',school:'Colorado',traded:'Dallas'},{rnd:2,num:49,player:'Isaiah Joe',pos:'SG',school:'Arkansas'},{rnd:2,num:58,player:'Paul Reed',pos:'PF',school:'DePaul'}]},
@@ -563,7 +634,7 @@ async function fetchAndBuildLottery() {
         const badge=document.getElementById('odds-updated-badge');
         if(badge) badge.textContent='Checking…';
 
-        // Fetch standings — ESPN groups by conference, each entry has stats including playoffSeed
+        // Fetch standings - ESPN groups by conference, each entry has stats including playoffSeed
         const res = await fetch(`https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2&_=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
@@ -588,7 +659,7 @@ async function fetchAndBuildLottery() {
                 // (play-in losers absorb the extra loss; winners keep their win).
                 const gamesPlayed = wins + losses;
                 if (gamesPlayed > 82) {
-                    // Only subtract from losses — play-in games that were losses
+                    // Only subtract from losses - play-in games that were losses
                     losses = 82 - wins;
                     if (losses < 0) { wins = 82; losses = 0; } // safety
                     winPct = wins / 82;
@@ -620,7 +691,7 @@ async function fetchAndBuildLottery() {
             // That's 5 per conf * 2 = 10... but NBA has 14 lottery teams (not 10).
             // Actually: seeds 1-6 = playoff bye, 7-10 = play-in (4 per conf * 2 = 8 teams),
             // seeds 11-15 = eliminated = 5 per conf * 2 = 10... that's still only 10.
-            // Wait — 30 teams total, 16 make playoffs (8 per conf), 14 in lottery.
+            // Wait - 30 teams total, 16 make playoffs (8 per conf), 14 in lottery.
             // So lottery = seeds 9-15 per conf... no: seeds 7-10 are play-in (4 per conf),
             // only 2 of those 4 make playoffs. The 2 that LOSE play-in join lottery.
             // During regular season, before play-in, ALL of seeds 9-15 = lottery eligible.
@@ -768,7 +839,7 @@ function computePickN(idx,pick) {
 }
 
 function renderOddsTable() {
-    // Determine which ranks are tied (shared W-L record) so we can show "—" for non-first in group
+    // Determine which ranks are tied (shared W-L record) so we can show "-" for non-first in group
     const tiedSet = new Set();
     for(let i=1;i<lotteryTeams.length;i++){
         if(lotteryTeams[i].wins===lotteryTeams[i-1].wins && lotteryTeams[i].losses===lotteryTeams[i-1].losses){
@@ -781,7 +852,7 @@ function renderOddsTable() {
         const isLast=i===lotteryTeams.length-1;
         const isTied=tiedSet.has(i);
         const rankDisplay=isTied
-            ? `<span style="color:var(--sixers-red);font-size:0.7rem;font-weight:900;width:16px;display:inline-block;text-align:center;">—</span>`
+            ? `<span style="color:var(--sixers-red);font-size:0.7rem;font-weight:900;width:16px;display:inline-block;text-align:center;">-</span>`
             : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;color:var(--mid);width:16px;display:inline-block;">${t.lotteryRank}</span>`;
         return `<tr class="${s?'highlight-row':''}" ${s?'id="sixers-table-row"':''}${isLast?' style="border-bottom:2px dashed var(--sixers-red);"':''}>
             <td style="${isLast?'border-bottom:2px dashed var(--sixers-red);':''}"><div style="display:flex;align-items:center;gap:6px;">
@@ -890,14 +961,14 @@ function renderSixersOddsPanel() {
     const sBubble=!s && bubbleTeams.find(t=>t.abbr==='PHI');
     if(!s && !sBubble){document.getElementById('sixers-odds-display').innerHTML=`<div style="color:var(--mid);font-size:0.85rem;">Sixers not in lottery this year.</div>`;return;}
     if(sBubble){
-        // Sixers are just outside the lottery — show bubble status
+        // Sixers are just outside the lottery - show bubble status
         const borderTeam=lotteryTeams[lotteryTeams.length-1];
         const lDiff=borderTeam?(borderTeam.losses-sBubble.losses):0;
         const wDiff=borderTeam?(sBubble.wins-borderTeam.wins):0;
         let gap='';
         if(lDiff>0) gap=`${lDiff} more loss${lDiff!==1?'es':''} needed to enter`;
         else if(wDiff>0) gap=`${wDiff} fewer win${wDiff!==1?'s':''} would help`;
-        else gap='Same record as #14 team — could flip';
+        else gap='Same record as #14 team - could flip';
         document.getElementById('sixers-odds-display').innerHTML=`
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--sixers-red);margin-bottom:0.3rem;">Not in Lottery · Rank #${sBubble.overallRank}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;color:var(--sixers-red);line-height:1.1;">On Bubble</div>
@@ -1017,7 +1088,7 @@ function buildComboMap() {
             idx++;
         }
     });
-    // The last combo (allCombos[1000]) is unassigned — we just don't add it
+    // The last combo (allCombos[1000]) is unassigned - we just don't add it
 }
 
 function drawOneCombination() {
@@ -1264,7 +1335,7 @@ function renderHistory() {
         <div class="history-item">
             <div style="display:flex;align-items:center;gap:0.45rem;">
                 <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;color:${pc(h.pick)}">#${h.pick}</span>
-                <span style="font-size:0.73rem;color:var(--mid);">${h.pick===1?'#1 Overall':h.pick<=4?'Top 4':'—'}</span>
+                <span style="font-size:0.73rem;color:var(--mid);">${h.pick===1?'#1 Overall':h.pick<=4?'Top 4':'-'}</span>
             </div>
             <span style="font-size:0.68rem;color:var(--mid);">${h.time}</span>
         </div>`).join('');
@@ -1349,7 +1420,7 @@ let scenarioOriginalTeams = null;
 
 function populateScenarioSelect() {
     const sel = document.getElementById('scenario-team-select');
-    sel.innerHTML = '<option value="">— select team —</option>';
+    sel.innerHTML = '<option value="">- select team -</option>';
     lotteryTeams.forEach(t => {
         const opt = document.createElement('option');
         opt.value = t.abbr;
@@ -1366,7 +1437,7 @@ function onScenarioTeamChange() {
     const slider = document.getElementById('scenario-seed-range');
     const seedVal = document.getElementById('scenario-seed-val');
     const preview = document.getElementById('scenario-odds-preview');
-    if (!abbr) { slider.disabled = true; seedVal.textContent = '—'; preview.style.display = 'none'; return; }
+    if (!abbr) { slider.disabled = true; seedVal.textContent = '-'; preview.style.display = 'none'; return; }
     const team = lotteryTeams.find(t => t.abbr === abbr);
     if (!team) return;
     slider.disabled = false;
@@ -1469,7 +1540,7 @@ function renderResultHeadline(sixersPick, allPicks) {
             <div class="headline-label">2026 NBA DRAFT LOTTERY SIMULATION</div>
             <div class="headline-pick-num ${sixersPick===1?'pick-1':sixersPick===2?'pick-2':sixersPick===3?'pick-3':'top4'}">#${sixersPick}</div>
             <div class="headline-label">${labels[sixersPick]}</div>
-            <div class="headline-sub" style="margin-top:0.4rem;color:rgba(255,255,255,0.75);font-weight:600;">${msgs[sixersPick]}</div>`;
+            <div class="headline-sub" style="margin-top:0.5rem;color:var(--ink);font-weight:700;letter-spacing:.04em;">${msgs[sixersPick]}</div>`;
     } else {
         el.innerHTML = `
             <div class="headline-label">2026 NBA Draft Lottery Result</div>
@@ -1518,7 +1589,7 @@ function drawSocialCard(picks) {
     // Red accent bar bottom
     ctx.fillStyle = '#ED174C'; ctx.fillRect(0, H-5, W, 5);
 
-    // Left panel — Sixers result
+    // Left panel - Sixers result
     const sp = picks.find(p => p.team.abbr === 'PHI');
     const sixersPick = sp ? sp.pick : null;
     const LX = 80;
@@ -1541,7 +1612,7 @@ function drawSocialCard(picks) {
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
     }
     ctx.font = '900 220px "Barlow Condensed", sans-serif';
-    const pickTxt = sixersPick ? `#${sixersPick}` : '—';
+    const pickTxt = sixersPick ? `#${sixersPick}` : '-';
     ctx.fillText(pickTxt, LX - 10, 330);
 
     // Label under pick
@@ -1560,7 +1631,7 @@ function drawSocialCard(picks) {
     ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(W/2 - 20, 60); ctx.lineTo(W/2 - 20, H - 20); ctx.stroke();
 
-    // Right panel — Top 4 picks
+    // Right panel - Top 4 picks
     const RX = W/2 + 20;
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.font = '700 20px "Barlow Condensed", sans-serif';
@@ -1645,7 +1716,7 @@ async function copyCardToClipboard() {
             }
         }, 'image/png');
     } catch(e) {
-        alert('Copy not supported in this browser — use Download instead.');
+        alert('Copy not supported in this browser - use Download instead.');
     }
 }
 
