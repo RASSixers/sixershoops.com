@@ -372,24 +372,25 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="footer-content">
             <div class="footer-section">
                 <a href="/" class="footer-brand">
-                    <img src="https://sixershoops.com/sixershoopslogonew.png" alt="Sixers Hoops Logo" class="footer-logo">
                     <span class="footer-brand-name">SIXERS HOOPS</span>
                 </a>
-                <p class="footer-tagline">Your source for Philadelphia 76ers analysis and insights.</p>
+                <span class="footer-brand-accent"></span>
+                <p class="footer-tagline">Independent Philadelphia 76ers analysis, advanced stats, and draft tools — built for fans who want the full picture.</p>
             </div>
-            
+
             <div class="footer-section">
-                <h3 class="footer-title">Quick Links</h3>
+                <h3 class="footer-title">Explore</h3>
                 <ul class="footer-links">
                     <li><a href="/">Home</a></li>
                     <li><a href="/pickem">Pick'em</a></li>
+                    <li><a href="https://sixershoops.com/standings">NBA Standings</a></li>
                     <li><a href="https://sixershoops.com/schedule">Schedule</a></li>
                     <li><a href="https://sixershoops.com/contact">Contact</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-section">
-                <h3 class="footer-title">Policies</h3>
+                <h3 class="footer-title">Legal</h3>
                 <ul class="footer-links">
                     <li><a href="/privacy-policy">Privacy Policy</a></li>
                     <li><a href="/cookie-policy">Cookie Policy</a></li>
@@ -398,9 +399,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
         </div>
-        
+
         <div class="footer-bottom">
-            <p>&copy; 2025 Sixers Hoops. All rights reserved.</p>
+            <p>&copy; 2025 Sixers Hoops &middot; All rights reserved</p>
+            <span class="footer-bottom-meta">Not affiliated with the NBA or the Philadelphia 76ers</span>
         </div>
     </footer>
     `;
