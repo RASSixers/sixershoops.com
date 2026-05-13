@@ -491,8 +491,8 @@
           </div>
           <div class="setup-grid">
             <div class="field">
-              <label>Your Display Name</label>
-              <input id="group-name" placeholder="e.g. RhatusGM" />
+              <label>Display Name <span style="color:var(--mid);font-weight:400;font-size:.75rem">(from your account)</span></label>
+              <input id="group-name" placeholder="Auto-filled from your Sixers Hoops login" />
             </div>
             <div class="field">
               <label>Draft Time</label>
@@ -515,15 +515,15 @@
               font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin-bottom:.4rem">Draft Format</label>
             <div class="format-row" id="format-row">
               <div class="format-pill active" data-format="team">
-                <div class="ft">🏀 Team Draft</div>
+                <div class="ft">Team Draft</div>
                 <div class="fd">Each pick slot is assigned to a friend (current default).</div>
               </div>
               <div class="format-pill" data-format="snake">
-                <div class="ft">🐍 Snake Draft</div>
+                <div class="ft">Snake Draft</div>
                 <div class="fd">Each friend builds their own roster, snake order across rounds.</div>
               </div>
               <div class="format-pill" data-format="shared">
-                <div class="ft">📋 Shared Board</div>
+                <div class="ft">Shared Board</div>
                 <div class="fd">Group ranks one big board together with reasoning + votes.</div>
               </div>
             </div>
@@ -548,8 +548,8 @@
         <div id="setup-join" style="display:none">
           <div class="setup-grid">
             <div class="field">
-              <label>Your Display Name</label>
-              <input id="join-name" placeholder="e.g. PhillyFan" />
+              <label>Display Name <span style="color:var(--mid);font-weight:400;font-size:.75rem">(from your account)</span></label>
+              <input id="join-name" placeholder="Auto-filled from your Sixers Hoops login" />
             </div>
             <div class="field">
               <label>Room Code</label>
@@ -709,8 +709,8 @@
             <div class="mb-stat" id="mb-stat">0 ranked</div>
           </div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-            <button class="copy-btn" id="mb-save">💾 Save</button>
-            <button class="copy-btn" id="mb-post">📣 Post to Community</button>
+            <button class="copy-btn" id="mb-save">Save</button>
+            <button class="copy-btn" id="mb-post">Post to Community</button>
             <button class="btn-ghost" id="mb-exit">Exit</button>
           </div>
         </div>
@@ -1484,13 +1484,14 @@ function renderGrades(){
 
 /* ============================================================ GROUP / FIRESTORE */
 async function createRoom(){
-  const name = $('group-name').value.trim();
-  const time = $('group-time').value;
-  const clock = Number($('group-clock').value);
-  if(!name) return toast('Enter a display name');
   if(!window.db) return toast('Database unavailable');
   const u = currentUser();
   if(!u){ $('group-signin-warn').style.display=''; return toast('Sign in on the community page first'); }
+  const time = $('group-time').value;
+  const clock = Number($('group-clock').value);
+  let name = $('group-name').value.trim();
+  if(!name){ name = currentUserName(u); $('group-name').value = name; }
+  if(!name) return toast('Could not read your account name');
   const code = code6();
   const myId = u.uid;
   window.__myId = myId;
@@ -1519,7 +1520,8 @@ async function createRoom(){
   }catch(e){ console.error(e); toast('Could not create room'); }
 }
 async function joinRoom(){
-  const name = $('join-name').value.trim();
+  let name = $('join-name').value.trim();
+  if(!name){ const u=currentUser(); if(u){ name = currentUserName(u); $('join-name').value=name; } }
   const code = $('join-code').value.trim().toUpperCase();
   if(!name||!code) return toast('Need name and code');
   if(!window.db) return toast('Database unavailable');
@@ -1772,6 +1774,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     window.auth.onAuthStateChanged(u=>{
       if(u){
         if(!$('group-name').value) $('group-name').value = currentUserName(u);
+        if(!$('join-name').value) $('join-name').value = currentUserName(u);
         $('group-signin-warn').style.display='none';
       }
       startListeners();
@@ -1930,9 +1933,9 @@ function renderMyBoard(){
           placeholder="Why this rank? (e.g. elite shot creation, plus defender, fits a contender…)">${it.reason||''}</textarea>
       </div>
       <div class="mb-actions">
-        <button class="mb-mini" data-mb-up="${i}" ${i===0?'disabled style=\"opacity:.4\"':''}>▲</button>
-        <button class="mb-mini" data-mb-down="${i}" ${i===MB.items.length-1?'disabled style=\"opacity:.4\"':''}>▼</button>
-        <button class="mb-mini danger" data-mb-del="${i}">✕</button>
+        <button class="mb-mini" data-mb-up="${i}" ${i===0?'disabled style=\"opacity:.4\"':''}>Up</button>
+        <button class="mb-mini" data-mb-down="${i}" ${i===MB.items.length-1?'disabled style=\"opacity:.4\"':''}>Down</button>
+        <button class="mb-mini danger" data-mb-del="${i}">Remove</button>
       </div>
     </div>
   `).join('');
@@ -2114,9 +2117,9 @@ function renderSharedBoard(){
           placeholder="Group reasoning — anyone can edit…">${it.reason||''}</textarea>
       </div>
       <div class="mb-actions">
-        <button class="mb-mini" data-s-up="${i}" ${i===0?'disabled style=\"opacity:.4\"':''}>▲</button>
-        <button class="mb-mini" data-s-down="${i}" ${i===State.sharedItems.length-1?'disabled style=\"opacity:.4\"':''}>▼</button>
-        <button class="mb-mini danger" data-s-del="${i}">✕</button>
+        <button class="mb-mini" data-s-up="${i}" ${i===0?'disabled style=\"opacity:.4\"':''}>Up</button>
+        <button class="mb-mini" data-s-down="${i}" ${i===State.sharedItems.length-1?'disabled style=\"opacity:.4\"':''}>Down</button>
+        <button class="mb-mini danger" data-s-del="${i}">Remove</button>
       </div>
     </div>`;
   }).join('');
@@ -2184,13 +2187,14 @@ const _origCreateRoom = createRoom;
 window.createRoom = async function(){
   // monkey-patch: call original then patch the doc with format
   // Easier: re-implement a thin version that adds format before set.
-  const name = $('group-name').value.trim();
-  const time = $('group-time').value;
-  const clock = Number($('group-clock').value);
-  if(!name) return toast('Enter a display name');
   if(!window.db) return toast('Database unavailable');
   const u = currentUser();
   if(!u){ $('group-signin-warn').style.display=''; return toast('Sign in on the community page first'); }
+  const time = $('group-time').value;
+  const clock = Number($('group-clock').value);
+  let name = $('group-name').value.trim();
+  if(!name){ name = currentUserName(u); $('group-name').value = name; }
+  if(!name) return toast('Could not read your account name');
   const code = code6();
   const myId = u.uid;
   window.__myId = myId;
@@ -2214,16 +2218,22 @@ window.createRoom = async function(){
     await window.db.collection('mock_draft_rooms').doc(code).set(room);
     listenRoom(code);
     if(format==='shared'){
-      // initialize shared board doc
-      await window.db.collection('mock_draft_rooms').doc(code)
-        .collection('shared_board').doc('main')
-        .set({items:[], contributors:{[myId]:{name, photo:currentUserPhoto(), at:Date.now()}}}, {merge:true});
+      try{
+        await window.db.collection('mock_draft_rooms').doc(code)
+          .collection('shared_board').doc('main')
+          .set({items:[], contributors:{[myId]:{name, photo:currentUserPhoto(), at:Date.now()}}}, {merge:true});
+      }catch(e){ console.warn('shared_board init failed (non-fatal)', e); }
       showSharedPane();
     } else {
       showLobby();
     }
-    if($('group-postfeed') && $('group-postfeed').checked) await postRoomToFeed(room);
-  }catch(e){ console.error(e); toast('Could not create room'); }
+    if($('group-postfeed') && $('group-postfeed').checked){
+      try{ await postRoomToFeed(room); }catch(e){ console.warn('postRoomToFeed failed', e); }
+    }
+  }catch(e){
+    console.error('createRoom failed:', e && (e.code||''), e && (e.message||e));
+    toast('Could not create room: ' + (e && (e.message||e.code) || 'unknown error'));
+  }
 };
 
 /* ---------- HOOK: listenRoom — branch on format ---------- */
