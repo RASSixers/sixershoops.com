@@ -689,6 +689,15 @@
         </div>
       </div>
 
+      <div id="draft-chat-wrap" class="lobby-chat" style="display:none;margin-top:1.25rem">
+        <div style="padding:.55rem .85rem;border-bottom:1px solid var(--border-light);background:#fafbfd;font-family:'Barlow Condensed';font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.75rem;color:var(--mid)">Draft Room Chat</div>
+        <div class="chat-stream" id="draft-chat-stream" style="max-height:220px"></div>
+        <div class="chat-input">
+          <input id="draft-chat-input" placeholder="Discuss the picks…" maxlength="280"/>
+          <button id="draft-chat-send">Send</button>
+        </div>
+      </div>
+
       <div class="section-label" style="margin-top:2rem">Draft Grades</div>
       <div class="panel">
         <div class="panel-body" id="grades-panel" style="padding:1rem 1.25rem;color:var(--mid)">
@@ -710,6 +719,7 @@
           </div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap">
             <button class="copy-btn" id="mb-save">Save</button>
+            <button class="copy-btn" id="mb-export">📸 Save as PNG</button>
             <button class="copy-btn" id="mb-post">Post to Community</button>
             <button class="btn-ghost" id="mb-exit">Exit</button>
           </div>
@@ -1239,27 +1249,34 @@ function renderRsvpButtons(){
 }
 
 /* ============================================================ CHAT */
-async function sendChat(){
-  const inp = $('chat-input');
+async function sendChat(srcId){
+  srcId = srcId || 'chat-input';
+  const inp = $(srcId) || $('chat-input');
+  if(!inp) return;
   const text = inp.value.trim();
-  if(!text || !State.roomRef) return;
+  if(!text || !State.roomRef) return toast(State.roomRef?'':'Chat is for group rooms');
   const me = currentUserId() || window.__myId;
   const name = State.myName || currentUserName() || 'Guest';
   const msg = {id:uid(), uid:me, name, text:text.slice(0,280), t:Date.now()};
   const chat = [...(State.chat||[]), msg].slice(-100);
-  try{ await State.roomRef.update({chat}); inp.value=''; }
-  catch(e){ console.error(e); toast('Chat failed'); }
+  try{
+    await State.roomRef.update({chat});
+    ['chat-input','draft-chat-input'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  }catch(e){ console.error(e); toast('Chat failed'); }
 }
 function renderChat(){
-  const stream = $('chat-stream'); if(!stream) return;
   const me = currentUserId() || window.__myId;
-  stream.innerHTML = (State.chat||[]).map(m=>`
+  const html = (State.chat||[]).map(m=>`
     <div class="chat-msg ${m.uid===me?'me':''}">
       <div class="who">${m.name}</div>
       <div class="body">${(m.text||'').replace(/[<>&]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>
     </div>
   `).join('');
-  stream.scrollTop = stream.scrollHeight;
+  ['chat-stream','draft-chat-stream'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.innerHTML = html;
+    el.scrollTop = el.scrollHeight;
+  });
 }
 
 /* ============================================================ SETUP UI */
@@ -1291,6 +1308,7 @@ function startDraft({mode,userTeam,clockSec,cpuStyle,rounds}){
   $('ds-mode').textContent = mode==='group'?'Group Draft':'Solo Mock';
   $('ds-room-pill').style.display = mode==='group'?'':'none';
   if(mode==='group') $('ds-room').textContent=State.roomCode;
+  const dcw = $('draft-chat-wrap'); if(dcw) dcw.style.display = mode==='group'?'':'none';
 
   renderAll();
   tickStart();
@@ -1373,6 +1391,7 @@ function renderAll(){
   renderPicks();
   renderClock();
   renderBoard();
+  renderChat();
 }
 function renderStatus(){
   $('ds-pick').textContent = `${Math.min(State.currentPick+1,State.fullOrder.length)} / ${State.fullOrder.length}`;
@@ -1742,8 +1761,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   // Chat
-  $('chat-send').onclick = sendChat;
-  $('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();sendChat();}});
+  $('chat-send').onclick = ()=>sendChat('chat-input');
+  $('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();sendChat('chat-input');}});
+  const dcs=$('draft-chat-send'); if(dcs) dcs.onclick = ()=>sendChat('draft-chat-input');
+  const dci=$('draft-chat-input'); if(dci) dci.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();sendChat('draft-chat-input');}});
 
   $('reset-draft').onclick = ()=>{
     if(!confirm('Reset draft and return to setup?')) return;
@@ -1834,6 +1855,46 @@ async function exportDraftImage(){
     document.body.appendChild(a); a.click(); a.remove();
     toast('Draft saved as PNG');
   });
+}
+
+
+async function exportMyBoardImage(){
+  if(typeof html2canvas==='undefined') return toast('Export library not loaded');
+  if(!MB.items.length) return toast('Add some prospects first');
+  toast('Generating image…');
+  // Build an off-screen, print-friendly snapshot of the board
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px;background:#ffffff;padding:32px;font-family:Barlow,sans-serif;color:#0d0f1a';
+  const author = (typeof currentUserName==='function' ? currentUserName() : '') || 'Anonymous';
+  wrap.innerHTML = `
+    <div style="border-bottom:3px solid #006BB6;padding-bottom:14px;margin-bottom:18px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ED174C;font-size:.8rem">Solo Big Board · 2026 NBA</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;line-height:1;margin-top:4px;color:#0d0f1a">${(MB.title||'My 2026 NBA Big Board').replace(/[<>&]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>
+      <div style="color:#64748b;font-size:.85rem;margin-top:6px">by ${author} · ${new Date().toLocaleDateString()}</div>
+    </div>
+    ${MB.items.map((it,i)=>`
+      <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #e4e8f0;align-items:flex-start">
+        <div style="width:34px;height:34px;border-radius:50%;background:#006BB6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:1rem">${it.name}</div>
+          <div style="color:#64748b;font-size:.78rem;margin-top:2px">${it.school} · ${it.pos}</div>
+          ${it.reason?`<div style="margin-top:6px;font-size:.85rem;color:#0d0f1a;border-left:3px solid #ED174C;padding-left:10px;font-style:italic">${it.reason.replace(/[<>&]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>`:''}
+        </div>
+      </div>`).join('')}
+    <div style="margin-top:18px;text-align:center;color:#64748b;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase">Built with Sixers Hoops Mock Draft Simulator</div>
+  `;
+  document.body.appendChild(wrap);
+  try{
+    const canvas = await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2});
+    canvas.toBlob(blob=>{
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(MB.title||'big-board').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      toast('Board saved as PNG');
+    });
+  }catch(e){ console.error(e); toast('Export failed'); }
+  finally{ wrap.remove(); }
 }
 
 /* ===== v2: REPLAY MODE ===== */
@@ -2327,6 +2388,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if($('mb-exit')) $('mb-exit').onclick = exitMyBoard;
   if($('mb-save')) $('mb-save').onclick = ()=>saveMyBoard(true);
   if($('mb-post')) $('mb-post').onclick = postBoardToCommunity;
+  if($('mb-export')) $('mb-export').onclick = exportMyBoardImage;
   if($('mb-title-inline')) $('mb-title-inline').oninput = e=>{ MB.title = e.target.value; mbAutoSave(); };
   if($('mb-add-search')) $('mb-add-search').oninput = refreshMbAddPicker;
   if($('mb-add-pos')) $('mb-add-pos').onchange = refreshMbAddPicker;
