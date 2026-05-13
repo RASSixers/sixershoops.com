@@ -453,19 +453,6 @@
         <div id="setup-solo">
           <div class="setup-grid">
             <div class="field">
-              <label>Your Team</label>
-              <select id="solo-team"></select>
-            </div>
-            <div class="field">
-              <label>Pick Clock</label>
-              <select id="solo-clock">
-                <option value="0">No timer</option>
-                <option value="60">60 seconds</option>
-                <option value="120" selected>2 minutes</option>
-                <option value="300">5 minutes</option>
-              </select>
-            </div>
-            <div class="field">
               <label>Rounds</label>
               <select id="solo-rounds">
                 <option value="1" selected>1st Round (30)</option>
@@ -473,16 +460,16 @@
               </select>
             </div>
             <div class="field">
-              <label>CPU Style</label>
-              <select id="solo-cpu">
-                <option value="bpa" selected>Best Player Available</option>
-                <option value="random">Chaos (random top-15)</option>
-              </select>
-            </div>
-            <div class="field">
               <button class="hero-btn-primary" id="start-solo">Start Draft →</button>
             </div>
           </div>
+          <div style="margin-top:.6rem;font-size:.85rem;color:var(--mid)">
+            You control every pick. Add optional reasoning for each selection.
+          </div>
+          <!-- legacy hidden inputs kept so existing code paths still resolve -->
+          <select id="solo-team" style="display:none"></select>
+          <select id="solo-clock" style="display:none"><option value="0" selected>0</option></select>
+          <select id="solo-cpu" style="display:none"><option value="bpa" selected>bpa</option></select>
         </div>
 
         <div id="setup-group" style="display:none">
@@ -1315,7 +1302,7 @@ function startDraft({mode,userTeam,clockSec,cpuStyle,rounds}){
 }
 
 function isUserPick(idx){
-  if(State.mode==='solo') return State.fullOrder[idx].team === State.userTeam;
+  if(State.mode==='solo') return true; // user controls every pick
   // group: assignments map pick->userId
   return State.assignments[idx] === window.__myId;
 }
@@ -1363,10 +1350,12 @@ function autoPick(){
 function makePick(prospect, auto=false){
   if(!State.started || State.currentPick>=State.fullOrder.length) return;
   if(State.picks[State.currentPick]) return;
-  State.picks[State.currentPick] = {...prospect, auto};
+  const reasonEl = document.getElementById('pick-reason');
+  const reason = reasonEl ? reasonEl.value.trim() : '';
+  State.picks[State.currentPick] = {...prospect, auto, reason};
   // sync to room
   if(State.mode==='group' && State.roomRef){
-    State.roomRef.update({[`picks.${State.currentPick}`]:{...prospect, auto}, currentPick: State.currentPick+1})
+    State.roomRef.update({[`picks.${State.currentPick}`]:{...prospect, auto, reason}, currentPick: State.currentPick+1})
       .catch(e=>console.warn(e));
   }
   advance();
@@ -1410,7 +1399,7 @@ function renderPicks(){
         ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
       </div>
       <div class="pick-player ${pick?'':'empty'}">
-        ${pick?`<div class="name" data-player-detail="${pick.name}">${pick.name}</div><div class="school">${pick.school} · ${pick.pos}${pick.auto?' · auto':''}</div>`
+        ${pick?`<div class="name" data-player-detail="${pick.name}">${pick.name}</div><div class="school">${pick.school} · ${pick.pos}${pick.auto?' · auto':''}</div>${pick.reason?`<div class="reason" style="margin-top:.3rem;font-size:.82rem;color:var(--mid);font-style:italic;line-height:1.4">“${pick.reason.replace(/"/g,'&quot;')}”</div>`:''}`
               :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
       </div>
     </div>`;
@@ -1437,6 +1426,10 @@ function renderClock(){
       ${mine?'<strong style="color:var(--sixers-blue)">You\u2019re on the clock.</strong> Pick from the big board.'
             :'CPU/other GM is picking. Auto-pick fires when the clock hits zero.'}
     </div>
+    ${mine?`<div style="margin-top:.75rem">
+        <label style="display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mid);margin-bottom:.3rem">Reasoning (optional)</label>
+        <textarea id="pick-reason" rows="2" placeholder="Why this pick? (fit, upside, value…)" style="width:100%;font-family:inherit;font-size:.9rem;padding:.5rem .65rem;border:1px solid var(--border-light);border-radius:8px;resize:vertical;background:#fff"></textarea>
+      </div>`:''}
     ${!mine && State.mode==='solo'?'<button class="btn-ghost" id="skip-cpu" style="margin-top:.75rem">Make CPU Pick Now</button>':''}
   `;
   const skip = $('skip-cpu'); if(skip) skip.onclick=()=>{ clearInterval(State.timer); autoPick(); };
