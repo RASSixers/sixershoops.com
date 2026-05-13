@@ -633,6 +633,12 @@
 
     <!-- DRAFT BOARD -->
     <div id="draft-pane" style="display:none">
+      <div class="mode-tabs" id="mode-tabs-draft" style="margin-bottom:1rem">
+        <button class="mode-tab active" data-mode="solo">Solo Mock</button>
+        <button class="mode-tab" data-mode="group">Group Mock</button>
+        <button class="mode-tab" data-mode="myboard">My Board</button>
+        <button class="mode-tab" data-mode="join">Join Room</button>
+      </div>
       <div class="draft-status">
         <div class="ds-meta">
           <div class="ds-pill live"><span class="dot"></span><span id="ds-mode">Solo Mock</span></div>
@@ -685,8 +691,8 @@
         </div>
       </div>
 
-      <div class="section-label" style="margin-top:2rem">Draft Grades</div>
-      <div class="panel">
+      <div class="section-label" id="grades-section-label" style="margin-top:2rem">Draft Grades</div>
+      <div class="panel" id="grades-panel-wrap">
         <div class="panel-body" id="grades-panel" style="padding:1rem 1.25rem;color:var(--mid)">
           Finish the draft to see AI-style grades for every team's haul.
         </div>
@@ -1296,6 +1302,12 @@ function startDraft({mode,userTeam,clockSec,cpuStyle,rounds}){
   $('ds-room-pill').style.display = mode==='group'?'':'none';
   if(mode==='group') $('ds-room').textContent=State.roomCode;
   const dcw = $('draft-chat-wrap'); if(dcw) dcw.style.display = mode==='group'?'':'none';
+  // Hide draft grades entirely in solo mode
+  const gsl = $('grades-section-label'), gpw = $('grades-panel-wrap');
+  if(gsl) gsl.style.display = mode==='solo'?'none':'';
+  if(gpw) gpw.style.display = mode==='solo'?'none':'';
+  // Sync mode tabs (both setup + draft copies)
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
 
   renderAll();
   tickStart();
@@ -2354,10 +2366,44 @@ window.startGroupNow = async function(){
   await State.roomRef.update(update);
 };
 
-/* ---------- HOOK: switchMode — show My Board pane ---------- */
+/* ---------- HOOK: switchMode — show My Board pane + auto-start Solo ---------- */
 const _origSwitch = switchMode;
 window.switchMode = function(mode){
   document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+
+  // SOLO: skip setup screen entirely, jump straight into the draft.
+  if(mode === 'solo'){
+    // If a non-solo draft is already in progress, tear it down first.
+    if(State.started && State.mode !== 'solo'){
+      clearInterval(State.timer);
+      clearInterval(State.countdownTimer);
+      if(State.roomUnsub){State.roomUnsub();State.roomUnsub=null;}
+      State.roomRef=null;State.roomCode=null;
+      State.started=false; State.picks=[]; State.currentPick=0;
+    }
+    // If we're not already in a solo draft, start one now.
+    if(!(State.started && State.mode === 'solo')){
+      const rounds = ($('solo-rounds') && $('solo-rounds').value) || '1';
+      startDraft({mode:'solo', userTeam:'PHI', clockSec:0, cpuStyle:'bpa', rounds});
+    }
+    // Hide all setup sub-panes; draft-pane is already shown by startDraft.
+    $('setup-solo').style.display='none';
+    $('setup-group').style.display='none';
+    $('setup-join').style.display='none';
+    const mb0 = $('setup-myboard'); if(mb0) mb0.style.display='none';
+    return;
+  }
+
+  // Non-solo: leave any in-progress draft and show setup.
+  if(State.started){
+    clearInterval(State.timer);
+    clearInterval(State.countdownTimer);
+    if(State.roomUnsub){State.roomUnsub();State.roomUnsub=null;}
+    State.roomRef=null;State.roomCode=null;
+    State.started=false; State.picks=[]; State.currentPick=0;
+  }
+  $('draft-pane').style.display='none';
+  $('setup-pane').style.display='';
   $('setup-solo').style.display = mode==='solo'?'':'none';
   $('setup-group').style.display = mode==='group'?'':'none';
   $('setup-join').style.display = mode==='join'?'':'none';
