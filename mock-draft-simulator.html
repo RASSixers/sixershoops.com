@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>2026 NBA Mock Draft Simulator — Sixers Hoops</title>
+<title>2026 NBA Mock Draft Simulator v2 — Sixers Hoops</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -142,6 +142,54 @@
   .draft-btn:hover{background:#0057a0;transform:translateY(-1px)}
   .draft-btn:disabled{background:#cbd5e1;cursor:not-allowed;transform:none}
 
+  
+  /* === v2.2 additions: My Board + group formats === */
+  .format-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem}
+  .format-pill{flex:1;min-width:180px;border:1.5px solid var(--border-light);background:#fff;
+    border-radius:10px;padding:.7rem .85rem;cursor:pointer;transition:.15s;
+    font-family:'Barlow',sans-serif}
+  .format-pill .ft{font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    text-transform:uppercase;font-size:.85rem;letter-spacing:.04em;color:var(--ink);margin-bottom:.15rem}
+  .format-pill .fd{font-size:.78rem;color:var(--mid);line-height:1.35}
+  .format-pill.active{border-color:var(--sixers-blue);background:#f0f7fd;
+    box-shadow:0 1px 0 rgba(0,107,182,.15) inset}
+  .mb-row{display:flex;align-items:flex-start;gap:.7rem;background:#fff;border:1px solid var(--border-light);
+    border-radius:10px;padding:.7rem .85rem;margin-bottom:.55rem;transition:.15s}
+  .mb-row:hover{border-color:var(--sixers-blue)}
+  .mb-rk{width:34px;height:34px;border-radius:50%;background:var(--soft);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';
+    font-weight:900;font-size:.95rem;flex-shrink:0}
+  .mb-info{flex:1;min-width:0}
+  .mb-name{font-weight:700;font-size:.95rem;color:var(--ink)}
+  .mb-meta{color:var(--mid);font-size:.78rem;margin-top:.1rem}
+  .mb-reason{margin-top:.45rem;width:100%;border:1px solid var(--border-light);border-radius:7px;
+    padding:.45rem .6rem;font-family:'Barlow';font-size:.85rem;resize:vertical;min-height:38px}
+  .mb-reason:focus{outline:none;border-color:var(--sixers-blue)}
+  .mb-actions{display:flex;flex-direction:column;gap:.3rem}
+  .mb-mini{background:var(--soft);border:none;border-radius:6px;padding:.25rem .5rem;
+    cursor:pointer;font-size:.75rem;font-weight:700;color:var(--ink)}
+  .mb-mini:hover{background:#e4e8f0}
+  .mb-mini.danger{color:var(--red)}
+  .mb-add-row{display:flex;gap:.5rem;align-items:center;background:#fff;
+    border:1.5px dashed var(--border-light);border-radius:10px;padding:.6rem;margin-bottom:.8rem}
+  .mb-add-row select,.mb-add-row input{flex:1;border:1px solid var(--border-light);border-radius:7px;
+    padding:.45rem .55rem;font-family:'Barlow';font-size:.88rem}
+  .mb-toolbar{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:space-between;
+    align-items:center;margin-bottom:.85rem}
+  .mb-stat{font-size:.85rem;color:var(--mid)}
+  .mb-author-chip{display:inline-flex;align-items:center;gap:.3rem;background:var(--soft);
+    border-radius:999px;padding:.15rem .55rem;font-size:.7rem;font-weight:700;color:var(--mid);
+    margin-left:.4rem}
+  /* Snake roster */
+  .roster-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.7rem;margin-top:.5rem}
+  .roster-card{background:#fff;border:1px solid var(--border-light);border-radius:10px;padding:.7rem .85rem}
+  .roster-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem}
+  .roster-head .nm{font-family:'Barlow Condensed';font-weight:800;text-transform:uppercase;
+    font-size:.95rem;letter-spacing:.03em;color:var(--ink)}
+  .roster-pick{font-size:.83rem;color:var(--ink);padding:.2rem 0;border-bottom:1px dashed #eef1f6}
+  .roster-pick:last-child{border-bottom:none}
+  .roster-pick .pk{color:var(--mid);font-weight:700;margin-right:.35rem}
+
   /* mode tabs */
   .mode-tabs{display:flex;gap:.4rem;background:var(--soft);padding:.3rem;border-radius:10px;margin-bottom:1rem}
   .mode-tab{flex:1;background:transparent;border:none;padding:.55rem .75rem;
@@ -222,6 +270,142 @@
 
   .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--mid)}
 </style>
+<style>
+  /* ===== Multiplayer additions ===== */
+  .upcoming-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));margin-bottom:1rem}
+  .upcoming-card{background:#fff;border:1px solid #e6eaf2;border-radius:12px;padding:1rem 1.1rem;
+    box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 28px -18px rgba(15,23,42,.18);
+    display:flex;flex-direction:column;gap:.55rem;position:relative;overflow:hidden}
+  .upcoming-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--sixers-blue),#1e90d8 60%,var(--sixers-blue))}
+  .upcoming-card .uc-host{font-size:.78rem;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+  .upcoming-card .uc-time{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.15rem;color:var(--ink)}
+  .uc-countdown{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.85rem;color:var(--sixers-blue);
+    background:rgba(0,107,182,.08);padding:.25rem .55rem;border-radius:6px;display:inline-block;width:max-content}
+  .uc-countdown.live{color:var(--green);background:rgba(22,163,74,.1)}
+  .uc-countdown.past{color:var(--mid);background:var(--soft)}
+  .uc-meta{display:flex;gap:.4rem;flex-wrap:wrap;font-size:.75rem;color:var(--mid)}
+  .uc-meta .tag{background:var(--soft);padding:.2rem .5rem;border-radius:5px;font-weight:700}
+  .uc-actions{display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap}
+  .uc-btn{flex:1;background:var(--sixers-blue);color:#fff;border:none;padding:.5rem .75rem;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.08em;
+    text-transform:uppercase;border-radius:7px;cursor:pointer;transition:all .15s}
+  .uc-btn:hover{background:#0057a0}
+  .uc-btn.ghost{background:#fff;color:var(--mid);border:1px solid var(--border-light)}
+  .uc-btn.ghost:hover{border-color:var(--sixers-blue);color:var(--sixers-blue)}
+
+  /* RSVP */
+  .rsvp-row{display:flex;gap:.4rem;flex-wrap:wrap}
+  .rsvp-btn{background:#fff;border:1px solid var(--border-light);padding:.4rem .85rem;
+    border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;color:var(--mid);transition:all .15s}
+  .rsvp-btn:hover{border-color:var(--sixers-blue);color:var(--sixers-blue)}
+  .rsvp-btn.active.going{background:var(--green);border-color:var(--green);color:#fff}
+  .rsvp-btn.active.maybe{background:#d97706;border-color:#d97706;color:#fff}
+  .rsvp-btn.active.no{background:var(--sixers-red);border-color:var(--sixers-red);color:#fff}
+
+  .pchip.going{background:rgba(22,163,74,.12);color:var(--green)}
+  .pchip.going .dot{background:var(--green)}
+  .pchip.maybe{background:rgba(217,119,6,.12);color:#d97706}
+  .pchip.maybe .dot{background:#d97706}
+  .pchip.no{background:rgba(220,38,38,.1);color:var(--red)}
+  .pchip.no .dot{background:var(--red)}
+  .pchip.invited .dot{background:var(--mid)}
+
+  /* invite modal */
+  .invite-search{width:100%;padding:.65rem .85rem;border:1px solid var(--border-light);border-radius:9px;
+    font-family:'Barlow',sans-serif;font-size:.95rem;outline:none;margin-bottom:.75rem}
+  .invite-search:focus{border-color:var(--sixers-blue)}
+  .invite-list{max-height:340px;overflow-y:auto;border:1px solid var(--border-light);border-radius:10px;background:#fff}
+  .invite-row{display:flex;align-items:center;gap:.6rem;padding:.55rem .85rem;border-bottom:1px solid #f1f3f8;cursor:pointer;transition:background .15s}
+  .invite-row:last-child{border-bottom:none}
+  .invite-row:hover{background:#f9fbff}
+  .invite-row.invited{background:#eef6fd}
+  .invite-avatar{width:30px;height:30px;border-radius:50%;background:var(--soft);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--mid);font-size:.78rem;flex-shrink:0;overflow:hidden}
+  .invite-avatar img{width:100%;height:100%;object-fit:cover}
+  .invite-name{flex:1;font-weight:700;font-size:.9rem;color:var(--ink)}
+  .invite-add{background:var(--sixers-blue);color:#fff;border:none;padding:.32rem .7rem;border-radius:6px;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+  .invite-add.added{background:var(--green)}
+
+  /* lobby chat */
+  .lobby-chat{margin-top:1.25rem;border:1px solid var(--border-light);border-radius:10px;background:#fff;overflow:hidden}
+  .chat-stream{max-height:260px;overflow-y:auto;padding:.75rem 1rem;display:flex;flex-direction:column;gap:.55rem}
+  .chat-msg{display:flex;flex-direction:column;gap:.15rem}
+  .chat-msg .who{font-size:.72rem;color:var(--mid);font-weight:700}
+  .chat-msg .body{background:var(--soft);padding:.45rem .7rem;border-radius:8px;font-size:.88rem;line-height:1.35;align-self:flex-start;max-width:85%}
+  .chat-msg.me .body{background:var(--sixers-blue);color:#fff;align-self:flex-end}
+  .chat-msg.me .who{text-align:right}
+  .chat-input{display:flex;gap:.5rem;padding:.6rem .75rem;border-top:1px solid var(--border-light);background:#fafbfd}
+  .chat-input input{flex:1;border:1px solid var(--border-light);border-radius:8px;padding:.5rem .75rem;font-family:'Barlow';font-size:.9rem;outline:none}
+  .chat-input input:focus{border-color:var(--sixers-blue)}
+  .chat-input button{background:var(--sixers-blue);color:#fff;border:none;padding:.5rem 1rem;border-radius:8px;
+    font-family:'Barlow Condensed';font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+
+  /* visibility toggle */
+  .visibility-row{display:flex;gap:.4rem;margin-top:.5rem}
+  .vis-pill{flex:1;background:#fff;border:1px solid var(--border-light);padding:.55rem .5rem;border-radius:8px;
+    font-family:'Barlow Condensed';font-weight:800;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--mid);cursor:pointer;text-align:center;transition:all .15s}
+  .vis-pill.active{background:var(--sixers-blue);border-color:var(--sixers-blue);color:#fff}
+
+  .signin-banner{background:#fffbe6;border:1px solid #ffe58f;color:#7a5800;padding:.75rem 1rem;
+    border-radius:10px;font-size:.88rem;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem}
+
+  .countdown-banner{background:linear-gradient(135deg,var(--sixers-blue),#0086d8);color:#fff;
+    padding:1rem 1.25rem;border-radius:12px;display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:1rem;margin-bottom:1rem}
+  .countdown-banner .cb-label{font-family:'Barlow Condensed';font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+  .countdown-banner .cb-time{font-family:'Barlow Condensed';font-weight:900;font-size:2rem;letter-spacing:.04em;line-height:1}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+  /* ===== v2 additions ===== */
+  .round-tabs{display:inline-flex;gap:.3rem;background:var(--soft);padding:.25rem;border-radius:8px;margin-left:.75rem;vertical-align:middle}
+  .round-tab{background:transparent;border:none;padding:.3rem .65rem;font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);
+    border-radius:5px;cursor:pointer;transition:all .15s}
+  .round-tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(15,23,42,.08)}
+  .pick-row .pick-player .name{cursor:pointer}
+  .pick-row .pick-player .name:hover{color:var(--sixers-blue);text-decoration:underline}
+  .player-info .pname{cursor:pointer}
+  .player-info .pname:hover{color:var(--sixers-blue);text-decoration:underline}
+  .needs-tag{display:inline-block;background:rgba(0,107,182,.08);color:var(--sixers-blue);
+    font-family:'Barlow Condensed';font-weight:800;font-size:.65rem;letter-spacing:.08em;
+    padding:.15rem .4rem;border-radius:4px;margin-left:.4rem;text-transform:uppercase}
+  .pdetail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-top:.85rem}
+  .pdetail-stat{background:var(--soft);padding:.65rem .85rem;border-radius:8px}
+  .pdetail-stat .lbl{font-family:'Barlow Condensed';font-weight:800;font-size:.62rem;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin-bottom:.2rem}
+  .pdetail-stat .val{font-family:'Barlow Condensed';font-weight:900;font-size:1.2rem;color:var(--ink)}
+  .replay-bar{background:#fff;border:1px solid #e6eaf2;border-radius:12px;padding:1rem 1.25rem;
+    margin-top:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .replay-bar input[type=range]{flex:1;min-width:200px;accent-color:var(--sixers-blue)}
+  .replay-bar .rb-label{font-family:'Barlow Condensed';font-weight:800;font-size:.72rem;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--mid)}
+  .export-btn{background:var(--navy);color:#fff;border:none;
+    font-family:'Barlow Condensed';font-weight:700;font-size:.78rem;letter-spacing:.08em;
+    text-transform:uppercase;padding:.55rem 1rem;border-radius:8px;cursor:pointer}
+  .export-btn:hover{background:#001240}
+  /* mobile sticky on-clock */
+  @media(max-width:1099px){
+    .clock-card-mobile-sticky{position:sticky;top:74px;z-index:5}
+  }
+  /* compact pick rows on mobile */
+  @media(max-width:560px){
+    .pick-row{grid-template-columns:36px 28px 1fr auto;gap:.5rem;padding:.5rem .65rem}
+    .pick-logo{width:28px;height:28px}
+    .pick-team .team{font-size:.85rem}
+    .pick-player .name{font-size:.85rem}
+    .pick-player .school{font-size:.7rem}
+    .ds-clock{font-size:1.2rem}
+    .hero-cta-row{flex-direction:column;width:100%}
+    .hero-cta-row button{width:100%;justify-content:center}
+  }
+</style>
+
 </head>
 <body>
   <script src="nav.js"></script>
@@ -233,7 +417,7 @@
       <h1 class="hero-title-top">2026 Mock</h1>
       <h2 class="hero-title-bottom">Draft Sim</h2>
       <div class="hero-divider"></div>
-      <p class="hero-sub">Run a full 30-pick first round solo, or schedule a live group draft with friends. Grade your board, then post the final mock straight to the community.</p>
+      <p class="hero-sub">Run a full 60-pick mock with smart team-needs CPU, schedule a live group draft with friends, click any prospect for scouting notes, and export your final board as a shareable image.</p>
       <div class="hero-cta-row">
         <button class="hero-btn-primary" id="cta-solo">Start Solo Draft</button>
         <button class="hero-btn-secondary" id="cta-group">Create Group Room</button>
@@ -243,6 +427,18 @@
   </section>
 
   <main class="md-wrap">
+    <!-- UPCOMING DRAFTS DASHBOARD -->
+    <div id="upcoming-pane" style="display:none">
+      <div class="section-label">Your Upcoming Drafts</div>
+      <div class="upcoming-grid" id="upcoming-grid"></div>
+    </div>
+
+    <!-- PUBLIC ROOM BROWSER -->
+    <div id="browse-pane" style="display:none">
+      <div class="section-label">Public Drafts <span style="color:var(--mid);font-weight:600;letter-spacing:0;text-transform:none;font-size:.78rem;margin-left:.5rem">— anyone can join</span></div>
+      <div class="upcoming-grid" id="browse-grid"></div>
+    </div>
+
     <!-- SETUP -->
     <div id="setup-pane">
       <div class="section-label">Draft Setup</div>
@@ -250,6 +446,7 @@
         <div class="mode-tabs" id="mode-tabs">
           <button class="mode-tab active" data-mode="solo">Solo Mock</button>
           <button class="mode-tab" data-mode="group">Group Mock</button>
+          <button class="mode-tab" data-mode="myboard">My Board</button>
           <button class="mode-tab" data-mode="join">Join Room</button>
         </div>
 
@@ -269,6 +466,13 @@
               </select>
             </div>
             <div class="field">
+              <label>Rounds</label>
+              <select id="solo-rounds">
+                <option value="1" selected>1st Round (30)</option>
+                <option value="2">Both Rounds (60)</option>
+              </select>
+            </div>
+            <div class="field">
               <label>CPU Style</label>
               <select id="solo-cpu">
                 <option value="bpa" selected>Best Player Available</option>
@@ -282,6 +486,9 @@
         </div>
 
         <div id="setup-group" style="display:none">
+          <div id="group-signin-warn" class="signin-banner" style="display:none">
+            ⚠️ Sign in on the community page first so friends can find and invite you.
+          </div>
           <div class="setup-grid">
             <div class="field">
               <label>Your Display Name</label>
@@ -303,8 +510,38 @@
               <button class="hero-btn-primary" id="create-room">Create Room →</button>
             </div>
           </div>
+          <div style="margin-top:1rem">
+            <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+              font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin-bottom:.4rem">Draft Format</label>
+            <div class="format-row" id="format-row">
+              <div class="format-pill active" data-format="team">
+                <div class="ft">🏀 Team Draft</div>
+                <div class="fd">Each pick slot is assigned to a friend (current default).</div>
+              </div>
+              <div class="format-pill" data-format="snake">
+                <div class="ft">🐍 Snake Draft</div>
+                <div class="fd">Each friend builds their own roster, snake order across rounds.</div>
+              </div>
+              <div class="format-pill" data-format="shared">
+                <div class="ft">📋 Shared Board</div>
+                <div class="fd">Group ranks one big board together with reasoning + votes.</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:1rem">
+            <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+              font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin-bottom:.4rem">Visibility</label>
+            <div class="visibility-row" id="vis-row">
+              <div class="vis-pill active" data-vis="invite">🔒 Invite only</div>
+              <div class="vis-pill" data-vis="public">🌐 Public — anyone can join</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;display:flex;align-items:center;gap:.5rem">
+            <input type="checkbox" id="group-postfeed" checked style="width:18px;height:18px;accent-color:var(--sixers-blue)"/>
+            <label for="group-postfeed" style="font-size:.88rem;color:var(--ink);cursor:pointer">Auto-post invite to the community feed</label>
+          </div>
           <p style="color:var(--mid);font-size:.85rem;margin:.85rem 0 0">
-            You'll get a 6-character code to share. Friends pick their teams when they join. Auto-pick fills any unowned team on the clock.
+            You'll get a 6-character code + an invite list. Friends get a notification, can RSVP, and pick teams in the lobby.
           </p>
         </div>
 
@@ -324,6 +561,26 @@
             </div>
           </div>
         </div>
+
+        <div id="setup-myboard" style="display:none">
+          <p style="color:var(--mid);font-size:.9rem;margin:.2rem 0 1rem;line-height:1.5">
+            Build your <strong style="color:var(--ink)">personal big board</strong> — no CPU, no team needs, no clock.
+            Rank the prospects in your own order, drop a sentence of reasoning on every pick, and save it to your account.
+            Share it to the community when you're done.
+          </p>
+          <div class="setup-grid">
+            <div class="field">
+              <label>Board Title</label>
+              <input id="mb-title" placeholder="My 2026 NBA Big Board" />
+            </div>
+            <div class="field">
+              <button class="hero-btn-primary" id="start-myboard">Open My Board →</button>
+            </div>
+          </div>
+          <p style="color:var(--mid);font-size:.8rem;margin-top:.6rem">
+            Sign in on the community page first if you want it saved to your Sixers Hoops account.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -340,7 +597,28 @@
             <div class="label">Scheduled For</div>
             <div style="font-weight:700" id="lobby-time">—</div>
           </div>
-          <button class="copy-btn" id="copy-link">Copy Invite Link</button>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="copy-btn" id="copy-link">Copy Invite Link</button>
+            <button class="copy-btn" id="ics-btn">Add to Calendar</button>
+            <button class="copy-btn" id="invite-btn">Invite Friends</button>
+          </div>
+        </div>
+
+        <div id="lobby-countdown" class="countdown-banner" style="display:none">
+          <div>
+            <div class="cb-label">Tip-off in</div>
+            <div class="cb-time" id="lobby-countdown-time">--:--:--</div>
+          </div>
+          <div style="font-size:.85rem;opacity:.9;max-width:340px">
+            Once the timer hits zero the host can launch the draft. Anyone who's marked Going will jump straight in.
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:.25rem">Your RSVP</div>
+        <div class="rsvp-row" id="rsvp-row">
+          <button class="rsvp-btn going" data-rsvp="going">✓ Going</button>
+          <button class="rsvp-btn maybe" data-rsvp="maybe">? Maybe</button>
+          <button class="rsvp-btn no" data-rsvp="no">✕ Can't</button>
         </div>
 
         <div class="section-label" style="margin-top:.25rem">Participants</div>
@@ -349,6 +627,14 @@
         <div class="section-label" style="margin-top:1.25rem">Team Assignments</div>
         <div style="overflow:auto;max-height:340px;border:1px solid var(--border-light);border-radius:10px">
           <table class="assign-table" id="assign-table"></table>
+        </div>
+
+        <div class="lobby-chat">
+          <div class="chat-stream" id="chat-stream"></div>
+          <div class="chat-input">
+            <input id="chat-input" placeholder="Talk trash before the picks start…" maxlength="280"/>
+            <button id="chat-send">Send</button>
+          </div>
         </div>
 
         <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;justify-content:flex-end">
@@ -382,7 +668,7 @@
         </div>
 
         <div>
-          <div class="panel" style="margin-bottom:1.25rem">
+          <div class="panel clock-card-mobile-sticky" style="margin-bottom:1.25rem">
             <div class="panel-head"><div class="panel-title">On The Clock</div></div>
             <div class="clock-card" id="clock-card"></div>
           </div>
@@ -410,6 +696,65 @@
         </div>
       </div>
     </div>
+
+    <!-- MY BOARD PANE -->
+    <div id="myboard-pane" style="display:none">
+      <div class="section-label" id="mb-section-label">My Big Board</div>
+      <div class="setup-card">
+        <div class="mb-toolbar">
+          <div>
+            <input id="mb-title-inline" style="font-family:'Barlow Condensed';font-weight:900;
+              font-size:1.4rem;border:none;background:transparent;color:var(--ink);width:100%;max-width:420px"
+              value="My 2026 NBA Big Board"/>
+            <div class="mb-stat" id="mb-stat">0 ranked</div>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="copy-btn" id="mb-save">💾 Save</button>
+            <button class="copy-btn" id="mb-post">📣 Post to Community</button>
+            <button class="btn-ghost" id="mb-exit">Exit</button>
+          </div>
+        </div>
+
+        <div class="mb-add-row">
+          <select id="mb-add-pos">
+            <option value="">All Pos</option>
+            <option>G</option><option>F</option><option>C</option>
+          </select>
+          <input id="mb-add-search" placeholder="Search a prospect to add to your board…"/>
+          <select id="mb-add-pick" style="flex:2"></select>
+          <button class="btn-primary" id="mb-add-btn">Add</button>
+        </div>
+
+        <div id="mb-list"></div>
+      </div>
+    </div>
+
+    <!-- SHARED BOARD COLLAB PANE (group format = shared) -->
+    <div id="shared-pane" style="display:none">
+      <div class="section-label">Group Shared Board <span id="shared-room-tag" style="color:var(--mid);font-weight:600;letter-spacing:0;text-transform:none;font-size:.78rem;margin-left:.5rem"></span></div>
+      <div class="setup-card">
+        <div class="mb-toolbar">
+          <div>
+            <div style="font-family:'Barlow Condensed';font-weight:900;font-size:1.3rem">Collaborative Big Board</div>
+            <div class="mb-stat" id="shared-stat">0 ranked · 0 contributors</div>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="copy-btn" id="shared-copy">Copy Invite Link</button>
+            <button class="btn-ghost" id="shared-exit">Leave</button>
+          </div>
+        </div>
+        <div class="mb-add-row">
+          <select id="shared-add-pos">
+            <option value="">All Pos</option><option>G</option><option>F</option><option>C</option>
+          </select>
+          <input id="shared-add-search" placeholder="Search a prospect to add…"/>
+          <select id="shared-add-pick" style="flex:2"></select>
+          <button class="btn-primary" id="shared-add-btn">Add</button>
+        </div>
+        <div id="shared-list"></div>
+      </div>
+    </div>
+
   </main>
 
   <!-- POST MODAL -->
@@ -433,6 +778,42 @@
       <div class="modal-foot">
         <button class="btn-ghost" data-close>Cancel</button>
         <button class="btn-primary" id="confirm-post">Post to Feed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVITE MODAL -->
+  <div class="modal-overlay" id="invite-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Invite Community Members</div>
+        <button class="btn-ghost" data-close-invite>Close</button>
+      </div>
+      <div class="modal-body">
+        <input class="invite-search" id="invite-search" placeholder="Search community members by name…" />
+        <div class="invite-list" id="invite-list"></div>
+        <p style="color:var(--mid);font-size:.78rem;margin-top:.6rem">Members get a notification with the room code. They can RSVP from the lobby.</p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-primary" data-close-invite>Done</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- v2: PLAYER DETAIL MODAL -->
+  <div class="modal-overlay" id="pdetail-modal">
+    <div class="modal-card" style="max-width:520px">
+      <div class="modal-head">
+        <div class="modal-title" id="pdetail-title">Player</div>
+        <button class="btn-ghost" data-pdetail-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="pdetail-body"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" data-pdetail-close>Close</button>
+        <button class="btn-primary" id="pdetail-draft">Draft This Player</button>
       </div>
     </div>
   </div>
@@ -474,6 +855,34 @@ const DRAFT_ORDER = [
 ];
 // fix SAS -> SA
 DRAFT_ORDER.forEach(p=>{if(p.via==='SAS')p.via='SA';});
+
+/* ===== v2: team needs (positional weight for CPU) ===== */
+const TEAM_NEEDS = {
+  ATL:['F','C'], BOS:['G','C'], BKN:['G','F'], CHA:['F','C'],
+  CHI:['F','G'], CLE:['F','G'], DAL:['G','F'], DEN:['G','F'],
+  DET:['F','C'], GS:['F','C'], HOU:['F','G'], IND:['F','C'],
+  LAC:['G','F'], LAL:['G','F'], MEM:['F','C'], MIA:['G','F'],
+  MIL:['G','F'], MIN:['G','F'], NOP:['G','C'], NY:['F','C'],
+  OKC:['F','C'], ORL:['G','F'], PHI:['G','F'], PHX:['F','C'],
+  POR:['F','C'], SAC:['F','C'], SA:['F','C'], TOR:['G','F'],
+  UTAH:['G','F'], WSH:['F','G']
+};
+/* ===== v2: simple scouting blurbs (generated/templated) ===== */
+function blurbFor(p){
+  const traits = {
+    G:['quick first step','high IQ pick-and-roll operator','elite pull-up shooter','disruptive on-ball defender'],
+    F:['versatile two-way wing','strong rebounder','switchable defender','smooth shot-creator'],
+    C:['rim-protecting anchor','vertical lob threat','mobile screen-and-roll big','floor-spacing 5']
+  };
+  const t = traits[p.pos]||traits.F;
+  const a = t[(p.rank*7)%t.length];
+  const b = t[((p.rank*11)+1)%t.length];
+  const tier = p.rank<=5?'top-5':p.rank<=14?'lottery':p.rank<=30?'first-round':'second-round';
+  return `Projected ${tier} prospect from ${p.school}. Scouts highlight ${a} and ${b}. Big-board rank: #${p.rank}.`;
+}
+/* ===== v2: build round 2 in reverse (snake) ===== */
+function buildRound2(){ return [...DRAFT_ORDER].reverse().map(p=>({...p,round:2})); }
+
 
 /* prospect board */
 const RAW_PROSPECTS = [
@@ -523,6 +932,14 @@ const State = {
   myName:'',
   participants:[],       // [{id,name,host}]
   assignments:{},        // {pickIndex:userId}  -> who controls each pick
+  visibility:'invite',
+  invitees:[],           // [{id,name,photo}]
+  rsvps:{},              // {userId:'going'|'maybe'|'no'}
+  chat:[],               // [{id,uid,name,text,t}]
+  countdownTimer:null,
+  upcomingUnsub:null,
+  browseUnsub:null,
+  communityUsers:[],     // cached community members for invite search
 };
 
 /* ============================================================ UTIL */
@@ -531,6 +948,319 @@ const toast = msg => { const t=$('toast'); t.textContent=msg; t.classList.add('s
 const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const uid = () => Math.random().toString(36).slice(2,10);
 const code6 = () => Math.random().toString(36).slice(2,8).toUpperCase();
+
+/* ============================================================ AUTH HELPERS */
+function currentUser(){ return (window.auth && window.auth.currentUser) || null; }
+function currentUserName(u){
+  u = u || currentUser();
+  if(!u) return '';
+  return u.displayName || (u.email?u.email.split('@')[0]:'User');
+}
+function currentUserId(){ const u=currentUser(); return u?u.uid:null; }
+function currentUserPhoto(){ const u=currentUser(); return u?(u.photoURL||''):''; }
+
+/* ============================================================ COMMUNITY USERS CACHE */
+async function loadCommunityUsers(){
+  if(!window.db) return [];
+  if(State.communityUsers.length) return State.communityUsers;
+  try{
+    const snap = await window.db.collection('community_posts').orderBy('createdAt','desc').limit(200).get();
+    const map = new Map();
+    snap.forEach(d=>{
+      const p = d.data();
+      if(p.authorId && !map.has(p.authorId)){
+        map.set(p.authorId, {
+          id:p.authorId,
+          name:(p.author||'').replace(/^u\//,''),
+          photo:p.authorPhoto||''
+        });
+      }
+    });
+    State.communityUsers = [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
+    return State.communityUsers;
+  }catch(e){ console.warn('community users load failed', e); return []; }
+}
+
+/* ============================================================ NOTIFICATIONS */
+async function sendDraftInvite(recipientId, recipientName){
+  if(!window.db || !window.firebase) return;
+  const u = currentUser(); if(!u) return;
+  try{
+    await window.db.collection('notifications').add({
+      recipientId,
+      senderId:u.uid,
+      senderName:currentUserName(u),
+      senderPhoto:currentUserPhoto(),
+      type:'draft_invite',
+      text:`invited you to a mock draft (room ${State.roomCode})`,
+      postId:null,
+      roomCode:State.roomCode,
+      read:false,
+      createdAt:window.firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){ console.warn('notif failed', e); }
+}
+
+/* ============================================================ ICS CALENDAR */
+function downloadICS(room){
+  if(!room.scheduledFor) return toast('No scheduled time set');
+  const dt = new Date(room.scheduledFor);
+  const fmtICS = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const start = fmtICS(dt);
+  const end = fmtICS(new Date(dt.getTime()+90*60*1000));
+  const url = `${location.origin}${location.pathname}?room=${room.code}`;
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SixersHoops//MockDraft//EN',
+    'BEGIN:VEVENT',
+    `UID:${room.code}@sixershoops`,
+    `DTSTAMP:${fmtICS(new Date())}`,
+    `DTSTART:${start}`,`DTEND:${end}`,
+    `SUMMARY:2026 NBA Mock Draft (Room ${room.code})`,
+    `DESCRIPTION:Join the mock draft: ${url}`,
+    `URL:${url}`,
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics],{type:'text/calendar'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `mock-draft-${room.code}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('Calendar invite downloaded');
+}
+
+/* ============================================================ COUNTDOWN */
+function startCountdown(scheduledFor){
+  clearInterval(State.countdownTimer);
+  const banner = $('lobby-countdown');
+  if(!scheduledFor){ if(banner) banner.style.display='none'; return; }
+  if(banner) banner.style.display='';
+  const tick = ()=>{
+    const ms = new Date(scheduledFor).getTime() - Date.now();
+    const el = $('lobby-countdown-time');
+    if(!el) return;
+    if(ms<=0){
+      el.textContent='LIVE — start the draft';
+      clearInterval(State.countdownTimer);
+      return;
+    }
+    const s = Math.floor(ms/1000);
+    const d = Math.floor(s/86400);
+    const h = Math.floor((s%86400)/3600);
+    const m = Math.floor((s%3600)/60);
+    const sec = s%60;
+    el.textContent = (d?`${d}d `:'') + `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  };
+  tick();
+  State.countdownTimer = setInterval(tick,1000);
+}
+
+/* ============================================================ UPCOMING DRAFTS */
+function listenUpcoming(){
+  if(State.upcomingUnsub){State.upcomingUnsub();State.upcomingUnsub=null;}
+  const u = currentUser();
+  const pane = $('upcoming-pane');
+  if(!u || !window.db){ if(pane) pane.style.display='none'; return; }
+  State.upcomingUnsub = window.db.collection('mock_draft_rooms')
+    .orderBy('createdAt','desc').limit(50).onSnapshot(snap=>{
+      const mine = [];
+      snap.forEach(d=>{
+        const r = d.data();
+        const isHost = r.hostId === u.uid || r.host === u.uid;
+        const isInvited = (r.invitees||[]).some(x=>x.id===u.uid);
+        const isParticipant = (r.participants||[]).some(p=>p.id===u.uid);
+        if(isHost || isInvited || isParticipant) mine.push(r);
+      });
+      renderUpcoming(mine);
+    },err=>console.warn('upcoming listener',err));
+}
+function renderUpcoming(rooms){
+  const pane = $('upcoming-pane');
+  const grid = $('upcoming-grid');
+  if(!grid) return;
+  if(!rooms.length){ pane.style.display='none'; return; }
+  pane.style.display='';
+  grid.innerHTML = rooms.map(r=>{
+    const time = r.scheduledFor ? new Date(r.scheduledFor) : null;
+    const ms = time ? time.getTime()-Date.now() : 0;
+    let label='On Demand', cls='';
+    if(time){
+      if(r.started){ label='LIVE NOW'; cls='live'; }
+      else if(ms<0){ label='Past — '+time.toLocaleString(); cls='past'; }
+      else label = time.toLocaleString();
+    }
+    const myRsvp = (r.rsvps||{})[currentUserId()] || (r.hostId===currentUserId()?'going':'invited');
+    const goingCount = Object.values(r.rsvps||{}).filter(v=>v==='going').length + 1;
+    return `<div class="upcoming-card">
+      <div class="uc-host">Host: ${r.hostName||'Host'}</div>
+      <div class="uc-time">Room ${r.code}</div>
+      <div class="uc-countdown ${cls}">${label}</div>
+      <div class="uc-meta">
+        <span class="tag">${goingCount} going</span>
+        <span class="tag">${(r.participants||[]).length} in lobby</span>
+        <span class="tag">${r.visibility==='public'?'Public':'Invite only'}</span>
+        <span class="tag">RSVP: ${myRsvp}</span>
+      </div>
+      <div class="uc-actions">
+        <button class="uc-btn" data-join="${r.code}">${r.started?'Join Live':'Open Lobby'}</button>
+        ${time?`<button class="uc-btn ghost" data-ics="${r.code}">+ Calendar</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>quickJoin(b.dataset.join));
+  grid.querySelectorAll('[data-ics]').forEach(b=>b.onclick=async ()=>{
+    const snap = await window.db.collection('mock_draft_rooms').doc(b.dataset.ics).get();
+    if(snap.exists) downloadICS(snap.data());
+  });
+}
+
+/* ============================================================ PUBLIC ROOMS BROWSER */
+function listenPublicRooms(){
+  if(State.browseUnsub){State.browseUnsub();State.browseUnsub=null;}
+  if(!window.db) return;
+  State.browseUnsub = window.db.collection('mock_draft_rooms')
+    .where('visibility','==','public').orderBy('createdAt','desc').limit(20)
+    .onSnapshot(snap=>{
+      const rooms = []; snap.forEach(d=>rooms.push(d.data()));
+      renderBrowse(rooms);
+    }, err=>{
+      console.warn('public rooms listener', err);
+      // fallback if composite index missing
+      window.db.collection('mock_draft_rooms').orderBy('createdAt','desc').limit(40).get()
+        .then(s=>{
+          const rooms=[]; s.forEach(d=>{const r=d.data(); if(r.visibility==='public') rooms.push(r);});
+          renderBrowse(rooms);
+        }).catch(()=>{});
+    });
+}
+function renderBrowse(rooms){
+  const pane = $('browse-pane');
+  const grid = $('browse-grid');
+  if(!grid) return;
+  // exclude rooms the user is already in (shown in upcoming)
+  const me = currentUserId();
+  const list = rooms.filter(r=>{
+    if(r.started) return false;
+    if(!me) return true;
+    return !(r.participants||[]).some(p=>p.id===me) && r.hostId!==me;
+  });
+  if(!list.length){ pane.style.display='none'; return; }
+  pane.style.display='';
+  grid.innerHTML = list.map(r=>{
+    const time = r.scheduledFor ? new Date(r.scheduledFor) : null;
+    const label = time ? time.toLocaleString() : 'On Demand';
+    return `<div class="upcoming-card">
+      <div class="uc-host">Public · Host: ${r.hostName||'Host'}</div>
+      <div class="uc-time">Room ${r.code}</div>
+      <div class="uc-countdown">${label}</div>
+      <div class="uc-meta">
+        <span class="tag">${(r.participants||[]).length} joined</span>
+        <span class="tag">${(r.invitees||[]).length} invited</span>
+      </div>
+      <div class="uc-actions">
+        <button class="uc-btn" data-pjoin="${r.code}">Join Room</button>
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('[data-pjoin]').forEach(b=>b.onclick=()=>quickJoin(b.dataset.pjoin));
+}
+
+async function quickJoin(code){
+  switchMode('join');
+  $('join-code').value = code;
+  const u = currentUser();
+  if(u && !$('join-name').value) $('join-name').value = currentUserName(u);
+  $('setup-pane').scrollIntoView({behavior:'smooth'});
+  if($('join-name').value && code) await joinRoom();
+}
+
+/* ============================================================ INVITE FLOW */
+async function openInviteModal(){
+  await loadCommunityUsers();
+  $('invite-search').value='';
+  renderInviteList('');
+  $('invite-modal').classList.add('open');
+}
+function renderInviteList(q){
+  const list = $('invite-list');
+  const invitedIds = new Set((State.invitees||[]).map(i=>i.id));
+  const participantIds = new Set((State.participants||[]).map(p=>p.id));
+  const filtered = State.communityUsers
+    .filter(u=>u.id!==currentUserId())
+    .filter(u=>!q || u.name.toLowerCase().includes(q.toLowerCase()))
+    .slice(0,80);
+  if(!filtered.length){
+    list.innerHTML = `<div style="padding:1.5rem;text-align:center;color:var(--mid);font-size:.88rem">No community members found.</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(u=>{
+    const already = invitedIds.has(u.id) || participantIds.has(u.id);
+    const initial = (u.name||'?').charAt(0).toUpperCase();
+    return `<div class="invite-row ${already?'invited':''}">
+      <div class="invite-avatar">${u.photo?`<img src="${u.photo}" alt=""/>`:initial}</div>
+      <div class="invite-name">${u.name}</div>
+      <button class="invite-add ${already?'added':''}" data-uid="${u.id}" data-name="${u.name}" data-photo="${u.photo||''}" ${already?'disabled':''}>
+        ${already?'✓ Invited':'Invite'}
+      </button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('button[data-uid]').forEach(b=>{
+    b.onclick = ()=>inviteUser({id:b.dataset.uid,name:b.dataset.name,photo:b.dataset.photo});
+  });
+}
+async function inviteUser(user){
+  if(!State.roomRef) return;
+  const invitees = [...(State.invitees||[])];
+  if(invitees.some(i=>i.id===user.id)) return;
+  invitees.push(user);
+  try{
+    await State.roomRef.update({invitees});
+    await sendDraftInvite(user.id, user.name);
+    toast(`Invited ${user.name}`);
+    renderInviteList($('invite-search').value);
+  }catch(e){ console.error(e); toast('Invite failed'); }
+}
+
+/* ============================================================ RSVP */
+async function setRsvp(status){
+  if(!State.roomRef) return;
+  const me = currentUserId() || window.__myId;
+  if(!me) return toast('Sign in to RSVP');
+  const rsvps = {...(State.rsvps||{})};
+  rsvps[me] = status;
+  try{ await State.roomRef.update({rsvps}); }
+  catch(e){ console.error(e); toast('RSVP failed'); }
+}
+function renderRsvpButtons(){
+  const me = currentUserId() || window.__myId;
+  const my = (State.rsvps||{})[me];
+  document.querySelectorAll('#rsvp-row .rsvp-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.rsvp===my);
+  });
+}
+
+/* ============================================================ CHAT */
+async function sendChat(){
+  const inp = $('chat-input');
+  const text = inp.value.trim();
+  if(!text || !State.roomRef) return;
+  const me = currentUserId() || window.__myId;
+  const name = State.myName || currentUserName() || 'Guest';
+  const msg = {id:uid(), uid:me, name, text:text.slice(0,280), t:Date.now()};
+  const chat = [...(State.chat||[]), msg].slice(-100);
+  try{ await State.roomRef.update({chat}); inp.value=''; }
+  catch(e){ console.error(e); toast('Chat failed'); }
+}
+function renderChat(){
+  const stream = $('chat-stream'); if(!stream) return;
+  const me = currentUserId() || window.__myId;
+  stream.innerHTML = (State.chat||[]).map(m=>`
+    <div class="chat-msg ${m.uid===me?'me':''}">
+      <div class="who">${m.name}</div>
+      <div class="body">${(m.text||'').replace(/[<>&]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>
+    </div>
+  `).join('');
+  stream.scrollTop = stream.scrollHeight;
+}
 
 /* ============================================================ SETUP UI */
 function populateTeamSelect(){
@@ -546,10 +1276,12 @@ function switchMode(mode){
 }
 
 /* ============================================================ DRAFT ENGINE */
-function startDraft({mode,userTeam,clockSec,cpuStyle}){
+function startDraft({mode,userTeam,clockSec,cpuStyle,rounds}){
   State.mode=mode; State.userTeam=userTeam; State.clockSec=Number(clockSec)||0;
   State.cpuStyle=cpuStyle||'bpa';
-  State.picks = DRAFT_ORDER.map(()=>null);
+  State.rounds = Number(rounds)||1;
+  State.fullOrder = State.rounds===2 ? [...DRAFT_ORDER.map(p=>({...p,round:1})), ...buildRound2()] : DRAFT_ORDER.map(p=>({...p,round:1}));
+  State.picks = State.fullOrder.map(()=>null);
   State.currentPick = 0;
   State.started = true;
 
@@ -565,7 +1297,7 @@ function startDraft({mode,userTeam,clockSec,cpuStyle}){
 }
 
 function isUserPick(idx){
-  if(State.mode==='solo') return DRAFT_ORDER[idx].team === State.userTeam;
+  if(State.mode==='solo') return State.fullOrder[idx].team === State.userTeam;
   // group: assignments map pick->userId
   return State.assignments[idx] === window.__myId;
 }
@@ -588,7 +1320,17 @@ function takenSet(){ return new Set(State.picks.filter(Boolean).map(p=>p.name));
 
 function bestAvailable(){
   const taken=takenSet();
-  return PROSPECTS.find(p=>!taken.has(p.name));
+  const slot = (State.fullOrder||DRAFT_ORDER)[State.currentPick];
+  const needs = TEAM_NEEDS[slot?.team] || [];
+  const pool = PROSPECTS.filter(p=>!taken.has(p.name));
+  // weight: rank - (needBoost). Top need: -3, secondary need: -1.5
+  const scored = pool.slice(0,18).map(p=>{
+    let boost = 0;
+    if(needs[0]===p.pos) boost = 3;
+    else if(needs[1]===p.pos) boost = 1.5;
+    return {p, score: p.rank - boost};
+  }).sort((a,b)=>a.score-b.score);
+  return scored[0]?.p || pool[0];
 }
 function chaosPick(){
   const taken=takenSet();
@@ -601,7 +1343,7 @@ function autoPick(){
 }
 
 function makePick(prospect, auto=false){
-  if(!State.started || State.currentPick>=DRAFT_ORDER.length) return;
+  if(!State.started || State.currentPick>=State.fullOrder.length) return;
   if(State.picks[State.currentPick]) return;
   State.picks[State.currentPick] = {...prospect, auto};
   // sync to room
@@ -614,7 +1356,7 @@ function makePick(prospect, auto=false){
 function advance(){
   State.currentPick++;
   renderAll();
-  if(State.currentPick>=DRAFT_ORDER.length){ finishDraft(); return; }
+  if(State.currentPick>=State.fullOrder.length){ finishDraft(); return; }
   tickStart();
 }
 function finishDraft(){
@@ -633,10 +1375,10 @@ function renderAll(){
   renderBoard();
 }
 function renderStatus(){
-  $('ds-pick').textContent = `${Math.min(State.currentPick+1,30)} / 30`;
+  $('ds-pick').textContent = `${Math.min(State.currentPick+1,State.fullOrder.length)} / ${State.fullOrder.length}`;
 }
 function renderPicks(){
-  const list = DRAFT_ORDER.map((slot,i)=>{
+  const list = (State.fullOrder||DRAFT_ORDER).map((slot,i)=>{
     const pick = State.picks[i];
     const onClock = i===State.currentPick && State.started;
     const completed = !!pick;
@@ -649,7 +1391,7 @@ function renderPicks(){
         ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
       </div>
       <div class="pick-player ${pick?'':'empty'}">
-        ${pick?`<div class="name">${pick.name}</div><div class="school">${pick.school} · ${pick.pos}${pick.auto?' · auto':''}</div>`
+        ${pick?`<div class="name" data-player-detail="${pick.name}">${pick.name}</div><div class="school">${pick.school} · ${pick.pos}${pick.auto?' · auto':''}</div>`
               :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
       </div>
     </div>`;
@@ -658,11 +1400,11 @@ function renderPicks(){
 }
 function renderClock(){
   const i = State.currentPick;
-  if(i>=DRAFT_ORDER.length){
+  if(i>=(State.fullOrder||DRAFT_ORDER).length){
     $('clock-card').innerHTML = `<div class="empty-state">Draft complete — scroll for grades.</div>`;
     return;
   }
-  const slot = DRAFT_ORDER[i];
+  const slot = (State.fullOrder||DRAFT_ORDER)[i];
   const mine = isUserPick(i);
   $('clock-card').innerHTML = `
     <div class="clock-team">
@@ -673,7 +1415,7 @@ function renderClock(){
       </div>
     </div>
     <div style="font-size:.85rem;color:var(--mid)">
-      ${mine?'<strong style="color:var(--sixers-blue)">You\\'re on the clock.</strong> Pick from the big board.'
+      ${mine?'<strong style="color:var(--sixers-blue)">You\u2019re on the clock.</strong> Pick from the big board.'
             :'CPU/other GM is picking. Auto-pick fires when the clock hits zero.'}
     </div>
     ${!mine && State.mode==='solo'?'<button class="btn-ghost" id="skip-cpu" style="margin-top:.75rem">Make CPU Pick Now</button>':''}
@@ -695,7 +1437,7 @@ function renderBoard(){
     const canDraft = State.started && !t && isUserPick(State.currentPick);
     return `<div class="player-row ${t?'taken':''}" data-name="${p.name}">
       <div class="player-rk">${p.rank}</div>
-      <div class="player-info"><div class="pname">${p.name}</div><div class="pschool">${p.school} · ${p.pos}</div></div>
+      <div class="player-info"><div class="pname" data-player-detail="${p.name}">${p.name}</div><div class="pschool">${p.school} · ${p.pos}</div></div>
       <button class="draft-btn" ${canDraft?'':'disabled'} data-pick="${p.name}">${t?'Picked':'Draft'}</button>
     </div>`;
   }).join('');
@@ -713,7 +1455,7 @@ function renderGrades(){
   const byTeam = {};
   State.picks.forEach((pk,i)=>{
     if(!pk) return;
-    const t = DRAFT_ORDER[i].team;
+    const t = (State.fullOrder||DRAFT_ORDER)[i].team;
     (byTeam[t]=byTeam[t]||[]).push({...pk,pickNum:i+1});
   });
   const rows = Object.entries(byTeam).map(([t,arr])=>{
@@ -747,22 +1489,33 @@ async function createRoom(){
   const clock = Number($('group-clock').value);
   if(!name) return toast('Enter a display name');
   if(!window.db) return toast('Database unavailable');
+  const u = currentUser();
+  if(!u){ $('group-signin-warn').style.display=''; return toast('Sign in on the community page first'); }
   const code = code6();
-  const myId = uid();
+  const myId = u.uid;
   window.__myId = myId;
   State.myName = name;
   State.isHost = true;
   State.roomCode = code;
   State.clockSec = clock;
+  const visibility = State.visibility || 'invite';
   const room = {
-    code, host:myId, scheduledFor:time||null, clockSec:clock,
-    participants:[{id:myId,name,host:true}],
+    code, host:myId, hostId:myId, hostName:name,
+    scheduledFor:time||null, clockSec:clock,
+    visibility,
+    participants:[{id:myId,name,host:true,photo:currentUserPhoto()}],
+    invitees:[],
+    rsvps:{[myId]:'going'},
+    chat:[],
     assignments:{}, picks:{}, currentPick:0, started:false, createdAt:Date.now()
   };
   try{
     await window.db.collection('mock_draft_rooms').doc(code).set(room);
     listenRoom(code);
     showLobby();
+    if($('group-postfeed') && $('group-postfeed').checked){
+      await postRoomToFeed(room);
+    }
   }catch(e){ console.error(e); toast('Could not create room'); }
 }
 async function joinRoom(){
@@ -773,13 +1526,20 @@ async function joinRoom(){
   const ref = window.db.collection('mock_draft_rooms').doc(code);
   const snap = await ref.get();
   if(!snap.exists) return toast('Room not found');
-  const myId = uid();
+  const u = currentUser();
+  const myId = u ? u.uid : uid();
   window.__myId = myId;
   State.myName = name;
   State.roomCode = code;
   const data = snap.data();
-  const participants = [...(data.participants||[]),{id:myId,name,host:false}];
-  await ref.update({participants});
+  const existing = (data.participants||[]);
+  const participants = existing.some(p=>p.id===myId)
+    ? existing.map(p=>p.id===myId?{...p,name}:p)
+    : [...existing,{id:myId,name,host:false,photo:currentUserPhoto()}];
+  const rsvps = {...(data.rsvps||{})};
+  if(!rsvps[myId]) rsvps[myId] = 'going';
+  State.isHost = (data.hostId||data.host) === myId;
+  await ref.update({participants, rsvps});
   listenRoom(code);
   showLobby();
 }
@@ -793,6 +1553,10 @@ function listenRoom(code){
     State.participants = d.participants||[];
     State.assignments = d.assignments||{};
     State.clockSec = d.clockSec||120;
+    State.invitees = d.invitees||[];
+    State.rsvps = d.rsvps||{};
+    State.chat = d.chat||[];
+    State.visibility = d.visibility||'invite';
     // sync picks
     if(d.started){
       if(!State.started){
@@ -813,12 +1577,26 @@ function listenRoom(code){
 function showLobby(){
   $('setup-pane').style.display='none';
   $('lobby-pane').style.display='';
+  $('upcoming-pane').style.display='none';
+  $('browse-pane').style.display='none';
 }
 function renderLobby(d){
   $('lobby-code').textContent = d.code;
   $('lobby-time').textContent = d.scheduledFor ? new Date(d.scheduledFor).toLocaleString() : 'On Demand';
-  $('lobby-participants').innerHTML = (d.participants||[]).map(p=>
-    `<span class="pchip ${p.host?'host':''}"><span class="dot"></span>${p.name}${p.host?' · host':''}</span>`).join('');
+  startCountdown(d.scheduledFor);
+  // participants with RSVP status
+  const rsvps = d.rsvps||{};
+  const inviteeRows = (d.invitees||[]).filter(i=>!(d.participants||[]).some(p=>p.id===i.id))
+    .map(i=>`<span class="pchip invited"><span class="dot"></span>${i.name} · invited</span>`).join('');
+  const partRows = (d.participants||[]).map(p=>{
+    const r = rsvps[p.id] || (p.host?'going':'going');
+    const cls = r==='going'?'going':r==='maybe'?'maybe':r==='no'?'no':'';
+    const tag = p.host?' · host':` · ${r}`;
+    return `<span class="pchip ${cls}"><span class="dot"></span>${p.name}${tag}</span>`;
+  }).join('');
+  $('lobby-participants').innerHTML = partRows + inviteeRows;
+  renderRsvpButtons();
+  renderChat();
   // assignments table
   const teams = [...new Set(DRAFT_ORDER.map(p=>p.team))];
   $('assign-table').innerHTML = `
@@ -846,7 +1624,10 @@ function renderLobby(d){
       await State.roomRef.update({assignments:a});
     };
   });
-  $('start-group').style.display = State.isHost?'':'none';
+  const myId = currentUserId() || window.__myId;
+  const amHost = State.isHost || (d.hostId||d.host) === myId;
+  $('start-group').style.display = amHost?'':'none';
+  $('invite-btn').style.display = amHost?'':'none';
 }
 
 async function startGroupNow(){
@@ -854,10 +1635,32 @@ async function startGroupNow(){
   await State.roomRef.update({started:true, currentPick:0});
 }
 async function leaveRoom(){
+  clearInterval(State.countdownTimer);
   if(State.roomUnsub) State.roomUnsub();
   State.roomRef=null; State.roomCode=null;
   $('lobby-pane').style.display='none';
   $('setup-pane').style.display='';
+  listenUpcoming();
+  listenPublicRooms();
+}
+
+/* ============================================================ POST INVITE TO FEED */
+async function postRoomToFeed(room){
+  if(!window.db || !window.firebase) return;
+  const u = currentUser(); if(!u) return;
+  const url = `${location.origin}${location.pathname}?room=${room.code}`;
+  const when = room.scheduledFor ? new Date(room.scheduledFor).toLocaleString() : 'On demand';
+  const post = {
+    author:'u/'+currentUserName(u), authorId:u.uid,
+    authorPhoto: currentUserPhoto(),
+    createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+    tag:'Mock Draft', tagClass:'bg-blue-100 text-blue-700',
+    title:`📋 Open mock draft — ${when} (Room ${room.code})`,
+    content:`Hosting a 2026 NBA mock draft.\n\n**When:** ${when}\n**Room code:** ${room.code}\n**Visibility:** ${room.visibility==='public'?'Public — anyone can join':'Invite only'}\n\nJoin here: ${url}`,
+    imageUrl:null, votes:1, voters:{[u.uid]:'up'}, comments:[]
+  };
+  try{ await window.db.collection('community_posts').add(post); }
+  catch(e){ console.warn('post invite failed', e); }
 }
 
 /* ============================================================ POST TO COMMUNITY */
@@ -904,7 +1707,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('cta-group').onclick= ()=>{switchMode('group'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
   $('cta-join').onclick = ()=>{switchMode('join'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
 
-  $('start-solo').onclick = ()=>startDraft({mode:'solo',userTeam:$('solo-team').value,clockSec:$('solo-clock').value,cpuStyle:$('solo-cpu').value});
+  $('start-solo').onclick = ()=>startDraft({mode:'solo',userTeam:$('solo-team').value,clockSec:$('solo-clock').value,cpuStyle:$('solo-cpu').value,rounds:$('solo-rounds').value});
   $('create-room').onclick = createRoom;
   $('join-room').onclick = joinRoom;
   $('start-group').onclick = startGroupNow;
@@ -913,14 +1716,44 @@ document.addEventListener('DOMContentLoaded',()=>{
     const url = `${location.origin}${location.pathname}?room=${State.roomCode}`;
     navigator.clipboard.writeText(url); toast('Invite link copied');
   };
+  $('ics-btn').onclick = async ()=>{
+    if(!State.roomRef) return;
+    const snap = await State.roomRef.get();
+    if(snap.exists) downloadICS(snap.data());
+  };
+  $('invite-btn').onclick = openInviteModal;
+  $('invite-search').oninput = e=>renderInviteList(e.target.value);
+  document.querySelectorAll('[data-close-invite]').forEach(b=>b.onclick=()=>$('invite-modal').classList.remove('open'));
+
+  // visibility toggle
+  document.querySelectorAll('#vis-row .vis-pill').forEach(p=>{
+    p.onclick = ()=>{
+      document.querySelectorAll('#vis-row .vis-pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      State.visibility = p.dataset.vis;
+    };
+  });
+
+  // RSVP buttons
+  document.querySelectorAll('#rsvp-row .rsvp-btn').forEach(b=>{
+    b.onclick = ()=>setRsvp(b.dataset.rsvp);
+  });
+
+  // Chat
+  $('chat-send').onclick = sendChat;
+  $('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();sendChat();}});
+
   $('reset-draft').onclick = ()=>{
     if(!confirm('Reset draft and return to setup?')) return;
     clearInterval(State.timer);
+    clearInterval(State.countdownTimer);
     State.started=false; State.picks=[]; State.currentPick=0;
     if(State.roomUnsub){State.roomUnsub();State.roomUnsub=null;}
     State.roomRef=null;State.roomCode=null;
     $('draft-pane').style.display='none';
     $('setup-pane').style.display='';
+    listenUpcoming();
+    listenPublicRooms();
   };
   $('player-search').oninput = renderBoard;
   $('player-pos').onchange = renderBoard;
@@ -932,7 +1765,587 @@ document.addEventListener('DOMContentLoaded',()=>{
   const params = new URLSearchParams(location.search);
   const r = params.get('room');
   if(r){ switchMode('join'); $('join-code').value = r.toUpperCase(); }
+
+  // Wait for auth, then power up the upcoming + public boards
+  const startListeners = ()=>{ listenUpcoming(); listenPublicRooms(); loadCommunityUsers(); };
+  if(window.auth && window.auth.onAuthStateChanged){
+    window.auth.onAuthStateChanged(u=>{
+      if(u){
+        if(!$('group-name').value) $('group-name').value = currentUserName(u);
+        $('group-signin-warn').style.display='none';
+      }
+      startListeners();
+    });
+  } else {
+    setTimeout(startListeners, 800);
+  }
 });
+
+
+/* ===== v2: PLAYER DETAIL MODAL ===== */
+function openPlayerDetail(name){
+  const p = PROSPECTS.find(x=>x.name===name); if(!p) return;
+  $('pdetail-title').textContent = p.name;
+  $('pdetail-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:.85rem">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--sixers-blue);color:#fff;
+        display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';
+        font-weight:900;font-size:1.4rem">${p.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</div>
+      <div>
+        <div style="font-family:'Barlow Condensed';font-weight:900;font-size:1.4rem;line-height:1">${p.name}</div>
+        <div style="color:var(--mid);font-size:.88rem">${p.school} · ${p.pos==='G'?'Guard':p.pos==='F'?'Forward':'Center'}</div>
+      </div>
+    </div>
+    <p style="margin:.85rem 0 0;color:var(--ink);line-height:1.55;font-size:.93rem">${blurbFor(p)}</p>
+    <div class="pdetail-grid">
+      <div class="pdetail-stat"><div class="lbl">Big Board Rank</div><div class="val">#${p.rank}</div></div>
+      <div class="pdetail-stat"><div class="lbl">Position</div><div class="val">${p.pos}</div></div>
+      <div class="pdetail-stat"><div class="lbl">School</div><div class="val" style="font-size:.95rem">${p.school}</div></div>
+      <div class="pdetail-stat"><div class="lbl">Status</div><div class="val" style="font-size:.95rem">${takenSet().has(p.name)?'Drafted':'Available'}</div></div>
+    </div>
+  `;
+  const btn = $('pdetail-draft');
+  const canDraft = State.started && !takenSet().has(p.name) && isUserPick(State.currentPick);
+  btn.disabled = !canDraft;
+  btn.style.opacity = canDraft?1:.45;
+  btn.onclick = ()=>{
+    if(!canDraft) return;
+    clearInterval(State.timer);
+    makePick(p,false);
+    $('pdetail-modal').classList.remove('open');
+  };
+  $('pdetail-modal').classList.add('open');
+}
+
+/* ===== v2: EXPORT DRAFT AS PNG ===== */
+async function exportDraftImage(){
+  if(typeof html2canvas==='undefined') return toast('Export library not loaded');
+  const node = $('picks-list');
+  if(!node) return;
+  toast('Generating image…');
+  const canvas = await html2canvas(node,{backgroundColor:'#ffffff',scale:2});
+  canvas.toBlob(blob=>{
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mock-draft-${Date.now()}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('Draft saved as PNG');
+  });
+}
+
+/* ===== v2: REPLAY MODE ===== */
+function showReplay(){
+  const grades = $('grades-panel');
+  if(document.getElementById('replay-bar')) return;
+  const bar = document.createElement('div');
+  bar.id='replay-bar';
+  bar.className='replay-bar';
+  bar.innerHTML = `
+    <span class="rb-label">Replay</span>
+    <input type="range" id="replay-range" min="0" max="${State.picks.filter(Boolean).length}" value="${State.picks.filter(Boolean).length}"/>
+    <span class="rb-label" id="replay-step">Pick ${State.picks.filter(Boolean).length}</span>
+    <button class="export-btn" id="export-png">📸 Save as PNG</button>
+  `;
+  grades.parentElement.parentElement.insertBefore(bar, grades.parentElement.nextSibling);
+  const range = document.getElementById('replay-range');
+  const stepLbl = document.getElementById('replay-step');
+  const fullPicks = [...State.picks];
+  range.oninput = ()=>{
+    const n = Number(range.value);
+    stepLbl.textContent = n===0?'Pre-draft':`Pick ${n}`;
+    State.picks = fullPicks.map((p,i)=>i<n?p:null);
+    renderPicks();
+  };
+  document.getElementById('export-png').onclick = ()=>{
+    State.picks = fullPicks; renderPicks();
+    range.value = fullPicks.length;
+    stepLbl.textContent = `Pick ${fullPicks.length}`;
+    setTimeout(exportDraftImage, 200);
+  };
+}
+
+/* ===== v2: hook into finishDraft ===== */
+const _origFinish = finishDraft;
+window.finishDraft = function(){ _origFinish(); showReplay(); };
+
+/* ===== v2: make player names clickable ===== */
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-player-detail]');
+  if(el) openPlayerDetail(el.dataset.playerDetail);
+});
+document.querySelectorAll('[data-pdetail-close]').forEach(b=>{
+  b.addEventListener('click', ()=>$('pdetail-modal').classList.remove('open'));
+});
+
+
+/* ============================================================
+   v2.2 — MY BOARD (solo, no CPU) + GROUP FORMATS (snake + shared)
+============================================================ */
+
+/* ---------- MY BOARD STATE ---------- */
+const MB = {
+  items: [],          // [{name, school, pos, rank, reason}]
+  title: 'My 2026 NBA Big Board',
+  loadedFromCloud: false,
+  saving: false
+};
+
+function mbStorageKey(){ const u=currentUser(); return u?`sh_myboard_${u.uid}`:'sh_myboard_local'; }
+
+function mbAvailableProspects(){
+  const taken = new Set(MB.items.map(i=>i.name));
+  return PROSPECTS.filter(p=>!taken.has(p.name));
+}
+function refreshMbAddPicker(){
+  const pos = $('mb-add-pos').value;
+  const q = ($('mb-add-search').value||'').toLowerCase();
+  const pool = mbAvailableProspects().filter(p=>{
+    if(pos && p.pos!==pos) return false;
+    if(q && !`${p.name} ${p.school}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).slice(0,80);
+  const sel = $('mb-add-pick');
+  if(!sel) return;
+  sel.innerHTML = pool.length
+    ? pool.map(p=>`<option value="${p.name}">#${p.rank} · ${p.name} (${p.school} · ${p.pos})</option>`).join('')
+    : '<option value="">— no matches —</option>';
+}
+function renderMyBoard(){
+  const list = $('mb-list');
+  if(!list) return;
+  $('mb-stat').textContent = `${MB.items.length} ranked`;
+  if(!MB.items.length){
+    list.innerHTML = `<div class="empty-state" style="padding:2rem;text-align:center;color:var(--mid)">
+      Your board is empty. Use the search above to add prospects in the order you'd take them.</div>`;
+    refreshMbAddPicker();
+    return;
+  }
+  list.innerHTML = MB.items.map((it,i)=>`
+    <div class="mb-row" data-idx="${i}">
+      <div class="mb-rk">${i+1}</div>
+      <div class="mb-info">
+        <div class="mb-name" data-player-detail="${it.name}">${it.name}</div>
+        <div class="mb-meta">${it.school} · ${it.pos}</div>
+        <textarea class="mb-reason" data-reason="${i}"
+          placeholder="Why this rank? (e.g. elite shot creation, plus defender, fits a contender…)">${it.reason||''}</textarea>
+      </div>
+      <div class="mb-actions">
+        <button class="mb-mini" data-mb-up="${i}" ${i===0?'disabled style=\"opacity:.4\"':''}>▲</button>
+        <button class="mb-mini" data-mb-down="${i}" ${i===MB.items.length-1?'disabled style=\"opacity:.4\"':''}>▼</button>
+        <button class="mb-mini danger" data-mb-del="${i}">✕</button>
+      </div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-mb-up]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.mbUp; if(i<=0)return;
+    [MB.items[i-1],MB.items[i]]=[MB.items[i],MB.items[i-1]]; renderMyBoard();
+  });
+  list.querySelectorAll('[data-mb-down]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.mbDown; if(i>=MB.items.length-1)return;
+    [MB.items[i+1],MB.items[i]]=[MB.items[i],MB.items[i+1]]; renderMyBoard();
+  });
+  list.querySelectorAll('[data-mb-del]').forEach(b=>b.onclick=()=>{
+    MB.items.splice(+b.dataset.mbDel,1); renderMyBoard();
+  });
+  list.querySelectorAll('.mb-reason').forEach(t=>{
+    t.oninput = ()=>{ const i=+t.dataset.reason; MB.items[i].reason=t.value; };
+    t.onblur = ()=>{ mbAutoSave(); };
+  });
+  refreshMbAddPicker();
+}
+async function loadMyBoard(){
+  // try Firestore first
+  const u = currentUser();
+  if(u && window.db){
+    try{
+      const snap = await window.db.collection('user_boards').doc(u.uid).get();
+      if(snap.exists){
+        const d = snap.data();
+        MB.items = d.items||[];
+        MB.title = d.title||MB.title;
+        MB.loadedFromCloud = true;
+        return;
+      }
+    }catch(e){ console.warn('myboard load failed', e); }
+  }
+  // fallback to localStorage
+  try{
+    const raw = localStorage.getItem(mbStorageKey());
+    if(raw){ const d=JSON.parse(raw); MB.items=d.items||[]; MB.title=d.title||MB.title; }
+  }catch(e){}
+}
+let _mbSaveTimer=null;
+function mbAutoSave(){
+  clearTimeout(_mbSaveTimer);
+  _mbSaveTimer=setTimeout(saveMyBoard, 800);
+}
+async function saveMyBoard(showToast){
+  if(MB.saving) return; MB.saving=true;
+  try{ localStorage.setItem(mbStorageKey(), JSON.stringify({items:MB.items,title:MB.title})); }catch(e){}
+  const u = currentUser();
+  if(u && window.db && window.firebase){
+    try{
+      await window.db.collection('user_boards').doc(u.uid).set({
+        items: MB.items, title: MB.title,
+        ownerId: u.uid, ownerName: currentUserName(u), ownerPhoto: currentUserPhoto(),
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true});
+      if(showToast) toast('Board saved');
+    }catch(e){ console.warn(e); if(showToast) toast('Save failed (saved locally)'); }
+  } else if(showToast){ toast('Saved locally — sign in to sync'); }
+  MB.saving=false;
+}
+function openMyBoard(){
+  $('setup-pane').style.display='none';
+  $('upcoming-pane').style.display='none';
+  $('browse-pane').style.display='none';
+  $('myboard-pane').style.display='';
+  const t = ($('mb-title').value||'').trim() || MB.title || 'My 2026 NBA Big Board';
+  MB.title = t;
+  $('mb-title-inline').value = t;
+  renderMyBoard();
+}
+function exitMyBoard(){
+  $('myboard-pane').style.display='none';
+  $('setup-pane').style.display='';
+  listenUpcoming(); listenPublicRooms();
+}
+async function postBoardToCommunity(){
+  if(!window.db || !window.firebase) return toast('Database unavailable');
+  const u = currentUser();
+  if(!u) return toast('Sign in on the community page first');
+  if(!MB.items.length) return toast('Add some prospects first');
+  const lines = [`**${MB.title}**`,'',
+    'Personal big board with reasoning:',''];
+  MB.items.forEach((it,i)=>{
+    lines.push(`${i+1}. **${it.name}** (${it.school} · ${it.pos})${it.reason?` — ${it.reason}`:''}`);
+  });
+  lines.push('','Built with the Sixers Hoops Mock Draft Simulator.');
+  try{
+    await window.db.collection('community_posts').add({
+      author:'u/'+currentUserName(u), authorId:u.uid,
+      authorPhoto: currentUserPhoto(),
+      createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      tag:'Big Board', tagClass:'bg-blue-100 text-blue-700',
+      title: MB.title,
+      content: lines.join('\n'),
+      imageUrl:null, votes:1, voters:{[u.uid]:'up'}, comments:[]
+    });
+    toast('Posted to community!');
+  }catch(e){ console.error(e); toast('Post failed'); }
+}
+
+/* ---------- GROUP FORMAT STATE & UI ---------- */
+State.groupFormat = 'team'; // team | snake | shared
+State.snakeOrder = [];      // participant ids in snake order
+State.sharedUnsub = null;
+State.sharedItems = [];
+State.sharedContribs = {};
+
+function selectGroupFormat(fmt){
+  State.groupFormat = fmt;
+  document.querySelectorAll('#format-row .format-pill').forEach(p=>{
+    p.classList.toggle('active', p.dataset.format===fmt);
+  });
+}
+
+/* ---------- SNAKE DRAFT helpers ---------- */
+function buildSnakeAssignments(participants, rounds){
+  // map pickIndex -> participantId, snake order across rounds of DRAFT_ORDER
+  const order = [...participants];
+  const a = {};
+  let picksPerRound = DRAFT_ORDER.length;
+  for(let r=0; r<rounds; r++){
+    const dir = (r%2===0) ? order : [...order].reverse();
+    for(let i=0;i<picksPerRound;i++){
+      const pickIdx = r*picksPerRound + i;
+      if(pickIdx >= picksPerRound*rounds) break;
+      a[pickIdx] = dir[i % dir.length].id;
+    }
+  }
+  return a;
+}
+
+/* ---------- SHARED BOARD (collab) ---------- */
+function listenSharedBoard(code){
+  if(!window.db) return;
+  const ref = window.db.collection('mock_draft_rooms').doc(code).collection('shared_board').doc('main');
+  if(State.sharedUnsub) State.sharedUnsub();
+  State.sharedUnsub = ref.onSnapshot(snap=>{
+    const d = snap.exists ? snap.data() : {items:[], contributors:{}};
+    State.sharedItems = d.items||[];
+    State.sharedContribs = d.contributors||{};
+    renderSharedBoard();
+  });
+}
+function refreshSharedAddPicker(){
+  const sel = $('shared-add-pick'); if(!sel) return;
+  const taken = new Set(State.sharedItems.map(i=>i.name));
+  const pos = $('shared-add-pos').value;
+  const q = ($('shared-add-search').value||'').toLowerCase();
+  const pool = PROSPECTS.filter(p=>{
+    if(taken.has(p.name)) return false;
+    if(pos && p.pos!==pos) return false;
+    if(q && !`${p.name} ${p.school}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).slice(0,80);
+  sel.innerHTML = pool.length
+    ? pool.map(p=>`<option value="${p.name}">#${p.rank} · ${p.name} (${p.school} · ${p.pos})</option>`).join('')
+    : '<option value="">— no matches —</option>';
+}
+function renderSharedBoard(){
+  const list = $('shared-list'); if(!list) return;
+  $('shared-stat').textContent = `${State.sharedItems.length} ranked · ${Object.keys(State.sharedContribs).length} contributors`;
+  $('shared-room-tag').textContent = State.roomCode ? `· Room ${State.roomCode}` : '';
+  if(!State.sharedItems.length){
+    list.innerHTML = `<div class="empty-state" style="padding:2rem;text-align:center;color:var(--mid)">
+      No prospects yet — anyone in the room can add one.</div>`;
+    refreshSharedAddPicker();
+    return;
+  }
+  list.innerHTML = State.sharedItems.map((it,i)=>{
+    const author = it.addedByName ? `<span class="mb-author-chip">added by ${it.addedByName}</span>`:'';
+    return `<div class="mb-row" data-idx="${i}">
+      <div class="mb-rk">${i+1}</div>
+      <div class="mb-info">
+        <div class="mb-name" data-player-detail="${it.name}">${it.name}${author}</div>
+        <div class="mb-meta">${it.school} · ${it.pos}</div>
+        <textarea class="mb-reason" data-sreason="${i}"
+          placeholder="Group reasoning — anyone can edit…">${it.reason||''}</textarea>
+      </div>
+      <div class="mb-actions">
+        <button class="mb-mini" data-s-up="${i}" ${i===0?'disabled style=\"opacity:.4\"':''}>▲</button>
+        <button class="mb-mini" data-s-down="${i}" ${i===State.sharedItems.length-1?'disabled style=\"opacity:.4\"':''}>▼</button>
+        <button class="mb-mini danger" data-s-del="${i}">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('[data-s-up]').forEach(b=>b.onclick=()=>moveShared(+b.dataset.sUp,-1));
+  list.querySelectorAll('[data-s-down]').forEach(b=>b.onclick=()=>moveShared(+b.dataset.sDown,1));
+  list.querySelectorAll('[data-s-del]').forEach(b=>b.onclick=()=>delShared(+b.dataset.sDel));
+  list.querySelectorAll('[data-sreason]').forEach(t=>{
+    let timer=null;
+    t.oninput = ()=>{
+      State.sharedItems[+t.dataset.sreason].reason = t.value;
+      clearTimeout(timer); timer=setTimeout(()=>persistShared(), 600);
+    };
+  });
+  refreshSharedAddPicker();
+}
+async function persistShared(){
+  if(!State.roomCode || !window.db) return;
+  const u = currentUser();
+  const contribs = {...State.sharedContribs};
+  if(u){ contribs[u.uid] = {name: currentUserName(u), photo: currentUserPhoto(), at: Date.now()}; }
+  try{
+    await window.db.collection('mock_draft_rooms').doc(State.roomCode)
+      .collection('shared_board').doc('main')
+      .set({items: State.sharedItems, contributors: contribs, updatedAt: Date.now()}, {merge:true});
+  }catch(e){ console.warn('shared persist failed', e); toast('Sync failed'); }
+}
+function moveShared(i,dir){
+  const j=i+dir; if(j<0||j>=State.sharedItems.length) return;
+  [State.sharedItems[i],State.sharedItems[j]]=[State.sharedItems[j],State.sharedItems[i]];
+  renderSharedBoard(); persistShared();
+}
+function delShared(i){
+  State.sharedItems.splice(i,1); renderSharedBoard(); persistShared();
+}
+function addShared(){
+  const sel = $('shared-add-pick'); const name = sel.value; if(!name) return;
+  const p = PROSPECTS.find(x=>x.name===name); if(!p) return;
+  const u = currentUser();
+  State.sharedItems.push({
+    name:p.name, school:p.school, pos:p.pos,
+    reason:'',
+    addedById: u?u.uid:null,
+    addedByName: u?currentUserName(u):'Guest'
+  });
+  $('shared-add-search').value='';
+  renderSharedBoard(); persistShared();
+}
+function showSharedPane(){
+  $('setup-pane').style.display='none';
+  $('lobby-pane').style.display='none';
+  $('draft-pane').style.display='none';
+  $('upcoming-pane').style.display='none';
+  $('browse-pane').style.display='none';
+  $('shared-pane').style.display='';
+  listenSharedBoard(State.roomCode);
+}
+function exitShared(){
+  if(State.sharedUnsub){ State.sharedUnsub(); State.sharedUnsub=null; }
+  $('shared-pane').style.display='none';
+  leaveRoom();
+}
+
+/* ---------- HOOK: createRoom now stores format ---------- */
+const _origCreateRoom = createRoom;
+window.createRoom = async function(){
+  // monkey-patch: call original then patch the doc with format
+  // Easier: re-implement a thin version that adds format before set.
+  const name = $('group-name').value.trim();
+  const time = $('group-time').value;
+  const clock = Number($('group-clock').value);
+  if(!name) return toast('Enter a display name');
+  if(!window.db) return toast('Database unavailable');
+  const u = currentUser();
+  if(!u){ $('group-signin-warn').style.display=''; return toast('Sign in on the community page first'); }
+  const code = code6();
+  const myId = u.uid;
+  window.__myId = myId;
+  State.myName = name;
+  State.isHost = true;
+  State.roomCode = code;
+  State.clockSec = clock;
+  const visibility = State.visibility || 'invite';
+  const format = State.groupFormat || 'team';
+  const room = {
+    code, host:myId, hostId:myId, hostName:name,
+    scheduledFor:time||null, clockSec:clock,
+    visibility, format,
+    participants:[{id:myId,name,host:true,photo:currentUserPhoto()}],
+    invitees:[],
+    rsvps:{[myId]:'going'},
+    chat:[],
+    assignments:{}, picks:{}, currentPick:0, started:false, createdAt:Date.now()
+  };
+  try{
+    await window.db.collection('mock_draft_rooms').doc(code).set(room);
+    listenRoom(code);
+    if(format==='shared'){
+      // initialize shared board doc
+      await window.db.collection('mock_draft_rooms').doc(code)
+        .collection('shared_board').doc('main')
+        .set({items:[], contributors:{[myId]:{name, photo:currentUserPhoto(), at:Date.now()}}}, {merge:true});
+      showSharedPane();
+    } else {
+      showLobby();
+    }
+    if($('group-postfeed') && $('group-postfeed').checked) await postRoomToFeed(room);
+  }catch(e){ console.error(e); toast('Could not create room'); }
+};
+
+/* ---------- HOOK: listenRoom — branch on format ---------- */
+const _origListenRoom = listenRoom;
+window.listenRoom = function(code){
+  const ref = window.db.collection('mock_draft_rooms').doc(code);
+  State.roomRef = ref;
+  if(State.roomUnsub) State.roomUnsub();
+  State.roomUnsub = ref.onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const d = snap.data();
+    State.participants = d.participants||[];
+    State.assignments = d.assignments||{};
+    State.clockSec = d.clockSec||120;
+    State.invitees = d.invitees||[];
+    State.rsvps = d.rsvps||{};
+    State.chat = d.chat||[];
+    State.visibility = d.visibility||'invite';
+    State.groupFormat = d.format||'team';
+    if(State.groupFormat==='shared'){
+      // skip the lobby + draft engine entirely
+      if($('shared-pane').style.display==='none' || !$('shared-pane').style.display){
+        showSharedPane();
+      }
+      return;
+    }
+    if(d.started){
+      if(!State.started){
+        State.mode='group';
+        startDraft({mode:'group',userTeam:null,clockSec:d.clockSec,cpuStyle:'bpa',
+                    rounds: State.groupFormat==='snake' ? 2 : 1});
+      }
+      const len = (State.fullOrder||DRAFT_ORDER).length;
+      const newPicks = Array.from({length:len},(_,i)=> d.picks?.[i] || null);
+      State.picks = newPicks;
+      State.currentPick = d.currentPick||0;
+      renderAll();
+      if(State.currentPick>=len) finishDraft();
+    } else {
+      renderLobby(d);
+      // for snake, auto-fill assignments based on participant order
+      if(State.groupFormat==='snake' && State.isHost){
+        const desired = buildSnakeAssignments(State.participants, 2);
+        const same = JSON.stringify(desired)===JSON.stringify(State.assignments||{});
+        if(!same){
+          State.roomRef.update({assignments: desired}).catch(()=>{});
+        }
+      }
+    }
+  });
+};
+
+/* ---------- HOOK: startGroupNow — for snake, use 2 rounds ---------- */
+const _origStartGroupNow = startGroupNow;
+window.startGroupNow = async function(){
+  if(!State.roomRef) return;
+  const update = {started:true, currentPick:0};
+  if(State.groupFormat==='snake'){
+    // make sure assignments are set
+    const a = buildSnakeAssignments(State.participants, 2);
+    update.assignments = a;
+    update.rounds = 2;
+  }
+  await State.roomRef.update(update);
+};
+
+/* ---------- HOOK: switchMode — show My Board pane ---------- */
+const _origSwitch = switchMode;
+window.switchMode = function(mode){
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  $('setup-solo').style.display = mode==='solo'?'':'none';
+  $('setup-group').style.display = mode==='group'?'':'none';
+  $('setup-join').style.display = mode==='join'?'':'none';
+  const mb = $('setup-myboard'); if(mb) mb.style.display = mode==='myboard'?'':'none';
+};
+
+/* ---------- WIRE UP ---------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // format pills
+  document.querySelectorAll('#format-row .format-pill').forEach(p=>{
+    p.onclick = ()=>selectGroupFormat(p.dataset.format);
+  });
+
+  // My Board buttons
+  if($('start-myboard')) $('start-myboard').onclick = async ()=>{
+    await loadMyBoard();
+    const t = ($('mb-title').value||'').trim();
+    if(t) MB.title = t;
+    openMyBoard();
+  };
+  if($('mb-exit')) $('mb-exit').onclick = exitMyBoard;
+  if($('mb-save')) $('mb-save').onclick = ()=>saveMyBoard(true);
+  if($('mb-post')) $('mb-post').onclick = postBoardToCommunity;
+  if($('mb-title-inline')) $('mb-title-inline').oninput = e=>{ MB.title = e.target.value; mbAutoSave(); };
+  if($('mb-add-search')) $('mb-add-search').oninput = refreshMbAddPicker;
+  if($('mb-add-pos')) $('mb-add-pos').onchange = refreshMbAddPicker;
+  if($('mb-add-btn')) $('mb-add-btn').onclick = ()=>{
+    const sel = $('mb-add-pick'); const name = sel.value; if(!name) return;
+    const p = PROSPECTS.find(x=>x.name===name); if(!p) return;
+    MB.items.push({name:p.name, school:p.school, pos:p.pos, rank:p.rank, reason:''});
+    $('mb-add-search').value='';
+    renderMyBoard(); mbAutoSave();
+  };
+
+  // Shared board buttons
+  if($('shared-add-search')) $('shared-add-search').oninput = refreshSharedAddPicker;
+  if($('shared-add-pos')) $('shared-add-pos').onchange = refreshSharedAddPicker;
+  if($('shared-add-btn')) $('shared-add-btn').onclick = addShared;
+  if($('shared-copy')) $('shared-copy').onclick = ()=>{
+    const url = `${location.origin}${location.pathname}?room=${State.roomCode}`;
+    navigator.clipboard.writeText(url); toast('Invite link copied');
+  };
+  if($('shared-exit')) $('shared-exit').onclick = exitShared;
+
+  // refresh user board on auth change
+  if(window.auth && window.auth.onAuthStateChanged){
+    window.auth.onAuthStateChanged(async u=>{
+      if(u){ MB.items=[]; MB.loadedFromCloud=false; await loadMyBoard(); if($('myboard-pane').style.display!=='none') renderMyBoard(); }
+    });
+  }
+});
+
 </script>
 </body>
 </html>
