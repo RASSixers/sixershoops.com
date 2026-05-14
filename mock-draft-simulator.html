@@ -1249,10 +1249,10 @@ function startDraft({mode,userTeam,clockSec,cpuStyle,rounds}){
   $('ds-room-pill').style.display = mode==='group'?'':'none';
   if(mode==='group') $('ds-room').textContent=State.roomCode;
   const dcw = $('draft-chat-wrap'); if(dcw) dcw.style.display = mode==='group'?'':'none';
-  // Hide draft grades entirely in solo mode
+  // Hide draft grades entirely (removed per design)
   const gsl = $('grades-section-label'), gpw = $('grades-panel-wrap');
-  if(gsl) gsl.style.display = mode==='solo'?'none':'';
-  if(gpw) gpw.style.display = mode==='solo'?'none':'';
+  if(gsl) gsl.style.display = 'none';
+  if(gpw) gpw.style.display = 'none';
   // Sync mode tabs (both setup + draft copies)
   document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
 
@@ -1417,7 +1417,15 @@ function renderClock(){
     </div>
     <div style="font-size:.85rem;color:var(--mid)">
       ${mine?'<strong style="color:var(--sixers-blue)">You\u2019re on the clock.</strong> Pick from the big board.'
-            :'CPU/other GM is picking. Auto-pick fires when the clock hits zero.'}
+            :(function(){
+                if(State.mode==='group'){
+                  const uid = State.assignments[i];
+                  const part = (State.participants||[]).find(p=>p.id===uid);
+                  const nm = part ? part.name : 'next GM';
+                  return 'Waiting for <strong style="color:var(--ink)">'+nm.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))+'</strong> to pick. Auto-pick fires at 0:00.';
+                }
+                return 'CPU is picking. Auto-pick fires when the clock hits zero.';
+              })()}
     </div>
     ${mine?`<div style="margin-top:.75rem">
         <label style="display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mid);margin-bottom:.3rem">Reasoning (optional)</label>
@@ -1875,28 +1883,51 @@ function _escHtml(s){ return String(s||'').replace(/[<>&]/g,c=>({ '<':'&lt;','>'
 
 function buildSocialCardNode(){
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:1200px;height:1500px;background:#f4ecd8;padding:60px;font-family:Barlow,sans-serif;color:#0d0f1a;box-sizing:border-box';
+  wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:1000px;background:#f7f8fc;padding:40px;font-family:Barlow,sans-serif;color:#0d0f1a;box-sizing:border-box';
   const made = State.picks.map((p,i)=>({p,i})).filter(x=>x.p);
-  const rows = made.slice(0,15).map(({p,i})=>{
-    const slot = State.fullOrder[i];
-    return `<div style="display:flex;align-items:center;gap:18px;padding:11px 0;border-bottom:1px solid #e4d9bd">
-      <div style="width:46px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.7rem;color:#ED174C;text-align:right">${slot.pick}</div>
-      <div style="width:60px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;color:#006BB6;letter-spacing:.05em">${slot.team}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.5rem;line-height:1.1;color:#0d0f1a">${_escHtml(p.name)}</div>
-        <div style="color:#5b5346;font-size:.85rem;margin-top:2px">${_escHtml(p.school||'')} · ${_escHtml(p.pos||'')}</div>
-      </div>
-    </div>`;
-  }).join('');
   const author = (typeof currentUserName==='function' ? currentUserName() : '') || 'Anonymous';
-  wrap.innerHTML = `
-    <div style="background:#ffffff;border-radius:14px;padding:48px 52px;height:100%;box-sizing:border-box;border-left:10px solid #006BB6;display:flex;flex-direction:column">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#ED174C;font-size:1rem">Solo Mock Draft · 2026 NBA</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3.6rem;line-height:.95;margin-top:6px;color:#0d0f1a">First Round Picks</div>
-      <div style="color:#5b5346;font-size:.95rem;margin-top:8px">by ${_escHtml(author)} · ${new Date().toLocaleDateString()}</div>
-      <div style="margin-top:22px;flex:1;overflow:hidden">${rows || '<div style="color:#5b5346;padding:40px 0">No picks yet.</div>'}</div>
-      <div style="margin-top:18px;text-align:center;color:#5b5346;font-size:.85rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700">sixershoops.com</div>
-    </div>`;
+  const modeLabel = State.mode==='group'
+    ? (State.groupFormat==='snake' ? 'Group Snake Draft' : 'Group Team Draft')
+    : 'Solo Mock Draft';
+
+  const rows = made.slice(0,30).map(function(o){
+    const p=o.p, i=o.i, slot=State.fullOrder[i];
+    const isSixers = slot.team === 'PHI';
+    return '<tr style="background:'+(isSixers?'rgba(0,107,182,.07)':'transparent')+'">'+
+      '<td style="padding:9px 6px;border-bottom:1px solid #f1f3f8;text-align:left;font-variant-numeric:tabular-nums">'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<span style="display:inline-block;width:26px;text-align:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:13px;color:#64748b;background:#f1f3f8;border-radius:5px;padding:3px 0">'+(i+1)+'</span>'+
+          '<span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;color:#006BB6;letter-spacing:.04em;font-size:14px;min-width:38px">'+slot.team+'</span>'+
+          '<span style="font-weight:'+(isSixers?800:600)+'">'+_escHtml(p.name)+'</span>'+
+        '</div>'+
+      '</td>'+
+      '<td style="padding:9px 6px;border-bottom:1px solid #f1f3f8;text-align:right;color:#64748b;font-size:13px">'+_escHtml(p.school||'')+'</td>'+
+      '<td style="padding:9px 6px;border-bottom:1px solid #f1f3f8;text-align:right">'+
+        '<span style="display:inline-block;min-width:32px;padding:3px 8px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:12px;letter-spacing:.04em;background:#f1f3f8;color:#64748b">'+_escHtml(p.pos||'')+'</span>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+
+  wrap.innerHTML =
+    '<div style="text-align:center;margin-bottom:28px">'+
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:800;letter-spacing:.22em;color:#ED174C;text-transform:uppercase">Sixers Hoops</div>'+
+      '<h1 style="font-family:\'Barlow Condensed\',sans-serif;font-size:52px;font-weight:900;color:#0d0f1a;text-transform:uppercase;margin:6px 0 4px;letter-spacing:-.01em;line-height:1">2026 Mock Draft</h1>'+
+      '<div style="width:48px;height:4px;background:#ED174C;border-radius:2px;margin:10px auto"></div>'+
+      '<div style="font-size:13px;color:#64748b;letter-spacing:.05em">'+modeLabel+' · by '+_escHtml(author)+' · '+new Date().toLocaleDateString()+'</div>'+
+    '</div>'+
+    '<div style="background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:22px 22px 14px;position:relative;overflow:hidden;box-shadow:0 8px 28px -18px rgba(15,23,42,.18)">'+
+      '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#006BB6,#1e90d8 60%,#006BB6)"></div>'+
+      '<h3 style="font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;color:#0d0f1a;margin:6px 0 14px">First Round</h3>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:14px">'+
+        '<thead><tr>'+
+          '<th style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#64748b;text-align:left;padding:6px 6px;border-bottom:1px solid #e4e8f0">Pick · Team · Player</th>'+
+          '<th style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#64748b;text-align:right;padding:6px 6px;border-bottom:1px solid #e4e8f0">School</th>'+
+          '<th style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#64748b;text-align:right;padding:6px 6px;border-bottom:1px solid #e4e8f0">Pos</th>'+
+        '</tr></thead>'+
+        '<tbody>'+(rows || '<tr><td colspan="3" style="padding:30px;text-align:center;color:#64748b">No picks yet.</td></tr>')+'</tbody>'+
+      '</table>'+
+    '</div>'+
+    '<div style="margin-top:18px;text-align:center;color:#64748b;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700">sixershoops.com</div>';
   document.body.appendChild(wrap);
   return wrap;
 }
@@ -1905,7 +1936,7 @@ async function buildSocialCardBlob(){
   if(typeof html2canvas==='undefined'){ toast('Export library not loaded'); return null; }
   const node = buildSocialCardNode();
   try{
-    const canvas = await html2canvas(node,{backgroundColor:'#f4ecd8',scale:2});
+    const canvas = await html2canvas(node,{backgroundColor:'#f7f8fc',scale:2,useCORS:true,allowTaint:true,logging:false});
     return await new Promise(res=>canvas.toBlob(res,'image/png'));
   } finally { node.remove(); }
 }
