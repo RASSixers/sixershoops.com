@@ -294,15 +294,6 @@
   .uc-btn.ghost{background:#fff;color:var(--mid);border:1px solid var(--border-light)}
   .uc-btn.ghost:hover{border-color:var(--sixers-blue);color:var(--sixers-blue)}
 
-  /* RSVP */
-  .rsvp-row{display:flex;gap:.4rem;flex-wrap:wrap}
-  .rsvp-btn{background:#fff;border:1px solid var(--border-light);padding:.4rem .85rem;
-    border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
-    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;color:var(--mid);transition:all .15s}
-  .rsvp-btn:hover{border-color:var(--sixers-blue);color:var(--sixers-blue)}
-  .rsvp-btn.active.going{background:var(--green);border-color:var(--green);color:#fff}
-  .rsvp-btn.active.maybe{background:#d97706;border-color:#d97706;color:#fff}
-  .rsvp-btn.active.no{background:var(--sixers-red);border-color:var(--sixers-red);color:#fff}
 
   .pchip.going{background:rgba(22,163,74,.12);color:var(--green)}
   .pchip.going .dot{background:var(--green)}
@@ -474,7 +465,7 @@
 
         <div id="setup-group" style="display:none">
           <div id="group-signin-warn" class="signin-banner" style="display:none">
-            ⚠️ Sign in on the community page first so friends can find and invite you.
+Sign in on the community page first so friends can find and invite you.
           </div>
           <div class="setup-grid">
             <div class="field">
@@ -519,16 +510,12 @@
             <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;
               font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin-bottom:.4rem">Visibility</label>
             <div class="visibility-row" id="vis-row">
-              <div class="vis-pill active" data-vis="invite">🔒 Invite only</div>
-              <div class="vis-pill" data-vis="public">🌐 Public — anyone can join</div>
+              <div class="vis-pill active" data-vis="invite">Invite only</div>
+              <div class="vis-pill" data-vis="public">Public — anyone can join</div>
             </div>
           </div>
-          <div style="margin-top:1rem;display:flex;align-items:center;gap:.5rem">
-            <input type="checkbox" id="group-postfeed" checked style="width:18px;height:18px;accent-color:var(--sixers-blue)"/>
-            <label for="group-postfeed" style="font-size:.88rem;color:var(--ink);cursor:pointer">Auto-post invite to the community feed</label>
-          </div>
           <p style="color:var(--mid);font-size:.85rem;margin:.85rem 0 0">
-            You'll get a 6-character code + an invite list. Friends get a notification, can RSVP, and pick teams in the lobby.
+            You'll get a 6-character code + an invite list. Friends get a notification and can pick teams in the lobby.
           </p>
         </div>
 
@@ -586,7 +573,6 @@
           </div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap">
             <button class="copy-btn" id="copy-link">Copy Invite Link</button>
-            <button class="copy-btn" id="ics-btn">Add to Calendar</button>
             <button class="copy-btn" id="invite-btn">Invite Friends</button>
           </div>
         </div>
@@ -600,14 +586,6 @@
             Once the timer hits zero the host can launch the draft. Anyone who's marked Going will jump straight in.
           </div>
         </div>
-
-        <div class="section-label" style="margin-top:.25rem">Pick Grades</div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;font-size:.82rem;color:var(--mid);background:#f6f8fc;border:1px solid var(--border-light);border-radius:10px;padding:.6rem .75rem">
-          <span>Every pick gets a live grade vs. its big-board rank:</span>
-          <span class="grade-A">A steal</span><span class="grade-B">B value</span>
-          <span class="grade-C">C neutral</span><span class="grade-D">D reach</span>
-        </div>
-
         <div class="section-label" style="margin-top:.25rem">Participants</div>
         <div class="participants" id="lobby-participants"></div>
 
@@ -713,7 +691,7 @@
           </div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap">
             <button class="copy-btn" id="mb-save">Save</button>
-            <button class="copy-btn" id="mb-export">📸 Save as PNG</button>
+            <button class="copy-btn" id="mb-export">Save as PNG</button>
             <button class="copy-btn" id="mb-post">Post to Community</button>
             <button class="btn-ghost" id="mb-exit">Exit</button>
           </div>
@@ -796,7 +774,7 @@
       <div class="modal-body">
         <input class="invite-search" id="invite-search" placeholder="Search community members by name…" />
         <div class="invite-list" id="invite-list"></div>
-        <p style="color:var(--mid);font-size:.78rem;margin-top:.6rem">Members get a notification with the room code. They can RSVP from the lobby.</p>
+        <p style="color:var(--mid);font-size:.78rem;margin-top:.6rem">Members get a notification with the room code and can join from the lobby.</p>
       </div>
       <div class="modal-foot">
         <button class="btn-primary" data-close-invite>Done</button>
@@ -1005,32 +983,6 @@ async function sendDraftInvite(recipientId, recipientName){
   }catch(e){ console.warn('notif failed', e); }
 }
 
-/* ============================================================ ICS CALENDAR */
-function downloadICS(room){
-  if(!room.scheduledFor) return toast('No scheduled time set');
-  const dt = new Date(room.scheduledFor);
-  const fmtICS = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-  const start = fmtICS(dt);
-  const end = fmtICS(new Date(dt.getTime()+90*60*1000));
-  const url = `${location.origin}${location.pathname}?room=${room.code}`;
-  const ics = [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SixersHoops//MockDraft//EN',
-    'BEGIN:VEVENT',
-    `UID:${room.code}@sixershoops`,
-    `DTSTAMP:${fmtICS(new Date())}`,
-    `DTSTART:${start}`,`DTEND:${end}`,
-    `SUMMARY:2026 NBA Mock Draft (Room ${room.code})`,
-    `DESCRIPTION:Join the mock draft: ${url}`,
-    `URL:${url}`,
-    'END:VEVENT','END:VCALENDAR'
-  ].join('\r\n');
-  const blob = new Blob([ics],{type:'text/calendar'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `mock-draft-${room.code}.ics`;
-  document.body.appendChild(a); a.click(); a.remove();
-  toast('Calendar invite downloaded');
-}
 
 /* ============================================================ COUNTDOWN */
 function startCountdown(scheduledFor){
@@ -1092,31 +1044,22 @@ function renderUpcoming(rooms){
       else if(ms<0){ label='Past — '+time.toLocaleString(); cls='past'; }
       else label = time.toLocaleString();
     }
-    const myRsvp = (r.rsvps||{})[currentUserId()] || (r.hostId===currentUserId()?'going':'invited');
-    const goingCount = Object.values(r.rsvps||{}).filter(v=>v==='going').length + 1;
     return `<div class="upcoming-card">
       <div class="uc-host">Host: ${r.hostName||'Host'}</div>
       <div class="uc-time">Room ${r.code}</div>
       <div class="uc-countdown ${cls}">${label}</div>
       <div class="uc-meta">
-        <span class="tag">${goingCount} going</span>
         <span class="tag">${(r.participants||[]).length} in lobby</span>
         <span class="tag">${r.visibility==='public'?'Public':'Invite only'}</span>
-        <span class="tag">RSVP: ${myRsvp}</span>
       </div>
       <div class="uc-actions">
         <button class="uc-btn" data-join="${r.code}">${r.started?'Join Live':'Open Lobby'}</button>
-        ${time?`<button class="uc-btn ghost" data-ics="${r.code}">+ Calendar</button>`:''}
         ${r.hostId===currentUserId()?`<button class="uc-btn ghost" data-del="${r.code}" style="color:var(--red);border-color:#fbd5da">Delete</button>`:''}
       </div>
     </div>`;
   }).join('');
   grid.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>quickJoin(b.dataset.join));
   grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteRoom(b.dataset.del));
-  grid.querySelectorAll('[data-ics]').forEach(b=>b.onclick=async ()=>{
-    const snap = await window.db.collection('mock_draft_rooms').doc(b.dataset.ics).get();
-    if(snap.exists) downloadICS(snap.data());
-  });
 }
 
 /* ============================================================ PUBLIC ROOMS BROWSER */
@@ -1205,7 +1148,7 @@ function renderInviteList(q){
       <div class="invite-avatar">${u.photo?`<img src="${u.photo}" alt=""/>`:initial}</div>
       <div class="invite-name">${u.name}</div>
       <button class="invite-add ${already?'added':''}" data-uid="${u.id}" data-name="${u.name}" data-photo="${u.photo||''}" ${already?'disabled':''}>
-        ${already?'✓ Invited':'Invite'}
+        ${already?'Invited':'Invite'}
       </button>
     </div>`;
   }).join('');
@@ -1224,24 +1167,6 @@ async function inviteUser(user){
     toast(`Invited ${user.name}`);
     renderInviteList($('invite-search').value);
   }catch(e){ console.error(e); toast('Invite failed'); }
-}
-
-/* ============================================================ RSVP */
-async function setRsvp(status){
-  if(!State.roomRef) return;
-  const me = currentUserId() || window.__myId;
-  if(!me) return toast('Sign in to RSVP');
-  const rsvps = {...(State.rsvps||{})};
-  rsvps[me] = status;
-  try{ await State.roomRef.update({rsvps}); }
-  catch(e){ console.error(e); toast('RSVP failed'); }
-}
-function renderRsvpButtons(){
-  const me = currentUserId() || window.__myId;
-  const my = (State.rsvps||{})[me];
-  document.querySelectorAll('#rsvp-row .rsvp-btn').forEach(b=>{
-    b.classList.toggle('active', b.dataset.rsvp===my);
-  });
 }
 
 /* ============================================================ CHAT */
@@ -1458,7 +1383,7 @@ function renderPicks(){
     const onClock = i===State.currentPick && State.started;
     const completed = !!pick;
     const userTeam = isUserPick(i);
-    const grade = completed ? pickGrade(pick, i+1) : null;
+    const grade = null;
     return `<div class="pick-row ${onClock?'on-clock':''} ${completed?'completed':''} ${userTeam?'user-team':''}" data-idx="${i}">
       <div class="pick-num">${i+1}</div>
       <img class="pick-logo" src="${logo(slot.team)}" alt="${slot.team}" onerror="this.style.opacity=.3"/>
@@ -1587,7 +1512,6 @@ async function createRoom(){
     visibility,
     participants:[{id:myId,name,host:true,photo:currentUserPhoto()}],
     invitees:[],
-    rsvps:{[myId]:'going'},
     chat:[],
     assignments:{}, picks:{}, currentPick:0, started:false, createdAt:Date.now()
   };
@@ -1595,9 +1519,6 @@ async function createRoom(){
     await window.db.collection('mock_draft_rooms').doc(code).set(room);
     listenRoom(code);
     showLobby();
-    if($('group-postfeed') && $('group-postfeed').checked){
-      await postRoomToFeed(room);
-    }
   }catch(e){ console.error(e); toast('Could not create room'); }
 }
 async function joinRoom(){
@@ -1626,10 +1547,8 @@ async function joinRoom(){
   const participants = alreadyIn
     ? existing.map(p=>p.id===myId?{...p,name}:p)
     : [...existing,{id:myId,name,host:false,photo:currentUserPhoto()}];
-  const rsvps = {...(data.rsvps||{})};
-  if(!rsvps[myId]) rsvps[myId] = 'going';
   State.isHost = (data.hostId||data.host) === myId;
-  await ref.update({participants, rsvps});
+  await ref.update({participants});
   listenRoom(code);
   showLobby();
 }
@@ -1644,7 +1563,6 @@ function listenRoom(code){
     State.assignments = d.assignments||{};
     State.clockSec = d.clockSec||120;
     State.invitees = d.invitees||[];
-    State.rsvps = d.rsvps||{};
     State.chat = d.chat||[];
     State.visibility = d.visibility||'invite';
     State.hostId = d.hostId || d.host;
@@ -1683,7 +1601,7 @@ function renderLobby(d){
   $('lobby-code').textContent = d.code;
   $('lobby-time').textContent = d.scheduledFor ? new Date(d.scheduledFor).toLocaleString() : 'On Demand';
   startCountdown(d.scheduledFor);
-  // participants list (no RSVP)
+  // participants list
   const inviteeRows = (d.invitees||[]).filter(i=>!(d.participants||[]).some(p=>p.id===i.id))
     .map(i=>`<span class="pchip invited"><span class="dot"></span>${i.name} · invited</span>`).join('');
   const partRows = (d.participants||[]).map(p=>{
@@ -1789,7 +1707,7 @@ async function postRoomToFeed(room){
     authorPhoto: currentUserPhoto(),
     createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
     tag:'Mock Draft', tagClass:'bg-blue-100 text-blue-700',
-    title:`📋 Open mock draft — ${when} (Room ${room.code})`,
+    title:`Open mock draft — ${when} (Room ${room.code})`,
     content:`Hosting a 2026 NBA mock draft.\n\n**When:** ${when}\n**Room code:** ${room.code}\n**Visibility:** ${room.visibility==='public'?'Public — anyone can join':'Invite only'}\n\nJoin here: ${url}`,
     imageUrl:null, votes:1, voters:{[u.uid]:'up'}, comments:[]
   };
@@ -1851,11 +1769,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     const url = `${location.origin}${location.pathname}?room=${State.roomCode}`;
     navigator.clipboard.writeText(url); toast('Invite link copied');
   };
-  $('ics-btn').onclick = async ()=>{
-    if(!State.roomRef) return;
-    const snap = await State.roomRef.get();
-    if(snap.exists) downloadICS(snap.data());
-  };
   $('invite-btn').onclick = openInviteModal;
   $('invite-search').oninput = e=>renderInviteList(e.target.value);
   document.querySelectorAll('[data-close-invite]').forEach(b=>b.onclick=()=>$('invite-modal').classList.remove('open'));
@@ -1869,7 +1782,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     };
   });
 
-  // (RSVP system removed — replaced by live Pick Grades)
 
   // Chat
   $('chat-send').onclick = ()=>sendChat('chat-input');
@@ -2017,8 +1929,8 @@ async function exportDraftImage(){
       </div>
       <img src="${url}" style="width:100%;border-radius:10px;border:1px solid #e4e8f0"/>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button id="social-copy" class="btn-primary" style="flex:1">📋 Copy Image</button>
-        <button id="social-download" class="btn-primary" style="flex:1">⬇️ Download PNG</button>
+        <button id="social-copy" class="btn-primary" style="flex:1">Copy Image</button>
+        <button id="social-download" class="btn-primary" style="flex:1">Download PNG</button>
       </div>
       <div id="social-msg" style="margin-top:10px;color:#5b5346;font-size:.85rem;text-align:center;min-height:1.2em"></div>
     </div>`;
@@ -2029,14 +1941,14 @@ async function exportDraftImage(){
   modal.querySelector('#social-download').onclick = ()=>{
     const a = document.createElement('a'); a.href = url; a.download = `mock-draft-${Date.now()}.png`;
     document.body.appendChild(a); a.click(); a.remove();
-    modal.querySelector('#social-msg').textContent = 'Downloaded ✓';
+    modal.querySelector('#social-msg').textContent = 'Downloaded';
   };
   modal.querySelector('#social-copy').onclick = async ()=>{
     const msg = modal.querySelector('#social-msg');
     try{
       if(!navigator.clipboard || !window.ClipboardItem) throw new Error('Clipboard API unavailable');
       await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-      msg.textContent = 'Copied to clipboard ✓';
+      msg.textContent = 'Copied to clipboard';
     }catch(e){
       msg.textContent = 'Copy not supported in this browser — use Download.';
     }
@@ -2094,7 +2006,7 @@ function showReplay(){
     <span class="rb-label">Replay</span>
     <input type="range" id="replay-range" min="0" max="${State.picks.filter(Boolean).length}" value="${State.picks.filter(Boolean).length}"/>
     <span class="rb-label" id="replay-step">Pick ${State.picks.filter(Boolean).length}</span>
-    <button class="export-btn" id="export-png">📸 Save as PNG</button>
+    <button class="export-btn" id="export-png">Save as PNG</button>
   `;
   grades.parentElement.parentElement.insertBefore(bar, grades.parentElement.nextSibling);
   const range = document.getElementById('replay-range');
@@ -2457,7 +2369,6 @@ window.createRoom = async function(){
     visibility, format,
     participants:[{id:myId,name,host:true,photo:currentUserPhoto()}],
     invitees:[],
-    rsvps:{[myId]:'going'},
     chat:[],
     assignments:{}, picks:{}, currentPick:0, started:false, createdAt:Date.now()
   };
@@ -2473,9 +2384,6 @@ window.createRoom = async function(){
       showSharedPane();
     } else {
       showLobby();
-    }
-    if($('group-postfeed') && $('group-postfeed').checked){
-      try{ await postRoomToFeed(room); }catch(e){ console.warn('postRoomToFeed failed', e); }
     }
   }catch(e){
     console.error('createRoom failed:', e && (e.code||''), e && (e.message||e));
@@ -2496,7 +2404,6 @@ window.listenRoom = function(code){
     State.assignments = d.assignments||{};
     State.clockSec = d.clockSec||120;
     State.invitees = d.invitees||[];
-    State.rsvps = d.rsvps||{};
     State.chat = d.chat||[];
     State.visibility = d.visibility||'invite';
     State.groupFormat = d.format||'team';
