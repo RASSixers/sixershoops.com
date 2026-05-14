@@ -1288,19 +1288,25 @@ function tickStart(){
     compute();
     if(State.timeLeft<=0){
       clearInterval(State.timer);
-      // Auto-pick fires regardless of who's present. Host fires immediately;
-      // other clients fire after a short delay as a fail-safe in case the host
-      // has left the lobby. bestAvailable() is deterministic so duplicate
-      // writes resolve to the same pick.
-      if(State.mode === 'group'){
-        const myId = window.__myId;
-        const hostId = State.hostId;
-        const isHost = myId && hostId && myId === hostId;
+      // Auto-pick fires on EVERY connected client at 0:00 — the draft
+      // continues regardless of who has left the room. We use a Firestore
+      // transaction so concurrent writes from multiple clients resolve to a
+      // single pick (first write wins; the rest become no-ops).
+      if(State.mode === 'group' && State.roomRef){
         const pickIdx = State.currentPick;
-        const delay = isHost ? 0 : 2500;
-        setTimeout(()=>{
-          if(State.currentPick === pickIdx && !State.picks[pickIdx]) autoPick();
-        }, delay);
+        const prospect = (State.cpuStyle==='random'?chaosPick():bestAvailable());
+        if(!prospect) return;
+        State.roomRef.firestore.runTransaction(async (tx)=>{
+          const snap = await tx.get(State.roomRef);
+          const d = snap.data() || {};
+          if(d.picks && d.picks[pickIdx]) return; // already picked
+          if((d.currentPick||0) !== pickIdx) return; // already advanced
+          tx.update(State.roomRef, {
+            [`picks.${pickIdx}`]: {...prospect, auto:true, reason:''},
+            currentPick: pickIdx + 1,
+            pickStartedAt: Date.now()
+          });
+        }).catch(e=>console.warn('autoPick tx',e));
       } else {
         autoPick();
       }
