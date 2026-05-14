@@ -479,7 +479,7 @@
           <div class="setup-grid">
             <div class="field">
               <label>Display Name <span style="color:var(--mid);font-weight:400;font-size:.75rem">(from your account)</span></label>
-              <input id="group-name" placeholder="Auto-filled from your Sixers Hoops login" />
+              <input id="group-name" placeholder="Sign in to auto-fill your name" readonly style="background:var(--soft);cursor:not-allowed" />
             </div>
             <div class="field">
               <label>Draft Time</label>
@@ -536,7 +536,7 @@
           <div class="setup-grid">
             <div class="field">
               <label>Display Name <span style="color:var(--mid);font-weight:400;font-size:.75rem">(from your account)</span></label>
-              <input id="join-name" placeholder="Auto-filled from your Sixers Hoops login" />
+              <input id="join-name" placeholder="Sign in to auto-fill your name" readonly style="background:var(--soft);cursor:not-allowed" />
             </div>
             <div class="field">
               <label>Room Code</label>
@@ -1569,8 +1569,9 @@ async function createRoom(){
   if(!u){ $('group-signin-warn').style.display=''; return toast('Sign in on the community page first'); }
   const time = $('group-time').value;
   const clock = Number($('group-clock').value);
-  let name = $('group-name').value.trim();
-  if(!name){ name = currentUserName(u); $('group-name').value = name; }
+  // Always use the signed-in account name — users cannot override it
+  const name = currentUserName(u);
+  $('group-name').value = name;
   if(!name) return toast('Could not read your account name');
   const code = code6();
   const myId = u.uid;
@@ -1600,8 +1601,11 @@ async function createRoom(){
   }catch(e){ console.error(e); toast('Could not create room'); }
 }
 async function joinRoom(){
-  let name = $('join-name').value.trim();
-  if(!name){ const u=currentUser(); if(u){ name = currentUserName(u); $('join-name').value=name; } }
+  const u = currentUser();
+  if(!u){ return toast('Sign in on the community page first'); }
+  // Always use the signed-in account name — users cannot override it
+  const name = currentUserName(u);
+  $('join-name').value = name;
   const code = $('join-code').value.trim().toUpperCase();
   if(!name||!code) return toast('Need name and code');
   if(!window.db) return toast('Database unavailable');
@@ -1901,10 +1905,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   const startListeners = ()=>{ listenUpcoming(); listenPublicRooms(); loadCommunityUsers(); };
   if(window.auth && window.auth.onAuthStateChanged){
     window.auth.onAuthStateChanged(u=>{
+      const gn = $('group-name'), jn = $('join-name');
       if(u){
-        if(!$('group-name').value) $('group-name').value = currentUserName(u);
-        if(!$('join-name').value) $('join-name').value = currentUserName(u);
+        const nm = currentUserName(u);
+        // Lock the name to the signed-in account — no editing allowed
+        if(gn){ gn.value = nm; gn.setAttribute('readonly',''); }
+        if(jn){ jn.value = nm; jn.setAttribute('readonly',''); }
         $('group-signin-warn').style.display='none';
+      } else {
+        if(gn){ gn.value=''; gn.setAttribute('readonly',''); }
+        if(jn){ jn.value=''; jn.setAttribute('readonly',''); }
       }
       startListeners();
     });
