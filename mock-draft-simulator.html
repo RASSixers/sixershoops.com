@@ -1288,11 +1288,19 @@ function tickStart(){
     compute();
     if(State.timeLeft<=0){
       clearInterval(State.timer);
-      // In group mode, only the host issues the auto-pick to avoid duplicate writes.
+      // Auto-pick fires regardless of who's present. Host fires immediately;
+      // other clients fire after a short delay as a fail-safe in case the host
+      // has left the lobby. bestAvailable() is deterministic so duplicate
+      // writes resolve to the same pick.
       if(State.mode === 'group'){
         const myId = window.__myId;
         const hostId = State.hostId;
-        if(myId && hostId && myId === hostId) autoPick();
+        const isHost = myId && hostId && myId === hostId;
+        const pickIdx = State.currentPick;
+        const delay = isHost ? 0 : 2500;
+        setTimeout(()=>{
+          if(State.currentPick === pickIdx && !State.picks[pickIdx]) autoPick();
+        }, delay);
       } else {
         autoPick();
       }
@@ -1417,15 +1425,7 @@ function renderClock(){
     </div>
     <div style="font-size:.85rem;color:var(--mid)">
       ${mine?'<strong style="color:var(--sixers-blue)">You\u2019re on the clock.</strong> Pick from the big board.'
-            :(function(){
-                if(State.mode==='group'){
-                  const uid = State.assignments[i];
-                  const part = (State.participants||[]).find(p=>p.id===uid);
-                  const nm = part ? part.name : 'next GM';
-                  return 'Waiting for <strong style="color:var(--ink)">'+nm.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))+'</strong> to pick. Auto-pick fires at 0:00.';
-                }
-                return 'CPU is picking. Auto-pick fires when the clock hits zero.';
-              })()}
+            :(()=>{ const p = State.mode==='group' ? (State.participants||[]).find(x=>x.team===slot.team) : null; return p ? `Waiting for <strong>${p.name}</strong> to pick. Auto-pick fires at 0:00.` : 'On the clock. Auto-pick fires at 0:00.'; })()}
     </div>
     ${mine?`<div style="margin-top:.75rem">
         <label style="display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mid);margin-bottom:.3rem">Reasoning (optional)</label>
