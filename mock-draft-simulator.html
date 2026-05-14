@@ -1613,8 +1613,7 @@ async function joinRoom(){
   const snap = await ref.get();
   if(!snap.exists) return toast('Room not found');
   const data = snap.data();
-  const u = currentUser();
-  const myId = u ? u.uid : uid();
+  const myId = u.uid;
   // HARD BLOCK: once draft is started, no new joins (existing participants can rejoin)
   const alreadyIn = (data.participants||[]).some(p=>p.id===myId);
   if(data.started && !alreadyIn){
