@@ -1344,15 +1344,35 @@ function isUserPick(idx){
 function tickStart(){
   clearInterval(State.timer);
   if(!State.clockSec){ $('ds-clock').textContent='--:--'; return; }
-  State.timeLeft = State.clockSec;
-  $('ds-clock').textContent = fmt(State.timeLeft);
-  $('ds-clock').classList.remove('warn');
+  // Anchor to wall clock: in group mode use pickStartedAt from Firestore,
+  // in solo mode use a local anchor. This way navigating away / refresh
+  // does NOT restart the countdown — it resumes from real elapsed time.
+  if(State.mode === 'group'){
+    if(!State.pickStartedAt) State.pickStartedAt = Date.now();
+  } else {
+    State.pickStartedAt = Date.now();
+  }
+  const compute = ()=>{
+    const elapsed = Math.floor((Date.now() - State.pickStartedAt)/1000);
+    State.timeLeft = Math.max(0, State.clockSec - elapsed);
+    $('ds-clock').textContent = fmt(State.timeLeft);
+    $('ds-clock').classList.toggle('warn', State.timeLeft<=10);
+  };
+  compute();
   State.timer = setInterval(()=>{
-    State.timeLeft--;
-    $('ds-clock').textContent = fmt(Math.max(0,State.timeLeft));
-    if(State.timeLeft<=10) $('ds-clock').classList.add('warn');
-    if(State.timeLeft<=0){ clearInterval(State.timer); autoPick(); }
-  },1000);
+    compute();
+    if(State.timeLeft<=0){
+      clearInterval(State.timer);
+      // In group mode, only the host issues the auto-pick to avoid duplicate writes.
+      if(State.mode === 'group'){
+        const myId = window.__myId;
+        const hostId = State.hostId;
+        if(myId && hostId && myId === hostId) autoPick();
+      } else {
+        autoPick();
+      }
+    }
+  },500);
 }
 
 function takenSet(){ return new Set(State.picks.filter(Boolean).map(p=>p.name)); }
@@ -1387,15 +1407,20 @@ function makePick(prospect, auto=false){
   const reasonEl = document.getElementById('pick-reason');
   const reason = reasonEl ? reasonEl.value.trim() : '';
   State.picks[State.currentPick] = {...prospect, auto, reason};
-  // sync to room
+  // sync to room — also reset pickStartedAt so all clients re-anchor the timer
   if(State.mode==='group' && State.roomRef){
-    State.roomRef.update({[`picks.${State.currentPick}`]:{...prospect, auto, reason}, currentPick: State.currentPick+1})
-      .catch(e=>console.warn(e));
+    State.roomRef.update({
+      [`picks.${State.currentPick}`]:{...prospect, auto, reason},
+      currentPick: State.currentPick+1,
+      pickStartedAt: Date.now()
+    }).catch(e=>console.warn(e));
   }
   advance();
 }
 function advance(){
   State.currentPick++;
+  // Reset anchor for the next pick (group mode reads it back from Firestore via listenRoom)
+  if(State.mode !== 'group') State.pickStartedAt = Date.now();
   renderAll();
   if(State.currentPick>=State.fullOrder.length){ finishDraft(); return; }
   tickStart();
@@ -1574,14 +1599,19 @@ async function joinRoom(){
   const ref = window.db.collection('mock_draft_rooms').doc(code);
   const snap = await ref.get();
   if(!snap.exists) return toast('Room not found');
+  const data = snap.data();
   const u = currentUser();
   const myId = u ? u.uid : uid();
+  // HARD BLOCK: once draft is started, no new joins (existing participants can rejoin)
+  const alreadyIn = (data.participants||[]).some(p=>p.id===myId);
+  if(data.started && !alreadyIn){
+    return toast('Draft already started — joining is locked');
+  }
   window.__myId = myId;
   State.myName = name;
   State.roomCode = code;
-  const data = snap.data();
   const existing = (data.participants||[]);
-  const participants = existing.some(p=>p.id===myId)
+  const participants = alreadyIn
     ? existing.map(p=>p.id===myId?{...p,name}:p)
     : [...existing,{id:myId,name,host:false,photo:currentUserPhoto()}];
   const rsvps = {...(data.rsvps||{})};
@@ -1605,8 +1635,13 @@ function listenRoom(code){
     State.rsvps = d.rsvps||{};
     State.chat = d.chat||[];
     State.visibility = d.visibility||'invite';
+    State.hostId = d.hostId || d.host;
     // sync picks
     if(d.started){
+      const prevPick = State.currentPick;
+      const prevAnchor = State.pickStartedAt;
+      // pull server anchor for the timer (wall-clock based — survives refresh)
+      State.pickStartedAt = d.pickStartedAt || Date.now();
       if(!State.started){
         State.mode='group';
         startDraft({mode:'group',userTeam:null,clockSec:d.clockSec,cpuStyle:'bpa'});
@@ -1616,6 +1651,10 @@ function listenRoom(code){
       State.picks = newPicks;
       State.currentPick = d.currentPick||0;
       renderAll();
+      // If the pick advanced OR the anchor changed (host reset), restart the local interval
+      if(State.started && (State.currentPick !== prevPick || State.pickStartedAt !== prevAnchor)){
+        tickStart();
+      }
       if(State.currentPick>=DRAFT_ORDER.length) finishDraft();
     } else {
       renderLobby(d);
@@ -1681,7 +1720,36 @@ function renderLobby(d){
 
 async function startGroupNow(){
   if(!State.roomRef) return;
-  await State.roomRef.update({started:true, currentPick:0});
+  // Build assignments based on group format
+  const snap = await State.roomRef.get();
+  const d = snap.data() || {};
+  const parts = (d.participants||[]).slice();
+  if(parts.length === 0) return toast('No participants to start');
+  let assignments = {...(d.assignments||{})};
+  const fmt = State.groupFormat || 'team';
+  const totalPicks = DRAFT_ORDER.length;
+  if(fmt === 'team'){
+    // Auto-assign every-other pick round-robin to participants (host first)
+    // Preserves any picks the host already manually assigned in the lobby table.
+    const hostId = d.hostId || d.host;
+    const ordered = [
+      ...parts.filter(p=>p.id===hostId),
+      ...parts.filter(p=>p.id!==hostId)
+    ];
+    for(let i=0;i<totalPicks;i++){
+      if(!assignments[i]) assignments[i] = ordered[i % ordered.length].id;
+    }
+  } else if(fmt === 'snake'){
+    const snake = buildSnakeAssignments(parts, 1);
+    assignments = {...snake, ...assignments};
+  }
+  await State.roomRef.update({
+    started:true,
+    startedAt: Date.now(),
+    currentPick:0,
+    pickStartedAt: Date.now(),  // anchor timer to wall clock
+    assignments
+  });
 }
 async function leaveRoom(){
   clearInterval(State.countdownTimer);
