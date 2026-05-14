@@ -1392,8 +1392,8 @@ function renderPicks(){
         <span class="team">${TEAMS[slot.team]||slot.team}</span>
         ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
       </div>
-      <div class="pick-player ${pick?'':'empty'}">
-        ${pick?`<div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}</div>${pick.reason?`<div class="reason" style="margin-top:.3rem;font-size:.82rem;color:var(--mid);font-style:italic;line-height:1.4">“${pick.reason.replace(/"/g,'&quot;')}”</div>`:''}`
+      <div class="pick-player ${pick?'':'empty'}" style="${pick && pick.reason?'display:flex;align-items:flex-start;gap:.75rem;justify-content:space-between':''}">
+        ${pick?`<div style="flex:1;min-width:0"><div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}</div></div>${pick.reason?`<div class="reason" style="flex:0 0 240px;align-self:center;max-width:240px;font-size:.78rem;color:var(--mid);font-style:italic;line-height:1.4;text-align:left;padding:.5rem .7rem;background:rgba(0,107,182,.05);border-left:2px solid var(--sixers-blue);border-radius:6px;word-wrap:break-word;overflow-wrap:break-word">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}`
               :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
       </div>
     </div>`;
@@ -1403,7 +1403,7 @@ function renderPicks(){
 function renderClock(){
   const i = State.currentPick;
   if(i>=(State.fullOrder||DRAFT_ORDER).length){
-    $('clock-card').innerHTML = `<div class="empty-state">Draft complete — scroll for grades.</div>`;
+    $('clock-card').innerHTML = `<div class="empty-state">Draft complete.</div>`;
     return;
   }
   const slot = (State.fullOrder||DRAFT_ORDER)[i];
@@ -1834,6 +1834,49 @@ async function submitPost(){
   }catch(e){ console.error(e); toast('Post failed'); }
 }
 
+/* Post the generated mock-draft image directly to the community feed */
+async function postMockImageToCommunity(){
+  if(!window.db || !window.firebase){ toast('Database unavailable'); return; }
+  const user = (window.auth && window.auth.currentUser) || null;
+  if(!user){ toast('Sign in on the community page first'); return; }
+  toast('Generating image…');
+  const blob = await buildSocialCardBlob();
+  if(!blob){ toast('Image generation failed'); return; }
+  // Compress to JPEG to keep doc under Firestore's 1MB limit
+  const dataUrl = await new Promise((res,rej)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const maxW = 1200;
+      const scale = Math.min(1, maxW / img.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*scale);
+      c.height = Math.round(img.height*scale);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f7f8fc';
+      ctx.fillRect(0,0,c.width,c.height);
+      ctx.drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(blob);
+  });
+  const authorName = user.displayName || (user.email?user.email.split('@')[0]:'User');
+  const post = {
+    author:'u/'+authorName, authorId:user.uid,
+    authorPhoto: (typeof currentUserPhoto==='function' ? currentUserPhoto() : null),
+    createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+    tag:'Mock Draft', tagClass:'bg-blue-100 text-blue-700',
+    title:`My 2026 NBA Mock Draft`,
+    content:'',
+    imageUrl: dataUrl,
+    votes:1, voters:{[user.uid]:'up'}, comments:[]
+  };
+  try{
+    await window.db.collection('community_posts').add(post);
+    toast('Posted to community!');
+  }catch(e){ console.error(e); toast('Post failed — image may be too large'); }
+}
+
 /* ============================================================ WIRE UP */
 document.addEventListener('DOMContentLoaded',()=>{
   populateTeamSelect();
@@ -1887,7 +1930,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   $('player-search').oninput = renderBoard;
   $('player-pos').onchange = renderBoard;
-  $('post-community').onclick = openPostModal;
+  $('post-community').onclick = postMockImageToCommunity;
   $('confirm-post').onclick = submitPost;
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('post-modal').classList.remove('open'));
 
@@ -1960,14 +2003,12 @@ function _escHtml(s){ return String(s||'').replace(/[<>&]/g,c=>({ '<':'&lt;','>'
 
 function buildSocialCardNode(){
   const wrap = document.createElement('div');
-  // Wider canvas + generous top padding so the header breathes
-  wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;background:#f7f8fc;padding:80px 56px 64px;font-family:Barlow,sans-serif;color:#0d0f1a;box-sizing:border-box';
+  // Use absolute (not fixed) so html2canvas captures the FULL height including top padding
+  wrap.style.cssText = 'position:absolute;left:-10000px;top:0;width:1280px;background:#f7f8fc;padding:40px 56px 56px;font-family:Barlow,sans-serif;color:#0d0f1a;box-sizing:border-box';
   const made = State.picks.map((p,i)=>({p,i})).filter(x=>x.p);
   const author = (typeof currentUserName==='function' ? currentUserName() : '') || 'Anonymous';
   const modeLabel = State.mode==='group' ? 'Group Team Draft' : 'Solo Mock Draft';
 
-  // Pick a column count that keeps every row readable without clipping.
-  // 1 col up to 14 picks, 2 cols up to 30, 3 cols beyond that (handles full 60-pick mocks).
   const n = made.length;
   const cols = n > 30 ? 3 : (n > 14 ? 2 : 1);
   const per = Math.ceil(n / cols);
@@ -2000,18 +2041,24 @@ function buildSocialCardNode(){
   const gridTemplate = 'repeat(' + cols + ', 1fr)';
 
   wrap.innerHTML =
-    '<div style="text-align:center;margin-bottom:36px">'+
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:26px;font-weight:900;letter-spacing:.18em;color:#ED174C;text-transform:uppercase;line-height:1;margin-bottom:14px">SIXERS HOOPS</div>'+
-      '<h1 style="font-family:\'Barlow Condensed\',sans-serif;font-size:64px;font-weight:900;color:#0d0f1a;text-transform:uppercase;margin:0 0 10px;letter-spacing:-.01em;line-height:1">2026 Mock Draft</h1>'+
-      '<div style="font-size:14px;color:#64748b;letter-spacing:.05em;margin-top:8px">'+modeLabel+' · by '+_escHtml(author)+' · '+new Date().toLocaleDateString()+'</div>'+
+    '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:0 4px 22px;border-bottom:2px solid #0d0f1a;margin-bottom:28px">'+
+      '<div style="display:flex;flex-direction:column;gap:2px">'+
+        '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:900;letter-spacing:.22em;color:#ED174C;text-transform:uppercase;line-height:1;margin-bottom:2px">SIXERS HOOPS</div>'+
+        '<h1 style="font-family:\'Barlow Condensed\',sans-serif;font-size:48px;font-weight:900;color:#0d0f1a;text-transform:uppercase;margin:0;letter-spacing:-.005em;line-height:.95">2026 Mock Draft</h1>'+
+      '</div>'+
+      '<div style="text-align:right;font-size:12px;color:#0d0f1a;letter-spacing:.04em;line-height:1.5">'+
+        '<div style="font-weight:800;color:#0d0f1a;font-size:13px">'+modeLabel+'</div>'+
+        '<div style="color:#0d0f1a">by '+_escHtml(author)+'</div>'+
+        '<div style="color:#0d0f1a">'+new Date().toLocaleDateString()+'</div>'+
+      '</div>'+
     '</div>'+
-    '<div style="background:#fff;border:1px solid #e6eaf2;border-top:5px solid #006BB6;border-radius:14px;padding:28px 18px 20px;box-shadow:0 8px 28px -18px rgba(15,23,42,.18)">'+
-      '<h3 style="font-family:\'Barlow Condensed\',sans-serif;font-size:24px;font-weight:900;text-transform:uppercase;color:#0d0f1a;margin:0 12px 18px">'+heading+'</h3>'+
+    '<div style="background:#fff;border:1px solid #e6eaf2;border-top:5px solid #006BB6;border-radius:14px;padding:24px 18px 18px;box-shadow:0 8px 28px -18px rgba(15,23,42,.18)">'+
+      '<h3 style="font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;color:#0d0f1a;margin:0 12px 16px;letter-spacing:.02em">'+heading+'</h3>'+
       '<div style="display:grid;grid-template-columns:'+gridTemplate+';gap:0 20px">'+
         groups.map(c=>'<div>'+colHtml(c)+'</div>').join('')+
       '</div>'+
     '</div>'+
-    '<div style="margin-top:26px;text-align:center;color:#64748b;font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700">sixershoops.com</div>';
+    '<div style="margin-top:22px;text-align:center;color:#64748b;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700">sixershoops.com</div>';
   document.body.appendChild(wrap);
   return wrap;
 }
@@ -2137,7 +2184,7 @@ function showDraftCompleteBanner(){
   modal.querySelector('#dc-close').onclick = close;
   modal.addEventListener('click', e=>{ if(e.target===modal) close(); });
   modal.querySelector('#dc-share').onclick = ()=>{ exportDraftImage(); };
-  modal.querySelector('#dc-post').onclick  = ()=>{ close(); openPostModal(); };
+  modal.querySelector('#dc-post').onclick  = ()=>{ close(); postMockImageToCommunity(); };
 }
 
 /* ===== v2: hook into finishDraft ===== */
