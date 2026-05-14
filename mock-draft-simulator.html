@@ -626,6 +626,7 @@
 
         <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;justify-content:flex-end">
           <button class="btn-ghost" id="leave-room">Leave Room</button>
+          <button class="btn-ghost" id="delete-room" style="display:none;color:var(--red);border-color:#fbd5da">Delete Room</button>
           <button class="btn-primary" id="start-group">Start Draft Now</button>
         </div>
       </div>
@@ -651,6 +652,14 @@
         </div>
       </div>
 
+      <div id="draft-chat-wrap" class="lobby-chat" style="display:none;margin-top:1.25rem">
+        <div style="padding:.55rem .85rem;border-bottom:1px solid var(--border-light);background:#fafbfd;font-family:'Barlow Condensed';font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.75rem;color:var(--mid)">Draft Room Chat</div>
+        <div class="chat-stream" id="draft-chat-stream" style="max-height:220px"></div>
+        <div class="chat-input">
+          <input id="draft-chat-input" placeholder="Discuss the picks…" maxlength="280"/>
+          <button id="draft-chat-send">Send</button>
+        </div>
+      </div>
       <div class="md-grid">
         <div class="panel">
           <div class="panel-head">
@@ -682,14 +691,6 @@
         </div>
       </div>
 
-      <div id="draft-chat-wrap" class="lobby-chat" style="display:none;margin-top:1.25rem">
-        <div style="padding:.55rem .85rem;border-bottom:1px solid var(--border-light);background:#fafbfd;font-family:'Barlow Condensed';font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.75rem;color:var(--mid)">Draft Room Chat</div>
-        <div class="chat-stream" id="draft-chat-stream" style="max-height:220px"></div>
-        <div class="chat-input">
-          <input id="draft-chat-input" placeholder="Discuss the picks…" maxlength="280"/>
-          <button id="draft-chat-send">Send</button>
-        </div>
-      </div>
 
       <div class="section-label" id="grades-section-label" style="margin-top:2rem">Draft Grades</div>
       <div class="panel" id="grades-panel-wrap">
@@ -1106,10 +1107,12 @@ function renderUpcoming(rooms){
       <div class="uc-actions">
         <button class="uc-btn" data-join="${r.code}">${r.started?'Join Live':'Open Lobby'}</button>
         ${time?`<button class="uc-btn ghost" data-ics="${r.code}">+ Calendar</button>`:''}
+        ${r.hostId===currentUserId()?`<button class="uc-btn ghost" data-del="${r.code}" style="color:var(--red);border-color:#fbd5da">Delete</button>`:''}
       </div>
     </div>`;
   }).join('');
   grid.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>quickJoin(b.dataset.join));
+  grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteRoom(b.dataset.del));
   grid.querySelectorAll('[data-ics]').forEach(b=>b.onclick=async ()=>{
     const snap = await window.db.collection('mock_draft_rooms').doc(b.dataset.ics).get();
     if(snap.exists) downloadICS(snap.data());
@@ -1672,6 +1675,7 @@ function renderLobby(d){
   const myId = currentUserId() || window.__myId;
   const amHost = State.isHost || (d.hostId||d.host) === myId;
   $('start-group').style.display = amHost?'':'none';
+  const _del=$('delete-room'); if(_del) _del.style.display = amHost?'':'none';
   $('invite-btn').style.display = amHost?'':'none';
 }
 
@@ -1687,6 +1691,16 @@ async function leaveRoom(){
   $('setup-pane').style.display='';
   listenUpcoming();
   listenPublicRooms();
+}
+async function deleteRoom(code){
+  const target = code || State.roomCode;
+  if(!target) return;
+  if(!confirm('Delete this room for everyone? This cannot be undone.')) return;
+  try{
+    if(window.db) await window.db.collection('mock_draft_rooms').doc(target).delete();
+    toast('Room deleted');
+  }catch(e){ console.warn(e); toast('Could not delete room'); }
+  if(target===State.roomCode){ leaveRoom(); }
 }
 
 /* ============================================================ POST INVITE TO FEED */
@@ -1757,6 +1771,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('join-room').onclick = joinRoom;
   $('start-group').onclick = startGroupNow;
   $('leave-room').onclick = leaveRoom;
+  const _delBtn=$('delete-room'); if(_delBtn) _delBtn.onclick = ()=>deleteRoom();
   $('copy-link').onclick = ()=>{
     const url = `${location.origin}${location.pathname}?room=${State.roomCode}`;
     navigator.clipboard.writeText(url); toast('Invite link copied');
