@@ -1261,6 +1261,8 @@ function tickStart(){
   // in solo mode use a local anchor. This way navigating away / refresh
   // does NOT restart the countdown — it resumes from real elapsed time.
   if(State.mode === 'group'){
+    // In group mode, the wall-clock anchor lives in Firestore (pickStartedAt).
+    // Never overwrite it here — listenRoom keeps it in sync. Only seed if missing.
     if(!State.pickStartedAt) State.pickStartedAt = Date.now();
   } else {
     State.pickStartedAt = Date.now();
@@ -1409,6 +1411,20 @@ function renderClock(){
   }
   const slot = (State.fullOrder||DRAFT_ORDER)[i];
   const mine = isUserPick(i);
+  // Resolve who's on the clock from assignments (works for team + snake formats)
+  let onClockName = '';
+  if(State.mode === 'group'){
+    const ownerId = (State.assignments||{})[i];
+    const owner = ownerId ? (State.participants||[]).find(x=>x.id===ownerId) : null;
+    onClockName = owner ? owner.name : 'CPU';
+  }
+  // Mirror the on-the-clock GM in the header pill
+  const dsMode = $('ds-mode');
+  if(dsMode){
+    dsMode.textContent = State.mode==='group'
+      ? `Group Draft · ${onClockName||'CPU'} on the clock`
+      : 'Solo Mock';
+  }
   $('clock-card').innerHTML = `
     <div class="clock-team">
       <img src="${logo(slot.team)}" alt="${slot.team}"/>
@@ -1418,8 +1434,13 @@ function renderClock(){
       </div>
     </div>
     <div style="font-size:.85rem;color:var(--mid)">
-      ${mine?'<strong style="color:var(--sixers-blue)">You\u2019re on the clock.</strong> Pick from the big board.'
-            :(()=>{ const p = State.mode==='group' ? (State.participants||[]).find(x=>x.team===slot.team) : null; return p ? `Waiting for <strong>${p.name}</strong> to pick. Auto-pick fires at 0:00.` : 'On the clock. Auto-pick fires at 0:00.'; })()}
+      ${mine
+        ? '<strong style="color:var(--sixers-blue)">You\u2019re on the clock.</strong> Pick from the big board.'
+        : (State.mode==='group'
+            ? (onClockName && onClockName!=='CPU'
+                ? `Waiting for <strong>${onClockName}</strong> to pick. Auto-pick fires at 0:00.`
+                : 'CPU on the clock. Auto-pick fires at 0:00.')
+            : 'On the clock. Auto-pick fires at 0:00.')}
     </div>
     ${mine?`<div style="margin-top:.75rem">
         <label style="display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mid);margin-bottom:.3rem">Reasoning (optional)</label>
@@ -1620,7 +1641,9 @@ function listenRoom(code){
       const prevPick = State.currentPick;
       const prevAnchor = State.pickStartedAt;
       // pull server anchor for the timer (wall-clock based — survives refresh)
-      State.pickStartedAt = d.pickStartedAt || Date.now();
+      // Preserve a known anchor if Firestore happens to be missing the field —
+      // never reset to "now" (that would restart the clock when anyone reconnects).
+      State.pickStartedAt = d.pickStartedAt || State.pickStartedAt || Date.now();
       if(!State.started){
         State.mode='group';
         startDraft({mode:'group',userTeam:null,clockSec:d.clockSec,cpuStyle:'bpa'});
@@ -1869,10 +1892,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('confirm-post').onclick = submitPost;
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('post-modal').classList.remove('open'));
 
-  // deep link ?room=CODE
+  // deep link ?room=CODE — otherwise jump straight into a Solo Mock
   const params = new URLSearchParams(location.search);
   const r = params.get('room');
   if(r){ switchMode('join'); $('join-code').value = r.toUpperCase(); }
+  else { switchMode('solo'); }
 
   // Wait for auth, then power up the upcoming + public boards
   const startListeners = ()=>{ listenUpcoming(); listenPublicRooms(); loadCommunityUsers(); };
