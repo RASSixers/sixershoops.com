@@ -442,22 +442,10 @@
         </div>
 
         <div id="setup-solo">
-          <div class="setup-grid">
-            <div class="field">
-              <label>Rounds</label>
-              <select id="solo-rounds">
-                <option value="1" selected>1st Round (30)</option>
-                <option value="2">Both Rounds (60)</option>
-              </select>
-            </div>
-            <div class="field">
-              <button class="hero-btn-primary" id="start-solo">Start Draft →</button>
-            </div>
-          </div>
-          <div style="margin-top:.6rem;font-size:.85rem;color:var(--mid)">
-            You control every pick. Add optional reasoning for each selection.
-          </div>
+          <div style="font-size:.9rem;color:var(--mid)">Loading your solo mock draft…</div>
           <!-- legacy hidden inputs kept so existing code paths still resolve -->
+          <select id="solo-rounds" style="display:none"><option value="1" selected>1st Round (30)</option><option value="2">Both Rounds (60)</option></select>
+          <button id="start-solo" style="display:none"></button>
           <select id="solo-team" style="display:none"></select>
           <select id="solo-clock" style="display:none"><option value="0" selected>0</option></select>
           <select id="solo-cpu" style="display:none"><option value="bpa" selected>bpa</option></select>
@@ -1566,6 +1554,53 @@ async function joinRoom(){
   listenRoom(code);
   showLobby();
 }
+async function catchUpAutoPicks(){
+  if(!State.roomRef) return;
+  try {
+    await State.roomRef.firestore.runTransaction(async (tx)=>{
+      const snap = await tx.get(State.roomRef);
+      if(!snap.exists) return;
+      const d = snap.data();
+      if(!d.started) return;
+      const clockSec = Number(d.clockSec)||0;
+      if(!clockSec) return;
+      let currentPick = d.currentPick||0;
+      let pickStartedAt = d.pickStartedAt || Date.now();
+      const total = DRAFT_ORDER.length;
+      const picks = {...(d.picks||{})};
+      const updates = {};
+      const now = Date.now();
+      let changed = false;
+      // Catch up any picks whose clock has already expired while no one was connected
+      while(currentPick < total && (now - pickStartedAt) >= clockSec*1000){
+        if(picks[currentPick]){ currentPick++; pickStartedAt += clockSec*1000; continue; }
+        const taken = new Set(Object.values(picks).filter(Boolean).map(p=>p.name));
+        const slot = DRAFT_ORDER[currentPick];
+        const needs = (typeof TEAM_NEEDS!=='undefined' ? TEAM_NEEDS[slot?.team] : null) || [];
+        const pool = PROSPECTS.filter(p=>!taken.has(p.name));
+        let best = null, bestScore = Infinity;
+        for(const p of pool.slice(0,18)){
+          const boost = needs[0]===p.pos?3:(needs[1]===p.pos?1.5:0);
+          const score = p.rank - boost;
+          if(score<bestScore){bestScore=score;best=p;}
+        }
+        if(!best) break;
+        const entry = {...best, auto:true, reason:''};
+        picks[currentPick] = entry;
+        updates[`picks.${currentPick}`] = entry;
+        currentPick++;
+        pickStartedAt += clockSec*1000;
+        changed = true;
+      }
+      if(changed){
+        updates.currentPick = currentPick;
+        updates.pickStartedAt = pickStartedAt;
+        tx.update(State.roomRef, updates);
+      }
+    });
+  } catch(e){ console.warn('catchUpAutoPicks',e); }
+}
+
 function listenRoom(code){
   const ref = window.db.collection('mock_draft_rooms').doc(code);
   State.roomRef = ref;
@@ -1600,10 +1635,23 @@ function listenRoom(code){
         tickStart();
       }
       if(State.currentPick>=DRAFT_ORDER.length) finishDraft();
+      // Catch up any picks that should have happened while no one was on the page.
+      // The transaction is no-op if another client already wrote first.
+      const clockSec = Number(d.clockSec)||0;
+      if(clockSec && State.currentPick < DRAFT_ORDER.length &&
+         (Date.now() - State.pickStartedAt) >= clockSec*1000){
+        catchUpAutoPicks();
+      }
     } else {
       renderLobby(d);
     }
   });
+  // Periodically force a catch-up sweep so the draft keeps moving even if the
+  // snapshot stream is quiet (no other clients writing).
+  if(State.catchUpInterval) clearInterval(State.catchUpInterval);
+  State.catchUpInterval = setInterval(()=>{
+    if(State.started && State.mode==='group') catchUpAutoPicks();
+  }, 5000);
 }
 function showLobby(){
   $('setup-pane').style.display='none';
