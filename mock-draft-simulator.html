@@ -601,11 +601,11 @@
           </div>
         </div>
 
-        <div class="section-label" style="margin-top:.25rem">Your RSVP</div>
-        <div class="rsvp-row" id="rsvp-row">
-          <button class="rsvp-btn going" data-rsvp="going">✓ Going</button>
-          <button class="rsvp-btn maybe" data-rsvp="maybe">? Maybe</button>
-          <button class="rsvp-btn no" data-rsvp="no">✕ Can't</button>
+        <div class="section-label" style="margin-top:.25rem">Pick Grades</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;font-size:.82rem;color:var(--mid);background:#f6f8fc;border:1px solid var(--border-light);border-radius:10px;padding:.6rem .75rem">
+          <span>Every pick gets a live grade vs. its big-board rank:</span>
+          <span class="grade-A">A steal</span><span class="grade-B">B value</span>
+          <span class="grade-C">C neutral</span><span class="grade-D">D reach</span>
         </div>
 
         <div class="section-label" style="margin-top:.25rem">Participants</div>
@@ -1444,12 +1444,21 @@ function renderAll(){
 function renderStatus(){
   $('ds-pick').textContent = `${Math.min(State.currentPick+1,State.fullOrder.length)} / ${State.fullOrder.length}`;
 }
+function pickGrade(pick, pickNum){
+  if(!pick || typeof pick.rank !== 'number') return null;
+  const diff = pickNum - pick.rank; // positive = steal
+  if(diff >= 6)  return {g:'A', cls:'grade-A', label:'Steal'};
+  if(diff >= 2)  return {g:'B', cls:'grade-B', label:'Value'};
+  if(diff >= -3) return {g:'C', cls:'grade-C', label:'Fair'};
+  return {g:'D', cls:'grade-D', label:'Reach'};
+}
 function renderPicks(){
   const list = (State.fullOrder||DRAFT_ORDER).map((slot,i)=>{
     const pick = State.picks[i];
     const onClock = i===State.currentPick && State.started;
     const completed = !!pick;
     const userTeam = isUserPick(i);
+    const grade = completed ? pickGrade(pick, i+1) : null;
     return `<div class="pick-row ${onClock?'on-clock':''} ${completed?'completed':''} ${userTeam?'user-team':''}" data-idx="${i}">
       <div class="pick-num">${i+1}</div>
       <img class="pick-logo" src="${logo(slot.team)}" alt="${slot.team}" onerror="this.style.opacity=.3"/>
@@ -1458,7 +1467,7 @@ function renderPicks(){
         ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
       </div>
       <div class="pick-player ${pick?'':'empty'}">
-        ${pick?`<div class="name" data-player-detail="${pick.name}">${pick.name}</div><div class="school">${pick.school} · ${pick.pos}${pick.auto?' · auto':''}</div>${pick.reason?`<div class="reason" style="margin-top:.3rem;font-size:.82rem;color:var(--mid);font-style:italic;line-height:1.4">“${pick.reason.replace(/"/g,'&quot;')}”</div>`:''}`
+        ${pick?`<div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}${pick.auto?' · auto':''}</div>${pick.reason?`<div class="reason" style="margin-top:.3rem;font-size:.82rem;color:var(--mid);font-style:italic;line-height:1.4">“${pick.reason.replace(/"/g,'&quot;')}”</div>`:''}`
               :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
       </div>
     </div>`;
@@ -1671,46 +1680,41 @@ function renderLobby(d){
   $('lobby-code').textContent = d.code;
   $('lobby-time').textContent = d.scheduledFor ? new Date(d.scheduledFor).toLocaleString() : 'On Demand';
   startCountdown(d.scheduledFor);
-  // participants with RSVP status
-  const rsvps = d.rsvps||{};
+  // participants list (no RSVP)
   const inviteeRows = (d.invitees||[]).filter(i=>!(d.participants||[]).some(p=>p.id===i.id))
     .map(i=>`<span class="pchip invited"><span class="dot"></span>${i.name} · invited</span>`).join('');
   const partRows = (d.participants||[]).map(p=>{
-    const r = rsvps[p.id] || (p.host?'going':'going');
-    const cls = r==='going'?'going':r==='maybe'?'maybe':r==='no'?'no':'';
-    const tag = p.host?' · host':` · ${r}`;
-    return `<span class="pchip ${cls}"><span class="dot"></span>${p.name}${tag}</span>`;
+    const tag = p.host?' · host':'';
+    return `<span class="pchip going"><span class="dot"></span>${p.name}${tag}</span>`;
   }).join('');
   $('lobby-participants').innerHTML = partRows + inviteeRows;
-  renderRsvpButtons();
   renderChat();
-  // assignments table
-  const teams = [...new Set(DRAFT_ORDER.map(p=>p.team))];
+  // assignments table — read-only, auto-assigned by format
+  const fmt = d.format || State.groupFormat || 'team';
+  const parts = (d.participants||[]).slice();
+  const hostId = d.hostId || d.host;
+  const ordered = [
+    ...parts.filter(p=>p.id===hostId),
+    ...parts.filter(p=>p.id!==hostId)
+  ];
+  const previewOwner = (i)=>{
+    const stored = (d.assignments||{})[i];
+    if(stored){
+      const pp = parts.find(p=>p.id===stored);
+      if(pp) return pp.name;
+    }
+    if(fmt==='team' && ordered.length){
+      return ordered[i % ordered.length].name + ' (auto)';
+    }
+    return '— auto / CPU —';
+  };
   $('assign-table').innerHTML = `
-    <thead><tr><th>Pick</th><th>Team</th><th>Assigned GM</th></tr></thead>
-    <tbody>${DRAFT_ORDER.map((slot,i)=>{
-      const owner = (d.assignments||{})[i];
-      const ownerName = (d.participants||[]).find(p=>p.id===owner)?.name || '— auto —';
-      return `<tr>
+    <thead><tr><th>Pick</th><th>Team</th><th>GM (auto-rotated)</th></tr></thead>
+    <tbody>${DRAFT_ORDER.map((slot,i)=>`<tr>
         <td><strong>#${i+1}</strong></td>
         <td><div style="display:flex;align-items:center;gap:.4rem"><img src="${logo(slot.team)}" style="width:20px;height:20px"/>${TEAMS[slot.team]}${slot.via?` <span style="color:var(--mid);font-size:.7rem">via ${slot.via}</span>`:''}</div></td>
-        <td>
-          <select data-pick="${i}" class="assign-sel">
-            <option value="">— auto —</option>
-            ${(d.participants||[]).map(p=>`<option value="${p.id}" ${p.id===owner?'selected':''}>${p.name}</option>`).join('')}
-          </select>
-        </td>
-      </tr>`;
-    }).join('')}</tbody>`;
-  $('assign-table').querySelectorAll('.assign-sel').forEach(s=>{
-    s.onchange = async ()=>{
-      const pickIdx = s.dataset.pick;
-      const val = s.value;
-      const a = {...(d.assignments||{})};
-      if(val) a[pickIdx]=val; else delete a[pickIdx];
-      await State.roomRef.update({assignments:a});
-    };
-  });
+        <td style="font-size:.85rem;color:var(--ink)">${previewOwner(i)}</td>
+      </tr>`).join('')}</tbody>`;
   const myId = currentUserId() || window.__myId;
   const amHost = State.isHost || (d.hostId||d.host) === myId;
   $('start-group').style.display = amHost?'':'none';
@@ -1862,10 +1866,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     };
   });
 
-  // RSVP buttons
-  document.querySelectorAll('#rsvp-row .rsvp-btn').forEach(b=>{
-    b.onclick = ()=>setRsvp(b.dataset.rsvp);
-  });
+  // (RSVP system removed — replaced by live Pick Grades)
 
   // Chat
   $('chat-send').onclick = ()=>sendChat('chat-input');
@@ -2523,16 +2524,37 @@ window.listenRoom = function(code){
   });
 };
 
-/* ---------- HOOK: startGroupNow — for snake, use 2 rounds ---------- */
+/* ---------- HOOK: startGroupNow — auto-rotate picks among participants ---------- */
 const _origStartGroupNow = startGroupNow;
 window.startGroupNow = async function(){
   if(!State.roomRef) return;
-  const update = {started:true, currentPick:0};
-  if(State.groupFormat==='snake'){
-    // make sure assignments are set
-    const a = buildSnakeAssignments(State.participants, 2);
-    update.assignments = a;
+  const snap = await State.roomRef.get();
+  const d = snap.data() || {};
+  const parts = (d.participants||[]).slice();
+  if(parts.length === 0) return toast('No participants to start');
+  const fmt = d.format || State.groupFormat || 'team';
+  const update = {
+    started:true,
+    startedAt: Date.now(),
+    currentPick:0,
+    pickStartedAt: Date.now()
+  };
+  if(fmt === 'snake'){
+    update.assignments = buildSnakeAssignments(parts, 2);
     update.rounds = 2;
+  } else {
+    // TEAM format: every-other pick auto-assigned, host first, ignore any manual choices
+    const hostId = d.hostId || d.host;
+    const ordered = [
+      ...parts.filter(p=>p.id===hostId),
+      ...parts.filter(p=>p.id!==hostId)
+    ];
+    const assignments = {};
+    const total = (DRAFT_ORDER||[]).length;
+    for(let i=0;i<total;i++){
+      assignments[i] = ordered[i % ordered.length].id;
+    }
+    update.assignments = assignments;
   }
   await State.roomRef.update(update);
 };
