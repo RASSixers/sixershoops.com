@@ -1586,17 +1586,18 @@ async function catchUpAutoPicks(){
       const clockSec = Number(d.clockSec)||0;
       if(!clockSec) return;
       let currentPick = d.currentPick||0;
-      let pickStartedAt = d.pickStartedAt || Date.now();
-      const total = DRAFT_ORDER.length;
+      const clockMs = clockSec * 1000;
+      const total = (d.rounds===2 || d.format==='snake') ? DRAFT_ORDER.length * 2 : DRAFT_ORDER.length;
+      let pickStartedAt = d.pickStartedAt || (d.startedAt ? d.startedAt + (currentPick * clockMs) : Date.now());
       const picks = {...(d.picks||{})};
       const updates = {};
       const now = Date.now();
       let changed = false;
       // Catch up any picks whose clock has already expired while no one was connected
-      while(currentPick < total && (now - pickStartedAt) >= clockSec*1000){
-        if(picks[currentPick]){ currentPick++; pickStartedAt += clockSec*1000; continue; }
+      while(currentPick < total && (now - pickStartedAt) >= clockMs){
+        if(picks[currentPick]){ currentPick++; pickStartedAt += clockMs; continue; }
         const taken = new Set(Object.values(picks).filter(Boolean).map(p=>p.name));
-        const slot = DRAFT_ORDER[currentPick];
+        const slot = currentPick < DRAFT_ORDER.length ? DRAFT_ORDER[currentPick] : buildRound2()[currentPick - DRAFT_ORDER.length];
         const needs = (typeof TEAM_NEEDS!=='undefined' ? TEAM_NEEDS[slot?.team] : null) || [];
         const pool = PROSPECTS.filter(p=>!taken.has(p.name));
         let best = null, bestScore = Infinity;
@@ -1610,7 +1611,7 @@ async function catchUpAutoPicks(){
         picks[currentPick] = entry;
         updates[`picks.${currentPick}`] = entry;
         currentPick++;
-        pickStartedAt += clockSec*1000;
+        pickStartedAt += clockMs;
         changed = true;
       }
       if(changed){
@@ -2524,6 +2525,14 @@ window.listenRoom = function(code){
       return;
     }
     if(d.started){
+      const previousPick = State.currentPick;
+      const previousAnchor = State.pickStartedAt;
+      const remotePick = d.currentPick||0;
+      const remoteClock = Number(d.clockSec)||0;
+      const fallbackAnchor = d.startedAt && remoteClock
+        ? d.startedAt + (remotePick * remoteClock * 1000)
+        : d.startedAt;
+      State.pickStartedAt = d.pickStartedAt || fallbackAnchor || State.pickStartedAt;
       if(!State.started){
         State.mode='group';
         startDraft({mode:'group',userTeam:null,clockSec:d.clockSec,cpuStyle:'bpa',
@@ -2532,8 +2541,15 @@ window.listenRoom = function(code){
       const len = (State.fullOrder||DRAFT_ORDER).length;
       const newPicks = Array.from({length:len},(_,i)=> d.picks?.[i] || null);
       State.picks = newPicks;
-      State.currentPick = d.currentPick||0;
+      State.currentPick = remotePick;
       renderAll();
+      if(State.started && (State.currentPick !== previousPick || State.pickStartedAt !== previousAnchor)){
+        tickStart();
+      }
+      if(remoteClock && State.currentPick < len && State.pickStartedAt &&
+         (Date.now() - State.pickStartedAt) >= remoteClock*1000){
+        catchUpAutoPicks();
+      }
       if(State.currentPick>=len) finishDraft();
     } else {
       renderLobby(d);
@@ -2547,6 +2563,10 @@ window.listenRoom = function(code){
       }
     }
   });
+  if(State.catchUpInterval) clearInterval(State.catchUpInterval);
+  State.catchUpInterval = setInterval(()=>{
+    if(State.started && State.mode==='group') catchUpAutoPicks();
+  }, 5000);
 };
 
 /* ---------- HOOK: startGroupNow — auto-rotate picks among participants ---------- */
