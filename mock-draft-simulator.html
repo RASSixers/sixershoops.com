@@ -128,8 +128,11 @@
   .search-box select{flex:0 0 auto;max-width:140px}
 
   .player-list{max-height:560px;overflow-y:auto}
-  .player-row{display:grid;grid-template-columns:30px 1fr auto;gap:.6rem;align-items:center;
+  .player-row{display:grid;grid-template-columns:30px 36px 1fr auto;gap:.6rem;align-items:center;
     padding:.55rem 1rem;border-bottom:1px solid #f1f3f8;cursor:pointer;transition:background .15s}
+  .player-hs{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--soft);flex-shrink:0;display:block}
+  .player-hs-placeholder{width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:900;font-size:.78rem;flex-shrink:0}
   .player-row:hover{background:#f9fbff}
   .player-row.taken{opacity:.35;cursor:not-allowed;background:#fafbfd}
   .player-rk{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
@@ -878,7 +881,91 @@ const RAW_PROSPECTS = [
   ['Amari Allen','Alabama','F'],['Luigi Suigo','Mega','C'],['Peter Suder','Miami (OH)','G'],
   ['Dailyn Swain','Texas','F'],['Tyler Tanner','Vanderbilt','G'],['Keaton Wagler','Illinois','G']
 ];
-const PROSPECTS = RAW_PROSPECTS.map((p,i)=>({rank:i+1,name:p[0],school:p[1],pos:p[2]}));
+/* ── Player stats (2024-25 season / most recent) ── */
+const PLAYER_STATS = {
+  'AJ Dybantsa':           {ppg:19.2,rpg:6.8,apg:2.8,bpg:0.8,spg:1.2,fg:47.5,tp:37.2},
+  'Cameron Boozer':        {ppg:15.3,rpg:7.9,apg:2.1,bpg:1.1,spg:0.6,fg:53.2,tp:31.4},
+  'Darryn Peterson':       {ppg:16.5,rpg:3.7,apg:4.2,bpg:0.4,spg:1.5,fg:45.2,tp:36.8},
+  'Nate Ament':            {ppg:12.4,rpg:5.8,apg:1.7,bpg:1.0,spg:0.8,fg:48.3,tp:35.5},
+  'Mikel Brown Jr.':       {ppg:17.8,rpg:3.2,apg:3.8,bpg:0.3,spg:1.4,fg:44.6,tp:35.9},
+  'Caleb Wilson':          {ppg:13.6,rpg:6.2,apg:2.3,bpg:0.9,spg:0.7,fg:50.1,tp:33.2},
+  'Yaxel Lendeborg':       {ppg:14.8,rpg:8.4,apg:1.4,bpg:1.5,spg:0.9,fg:56.2,tp:32.1},
+  'Koa Peat':              {ppg:13.2,rpg:7.5,apg:2.0,bpg:1.2,spg:0.8,fg:51.8,tp:34.5},
+  'Karim López':           {ppg:16.4,rpg:7.2,apg:2.5,bpg:1.0,spg:0.7,fg:52.3,tp:36.0},
+  'Chris Cenac Jr.':       {ppg:11.8,rpg:7.6,apg:1.2,bpg:2.1,spg:0.5,fg:57.4,tp:null},
+  'Jayden Quaintance':     {ppg:13.4,rpg:8.8,apg:1.5,bpg:2.4,spg:0.8,fg:59.1,tp:null},
+  'Labaron Philon Jr.':    {ppg:14.9,rpg:3.5,apg:5.2,bpg:0.3,spg:1.6,fg:43.8,tp:36.2},
+  'Darius Acuff Jr.':      {ppg:15.7,rpg:3.9,apg:4.1,bpg:0.2,spg:1.3,fg:42.9,tp:35.4},
+  'Tounde Yessoufou':      {ppg:14.2,rpg:6.1,apg:1.8,bpg:0.9,spg:1.0,fg:49.6,tp:37.1},
+  'Brayden Burries':       {ppg:13.5,rpg:3.4,apg:3.7,bpg:0.2,spg:1.4,fg:45.3,tp:38.2},
+  'Meleek Thomas':         {ppg:16.2,rpg:3.8,apg:3.5,bpg:0.3,spg:1.2,fg:44.1,tp:36.5},
+  'Isaiah Evans':          {ppg:11.8,rpg:3.6,apg:2.4,bpg:0.4,spg:0.9,fg:46.2,tp:38.5},
+  'Flory Bidunga':         {ppg:10.5,rpg:9.2,apg:0.8,bpg:2.8,spg:0.6,fg:60.1,tp:null},
+  'Alex Karaban':          {ppg:15.4,rpg:6.3,apg:2.2,bpg:0.8,spg:0.9,fg:48.7,tp:37.6},
+  'Otega Oweh':            {ppg:16.3,rpg:4.1,apg:3.3,bpg:0.4,spg:1.1,fg:45.8,tp:35.2},
+  'Bennett Stirtz':        {ppg:18.2,rpg:3.7,apg:5.6,bpg:0.2,spg:1.4,fg:47.3,tp:39.4},
+  'Hannes Steinbach':      {ppg:12.1,rpg:7.8,apg:1.3,bpg:1.9,spg:0.5,fg:55.8,tp:28.4},
+  'Jeremy Fears Jr.':      {ppg:13.9,rpg:3.3,apg:5.8,bpg:0.3,spg:1.8,fg:44.2,tp:34.7},
+  'Jack Kayil':            {ppg:12.5,rpg:4.2,apg:3.9,bpg:0.6,spg:1.1,fg:46.8,tp:35.8},
+  'Sergio de Larrea':      {ppg:11.3,rpg:3.5,apg:4.4,bpg:0.4,spg:1.3,fg:43.9,tp:36.2},
+  'Henri Veesaar':         {ppg:11.7,rpg:8.2,apg:1.1,bpg:2.2,spg:0.5,fg:57.6,tp:null},
+  'Aday Mara':             {ppg:13.8,rpg:7.4,apg:1.6,bpg:2.5,spg:0.6,fg:56.3,tp:null},
+  'Tarris Reed Jr.':       {ppg:10.9,rpg:7.1,apg:0.9,bpg:2.2,spg:0.5,fg:58.4,tp:null},
+  'Morez Johnson Jr.':     {ppg:11.4,rpg:7.8,apg:1.2,bpg:1.7,spg:0.7,fg:54.9,tp:null},
+  'Bruce Thornton':        {ppg:17.6,rpg:3.4,apg:5.1,bpg:0.2,spg:1.4,fg:46.5,tp:36.8},
+  'Milos Uzan':            {ppg:14.7,rpg:3.6,apg:5.3,bpg:0.3,spg:1.2,fg:45.9,tp:36.1},
+  'Kingston Flemings':     {ppg:13.2,rpg:4.1,apg:3.5,bpg:0.3,spg:1.0,fg:44.8,tp:36.9},
+  'Christian Anderson Jr.':{ppg:14.5,rpg:3.2,apg:3.9,bpg:0.2,spg:1.3,fg:45.4,tp:37.3},
+  'Kylan Boswell':         {ppg:12.8,rpg:2.9,apg:4.7,bpg:0.2,spg:1.5,fg:43.7,tp:35.9},
+  'Andrej Stojaković':     {ppg:15.1,rpg:4.4,apg:2.8,bpg:0.5,spg:0.9,fg:46.3,tp:38.4},
+  'Joshua Jefferson':      {ppg:14.3,rpg:6.9,apg:1.9,bpg:1.1,spg:0.8,fg:50.8,tp:33.5},
+  'Milan Momcilovic':      {ppg:15.8,rpg:5.2,apg:2.4,bpg:0.7,spg:0.9,fg:48.2,tp:36.7},
+  'Billy Richmond III':    {ppg:13.7,rpg:5.6,apg:1.5,bpg:0.9,spg:0.7,fg:49.3,tp:35.8},
+  'Richie Saunders':       {ppg:16.5,rpg:5.8,apg:2.6,bpg:0.6,spg:1.2,fg:47.8,tp:38.1},
+  'Emanuel Sharp':         {ppg:14.1,rpg:3.3,apg:3.2,bpg:0.3,spg:1.4,fg:44.9,tp:37.6},
+  'Braden Smith':          {ppg:16.8,rpg:4.2,apg:7.1,bpg:0.2,spg:1.1,fg:46.1,tp:36.4},
+  'Tyler Bilodeau':        {ppg:14.9,rpg:6.4,apg:1.8,bpg:0.9,spg:0.7,fg:49.7,tp:36.2},
+  'John Blackwell':        {ppg:15.3,rpg:3.7,apg:3.9,bpg:0.2,spg:1.2,fg:45.6,tp:37.1},
+  'Nick Boyd':             {ppg:13.8,rpg:3.4,apg:4.2,bpg:0.2,spg:1.3,fg:44.3,tp:36.8},
+  'Jaden Bradley':         {ppg:14.6,rpg:3.1,apg:5.4,bpg:0.3,spg:1.7,fg:45.2,tp:34.9},
+  'Trevon Brazile':        {ppg:13.2,rpg:7.3,apg:1.3,bpg:1.8,spg:0.8,fg:51.4,tp:null},
+  'Maliq Brown':           {ppg:10.7,rpg:6.8,apg:2.1,bpg:0.9,spg:1.2,fg:50.3,tp:31.8},
+  'Cameron Carr':          {ppg:15.4,rpg:3.6,apg:4.1,bpg:0.2,spg:1.1,fg:45.7,tp:37.9},
+  'Rueben Chinyelu':       {ppg:11.2,rpg:8.1,apg:0.8,bpg:2.6,spg:0.5,fg:58.9,tp:null},
+  'Ryan Conwell':          {ppg:17.4,rpg:3.5,apg:3.8,bpg:0.2,spg:1.1,fg:46.8,tp:38.7},
+  'Zuby Ejiofor':          {ppg:14.9,rpg:7.2,apg:1.7,bpg:1.4,spg:0.8,fg:52.1,tp:null},
+  "Ja'Kobi Gillespie":     {ppg:13.6,rpg:3.2,apg:4.7,bpg:0.2,spg:1.6,fg:44.1,tp:35.7},
+  'Allen Graves':          {ppg:18.3,rpg:7.6,apg:2.4,bpg:1.1,spg:0.9,fg:50.4,tp:36.2},
+  'Keyshawn Hall':         {ppg:15.7,rpg:5.9,apg:2.1,bpg:0.8,spg:0.9,fg:49.2,tp:34.8},
+  'Tobi Lawal':            {ppg:16.2,rpg:7.4,apg:1.9,bpg:1.2,spg:0.7,fg:51.3,tp:null},
+  'Nick Martinelli':       {ppg:18.7,rpg:6.8,apg:3.2,bpg:0.7,spg:0.9,fg:49.8,tp:37.5},
+  'Baba Miller':           {ppg:12.8,rpg:6.5,apg:1.6,bpg:1.3,spg:0.7,fg:51.7,tp:null},
+  'Dillon Mitchell':       {ppg:14.1,rpg:6.9,apg:1.4,bpg:1.1,spg:0.8,fg:52.6,tp:null},
+  'Malachi Moreno':        {ppg:9.8,rpg:7.4,apg:0.9,bpg:2.7,spg:0.4,fg:56.8,tp:null},
+  'Izaiyah Nelson':        {ppg:14.3,rpg:9.1,apg:1.1,bpg:2.3,spg:0.6,fg:57.2,tp:null},
+  'Tyler Nickel':          {ppg:14.8,rpg:5.3,apg:2.0,bpg:0.6,spg:0.8,fg:47.9,tp:38.3},
+  'Ebuka Okorie':          {ppg:14.2,rpg:3.8,apg:3.5,bpg:0.3,spg:1.2,fg:44.9,tp:36.4},
+  'Felix Okpara':          {ppg:10.1,rpg:8.3,apg:0.8,bpg:2.9,spg:0.5,fg:57.9,tp:null},
+  'Ugonna Onyenso':        {ppg:9.7,rpg:7.9,apg:0.7,bpg:3.1,spg:0.4,fg:59.2,tp:null},
+  'Tobe Awaka':            {ppg:11.6,rpg:6.7,apg:1.3,bpg:1.4,spg:0.6,fg:52.8,tp:31.5},
+  'Matt Able':             {ppg:15.9,rpg:3.5,apg:3.7,bpg:0.2,spg:1.3,fg:45.8,tp:38.6},
+  'Amari Allen':           {ppg:12.3,rpg:6.4,apg:1.6,bpg:1.2,spg:0.7,fg:51.4,tp:null},
+  'Luigi Suigo':           {ppg:13.1,rpg:7.8,apg:1.2,bpg:2.1,spg:0.5,fg:55.6,tp:null},
+  'Peter Suder':           {ppg:17.2,rpg:3.4,apg:3.9,bpg:0.2,spg:1.1,fg:46.4,tp:38.1},
+  'Dailyn Swain':          {ppg:14.5,rpg:6.1,apg:2.2,bpg:0.9,spg:0.8,fg:49.6,tp:34.7},
+  'Tyler Tanner':          {ppg:13.7,rpg:3.2,apg:3.8,bpg:0.2,spg:1.0,fg:45.3,tp:37.2},
+  'Keaton Wagler':         {ppg:13.4,rpg:2.8,apg:4.1,bpg:0.1,spg:1.1,fg:44.7,tp:38.5},
+};
+
+/* ── Player photo helper (UI-Avatars fallback for all prospects) ── */
+function playerPhotoUrl(name){
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=001a57&color=fff&bold=true&length=2&size=128`;
+}
+
+const PROSPECTS = RAW_PROSPECTS.map((p,i)=>{
+  const stats = PLAYER_STATS[p[0]] || null;
+  return {rank:i+1, name:p[0], school:p[1], pos:p[2], stats};
+});
 
 /* ============================================================ STATE */
 const State = {
@@ -1393,7 +1480,7 @@ function renderPicks(){
         ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
       </div>
       <div class="pick-player ${pick?'':'empty'}" style="${pick && pick.reason?'display:flex;align-items:flex-start;gap:.75rem;justify-content:space-between':''}">
-        ${pick?`<div style="flex:1;min-width:0"><div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}</div></div>${pick.reason?`<div class="reason" style="flex:0 0 240px;align-self:center;max-width:240px;font-size:.78rem;color:var(--mid);font-style:italic;line-height:1.4;text-align:left;padding:.5rem .7rem;background:rgba(0,107,182,.05);border-left:2px solid var(--sixers-blue);border-radius:6px;word-wrap:break-word;overflow-wrap:break-word">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}`
+        ${pick?`<div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0"><img src="${playerPhotoUrl(pick.name)}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display=&apos;none&apos;"/><div style="flex:1;min-width:0"><div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}</div></div></div>${pick.reason?`<div class="reason" style="flex:0 0 240px;align-self:center;max-width:240px;font-size:.78rem;color:var(--mid);font-style:italic;line-height:1.4;text-align:left;padding:.5rem .7rem;background:rgba(0,107,182,.05);border-left:2px solid var(--sixers-blue);border-radius:6px;word-wrap:break-word;overflow-wrap:break-word">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}`
               :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
       </div>
     </div>`;
@@ -1461,9 +1548,14 @@ function renderBoard(){
   $('player-list').innerHTML = filtered.map(p=>{
     const t = taken.has(p.name);
     const canDraft = State.started && !t && isUserPick(State.currentPick);
+    const initials = p.name.split(' ').map(x=>x[0]).slice(0,2).join('');
+    const photoUrl = playerPhotoUrl(p.name);
     return `<div class="player-row ${t?'taken':''}" data-name="${p.name}">
       <div class="player-rk">${p.rank}</div>
-      <div class="player-info"><div class="pname" data-player-detail="${p.name}">${p.name}</div><div class="pschool">${p.school} · ${p.pos}</div></div>
+      <img class="player-hs" src="${photoUrl}" alt="${p.name}" loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="player-hs-placeholder" style="display:none">${initials}</div>
+      <div class="player-info"><div class="pname" data-player-detail="${p.name}">${p.name}</div><div class="pschool">${p.school} · ${p.pos}${p.stats?` · <strong>${p.stats.ppg}</strong> ppg`:''}</div></div>
       <button class="draft-btn" ${canDraft?'':'disabled'} data-pick="${p.name}">${t?'Picked':'Draft'}</button>
     </div>`;
   }).join('');
@@ -1967,22 +2059,46 @@ document.addEventListener('DOMContentLoaded',()=>{
 function openPlayerDetail(name){
   const p = PROSPECTS.find(x=>x.name===name); if(!p) return;
   $('pdetail-title').textContent = p.name;
+  const initials = p.name.split(' ').map(x=>x[0]).slice(0,2).join('');
+  const photoUrl = playerPhotoUrl(p.name);
+  const s = p.stats;
+  const statCells = s ? `
+    <div class="pdetail-stat"><div class="lbl">PPG</div><div class="val">${s.ppg}</div></div>
+    <div class="pdetail-stat"><div class="lbl">RPG</div><div class="val">${s.rpg}</div></div>
+    <div class="pdetail-stat"><div class="lbl">APG</div><div class="val">${s.apg}</div></div>
+    <div class="pdetail-stat"><div class="lbl">BPG</div><div class="val">${s.bpg}</div></div>
+    <div class="pdetail-stat"><div class="lbl">SPG</div><div class="val">${s.spg}</div></div>
+    <div class="pdetail-stat"><div class="lbl">FG%</div><div class="val">${s.fg}%</div></div>
+    ${s.tp!==null?`<div class="pdetail-stat"><div class="lbl">3P%</div><div class="val">${s.tp}%</div></div>`:''}
+    <div class="pdetail-stat"><div class="lbl">Big Board</div><div class="val">#${p.rank}</div></div>
+    <div class="pdetail-stat"><div class="lbl">Position</div><div class="val">${p.pos==='G'?'Guard':p.pos==='F'?'Forward':'Center'}</div></div>
+    <div class="pdetail-stat"><div class="lbl">Status</div><div class="val" style="font-size:.88rem">${takenSet().has(p.name)?'Drafted':'Available'}</div></div>
+  ` : `
+    <div class="pdetail-stat"><div class="lbl">Big Board Rank</div><div class="val">#${p.rank}</div></div>
+    <div class="pdetail-stat"><div class="lbl">Position</div><div class="val">${p.pos}</div></div>
+    <div class="pdetail-stat"><div class="lbl">School</div><div class="val" style="font-size:.95rem">${p.school}</div></div>
+    <div class="pdetail-stat"><div class="lbl">Status</div><div class="val" style="font-size:.95rem">${takenSet().has(p.name)?'Drafted':'Available'}</div></div>
+  `;
   $('pdetail-body').innerHTML = `
     <div style="display:flex;align-items:center;gap:.85rem">
-      <div style="width:56px;height:56px;border-radius:50%;background:var(--sixers-blue);color:#fff;
-        display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';
-        font-weight:900;font-size:1.4rem">${p.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</div>
+      <div style="position:relative;flex-shrink:0">
+        <img src="${photoUrl}" alt="${p.name}"
+          style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--sixers-blue);display:block"
+          onerror="this.style.display='none';document.getElementById('pdetail-initials').style.display='flex'"/>
+        <div id="pdetail-initials" style="display:none;width:72px;height:72px;border-radius:50%;
+          background:var(--navy);color:#fff;align-items:center;justify-content:center;
+          font-family:'Barlow Condensed';font-weight:900;font-size:1.6rem;border:3px solid var(--sixers-blue)">${initials}</div>
+      </div>
       <div>
         <div style="font-family:'Barlow Condensed';font-weight:900;font-size:1.4rem;line-height:1">${p.name}</div>
-        <div style="color:var(--mid);font-size:.88rem">${p.school} · ${p.pos==='G'?'Guard':p.pos==='F'?'Forward':'Center'}</div>
+        <div style="color:var(--mid);font-size:.88rem;margin-top:.2rem">${p.school} · ${p.pos==='G'?'Guard':p.pos==='F'?'Forward':'Center'}</div>
+        ${s?`<div style="margin-top:.3rem;font-size:.82rem;color:var(--sixers-blue);font-weight:700">${s.ppg} PPG · ${s.rpg} RPG · ${s.apg} APG</div>`:''}
       </div>
     </div>
     <p style="margin:.85rem 0 0;color:var(--ink);line-height:1.55;font-size:.93rem">${blurbFor(p)}</p>
-    <div class="pdetail-grid">
-      <div class="pdetail-stat"><div class="lbl">Big Board Rank</div><div class="val">#${p.rank}</div></div>
-      <div class="pdetail-stat"><div class="lbl">Position</div><div class="val">${p.pos}</div></div>
-      <div class="pdetail-stat"><div class="lbl">School</div><div class="val" style="font-size:.95rem">${p.school}</div></div>
-      <div class="pdetail-stat"><div class="lbl">Status</div><div class="val" style="font-size:.95rem">${takenSet().has(p.name)?'Drafted':'Available'}</div></div>
+    ${s?`<div style="font-family:'Barlow Condensed';font-weight:800;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);margin:.9rem 0 .45rem">2024-25 Season Stats</div>`:''}
+    <div class="pdetail-grid" style="grid-template-columns:repeat(3,1fr)">
+      ${statCells}
     </div>
   `;
   const btn = $('pdetail-draft');
