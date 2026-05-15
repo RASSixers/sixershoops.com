@@ -105,8 +105,8 @@
   .pick-team .team{font-weight:700;font-size:.95rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pick-team .via{font-size:.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:.06em}
   .pick-player{min-width:0;justify-self:end;width:100%;max-width:280px}
-  .pick-player .pp-row{display:flex;align-items:center;justify-content:flex-end;gap:.55rem}
-  .pick-player .pp-meta{text-align:right;min-width:0;flex:1}
+  .pick-player .pp-row{display:flex;align-items:center;justify-content:flex-start;gap:.55rem;flex-direction:row}
+  .pick-player .pp-meta{text-align:left;min-width:0;flex:1}
   .pick-player .pp-photo{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--soft)}
   .pick-player .name{font-weight:700;color:var(--ink);font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pick-player .school{font-size:.75rem;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1032,7 +1032,7 @@ const PLAYER_ESPN_IDS = {
   'Jayden Quaintance':5101845,
   'Aday Mara':5174983,
   'Labaron Philon':4873090,
-  'Karim Lopez':5231919,
+  // 'Karim Lopez': international, no ESPN headshot — uses SVG fallback
   'Hannes Steinbach':5281370,
   'Chris Cenac Jr.':5142621,
   'Bennett Stirtz':5241364,
@@ -1067,31 +1067,31 @@ const PLAYER_ESPN_IDS = {
   'Malachi Moreno':5101849,
   'Bruce Thornton':5105837,
   'Milos Uzan':5106272,
-  'Sergio de Larrea':5279129,
+  // 'Sergio de Larrea': international, no ESPN headshot — uses SVG fallback
   'Baba Miller':5075626,
   'Tyler Bilodeau':5105626,
   'John Blackwell':5103630,
-  'Nate Bittle':4685700,
+  'Nate Bittle':4432586,
   'Ugonna Onyenso':5037878,
   'Kylan Boswell':4684269,
   'Andrej Stojakovic':5175007,
   'Quadir Copeland':4701994,
   'Matt Able':5196877,
-  'Tamin Lipsey':4699962,
-  'Malik Reneau':4698754,
+  'Tamin Lipsey':5106254,
+  'Malik Reneau':5105798,
   'Keyshawn Hall':5075625,
   'Jeremy Fears Jr.':4711255,
   'Rafael Castro':4684443,
   'Jaron Pierre Jr.':4703115,
   'Felix Okpara':5105841,
-  'Tucker DeVries':4432540,
+  'Tucker DeVries':4837238,
   'Dillon Mitchell':5106283,
   'Izaiyah Nelson':5107251,
   'Cade Tyson':5107970,
   'Darrion Williams':4937074,
   'Tyler Nickel':4838721,
   'Jaden Henley':5105821,
-  'Elliot Cadeau':5097770,
+  'Elliot Cadeau':4869764,
   'Nick Martinelli':5105832,
   'Lamar Wilkerson':5105876,
   'Maliq Brown':5105337,
@@ -1669,11 +1669,11 @@ function renderPicks(){
       <div class="pick-player ${pick?'':'empty'}">
         ${pick?`
           <div class="pp-row">
+            <img class="pp-photo" src="${playerPhotoUrl(pick.name)}" alt="" onerror="this.onerror=null;this.src=playerSvgAvatar('${pick.name.replace(/'/g,"\\'")}')"/>
             <div class="pp-meta">
               <div class="name" data-player-detail="${pick.name}">${pick.name}${grade?` <span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div>
               <div class="school">${pick.school} · ${pick.pos}</div>
             </div>
-            <img class="pp-photo" src="${playerPhotoUrl(pick.name)}" alt="" onerror="this.style.visibility='hidden'"/>
           </div>
           ${pick.reason?`<div class="pp-reason">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}
         `:`<div class="pp-row"><div class="pp-meta"><div class="name">${onClock?'On the clock…':'—'}</div></div></div>`}
