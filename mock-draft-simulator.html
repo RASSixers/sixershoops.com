@@ -133,6 +133,11 @@
   .player-hs{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--soft);flex-shrink:0;display:block}
   .player-hs-placeholder{width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;
     display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:900;font-size:.78rem;flex-shrink:0}
+  .pstat-row{display:flex;gap:.2rem;flex-wrap:wrap;margin-top:.18rem}
+  .pstat-chip{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.62rem;
+    letter-spacing:.04em;background:rgba(0,107,182,.1);color:var(--sixers-blue);
+    padding:.1rem .3rem;border-radius:4px;white-space:nowrap}
+  .player-row.taken .pstat-chip{opacity:.5}
   .player-row:hover{background:#f9fbff}
   .player-row.taken{opacity:.35;cursor:not-allowed;background:#fafbfd}
   .player-rk{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
@@ -199,6 +204,25 @@
     font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;
     letter-spacing:.08em;text-transform:uppercase;color:var(--mid);border-radius:7px;cursor:pointer;transition:all .15s}
   .mode-tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(15,23,42,.08)}
+
+  /* history panel */
+  .hist-card{background:#fff;border:1px solid #e6eaf2;border-radius:12px;margin-bottom:1rem;overflow:hidden}
+  .hist-card-head{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;background:var(--soft);border-bottom:1px solid #e6eaf2;flex-wrap:wrap;gap:.4rem}
+  .hist-card-meta{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .hist-tag{font-family:'Barlow Condensed';font-weight:800;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .55rem;border-radius:6px;background:#e8f1fb;color:var(--sixers-blue)}
+  .hist-tag.red{background:#fde8ed;color:#c01038}
+  .hist-date{font-size:.8rem;color:var(--mid)}
+  .hist-picks{padding:.6rem .9rem}
+  .hist-pick-row{display:grid;grid-template-columns:28px 28px 1fr;gap:.45rem;align-items:center;padding:.32rem .1rem;border-bottom:1px solid #f5f6fa}
+  .hist-pick-row:last-child{border-bottom:none}
+  .hist-pick-num{font-family:'Barlow Condensed';font-weight:800;font-size:.82rem;color:var(--mid);text-align:right}
+  .hist-pick-photo{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e8f1fb}
+  .hist-pick-info{display:flex;flex-direction:column;min-width:0}
+  .hist-pick-name{font-weight:700;font-size:.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hist-pick-sub{font-size:.75rem;color:var(--mid)}
+  .hist-summary{padding:.5rem 1rem .75rem;font-size:.82rem;color:var(--mid);border-top:1px solid #f5f6fa;display:flex;gap:1rem;flex-wrap:wrap}
+  .hist-delete{background:none;border:none;font-size:.8rem;color:#c01038;cursor:pointer;padding:.2rem .5rem;border-radius:5px}
+  .hist-delete:hover{background:#fde8ed}
 
   /* setup card */
   .setup-card{background:#fff;border:1px solid #e6eaf2;border-radius:14px;
@@ -442,6 +466,7 @@
           <button class="mode-tab" data-mode="group">Group Mock</button>
           <button class="mode-tab" data-mode="myboard">My Board</button>
           <button class="mode-tab" data-mode="join">Join Room</button>
+          <button class="mode-tab" data-mode="history">History</button>
         </div>
 
         <div id="setup-solo">
@@ -601,6 +626,7 @@ Sign in on the community page first so friends can find and invite you.
         <button class="mode-tab" data-mode="group">Group Mock</button>
         <button class="mode-tab" data-mode="myboard">My Board</button>
         <button class="mode-tab" data-mode="join">Join Room</button>
+        <button class="mode-tab" data-mode="history">History</button>
       </div>
       <div class="draft-status">
         <div class="ds-meta">
@@ -696,6 +722,18 @@ Sign in on the community page first so friends can find and invite you.
         </div>
 
         <div id="mb-list"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY PANE -->
+    <div id="history-pane" style="display:none">
+      <div class="section-label">Draft History</div>
+      <div class="setup-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;flex-wrap:wrap;gap:.5rem">
+          <div style="font-family:'Barlow Condensed';font-weight:900;font-size:1.25rem;color:var(--ink)">Your Past Mock Drafts</div>
+          <button class="btn-ghost" id="history-clear" style="color:#ED174C;border-color:#fbd5da">Clear All</button>
+        </div>
+        <div id="history-list"><div class="empty-state">No drafts saved yet. Complete a Solo Mock to record it here.</div></div>
       </div>
     </div>
 
@@ -957,9 +995,58 @@ const PLAYER_STATS = {
   'Keaton Wagler':         {ppg:13.4,rpg:2.8,apg:4.1,bpg:0.1,spg:1.1,fg:44.7,tp:38.5},
 };
 
-/* ── Player photo helper (UI-Avatars fallback for all prospects) ── */
+/* ── ESPN player IDs for headshots ── */
+const PLAYER_ESPN_IDS = {
+  'AJ Dybantsa':5142718,'Cameron Boozer':5041935,'Darryn Peterson':5041955,
+  'Nate Ament':5164559,'Mikel Brown Jr.':5101761,'Caleb Wilson':5095151,
+  'Yaxel Lendeborg':5175737,'Koa Peat':5041953,'Chris Cenac Jr.':5142621,
+  'Jayden Quaintance':5101845,'Labaron Philon Jr.':4873090,'Darius Acuff Jr.':5142620,
+  'Tounde Yessoufou':5095152,'Brayden Burries':5082206,'Meleek Thomas':5041951,
+  'Isaiah Evans':5061585,'Flory Bidunga':5044426,'Alex Karaban':4917149,
+  'Otega Oweh':5106270,'Bennett Stirtz':5241364,'Hannes Steinbach':5281370,
+  'Jeremy Fears Jr.':4711255,'Henri Veesaar':5105571,'Aday Mara':5174983,
+  'Tarris Reed Jr.':5105809,'Morez Johnson Jr.':4873153,'Bruce Thornton':5105837,
+  'Milos Uzan':5106272,'Kingston Flemings':5149077,'Christian Anderson Jr.':5060701,
+  'Kylan Boswell':4684269,'Andrej Stojakovi\u0107':5175007,'Joshua Jefferson':4870564,
+  'Milan Momcilovic':4848637,'Billy Richmond III':5060732,'Richie Saunders':5105462,
+  'Emanuel Sharp':5106058,'Braden Smith':5105854,'Tyler Bilodeau':5105626,
+  'John Blackwell':5103630,'Nick Boyd':4702654,'Jaden Bradley':4432737,
+  'Trevon Brazile':4698719,'Maliq Brown':5105337,'Cameron Carr':5113969,
+  'Rueben Chinyelu':5174971,'Ryan Conwell':5107157,'Zuby Ejiofor':5106262,
+  "Ja'Kobi Gillespie":5107968,'Allen Graves':5149115,'Keyshawn Hall':5075625,
+  'Tobi Lawal':5106040,'Nick Martinelli':5105832,'Baba Miller':5075626,
+  'Dillon Mitchell':5106283,'Malachi Moreno':5101849,'Izaiyah Nelson':5107251,
+  'Tyler Nickel':4838721,'Ebuka Okorie':5258459,'Felix Okpara':5105841,
+  'Ugonna Onyenso':5037878,'Tobe Awaka':5105555,'Matt Able':5196877,
+  'Amari Allen':5101833,'Peter Suder':5106674,'Dailyn Swain':4848625,
+  'Tyler Tanner':5187600,'Keaton Wagler':5254165
+};
+
+/* ── Player photo helper — ESPN CDN with inline SVG fallback ── */
 function playerPhotoUrl(name){
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=001a57&color=fff&bold=true&length=2&size=128`;
+  const id = PLAYER_ESPN_IDS[name];
+  if(id) return `https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/${id}.png`;
+  return playerSvgAvatar(name);
+}
+function playerSvgAvatar(name){
+  const initials = name.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
+  const hash = name.split('').reduce((a,c)=>a+(c.charCodeAt(0)*31),0);
+  const palettes = [
+    ['#006BB6','#1e90d8'],['#001a57','#0057a0'],['#0080d4','#006BB6'],
+    ['#003d7a','#006BB6'],['#0057a0','#1e90d8'],['#ED174C','#c01038'],
+    ['#001a57','#1e90d8'],['#004e8c','#0080d4']
+  ];
+  const [c1,c2] = palettes[Math.abs(hash)%palettes.length];
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'>
+    <defs><linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='${c1}'/>
+      <stop offset='100%' stop-color='${c2}'/>
+    </linearGradient></defs>
+    <circle cx='40' cy='40' r='40' fill='url(#g)'/>
+    <text x='40' y='52' font-family='Arial Black,sans-serif' font-size='26' font-weight='900'
+      text-anchor='middle' fill='white' letter-spacing='1'>${initials}</text>
+  </svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 
 const PROSPECTS = RAW_PROSPECTS.map((p,i)=>{
@@ -1283,6 +1370,19 @@ function switchMode(mode){
   $('setup-solo').style.display = mode==='solo'?'':'none';
   $('setup-group').style.display = mode==='group'?'':'none';
   $('setup-join').style.display = mode==='join'?'':'none';
+  // History mode
+  if(mode==='history'){
+    if(State.started && State.mode==='solo'){
+      State.started=false; clearInterval(State.timer);
+      $('draft-pane').style.display='none';
+    }
+    $('setup-pane').style.display='none';
+    $('myboard-pane').style.display='none';
+    $('history-pane').style.display='';
+    renderHistory();
+    return;
+  }
+  $('history-pane').style.display='none';
   // Solo mode: skip the Start Draft screen entirely and jump straight in
   if(mode==='solo'){
     if(State.started && State.mode!=='solo'){
@@ -1480,7 +1580,7 @@ function renderPicks(){
         ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
       </div>
       <div class="pick-player ${pick?'':'empty'}" style="${pick && pick.reason?'display:flex;align-items:flex-start;gap:.75rem;justify-content:space-between':''}">
-        ${pick?`<div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0"><img src="${playerPhotoUrl(pick.name)}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display=&apos;none&apos;"/><div style="flex:1;min-width:0"><div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}</div></div></div>${pick.reason?`<div class="reason" style="flex:0 0 240px;align-self:center;max-width:240px;font-size:.78rem;color:var(--mid);font-style:italic;line-height:1.4;text-align:left;padding:.5rem .7rem;background:rgba(0,107,182,.05);border-left:2px solid var(--sixers-blue);border-radius:6px;word-wrap:break-word;overflow-wrap:break-word">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}`
+        ${pick?`<div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0"><img src="${playerPhotoUrl(pick.name)}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'"/><div style="flex:1;min-width:0"><div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}</div></div></div>${pick.reason?`<div class="reason" style="flex:0 0 240px;align-self:center;max-width:240px;font-size:.78rem;color:var(--mid);font-style:italic;line-height:1.4;text-align:left;padding:.5rem .7rem;background:rgba(0,107,182,.05);border-left:2px solid var(--sixers-blue);border-radius:6px;word-wrap:break-word;overflow-wrap:break-word">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}`
               :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
       </div>
     </div>`;
@@ -1548,14 +1648,12 @@ function renderBoard(){
   $('player-list').innerHTML = filtered.map(p=>{
     const t = taken.has(p.name);
     const canDraft = State.started && !t && isUserPick(State.currentPick);
-    const initials = p.name.split(' ').map(x=>x[0]).slice(0,2).join('');
     const photoUrl = playerPhotoUrl(p.name);
+    const statLine = p.stats ? `<div class="pstat-row"><span class="pstat-chip">${p.stats.ppg}pts</span><span class="pstat-chip">${p.stats.rpg}reb</span><span class="pstat-chip">${p.stats.apg}ast</span>${p.stats.bpg>=1?'<span class="pstat-chip">'+p.stats.bpg+'blk</span>':''}</div>` : '';
     return `<div class="player-row ${t?'taken':''}" data-name="${p.name}">
       <div class="player-rk">${p.rank}</div>
-      <img class="player-hs" src="${photoUrl}" alt="${p.name}" loading="lazy"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-      <div class="player-hs-placeholder" style="display:none">${initials}</div>
-      <div class="player-info"><div class="pname" data-player-detail="${p.name}">${p.name}</div><div class="pschool">${p.school} · ${p.pos}${p.stats?` · <strong>${p.stats.ppg}</strong> ppg`:''}</div></div>
+      <img class="player-hs" src="${photoUrl}" alt="${p.name}"/>
+      <div class="player-info"><div class="pname" data-player-detail="${p.name}">${p.name}</div><div class="pschool">${p.school} · ${p.pos==='G'?'G':p.pos==='F'?'F':'C'}</div>${statLine}</div>
       <button class="draft-btn" ${canDraft?'':'disabled'} data-pick="${p.name}">${t?'Picked':'Draft'}</button>
     </div>`;
   }).join('');
@@ -1974,6 +2072,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   populateTeamSelect();
 
   document.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>switchMode(b.dataset.mode));
+  const _hclear = $('history-clear');
+  if(_hclear) _hclear.onclick = ()=>{ localStorage.removeItem(HISTORY_KEY); renderHistory(); };
   $('cta-solo').onclick = ()=>{switchMode('solo'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
   $('cta-group').onclick= ()=>{switchMode('group'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
   $('cta-join').onclick = ()=>{switchMode('join'); $('setup-pane').scrollIntoView({behavior:'smooth'});};
@@ -2303,9 +2403,97 @@ function showDraftCompleteBanner(){
   modal.querySelector('#dc-post').onclick  = ()=>{ close(); postMockImageToCommunity(); };
 }
 
+/* ===== DRAFT HISTORY — save/load/render ===== */
+const HISTORY_KEY = 'mock_draft_history_v1';
+
+function saveDraftHistory(){
+  if(State.mode !== 'solo') return;
+  const userPicks = (State.fullOrder||DRAFT_ORDER)
+    .map((slot,i)=>({slot,pick:State.picks[i],pickNum:i+1}))
+    .filter(x=>x.pick);
+  if(!userPicks.length) return;
+  const entry = {
+    id: Date.now(),
+    date: new Date().toLocaleString(),
+    team: TEAMS[State.userTeam] || State.userTeam,
+    teamCode: State.userTeam,
+    rounds: State.rounds || 1,
+    totalPicks: userPicks.length,
+    picks: userPicks.map(x=>({
+      pickNum: x.pickNum,
+      name: x.pick.name,
+      school: x.pick.school,
+      pos: x.pick.pos,
+      rank: x.pick.rank
+    }))
+  };
+  let history = [];
+  try{ history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }catch(e){}
+  history.unshift(entry);
+  if(history.length > 50) history = history.slice(0,50);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function renderHistory(){
+  const list = $('history-list');
+  if(!list) return;
+  let history = [];
+  try{ history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }catch(e){}
+  if(!history.length){
+    list.innerHTML = '<div class="empty-state">No drafts saved yet. Complete a Solo Mock to record it here.</div>';
+    return;
+  }
+  list.innerHTML = history.map((entry,idx)=>{
+    const avgVal = entry.picks.length
+      ? (entry.picks.reduce((s,p)=>s+(p.pickNum-p.rank),0)/entry.picks.length).toFixed(1)
+      : '0.0';
+    const valClass = Number(avgVal)>0?'red':'';
+    const picksHtml = entry.picks.map(p=>{
+      const espnId = PLAYER_ESPN_IDS[p.name];
+      const photoUrl = espnId
+        ? `https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/${espnId}.png`
+        : playerSvgAvatar(p.name);
+      return `<div class="hist-pick-row">
+        <div class="hist-pick-num">${p.pickNum}</div>
+        <img class="hist-pick-photo" src="${photoUrl}" alt="" onerror="this.src='${playerSvgAvatar(p.name)}'"/>
+        <div class="hist-pick-info">
+          <div class="hist-pick-name">${p.name}</div>
+          <div class="hist-pick-sub">${p.school} · ${p.pos} · Board #${p.rank}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="hist-card">
+      <div class="hist-card-head">
+        <div class="hist-card-meta">
+          <span class="hist-tag">${entry.team}</span>
+          <span class="hist-tag">${entry.rounds === 2 ? '2 Rounds' : '1st Round'}</span>
+          <span class="hist-tag ${valClass}">Avg Value ${Number(avgVal)>0?'+':''}${avgVal}</span>
+          <span class="hist-date">${entry.date}</span>
+        </div>
+        <button class="hist-delete" data-hist-idx="${idx}">Remove</button>
+      </div>
+      <div class="hist-picks">${picksHtml}</div>
+      <div class="hist-summary">
+        <span><strong>${entry.picks.length}</strong> picks made</span>
+        <span>Avg pick value: <strong>${Number(avgVal)>0?'+':''}${avgVal}</strong> vs board rank</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-hist-idx]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      let h = [];
+      try{ h = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }catch(e){}
+      h.splice(Number(btn.dataset.histIdx), 1);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+      renderHistory();
+    });
+  });
+}
+
 /* ===== v2: hook into finishDraft ===== */
 const _origFinish = finishDraft;
-window.finishDraft = function(){ _origFinish(); showDraftCompleteBanner(); };
+window.finishDraft = function(){ _origFinish(); saveDraftHistory(); showDraftCompleteBanner(); };
 
 /* ===== v2: wire Share to Social Media button (always available) ===== */
 document.addEventListener('DOMContentLoaded', ()=>{
