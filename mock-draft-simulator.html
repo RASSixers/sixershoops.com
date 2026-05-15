@@ -93,7 +93,7 @@
   .panel-body{padding:.75rem 0}
 
   /* picks list */
-  .pick-row{display:grid;grid-template-columns:46px 36px 1fr auto;gap:.75rem;
+  .pick-row{display:grid;grid-template-columns:46px 36px 1fr 280px;gap:.75rem;
     align-items:center;padding:.6rem 1rem;border-bottom:1px solid #f1f3f8;transition:background .15s}
   .pick-row:hover{background:#f9fbff}
   .pick-row.on-clock{background:linear-gradient(90deg,rgba(237,23,76,.08),transparent 70%)}
@@ -104,11 +104,21 @@
   .pick-team{display:flex;flex-direction:column;line-height:1.15;min-width:0}
   .pick-team .team{font-weight:700;font-size:.95rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pick-team .via{font-size:.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:.06em}
-  .pick-player{text-align:right;min-width:0}
-  .pick-player .name{font-weight:700;color:var(--ink);font-size:.95rem}
-  .pick-player .school{font-size:.75rem;color:var(--mid)}
+  .pick-player{min-width:0;justify-self:end;width:100%;max-width:280px}
+  .pick-player .pp-row{display:flex;align-items:center;justify-content:flex-end;gap:.55rem}
+  .pick-player .pp-meta{text-align:right;min-width:0;flex:1}
+  .pick-player .pp-photo{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--soft)}
+  .pick-player .name{font-weight:700;color:var(--ink);font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pick-player .school{font-size:.75rem;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pick-player.empty .name{color:#cbd5e1;font-style:italic;font-weight:500}
+  .pick-player .pp-reason{margin-top:.4rem;font-size:.76rem;color:var(--mid);font-style:italic;
+    line-height:1.4;text-align:left;padding:.45rem .65rem;background:rgba(0,107,182,.05);
+    border-left:2px solid var(--sixers-blue);border-radius:6px;word-wrap:break-word;overflow-wrap:break-word}
   .pick-row.user-team{background:linear-gradient(90deg,rgba(0,107,182,.07),transparent 70%)}
+  @media(max-width:720px){
+    .pick-row{grid-template-columns:38px 32px 1fr 200px;gap:.5rem;padding:.5rem .75rem}
+    .pick-player{max-width:200px}
+  }
 
   /* on-clock card */
   .clock-card{padding:1rem 1.25rem 1.25rem;background:linear-gradient(180deg,#fff,#f7faff)}
@@ -924,115 +934,166 @@ const RAW_PROSPECTS = [
 ];
 /* ── Player stats (2025-26 season) ── */
 const PLAYER_STATS = {
-  'AJ Dybantsa':           {ppg:21.4,rpg:7.3,apg:3.1,bpg:0.9,spg:1.4,fg:48.9,tp:38.1},
-  'Darryn Peterson':       {ppg:17.8,rpg:4.1,apg:4.6,bpg:0.5,spg:1.6,fg:46.3,tp:37.4},
-  'Cameron Boozer':        {ppg:14.7,rpg:8.2,apg:2.3,bpg:1.2,spg:0.7,fg:52.8,tp:30.9},
-  'Caleb Wilson':          {ppg:13.9,rpg:6.7,apg:2.5,bpg:1.1,spg:0.8,fg:51.2,tp:34.3},
-  'Darius Acuff Jr.':      {ppg:16.4,rpg:4.1,apg:4.4,bpg:0.3,spg:1.5,fg:43.7,tp:36.1},
-  'Kingston Flemings':     {ppg:13.6,rpg:4.4,apg:3.8,bpg:0.3,spg:1.1,fg:45.2,tp:37.4},
-  'Keaton Wagler':         {ppg:14.2,rpg:3.1,apg:4.5,bpg:0.2,spg:1.2,fg:45.6,tp:39.1},
-  'Mikel Brown Jr.':       {ppg:18.9,rpg:3.4,apg:4.0,bpg:0.4,spg:1.5,fg:45.3,tp:36.7},
-  'Nate Ament':            {ppg:12.8,rpg:6.3,apg:1.9,bpg:1.1,spg:0.9,fg:49.1,tp:36.2},
-  'Brayden Burries':       {ppg:14.1,rpg:3.6,apg:4.0,bpg:0.3,spg:1.5,fg:46.4,tp:39.3},
-  'Koa Peat':              {ppg:14.7,rpg:7.9,apg:2.1,bpg:1.4,spg:0.9,fg:52.6,tp:35.1},
-  'Yaxel Lendeborg':       {ppg:16.2,rpg:9.1,apg:1.6,bpg:1.7,spg:1.0,fg:57.4,tp:33.6},
-  'Jayden Quaintance':     {ppg:14.8,rpg:9.4,apg:1.7,bpg:2.7,spg:0.9,fg:60.3,tp:null},
-  'Aday Mara':             {ppg:15.1,rpg:7.9,apg:1.8,bpg:2.8,spg:0.7,fg:57.6,tp:null},
-  'Labaron Philon':        {ppg:15.6,rpg:3.7,apg:5.5,bpg:0.3,spg:1.7,fg:44.2,tp:37.0},
-  'Karim Lopez':           {ppg:17.1,rpg:7.6,apg:2.7,bpg:1.1,spg:0.8,fg:53.4,tp:null},
-  'Hannes Steinbach':      {ppg:12.8,rpg:8.2,apg:1.4,bpg:2.1,spg:0.6,fg:56.4,tp:29.3},
-  'Chris Cenac Jr.':       {ppg:12.4,rpg:8.0,apg:1.3,bpg:2.3,spg:0.6,fg:58.1,tp:null},
-  'Bennett Stirtz':        {ppg:19.4,rpg:4.0,apg:5.9,bpg:0.2,spg:1.5,fg:48.1,tp:40.2},
-  'Cameron Carr':          {ppg:16.1,rpg:3.8,apg:4.3,bpg:0.2,spg:1.2,fg:46.3,tp:38.5},
-  'Morez Johnson Jr.':     {ppg:12.1,rpg:8.3,apg:1.3,bpg:1.9,spg:0.8,fg:55.7,tp:null},
-  'Christian Anderson':    {ppg:15.2,rpg:3.4,apg:4.1,bpg:0.2,spg:1.4,fg:46.0,tp:38.0},
-  'Henri Veesaar':         {ppg:12.3,rpg:8.7,apg:1.2,bpg:2.4,spg:0.6,fg:58.2,tp:null},
-  'Isaiah Evans':          {ppg:12.6,rpg:3.9,apg:2.6,bpg:0.5,spg:1.0,fg:47.0,tp:39.2},
-  'Flory Bidunga':         {ppg:11.8,rpg:9.7,apg:0.9,bpg:3.1,spg:0.7,fg:61.4,tp:null},
-  'Amari Allen':           {ppg:13.0,rpg:6.7,apg:1.7,bpg:1.3,spg:0.8,fg:52.1,tp:null},
-  'Dailyn Swain':          {ppg:15.3,rpg:6.4,apg:2.4,bpg:1.0,spg:0.9,fg:50.2,tp:35.3},
-  'Rueben Chinyelu':       {ppg:11.9,rpg:8.6,apg:0.9,bpg:2.8,spg:0.5,fg:59.5,tp:null},
-  'Ebuka Okorie':          {ppg:14.9,rpg:4.0,apg:3.7,bpg:0.4,spg:1.3,fg:45.6,tp:37.1},
-  'Allen Graves':          {ppg:19.6,rpg:8.1,apg:2.5,bpg:1.2,spg:1.0,fg:51.2,tp:37.0},
-  'Juke Harris':           {ppg:15.1,rpg:5.4,apg:1.9,bpg:0.9,spg:1.1,fg:47.8,tp:37.2},
-  'Tarris Reed Jr.':       {ppg:11.4,rpg:7.5,apg:1.0,bpg:2.4,spg:0.6,fg:59.1,tp:null},
-  'Tounde Yessoufou':      {ppg:14.9,rpg:6.4,apg:1.9,bpg:1.0,spg:1.1,fg:50.3,tp:37.8},
-  'Tyler Tanner':          {ppg:14.4,rpg:3.3,apg:4.0,bpg:0.2,spg:1.1,fg:46.0,tp:37.9},
-  'Alex Karaban':          {ppg:16.2,rpg:6.6,apg:2.3,bpg:0.9,spg:1.0,fg:49.4,tp:38.2},
-  'Meleek Thomas':         {ppg:17.1,rpg:4.0,apg:3.7,bpg:0.3,spg:1.3,fg:44.8,tp:37.2},
-  'Joshua Jefferson':      {ppg:15.0,rpg:7.2,apg:2.1,bpg:1.2,spg:0.9,fg:51.4,tp:34.1},
-  'Ryan Conwell':          {ppg:18.2,rpg:3.7,apg:4.0,bpg:0.2,spg:1.2,fg:47.4,tp:39.3},
-  'Milan Momcilovic':      {ppg:16.5,rpg:5.5,apg:2.6,bpg:0.8,spg:1.0,fg:48.8,tp:37.3},
-  'Braden Smith':          {ppg:17.6,rpg:4.4,apg:7.6,bpg:0.2,spg:1.2,fg:46.8,tp:37.1},
-  'Zuby Ejiofor':          {ppg:15.6,rpg:7.5,apg:1.8,bpg:1.5,spg:0.9,fg:53.0,tp:null},
-  'Trevon Brazile':        {ppg:14.0,rpg:7.6,apg:1.4,bpg:2.0,spg:0.9,fg:52.1,tp:null},
-  'Billy Richmond III':    {ppg:14.4,rpg:5.9,apg:1.6,bpg:1.0,spg:0.8,fg:49.9,tp:36.4},
-  'Otega Oweh':            {ppg:17.1,rpg:4.3,apg:3.5,bpg:0.5,spg:1.2,fg:46.4,tp:35.9},
-  'Jaden Bradley':         {ppg:15.3,rpg:3.3,apg:5.7,bpg:0.3,spg:1.8,fg:45.8,tp:35.5},
-  'Richie Saunders':       {ppg:17.3,rpg:6.1,apg:2.7,bpg:0.7,spg:1.3,fg:48.4,tp:38.8},
-  'Emanuel Sharp':         {ppg:14.8,rpg:3.5,apg:3.4,bpg:0.3,spg:1.5,fg:45.5,tp:38.2},
-  'Malachi Moreno':        {ppg:10.5,rpg:7.8,apg:1.0,bpg:2.9,spg:0.5,fg:57.4,tp:null},
-  'Bruce Thornton':        {ppg:18.4,rpg:3.6,apg:5.4,bpg:0.2,spg:1.5,fg:47.1,tp:37.5},
-  'Milos Uzan':            {ppg:15.5,rpg:3.8,apg:5.6,bpg:0.3,spg:1.3,fg:46.5,tp:36.8},
-  'Sergio de Larrea':      {ppg:12.1,rpg:3.7,apg:4.7,bpg:0.4,spg:1.4,fg:44.3,tp:36.9},
-  'Baba Miller':           {ppg:13.4,rpg:6.8,apg:1.7,bpg:1.4,spg:0.8,fg:52.3,tp:null},
-  'Tyler Bilodeau':        {ppg:15.7,rpg:6.7,apg:1.9,bpg:1.0,spg:0.8,fg:50.3,tp:37.0},
-  'John Blackwell':        {ppg:16.0,rpg:3.9,apg:4.1,bpg:0.2,spg:1.3,fg:46.2,tp:37.8},
-  "Ja'Kobi Gillespie":     {ppg:14.3,rpg:3.4,apg:5.0,bpg:0.2,spg:1.7,fg:44.7,tp:36.3},
-  'Nate Bittle':           {ppg:11.6,rpg:8.4,apg:1.0,bpg:2.7,spg:0.5,fg:58.3,tp:null},
-  'Ugonna Onyenso':        {ppg:10.4,rpg:8.2,apg:0.8,bpg:3.3,spg:0.5,fg:59.8,tp:null},
-  'Kylan Boswell':         {ppg:13.5,rpg:3.1,apg:5.0,bpg:0.2,spg:1.6,fg:44.3,tp:36.5},
-  'Luigi Suigo':           {ppg:14.2,rpg:8.4,apg:1.3,bpg:2.3,spg:0.5,fg:56.2,tp:null},
-  'Andrej Stojakovic':     {ppg:16.0,rpg:4.6,apg:3.0,bpg:0.6,spg:1.0,fg:47.0,tp:39.1},
-  'Quadir Copeland':       {ppg:17.3,rpg:4.3,apg:5.5,bpg:0.2,spg:1.5,fg:46.5,tp:38.2},
-  'Matt Able':             {ppg:16.7,rpg:3.7,apg:3.9,bpg:0.2,spg:1.4,fg:46.4,tp:39.2},
-  'Tamin Lipsey':          {ppg:14.8,rpg:3.8,apg:5.2,bpg:0.2,spg:2.0,fg:45.9,tp:36.4},
-  'Malik Reneau':          {ppg:16.8,rpg:7.1,apg:2.1,bpg:1.0,spg:0.9,fg:51.0,tp:35.7},
-  'Keyshawn Hall':         {ppg:16.4,rpg:6.2,apg:2.2,bpg:0.9,spg:1.0,fg:49.8,tp:35.4},
-  'Jeremy Fears Jr.':      {ppg:14.7,rpg:3.5,apg:6.1,bpg:0.3,spg:1.9,fg:44.8,tp:35.3},
-  'Rafael Castro':         {ppg:13.8,rpg:9.4,apg:1.2,bpg:2.3,spg:0.6,fg:58.6,tp:null},
-  'Jaron Pierre Jr.':      {ppg:18.4,rpg:4.3,apg:3.6,bpg:0.3,spg:1.3,fg:46.9,tp:39.0},
-  'Felix Okpara':          {ppg:10.8,rpg:8.6,apg:0.9,bpg:3.1,spg:0.5,fg:58.5,tp:null},
-  'Tucker DeVries':        {ppg:16.4,rpg:6.4,apg:2.4,bpg:0.7,spg:0.9,fg:49.1,tp:38.5},
-  'Dillon Mitchell':       {ppg:14.8,rpg:7.2,apg:1.5,bpg:1.2,spg:0.9,fg:53.1,tp:null},
-  'Izaiyah Nelson':        {ppg:15.1,rpg:9.5,apg:1.2,bpg:2.5,spg:0.7,fg:57.8,tp:null},
-  'Cade Tyson':            {ppg:15.4,rpg:5.9,apg:2.5,bpg:0.7,spg:1.0,fg:47.9,tp:37.7},
-  'Darrion Williams':      {ppg:14.9,rpg:5.7,apg:2.3,bpg:0.8,spg:1.1,fg:48.6,tp:37.3},
-  'Tyler Nickel':          {ppg:15.5,rpg:5.5,apg:2.1,bpg:0.7,spg:0.9,fg:48.5,tp:39.0},
-  'Jaden Henley':          {ppg:19.7,rpg:5.3,apg:3.9,bpg:0.4,spg:1.4,fg:48.2,tp:38.7},
-  'Elliot Cadeau':         {ppg:14.3,rpg:3.5,apg:5.6,bpg:0.2,spg:1.6,fg:45.2,tp:36.8},
-  'Nick Martinelli':       {ppg:19.4,rpg:7.1,apg:3.4,bpg:0.8,spg:1.0,fg:50.4,tp:38.1},
-  'Lamar Wilkerson':       {ppg:14.6,rpg:4.5,apg:3.0,bpg:0.4,spg:1.2,fg:46.2,tp:38.0},
-  'Maliq Brown':           {ppg:11.3,rpg:7.1,apg:2.2,bpg:1.0,spg:1.3,fg:51.0,tp:32.4},
+  'AJ Dybantsa'                {ppg:25.5,rpg:6.8,apg:3.7,bpg:0.3,spg:1.1,fg:51.0,tp:33.1},
+  'Darryn Peterson'            {ppg:20.2,rpg:4.2,apg:1.6,bpg:0.6,spg:1.4,fg:43.8,tp:38.2},
+  'Cameron Boozer'             {ppg:22.5,rpg:10.2,apg:4.1,bpg:0.6,spg:1.4,fg:55.6,tp:39.1},
+  'Caleb Wilson'               {ppg:19.8,rpg:9.4,apg:2.7,bpg:1.4,spg:1.5,fg:57.8,tp:25.9},
+  'Darius Acuff Jr.'           {ppg:23.5,rpg:3.1,apg:6.4,bpg:0.3,spg:0.8,fg:48.4,tp:44.0},
+  'Kingston Flemings'          {ppg:16.1,rpg:4.1,apg:5.2,bpg:0.3,spg:1.5,fg:47.6,tp:38.7},
+  'Keaton Wagler'              {ppg:17.9,rpg:5.1,apg:4.2,bpg:0.4,spg:0.9,fg:44.5,tp:39.7},
+  'Mikel Brown Jr.'            {ppg:18.2,rpg:3.3,apg:4.7,bpg:0.1,spg:1.2,fg:41.0,tp:34.4},
+  'Nate Ament'                 {ppg:16.7,rpg:6.3,apg:2.3,bpg:0.6,spg:1.0,fg:39.9,tp:33.3},
+  'Brayden Burries'            {ppg:16.1,rpg:4.9,apg:2.4,bpg:0.2,spg:1.5,fg:49.1,tp:39.1},
+  'Koa Peat'                   {ppg:14.1,rpg:5.6,apg:2.6,bpg:0.7,spg:0.6,fg:52.8,tp:35.0},
+  'Yaxel Lendeborg'            {ppg:15.1,rpg:6.8,apg:3.2,bpg:1.2,spg:1.1,fg:51.5,tp:37.2},
+  'Jayden Quaintance'          {ppg:5.0,rpg:5.0,apg:0.5,bpg:0.8,spg:0.5,fg:57.1,tp:null},
+  'Aday Mara'                  {ppg:12.1,rpg:6.8,apg:2.4,bpg:2.6,spg:0.4,fg:66.8,tp:30.0},
+  'Labaron Philon'             {ppg:22.0,rpg:3.5,apg:5.0,bpg:0.2,spg:1.2,fg:50.1,tp:39.9},
+  'Karim Lopez'                {ppg:17.1,rpg:7.6,apg:2.7,bpg:1.1,spg:0.8,fg:53.4,tp:null},
+  'Hannes Steinbach'           {ppg:18.5,rpg:11.8,apg:1.6,bpg:1.2,spg:1.1,fg:57.7,tp:34.0},
+  'Chris Cenac Jr.'            {ppg:9.5,rpg:7.9,apg:0.7,bpg:0.5,spg:0.8,fg:48.5,tp:33.3},
+  'Bennett Stirtz'             {ppg:19.8,rpg:2.6,apg:4.4,bpg:0.2,spg:1.4,fg:47.7,tp:35.8},
+  'Cameron Carr'               {ppg:18.9,rpg:5.8,apg:2.6,bpg:1.3,spg:0.9,fg:49.4,tp:37.4},
+  'Morez Johnson Jr.'          {ppg:13.1,rpg:7.3,apg:1.2,bpg:1.1,spg:0.7,fg:62.3,tp:34.3},
+  'Christian Anderson'         {ppg:18.5,rpg:3.6,apg:7.4,bpg:0.2,spg:1.5,fg:47.2,tp:41.5},
+  'Henri Veesaar'              {ppg:17.0,rpg:8.7,apg:2.1,bpg:1.2,spg:0.6,fg:60.8,tp:42.6},
+  'Isaiah Evans'               {ppg:15.0,rpg:3.2,apg:1.3,bpg:0.7,spg:0.7,fg:43.3,tp:36.1},
+  'Flory Bidunga'              {ppg:13.3,rpg:9.0,apg:1.5,bpg:2.6,spg:0.7,fg:64.0,tp:null},
+  'Amari Allen'                {ppg:11.4,rpg:6.9,apg:3.1,bpg:0.7,spg:1.0,fg:44.6,tp:34.1},
+  'Dailyn Swain'               {ppg:17.3,rpg:7.5,apg:3.6,bpg:0.3,spg:1.6,fg:54.2,tp:34.4},
+  'Rueben Chinyelu'            {ppg:10.9,rpg:11.2,apg:0.7,bpg:1.0,spg:0.8,fg:58.4,tp:null},
+  'Ebuka Okorie'               {ppg:23.2,rpg:3.6,apg:3.6,bpg:0.3,spg:1.6,fg:46.5,tp:35.4},
+  'Allen Graves'               {ppg:11.8,rpg:6.5,apg:1.8,bpg:0.9,spg:1.9,fg:51.2,tp:41.3},
+  'Juke Harris'                {ppg:21.4,rpg:6.5,apg:1.9,bpg:0.2,spg:1.3,fg:44.4,tp:33.2},
+  'Tarris Reed Jr.'            {ppg:14.7,rpg:9.0,apg:2.3,bpg:2.0,spg:0.9,fg:60.7,tp:null},
+  'Tounde Yessoufou'           {ppg:17.8,rpg:5.9,apg:1.6,bpg:0.6,spg:2.0,fg:46.5,tp:29.3},
+  'Tyler Tanner'               {ppg:19.5,rpg:3.6,apg:5.1,bpg:0.3,spg:2.4,fg:48.5,tp:36.8},
+  'Alex Karaban'               {ppg:13.2,rpg:5.3,apg:2.4,bpg:0.8,spg:0.8,fg:46.4,tp:37.4},
+  'Meleek Thomas'              {ppg:15.6,rpg:3.8,apg:2.5,bpg:0.2,spg:1.5,fg:43.5,tp:41.6},
+  'Joshua Jefferson'           {ppg:16.4,rpg:7.4,apg:4.8,bpg:0.8,spg:1.6,fg:47.1,tp:34.5},
+  'Ryan Conwell'               {ppg:18.8,rpg:4.8,apg:2.7,bpg:0.2,spg:1.1,fg:40.8,tp:34.5},
+  'Milan Momcilovic'           {ppg:16.9,rpg:3.1,apg:1.0,bpg:0.2,spg:0.8,fg:50.6,tp:48.7},
+  'Braden Smith'               {ppg:14.3,rpg:3.5,apg:8.8,bpg:0.2,spg:1.7,fg:44.0,tp:36.2},
+  'Zuby Ejiofor'               {ppg:16.3,rpg:7.3,apg:3.5,bpg:2.1,spg:1.2,fg:53.6,tp:30.5},
+  'Trevon Brazile'             {ppg:13.0,rpg:7.3,apg:1.6,bpg:1.6,spg:1.5,fg:52.5,tp:34.1},
+  'Billy Richmond III'         {ppg:11.2,rpg:4.3,apg:2.0,bpg:0.8,spg:1.1,fg:56.3,tp:25.9},
+  'Otega Oweh'                 {ppg:18.6,rpg:4.8,apg:2.7,bpg:0.3,spg:1.8,fg:46.5,tp:33.3},
+  'Jaden Bradley'              {ppg:13.3,rpg:3.4,apg:4.4,bpg:0.1,spg:1.4,fg:46.3,tp:39.4},
+  'Richie Saunders'            {ppg:18.0,rpg:5.8,apg:2.1,bpg:0.3,spg:1.7,fg:48.9,tp:37.6},
+  'Emanuel Sharp'              {ppg:15.5,rpg:3.0,apg:1.7,bpg:0.1,spg:1.2,fg:41.3,tp:37.2},
+  'Malachi Moreno'             {ppg:7.8,rpg:6.3,apg:1.8,bpg:1.5,spg:0.5,fg:58.2,tp:null},
+  'Bruce Thornton'             {ppg:19.9,rpg:5.1,apg:3.9,bpg:0.2,spg:1.1,fg:55.4,tp:40.0},
+  'Milos Uzan'                 {ppg:11.1,rpg:2.7,apg:4.0,bpg:0.1,spg:1.0,fg:38.0,tp:34.3},
+  'Sergio de Larrea'           {ppg:12.1,rpg:3.7,apg:4.7,bpg:0.4,spg:1.4,fg:44.3,tp:36.9},
+  'Baba Miller'                {ppg:13.0,rpg:10.3,apg:3.7,bpg:1.2,spg:0.7,fg:52.9,tp:19.2},
+  'Tyler Bilodeau'             {ppg:17.6,rpg:5.6,apg:1.1,bpg:0.4,spg:0.5,fg:51.8,tp:46.4},
+  'John Blackwell'             {ppg:19.1,rpg:5.1,apg:2.3,bpg:0.1,spg:1.1,fg:43.0,tp:38.9},
+  'Nate Bittle'                {ppg:11.6,rpg:8.4,apg:1.0,bpg:2.7,spg:0.5,fg:58.3,tp:null},
+  'Ugonna Onyenso'             {ppg:6.5,rpg:4.9,apg:0.6,bpg:2.9,spg:0.6,fg:56.8,tp:27.8},
+  'Kylan Boswell'              {ppg:12.3,rpg:4.0,apg:3.0,bpg:0.0,spg:0.7,fg:44.4,tp:30.7},
+  'Luigi Suigo'                {ppg:14.2,rpg:8.4,apg:1.3,bpg:2.3,spg:0.5,fg:56.2,tp:null},
+  'Andrej Stojakovic'          {ppg:13.5,rpg:4.5,apg:1.0,bpg:0.4,spg:0.4,fg:50.0,tp:24.4},
+  'Quadir Copeland'            {ppg:17.3,rpg:4.3,apg:5.5,bpg:0.2,spg:1.5,fg:46.5,tp:38.2},
+  'Matt Able'                  {ppg:8.8,rpg:3.4,apg:0.9,bpg:0.3,spg:1.2,fg:41.6,tp:35.5},
+  'Tamin Lipsey'               {ppg:14.8,rpg:3.8,apg:5.2,bpg:0.2,spg:2.0,fg:45.9,tp:36.4},
+  'Malik Reneau'               {ppg:16.8,rpg:7.1,apg:2.1,bpg:1.0,spg:0.9,fg:51.0,tp:35.7},
+  'Keyshawn Hall'              {ppg:19.3,rpg:7.1,apg:2.6,bpg:0.6,spg:0.7,fg:45.1,tp:37.9},
+  'Jeremy Fears Jr.'           {ppg:15.2,rpg:2.4,apg:9.4,bpg:0.0,spg:1.3,fg:43.1,tp:32.1},
+  'Rafael Castro'              {ppg:15.3,rpg:9.1,apg:1.7,bpg:1.7,spg:1.8,fg:62.7,tp:null},
+  'Jaron Pierre Jr.'           {ppg:17.6,rpg:4.9,apg:2.1,bpg:0.4,spg:1.0,fg:46.2,tp:37.0},
+  'Felix Okpara'               {ppg:8.0,rpg:6.3,apg:0.5,bpg:1.5,spg:0.4,fg:59.7,tp:36.4},
+  'Tucker DeVries'             {ppg:16.4,rpg:6.4,apg:2.4,bpg:0.7,spg:0.9,fg:49.1,tp:38.5},
+  'Dillon Mitchell'            {ppg:8.3,rpg:7.0,apg:3.0,bpg:0.7,spg:1.3,fg:55.9,tp:6.7},
+  'Izaiyah Nelson'             {ppg:15.9,rpg:9.6,apg:1.2,bpg:1.4,spg:1.6,fg:56.1,tp:14.3},
+  'Cade Tyson'                 {ppg:19.6,rpg:5.4,apg:2.1,bpg:0.2,spg:0.8,fg:50.0,tp:41.3},
+  'Darrion Williams'           {ppg:14.0,rpg:4.6,apg:2.8,bpg:0.3,spg:1.1,fg:41.4,tp:40.4},
+  'Tyler Nickel'               {ppg:13.5,rpg:3.3,apg:1.2,bpg:0.5,spg:0.8,fg:44.5,tp:40.0},
+  'Jaden Henley'               {ppg:17.7,rpg:5.7,apg:2.9,bpg:0.3,spg:1.6,fg:46.6,tp:26.8},
+  'Elliot Cadeau'              {ppg:14.3,rpg:3.5,apg:5.6,bpg:0.2,spg:1.6,fg:45.2,tp:36.8},
+  'Nick Martinelli'            {ppg:23.0,rpg:6.2,apg:2.0,bpg:0.4,spg:0.8,fg:51.0,tp:41.7},
+  'Lamar Wilkerson'            {ppg:20.9,rpg:3.5,apg:2.4,bpg:0.2,spg:1.0,fg:46.3,tp:37.8},
+  'Maliq Brown'                {ppg:4.9,rpg:5.2,apg:1.6,bpg:0.6,spg:1.8,fg:62.9,tp:16.7},
 };
 
 /* ── ESPN player IDs for headshots ── */
 const PLAYER_ESPN_IDS = {
-  'AJ Dybantsa':5142718,'Darryn Peterson':5041955,'Cameron Boozer':5041935,
-  'Caleb Wilson':5095151,'Darius Acuff Jr.':5142620,'Kingston Flemings':5149077,
-  'Keaton Wagler':5254165,'Mikel Brown Jr.':5101761,'Nate Ament':5164559,
-  'Brayden Burries':5082206,'Koa Peat':5041953,'Yaxel Lendeborg':5175737,
-  'Jayden Quaintance':5101845,'Aday Mara':5174983,'Labaron Philon':4873090,
-  'Hannes Steinbach':5281370,'Chris Cenac Jr.':5142621,
-  'Bennett Stirtz':5241364,'Cameron Carr':5113969,'Morez Johnson Jr.':4873153,
-  'Christian Anderson':5060701,'Henri Veesaar':5105571,'Isaiah Evans':5061585,
-  'Flory Bidunga':5044426,'Amari Allen':5101833,'Dailyn Swain':4848625,
-  'Rueben Chinyelu':5174971,'Ebuka Okorie':5258459,'Allen Graves':5149115,
-  'Tarris Reed Jr.':5105809,'Tounde Yessoufou':5095152,
-  'Tyler Tanner':5187600,'Alex Karaban':4917149,'Meleek Thomas':5041951,
-  'Joshua Jefferson':4870564,'Ryan Conwell':5107157,'Milan Momcilovic':4848637,
-  'Braden Smith':5105854,'Zuby Ejiofor':5106262,'Trevon Brazile':4698719,
-  'Billy Richmond III':5060732,'Otega Oweh':5106270,'Jaden Bradley':4432737,
-  'Richie Saunders':5105462,'Emanuel Sharp':5106058,'Malachi Moreno':5101849,
-  'Bruce Thornton':5105837,'Milos Uzan':5106272,
-  'Baba Miller':5075626,'Tyler Bilodeau':5105626,'John Blackwell':5103630,
-  "Ja'Kobi Gillespie":5107968,'Nate Bittle':4685700,'Ugonna Onyenso':5037878,
-  'Kylan Boswell':4684269,'Andrej Stojakovic':5175007,
-  'Quadir Copeland':4701994,'Matt Able':5196877,'Tamin Lipsey':4699962,
-  'Malik Reneau':4698754,'Keyshawn Hall':5075625,'Jeremy Fears Jr.':4711255,
-  'Felix Okpara':5105841,'Tucker DeVries':4432540,
-  'Dillon Mitchell':5106283,'Izaiyah Nelson':5107251,
-  'Tyler Nickel':4838721,'Elliot Cadeau':5097770,'Nick Martinelli':5105832,
+  'AJ Dybantsa':5142718,
+  'Darryn Peterson':5041955,
+  'Cameron Boozer':5041935,
+  'Caleb Wilson':5095151,
+  'Darius Acuff Jr.':5142620,
+  'Kingston Flemings':5149077,
+  'Keaton Wagler':5254165,
+  'Mikel Brown Jr.':5101761,
+  'Nate Ament':5164559,
+  'Brayden Burries':5082206,
+  'Koa Peat':5041953,
+  'Yaxel Lendeborg':5175737,
+  'Jayden Quaintance':5101845,
+  'Aday Mara':5174983,
+  'Labaron Philon':4873090,
+  'Karim Lopez':5231919,
+  'Hannes Steinbach':5281370,
+  'Chris Cenac Jr.':5142621,
+  'Bennett Stirtz':5241364,
+  'Cameron Carr':5113969,
+  'Morez Johnson Jr.':4873153,
+  'Christian Anderson':5060701,
+  'Henri Veesaar':5105571,
+  'Isaiah Evans':5061585,
+  'Flory Bidunga':5044426,
+  'Amari Allen':5101833,
+  'Dailyn Swain':4848625,
+  'Rueben Chinyelu':5174971,
+  'Ebuka Okorie':5258459,
+  'Allen Graves':5149115,
+  'Juke Harris':5142609,
+  'Tarris Reed Jr.':5105809,
+  'Tounde Yessoufou':5095152,
+  'Tyler Tanner':5187600,
+  'Alex Karaban':4917149,
+  'Meleek Thomas':5041951,
+  'Joshua Jefferson':4870564,
+  'Ryan Conwell':5107157,
+  'Milan Momcilovic':4848637,
+  'Braden Smith':5105854,
+  'Zuby Ejiofor':5106262,
+  'Trevon Brazile':4698719,
+  'Billy Richmond III':5060732,
+  'Otega Oweh':5106270,
+  'Jaden Bradley':4432737,
+  'Richie Saunders':5105462,
+  'Emanuel Sharp':5106058,
+  'Malachi Moreno':5101849,
+  'Bruce Thornton':5105837,
+  'Milos Uzan':5106272,
+  'Sergio de Larrea':5279129,
+  'Baba Miller':5075626,
+  'Tyler Bilodeau':5105626,
+  'John Blackwell':5103630,
+  'Nate Bittle':4685700,
+  'Ugonna Onyenso':5037878,
+  'Kylan Boswell':4684269,
+  'Andrej Stojakovic':5175007,
+  'Quadir Copeland':4701994,
+  'Matt Able':5196877,
+  'Tamin Lipsey':4699962,
+  'Malik Reneau':4698754,
+  'Keyshawn Hall':5075625,
+  'Jeremy Fears Jr.':4711255,
+  'Rafael Castro':4684443,
+  'Jaron Pierre Jr.':4703115,
+  'Felix Okpara':5105841,
+  'Tucker DeVries':4432540,
+  'Dillon Mitchell':5106283,
+  'Izaiyah Nelson':5107251,
+  'Cade Tyson':5107970,
+  'Darrion Williams':4937074,
+  'Tyler Nickel':4838721,
+  'Jaden Henley':5105821,
+  'Elliot Cadeau':5097770,
+  'Nick Martinelli':5105832,
+  'Lamar Wilkerson':5105876,
   'Maliq Brown':5105337,
 };
 
@@ -1605,9 +1666,17 @@ function renderPicks(){
         <span class="team">${TEAMS[slot.team]||slot.team}</span>
         ${slot.via?`<span class="via">via ${slot.via}</span>`:''}
       </div>
-      <div class="pick-player ${pick?'':'empty'}" style="${pick && pick.reason?'display:flex;align-items:flex-start;gap:.75rem;justify-content:space-between':''}">
-        ${pick?`<div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0"><img src="${playerPhotoUrl(pick.name)}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'"/><div style="flex:1;min-width:0"><div class="name" data-player-detail="${pick.name}">${pick.name} ${grade?`<span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div><div class="school">${pick.school} · ${pick.pos}</div></div></div>${pick.reason?`<div class="reason" style="flex:0 0 240px;align-self:center;max-width:240px;font-size:.78rem;color:var(--mid);font-style:italic;line-height:1.4;text-align:left;padding:.5rem .7rem;background:rgba(0,107,182,.05);border-left:2px solid var(--sixers-blue);border-radius:6px;word-wrap:break-word;overflow-wrap:break-word">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}`
-              :`<div class="name">${onClock?'On the clock…':'—'}</div>`}
+      <div class="pick-player ${pick?'':'empty'}">
+        ${pick?`
+          <div class="pp-row">
+            <div class="pp-meta">
+              <div class="name" data-player-detail="${pick.name}">${pick.name}${grade?` <span class="${grade.cls}" title="${grade.label} (board #${pick.rank})" style="font-size:.78rem;margin-left:.4rem;padding:.05rem .4rem;border:1px solid currentColor;border-radius:6px">${grade.g}</span>`:''}</div>
+              <div class="school">${pick.school} · ${pick.pos}</div>
+            </div>
+            <img class="pp-photo" src="${playerPhotoUrl(pick.name)}" alt="" onerror="this.style.visibility='hidden'"/>
+          </div>
+          ${pick.reason?`<div class="pp-reason">“${(()=>{const w=pick.reason.split(/\s+/);return (w.length>50?w.slice(0,50).join(' ')+'…':w.join(' ')).replace(/"/g,'&quot;');})()}”</div>`:''}
+        `:`<div class="pp-row"><div class="pp-meta"><div class="name">${onClock?'On the clock…':'—'}</div></div></div>`}
       </div>
     </div>`;
   }).join('');
