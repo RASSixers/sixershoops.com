@@ -253,9 +253,15 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Auth Modal -->
     <div class="auth-modal-overlay" id="authModalOverlay">
         <div class="auth-modal">
-            <button class="auth-modal-close" id="authModalClose">&times;</button>
+            <button class="auth-modal-close" id="authModalClose" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
             <div class="auth-modal-header">
+                <div class="auth-brand-mark" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+                </div>
                 <h2 class="auth-modal-title">Sixers Hoops</h2>
+                <p class="auth-modal-subtitle">Sign in to track picks, standings, and your locker room.</p>
             </div>
             <div class="auth-modal-tabs">
                 <button class="auth-modal-tab active" data-tab="login">Login</button>
@@ -264,39 +270,54 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="auth-modal-content">
                 <div id="navAuthMessage" class="auth-message"></div>
-                
+
                 <!-- Login Form -->
-                <form id="navLoginForm">
+                <form id="navLoginForm" novalidate>
                     <div class="auth-form-group">
-                        <label class="auth-label">Email</label>
-                        <input type="email" class="auth-input" id="navLoginEmail" required>
+                        <label class="auth-label" for="navLoginEmail">Email</label>
+                        <div class="auth-input-wrap">
+                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            <input type="email" class="auth-input" id="navLoginEmail" required autocomplete="email" placeholder="name@example.com">
+                        </div>
                     </div>
                     <div class="auth-form-group">
-                        <label class="auth-label">Password</label>
-                        <input type="password" class="auth-input" id="navLoginPassword" required>
+                        <label class="auth-label" for="navLoginPassword">Password</label>
+                        <div class="auth-input-wrap">
+                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <input type="password" class="auth-input" id="navLoginPassword" required autocomplete="current-password" placeholder="••••••••">
+                            <button type="button" class="auth-pw-toggle" data-target="navLoginPassword" aria-label="Show password">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
-                    <div style="text-align: right; margin-bottom: 1rem;">
-                        <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot Password?</a>
+                    <div class="auth-row-between">
+                        <label class="auth-remember">
+                            <input type="checkbox" id="navRememberMe">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot password?</a>
                     </div>
                     <button type="submit" class="auth-submit-btn">Sign In</button>
+                    <div class="auth-switch">Don't have an account? <a href="#" data-tab-switch="register">Create one</a></div>
                 </form>
 
                 <!-- Forgot Password Form -->
-                <form id="navForgotForm" style="display: none;">
-                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; text-align: center;">Enter your email address and we'll send you a link to reset your password.</p>
+                <form id="navForgotForm" style="display: none;" novalidate>
+                    <p class="auth-helper-text">Enter your email and we'll send you a link to reset your password.</p>
                     <div class="auth-form-group">
-                        <label class="auth-label">Email Address</label>
-                        <input type="email" class="auth-input" id="navForgotEmail" required placeholder="name@example.com">
+                        <label class="auth-label" for="navForgotEmail">Email address</label>
+                        <div class="auth-input-wrap">
+                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            <input type="email" class="auth-input" id="navForgotEmail" required placeholder="name@example.com">
+                        </div>
                     </div>
-                    <button type="submit" class="auth-submit-btn">Send Reset Link</button>
-                    <div style="text-align: center; margin-top: 1.5rem;">
-                        <a href="#" id="backToLoginLink" class="auth-back-link">Back to Login</a>
-                    </div>
+                    <button type="submit" class="auth-submit-btn">Send reset link</button>
+                    <div class="auth-switch"><a href="#" id="backToLoginLink" class="auth-back-link">&larr; Back to login</a></div>
                 </form>
 
                 <!-- Profile Form -->
                 <form id="navProfileForm" style="display: none;">
-                    
+
                     <!-- Profile Preview Card -->
                     <div id="navProfilePreview" style="display:flex;align-items:center;gap:1rem;background:linear-gradient(135deg,rgba(0,26,87,0.06),rgba(0,107,182,0.06));border:1px solid rgba(0,107,182,0.15);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
                         <div style="position:relative;flex-shrink:0;">
@@ -330,11 +351,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <input type="hidden" id="navAvatarColor" value="">
                     </div>
-                    
+
                     <button type="submit" class="auth-submit-btn">Save Changes</button>
-                    
+
                     <div class="user-dropdown-divider" style="margin: 2rem 0 1rem;"></div>
-                    
+
                     <div class="danger-zone">
                         <h4 style="color: #ef4444; font-size: 0.85rem; margin-bottom: 0.5rem;">Danger Zone</h4>
                         <button type="button" class="delete-account-btn" id="deleteAccountBtn">Delete My Account</button>
@@ -342,24 +363,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 </form>
 
                 <!-- Register Form -->
-                <form id="navRegisterForm" style="display: none;">
+                <form id="navRegisterForm" style="display: none;" novalidate>
                     <div class="auth-form-group">
-                        <label class="auth-label">Username (Max 12 chars)</label>
-                        <input type="text" class="auth-input" id="navRegisterUsername" required maxlength="12">
+                        <label class="auth-label" for="navRegisterUsername">Username (max 12 chars)</label>
+                        <div class="auth-input-wrap">
+                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <input type="text" class="auth-input" id="navRegisterUsername" required maxlength="12" placeholder="yourhandle">
+                        </div>
                     </div>
                     <div class="auth-form-group">
-                        <label class="auth-label">Email</label>
-                        <input type="email" class="auth-input" id="navRegisterEmail" required>
+                        <label class="auth-label" for="navRegisterEmail">Email</label>
+                        <div class="auth-input-wrap">
+                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            <input type="email" class="auth-input" id="navRegisterEmail" required autocomplete="email" placeholder="name@example.com">
+                        </div>
                     </div>
                     <div class="auth-form-group">
-                        <label class="auth-label">Password</label>
-                        <input type="password" class="auth-input" id="navRegisterPassword" required>
+                        <label class="auth-label" for="navRegisterPassword">Password</label>
+                        <div class="auth-input-wrap">
+                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <input type="password" class="auth-input" id="navRegisterPassword" required autocomplete="new-password" placeholder="At least 8 characters">
+                            <button type="button" class="auth-pw-toggle" data-target="navRegisterPassword" aria-label="Show password">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="auth-form-group">
-                        <label class="auth-label">Confirm Password</label>
-                        <input type="password" class="auth-input" id="navRegisterConfirm" required>
+                        <label class="auth-label" for="navRegisterConfirm">Confirm password</label>
+                        <div class="auth-input-wrap">
+                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <input type="password" class="auth-input" id="navRegisterConfirm" required autocomplete="new-password" placeholder="Repeat password">
+                        </div>
                     </div>
+                    <p class="auth-fineprint">By creating an account, you agree to the Terms and Privacy Policy.</p>
                     <button type="submit" class="auth-submit-btn">Create Account</button>
+                    <div class="auth-switch">Already have an account? <a href="#" data-tab-switch="login">Sign in</a></div>
                 </form>
             </div>
         </div>
@@ -1166,4 +1204,27 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         syncThemeIcons();
     });
+});
+
+
+/* ── Modern auth UX: password show/hide + inline tab switch links ── */
+document.addEventListener('click', function(e) {
+    const tgt = e.target.closest('.auth-pw-toggle');
+    if (tgt) {
+        const id = tgt.getAttribute('data-target');
+        const input = document.getElementById(id);
+        if (input) {
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            tgt.classList.toggle('is-on', !showing);
+        }
+        return;
+    }
+    const sw = e.target.closest('[data-tab-switch]');
+    if (sw) {
+        e.preventDefault();
+        const which = sw.getAttribute('data-tab-switch');
+        const tabBtn = document.querySelector('.auth-modal-tab[data-tab="' + which + '"]');
+        if (tabBtn) tabBtn.click();
+    }
 });
