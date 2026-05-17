@@ -253,13 +253,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Auth Modal -->
     <div class="auth-modal-overlay" id="authModalOverlay">
         <div class="auth-modal">
-            <button class="auth-modal-close" id="authModalClose" aria-label="Close">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
+            <button class="auth-modal-close" id="authModalClose" aria-label="Close">×</button>
             <div class="auth-modal-header">
-                <div class="auth-brand-mark" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
-                </div>
                 <h2 class="auth-modal-title">Sixers Hoops</h2>
                 <p class="auth-modal-subtitle">Sign in to track picks, standings, and your locker room.</p>
             </div>
@@ -276,18 +271,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="auth-form-group">
                         <label class="auth-label" for="navLoginEmail">Email</label>
                         <div class="auth-input-wrap">
-                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            
                             <input type="email" class="auth-input" id="navLoginEmail" required autocomplete="email" placeholder="name@example.com">
                         </div>
                     </div>
                     <div class="auth-form-group">
                         <label class="auth-label" for="navLoginPassword">Password</label>
                         <div class="auth-input-wrap">
-                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            
                             <input type="password" class="auth-input" id="navLoginPassword" required autocomplete="current-password" placeholder="••••••••">
-                            <button type="button" class="auth-pw-toggle" data-target="navLoginPassword" aria-label="Show password">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
+                            <button type="button" class="auth-pw-toggle" data-target="navLoginPassword" aria-label="Show password">Show</button>
                         </div>
                     </div>
                     <div class="auth-row-between">
@@ -307,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="auth-form-group">
                         <label class="auth-label" for="navForgotEmail">Email address</label>
                         <div class="auth-input-wrap">
-                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            
                             <input type="email" class="auth-input" id="navForgotEmail" required placeholder="name@example.com">
                         </div>
                     </div>
@@ -352,6 +345,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="hidden" id="navAvatarColor" value="">
                     </div>
 
+                    
+                    <div class="auth-form-group">
+                        <label class="auth-label">Profile Picture</label>
+                        <div class="pic-upload-row">
+                            <div class="pic-upload-preview" id="navPicPreview"></div>
+                            <div class="pic-upload-controls">
+                                <label for="navProfilePicInput" class="pic-upload-btn">Upload Photo</label>
+                                <input type="file" id="navProfilePicInput" accept="image/*" style="display:none;">
+                                <button type="button" class="pic-upload-clear" id="navProfilePicClear">Remove</button>
+                                <p class="pic-upload-hint">JPG or PNG, up to 2 MB.</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="navProfilePicUrl" value="">
+                    </div>
+
                     <button type="submit" class="auth-submit-btn">Save Changes</button>
 
                     <div class="user-dropdown-divider" style="margin: 2rem 0 1rem;"></div>
@@ -367,31 +375,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="auth-form-group">
                         <label class="auth-label" for="navRegisterUsername">Username (max 12 chars)</label>
                         <div class="auth-input-wrap">
-                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            
                             <input type="text" class="auth-input" id="navRegisterUsername" required maxlength="12" placeholder="yourhandle">
                         </div>
                     </div>
                     <div class="auth-form-group">
                         <label class="auth-label" for="navRegisterEmail">Email</label>
                         <div class="auth-input-wrap">
-                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            
                             <input type="email" class="auth-input" id="navRegisterEmail" required autocomplete="email" placeholder="name@example.com">
                         </div>
                     </div>
                     <div class="auth-form-group">
                         <label class="auth-label" for="navRegisterPassword">Password</label>
                         <div class="auth-input-wrap">
-                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            
                             <input type="password" class="auth-input" id="navRegisterPassword" required autocomplete="new-password" placeholder="At least 8 characters">
-                            <button type="button" class="auth-pw-toggle" data-target="navRegisterPassword" aria-label="Show password">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
+                            <button type="button" class="auth-pw-toggle" data-target="navRegisterPassword" aria-label="Show password">Show</button>
                         </div>
                     </div>
                     <div class="auth-form-group">
                         <label class="auth-label" for="navRegisterConfirm">Confirm password</label>
                         <div class="auth-input-wrap">
-                            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            
                             <input type="password" class="auth-input" id="navRegisterConfirm" required autocomplete="new-password" placeholder="Repeat password">
                         </div>
                     </div>
@@ -514,56 +520,51 @@ document.addEventListener('DOMContentLoaded', function() {
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             const initial = displayName.charAt(0).toUpperCase();
             
-            
-            const avatarHTML = `<div class="relative"><div class="user-avatar">${initial}</div><div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
-            
+            const photoURL = user.photoURL || localStorage.getItem('photoURL') || '';
+            const avatarColor = localStorage.getItem('avatarColor') || '#001a57';
+            const usernameSlug = encodeURIComponent((displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-'));
+            const profileUrl = `/user/${usernameSlug}`;
+
+            const avatarInner = photoURL
+                ? `<img src="${photoURL}" alt="${displayName}" class="user-avatar-img">`
+                : `<div class="user-avatar" style="background:${avatarColor}">${initial}</div>`;
+
+            const avatarHTML = `<div class="relative">${avatarInner}<div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
+
             const userHTML = `
                 <div class="user-profile-wrapper">
                     <div class="user-profile-btn" id="userProfileBtn">
                         ${avatarHTML}
                         <span class="user-name">${displayName}</span>
                     </div>
-                    <button class="nav-small-logout" id="navSmallLogout" title="Logout">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    </button>
+                    <button class="nav-small-logout" id="navSmallLogout" title="Logout">Logout</button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-header">
-                            <div class="flex items-center justify-between">
-                                <strong>${displayName}</strong>
-                                <span id="dropdown-notif-count" class="hidden bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">0</span>
-                            </div>
-                            <span>${user.email}</span>
+                            <strong>${displayName}</strong>
+                            <span>${user.email || ''}</span>
                         </div>
                         <div class="user-dropdown-divider"></div>
-                        
-                        <button class="user-dropdown-item" id="navProfileBtn">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            Account Settings
-                        </button>
-                        
+
+                        <a class="user-dropdown-item" href="${profileUrl}">My Profile</a>
+
+                        <a class="user-dropdown-item" href="/inbox" id="navInboxLink">
+                            <span>Inbox</span>
+                            <span id="dropdown-notif-count" class="dropdown-notif-pill hidden">0</span>
+                        </a>
+
+                        <button class="user-dropdown-item" id="navProfileBtn">Account Settings</button>
+
                         <div class="user-dropdown-divider"></div>
-                        
-                        <div class="inbox-section">
-                            <div class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-100">
-                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                                    Inbox <span id="inbox-title-count" class="hidden text-blue-600">(0)</span>
-                                </span>
-                                <button class="text-[10px] text-blue-600 font-bold hover:underline" id="markAllReadBtn">Mark all as read</button>
-                            </div>
-                            <div id="dropdown-notifications-list" class="max-h-[460px] overflow-y-auto custom-scrollbar">
-                                <div class="text-center py-8 text-slate-500 text-xs">
-                                    <p>Loading notifications...</p>
-                                </div>
-                            </div>
-                        </div>
+
+                        <button class="user-dropdown-item logout-action" id="navDropdownLogout">Sign Out</button>
                     </div>
                 </div>
             `;
-            
+
             if (authNav) authNav.innerHTML = userHTML;
             if (mobileAuth) {
                 mobileAuth.innerHTML = `
-                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div class="user-profile-btn">
                                 ${avatarHTML}
@@ -571,15 +572,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
+                        <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
+                        <a class="auth-nav-btn" href="/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Account Settings</button>
                     </div>
                 `;
             }
-            
+
             const profileBtn = document.getElementById('userProfileBtn');
             const userDropdown = document.getElementById('userDropdown');
-            const logoutBtnMain = document.getElementById('navLogoutBtnMain');
             const smallLogoutBtn = document.getElementById('navSmallLogout');
+            const dropdownLogoutBtn = document.getElementById('navDropdownLogout');
             const editProfileBtn = document.getElementById('navProfileBtn');
             const mobileEditBtn = document.getElementById('mobileProfileBtn');
             const mobileLogout = document.getElementById('navLogoutBtn');
@@ -587,23 +590,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (profileBtn && userDropdown) {
                 profileBtn.onclick = (e) => {
                     e.stopPropagation();
-                    const isActive = userDropdown.classList.toggle('active');
-                    if (isActive) {
-                        loadNotifications();
-                    }
+                    userDropdown.classList.toggle('active');
                 };
             }
+            if (smallLogoutBtn)    smallLogoutBtn.onclick    = (e) => { e.stopPropagation(); window.auth.signOut(); };
+            if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = (e) => { e.stopPropagation(); window.auth.signOut(); };
+            if (editProfileBtn)    editProfileBtn.onclick    = openProfileModal;
+            if (mobileEditBtn)     mobileEditBtn.onclick     = openProfileModal;
+            if (mobileLogout)      mobileLogout.onclick      = () => window.auth.signOut();
 
-            if (smallLogoutBtn) {
-                smallLogoutBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    window.auth.signOut();
-                };
-            }
-            
-            if (editProfileBtn) editProfileBtn.onclick = openProfileModal;
-            if (mobileEditBtn) mobileEditBtn.onclick = openProfileModal;
-            if (mobileLogout) mobileLogout.onclick = () => window.auth.signOut();
         } else {
             if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
             if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
@@ -768,7 +763,67 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             });
 
-            loadNotifications();
+
+            // === Profile picture wiring ===
+            const picInput   = document.getElementById('navProfilePicInput');
+            const picPreview = document.getElementById('navPicPreview');
+            const picClear   = document.getElementById('navProfilePicClear');
+            const picUrlHidden = document.getElementById('navProfilePicUrl');
+            const currentPhoto = user.photoURL || localStorage.getItem('photoURL') || '';
+            if (picPreview) {
+                picPreview.innerHTML = currentPhoto
+                    ? `<img src="${currentPhoto}" alt="">`
+                    : `<span class="pic-upload-placeholder">${initial}</span>`;
+                picPreview.style.background = currentPhoto ? '#0b0f1a' : savedColor;
+            }
+            if (picUrlHidden) picUrlHidden.value = currentPhoto;
+            if (picInput) {
+                picInput.onchange = async (ev) => {
+                    const file = ev.target.files && ev.target.files[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) {
+                        showNavMessage('Image must be under 2 MB.', 'error');
+                        return;
+                    }
+                    if (!window.storage) {
+                        showNavMessage('Storage not ready, try again in a moment.', 'error');
+                        return;
+                    }
+                    try {
+                        showNavMessage('Uploading photo...', 'success');
+                        const ref = window.storage.ref().child(`profile-pics/${user.uid}/${Date.now()}_${file.name}`);
+                        const snap = await ref.put(file);
+                        const url  = await snap.ref.getDownloadURL();
+                        if (picUrlHidden) picUrlHidden.value = url;
+                        if (picPreview) {
+                            picPreview.innerHTML = `<img src="${url}" alt="">`;
+                            picPreview.style.background = '#0b0f1a';
+                        }
+                        // Update preview avatar in the gradient card too
+                        if (avatarPreview) {
+                            avatarPreview.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        }
+                        showNavMessage('Photo uploaded. Hit Save Changes to keep it.', 'success');
+                    } catch (err) {
+                        console.error(err);
+                        showNavMessage('Upload failed: ' + err.message, 'error');
+                    }
+                };
+            }
+            if (picClear) {
+                picClear.onclick = () => {
+                    if (picUrlHidden) picUrlHidden.value = '';
+                    if (picPreview) {
+                        picPreview.innerHTML = `<span class="pic-upload-placeholder">${initial}</span>`;
+                        picPreview.style.background = savedColor;
+                    }
+                    if (avatarPreview) {
+                        avatarPreview.innerHTML = `<span id="navProfileInitialPreview">${initial}</span>`;
+                        avatarPreview.style.background = savedColor;
+                    }
+                };
+            }
+
         }
     }
 
@@ -1045,12 +1100,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const user = window.auth.currentUser;
-            await user.updateProfile({ displayName: name });
+            const photoURL = (document.getElementById('navProfilePicUrl') || {}).value || '';
+            const profileUpdate = { displayName: name };
+            if (photoURL) profileUpdate.photoURL = photoURL;
+            else profileUpdate.photoURL = null;
+            await user.updateProfile(profileUpdate);
             if (avatarColor) localStorage.setItem('avatarColor', avatarColor);
+            if (photoURL) localStorage.setItem('photoURL', photoURL);
+            else localStorage.removeItem('photoURL');
 
+            const usernameLower = (name || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
             await window.db.collection('users').doc(user.uid).set({
                 username: name,
+                usernameLower: usernameLower,
                 avatarColor: avatarColor || '#001a57',
+                photoURL: photoURL || null,
                 updatedAt: new Date().toISOString()
             }, { merge: true }).catch(err => console.error("Firestore sync error:", err));
 
@@ -1111,6 +1175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             await db.collection('users').doc(user.uid).set({
                 username: username,
+                usernameLower: (username || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-'),
                 email: email,
                 createdAt: new Date().toISOString()
             });
