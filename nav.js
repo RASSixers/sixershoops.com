@@ -667,7 +667,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setupAuthListeners() {
         window.auth.onAuthStateChanged(async user => {
-            // Fetch usernameLower from Firestore and cache it so profileUrl is always correct
             if (user && window.db) {
                 try {
                     const doc = await window.db.collection('users').doc(user.uid).get();
@@ -675,6 +674,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         localStorage.setItem('usernameLower', doc.data().usernameLower);
                     }
                 } catch(_) {}
+            } else if (!user) {
+                localStorage.removeItem('usernameLower');
             }
             renderUserNav(user);
             setupNotificationListener(user);
