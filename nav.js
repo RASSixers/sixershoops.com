@@ -545,16 +545,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="user-dropdown-divider"></div>
 
-                        <a class="user-dropdown-item" href="${profileUrl}">My Profile</a>
+                        <button class="user-dropdown-item" id="navMyProfileLink">My Profile</button>
 
-                        <a class="user-dropdown-item" href="${profileUrl}/inbox" id="navInboxLink">
+                        <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
                             <span id="dropdown-notif-count" class="dropdown-notif-pill hidden">0</span>
-                        </a>
+                        </button>
 
-                        <a class="user-dropdown-item" href="${profileUrl}/notifications" id="navNotifsLink">
+                        <button class="user-dropdown-item" id="navNotifsLink">
                             <span>Notifications</span>
-                        </a>
+                        </button>
 
                         <button class="user-dropdown-item" id="navProfileBtn">Account Settings</button>
 
@@ -590,6 +590,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const editProfileBtn = document.getElementById('navProfileBtn');
             const mobileEditBtn = document.getElementById('mobileProfileBtn');
             const mobileLogout = document.getElementById('navLogoutBtn');
+            const myProfileLink = document.getElementById('navMyProfileLink');
+            const inboxLink = document.getElementById('navInboxLink');
+            const notifsLink = document.getElementById('navNotifsLink');
 
             if (profileBtn && userDropdown) {
                 profileBtn.onclick = (e) => {
@@ -597,6 +600,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     userDropdown.classList.toggle('active');
                 };
             }
+            if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
+            if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
+            if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
             if (smallLogoutBtn)    smallLogoutBtn.onclick    = (e) => { e.stopPropagation(); window.auth.signOut(); };
             if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = (e) => { e.stopPropagation(); window.auth.signOut(); };
             if (editProfileBtn)    editProfileBtn.onclick    = openProfileModal;
@@ -670,17 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', (e) => {
         const dropdown = document.getElementById('userDropdown');
         const profileBtn = document.getElementById('userProfileBtn');
-
         if (!dropdown) return;
-
-        // If an anchor link inside the dropdown was clicked, close dropdown and let browser navigate
-        const clickedLink = e.target.closest('a.user-dropdown-item');
-        if (clickedLink && dropdown.contains(clickedLink)) {
-            dropdown.classList.remove('active');
-            return;
-        }
-
-        // Close dropdown when clicking outside it and outside the trigger button
         if (!dropdown.contains(e.target) && (!profileBtn || !profileBtn.contains(e.target))) {
             dropdown.classList.remove('active');
         }
