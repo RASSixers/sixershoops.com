@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const photoURL = user.photoURL || localStorage.getItem('photoURL') || '';
             const avatarColor = localStorage.getItem('avatarColor') || '#001a57';
-            const usernameSlug = encodeURIComponent((displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-'));
+            const usernameSlug = localStorage.getItem('usernameLower') || encodeURIComponent((displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-'));
             const profileUrl = `/user/${usernameSlug}`;
 
             const avatarInner = photoURL
@@ -666,7 +666,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupAuthListeners() {
-        window.auth.onAuthStateChanged(user => {
+        window.auth.onAuthStateChanged(async user => {
+            // Fetch usernameLower from Firestore and cache it so profileUrl is always correct
+            if (user && window.db) {
+                try {
+                    const doc = await window.db.collection('users').doc(user.uid).get();
+                    if (doc.exists && doc.data().usernameLower) {
+                        localStorage.setItem('usernameLower', doc.data().usernameLower);
+                    }
+                } catch(_) {}
+            }
             renderUserNav(user);
             setupNotificationListener(user);
         });
@@ -721,6 +730,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.querySelector('.auth-modal-title').textContent = 'Account Settings';
 
+        const user = window.auth && window.auth.currentUser;
         if (user) {
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             const initial = displayName.charAt(0).toUpperCase();
@@ -1119,6 +1129,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else localStorage.removeItem('photoURL');
 
             const usernameLower = (name || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+            localStorage.setItem('usernameLower', usernameLower);
             await window.db.collection('users').doc(user.uid).set({
                 username: name,
                 usernameLower: usernameLower,
