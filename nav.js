@@ -670,9 +670,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', (e) => {
         const dropdown = document.getElementById('userDropdown');
         const profileBtn = document.getElementById('userProfileBtn');
-        
-        // If clicking outside dropdown AND outside the trigger button, close it
-        if (dropdown && !dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+
+        if (!dropdown) return;
+
+        // If an anchor link inside the dropdown was clicked, close dropdown and let browser navigate
+        const clickedLink = e.target.closest('a.user-dropdown-item');
+        if (clickedLink && dropdown.contains(clickedLink)) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        // Close dropdown when clicking outside it and outside the trigger button
+        if (!dropdown.contains(e.target) && (!profileBtn || !profileBtn.contains(e.target))) {
             dropdown.classList.remove('active');
         }
     });
