@@ -547,9 +547,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <a class="user-dropdown-item" href="${profileUrl}">My Profile</a>
 
-                        <a class="user-dropdown-item" href="/inbox" id="navInboxLink">
+                        <a class="user-dropdown-item" href="${profileUrl}/inbox" id="navInboxLink">
                             <span>Inbox</span>
                             <span id="dropdown-notif-count" class="dropdown-notif-pill hidden">0</span>
+                        </a>
+
+                        <a class="user-dropdown-item" href="${profileUrl}/notifications" id="navNotifsLink">
+                            <span>Notifications</span>
                         </a>
 
                         <button class="user-dropdown-item" id="navProfileBtn">Account Settings</button>
@@ -573,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
                         <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
-                        <a class="auth-nav-btn" href="/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
+                        <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Account Settings</button>
                     </div>
                 `;
