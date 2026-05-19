@@ -523,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const photoURL = user.photoURL || localStorage.getItem('photoURL') || '';
             const avatarColor = localStorage.getItem('avatarColor') || '#001a57';
             const usernameSlug = localStorage.getItem('usernameLower') || (displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
-            const profileUrl = `/user.html?u=${encodeURIComponent(usernameSlug)}`;
+            const profileUrl = `/user/${encodeURIComponent(usernameSlug)}`;
 
             const avatarInner = photoURL
                 ? `<img src="${photoURL}" alt="${displayName}" class="user-avatar-img">`
@@ -577,8 +577,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
                         <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
-                        <a class="auth-nav-btn" href="${profileUrl}#inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
-                        <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Account Settings</button>
+                        <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
+                        <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
                     </div>
                 `;
             }
@@ -601,12 +601,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
             if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
-            if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '#inbox'; };
-            if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '#notifications'; };
+            if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
+            if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
             if (smallLogoutBtn)    smallLogoutBtn.onclick    = (e) => { e.stopPropagation(); window.auth.signOut(); };
             if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = (e) => { e.stopPropagation(); window.auth.signOut(); };
-            if (editProfileBtn)    editProfileBtn.onclick    = openProfileModal;
-            if (mobileEditBtn)     mobileEditBtn.onclick     = openProfileModal;
+            // Account Settings now lives on the profile page (/user/<name>/settings)
+            if (editProfileBtn)    editProfileBtn.onclick    = () => { window.location.href = profileUrl + '/settings'; };
+            if (mobileEditBtn)     mobileEditBtn.onclick     = () => { window.location.href = profileUrl + '/settings'; };
             if (mobileLogout)      mobileLogout.onclick      = () => window.auth.signOut();
 
         } else {
@@ -805,13 +806,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         showNavMessage('Image must be under 2 MB.', 'error');
                         return;
                     }
+                    // Lazy-load firebase-storage SDK if missing
+                    if (typeof firebase.storage !== 'function') {
+                        showNavMessage('Loading uploader…', 'success');
+                        await new Promise((res, rej) => {
+                            const s = document.createElement('script');
+                            s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
+                            s.onload = res; s.onerror = rej;
+                            document.head.appendChild(s);
+                        }).catch(() => {});
+                    }
+                    if (!window.storage && typeof firebase.storage === 'function') {
+                        try { window.storage = firebase.storage(); } catch(_) {}
+                    }
                     if (!window.storage) {
                         showNavMessage('Storage not ready, try again in a moment.', 'error');
                         return;
                     }
                     try {
                         showNavMessage('Uploading photo...', 'success');
-                        const ref = window.storage.ref().child(`profile-pics/${user.uid}/${Date.now()}_${file.name}`);
+                        const ref = window.storage.ref().child(`profile-pics/${user.uid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
                         const snap = await ref.put(file);
                         const url  = await snap.ref.getDownloadURL();
                         if (picUrlHidden) picUrlHidden.value = url;
