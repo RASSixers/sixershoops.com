@@ -586,20 +586,36 @@
             appId: "1:715626120695:web:4942646cf3d6ca7e181af2"
         };
 
-        // ── URL routing ────────────────────────────────────────────
-        // /user/:username           → main profile (posts/comments/likes tabs in-page)
-        // /user/:username/inbox     → inbox panel
-        // /user/:username/notifications → notifications panel
-        const pathParts = location.pathname.split('/').filter(Boolean);
-        // ['user', 'username', 'tab?']
-        const slug = pathParts[1] || '';
-        const subPage = pathParts[2] || null;
-        const VALID_SUBPAGES = ['inbox', 'notifications'];
-        const currentSubPage = subPage && VALID_SUBPAGES.includes(subPage) ? subPage : null;
+        // ── Hash-based routing ─────────────────────────────────
+        // sixershoops.com/user.html          → posts (default)
+        // sixershoops.com/user.html#inbox    → inbox panel
+        // sixershoops.com/user.html#notifications → notifications panel
+        // Username comes from ?u=username query param OR Firebase auth
+        const params = new URLSearchParams(location.search);
+        const slug = params.get('u') || '';
+        
+        function getHash() { return location.hash.replace('#','') || 'posts'; }
+        let currentSubPage = ['inbox','notifications'].includes(getHash()) ? getHash() : null;
+
+        // Listen for hash changes (back/forward navigation)
+        window.addEventListener('hashchange', () => {
+            currentSubPage = ['inbox','notifications'].includes(getHash()) ? getHash() : null;
+            if (gUserData) {
+                renderBanner(gUserData, gPosts.length, gMyUid);
+                document.getElementById('pageContent').innerHTML = `
+                    <div id="feedContent"></div>
+                    <div class="profile-sidebar"><div id="sidebarContent"></div></div>`;
+                renderSidebar(gUserData, gPosts.length, gMyUid);
+                if (currentSubPage === 'inbox') renderInbox(gMyUid);
+                else if (currentSubPage === 'notifications') renderNotifications(gMyUid);
+                else renderFeed();
+            }
+        });
 
         let currentTab = 'posts';
         let currentSort = 'new';
         let gUserData = null;
+        let gMyUid = null;
         let gPosts = [];
         let gComments = [];
 
@@ -644,8 +660,8 @@
             return `<div class="feed-card-avatar" style="width:${size}px;height:${size}px;background:${bg};">${inner}</div>`;
         }
 
-        function userBase() { return `/user/${encodeURIComponent(slug)}`; }
-        function tabHref(sub) { return sub ? `${userBase()}/${sub}` : userBase(); }
+        function userBase() { return `/user.html${slug ? '?u=' + encodeURIComponent(slug) : ''}`; }
+        function tabHref(sub) { return sub ? `${userBase()}#${sub}` : userBase(); }
 
         // ── Banner ─────────────────────────────────────────────────
         function renderBanner(ud, postCount, myUid) {
@@ -1016,7 +1032,7 @@
 
         // ── Page renderer ─────────────────────────────────────────
         function renderPage(ud, posts, comments, myUid) {
-            gUserData = ud; gPosts = posts; gComments = comments;
+            gUserData = ud; gPosts = posts; gComments = comments; gMyUid = myUid;
             document.title = `${ud.username || 'User'} — Sixers Hoops`;
 
             renderBanner(ud, posts.length, myUid);
@@ -1070,9 +1086,14 @@
             try { myUid = window.auth?.currentUser?.uid || firebase.auth().currentUser?.uid || null; } catch(_) {}
 
             try {
-                const userSnap = await db.collection('users').where('usernameLower','==',slug).limit(1).get();
-                if (userSnap.empty) { showNotFound(); return; }
-                const ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
+                let ud = null;
+                // Look up by usernameLower
+                const userSnap = await db.collection('users').where('usernameLower','==',slug.toLowerCase()).limit(1).get();
+                if (!userSnap.empty) {
+                    ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
+                } else {
+                    showNotFound(); return;
+                }
 
                 let posts = [], comments = [];
                 try {
