@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span>Notifications</span>
                         </button>
 
-                        <button class="user-dropdown-item" id="navProfileBtn">Account Settings</button>
+                        <button class="user-dropdown-item" id="navSettingsBtn">Account Settings</button>
 
                         <div class="user-dropdown-divider"></div>
 
@@ -587,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const userDropdown = document.getElementById('userDropdown');
             const smallLogoutBtn = document.getElementById('navSmallLogout');
             const dropdownLogoutBtn = document.getElementById('navDropdownLogout');
-            const editProfileBtn = document.getElementById('navProfileBtn');
+            const editProfileBtn = document.getElementById('navSettingsBtn');
             const mobileEditBtn = document.getElementById('mobileProfileBtn');
             const mobileLogout = document.getElementById('navLogoutBtn');
             const myProfileLink = document.getElementById('navMyProfileLink');
