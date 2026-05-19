@@ -586,20 +586,40 @@
             appId: "1:715626120695:web:4942646cf3d6ca7e181af2"
         };
 
-        // ── Hash-based routing ─────────────────────────────────
-        // sixershoops.com/user.html          → posts (default)
-        // sixershoops.com/user.html#inbox    → inbox panel
-        // sixershoops.com/user.html#notifications → notifications panel
-        // Username comes from ?u=username query param OR Firebase auth
-        const params = new URLSearchParams(location.search);
-        const slug = params.get('u') || '';
-        
-        function getHash() { return location.hash.replace('#','') || 'posts'; }
-        let currentSubPage = ['inbox','notifications'].includes(getHash()) ? getHash() : null;
+        // ── URL routing ─────────────────────────────────────────
+        // Clean URLs (requires server rewrite of /user/* → /user.html):
+        //   /user/<username>                → posts (default)
+        //   /user/<username>/inbox          → inbox panel
+        //   /user/<username>/notifications  → notifications panel
+        //   /user/<username>/settings       → account settings panel
+        // Legacy ?u=<username>&#hash kept for backwards compatibility.
+        const SUBPAGES = ['inbox','notifications','settings'];
 
-        // Listen for hash changes (back/forward navigation)
-        window.addEventListener('hashchange', () => {
-            currentSubPage = ['inbox','notifications'].includes(getHash()) ? getHash() : null;
+        function parseRoute() {
+            const path = location.pathname.replace(/\/+$/, ''); // trim trailing /
+            const m = path.match(/^\/user\/([^\/]+)(?:\/([^\/]+))?$/);
+            if (m) {
+                return {
+                    slug: decodeURIComponent(m[1]),
+                    sub: SUBPAGES.includes(m[2]) ? m[2] : null
+                };
+            }
+            // Legacy fallback: ?u=name (+ optional #inbox/#notifications/#settings)
+            const qp = new URLSearchParams(location.search);
+            const legacySlug = qp.get('u') || '';
+            const hash = location.hash.replace('#','');
+            return {
+                slug: legacySlug,
+                sub: SUBPAGES.includes(hash) ? hash : null
+            };
+        }
+
+        let { slug, sub: currentSubPage } = parseRoute();
+
+        // Re-render on back/forward
+        window.addEventListener('popstate', () => {
+            const r = parseRoute();
+            currentSubPage = r.sub;
             if (gUserData) {
                 renderBanner(gUserData, gPosts.length, gMyUid);
                 document.getElementById('pageContent').innerHTML = `
@@ -608,9 +628,13 @@
                 renderSidebar(gUserData, gPosts.length, gMyUid);
                 if (currentSubPage === 'inbox') renderInbox(gMyUid);
                 else if (currentSubPage === 'notifications') renderNotifications(gMyUid);
+                else if (currentSubPage === 'settings') renderSettings(gUserData, gMyUid);
                 else renderFeed();
             }
         });
+        // Legacy hashchange support
+        window.addEventListener('hashchange', () => window.dispatchEvent(new Event('popstate')));
+
 
         let currentTab = 'posts';
         let currentSort = 'new';
@@ -660,8 +684,19 @@
             return `<div class="feed-card-avatar" style="width:${size}px;height:${size}px;background:${bg};">${inner}</div>`;
         }
 
-        function userBase() { return `/user.html${slug ? '?u=' + encodeURIComponent(slug) : ''}`; }
-        function tabHref(sub) { return sub ? `${userBase()}#${sub}` : userBase(); }
+        function userBase() { return slug ? `/user/${encodeURIComponent(slug)}` : '/user'; }
+        function tabHref(sub) { return sub ? `${userBase()}/${sub}` : userBase(); }
+
+        // Intercept clicks on profile-tab anchors to do client-side nav (no full reload).
+        document.addEventListener('click', (e) => {
+            const a = e.target.closest('a.profile-tab');
+            if (!a) return;
+            const href = a.getAttribute('href') || '';
+            if (!href.startsWith('/user/') && href !== '/user') return;
+            e.preventDefault();
+            history.pushState(null, '', href);
+            window.dispatchEvent(new Event('popstate'));
+        });
 
         // ── Banner ─────────────────────────────────────────────────
         function renderBanner(ud, postCount, myUid) {
@@ -717,7 +752,8 @@
                     </a>
                     <a class="profile-tab" href="${tabHref('notifications')}">
                         Notifications <span id="tab-notif-count" class="tab-notif-pill hidden"></span>
-                    </a>` : ''}`;
+                    </a>
+                    <a class="profile-tab" href="${tabHref('settings')}">Settings</a>` : ''}`;
 
                 tabsEl.querySelectorAll('.profile-tab[data-tab]').forEach(tab => {
                     tab.addEventListener('click', () => {
@@ -738,7 +774,8 @@
                     </a>
                     <a class="profile-tab ${currentSubPage==='notifications'?'active':''}" href="${tabHref('notifications')}">
                         Notifications <span id="tab-notif-count" class="tab-notif-pill hidden"></span>
-                    </a>` : ''}`;
+                    </a>
+                    <a class="profile-tab ${currentSubPage==='settings'?'active':''}" href="${tabHref('settings')}">Settings</a>` : ''}`;
             }
 
             // Wire up action buttons
@@ -755,8 +792,8 @@
             const editBtn = document.getElementById('bannerEditBtn');
             if (editBtn) {
                 editBtn.addEventListener('click', () => {
-                    if (window.openProfileModal) window.openProfileModal();
-                    else document.getElementById('userProfileBtn')?.click();
+                    history.pushState(null, '', tabHref('settings'));
+                    window.dispatchEvent(new Event('popstate'));
                 });
             }
 
@@ -1030,6 +1067,214 @@
               });
         }
 
+        // ── Settings panel (inline, on own profile) ───────────────
+        function renderSettings(ud, myUid) {
+            const fc = document.getElementById('feedContent');
+            if (!fc) return;
+            if (!myUid || myUid !== ud._uid) {
+                fc.innerHTML = `<div class="empty-state"><p>You can only edit your own settings.</p></div>`;
+                return;
+            }
+
+            const photo = ud.photoURL || '';
+            const initial = (ud.username || 'U').charAt(0).toUpperCase();
+            const color = ud.avatarColor || '#001a57';
+            const colorChoices = ['#001a57','#006BB6','#ED174C','#475569','#1e293b','#0057a0'];
+
+            fc.innerHTML = `
+            <div class="panel-wrap">
+                <div class="panel-header"><span class="panel-title">Account Settings</span></div>
+
+                <form id="settingsForm" class="settings-form" style="display:flex;flex-direction:column;gap:1.5rem;padding:1.25rem;">
+
+                    <div style="display:flex;align-items:center;gap:1.25rem;">
+                        <div id="settingsAvatar" style="width:84px;height:84px;border-radius:50%;background:${photo?'#0b0f1a':color};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;color:#fff;overflow:hidden;border:1px solid rgba(0,0,0,0.08);flex-shrink:0;">
+                            ${photo?`<img src="${esc(photo)}" alt="" style="width:100%;height:100%;object-fit:cover;">`:initial}
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                            <label for="settingsPicInput" style="cursor:pointer;display:inline-block;padding:0.5rem 0.9rem;border:1px solid rgba(13,15,26,0.15);border-radius:4px;font-family:'Barlow',sans-serif;font-weight:600;font-size:0.82rem;color:var(--ink);background:#fff;">Upload Photo</label>
+                            <input type="file" id="settingsPicInput" accept="image/*" style="display:none;">
+                            <button type="button" id="settingsPicRemove" style="background:none;border:none;padding:0;color:#dc2626;font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:500;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px;">Remove photo</button>
+                            <span id="settingsPicMsg" style="font-size:0.75rem;color:var(--mid);min-height:1em;"></span>
+                        </div>
+                        <input type="hidden" id="settingsPhotoURL" value="${esc(photo)}">
+                    </div>
+
+                    <div>
+                        <label class="auth-label">Username</label>
+                        <input type="text" class="auth-field" id="settingsUsername" maxlength="12" value="${esc(ud.username||'')}">
+                    </div>
+
+                    <div>
+                        <label class="auth-label">Bio</label>
+                        <textarea class="auth-field" id="settingsBio" rows="3" maxlength="200" style="resize:vertical;font-family:inherit;">${esc(ud.bio||'')}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="auth-label">Avatar Color</label>
+                        <div id="settingsColorRow" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.25rem;">
+                            ${colorChoices.map(c => `
+                                <button type="button" data-color="${c}" class="settings-color-opt ${c===color?'is-active':''}" style="width:30px;height:30px;border-radius:50%;background:${c};border:2px solid ${c===color?'#0d0f1a':'transparent'};cursor:pointer;padding:0;"></button>
+                            `).join('')}
+                        </div>
+                        <input type="hidden" id="settingsAvatarColor" value="${color}">
+                    </div>
+
+                    <div id="settingsMsg" class="nav-message" style="margin:0;"></div>
+
+                    <div style="display:flex;gap:0.6rem;">
+                        <button type="submit" class="auth-submit-btn" style="flex:1;max-width:200px;">Save Changes</button>
+                        <button type="button" id="settingsCancel" style="padding:0.78rem 1rem;background:transparent;border:1px solid rgba(13,15,26,0.14);border-radius:4px;font-family:'Barlow',sans-serif;font-weight:600;font-size:0.9rem;color:var(--ink);cursor:pointer;">Cancel</button>
+                    </div>
+
+                    <div style="margin-top:0.5rem;padding-top:1.25rem;border-top:1px solid var(--border-light);">
+                        <div style="font-family:'Barlow',sans-serif;font-weight:700;font-size:0.85rem;color:var(--ink);margin-bottom:0.25rem;">Danger zone</div>
+                        <p style="font-size:0.8rem;color:var(--mid);margin-bottom:0.65rem;">Permanently delete your account and all associated data.</p>
+                        <button type="button" id="settingsDelete" style="padding:0.55rem 0.9rem;background:transparent;border:1px solid #fecaca;border-radius:4px;color:#dc2626;font-family:'Barlow',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;">Delete account</button>
+                    </div>
+                </form>
+            </div>`;
+
+            const avEl = document.getElementById('settingsAvatar');
+            const photoHidden = document.getElementById('settingsPhotoURL');
+            const colorHidden = document.getElementById('settingsAvatarColor');
+            const picMsg = document.getElementById('settingsPicMsg');
+
+            function repaintAvatar() {
+                const p = photoHidden.value;
+                const c = colorHidden.value || '#001a57';
+                avEl.style.background = p ? '#0b0f1a' : c;
+                avEl.innerHTML = p
+                    ? `<img src="${esc(p)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+                    : (document.getElementById('settingsUsername').value || 'U').charAt(0).toUpperCase();
+            }
+
+            // Color picker
+            document.querySelectorAll('.settings-color-opt').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.settings-color-opt').forEach(b => b.style.borderColor = 'transparent');
+                    btn.style.borderColor = '#0d0f1a';
+                    colorHidden.value = btn.dataset.color;
+                    repaintAvatar();
+                };
+            });
+
+            // Photo upload
+            const picInput = document.getElementById('settingsPicInput');
+            const picRemove = document.getElementById('settingsPicRemove');
+            picInput.onchange = async (ev) => {
+                const file = ev.target.files && ev.target.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) { picMsg.textContent = 'Image must be under 2 MB.'; picMsg.style.color = '#dc2626'; return; }
+
+                // Ensure firebase storage is loaded
+                if (typeof firebase.storage !== 'function') {
+                    picMsg.textContent = 'Loading uploader…'; picMsg.style.color = 'var(--mid)';
+                    await new Promise((res, rej) => {
+                        const s = document.createElement('script');
+                        s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
+                        s.onload = res; s.onerror = rej;
+                        document.head.appendChild(s);
+                    }).catch(() => {});
+                }
+                if (!window.storage && typeof firebase.storage === 'function') {
+                    try { window.storage = firebase.storage(); } catch(_) {}
+                }
+                if (!window.storage) { picMsg.textContent = 'Upload service unavailable.'; picMsg.style.color = '#dc2626'; return; }
+
+                try {
+                    picMsg.textContent = 'Uploading…'; picMsg.style.color = 'var(--mid)';
+                    const ref = window.storage.ref().child(`profile-pics/${myUid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
+                    const snap = await ref.put(file);
+                    const url = await snap.ref.getDownloadURL();
+                    photoHidden.value = url;
+                    repaintAvatar();
+                    picMsg.textContent = 'Photo uploaded. Save to keep it.'; picMsg.style.color = '#15803d';
+                } catch (err) {
+                    console.error(err);
+                    picMsg.textContent = 'Upload failed: ' + err.message; picMsg.style.color = '#dc2626';
+                }
+            };
+            picRemove.onclick = () => {
+                photoHidden.value = '';
+                repaintAvatar();
+                picMsg.textContent = 'Photo removed. Save to keep it.'; picMsg.style.color = 'var(--mid)';
+            };
+            document.getElementById('settingsUsername').addEventListener('input', repaintAvatar);
+
+            // Cancel
+            document.getElementById('settingsCancel').onclick = () => {
+                history.pushState(null, '', userBase());
+                window.dispatchEvent(new Event('popstate'));
+            };
+
+            // Save
+            document.getElementById('settingsForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const msg = document.getElementById('settingsMsg');
+                msg.className = 'nav-message';
+                const name = document.getElementById('settingsUsername').value.trim();
+                if (!name || name.length > 12) {
+                    msg.className = 'nav-message error'; msg.textContent = 'Username is required and must be 12 characters or less.';
+                    return;
+                }
+                const bio = document.getElementById('settingsBio').value.trim();
+                const photoURL = photoHidden.value || '';
+                const avatarColor = colorHidden.value || '#001a57';
+                const usernameLower = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.disabled = true; submitBtn.textContent = 'Saving…';
+                try {
+                    const user = firebase.auth().currentUser;
+                    await user.updateProfile({ displayName: name, photoURL: photoURL || null });
+                    localStorage.setItem('avatarColor', avatarColor);
+                    if (photoURL) localStorage.setItem('photoURL', photoURL); else localStorage.removeItem('photoURL');
+                    localStorage.setItem('usernameLower', usernameLower);
+
+                    await firebase.firestore().collection('users').doc(myUid).set({
+                        username: name,
+                        usernameLower,
+                        bio,
+                        avatarColor,
+                        photoURL: photoURL || null,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+
+                    msg.className = 'nav-message success'; msg.textContent = 'Settings saved.';
+                    // Update local + refresh the banner
+                    gUserData = { ...gUserData, username: name, usernameLower, bio, avatarColor, photoURL: photoURL || null };
+                    renderBanner(gUserData, gPosts.length, gMyUid);
+                    // If username changed, update the URL slug
+                    if (usernameLower !== slug.toLowerCase()) {
+                        slug = usernameLower;
+                        history.replaceState(null, '', tabHref('settings'));
+                    }
+                    if (window.renderUserNav) window.renderUserNav(user);
+                } catch (err) {
+                    console.error(err);
+                    msg.className = 'nav-message error'; msg.textContent = err.message || 'Could not save settings.';
+                } finally {
+                    submitBtn.disabled = false; submitBtn.textContent = 'Save Changes';
+                }
+            };
+
+            // Delete
+            document.getElementById('settingsDelete').onclick = async () => {
+                if (!confirm('Permanently delete your account? This cannot be undone.')) return;
+                try {
+                    const user = firebase.auth().currentUser;
+                    await firebase.firestore().collection('users').doc(myUid).delete().catch(()=>{});
+                    await user.delete();
+                    location.href = '/';
+                } catch (err) {
+                    if (err.code === 'auth/requires-recent-login') {
+                        alert('For security, please sign out and sign back in, then try again.');
+                    } else { alert(err.message); }
+                }
+            };
+        }
+
         // ── Page renderer ─────────────────────────────────────────
         function renderPage(ud, posts, comments, myUid) {
             gUserData = ud; gPosts = posts; gComments = comments; gMyUid = myUid;
@@ -1047,6 +1292,8 @@
                 renderInbox(myUid);
             } else if (currentSubPage === 'notifications') {
                 renderNotifications(myUid);
+            } else if (currentSubPage === 'settings') {
+                renderSettings(ud, myUid);
             } else {
                 renderFeed();
             }
@@ -1079,7 +1326,25 @@
             setTimeout(() => waitForDB(cb, n + 1), 300);
         }
 
-        if (!slug) { showNotFound('No username in URL.'); return; }
+        // If no slug, wait for auth and redirect to the signed-in user's profile.
+        if (!slug) {
+            const tryRedirect = () => {
+                try {
+                    const u = firebase.auth().currentUser;
+                    if (u) {
+                        const lower = (u.displayName || localStorage.getItem('usernameLower') || '').toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+                        if (lower) { location.replace(`/user/${encodeURIComponent(lower)}`); return true; }
+                    }
+                } catch(_) {}
+                return false;
+            };
+            if (!tryRedirect()) {
+                try {
+                    firebase.auth().onAuthStateChanged(() => { if (!tryRedirect()) showNotFound('Sign in to view your profile.'); });
+                } catch(_) { showNotFound('No username in URL.'); }
+            }
+            return;
+        }
 
         waitForDB(async (db) => {
             let myUid = null;
