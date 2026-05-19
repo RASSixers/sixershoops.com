@@ -522,8 +522,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const photoURL = user.photoURL || localStorage.getItem('photoURL') || '';
             const avatarColor = localStorage.getItem('avatarColor') || '#001a57';
-            const usernameSlug = localStorage.getItem('usernameLower') || encodeURIComponent((displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-'));
-            const profileUrl = `/user/${usernameSlug}`;
+            const usernameSlug = localStorage.getItem('usernameLower') || (displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+            const profileUrl = `/user.html?u=${encodeURIComponent(usernameSlug)}`;
 
             const avatarInner = photoURL
                 ? `<img src="${photoURL}" alt="${displayName}" class="user-avatar-img">`
@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
                         <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
-                        <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
+                        <a class="auth-nav-btn" href="${profileUrl}#inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <button class="auth-nav-btn" id="mobileProfileBtn" style="width: 100%; background: #f3f4f6; color: #374151;">Account Settings</button>
                     </div>
                 `;
@@ -601,8 +601,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
             if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
-            if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
-            if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
+            if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '#inbox'; };
+            if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '#notifications'; };
             if (smallLogoutBtn)    smallLogoutBtn.onclick    = (e) => { e.stopPropagation(); window.auth.signOut(); };
             if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = (e) => { e.stopPropagation(); window.auth.signOut(); };
             if (editProfileBtn)    editProfileBtn.onclick    = openProfileModal;
