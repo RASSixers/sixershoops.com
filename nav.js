@@ -21,12 +21,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(link);
     }
 
-    // Add Google Fonts if not present
+    // Add Google Fonts if not present (Geist — matches homepage)
     if (!document.getElementById('nav-google-fonts')) {
+        const preconnect1 = document.createElement('link');
+        preconnect1.rel = 'preconnect';
+        preconnect1.href = 'https://fonts.googleapis.com';
+        document.head.appendChild(preconnect1);
+
+        const preconnect2 = document.createElement('link');
+        preconnect2.rel = 'preconnect';
+        preconnect2.href = 'https://fonts.gstatic.com';
+        preconnect2.crossOrigin = '';
+        document.head.appendChild(preconnect2);
+
         const link = document.createElement('link');
         link.id = 'nav-google-fonts';
         link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@400;500;600;700&display=swap';
+        link.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap';
         document.head.appendChild(link);
     }
 
@@ -312,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <form id="navProfileForm" style="display: none;">
 
                     <!-- Profile Preview Card -->
-                    <div id="navProfilePreview" style="display:flex;align-items:center;gap:1rem;background:linear-gradient(135deg,rgba(0,26,87,0.06),rgba(0,107,182,0.06));border:1px solid rgba(0,107,182,0.15);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+                    <div id="navProfilePreview" style="display:flex;align-items:center;gap:1rem;background:#f6f8fb;border:1px solid rgba(13,15,26,0.08);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
                         <div style="position:relative;flex-shrink:0;">
                             <div id="navProfileAvatarPreview" style="width:56px;height:56px;border-radius:50%;background:#001a57;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.4rem;color:white;overflow:hidden;border:3px solid rgba(0,107,182,0.3);">
                                 <span id="navProfileInitialPreview">?</span>
