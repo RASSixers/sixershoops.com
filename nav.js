@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span></span>
             </button>
             <a href="/" class="nav-brand">
-                <span class="brand-name">SIXERS HOOPS</span>
+                <span class="brand-name">Sixers Hoops</span>
             </a>
         </div>
 
@@ -548,7 +548,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${avatarHTML}
                         <span class="user-name">${displayName}</span>
                     </div>
-                    <button class="nav-small-logout" id="navSmallLogout" title="Logout">Logout</button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-header">
                             <strong>${displayName}</strong>
