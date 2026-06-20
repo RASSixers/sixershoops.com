@@ -7,7 +7,7 @@
     <meta name="description" content="Sixers Hoops — your home for Philadelphia 76ers news, analysis, community discussions, player grades, and the latest NBA updates. Join the conversation with fellow Sixers fans.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Barlow+Condensed:wght@700;800;900&family=Roboto+Condensed:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -37,7 +37,7 @@
             --navy-deep: #0b0f1a;
             --sixers-blue: #006BB6;
             --sixers-red: #ED174C;
-            --cream: #f7f8fc;
+            --cream: #fafbfc;
             --ink: #0d0f1a;
             --mid: #64748b;
             --border-light: #e4e8f0;
@@ -45,6 +45,8 @@
         }
 
         *, *::before, *::after { box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
 
         body, html {
             margin-top: 60px;
@@ -54,6 +56,9 @@
             overflow-x: hidden;
             max-width: 100%;
         }
+
+        /* Offset anchor jumps so content isn't hidden under the fixed navbar */
+        #community-feed-section, [id] { scroll-margin-top: 80px; }
 
         /* Uppercase only the hero header, not the whole page */
         header.hero, header.hero * { text-transform: uppercase; }
@@ -69,7 +74,7 @@
         }
 
         /* Scope custom fonts to page content only — never touch the JS-injected navbar */
-        main, footer, main * { font-family: 'Times New Roman', Times, serif; }
+        main, footer, main * { font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
 
         /* ─── HERO ──────────────────────────────────── */
         .hero {
@@ -80,16 +85,7 @@
         }
 
         /* Subtle dot-grid texture */
-        .hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: radial-gradient(circle, rgba(0,107,182,0.12) 1px, transparent 1px);
-            background-size: 28px 28px;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.6;
-        }
+        .hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, rgba(0,107,182,0.04) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(237,23,76,0.02) 0%, transparent 40%); pointer-events: none; z-index: 0; }
 
         /* Soft color wash top-right */
         .hero-glow-blue {
@@ -98,7 +94,7 @@
             top: -80px;
             width: 600px;
             height: 500px;
-            background: radial-gradient(ellipse at center, rgba(0,107,182,0.08) 0%, transparent 70%);
+            background: radial-gradient(ellipse at center, rgba(0,107,182,0.06) 0%, transparent 70%);
             pointer-events: none;
             z-index: 0;
         }
@@ -109,7 +105,7 @@
             bottom: -40px;
             width: 400px;
             height: 300px;
-            background: radial-gradient(ellipse at center, rgba(237,23,76,0.05) 0%, transparent 70%);
+            background: radial-gradient(ellipse at center, rgba(237,23,76,0.03) 0%, transparent 70%);
             pointer-events: none;
             z-index: 0;
         }
@@ -161,31 +157,30 @@
         }
 
         .hero-eyebrow-text {
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
             color: var(--sixers-blue);
         }
 
         .hero-title-top {
-            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: clamp(3.2rem, 8vw, 6rem);
-            font-weight: 800;
-            line-height: 0.9;
-            letter-spacing: 0.01em;
-            
+            font-weight: 700;
+            line-height: 0.95;
+            letter-spacing: -0.03em;
             color: var(--ink);
             margin: 0;
         }
 
         .hero-title-bottom {
-            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: clamp(3.2rem, 8vw, 6rem);
-            font-weight: 800;
-            line-height: 0.9;
-            letter-spacing: 0.01em;
+            font-weight: 700;
+            line-height: 0.95;
+            letter-spacing: -0.03em;
             color: var(--sixers-blue);
             margin: 0;
         }
@@ -195,14 +190,14 @@
         }
 
         .hero-sub {
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-size: 1rem;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.02rem;
             font-weight: 400;
             color: var(--mid);
-            max-width: 420px;
+            max-width: 460px;
             line-height: 1.65;
-            margin: 0 auto;
-            padding-top: 1.1rem;
+            margin: 1.25rem auto 0;
+            text-transform: none;
         }
 
         .hero-cta-row {
@@ -219,13 +214,12 @@
             gap: 0.45rem;
             background: var(--sixers-blue);
             color: white;
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-weight: 700;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 600;
             font-size: 0.84rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            padding: 0.7rem 1.5rem;
-            border-radius: 9px;
+            letter-spacing: 0.02em;
+            padding: 0.75rem 1.6rem;
+            border-radius: 8px;
             text-decoration: none;
             border: none;
             transition: all 0.2s;
@@ -245,13 +239,12 @@
             gap: 0.45rem;
             background: transparent;
             color: var(--sixers-blue);
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-weight: 700;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 600;
             font-size: 0.84rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            padding: 0.7rem 1.5rem;
-            border-radius: 9px;
+            letter-spacing: 0.02em;
+            padding: 0.75rem 1.6rem;
+            border-radius: 8px;
             text-decoration: none;
             border: 1px solid var(--sixers-blue);
             transition: all 0.2s;
@@ -271,7 +264,7 @@
             z-index: 1;
             background: var(--cream);
             border-top: 1px solid var(--border-light);
-            padding: 0 0 2rem;
+            padding: 0.5rem 0 2.5rem;
         }
 
         .feature-cards-inner {
@@ -294,8 +287,8 @@
             position: relative;
             overflow: hidden;
             transition: all 0.22s ease;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
         }
 
         .feature-card::after {
@@ -314,13 +307,13 @@
 
         .feature-card:hover {
             border-color: rgba(0,107,182,0.25);
-            box-shadow: 0 6px 24px rgba(0,107,182,0.09);
+            box-shadow: 0 4px 20px rgba(0,107,182,0.07);
             transform: translateY(-2px);
         }
 
         .feature-card-icon {
             width: 36px; height: 36px;
-            border-radius: 9px;
+            border-radius: 8px;
             background: rgba(0,107,182,0.08);
             border: 1px solid rgba(0,107,182,0.15);
             display: flex;
@@ -337,17 +330,16 @@
         }
 
         .feature-card-title {
-            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.9rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            
+            font-weight: 600;
+            letter-spacing: -0.01em;
             color: var(--ink);
             line-height: 1.1;
         }
 
         .feature-card-desc {
-            font-family: 'Barlow', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.76rem;
             font-weight: 400;
             color: var(--mid);
@@ -372,10 +364,7 @@
             background: var(--navy-deep);
         }
 
-        :root.dark-mode .hero::before {
-            background-image: radial-gradient(circle, rgba(0,107,182,0.18) 1px, transparent 1px);
-            opacity: 0.4;
-        }
+        :root.dark-mode .hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, rgba(0,107,182,0.04) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(237,23,76,0.02) 0%, transparent 40%); pointer-events: none; z-index: 0; }
 
         :root.dark-mode .hero-glow-blue {
             background: radial-gradient(ellipse at center, rgba(0,107,182,0.12) 0%, transparent 70%);
@@ -443,11 +432,11 @@
 
         /* ─── SECTION LABEL ────────────────────────── */
         .section-label {
-            font-family: 'Barlow Condensed', system-ui, sans-serif;
-            font-weight: 800;
-            font-size: 0.65rem;
-            letter-spacing: -0.02em;
-            
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 500;
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
             color: var(--mid);
             display: flex;
             align-items: center;
@@ -499,7 +488,7 @@
             background: #f4f6fa;
             border-radius: 999px;
             padding: 0.5rem 1rem;
-            font-family: 'Barlow', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.9rem;
             color: var(--mid);
             cursor: pointer;
@@ -515,11 +504,10 @@
             border: none;
             border-radius: 8px;
             padding: 0.5rem 1.1rem;
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-weight: 700;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 500;
             font-size: 0.85rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            letter-spacing: 0.01em;
             cursor: pointer;
             transition: background 0.2s, transform 0.15s;
             flex-shrink: 0;
@@ -547,11 +535,10 @@
             border: none;
             background: none;
             border-radius: 7px;
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-weight: 700;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 500;
             font-size: 0.85rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            letter-spacing: 0.02em;
             color: var(--mid);
             cursor: pointer;
             transition: all 0.2s;
@@ -579,11 +566,11 @@
         .sidebar-card:last-child { margin-bottom: 0; }
 
         .sidebar-heading {
-            font-family: 'Barlow Condensed', system-ui, sans-serif;
-            font-weight: 800;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 600;
             font-size: 0.75rem;
-            letter-spacing: -0.02em;
-            
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
             color: var(--ink);
             margin-bottom: 1rem;
             display: flex;
@@ -591,16 +578,16 @@
             justify-content: space-between;
         }
         .sidebar-card {
-            border-top: 3px solid var(--navy) !important;
+            border-top: 2px solid var(--navy) !important;
         }
         .sidebar-card.headlines-card {
             border-top-color: var(--navy) !important;
         }
 
         .sidebar-view-all {
-            font-family: 'Barlow', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.72rem;
-            font-weight: 600;
+            font-weight: 500;
             color: var(--sixers-blue);
             text-transform: none;
             letter-spacing: 0;
@@ -652,7 +639,7 @@
             width: 90%;
             max-width: 800px;
             max-height: 90vh;
-            border-radius: 16px;
+            border-radius: 12px;
             position: relative;
             overflow-y: auto;
             transform: translateY(20px) scale(0.98);
@@ -707,7 +694,7 @@
             width: 95%;
             max-width: 750px;
             max-height: 90vh;
-            border-radius: 16px;
+            border-radius: 12px;
             position: relative;
             overflow-y: auto;
             transform: scale(0.95) translateY(20px);
@@ -764,10 +751,10 @@
             background: white;
             cursor: pointer;
             transition: all 0.2s;
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-weight: 700;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 500;
             font-size: 0.9rem;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.01em;
             color: var(--ink);
         }
 
@@ -799,7 +786,7 @@
             border: 1px solid #e2e8f0;
             padding: 20px;
             margin-bottom: 16px;
-            border-radius: 12px;
+            border-radius: 10px;
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
@@ -815,20 +802,20 @@
 
         .player-card-render:hover {
             border-color: var(--sixers-blue);
-            box-shadow: 0 8px 24px rgba(0,107,182,0.12);
+            box-shadow: 0 6px 20px rgba(0,107,182,0.08);
             transform: translateY(-2px);
         }
 
         .player-header-render { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 16px; }
-        .player-name-render { font-family: 'Barlow', system-ui, sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--ink); }
-        .player-grade-render { font-family: 'Barlow', system-ui, sans-serif; font-size: 1rem; font-weight: 900; padding: 4px 12px; color: white; min-width: 44px; text-align: center; border-radius: 7px; }
-        .player-stats-render { font-size: 0.75rem; color: #64748b; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; }
+        .player-name-render { font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--ink); }
+        .player-grade-render { font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 1rem; font-weight: 700; padding: 4px 12px; color: white; min-width: 44px; text-align: center; border-radius: 7px; }
+        .player-stats-render { font-size: 0.75rem; color: #64748b; font-weight: 500; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; }
         .player-analysis-render { color: #475569; line-height: 1.6; font-size: 0.9rem; }
 
         /* Grade Colors — clean scale from green → amber → red */
-        .grade-a-plus { background: #1a6b3c; }
-        .grade-a     { background: #1e7d46; }
-        .grade-a-minus { background: #2d8f56; }
+        .grade-a-plus { background: #1e7a4a; }
+        .grade-a     { background: #228b52; }
+        .grade-a-minus { background: #2a9d5e; }
         .grade-b-plus { background: #006BB6; }
         .grade-b     { background: #0077cc; }
         .grade-b-minus { background: #2a85d0; }
@@ -850,7 +837,7 @@
             background: #f8f9fc;
             border: 1px solid #e2e8f0;
             padding: 1.25rem;
-            border-radius: 12px;
+            border-radius: 10px;
             position: relative;
             transition: all 0.2s;
         }
@@ -1069,7 +1056,7 @@
             width: 95%;
             max-width: 900px;
             max-height: 92vh;
-            border-radius: 20px;
+            border-radius: 14px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -1110,18 +1097,18 @@
         .profile-rank-info { display: flex; flex-direction: column; gap: 1px; }
 
         .profile-rank-label {
-            font-family: 'Barlow', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.6rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
+            font-weight: 500;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.3);
         }
 
         .profile-rank-title {
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-size: 1.05rem;
-            font-weight: 900;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
             color: #4da8ff;
             letter-spacing: 0.03em;
             line-height: 1;
@@ -1134,15 +1121,15 @@
         }
 
         .profile-rank-score-val {
-            font-family: 'Barlow', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 1.5rem;
-            font-weight: 900;
+            font-weight: 700;
             color: white;
             line-height: 1;
         }
 
         .profile-rank-score-label {
-            font-family: 'Barlow', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.6rem;
             font-weight: 600;
             letter-spacing: 0.08em;
@@ -1173,17 +1160,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-weight: 900;
-            font-size: 2.4rem;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 700;
+            font-size: 2.2rem;
             color: white;
             border: 4px solid rgba(255,255,255,0.2);
             flex-shrink: 0;
         }
         .profile-username {
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-size: 1.9rem;
-            font-weight: 900;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
             color: white;
             letter-spacing: 0.02em;
             line-height: 1;
@@ -1209,16 +1196,16 @@
             border-left: 1px solid rgba(255,255,255,0.08);
         }
         .profile-stat-val {
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-size: 2.2rem;
-            font-weight: 900;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
             color: white;
             line-height: 1;
         }
         .profile-stat-label {
             font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.12em;
+            font-weight: 500;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.35);
             margin-top: 3px;
@@ -1230,7 +1217,7 @@
             padding: 2rem 2.5rem;
         }
         .profile-section-label {
-            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.65rem;
             font-weight: 800;
             letter-spacing: -0.02em;
@@ -1256,9 +1243,9 @@
         .profile-post-item:last-child { border-bottom: none; }
         .profile-post-item:hover { opacity: 0.7; }
         .profile-post-title {
-            font-family: 'Barlow', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.95rem;
-            font-weight: 700;
+            font-weight: 500;
             color: var(--ink);
             line-height: 1.4;
             margin-bottom: 0.35rem;
@@ -1295,18 +1282,18 @@
         }
 
         .community-feed-title {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 1.65rem;
-            font-weight: bold;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
             letter-spacing: -0.02em;
             color: var(--ink);
             line-height: 1;
         }
 
         .community-feed-badge {
-            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.6rem;
-            font-weight: 800;
+            font-weight: 600;
             letter-spacing: -0.02em;
             
             color: var(--sixers-red);
@@ -1339,8 +1326,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Barlow', system-ui, sans-serif;
-            font-weight: 800;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 600;
             font-size: 0.85rem;
             color: white;
             flex-shrink: 0;
@@ -1358,9 +1345,9 @@
         /* ─── EDITORIAL ARTICLES SECTION ───────────── */
         .editorial-section { max-width:1200px;margin:2.5rem auto 0;padding:0 1.5rem; }
         .editorial-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem; }
-        .editorial-title { font-family:'Barlow Condensed', system-ui, sans-serif;font-size:1rem;font-weight:800;letter-spacing: -0.02em;color:var(--ink);display:flex;align-items:center;gap:0.6rem; }
+        .editorial-title { font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.85rem;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:0.6rem; }
         .editorial-title::before { content:'';display:inline-block;width:3px;height:1em;background:var(--sixers-red);border-radius:2px; }
-        .editorial-view-all { font-family:'Barlow', system-ui, sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--sixers-blue);text-decoration:none; }
+        .editorial-view-all { font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.75rem;font-weight:500;letter-spacing:0.01em;color:var(--sixers-blue);text-decoration:none; }
         .editorial-view-all:hover { text-decoration:underline; }
 
         /* Grid adapts: 1 card = full width, 2 = side by side, 3 = featured left + 2 stacked */
@@ -1405,7 +1392,7 @@
             content:'';
             position:absolute;
             inset:0;
-            background:linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%);
+            background:linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%);
             pointer-events:none;
             z-index:1;
         }
@@ -1415,9 +1402,9 @@
         .article-card-cat-pill {
             position:relative;
             z-index:2;
-            font-family:'Barlow', system-ui, sans-serif;
+            font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size:0.6rem;
-            font-weight:700;
+            font-weight:500;
             letter-spacing: 0.08em;
             text-transform:uppercase;
             padding:3px 10px;
@@ -1439,7 +1426,7 @@
         /* Hide old tag — pill on thumb replaces it */
         .article-card-tag { display:none; }
         .article-card-title {
-            font-family:'Barlow', system-ui, sans-serif;
+            font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size:1.08rem;
             font-weight:800;
             line-height:1.2;
@@ -1479,7 +1466,7 @@
             background:var(--mid);opacity:0.45;display:inline-block;
         }
         .article-card-read {
-            font-family:'Barlow', system-ui, sans-serif;
+            font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size:0.68rem;
             font-weight:700;
             letter-spacing:0.08em;
@@ -1526,13 +1513,13 @@
         .art-hero-inner { max-width:860px;margin:0 auto;position:relative;z-index:1; }
         .art-back-btn { display:none; }
         .art-cat-badge {
-            display:inline-block;font-family:'Barlow', system-ui, sans-serif;
-            font-size:0.7rem;font-weight:700;letter-spacing: 0.08em;text-transform:uppercase;
+            display:inline-block;font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size:0.7rem;font-weight:500;letter-spacing: 0.05em;text-transform:uppercase;
             padding:5px 14px;border-radius:6px;margin-bottom:1.5rem;
         }
         .art-headline {
-            font-family:'Barlow Condensed', system-ui, sans-serif;
-            font-size:clamp(2.4rem,6vw,4rem);font-weight:900;
+            font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size:clamp(2.4rem,6vw,4rem);font-weight:700;
             line-height:1.0;color:#ffffff;
             margin:0 0 1.5rem;letter-spacing:-0.01em;
         }
@@ -1544,14 +1531,14 @@
         .art-body-wrap { max-width:760px;margin:2.5rem auto;padding:0 1.5rem 4rem; }
         .art-body p { font-size:1rem;line-height:1.8;color:var(--ink);margin:0 0 1.4rem; }
         .art-body h2 {
-            font-family:'Barlow Condensed', system-ui, sans-serif;font-size:1.4rem;font-weight:800;
+            font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:1.3rem;font-weight:600;
             letter-spacing: -0.02em;color:var(--ink);
             margin:2.5rem 0 0.75rem;padding-left:0.75rem;border-left:3px solid var(--sixers-red);
         }
         .art-grade-card { background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;padding:1.25rem 1.4rem;margin:1rem 0; }
         .art-grade-header { display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem; }
-        .art-grade-name { font-family:'Barlow Condensed', system-ui, sans-serif;font-size:1.25rem;font-weight:900;color:var(--ink); }
-        .art-grade-badge { font-family:'Barlow', system-ui, sans-serif;font-size:1rem;font-weight:900;color:white;padding:4px 14px;border-radius:8px;flex-shrink:0; }
+        .art-grade-name { font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:1.2rem;font-weight:600;color:var(--ink); }
+        .art-grade-badge { font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:1rem;font-weight:700;color:white;padding:4px 14px;border-radius:8px;flex-shrink:0; }
         .art-grade-stats { font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--mid);padding-bottom:0.6rem;border-bottom:1px dashed var(--border-light);margin-bottom:0.6rem; }
         .art-grade-analysis { font-size:0.92rem;line-height:1.65;color:#475569; }
         .art-grade-tweet { margin-top:1rem;border-top:1px solid var(--border-light);padding-top:1rem;min-height:32px; }
@@ -1578,11 +1565,6 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8055761449140377" crossorigin="anonymous"></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8046070602394287"
      crossorigin="anonymous"></script>
-<style id="page-font-override">
-body, body * { font-family: 'Times New Roman', Times, serif !important; }
-#site-nav, #site-nav *, nav.navbar, nav.navbar * { font-family: Barlow, "Barlow Condensed", system-ui, sans-serif !important; }
-.hero-title-top, .hero-title-bottom { font-weight: 900 !important; }
-</style>
 </head>
 <body>
   <!-- Navigation injected by nav.js -->
@@ -1596,6 +1578,10 @@ body, body * { font-family: 'Times New Roman', Times, serif !important; }
     <div class="hero-glow-red"></div>
     <div class="hero-inner">
         <div class="hero-wordmark">
+            <div class="hero-eyebrow">
+                <span class="hero-eyebrow-dot"></span>
+                <span class="hero-eyebrow-text">Live · 2025–26 Season</span>
+            </div>
             <p class="hero-title-top">Sixers</p>
             <p class="hero-title-bottom">Hoops</p>
             <div class="hero-divider"></div>
@@ -1695,7 +1681,7 @@ body, body * { font-family: 'Times New Roman', Times, serif !important; }
         <div class="sidebar-card" id="poll-sidebar-card">
             <div class="sidebar-heading">
                 Fan Poll
-                <span id="poll-ends-label" style="font-family:'Barlow', system-ui, sans-serif;font-size:0.65rem;font-weight:500;color:var(--mid);letter-spacing:0;text-transform:none;"></span>
+                <span id="poll-ends-label" style="font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.65rem;font-weight:400;color:var(--mid);letter-spacing:0.01em;"></span>
             </div>
             <div id="poll-container">
                 <p style="font-size:0.8rem;color:var(--mid);text-align:center;padding:1rem 0;">Loading poll…</p>
@@ -1712,8 +1698,8 @@ body, body * { font-family: 'Times New Roman', Times, serif !important; }
             <div id="mod-headline-controls" class="mt-4 pt-4 hidden" style="border-top: 1px solid var(--border-light);">
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <div style="width:28px;height:28px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.7rem;flex-shrink:0;">H</div>
-                    <input type="text" placeholder="Add headline..." id="create-headline-trigger" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs transition-all cursor-pointer" readonly style="font-family:'Barlow', system-ui, sans-serif;">
-                    <button id="add-headline-btn-sidebar" style="background:#7c3aed;color:white;border:none;border-radius:7px;padding:0.35rem 0.75rem;font-family:'Barlow', system-ui, sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Add</button>
+                    <input type="text" placeholder="Add headline..." id="create-headline-trigger" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs transition-all cursor-pointer" readonly style="font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;">
+                    <button id="add-headline-btn-sidebar" style="background:#7c3aed;color:white;border:none;border-radius:7px;padding:0.35rem 0.75rem;font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Add</button>
                 </div>
             </div>
         </div>
@@ -1731,7 +1717,7 @@ body, body * { font-family: 'Times New Roman', Times, serif !important; }
                 <div style="flex:1;min-width:0;">
                     <div class="profile-username" id="profile-modal-username"></div>
                     <div class="profile-joined" id="profile-modal-joined"></div>
-                    <div id="profile-follower-count" style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;font-family:'Barlow', system-ui, sans-serif;"></div>
+                    <div id="profile-follower-count" style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;"></div>
                     <div id="profile-modal-badges" style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.6rem;align-items:center;"></div>
                 </div>
             </div>
@@ -1929,7 +1915,7 @@ body, body * { font-family: 'Times New Roman', Times, serif !important; }
                 <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Post Content</label>
                 <textarea id="post-content-input" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none min-h-[200px]" placeholder="What are your thoughts?" maxlength="2000"></textarea>
                 <div class="flex justify-end" style="margin-top:-0.5rem;">
-                    <span id="post-char-counter" style="font-family:'Barlow', system-ui, sans-serif;font-size:0.7rem;color:var(--mid);transition:color 0.2s;">0 / 2000</span>
+                    <span id="post-char-counter" style="font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.7rem;color:var(--mid);transition:color 0.2s;">0 / 2000</span>
                 </div>
             </div>
             <div id="player-grade-editor" class="hidden space-y-4">
@@ -1966,7 +1952,7 @@ body, body * { font-family: 'Times New Roman', Times, serif !important; }
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                     <span id="art-read-text"></span>
                 </span>
-                <button id="art-share-btn" onclick="shareArticle()" style="display:inline-flex;align-items:center;gap:0.3rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:6px;padding:3px 10px;font-family:'Barlow', system-ui, sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                <button id="art-share-btn" onclick="shareArticle()" style="display:inline-flex;align-items:center;gap:0.3rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:6px;padding:3px 10px;font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                     Share
                 </button>
@@ -2027,7 +2013,7 @@ function renderEditorialGrid(articles) {
         const title = (a.title || '').replace(/</g,'&lt;');
         const excerpt = (a.excerpt || '').replace(/</g,'&lt;');
         const category = (a.category || '').replace(/</g,'&lt;');
-        const tweetBadge = a.tweetUrl ? `<span style="display:inline-flex;align-items:center;gap:3px;background:#1d9bf0;color:white;font-family:'Barlow', system-ui, sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Tweet</span>` : '';
+        const tweetBadge = a.tweetUrl ? `<span style="display:inline-flex;align-items:center;gap:3px;background:#1d9bf0;color:white;font-family:'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Tweet</span>` : '';
         const footerLeft = [date, playerCount > 0 ? playerCount + ' graded' : ''].filter(Boolean).join(' · ');
         return `<div class="article-card" onclick="openArticleModal('${a.id}')">
             <div class="article-card-thumb">
@@ -2074,7 +2060,7 @@ function openArticleModal(id) {
 
     const badge = document.getElementById('art-cat-badge');
     badge.textContent = a.category;
-    badge.style.cssText = 'display:inline-block;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:5px 14px;border-radius:6px;margin-bottom:1.5rem;background:' + color + '28;color:' + color + ';border:1px solid ' + color + '50;';
+    badge.style.cssText = 'display:inline-block;font-family:\'Geist\', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:5px 14px;border-radius:6px;margin-bottom:1.5rem;background:' + color + '28;color:' + color + ';border:1px solid ' + color + '50;';
 
     document.getElementById('art-headline').textContent = a.title;
     document.getElementById('art-date-text').textContent = date;
