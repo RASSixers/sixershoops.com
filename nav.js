@@ -1,1526 +1,1340 @@
-/* ─────────────────────────────────────────────────────────────
-   SIXERS HOOPS - NAVBAR
-   Clean, modern, light + dark mode
-   ───────────────────────────────────────────────────────────── */
-
-/* ── Tokens ── */
-:root {
-  --nav-bg:          #ffffff;
-  --nav-bg-scrolled: rgba(255,255,255,0.92);
-  --nav-border:      rgba(0,0,0,0.08);
-  --nav-text:        #0a0a14;
-  --nav-text-dim:    #64748b;
-  --nav-link-color:  #0a0a14;
-  --nav-hover-bg:    rgba(0,107,182,0.08);
-  --nav-active-bg:   rgba(0,107,182,0.12);
-  --nav-active-text: #006BB6;
-  --nav-cta-bg:      #006BB6;
-  --nav-cta-hover:   #0057a0;
-  --nav-drop-bg:     #ffffff;
-  --nav-drop-border: rgba(0,0,0,0.08);
-  --nav-drop-shadow: 0 12px 40px rgba(0,0,0,0.1);
-  --brand-color:     #006BB6;
-}
-
-:root.dark-mode {
-  --nav-bg:          #0b0f1a;
-  --nav-bg-scrolled: rgba(11,15,26,0.95);
-  --nav-border:      rgba(255,255,255,0.07);
-  --nav-text:        #e8eaf0;
-  --nav-text-dim:    #8892a4;
-  --nav-link-color:  #e8eaf0;
-  --nav-hover-bg:    rgba(255,255,255,0.06);
-  --nav-active-bg:   rgba(0,107,182,0.18);
-  --nav-active-text: #4da8ff;
-  --nav-cta-bg:      #006BB6;
-  --nav-cta-hover:   #0080d4;
-  --nav-drop-bg:     #141826;
-  --nav-drop-border: rgba(255,255,255,0.08);
-  --nav-drop-shadow: 0 12px 40px rgba(0,0,0,0.5);
-}
-
-/* ── Base ── */
-.navbar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 60px;
-  background: var(--nav-bg);
-  border-bottom: 1px solid var(--nav-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
-  z-index: 1000;
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Hide hamburger on desktop - shown via media query below */
-.mobile-menu-btn { display: none; }
-
-.navbar.scrolled {
-  background: var(--nav-bg-scrolled);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 1px 0 var(--nav-border), 0 4px 20px rgba(0,0,0,0.06);
-  border-bottom-color: transparent;
-}
-
-/* ── Brand ── */
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.brand-name {
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--nav-text);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
-
-.nav-brand:hover .brand-name { color: var(--brand-color); }
-
-/* ── Center menu ── */
-.nav-menu {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.nav-item { position: relative; }
-
-.nav-link,
-.dropdown-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.8rem;
-  color: var(--nav-link-color);
-  text-decoration: none;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 0.82rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border-radius: 7px;
-  transition: color 0.18s, background 0.18s;
-  white-space: nowrap;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.nav-link:hover,
-.dropdown-toggle:hover {
-  color: var(--nav-text);
-  background: var(--nav-hover-bg);
-}
-
-.nav-link.active {
-  color: var(--nav-active-text);
-  background: var(--nav-active-bg);
-}
-
-/* Dropdown chevron */
-.dropdown-toggle::after {
-  content: '';
-  width: 0; height: 0;
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  border-top: 4px solid currentColor;
-  opacity: 0.55;
-  transition: transform 0.2s;
-  margin-top: 1px;
-  flex-shrink: 0;
-}
-
-.dropdown:hover .dropdown-toggle::after { transform: rotate(180deg); }
-
-.dropdown:hover .dropdown-toggle {
-  color: var(--nav-text);
-  background: var(--nav-hover-bg);
-}
-
-/* Dropdown menu */
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 186px;
-  background: var(--nav-drop-bg);
-  border: 1px solid var(--nav-drop-border);
-  border-radius: 10px;
-  box-shadow: var(--nav-drop-shadow);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-6px) scale(0.98);
-  transform-origin: top left;
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
-  z-index: 100;
-  padding: 0.4rem;
-}
-
-.dropdown:hover .dropdown-menu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
-}
-
-.dropdown-item {
-  display: block;
-  padding: 0.55rem 0.85rem;
-  color: var(--nav-text-dim);
-  text-decoration: none;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border-radius: 6px;
-  transition: color 0.15s, background 0.15s;
-  white-space: nowrap;
-}
-
-.dropdown-item:hover {
-  color: var(--nav-active-text);
-  background: var(--nav-hover-bg);
-}
-
-/* ── Right icons ── */
-.nav-icons {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-/* Theme toggle */
-.icon-btn.theme-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid var(--nav-border);
-  background: none;
-  color: var(--nav-text-dim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: color 0.18s, background 0.18s, border-color 0.18s;
-}
-
-.icon-btn.theme-toggle:hover {
-  color: var(--nav-text);
-  background: var(--nav-hover-bg);
-  border-color: rgba(0,107,182,0.3);
-}
-
-/* Auth button */
-.auth-nav-btn {
-  padding: 0.45rem 1.05rem;
-  background: linear-gradient(180deg, #007fd6 0%, var(--nav-cta-bg) 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 9px;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-weight: 700;
-  font-size: 0.82rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: filter 0.18s, transform 0.15s, box-shadow 0.2s;
-  white-space: nowrap;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.18) inset,
-    0 6px 14px -6px rgba(0,107,182,0.55);
-}
-
-.auth-nav-btn:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.2) inset,
-    0 10px 20px -8px rgba(0,107,182,0.65);
-}
-.auth-nav-btn:active { transform: translateY(0); filter: brightness(0.97); }
-
-/* User profile pill */
-.user-profile-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.user-profile-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.75rem 0.35rem 0.45rem;
-  background: var(--nav-hover-bg);
-  border: 1px solid var(--nav-drop-border);
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background 0.18s, border-color 0.18s;
-}
-
-.user-profile-btn:hover {
-  background: var(--nav-active-bg);
-  border-color: rgba(0,107,182,0.3);
-}
-
-.user-avatar {
-  width: 24px; height: 24px;
-  background: var(--nav-cta-bg);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.user-avatar-img {
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--nav-text);
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: 0.03em;
-}
-
-/* User dropdown */
-.user-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 260px;
-  background: var(--nav-drop-bg);
-  border-radius: 12px;
-  box-shadow: var(--nav-drop-shadow);
-  border: 1px solid var(--nav-drop-border);
-  display: none;
-  flex-direction: column;
-  padding: 0.4rem;
-  z-index: 100;
-  animation: dropdownFade 0.18s ease-out;
-}
-
-.user-dropdown.active { display: flex; }
-
-@keyframes dropdownFade {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.user-dropdown-header {
-  padding: 0.65rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.user-dropdown-header strong {
-  font-size: 0.88rem;
-  color: var(--nav-text);
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.user-dropdown-header span {
-  font-size: 0.72rem;
-  color: var(--nav-text-dim);
-}
-
-.user-dropdown-divider {
-  height: 1px;
-  background: var(--nav-border);
-  margin: 0.3rem 0;
-}
-
-.user-dropdown-item {
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  background: none;
-  border: none;
-  border-radius: 7px;
-  text-align: left;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--nav-text-dim);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background 0.15s, color 0.15s;
-  text-transform: uppercase;
-}
-
-.user-dropdown-item:hover {
-  background: var(--nav-hover-bg);
-  color: var(--nav-text);
-}
-
-.user-dropdown-item.logout-action:hover {
-  color: #ef4444;
-  background: rgba(239,68,68,0.07);
-}
-
-/* Google Auth */
-.google-auth-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  padding: 0.7rem;
-  background: var(--nav-hover-bg);
-  border: 1px solid var(--nav-drop-border);
-  border-radius: 9px;
-  color: var(--nav-text);
-  font-weight: 700;
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: background 0.18s, border-color 0.18s;
-  margin-top: 0.75rem;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-}
-
-.google-auth-btn:hover {
-  background: var(--nav-active-bg);
-  border-color: rgba(0,107,182,0.3);
-}
-
-.google-auth-btn img { width: 18px; height: 18px; }
-
-/* Auth divider */
-.auth-divider {
-  display: flex;
-  align-items: center;
-  margin: 1.25rem 0;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--nav-border);
-}
-
-.auth-divider span {
-  margin: 0 0.75rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--nav-text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-/* Logout mini-button */
-.nav-small-logout {
-  background: rgba(239,68,68,0.08);
-  color: #ef4444;
-  border: 1px solid rgba(239,68,68,0.2);
-  border-radius: 7px;
-  width: 32px; height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.18s, border-color 0.18s;
-  flex-shrink: 0;
-}
-
-.nav-small-logout:hover {
-  background: rgba(239,68,68,0.15);
-  border-color: rgba(239,68,68,0.4);
-}
-
-/* ── Mobile ── */
-.mobile-menu-btn {
-  display: none;
-  flex-direction: column;
-  gap: 4.5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.4rem;
-  border-radius: 7px;
-  transition: background 0.18s;
-}
-
-.mobile-menu-btn:hover { background: var(--nav-hover-bg); }
-
-.mobile-menu-btn span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: var(--nav-text);
-  border-radius: 2px;
-  transition: all 0.25s ease;
-}
-
-.mobile-menu-btn.active span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-.mobile-menu-btn.active span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.mobile-menu-btn.active span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
-
-/* Mobile menu panel - targets both the ID and the class used in the JS */
-#mobileMenu,
-.mobile-menu {
-  display: none;
-  position: fixed;
-  top: 60px; left: 0; right: 0;
-  background: var(--nav-drop-bg);
-  border-bottom: 1px solid var(--nav-drop-border);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  z-index: 999;
-  max-height: calc(100vh - 60px);
-  overflow-y: auto;
-  padding: 0.5rem 0.75rem 1rem;
-}
-
-#mobileMenu.active,
-.mobile-menu.active { display: block; }
-
-/* Each nav row in the mobile menu */
-.mobile-nav-item {
-  display: block;
-}
-
-.mobile-nav-item a.mobile-nav-link,
-.mobile-nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 0.85rem;
-  color: var(--nav-text-dim);
-  text-decoration: none;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border-radius: 9px;
-  transition: color 0.15s, background 0.15s;
-  min-height: 48px; /* big tap target */
-}
-
-.mobile-nav-link:hover,
-.mobile-nav-link.active {
-  color: var(--nav-active-text);
-  background: var(--nav-active-bg);
-}
-
-.mobile-nav-group-label {
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--nav-text-dim);
-  opacity: 0.6;
-  padding: 0.9rem 0.75rem 0.35rem;
-}
-
-.mobile-nav-divider {
-  height: 1px;
-  background: var(--nav-border);
-  margin: 0.4rem 0;
-}
-
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .nav-menu { display: none; }
-  .mobile-menu-btn { display: flex; }
-  .nav-icons { margin-right: 0; }
-}
-
-@media (max-width: 600px) {
-  .navbar { padding: 0 0.85rem; }
-
-  /* nav-left stays left - hamburger + brand text together */
-  .nav-left { gap: 0.4rem; }
-
-  /* Right side: auth + theme toggle only */
-  .nav-icons { gap: 0.35rem; flex-shrink: 0; }
-  .icon-btn.theme-toggle { width: 32px; height: 32px; }
-
-  /* Auth button compact */
-  .auth-nav-btn { padding: 0.38rem 0.85rem; font-size: 0.8rem; }
-
-  /* Logged-in user: hide username, show avatar only */
-  .user-name { display: none; }
-  .user-profile-btn { padding: 0.3rem 0.5rem; }
-
-  /* Logout button smaller */
-  .nav-small-logout { width: 28px; height: 28px; }
-}
-
-@media (max-width: 380px) {
-  .navbar { padding: 0 0.6rem; }
-  .brand-name { font-size: 0.82rem; }
-  .auth-nav-btn { padding: 0.35rem 0.65rem; font-size: 0.76rem; }
-}
-
-/* ── Notification badge ── */
-.notification-item {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--nav-border);
-  transition: background 0.15s;
-  cursor: pointer;
-}
-
-.notification-item:last-child { border-bottom: none; }
-.notification-item:hover { background: var(--nav-hover-bg); }
-.notification-item.unread { background: rgba(0,107,182,0.06); }
-.notification-item.unread:hover { background: rgba(0,107,182,0.1); }
-
-/* ── Auth modal (modernized) ── */
-.auth-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse at top, rgba(0,107,182,0.18), rgba(0,0,0,0.55) 60%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.25s, visibility 0.25s;
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  padding: 1rem;
-}
-
-.auth-modal-overlay.active { opacity: 1; visibility: visible; }
-
-.auth-modal {
-  position: relative;
-  background: var(--nav-drop-bg);
-  border: 1px solid var(--nav-drop-border);
-  border-radius: 20px;
-  width: 100%;
-  max-width: 420px;
-  max-height: 92vh;
-  overflow-y: auto;
-  padding: 2.25rem 2rem 1.75rem;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.06) inset,
-    0 30px 80px -20px rgba(0,0,0,0.45),
-    0 12px 28px -12px rgba(0,107,182,0.25);
-  transform: translateY(14px) scale(0.97);
-  transition: transform 0.32s cubic-bezier(0.22,1.2,0.36,1);
-}
-
-.auth-modal::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(180deg, rgba(0,107,182,0.35), transparent 45%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-}
-
-.auth-modal-overlay.active .auth-modal { transform: translateY(0) scale(1); }
-
-.auth-modal-close {
-  position: absolute;
-  top: 0.85rem; right: 0.85rem;
-  width: 32px; height: 32px;
-  border-radius: 10px;
-  border: 1px solid var(--nav-border);
-  background: var(--nav-hover-bg);
-  color: var(--nav-text-dim);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s, transform 0.15s, border-color 0.15s;
-}
-.auth-modal-close:hover {
-  background: var(--nav-active-bg);
-  color: var(--nav-text);
-  border-color: rgba(0,107,182,0.35);
-  transform: rotate(90deg);
-}
-
-/* Header */
-.auth-modal-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-.auth-brand-mark {
-  width: 48px; height: 48px;
-  margin: 0 auto 0.85rem;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--brand-color) 0%, #0057a0 100%);
-  box-shadow:
-    0 8px 22px -6px rgba(0,107,182,0.55),
-    0 0 0 1px rgba(255,255,255,0.08) inset;
-}
-.auth-modal-title {
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-weight: 800;
-  font-size: 1.5rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--nav-text);
-  margin: 0;
-}
-.auth-modal-subtitle {
-  font-family: 'Barlow', 'Inter', sans-serif;
-  font-size: 0.85rem;
-  color: var(--nav-text-dim);
-  margin: 0.35rem auto 0;
-  max-width: 28ch;
-  line-height: 1.45;
-}
-
-/* Tabs */
-.auth-modal-tabs,
-.auth-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 1.5rem;
-  background: var(--nav-hover-bg);
-  border: 1px solid var(--nav-border);
-  border-radius: 12px;
-  padding: 4px;
-}
-.auth-modal-tab,
-.auth-tab {
-  flex: 1;
-  padding: 0.55rem 0.5rem;
-  border: none;
-  background: none;
-  border-radius: 9px;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-weight: 700;
-  font-size: 0.82rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--nav-text-dim);
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.auth-modal-tab:hover,
-.auth-tab:hover { color: var(--nav-text); }
-.auth-modal-tab.active,
-.auth-tab.active {
-  background: var(--nav-drop-bg);
-  color: var(--nav-text);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.04) inset,
-    0 2px 8px rgba(0,0,0,0.08),
-    0 0 0 1px rgba(0,107,182,0.18);
-}
-
-/* Form bits */
-.auth-form { display: none; }
-.auth-form.active { display: block; }
-
-.auth-form-group { margin-bottom: 0.85rem; }
-
-.auth-label {
-  display: block;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--nav-text-dim);
-  margin-bottom: 0.4rem;
-}
-
-/* Input + icon wrap */
-.auth-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.auth-input-icon {
-  position: absolute;
-  left: 0.85rem;
-  color: var(--nav-text-dim);
-  pointer-events: none;
-  transition: color 0.18s;
-}
-
-.auth-input,
-.auth-field {
-  width: 100%;
-  padding: 0.78rem 0.95rem 0.78rem 2.4rem;
-  border: 1px solid var(--nav-border);
-  border-radius: 11px;
-  background: var(--nav-bg);
-  color: var(--nav-text);
-  font-family: 'Inter', 'Barlow', sans-serif;
-  font-size: 0.9rem;
-  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
-  box-sizing: border-box;
-}
-.auth-field { padding-left: 0.95rem; }
-
-.auth-input:hover,
-.auth-field:hover { border-color: rgba(0,107,182,0.35); }
-
-.auth-input:focus,
-.auth-field:focus {
-  outline: none;
-  border-color: var(--brand-color);
-  background: var(--nav-bg);
-  box-shadow:
-    0 0 0 4px rgba(0,107,182,0.14),
-    0 1px 2px rgba(0,0,0,0.04);
-}
-.auth-input:focus ~ .auth-input-icon,
-.auth-input-wrap:focus-within .auth-input-icon { color: var(--brand-color); }
-
-.auth-input::placeholder,
-.auth-field::placeholder { color: var(--nav-text-dim); opacity: 0.65; }
-
-/* Password show/hide button */
-.auth-pw-toggle {
-  position: absolute;
-  right: 0.55rem;
-  width: 30px; height: 30px;
-  border: none;
-  background: transparent;
-  color: var(--nav-text-dim);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s;
-}
-.auth-pw-toggle:hover { background: var(--nav-hover-bg); color: var(--nav-text); }
-.auth-pw-toggle.is-on { color: var(--brand-color); }
-
-/* Remember + forgot row */
-.auth-row-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin: 0.25rem 0 1rem;
-}
-.auth-remember {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  color: var(--nav-text-dim);
-  cursor: pointer;
-  user-select: none;
-}
-.auth-remember input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 16px; height: 16px;
-  border: 1.5px solid var(--nav-border);
-  border-radius: 5px;
-  background: var(--nav-bg);
-  cursor: pointer;
-  display: inline-grid;
-  place-content: center;
-  transition: background 0.15s, border-color 0.15s;
-}
-.auth-remember input[type="checkbox"]::after {
-  content: '';
-  width: 9px; height: 9px;
-  border-radius: 2px;
-  background: #ffffff;
-  clip-path: polygon(14% 44%, 0 65%, 36% 100%, 100% 26%, 80% 10%, 36% 65%);
-  transform: scale(0);
-  transition: transform 0.15s;
-}
-.auth-remember input[type="checkbox"]:checked {
-  background: var(--brand-color);
-  border-color: var(--brand-color);
-}
-.auth-remember input[type="checkbox"]:checked::after { transform: scale(1); }
-
-.auth-helper-link,
-.auth-back-link {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--brand-color);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-.auth-helper-link:hover,
-.auth-back-link:hover { color: var(--nav-cta-hover); text-decoration: underline; }
-
-.auth-helper-text {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  color: var(--nav-text-dim);
-  text-align: center;
-  margin: 0 0 1.25rem;
-  line-height: 1.5;
-}
-
-/* Submit button */
-.auth-submit-btn {
-  width: 100%;
-  padding: 0.82rem;
-  background: linear-gradient(180deg, #007fd6 0%, var(--nav-cta-bg) 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 11px;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.2s, filter 0.18s;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.18) inset,
-    0 8px 20px -8px rgba(0,107,182,0.6);
-}
-.auth-submit-btn:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.2) inset,
-    0 12px 26px -10px rgba(0,107,182,0.7);
-}
-.auth-submit-btn:active { transform: translateY(0); filter: brightness(0.97); }
-.auth-submit-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-
-/* Switch line under form */
-.auth-switch {
-  text-align: center;
-  margin-top: 1.1rem;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.82rem;
-  color: var(--nav-text-dim);
-}
-.auth-switch a {
-  color: var(--brand-color);
-  font-weight: 600;
-  text-decoration: none;
-  margin-left: 0.25rem;
-}
-.auth-switch a:hover { text-decoration: underline; }
-
-.auth-fineprint {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: var(--nav-text-dim);
-  text-align: center;
-  margin: 0.25rem 0 0.85rem;
-  line-height: 1.45;
-}
-
-/* Messages */
-.auth-message,
-.nav-message {
-  padding: 0.7rem 0.9rem;
-  border-radius: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.82rem;
-  margin-bottom: 0.9rem;
-  display: none;
-}
-.auth-message:not(:empty),
-.nav-message:not(:empty) { display: block; }
-.auth-message.success,
-.nav-message.success {
-  background: rgba(34,197,94,0.1);
-  color: #15803d;
-  border: 1px solid rgba(34,197,94,0.25);
-}
-.auth-message.error,
-.nav-message.error {
-  background: rgba(239,68,68,0.08);
-  color: #dc2626;
-  border: 1px solid rgba(239,68,68,0.25);
-}
-
-:root.dark-mode .auth-message.success,
-:root.dark-mode .nav-message.success { color: #4ade80; }
-:root.dark-mode .auth-message.error,
-:root.dark-mode .nav-message.error { color: #f87171; }
-
-/* Small screens */
-@media (max-width: 480px) {
-  .auth-modal { padding: 1.75rem 1.25rem 1.35rem; border-radius: 18px; }
-  .auth-modal-title { font-size: 1.3rem; }
-  .auth-input, .auth-field { font-size: 0.92rem; }
-}
-
-/* ── Notification bell ── */
-.notification-wrapper {
-  position: relative;
-}
-
-.notif-count {
-  position: absolute;
-  top: -4px; right: -4px;
-  min-width: 16px; height: 16px;
-  background: #ED174C;
-  color: white;
-  border-radius: 999px;
-  font-size: 0.6rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 3px;
-  font-family: 'Barlow Condensed', sans-serif;
-  border: 2px solid var(--nav-bg);
-  pointer-events: none;
-}
-
-/* ── Avatar color picker ── */
-.avatar-picker-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-}
-
-.avatar-option {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.15s, transform 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800;
-  font-size: 0.8rem;
-  color: white;
-  flex-shrink: 0;
-}
-
-.avatar-option:hover { transform: scale(1.1); }
-.avatar-option.selected { border-color: var(--brand-color); box-shadow: 0 0 0 2px rgba(0,107,182,0.3); }
-.avatar-option-navy  { background: #001a57; }
-.avatar-option-blue  { background: #006BB6; }
-.avatar-option-red   { background: #ED174C; }
-.avatar-option-slate { background: #475569; }
-.avatar-option-dark  { background: #1e293b; }
-
-/* Delete account */
-#deleteAccountBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid rgba(239,68,68,0.25);
-  border-radius: 9px;
-  background: rgba(239,68,68,0.05);
-  color: #dc2626;
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-top: 1rem;
-  transition: background 0.18s, border-color 0.18s;
-}
-
-#deleteAccountBtn:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); }
-
-
-
-/* ── Footer (modern, standings.html aesthetic) ── */
-.footer {
-  position: relative;
-  background: #f7f8fc;
-  border-top: 1px solid #e4e8f0;
-  padding: 4rem 2rem 1.5rem;
-  margin-top: auto;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-feature-settings: 'ss01', 'cv11';
-  overflow: hidden;
-  transition: background 0.3s, border-color 0.3s;
-}
-
-.footer::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #006BB6, #1e90d8 60%, #006BB6);
-}
-
-.footer::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(0,107,182,0.10) 1px, transparent 1px);
-  background-size: 28px 28px;
-  opacity: .35;
-  pointer-events: none;
-}
-
-:root.dark-mode .footer {
-  background: #080c16;
-  border-top-color: rgba(255,255,255,0.06);
-}
-:root.dark-mode .footer::after {
-  background-image: radial-gradient(circle, rgba(77,168,255,0.10) 1px, transparent 1px);
-  opacity: .25;
-}
-
-.footer-content {
-  position: relative;
-  z-index: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 3rem;
-  margin-bottom: 2.5rem;
-}
-
-.footer-section { display: flex; flex-direction: column; }
-
-.footer-brand {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  text-decoration: none;
-  margin-bottom: 1rem;
-  transition: opacity 0.2s;
-}
-.footer-brand:hover { opacity: 0.75; }
-
-.footer-brand-name {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #0d0f1a;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-:root.dark-mode .footer-brand-name { color: #ffffff; }
-
-.footer-brand-accent {
-  display: inline-block;
-  width: 28px;
-  height: 3px;
-  background: #ED174C;
-  border-radius: 2px;
-  margin-bottom: 1rem;
-}
-
-.footer-tagline {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: #5b6473;
-  line-height: 1.65;
-  letter-spacing: -0.005em;
-  max-width: 340px;
-  margin: 0;
-}
-:root.dark-mode .footer-tagline { color: #8892a4; }
-
-.footer-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #6b7488;
-  margin: 0 0 1.1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.footer-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #e4e8f0;
-}
-:root.dark-mode .footer-title { color: #8892a4; }
-:root.dark-mode .footer-title::after { background: rgba(255,255,255,0.08); }
-
-.footer-links {
-  list-style: none;
-  padding: 0; margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.footer-links a {
-  position: relative;
-  color: #1a1f2e;
-  text-decoration: none;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  width: fit-content;
-  padding: 1px 0;
-  transition: color 0.18s, transform 0.18s;
-}
-.footer-links a::before {
-  content: '';
-  position: absolute;
-  left: 0; bottom: -2px;
-  width: 0; height: 1.5px;
-  background: #006BB6;
-  transition: width 0.22s ease;
-}
-.footer-links a:hover {
-  color: #006BB6;
-  transform: translateX(2px);
-}
-.footer-links a:hover::before { width: 100%; }
-:root.dark-mode .footer-links a { color: #c0c8d8; }
-:root.dark-mode .footer-links a:hover { color: #4da8ff; }
-
-.footer-bottom {
-  position: relative;
-  z-index: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e4e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.74rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: #6b7488;
-}
-:root.dark-mode .footer-bottom {
-  border-top-color: rgba(255,255,255,0.07);
-  color: #8892a4;
-}
-
-.footer-bottom p { margin: 0; }
-
-.footer-bottom-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-.footer-bottom-meta::before {
-  content: '';
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: #16a34a;
-  box-shadow: 0 0 0 3px rgba(22,163,74,0.18);
-}
-
-@media (max-width: 768px) {
-  .footer { padding: 2.5rem 1.5rem 1.25rem; }
-  .footer-content {
-    gap: 2rem;
-    grid-template-columns: 1fr;
-    margin-bottom: 1.75rem;
-  }
-  .footer-bottom { justify-content: center; text-align: center; }
-}
-
-/* ── Dark mode: community feed & page content ── */
-:root.dark-mode,
-:root.dark-mode body,
-:root.dark-mode html {
-  background-color: #0b0f1a;
-  color: #e8eaf0;
-  color-scheme: dark;
-}
-
-:root.dark-mode h1, :root.dark-mode h2, :root.dark-mode h3,
-:root.dark-mode h4, :root.dark-mode h5, :root.dark-mode h6 { color: #ffffff; }
-
-:root.dark-mode p { color: #d0d4e0; }
-
-/* Feed post cards */
-:root.dark-mode #feed-container .bg-white,
-:root.dark-mode #feed-container [class*="bg-white"] {
-  background-color: #131929 !important;
-  border-color: rgba(255,255,255,0.08) !important;
-}
-
-:root.dark-mode [class*="bg-slate-50"] { background-color: rgba(255,255,255,0.03) !important; }
-:root.dark-mode .border-slate-100, :root.dark-mode [class*="border-slate-100"] { border-color: rgba(255,255,255,0.06) !important; }
-:root.dark-mode .border-slate-200, :root.dark-mode [class*="border-slate-200"] { border-color: rgba(255,255,255,0.08) !important; }
-
-:root.dark-mode .vote-up:not(.text-orange-600):not([class*="text-orange"]),
-:root.dark-mode .vote-down:not(.text-blue-600) { color: rgba(255,255,255,0.4) !important; }
-:root.dark-mode [class*="hover:bg-slate-200"]:hover { background-color: rgba(255,255,255,0.08) !important; }
-
-:root.dark-mode .text-slate-900 { color: #ffffff !important; }
-:root.dark-mode .text-slate-500, :root.dark-mode .text-slate-600 { color: rgba(255,255,255,0.5) !important; }
-:root.dark-mode .text-slate-400 { color: rgba(255,255,255,0.35) !important; }
-
-:root.dark-mode #comment-input,
-:root.dark-mode textarea.border-slate-200,
-:root.dark-mode textarea[class*="border-slate"] {
-  background-color: #131929 !important;
-  border-color: rgba(255,255,255,0.1) !important;
-  color: #e0e0e0 !important;
-}
-
-:root.dark-mode #comment-input::placeholder,
-:root.dark-mode textarea::placeholder { color: rgba(255,255,255,0.3) !important; }
-
-:root.dark-mode .comments-list [class*="bg-slate-50"],
-:root.dark-mode .comments-list [class*="bg-white"] {
-  background-color: #1a2035 !important;
-  border-color: rgba(255,255,255,0.07) !important;
-}
-
-:root.dark-mode .reply-input-container textarea {
-  background-color: #131929 !important;
-  border-color: rgba(255,255,255,0.1) !important;
-  color: #e0e0e0 !important;
-}
-
-:root.dark-mode #feed-container .rounded-xl.border-slate-200,
-:root.dark-mode #feed-container [class*="border-slate-200"] {
-  background-color: #131929 !important;
-  border-color: rgba(255,255,255,0.08) !important;
-}
-
-:root.dark-mode [class*="bg-slate-100"] {
-  background-color: rgba(255,255,255,0.07) !important;
-  color: rgba(255,255,255,0.7) !important;
-}
-
-:root.dark-mode input[class*="bg-slate-50"] {
-  background-color: #131929 !important;
-  border-color: rgba(255,255,255,0.1) !important;
-  color: #e0e0e0 !important;
-}
-
-:root.dark-mode .bg-white { background-color: #131929 !important; }
-:root.dark-mode .bg-slate-50 { background-color: #161d2e !important; }
-:root.dark-mode .bg-slate-100 { background-color: #1a2035 !important; }
-:root.dark-mode .border-slate-200 { border-color: rgba(255,255,255,0.08) !important; }
-:root.dark-mode .border-slate-100 { border-color: rgba(255,255,255,0.06) !important; }
-:root.dark-mode .text-slate-800 { color: #e8eaf0 !important; }
-:root.dark-mode .text-slate-700 { color: #c0c8d8 !important; }
-:root.dark-mode .hover\:bg-slate-100:hover { background-color: #1a2035 !important; }
-:root.dark-mode .hover\:bg-slate-50:hover { background-color: #161d2e !important; }
-:root.dark-mode [class*="post-card"], :root.dark-mode .feed-post { background: #131929; border-color: rgba(255,255,255,0.07); }
-:root.dark-mode .section-label::after { background: rgba(255,255,255,0.1); }
-:root.dark-mode .section-label { color: rgba(255,255,255,0.4); }
-:root.dark-mode .community-feed-title { color: #e8eaf0; }
-:root.dark-mode .sidebar-view-all { color: #4da8ff; }
-:root.dark-mode .poll-option-bar-bg { background: #1a2035 !important; }
-:root.dark-mode .poll-option-btn { background: #1a2035 !important; border-color: rgba(255,255,255,0.1) !important; color: #e8eaf0 !important; }
-:root.dark-mode .poll-option-btn:hover { background: #21284a !important; border-color: rgba(0,107,182,0.4) !important; }
-:root.dark-mode .poll-option-btn.voted { background: rgba(0,107,182,0.18) !important; border-color: rgba(0,107,182,0.5) !important; }
-:root.dark-mode #post-char-counter { color: rgba(255,255,255,0.35); }
-:root.dark-mode .notification-item { border-color: rgba(255,255,255,0.07); }
-:root.dark-mode .notification-item:hover { background: rgba(255,255,255,0.05); }
-:root.dark-mode .notification-item.unread { background: rgba(0,107,182,0.1); }
-:root.dark-mode .notification-item.unread:hover { background: rgba(0,107,182,0.18); }
-
-/* Pagination dark */
-:root.dark-mode .pagination button { background: #131929; border-color: rgba(255,255,255,0.08); color: #e8eaf0; }
-:root.dark-mode .pagination button:hover:not(:disabled) { background: #1a2035; }
-
-
-/* ─────────────────────────────────────────────────────────────
-   SIXERS HOOPS — Sign-in cleanup (no icons), profile pic upload,
-   dropdown nav links
-   ───────────────────────────────────────────────────────────── */
-
-/* Sign-in page: remove all icon affordances */
-.auth-brand-mark,
-.auth-input-icon { display: none !important; }
-
-/* Inputs no longer need left padding for an icon */
-.auth-input { padding-left: 0.95rem; }
-
-/* Password show/hide as plain text */
-.auth-pw-toggle {
-  width: auto;
-  height: 30px;
-  padding: 0 0.55rem;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--nav-text-dim);
-  right: 0.4rem;
-}
-.auth-pw-toggle.is-on { color: var(--brand-color); }
-
-/* Close button as plain × */
-.auth-modal-close {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1;
-  padding-bottom: 2px;
-}
-
-/* ── Profile picture upload row ── */
-.pic-upload-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.pic-upload-preview {
-  width: 64px; height: 64px;
-  border-radius: 50%;
-  background: #001a57;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--nav-border);
-}
-.pic-upload-preview img {
-  width: 100%; height: 100%; object-fit: cover;
-}
-.pic-upload-placeholder {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800;
-  font-size: 1.6rem;
-  color: #fff;
-}
-.pic-upload-controls {
-  display: flex; flex-direction: column;
-  gap: 0.35rem;
-  flex: 1;
-}
-.pic-upload-btn,
-.pic-upload-clear {
-  display: inline-block;
-  width: fit-content;
-  padding: 0.45rem 0.85rem;
-  background: var(--nav-hover-bg);
-  border: 1px solid var(--nav-border);
-  border-radius: 8px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--nav-text);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.pic-upload-btn:hover { background: var(--nav-active-bg); border-color: rgba(0,107,182,0.35); }
-.pic-upload-clear {
-  background: transparent;
-  color: var(--nav-text-dim);
-  font-size: 0.72rem;
-  padding: 0.3rem 0;
-  border: none;
-  text-decoration: underline;
-}
-.pic-upload-clear:hover { color: #ef4444; }
-.pic-upload-hint {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: var(--nav-text-dim);
-}
-
-/* User dropdown: anchor items styled like buttons */
-a.user-dropdown-item {
-  text-decoration: none;
-  justify-content: space-between;
-}
-
-/* Inbox unread pill in dropdown */
-.dropdown-notif-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: #ED174C;
-  color: #fff;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-.dropdown-notif-pill.hidden { display: none; }
-
-/* Small logout button — text variant */
-.nav-small-logout {
-  width: auto;
-  padding: 0 0.65rem;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Avatar image variant inherits sizing */
-.user-profile-btn .user-avatar-img { width: 24px; height: 24px; }
-
-/* Avatar inside user button when using color div */
-.user-profile-btn .user-avatar { background: var(--nav-cta-bg); }
-
-/* Dark mode tweaks for upload controls */
-:root.dark-mode .pic-upload-btn { color: #e8eaf0; }
-:root.dark-mode .pic-upload-preview { border-color: rgba(255,255,255,0.08); }
+// Navbar Injection Script
+
+// === DARK MODE ANTI-FLASH ===
+// Run immediately (outside DOMContentLoaded) so theme applies before first paint.
+(function() {
+    try {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            document.documentElement.style.colorScheme = 'dark';
+        }
+    } catch(e) {}
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Navbar Styles if not present
+    if (!document.getElementById('navbar-styles')) {
+        const link = document.createElement('link');
+        link.id = 'navbar-styles';
+        link.rel = 'stylesheet';
+        link.href = '/navbar-styles.css';
+        document.head.appendChild(link);
+    }
+
+    // Add Google Fonts if not present (Geist — matches homepage)
+    if (!document.getElementById('nav-google-fonts')) {
+        const preconnect1 = document.createElement('link');
+        preconnect1.rel = 'preconnect';
+        preconnect1.href = 'https://fonts.googleapis.com';
+        document.head.appendChild(preconnect1);
+
+        const preconnect2 = document.createElement('link');
+        preconnect2.rel = 'preconnect';
+        preconnect2.href = 'https://fonts.gstatic.com';
+        preconnect2.crossOrigin = '';
+        document.head.appendChild(preconnect2);
+
+        const link = document.createElement('link');
+        link.id = 'nav-google-fonts';
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap';
+        document.head.appendChild(link);
+    }
+
+    // Add Tailwind CSS if not present
+    if (typeof tailwind === 'undefined' && !document.getElementById('nav-tailwind-cdn')) {
+        const script = document.createElement('script');
+        script.id = 'nav-tailwind-cdn';
+        script.src = 'https://cdn.tailwindcss.com';
+        script.onload = () => {
+            // Configure Tailwind if it just loaded
+            if (window.tailwind) {
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                border: "hsl(214.3 31.8% 91.4%)",
+                                input: "hsl(214.3 31.8% 91.4%)",
+                                ring: "hsl(222.2 84% 4.9%)",
+                                background: "hsl(0 0% 100%)",
+                                foreground: "hsl(222.2 84% 4.9%)",
+                                primary: {
+                                    DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                                    foreground: "hsl(210 40% 98%)",
+                                },
+                                secondary: {
+                                    DEFAULT: "hsl(210 40% 96.1%)",
+                                    foreground: "hsl(222.2 47.4% 11.2%)",
+                                },
+                                muted: {
+                                    DEFAULT: "hsl(210 40% 96.1%)",
+                                    foreground: "hsl(215.4 16.3% 46.9%)",
+                                },
+                                accent: {
+                                    DEFAULT: "hsl(210 40% 96.1%)",
+                                    foreground: "hsl(222.2 47.4% 11.2%)",
+                                },
+                                card: {
+                                    DEFAULT: "hsl(0 0% 100%)",
+                                    foreground: "hsl(222.2 84% 4.9%)",
+                                },
+                            }
+                        }
+                    }
+                };
+            }
+        };
+        document.head.appendChild(script);
+    } else if (window.tailwind && !tailwind.config?.theme?.extend?.colors?.primary) {
+        // Extend existing config if Tailwind is already there but missing our colors
+        const existingConfig = tailwind.config || {};
+        tailwind.config = {
+            ...existingConfig,
+            theme: {
+                ...(existingConfig.theme || {}),
+                extend: {
+                    ...(existingConfig.theme?.extend || {}),
+                    colors: {
+                        ...(existingConfig.theme?.extend?.colors || {}),
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        primary: {
+                            DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        // Add other necessary colors
+                    }
+                }
+            }
+        };
+    }
+
+    // Add Firebase SDKs if not present
+    if (!document.getElementById('firebase-app-sdk')) {
+        const scripts = [
+            { id: 'firebase-app-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js' },
+            { id: 'firebase-auth-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js' },
+            { id: 'firebase-firestore-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js' },
+            { id: 'firebase-storage-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js' }
+        ];
+        
+        scripts.forEach(s => {
+            const script = document.createElement('script');
+            script.id = s.id;
+            script.src = s.src;
+            script.async = false; // Ensure they load in order
+            document.head.appendChild(script);
+        });
+    }
+
+    const navbarHTML = `
+    <nav class="navbar">
+        <div class="nav-left">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <a href="/" class="nav-brand">
+                <span class="brand-name">Sixers Hoops</span>
+            </a>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="/pickem" class="nav-link">Pick'em</a>
+            </li>
+            <li class="nav-item dropdown">
+                <button class="dropdown-toggle">Team Hub</button>
+                <div class="dropdown-menu">
+                    <a href="https://sixershoops.com/roster" class="dropdown-item">Roster</a>
+                    <a href="https://sixershoops.com/sixers-depth-chart" class="dropdown-item">Depth Chart</a>
+                    <a href="/stats" class="dropdown-item">Stats</a>
+                    <a href="https://sixershoops.com/standings" class="dropdown-item">NBA Standings</a>
+                    <a href="https://sixershoops.com/salary" class="dropdown-item">Salary Breakdown</a>
+                    <a href="https://sixershoops.com/future-draft-picks" class="dropdown-item">Draft Picks</a>
+                </div>
+            </li>
+            <li class="nav-item dropdown">
+                <button class="dropdown-toggle">Draft Tools</button>
+                <div class="dropdown-menu">
+                    <a href="https://sixershoops.com/lottery-simulator" class="dropdown-item">Lottery Simulator</a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a>
+            </li>
+            <li class="nav-item">
+                <a href="https://sixershoops.com/contact" class="nav-link">Contact</a>
+            </li>
+        </ul>
+
+        <div class="nav-icons">
+            <div id="authNavContainer">
+                <button class="auth-nav-btn" id="navSignInBtn">Sign In</button>
+            </div>
+            <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+        <style>
+            .notification-item {
+                padding: 12px 16px;
+                border-bottom: 1px solid #f1f5f9;
+                transition: background 0.2s;
+                cursor: pointer;
+            }
+            .notification-item:hover {
+                background: #f8fafc;
+            }
+            .notification-item.unread {
+                background: #eff6ff;
+            }
+            .notification-item.unread:hover {
+                background: #e0f2fe;
+            }
+            #nav-notif-badge {
+                z-index: 50;
+                box-shadow: 0 0 0 2px #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+            }
+        </style>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-nav-item" id="mobileAuthContainer" style="padding: 1rem; border-bottom: 1px solid rgba(0,0,0,0.1);">
+            <button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/" class="mobile-nav-link">Home</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/pickem" class="mobile-nav-link">Pick'em</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/roster" class="mobile-nav-link">Roster</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/sixers-depth-chart" class="mobile-nav-link">Depth Chart</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/stats" class="mobile-nav-link">Stats</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/standings" class="mobile-nav-link">NBA Standings</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/salary" class="mobile-nav-link">Salary Breakdown</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/future-draft-picks" class="mobile-nav-link">Draft Picks</a>
+        </div>
+        <div class="mobile-nav-item" style="padding: 0.5rem 1.25rem 0.25rem; border-bottom: none;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.3);">Draft Tools</span>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/lottery-simulator" class="mobile-nav-link">Lottery Simulator</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/schedule" class="mobile-nav-link">Schedule</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="https://sixershoops.com/contact" class="mobile-nav-link">Contact</a>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal-overlay" id="authModalOverlay">
+        <div class="auth-modal">
+            <button class="auth-modal-close" id="authModalClose" aria-label="Close">×</button>
+            <div class="auth-modal-header">
+                <h2 class="auth-modal-title">Sixers Hoops</h2>
+                <p class="auth-modal-subtitle">Sign in to track picks, standings, and your locker room.</p>
+            </div>
+            <div class="auth-modal-tabs">
+                <button class="auth-modal-tab active" data-tab="login">Login</button>
+                <button class="auth-modal-tab" data-tab="register">Sign Up</button>
+                <button class="auth-modal-tab" data-tab="profile" id="navProfileTab" style="display: none;">Profile</button>
+            </div>
+            <div class="auth-modal-content">
+                <div id="navAuthMessage" class="auth-message"></div>
+
+                <!-- Login Form -->
+                <form id="navLoginForm" novalidate>
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="navLoginEmail">Email</label>
+                        <div class="auth-input-wrap">
+                            
+                            <input type="email" class="auth-input" id="navLoginEmail" required autocomplete="email" placeholder="name@example.com">
+                        </div>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="navLoginPassword">Password</label>
+                        <div class="auth-input-wrap">
+                            
+                            <input type="password" class="auth-input" id="navLoginPassword" required autocomplete="current-password" placeholder="••••••••">
+                            <button type="button" class="auth-pw-toggle" data-target="navLoginPassword" aria-label="Show password">Show</button>
+                        </div>
+                    </div>
+                    <div class="auth-row-between">
+                        <label class="auth-remember">
+                            <input type="checkbox" id="navRememberMe">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Sign In</button>
+                    <div class="auth-switch">Don't have an account? <a href="#" data-tab-switch="register">Create one</a></div>
+                </form>
+
+                <!-- Forgot Password Form -->
+                <form id="navForgotForm" style="display: none;" novalidate>
+                    <p class="auth-helper-text">Enter your email and we'll send you a link to reset your password.</p>
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="navForgotEmail">Email address</label>
+                        <div class="auth-input-wrap">
+                            
+                            <input type="email" class="auth-input" id="navForgotEmail" required placeholder="name@example.com">
+                        </div>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Send reset link</button>
+                    <div class="auth-switch"><a href="#" id="backToLoginLink" class="auth-back-link">&larr; Back to login</a></div>
+                </form>
+
+                <!-- Profile Form -->
+                <form id="navProfileForm" style="display: none;">
+
+                    <!-- Profile Preview Card -->
+                    <div id="navProfilePreview" style="display:flex;align-items:center;gap:1rem;background:#f6f8fb;border:1px solid rgba(13,15,26,0.08);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+                        <div style="position:relative;flex-shrink:0;">
+                            <div id="navProfileAvatarPreview" style="width:56px;height:56px;border-radius:50%;background:#001a57;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.4rem;color:white;overflow:hidden;border:3px solid rgba(0,107,182,0.3);">
+                                <span id="navProfileInitialPreview">?</span>
+                            </div>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div id="navProfileNamePreview" style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;color:#001a57;letter-spacing:0.03em;">—</div>
+                            <div id="navProfileEmailPreview" style="font-size:0.78rem;color:#64748b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+                            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+                                <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;"></div>
+                                <span style="font-size:0.7rem;color:#64748b;font-weight:600;">Sixers Hoops Member</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-form-group">
+                        <label class="auth-label">Display Name (Max 12 chars)</label>
+                        <input type="text" class="auth-input" id="navProfileName" required maxlength="12">
+                    </div>
+
+                    <div class="auth-form-group">
+                        <label class="auth-label">Avatar Color</label>
+                        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;">
+                            <div class="nav-avatar-opt" data-color="#001a57" data-label="Navy" style="width:34px;height:34px;border-radius:50%;background:#001a57;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Navy">S</div>
+                            <div class="nav-avatar-opt" data-color="#006BB6" data-label="Blue" style="width:34px;height:34px;border-radius:50%;background:#006BB6;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Blue">S</div>
+                            <div class="nav-avatar-opt" data-color="#ED174C" data-label="Red" style="width:34px;height:34px;border-radius:50%;background:#ED174C;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Red">S</div>
+                            <div class="nav-avatar-opt" data-color="#475569" data-label="Slate" style="width:34px;height:34px;border-radius:50%;background:#475569;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Slate">S</div>
+                            <div class="nav-avatar-opt" data-color="#1e293b" data-label="Dark" style="width:34px;height:34px;border-radius:50%;background:#1e293b;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Dark">S</div>
+                        </div>
+                        <input type="hidden" id="navAvatarColor" value="">
+                    </div>
+
+                    
+                    <div class="auth-form-group">
+                        <label class="auth-label">Profile Picture</label>
+                        <div class="pic-upload-row">
+                            <div class="pic-upload-preview" id="navPicPreview"></div>
+                            <div class="pic-upload-controls">
+                                <label for="navProfilePicInput" class="pic-upload-btn">Upload Photo</label>
+                                <input type="file" id="navProfilePicInput" accept="image/*" style="display:none;">
+                                <button type="button" class="pic-upload-clear" id="navProfilePicClear">Remove</button>
+                                <p class="pic-upload-hint">JPG or PNG, up to 2 MB.</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="navProfilePicUrl" value="">
+                    </div>
+
+                    <button type="submit" class="auth-submit-btn">Save Changes</button>
+
+                    <div class="user-dropdown-divider" style="margin: 2rem 0 1rem;"></div>
+
+                    <div class="danger-zone">
+                        <h4 style="color: #ef4444; font-size: 0.85rem; margin-bottom: 0.5rem;">Danger Zone</h4>
+                        <button type="button" class="delete-account-btn" id="deleteAccountBtn">Delete My Account</button>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="navRegisterForm" style="display: none;" novalidate>
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="navRegisterUsername">Username (max 12 chars)</label>
+                        <div class="auth-input-wrap">
+                            
+                            <input type="text" class="auth-input" id="navRegisterUsername" required maxlength="12" placeholder="yourhandle">
+                        </div>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="navRegisterEmail">Email</label>
+                        <div class="auth-input-wrap">
+                            
+                            <input type="email" class="auth-input" id="navRegisterEmail" required autocomplete="email" placeholder="name@example.com">
+                        </div>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="navRegisterPassword">Password</label>
+                        <div class="auth-input-wrap">
+                            
+                            <input type="password" class="auth-input" id="navRegisterPassword" required autocomplete="new-password" placeholder="At least 8 characters">
+                            <button type="button" class="auth-pw-toggle" data-target="navRegisterPassword" aria-label="Show password">Show</button>
+                        </div>
+                    </div>
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="navRegisterConfirm">Confirm password</label>
+                        <div class="auth-input-wrap">
+                            
+                            <input type="password" class="auth-input" id="navRegisterConfirm" required autocomplete="new-password" placeholder="Repeat password">
+                        </div>
+                    </div>
+                    <p class="auth-fineprint">By creating an account, you agree to the Terms and Privacy Policy.</p>
+                    <button type="submit" class="auth-submit-btn">Create Account</button>
+                    <div class="auth-switch">Already have an account? <a href="#" data-tab-switch="login">Sign in</a></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    `;
+
+    // Footer HTML
+    const footerHTML = `
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <a href="/" class="footer-brand">
+                    <span class="footer-brand-name">SIXERS HOOPS</span>
+                </a>
+                <span class="footer-brand-accent"></span>
+                <p class="footer-tagline">Independent Philadelphia 76ers analysis, advanced stats, and draft tools — built for fans who want the full picture.</p>
+            </div>
+
+            <div class="footer-section">
+                <h3 class="footer-title">Explore</h3>
+                <ul class="footer-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/pickem">Pick'em</a></li>
+                    <li><a href="https://sixershoops.com/standings">NBA Standings</a></li>
+                    <li><a href="https://sixershoops.com/schedule">Schedule</a></li>
+                    <li><a href="https://sixershoops.com/contact">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3 class="footer-title">Legal</h3>
+                <ul class="footer-links">
+                    <li><a href="/privacy-policy">Privacy Policy</a></li>
+                    <li><a href="/cookie-policy">Cookie Policy</a></li>
+                    <li><a href="/terms-of-service">Terms of Service</a></li>
+                    <li><a href="/disclaimer">Disclaimer</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Sixers Hoops &middot; All rights reserved</p>
+            <span class="footer-bottom-meta">Not affiliated with the NBA or the Philadelphia 76ers</span>
+        </div>
+    </footer>
+    `;
+
+    // Insert navbar at the beginning of body
+    document.body.insertAdjacentHTML('afterbegin', navbarHTML);
+    
+    // Insert footer at the end of body
+    document.body.insertAdjacentHTML('beforeend', footerHTML);
+
+    // === Firebase Logic ===
+    const firebaseConfig = {
+        apiKey: "AIzaSyBzMlBV5gbZZlg_eTwNWrRDrhx-_ATIPS0",
+        authDomain: "pickem-1e12b.firebaseapp.com",
+        projectId: "pickem-1e12b",
+        storageBucket: "pickem-1e12b.appspot.com",
+        messagingSenderId: "715626120695",
+        appId: "1:715626120695:web:4942646cf3d6ca7e181af2",
+        measurementId: "G-B22K71F01E"
+    };
+
+    // Make these globally accessible
+    window.auth = null;
+    window.db = null;
+    window.storage = null;
+    
+    function initFirebase() {
+        if (typeof firebase === 'undefined' || !firebase.apps.length) {
+            if (typeof firebase !== 'undefined') {
+                window.firebase = firebase;
+                firebase.initializeApp(firebaseConfig);
+                window.auth = firebase.auth();
+                window.db = firebase.firestore();
+                // Ensure storage is initialized if the function exists
+                if (typeof firebase.storage === 'function') {
+                    window.storage = firebase.storage();
+                }
+                setupAuthListeners();
+            } else {
+                setTimeout(initFirebase, 200);
+            }
+        } else {
+            window.firebase = firebase;
+            window.auth = firebase.auth();
+            window.db = firebase.firestore();
+            if (typeof firebase.storage === 'function') {
+                window.storage = firebase.storage();
+            }
+            setupAuthListeners();
+        }
+
+        // Keep checking for storage if it's not yet available (it might load after the base app)
+        if (!window.storage && typeof firebase !== 'undefined' && firebase.apps.length) {
+            const checkStorage = setInterval(() => {
+                if (typeof firebase.storage === 'function') {
+                    window.storage = firebase.storage();
+                    console.log("Firebase Storage initialized");
+                    clearInterval(checkStorage);
+                }
+            }, 500);
+            // Stop checking after 10 seconds
+            setTimeout(() => clearInterval(checkStorage), 10000);
+        }
+    }
+
+    function renderUserNav(user) {
+        const authNav = document.getElementById('authNavContainer');
+        const mobileAuth = document.getElementById('mobileAuthContainer');
+        
+        if (user) {
+            const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+            const initial = displayName.charAt(0).toUpperCase();
+            
+            const photoURL = user.photoURL || localStorage.getItem('photoURL') || '';
+            const avatarColor = localStorage.getItem('avatarColor') || '#001a57';
+            const usernameSlug = localStorage.getItem('usernameLower') || (displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+            const profileUrl = `/user/${encodeURIComponent(usernameSlug)}`;
+
+            const avatarInner = photoURL
+                ? `<img src="${photoURL}" alt="${displayName}" class="user-avatar-img">`
+                : `<div class="user-avatar" style="background:${avatarColor}">${initial}</div>`;
+
+            const avatarHTML = `<div class="relative">${avatarInner}<div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
+
+            const userHTML = `
+                <div class="user-profile-wrapper">
+                    <div class="user-profile-btn" id="userProfileBtn">
+                        ${avatarHTML}
+                        <span class="user-name">${displayName}</span>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-header">
+                            <strong>${displayName}</strong>
+                            <span>${user.email || ''}</span>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+
+                        <button class="user-dropdown-item" id="navMyProfileLink">My Profile</button>
+
+                        <button class="user-dropdown-item" id="navInboxLink">
+                            <span>Inbox</span>
+                            <span id="dropdown-notif-count" class="dropdown-notif-pill hidden">0</span>
+                        </button>
+
+                        <button class="user-dropdown-item" id="navNotifsLink">
+                            <span>Notifications</span>
+                        </button>
+
+                        <button class="user-dropdown-item" id="navSettingsBtn">Account Settings</button>
+
+                        <div class="user-dropdown-divider"></div>
+
+                        <button class="user-dropdown-item logout-action" id="navDropdownLogout">Sign Out</button>
+                    </div>
+                </div>
+            `;
+
+            if (authNav) authNav.innerHTML = userHTML;
+            if (mobileAuth) {
+                mobileAuth.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="user-profile-btn">
+                                ${avatarHTML}
+                                <span class="user-name">${displayName}</span>
+                            </div>
+                            <button class="logout-btn" id="navLogoutBtn">Logout</button>
+                        </div>
+                        <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
+                        <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
+                        <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
+                    </div>
+                `;
+            }
+
+            const profileBtn = document.getElementById('userProfileBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            const smallLogoutBtn = document.getElementById('navSmallLogout');
+            const dropdownLogoutBtn = document.getElementById('navDropdownLogout');
+            const editProfileBtn = document.getElementById('navSettingsBtn');
+            const mobileEditBtn = document.getElementById('mobileProfileBtn');
+            const mobileLogout = document.getElementById('navLogoutBtn');
+            const myProfileLink = document.getElementById('navMyProfileLink');
+            const inboxLink = document.getElementById('navInboxLink');
+            const notifsLink = document.getElementById('navNotifsLink');
+
+            if (profileBtn && userDropdown) {
+                profileBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('active');
+                };
+            }
+            if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
+            if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
+            if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
+            if (smallLogoutBtn)    smallLogoutBtn.onclick    = (e) => { e.stopPropagation(); window.auth.signOut(); };
+            if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = (e) => { e.stopPropagation(); window.auth.signOut(); };
+            // Account Settings now lives on the profile page (/user/<name>/settings)
+            if (editProfileBtn)    editProfileBtn.onclick    = () => { window.location.href = profileUrl + '/settings'; };
+            if (mobileEditBtn)     mobileEditBtn.onclick     = () => { window.location.href = profileUrl + '/settings'; };
+            if (mobileLogout)      mobileLogout.onclick      = () => window.auth.signOut();
+
+        } else {
+            if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
+            if (mobileAuth) mobileAuth.innerHTML = '<button class="auth-nav-btn" id="mobileSignInBtn" style="width: 100%;">Sign In</button>';
+            
+            const signInBtn = document.getElementById('navSignInBtn');
+            const mobileSignInBtn = document.getElementById('mobileSignInBtn');
+            if(signInBtn) signInBtn.onclick = openAuthModal;
+            if(mobileSignInBtn) mobileSignInBtn.onclick = openAuthModal;
+        }
+    }
+
+    let notificationUnsubscribe = null;
+
+    function setupNotificationListener(user) {
+        if (notificationUnsubscribe) notificationUnsubscribe();
+        if (!user || !window.db) return;
+
+        notificationUnsubscribe = window.db.collection('notifications')
+            .where('recipientId', '==', user.uid)
+            .where('read', '==', false)
+            .onSnapshot(snapshot => {
+                const count = snapshot.size;
+                const badges = document.querySelectorAll('#nav-notif-badge');
+                const counts = document.querySelectorAll('#dropdown-notif-count');
+                const titleCounts = document.querySelectorAll('#inbox-title-count');
+                
+                badges.forEach(b => {
+                    if (count > 0) {
+                        b.classList.remove('hidden');
+                        b.textContent = count;
+                    } else {
+                        b.classList.add('hidden');
+                        b.textContent = '';
+                    }
+                });
+
+                counts.forEach(c => {
+                    if (count > 0) {
+                        c.classList.remove('hidden');
+                        c.textContent = count > 9 ? '9+' : count;
+                    } else {
+                        c.classList.add('hidden');
+                    }
+                });
+
+                titleCounts.forEach(tc => {
+                    if (count > 0) {
+                        tc.classList.remove('hidden');
+                        tc.textContent = `(${count})`;
+                    } else {
+                        tc.classList.add('hidden');
+                    }
+                });
+            }, err => console.error("Notification listener error:", err));
+    }
+
+    function setupAuthListeners() {
+        window.auth.onAuthStateChanged(async user => {
+            if (user && window.db) {
+                try {
+                    const doc = await window.db.collection('users').doc(user.uid).get();
+                    if (doc.exists && doc.data().usernameLower) {
+                        localStorage.setItem('usernameLower', doc.data().usernameLower);
+                    }
+                } catch(_) {}
+            } else if (!user) {
+                localStorage.removeItem('usernameLower');
+            }
+            renderUserNav(user);
+            setupNotificationListener(user);
+        });
+    }
+
+    // Global click listener for dropdowns
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('userDropdown');
+        const profileBtn = document.getElementById('userProfileBtn');
+        if (!dropdown) return;
+        if (!dropdown.contains(e.target) && (!profileBtn || !profileBtn.contains(e.target))) {
+            dropdown.classList.remove('active');
+        }
+    });
+
+    initFirebase();
+
+    // === Modal Logic ===
+    const modal = document.getElementById('authModalOverlay');
+    const closeBtn = document.getElementById('authModalClose');
+    const tabs = document.querySelectorAll('.auth-modal-tab');
+    const loginForm = document.getElementById('navLoginForm');
+    const registerForm = document.getElementById('navRegisterForm');
+    const forgotForm = document.getElementById('navForgotForm');
+    const profileForm = document.getElementById('navProfileForm');
+    const authMessage = document.getElementById('navAuthMessage');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const backToLoginLink = document.getElementById('backToLoginLink');
+
+    function openAuthModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        // Reset to login view when opening
+        if (tabs[0]) tabs[0].click();
+    }
+
+    function openProfileModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'none';
+        forgotForm.style.display = 'none';
+        profileForm.style.display = 'block';
+        
+        tabs.forEach(t => t.style.display = 'none');
+        const profileTab = document.getElementById('navProfileTab');
+        if (profileTab) profileTab.style.display = 'block';
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        if (profileTab) profileTab.classList.add('active');
+
+        document.querySelector('.auth-modal-title').textContent = 'Account Settings';
+
+        const user = window.auth && window.auth.currentUser;
+        if (user) {
+            const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+            const initial = displayName.charAt(0).toUpperCase();
+            const savedColor = localStorage.getItem('avatarColor') || '#001a57';
+
+            // Populate fields
+            document.getElementById('navProfileName').value = displayName;
+            document.getElementById('navAvatarColor').value = savedColor;
+
+            // Populate preview card
+            const namePreview = document.getElementById('navProfileNamePreview');
+            const emailPreview = document.getElementById('navProfileEmailPreview');
+            const initialPreview = document.getElementById('navProfileInitialPreview');
+            const avatarPreview = document.getElementById('navProfileAvatarPreview');
+
+            if (namePreview) namePreview.textContent = displayName;
+            if (emailPreview) emailPreview.textContent = user.email || '';
+            if (avatarPreview) avatarPreview.style.background = savedColor;
+            if (initialPreview) initialPreview.textContent = initial;
+
+            // Live preview: name input → preview card
+            const nameInput = document.getElementById('navProfileName');
+            if (nameInput && namePreview && initialPreview) {
+                nameInput.oninput = () => {
+                    const val = nameInput.value || displayName;
+                    namePreview.textContent = val;
+                    initialPreview.textContent = val.charAt(0).toUpperCase() || initial;
+                };
+            }
+
+            // Avatar color picker
+            const avatarOpts = document.querySelectorAll('.nav-avatar-opt');
+            avatarOpts.forEach(opt => {
+                const isSelected = opt.dataset.color === savedColor;
+                opt.style.borderColor = isSelected ? '#006BB6' : 'transparent';
+                opt.style.boxShadow = isSelected ? '0 0 0 2px rgba(0,107,182,0.3)' : 'none';
+                opt.style.transform = isSelected ? 'scale(1.1)' : 'scale(1)';
+                opt.onclick = () => {
+                    avatarOpts.forEach(o => {
+                        o.style.borderColor = 'transparent';
+                        o.style.boxShadow = 'none';
+                        o.style.transform = 'scale(1)';
+                    });
+                    opt.style.borderColor = '#006BB6';
+                    opt.style.boxShadow = '0 0 0 2px rgba(0,107,182,0.3)';
+                    opt.style.transform = 'scale(1.1)';
+                    document.getElementById('navAvatarColor').value = opt.dataset.color;
+                    if (avatarPreview) avatarPreview.style.background = opt.dataset.color;
+                };
+            });
+
+
+            // === Profile picture wiring ===
+            const picInput   = document.getElementById('navProfilePicInput');
+            const picPreview = document.getElementById('navPicPreview');
+            const picClear   = document.getElementById('navProfilePicClear');
+            const picUrlHidden = document.getElementById('navProfilePicUrl');
+            const currentPhoto = user.photoURL || localStorage.getItem('photoURL') || '';
+            if (picPreview) {
+                picPreview.innerHTML = currentPhoto
+                    ? `<img src="${currentPhoto}" alt="">`
+                    : `<span class="pic-upload-placeholder">${initial}</span>`;
+                picPreview.style.background = currentPhoto ? '#0b0f1a' : savedColor;
+            }
+            if (picUrlHidden) picUrlHidden.value = currentPhoto;
+            if (picInput) {
+                picInput.onchange = async (ev) => {
+                    const file = ev.target.files && ev.target.files[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) {
+                        showNavMessage('Image must be under 2 MB.', 'error');
+                        return;
+                    }
+                    // Lazy-load firebase-storage SDK if missing
+                    if (typeof firebase.storage !== 'function') {
+                        showNavMessage('Loading uploader…', 'success');
+                        await new Promise((res, rej) => {
+                            const s = document.createElement('script');
+                            s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
+                            s.onload = res; s.onerror = rej;
+                            document.head.appendChild(s);
+                        }).catch(() => {});
+                    }
+                    if (!window.storage && typeof firebase.storage === 'function') {
+                        try { window.storage = firebase.storage(); } catch(_) {}
+                    }
+                    if (!window.storage) {
+                        showNavMessage('Storage not ready, try again in a moment.', 'error');
+                        return;
+                    }
+                    try {
+                        showNavMessage('Uploading photo...', 'success');
+                        const ref = window.storage.ref().child(`profile-pics/${user.uid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
+                        const snap = await ref.put(file);
+                        const url  = await snap.ref.getDownloadURL();
+                        if (picUrlHidden) picUrlHidden.value = url;
+                        if (picPreview) {
+                            picPreview.innerHTML = `<img src="${url}" alt="">`;
+                            picPreview.style.background = '#0b0f1a';
+                        }
+                        // Update preview avatar in the gradient card too
+                        if (avatarPreview) {
+                            avatarPreview.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        }
+                        showNavMessage('Photo uploaded. Hit Save Changes to keep it.', 'success');
+                    } catch (err) {
+                        console.error(err);
+                        showNavMessage('Upload failed: ' + err.message, 'error');
+                    }
+                };
+            }
+            if (picClear) {
+                picClear.onclick = () => {
+                    if (picUrlHidden) picUrlHidden.value = '';
+                    if (picPreview) {
+                        picPreview.innerHTML = `<span class="pic-upload-placeholder">${initial}</span>`;
+                        picPreview.style.background = savedColor;
+                    }
+                    if (avatarPreview) {
+                        avatarPreview.innerHTML = `<span id="navProfileInitialPreview">${initial}</span>`;
+                        avatarPreview.style.background = savedColor;
+                    }
+                };
+            }
+
+        }
+    }
+
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Just now';
+        try {
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            if (isNaN(date.getTime())) return 'Just now';
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return "just now";
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + "y";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + "mo";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + "d";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + "h";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + "m";
+            return Math.floor(seconds) + "s";
+        } catch (e) {
+            return 'Just now';
+        }
+    }
+
+    async function loadNotifications() {
+        const list = document.getElementById('dropdown-notifications-list');
+        const user = (window.auth && window.auth.currentUser) ? window.auth.currentUser : null;
+        if (!list || !user) return;
+
+        // Ensure window.db is ready
+        if (!window.db) {
+            console.warn("Firestore not initialized yet");
+            setTimeout(loadNotifications, 500);
+            return;
+        }
+
+        try {
+            let snapshot;
+            try {
+                // Try fetching with ordering (best case)
+                snapshot = await window.db.collection('notifications')
+                    .where('recipientId', '==', user.uid)
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+            } catch (qErr) {
+                console.warn("Ordered notifications query failed, trying simple query", qErr);
+                // Simple query fallback (works without index)
+                snapshot = await window.db.collection('notifications')
+                    .where('recipientId', '==', user.uid)
+                    .limit(20)
+                    .get();
+            }
+
+            if (!snapshot) throw new Error("Failed to retrieve snapshot");
+
+            const markAllBtn = document.getElementById('markAllReadBtn');
+            if (markAllBtn) {
+                markAllBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    const unreadDocs = snapshot.docs.filter(doc => !doc.data().read);
+                    if (unreadDocs.length === 0) return;
+                    
+                    try {
+                        const batch = window.db.batch();
+                        unreadDocs.forEach(doc => {
+                            batch.update(doc.ref, { read: true });
+                        });
+                        await batch.commit();
+                        loadNotifications();
+                    } catch (batchErr) {
+                        console.error("Error marking all as read:", batchErr);
+                    }
+                };
+            }
+
+            if (snapshot.empty) {
+                list.innerHTML = `
+                    <div class="text-center py-10 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 opacity-20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <p class="text-[11px]">Your inbox is empty</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Always manually sort to ensure consistency if the database index is missing
+            const docs = [...snapshot.docs];
+            docs.sort((a, b) => {
+                const getVal = (doc) => {
+                    const d = doc.data().createdAt;
+                    if (!d) return 0;
+                    if (d.toDate) return d.toDate().getTime();
+                    if (d.seconds) return d.seconds * 1000;
+                    try {
+                        const parsed = new Date(d).getTime();
+                        return isNaN(parsed) ? 0 : parsed;
+                    } catch(e) { return 0; }
+                };
+                return getVal(b) - getVal(a);
+            });
+
+            list.innerHTML = docs.map(doc => {
+                const data = doc.data();
+                const timeStr = formatTimeAgo(data.createdAt);
+                
+                return `
+                    <div class="notification-item ${!data.read ? 'unread' : ''}" onclick="handleNotificationClick('${data.postId}', '${doc.id}', event)">
+                        <div class="flex gap-3">
+                            <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 flex-shrink-0">${(data.senderName || 'S').charAt(0).toUpperCase()}</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[11px] text-slate-900 leading-tight">
+                                    <span class="font-bold">${data.senderName || 'Someone'}</span> 
+                                    ${data.type === 'reply' ? 'replied to your comment' : 'commented on your post'}
+                                </p>
+                                <p class="text-[11px] text-slate-500 italic mt-0.5 line-clamp-2">"${data.text || ''}"</p>
+                                <p class="text-[9px] text-slate-400 mt-1">${timeStr}</p>
+                            </div>
+                            ${!data.read ? '<div class="h-1.5 w-1.5 bg-blue-600 rounded-full mt-1 flex-shrink-0"></div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+        } catch (err) {
+            console.error("Detailed error loading notifications:", err);
+            list.innerHTML = `
+                <div class="p-6 text-center text-[10px] text-slate-400">
+                    <p>Unable to load notifications.</p>
+                    <p class="mt-1 opacity-50">${err.code || 'Check connection or permissions'}</p>
+                </div>
+            `;
+        }
+    }
+
+    // Exported globally so it can be called from notification clicks
+    window.handleNotificationClick = async (postId, notificationId, event) => {
+        if (event) event.stopPropagation();
+        try {
+            // Mark as read
+            await window.db.collection('notifications').doc(notificationId).update({ read: true });
+            
+            // Close dropdown
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) dropdown.classList.remove('active');
+
+            // Check if we are on community page
+            if (window.location.pathname.includes('community') || document.getElementById('community-feed-section')) {
+                // If CommunityFeed is available, open the post
+                if (window.CommunityFeed && typeof window.CommunityFeed.openDetailedView === 'function') {
+                    window.CommunityFeed.openDetailedView(postId);
+                } else {
+                    window.location.href = `/?post=${postId}`;
+                }
+            } else {
+                window.location.href = `/?post=${postId}`;
+            }
+        } catch (err) {
+            console.error("Error handling notification click:", err);
+            window.location.href = `/?post=${postId}`;
+        }
+    };
+
+    function closeAuthModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        authMessage.className = 'auth-message';
+        authMessage.textContent = '';
+        document.querySelector('.auth-modal-title').textContent = 'Sixers Hoops';
+        tabs.forEach(t => t.style.display = 'block');
+        // Reset forms
+        if (loginForm) loginForm.reset();
+        if (registerForm) registerForm.reset();
+        if (forgotForm) forgotForm.reset();
+        if (profileForm) profileForm.reset();
+    }
+
+    if(closeBtn) closeBtn.addEventListener('click', closeAuthModal);
+    if(modal) modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeAuthModal();
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            const tabName = tab.dataset.tab;
+            if (tabName === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                forgotForm.style.display = 'none';
+                profileForm.style.display = 'none';
+            } else if (tabName === 'register') {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                forgotForm.style.display = 'none';
+                profileForm.style.display = 'none';
+            } else if (tabName === 'profile') {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'none';
+                forgotForm.style.display = 'none';
+                profileForm.style.display = 'block';
+            }
+        });
+    });
+
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'none';
+            forgotForm.style.display = 'block';
+            profileForm.style.display = 'none';
+            tabs.forEach(t => t.classList.remove('active'));
+        });
+    }
+
+    if (backToLoginLink) {
+        backToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (tabs[0]) tabs[0].click();
+        });
+    }
+
+    function showNavMessage(msg, type) {
+        authMessage.textContent = msg;
+        authMessage.className = `auth-message show ${type}`;
+    }
+
+    if(loginForm) loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('navLoginEmail').value;
+        const password = document.getElementById('navLoginPassword').value;
+        
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            closeAuthModal();
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    });
+
+    if(forgotForm) forgotForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('navForgotEmail').value;
+        
+        try {
+            await auth.sendPasswordResetEmail(email);
+            showNavMessage('Password reset email sent! Check your inbox.', 'success');
+            setTimeout(() => {
+                if (tabs[0]) tabs[0].click();
+            }, 3000);
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    });
+
+    if(profileForm) profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('navProfileName').value;
+        const avatarColor = document.getElementById('navAvatarColor').value;
+
+        if (name.length > 12) {
+            showNavMessage('Username must be 12 characters or less', 'error');
+            return;
+        }
+
+        const submitBtn = profileForm.querySelector('.auth-submit-btn');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving…'; }
+
+        try {
+            const user = window.auth.currentUser;
+            const photoURL = (document.getElementById('navProfilePicUrl') || {}).value || '';
+            const profileUpdate = { displayName: name };
+            if (photoURL) profileUpdate.photoURL = photoURL;
+            else profileUpdate.photoURL = null;
+            await user.updateProfile(profileUpdate);
+            if (avatarColor) localStorage.setItem('avatarColor', avatarColor);
+            if (photoURL) localStorage.setItem('photoURL', photoURL);
+            else localStorage.removeItem('photoURL');
+
+            const usernameLower = (name || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+            localStorage.setItem('usernameLower', usernameLower);
+            await window.db.collection('users').doc(user.uid).set({
+                username: name,
+                usernameLower: usernameLower,
+                avatarColor: avatarColor || '#001a57',
+                photoURL: photoURL || null,
+                updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(err => console.error("Firestore sync error:", err));
+
+            await user.reload();
+            renderUserNav(window.auth.currentUser);
+            showNavMessage('Settings saved successfully!', 'success');
+            setTimeout(closeAuthModal, 1800);
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        } finally {
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Save Changes'; }
+        }
+    });
+
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', async () => {
+            const user = window.auth.currentUser;
+            if (!user) return;
+
+            const confirmDelete = confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and you will lose all your Pick\'em progress.');
+            
+            if (confirmDelete) {
+                try {
+                    // Remove user data from Firestore first if exists
+                    await window.db.collection('users').doc(user.uid).delete().catch(() => {});
+                    
+                    await user.delete();
+                    showNavMessage('Account deleted successfully.', 'success');
+                    setTimeout(closeAuthModal, 2000);
+                } catch (err) {
+                    if (err.code === 'auth/requires-recent-login') {
+                        showNavMessage('For security, please sign out and sign back in before deleting your account.', 'error');
+                    } else {
+                        showNavMessage(err.message, 'error');
+                    }
+                }
+            }
+        });
+    }
+
+    if(registerForm) registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('navRegisterUsername').value;
+        const email = document.getElementById('navRegisterEmail').value;
+        const password = document.getElementById('navRegisterPassword').value;
+        const confirm = document.getElementById('navRegisterConfirm').value;
+        
+        if (password !== confirm) {
+            showNavMessage('Passwords do not match', 'error');
+            return;
+        }
+        
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            await user.updateProfile({ displayName: username });
+            
+            await db.collection('users').doc(user.uid).set({
+                username: username,
+                usernameLower: (username || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-'),
+                email: email,
+                createdAt: new Date().toISOString()
+            });
+
+            // Refresh user and UI
+            await user.reload();
+            renderUserNav(window.auth.currentUser);
+
+            showNavMessage('Account created! Settings updated.', 'success');
+            setTimeout(closeAuthModal, 1500);
+        } catch (err) {
+            showNavMessage(err.message, 'error');
+        }
+    });
+
+    // Mobile Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', function() {
+            mobileMenuBtn.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+    }
+
+    // Close mobile menu when clicking a link
+    const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+    mobileLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            }
+        });
+    });
+
+    // Active link highlighting based on current page
+    const currentLocation = location.pathname;
+    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+    
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentLocation || 
+            (currentLocation === '/' && link.getAttribute('href') === '/')) {
+            link.classList.add('active');
+        }
+    });
+
+    // Scroll effect on navbar
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > 20) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    }
+
+    // Theme Toggle — query icons AFTER navbar is injected so elements exist
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlElement = document.documentElement;
+
+    // Helper to sync icon visibility with current theme
+    function syncThemeIcons() {
+        const sunIcon = document.querySelector('.sun-icon');
+        const moonIcon = document.querySelector('.moon-icon');
+        const isDark = htmlElement.classList.contains('dark-mode');
+        if (sunIcon && moonIcon) {
+            sunIcon.style.display = isDark ? 'none' : 'block';
+            moonIcon.style.display = isDark ? 'block' : 'none';
+        }
+    }
+
+    // Load saved theme preference - default to light mode
+    const savedTheme = localStorage.getItem('theme') || 'light';
+
+    // Apply theme immediately to prevent flash
+    if (savedTheme === 'dark') {
+        htmlElement.classList.add('dark-mode');
+    }
+
+    // Sync icons now that navbar HTML is in the DOM
+    syncThemeIcons();
+
+    if (themeToggle) themeToggle.addEventListener('click', function() {
+        const isDark = htmlElement.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        syncThemeIcons();
+    });
+});
+
+
+/* ── Modern auth UX: password show/hide + inline tab switch links ── */
+document.addEventListener('click', function(e) {
+    const tgt = e.target.closest('.auth-pw-toggle');
+    if (tgt) {
+        const id = tgt.getAttribute('data-target');
+        const input = document.getElementById(id);
+        if (input) {
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            tgt.classList.toggle('is-on', !showing);
+        }
+        return;
+    }
+    const sw = e.target.closest('[data-tab-switch]');
+    if (sw) {
+        e.preventDefault();
+        const which = sw.getAttribute('data-tab-switch');
+        const tabBtn = document.querySelector('.auth-modal-tab[data-tab="' + which + '"]');
+        if (tabBtn) tabBtn.click();
+    }
+});
