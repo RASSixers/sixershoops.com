@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span></span>
             </button>
             <a href="/" class="nav-brand">
-                <img src="/logo.webp" alt="Sixers Hoops" class="nav-logo">
+                <img src="/favicon.png" alt="Sixers Hoops" class="nav-logo">
                 <span class="brand-name">SixersHoops</span>
             </a>
         </div>
