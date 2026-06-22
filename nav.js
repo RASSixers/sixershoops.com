@@ -268,7 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="auth-modal-close" id="authModalClose" aria-label="Close">×</button>
             <div class="auth-modal-header">
                 <h2 class="auth-modal-title">Sixers Hoops</h2>
-                <p class="auth-modal-subtitle">Sign in to track picks, standings, and your locker room.</p>
             </div>
             <div class="auth-modal-tabs">
                 <button class="auth-modal-tab active" data-tab="login">Login</button>
