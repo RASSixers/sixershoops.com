@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(link);
     }
 
-    // Add Google Fonts if not present (Geist — matches homepage)
+    // Add Google Fonts if not present (Lexend — matches homepage)
     if (!document.getElementById('nav-google-fonts')) {
         const preconnect1 = document.createElement('link');
         preconnect1.rel = 'preconnect';
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const link = document.createElement('link');
         link.id = 'nav-google-fonts';
         link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap';
+        link.href = 'https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap';
         document.head.appendChild(link);
     }
 
