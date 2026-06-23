@@ -139,41 +139,46 @@ ANALYSIS: [Analysis]
             /* ── Feed cards ── */
             .cm-post-card {
                 background: var(--cm-card);
-                border-radius: 14px;
-                box-shadow: var(--cm-shadow);
-                border: 1.5px solid var(--cm-border2);
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+                border: 1px solid var(--cm-border);
                 overflow: hidden;
                 display: flex;
                 cursor: pointer;
-                transition: border-color 0.18s, box-shadow 0.18s;
+                transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+                min-width: 0;
             }
             .cm-post-card:hover {
-                box-shadow: var(--cm-shadow-md);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
+                transform: translateY(-1px);
             }
 
             /* ── Vote sidebar ── */
             .cm-vote-sidebar {
-                width: 52px;
-                padding: 14px 6px;
+                width: 48px;
+                min-width: 48px;
+                padding: 12px 4px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 4px;
+                gap: 2px;
                 flex-shrink: 0;
+                background: transparent;
             }
             .cm-vote-btn {
-                width: 32px; height: 32px;
+                width: 30px; height: 30px;
                 display: flex; align-items: center; justify-content: center;
-                border-radius: 8px; border: none; background: transparent;
+                border-radius: 6px; border: none; background: transparent;
                 color: var(--cm-text4); cursor: pointer;
                 transition: background 0.15s, color 0.15s;
+                padding: 0;
             }
-            .cm-vote-btn:hover { background: var(--cm-bg3); }
-            .cm-vote-btn.active-up   { color: #ea580c; background: rgba(234,88,12,0.1); }
-            .cm-vote-btn.active-down { color: #3b82f6; background: rgba(59,130,246,0.1); }
+            .cm-vote-btn:hover { background: var(--cm-bg3); color: var(--cm-text2); }
+            .cm-vote-btn.active-up   { color: #ea580c !important; background: rgba(234,88,12,0.1); }
+            .cm-vote-btn.active-down { color: #3b82f6 !important; background: rgba(59,130,246,0.1); }
             .cm-vote-count {
-                font-size: 0.72rem; font-weight: 800; color: var(--cm-text3);
-                min-width: 18px; text-align: center; line-height: 1;
+                font-size: 0.7rem; font-weight: 800; color: var(--cm-text3);
+                min-width: 16px; text-align: center; line-height: 1;
             }
 
             /* ── Post body ── */
@@ -184,12 +189,12 @@ ANALYSIS: [Analysis]
             .cm-author { font-family: 'Barlow', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--cm-text2); cursor: pointer; }
             .cm-author:hover { text-decoration: underline; }
             .cm-time { font-family: 'Barlow', sans-serif; font-size: 0.72rem; color: var(--cm-text4); }
-            .cm-post-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--cm-text); line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
+            .cm-post-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--cm-text); line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 6px; word-break: break-word; }
             .cm-post-excerpt { font-family: 'Barlow', sans-serif; font-size: 0.82rem; color: var(--cm-text3); line-height: 1.55; margin: 0 0 10px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
             /* ── Action bar ── */
             .cm-action-bar { display: flex; align-items: center; gap: 2px; margin-top: auto; padding-top: 4px; }
-            .cm-action-btn { display: inline-flex; align-items: center; gap: 5px; font-family: 'Barlow', sans-serif; font-size: 0.72rem; font-weight: 600; color: var(--cm-text3); background: transparent; border: none; border-radius: 7px; padding: 5px 8px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+            .cm-action-btn { display: inline-flex; align-items: center; gap: 5px; font-family: 'Barlow', sans-serif; font-size: 0.72rem; font-weight: 600; color: var(--cm-text3); background: transparent; border: none; outline: none; border-radius: 7px; padding: 5px 8px; cursor: pointer; transition: background 0.15s, color 0.15s; box-shadow: none; }
             .cm-action-btn:hover { background: var(--cm-bg3); color: var(--cm-text2); }
             .cm-action-btn.blue-hover:hover { background: var(--cm-blue-bg); color: var(--cm-blue-text); }
             .cm-del-btn { color: #fca5a5 !important; }
@@ -282,6 +287,11 @@ ANALYSIS: [Analysis]
 
             /* ── Repost/share popup ── */
             .cm-share-input { flex: 1; padding: 0.5rem; background: var(--cm-bg2); border: 1px solid var(--cm-border); border-radius: 6px; color: var(--cm-text); font-size: 0.75rem; outline: none; }
+
+            /* ── Sidebar headline links ── */
+            .cm-headline-link:last-child { border-bottom: none !important; }
+            .cm-headline-link:hover .cm-hl-title { color: var(--cm-blue-text) !important; }
+            :root.dark-mode .cm-headline-link { border-color: var(--cm-border) !important; }
 
             /* ── Scrollbar ── */
             .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -672,18 +682,22 @@ ANALYSIS: [Analysis]
 
         const displayed = trendingHeadlines.slice(0, 5);
         container.innerHTML = displayed.map(headline => `
-            <a href="${headline.url}" class="cm-headline-item group relative">
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[10px] text-purple-600 font-black uppercase tracking-wider bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">${headline.category}</span>
+            <a href="${headline.url}" style="display:block;padding:10px 0;border-bottom:1px solid var(--cm-border);text-decoration:none;position:relative;" class="cm-headline-link" onmouseenter="this.querySelector('.cm-hl-title').style.color='var(--cm-blue-text)'" onmouseleave="this.querySelector('.cm-hl-title').style.color='var(--cm-text)'">
+                <div style="margin-bottom:4px;">
+                    <span style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#7c3aed;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);border-radius:4px;padding:1px 5px;">${headline.category}</span>
                 </div>
-                <h4 class="cm-headline-title">${headline.title}</h4>
+                <div class="cm-hl-title" style="font-size:0.875rem;font-weight:700;color:var(--cm-text);line-height:1.35;transition:color 0.15s;">${headline.title}</div>
                 ${isMod() ? `
-                    <button class="edit-headline-mini absolute -top-1 -right-1 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--cm-card);border:1px solid var(--cm-border);" data-headline-id="${headline.id}">
+                    <button class="edit-headline-mini" style="position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--cm-card);border:1px solid var(--cm-border);box-shadow:0 1px 3px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.15s;cursor:pointer;" data-headline-id="${headline.id}"
+                        onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                 ` : ''}
             </a>
         `).join('');
+        // Remove border from last item
+        const links = container.querySelectorAll('.cm-headline-link');
+        if (links.length) links[links.length - 1].style.borderBottom = 'none';
 
         container.querySelectorAll('.edit-headline-mini').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1380,7 +1394,7 @@ ANALYSIS: [Analysis]
             </div>
 
             <!-- Content -->
-            <div style="flex:1;padding:14px 16px 12px;min-width:0;display:flex;flex-direction:column;gap:0;background:var(--cm-card);">
+            <div style="flex:1;padding:14px 16px 12px;min-width:0;display:flex;flex-direction:column;gap:0;">
 
                 <!-- Top meta row -->
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1405,7 +1419,7 @@ ANALYSIS: [Analysis]
                             </button>
                         ` : ''}
                         ${canDelete ? `
-                            <button class="delete-post-btn cm-action-btn cm-del-btn" style="width:28px;height:28px;padding:0;" title="Delete">
+                            <button class="delete-post-btn" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:none;background:transparent;color:#fca5a5;cursor:pointer;transition:background 0.15s,color 0.15s;" title="Delete" onmouseenter="this.style.color='#dc2626'" onmouseleave="this.style.color='#fca5a5'">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </button>
                         ` : ''}
