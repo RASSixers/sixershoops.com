@@ -64,24 +64,253 @@ ANALYSIS: [Analysis]
     let isInitialized = false;
     let feedLoaded = false;
 
+    function injectCommunityStyles() {
+        if (document.getElementById('community-dark-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'community-dark-styles';
+        style.textContent = `
+            /* ── Community Feed CSS Variables ── */
+            :root {
+                --cm-bg:          #ffffff;
+                --cm-bg2:         #f8fafc;
+                --cm-bg3:         #f1f5f9;
+                --cm-card:        #ffffff;
+                --cm-card-hover:  #f8fafc;
+                --cm-border:      #e8edf4;
+                --cm-border2:     #f0f2f5;
+                --cm-text:        #0f172a;
+                --cm-text2:       #334155;
+                --cm-text3:       #64748b;
+                --cm-text4:       #94a3b8;
+                --cm-skeleton:    #eef2f8;
+                --cm-vote-bg:     rgba(0,0,0,0.03);
+                --cm-reply-bg:    #f8fafc;
+                --cm-reply-border:#e2e8f0;
+                --cm-input-bg:    #ffffff;
+                --cm-input-border:#e2e8f0;
+                --cm-input-focus: #3b82f6;
+                --cm-modal-bg:    #ffffff;
+                --cm-modal-overlay:rgba(15,23,42,0.55);
+                --cm-shadow:      0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);
+                --cm-shadow-md:   0 4px 16px rgba(0,0,0,0.09),0 1px 4px rgba(0,0,0,0.05);
+                --cm-blue-bg:     #eff6ff;
+                --cm-blue-text:   #2563eb;
+                --cm-blue-border: #bfdbfe;
+                --cm-vote-up:     #ea580c;
+                --cm-vote-down:   #2563eb;
+                --cm-tag-disc-bg: rgba(37,99,235,0.06);
+                --cm-tag-disc-bd: #bfdbfe;
+                --cm-tag-disc-dot:#2563eb;
+                --cm-badge-disc:  background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;
+                --cm-poll-bar:    #f1f5f9;
+            }
+            :root.dark-mode {
+                --cm-bg:          #111827;
+                --cm-bg2:         #1a2236;
+                --cm-bg3:         #1e2a3a;
+                --cm-card:        #1a2236;
+                --cm-card-hover:  #1f2d42;
+                --cm-border:      #2a3a52;
+                --cm-border2:     #243045;
+                --cm-text:        #f1f5f9;
+                --cm-text2:       #cbd5e1;
+                --cm-text3:       #94a3b8;
+                --cm-text4:       #64748b;
+                --cm-skeleton:    #1e2a3a;
+                --cm-vote-bg:     rgba(255,255,255,0.04);
+                --cm-reply-bg:    #1e2a3a;
+                --cm-reply-border:#2a3a52;
+                --cm-input-bg:    #1a2236;
+                --cm-input-border:#2a3a52;
+                --cm-input-focus: #60a5fa;
+                --cm-modal-bg:    #141e2e;
+                --cm-modal-overlay:rgba(0,0,0,0.75);
+                --cm-shadow:      0 1px 3px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.2);
+                --cm-shadow-md:   0 4px 16px rgba(0,0,0,0.4),0 1px 4px rgba(0,0,0,0.3);
+                --cm-blue-bg:     rgba(37,99,235,0.15);
+                --cm-blue-text:   #60a5fa;
+                --cm-blue-border: rgba(96,165,250,0.3);
+                --cm-poll-bar:    #1e2a3a;
+            }
+
+            /* ── Skeleton Pulse ── */
+            @keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+            /* ── Feed cards ── */
+            .cm-post-card {
+                background: var(--cm-card);
+                border-radius: 14px;
+                box-shadow: var(--cm-shadow);
+                border: 1.5px solid var(--cm-border2);
+                overflow: hidden;
+                display: flex;
+                cursor: pointer;
+                transition: border-color 0.18s, box-shadow 0.18s;
+            }
+            .cm-post-card:hover {
+                box-shadow: var(--cm-shadow-md);
+            }
+
+            /* ── Vote sidebar ── */
+            .cm-vote-sidebar {
+                width: 52px;
+                padding: 14px 6px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                flex-shrink: 0;
+            }
+            .cm-vote-btn {
+                width: 32px; height: 32px;
+                display: flex; align-items: center; justify-content: center;
+                border-radius: 8px; border: none; background: transparent;
+                color: var(--cm-text4); cursor: pointer;
+                transition: background 0.15s, color 0.15s;
+            }
+            .cm-vote-btn:hover { background: var(--cm-bg3); }
+            .cm-vote-btn.active-up   { color: #ea580c; background: rgba(234,88,12,0.1); }
+            .cm-vote-btn.active-down { color: #3b82f6; background: rgba(59,130,246,0.1); }
+            .cm-vote-count {
+                font-size: 0.72rem; font-weight: 800; color: var(--cm-text3);
+                min-width: 18px; text-align: center; line-height: 1;
+            }
+
+            /* ── Post body ── */
+            .cm-post-body { padding: 14px 16px 12px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+            .cm-post-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+            .cm-meta-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+            .cm-tag-badge { border-radius: 20px; padding: 3px 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; }
+            .cm-author { font-family: 'Barlow', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--cm-text2); cursor: pointer; }
+            .cm-author:hover { text-decoration: underline; }
+            .cm-time { font-family: 'Barlow', sans-serif; font-size: 0.72rem; color: var(--cm-text4); }
+            .cm-post-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--cm-text); line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
+            .cm-post-excerpt { font-family: 'Barlow', sans-serif; font-size: 0.82rem; color: var(--cm-text3); line-height: 1.55; margin: 0 0 10px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+            /* ── Action bar ── */
+            .cm-action-bar { display: flex; align-items: center; gap: 2px; margin-top: auto; padding-top: 4px; }
+            .cm-action-btn { display: inline-flex; align-items: center; gap: 5px; font-family: 'Barlow', sans-serif; font-size: 0.72rem; font-weight: 600; color: var(--cm-text3); background: transparent; border: none; border-radius: 7px; padding: 5px 8px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+            .cm-action-btn:hover { background: var(--cm-bg3); color: var(--cm-text2); }
+            .cm-action-btn.blue-hover:hover { background: var(--cm-blue-bg); color: var(--cm-blue-text); }
+            .cm-del-btn { color: #fca5a5 !important; }
+            .cm-del-btn:hover { background: rgba(239,68,68,0.08) !important; color: #dc2626 !important; }
+
+            /* ── Comments section ── */
+            .cm-comment-card { background: var(--cm-reply-bg); border-radius: 12px; padding: 1rem; border: 1px solid var(--cm-reply-border); }
+            .cm-comment-author { font-weight: 700; color: var(--cm-text); }
+            .cm-comment-text { font-size: 0.875rem; color: var(--cm-text2); line-height: 1.5; margin-bottom: 0.75rem; }
+            .cm-reply-thread { padding-left: 1rem; border-left: 2px solid var(--cm-border); margin-top: 0.5rem; display: flex; flex-direction: column; gap: 1rem; }
+            .cm-vote-pill { display: flex; align-items: center; gap: 2px; background: var(--cm-card); border: 1px solid var(--cm-border); border-radius: 999px; padding: 2px 6px; }
+            .cm-vote-pill-btn { background: none; border: none; cursor: pointer; padding: 2px; color: var(--cm-text4); transition: color 0.15s; }
+            .cm-vote-pill-btn:hover { color: var(--cm-text2); }
+            .cm-vote-pill-btn.up-active   { color: #ea580c; }
+            .cm-vote-pill-btn.down-active { color: #3b82f6; }
+            .cm-vote-pill-count { font-size: 0.625rem; font-weight: 700; min-width: 12px; text-align: center; color: var(--cm-text3); }
+            .cm-reply-input { width: 100%; padding: 0.75rem 1rem; background: var(--cm-input-bg); border: 1px solid var(--cm-input-border); border-radius: 12px; color: var(--cm-text); font-size: 0.875rem; line-height: 1.5; outline: none; resize: none; transition: border-color 0.2s; font-family: 'Lexend', sans-serif; }
+            .cm-reply-input:focus { border-color: var(--cm-input-focus); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+            .cm-reply-input::placeholder { color: var(--cm-text4); }
+            .cm-reply-cancel { padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; color: var(--cm-text3); background: none; border: none; cursor: pointer; }
+            .cm-reply-cancel:hover { background: var(--cm-bg3); }
+            .cm-reply-submit { padding: 4px 14px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: var(--sixers-blue, #006BB6); color: white; border: none; cursor: pointer; transition: opacity 0.2s; }
+            .cm-reply-submit:hover { opacity: 0.85; }
+            .cm-link-btn { font-size: 0.75rem; font-weight: 700; color: var(--cm-text3); background: none; border: none; cursor: pointer; transition: color 0.15s; }
+            .cm-link-btn:hover { color: var(--cm-blue-text); }
+
+            /* ── Comment input (modal) ── */
+            .cm-comment-textarea { width: 100%; padding: 1rem; background: var(--cm-input-bg); border: 1px solid var(--cm-input-border); border-radius: 14px; color: var(--cm-text); font-size: 0.9rem; line-height: 1.55; outline: none; resize: none; transition: border-color 0.2s, box-shadow 0.2s; font-family: 'Lexend', sans-serif; }
+            .cm-comment-textarea:focus { border-color: var(--cm-input-focus); box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
+            .cm-comment-textarea::placeholder { color: var(--cm-text4); }
+            .cm-submit-comment { background: var(--sixers-blue, #006BB6); color: white; padding: 0.65rem 2rem; border-radius: 999px; font-size: 0.875rem; font-weight: 700; border: none; cursor: pointer; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,107,182,0.3); }
+            .cm-submit-comment:hover { opacity: 0.87; }
+
+            /* ── Sidebar ── */
+            .cm-headline-item { display: block; padding: 0.5rem; margin: 0 -0.5rem; border-radius: 12px; border: 1px solid transparent; text-decoration: none; transition: background 0.15s, border-color 0.15s; }
+            .cm-headline-item:hover { background: var(--cm-bg2); border-color: var(--cm-border); }
+            .cm-headline-title { font-size: 0.875rem; font-weight: 700; color: var(--cm-text); line-height: 1.35; transition: color 0.15s; }
+            .cm-headline-item:hover .cm-headline-title { color: var(--cm-blue-text); }
+            .cm-article-item { display: flex; gap: 12px; padding: 0.5rem; margin: 0 -0.5rem; border-radius: 12px; text-decoration: none; transition: background 0.15s; }
+            .cm-article-item:hover { background: var(--cm-bg2); }
+            .cm-article-title { font-size: 0.875rem; font-weight: 700; color: var(--cm-text); line-height: 1.35; transition: color 0.15s; }
+            .cm-article-item:hover .cm-article-title { color: var(--cm-blue-text); }
+
+            /* ── Player grade cards ── */
+            .player-card-render { background: var(--cm-card); border: 1px solid var(--cm-border); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+            .player-header-render { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+            .player-name-render { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1rem; color: var(--cm-text); }
+            .player-stats-render { font-family: 'Barlow', sans-serif; font-size: 0.78rem; color: var(--cm-text3); margin-bottom: 0.3rem; }
+            .player-analysis-render { font-size: 0.82rem; color: var(--cm-text2); }
+
+            /* ── Empty state ── */
+            .cm-empty-state { background: var(--cm-card); border-radius: 14px; padding: 3rem; text-align: center; border: 1px solid var(--cm-border); }
+            .cm-empty-icon { width: 4rem; height: 4rem; background: var(--cm-bg3); color: var(--cm-blue-text); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+            .cm-empty-title { font-size: 1.2rem; font-weight: 700; color: var(--cm-text); margin-bottom: 0.5rem; }
+            .cm-empty-sub { color: var(--cm-text3); font-size: 0.875rem; }
+
+            /* ── No-comments state ── */
+            .cm-no-comments { text-align: center; padding: 2rem 0; }
+            .cm-no-comments svg { color: var(--cm-border); margin: 0 auto 0.75rem; display: block; }
+            .cm-no-comments p { color: var(--cm-text3); font-size: 0.875rem; font-style: italic; }
+
+            /* ── Pin badge ── */
+            .cm-pin-badge { display: inline-flex; align-items: center; gap: 3px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #2563eb; background: var(--cm-blue-bg); border: 1px solid var(--cm-blue-border); border-radius: 20px; padding: 2px 7px; }
+
+            /* ── Guest banner ── */
+            .cm-guest-banner { margin-bottom: 1rem; background: var(--navy-deep, #000d2e); border: 1px solid rgba(0,107,182,0.22); border-radius: 12px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.85rem; }
+            :root.dark-mode .cm-guest-banner { background: #0d1b2e; border-color: rgba(0,107,182,0.35); }
+
+            /* ── Modal ── */
+            .cm-modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.65rem; font-weight: 900; color: var(--cm-text); line-height: 1.2; letter-spacing: -0.02em; margin: 0; }
+            .cm-modal-section { border-top: 1px solid var(--cm-border); padding-top: 1.5rem; }
+            .cm-modal-section-title { font-weight: 700; margin-bottom: 1rem; font-size: 1.1rem; color: var(--cm-text); }
+
+            /* ── Profile stats ── */
+            .profile-stat { text-align: center; }
+            .profile-stat-val { font-size: 1.25rem; font-weight: 800; color: var(--cm-text); }
+            .profile-stat-label { font-size: 0.7rem; color: var(--cm-text3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+            /* ── Profile post items ── */
+            .profile-post-item { padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--cm-border); cursor: pointer; border-radius: 8px; transition: background 0.15s; }
+            .profile-post-item:hover { background: var(--cm-bg2); }
+            .profile-post-title { font-size: 0.85rem; font-weight: 700; color: var(--cm-text); margin-bottom: 0.25rem; }
+            .profile-post-meta { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; color: var(--cm-text3); flex-wrap: wrap; }
+
+            /* ── Poll ── */
+            .cm-poll-question { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.95rem; line-height: 1.3; color: var(--cm-text); margin-bottom: 0.85rem; }
+            .cm-poll-option-btn { width: 100%; text-align: left; padding: 0.55rem 0.75rem; border: 1px solid var(--cm-border); border-radius: 8px; background: var(--cm-card); cursor: pointer; font-family: 'Barlow', sans-serif; font-size: 0.82rem; font-weight: 500; color: var(--cm-text); transition: border-color 0.2s, background 0.2s; }
+            .cm-poll-option-btn:hover { border-color: var(--sixers-blue, #006BB6); background: rgba(0,107,182,0.05); }
+            .cm-poll-bar-bg { position: absolute; inset: 0; background: var(--cm-poll-bar); z-index: 0; border-radius: 8px; }
+
+            /* ── Repost/share popup ── */
+            .cm-share-input { flex: 1; padding: 0.5rem; background: var(--cm-bg2); border: 1px solid var(--cm-border); border-radius: 6px; color: var(--cm-text); font-size: 0.75rem; outline: none; }
+
+            /* ── Scrollbar ── */
+            .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: var(--cm-bg2); border-radius: 2px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 2px; }
+        `;
+        document.head.appendChild(style);
+    }
+
+
     function showFeedSkeleton() {
         const container = document.getElementById('feed-container');
         if (!container || feedLoaded) return;
         const skeletonCard = () => `
-            <div style="background:white;border:1px solid var(--border-light);border-radius:10px;padding:1.25rem;margin-bottom:1rem;animation:skeleton-pulse 1.4s ease-in-out infinite;">
+            <div style="background:var(--cm-card);border:1px solid var(--cm-border);border-radius:10px;padding:1.25rem;margin-bottom:1rem;animation:skeleton-pulse 1.4s ease-in-out infinite;">
                 <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.85rem;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:#eef2f8;flex-shrink:0;"></div>
-                    <div style="flex:1;"><div style="height:10px;background:#eef2f8;border-radius:4px;width:40%;margin-bottom:5px;"></div><div style="height:8px;background:#eef2f8;border-radius:4px;width:25%;"></div></div>
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--cm-skeleton);flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="height:10px;background:var(--cm-skeleton);border-radius:4px;width:40%;margin-bottom:5px;"></div><div style="height:8px;background:var(--cm-skeleton);border-radius:4px;width:25%;"></div></div>
                 </div>
-                <div style="height:13px;background:#eef2f8;border-radius:4px;width:80%;margin-bottom:8px;"></div>
-                <div style="height:11px;background:#eef2f8;border-radius:4px;width:60%;margin-bottom:16px;"></div>
-                <div style="display:flex;gap:0.5rem;"><div style="height:28px;width:60px;background:#eef2f8;border-radius:6px;"></div><div style="height:28px;width:80px;background:#eef2f8;border-radius:6px;"></div></div>
+                <div style="height:13px;background:var(--cm-skeleton);border-radius:4px;width:80%;margin-bottom:8px;"></div>
+                <div style="height:11px;background:var(--cm-skeleton);border-radius:4px;width:60%;margin-bottom:16px;"></div>
+                <div style="display:flex;gap:0.5rem;"><div style="height:28px;width:60px;background:var(--cm-skeleton);border-radius:6px;"></div><div style="height:28px;width:80px;background:var(--cm-skeleton);border-radius:6px;"></div></div>
             </div>`;
         container.innerHTML = `<style>@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:0.5}}</style>` + skeletonCard() + skeletonCard() + skeletonCard();
     }
 
     function init() {
         if (isInitialized) return;
+        injectCommunityStyles();
         showFeedSkeleton();
         if (window.db) {
             isInitialized = true;
@@ -262,7 +491,7 @@ ANALYSIS: [Analysis]
         })();
 
         container.innerHTML = `
-            <p style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.95rem;line-height:1.3;color:var(--ink);margin-bottom:0.85rem;">${poll.question}</p>
+            <p class="cm-poll-question">${poll.question}</p>
             <div style="display:flex;flex-direction:column;gap:0.5rem;" id="poll-options-list">
                 ${options.map((opt, i) => {
                     const voteCount = (poll.votes || {})[i] || 0;
@@ -273,7 +502,7 @@ ANALYSIS: [Analysis]
                     if (showResults) {
                         return `
                         <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid ${isMyVote ? 'var(--sixers-blue)' : 'var(--border-light)'};background:${isMyVote ? 'rgba(0,107,182,0.06)' : 'transparent'};">
-                            <div class="poll-option-bar-bg" style="position:absolute;inset:0;background:#f1f5f9;z-index:0;border-radius:8px;"></div>
+                            <div class="cm-poll-bar-bg"></div>
                             <div style="position:absolute;inset:0;background:${isMyVote ? 'rgba(0,107,182,0.14)' : 'rgba(0,107,182,0.07)'};width:${pct}%;z-index:1;border-radius:8px;transition:width 0.6s ease;"></div>
                             <div style="position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;">
                                 <span style="font-family:'Barlow',sans-serif;font-size:0.82rem;font-weight:${isMyVote ? '700' : '500'};color:var(--ink);">${isMyVote ? '✓ ' : ''}${opt}</span>
@@ -282,7 +511,7 @@ ANALYSIS: [Analysis]
                         </div>`;
                     } else {
                         return `
-                        <button class="poll-option-btn" data-poll-idx="${i}" style="width:100%;text-align:left;padding:0.55rem 0.75rem;border:1px solid var(--border-light);border-radius:8px;background:var(--card-bg, #fff);cursor:pointer;font-family:'Barlow',sans-serif;font-size:0.82rem;font-weight:500;color:var(--ink);transition:border-color 0.2s,background 0.2s;">
+                        <button class="poll-option-btn cm-poll-option-btn" data-poll-idx="${i}">
                             ${opt}
                         </button>`;
                     }
@@ -296,14 +525,7 @@ ANALYSIS: [Analysis]
 
         // Vote button listeners
         container.querySelectorAll('.poll-option-btn').forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.borderColor = 'var(--sixers-blue)';
-                btn.style.background = 'rgba(0,107,182,0.05)';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.borderColor = 'var(--border-light)';
-                btn.style.background = 'var(--card-bg, #fff)';
-            });
+// hover handled by .cm-poll-option-btn CSS
             btn.addEventListener('click', () => handlePollVote(poll.id, parseInt(btn.dataset.pollIdx)));
         });
 
@@ -450,13 +672,13 @@ ANALYSIS: [Analysis]
 
         const displayed = trendingHeadlines.slice(0, 5);
         container.innerHTML = displayed.map(headline => `
-            <a href="${headline.url}" class="block group relative p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-purple-100">
+            <a href="${headline.url}" class="cm-headline-item group relative">
                 <div class="flex items-center gap-2 mb-1">
                     <span class="text-[10px] text-purple-600 font-black uppercase tracking-wider bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">${headline.category}</span>
                 </div>
-                <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-purple-600 transition-colors">${headline.title}</h4>
+                <h4 class="cm-headline-title">${headline.title}</h4>
                 ${isMod() ? `
-                    <button class="edit-headline-mini absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" data-headline-id="${headline.id}">
+                    <button class="edit-headline-mini absolute -top-1 -right-1 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--cm-card);border:1px solid var(--cm-border);" data-headline-id="${headline.id}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                 ` : ''}
@@ -488,12 +710,12 @@ ANALYSIS: [Analysis]
         }
 
         list.innerHTML = trendingHeadlines.map(headline => `
-            <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 group relative shadow-sm hover:shadow-md transition-all">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;background:var(--cm-card);border-radius:12px;border:1px solid var(--cm-border);position:relative;" class="group">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] text-purple-600 font-black uppercase tracking-wider bg-purple-50 px-2 py-0.5 rounded border border-purple-100">${headline.category}</span>
                     </div>
-                    <h4 class="text-base font-bold text-slate-900 leading-tight mb-2">${headline.title}</h4>
+                    <h4 style="font-size:1rem;font-weight:700;color:var(--cm-text);line-height:1.35;margin-bottom:0.5rem;">${headline.title}</h4>
                     <a href="${headline.url}" class="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
                         View Headline Link
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
@@ -641,18 +863,18 @@ ANALYSIS: [Analysis]
             const isPlayerGrade = article.category && article.category.toLowerCase().includes('player grade');
             
             return `
-            <a href="${article.url}" class="flex gap-3 group relative p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-all">
+            <a href="${article.url}" class="cm-article-item group relative">
                 <div class="flex-1 min-w-0 pl-2">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 tracking-tight">
                             ${isPlayerGrade ? '★ ' : ''}${article.category}
                         </span>
-                        <span class="text-[10px] text-slate-400 whitespace-nowrap">${article.date}</span>
+                        <span style="font-size:0.625rem;color:var(--cm-text4);white-space:nowrap;">${article.date}</span>
                     </div>
-                    <h4 class="text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">${article.title}</h4>
+                    <h4 class="cm-article-title">${article.title}</h4>
                 </div>
                 ${isMod() ? `
-                    <button class="edit-article-mini absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10" data-article-id="${article.id}">
+                    <button class="edit-article-mini absolute -top-1 -right-1 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10" style="background:var(--cm-card);border:1px solid var(--cm-border);" data-article-id="${article.id}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                 ` : ''}
@@ -710,7 +932,7 @@ ANALYSIS: [Analysis]
             const isPlayerGrade = article.category && article.category.toLowerCase().includes('player grade');
 
             return `
-            <div class="flex gap-4 p-4 bg-white rounded-xl border border-slate-200 group relative shadow-sm hover:shadow-md transition-all">
+            <div style="display:flex;gap:1rem;padding:1rem;background:var(--cm-card);border-radius:12px;border:1px solid var(--cm-border);position:relative;" class="group">
                 <div class="h-20 w-20 rounded-lg overflow-hidden flex-shrink-0 border border-slate-100">
                     <img src="${article.imageUrl}" alt="Article" class="h-full w-full object-cover">
                 </div>
@@ -719,9 +941,9 @@ ANALYSIS: [Analysis]
                         <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">
                             ${isPlayerGrade ? '★ ' : ''}${article.category}
                         </span>
-                        <span class="text-[10px] text-slate-400 font-medium">${article.date}</span>
+                        <span style="font-size:0.625rem;color:var(--cm-text4);font-weight:500;">${article.date}</span>
                     </div>
-                    <h4 class="text-base font-bold text-slate-900 leading-tight mb-2 group-hover:text-blue-600 transition-colors">${article.title}</h4>
+                    <h4 style="font-size:1rem;font-weight:700;color:var(--cm-text);line-height:1.35;margin-bottom:0.5rem;">${article.title}</h4>
                     <a href="${article.url}" class="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
                         Read Full Article
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
@@ -992,13 +1214,13 @@ ANALYSIS: [Analysis]
 
         if (posts.length === 0) {
             container.innerHTML = `
-                <div class="bg-white rounded-xl p-12 text-center border border-slate-200">
-                    <div class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div class="cm-empty-state">
+                    <div class="cm-empty-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">No posts yet</h3>
-                    <p class="text-slate-500">Be the first to start a conversation in the community!</p>
-                    ${!user ? `<button onclick="CommunityFeed.triggerLogin()" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all text-sm">Sign In to Post</button>` : ''}
+                    <p class="cm-empty-title">No posts yet</p>
+                    <p class="cm-empty-sub">Be the first to start a conversation in the community!</p>
+                    ${!user ? `<button onclick="CommunityFeed.triggerLogin()" style="margin-top:1.5rem;background:var(--sixers-blue,#006BB6);color:white;padding:0.5rem 1.5rem;border-radius:999px;font-weight:700;font-size:0.875rem;border:none;cursor:pointer;">Sign In to Post</button>` : ''}
                 </div>
             `;
             return;
@@ -1009,16 +1231,7 @@ ANALYSIS: [Analysis]
         // Add a compact "Sign in" banner for guests — styled to match site theme
         if (!user) {
             const guestPrompt = document.createElement('div');
-            guestPrompt.style.cssText = `
-                margin-bottom:1rem;
-                background:var(--navy-deep,#000d2e);
-                border:1px solid rgba(0,107,182,0.22);
-                border-radius:12px;
-                padding:0.75rem 1rem;
-                display:flex;
-                align-items:center;
-                gap:0.85rem;
-            `;
+            guestPrompt.className = 'cm-guest-banner';
             guestPrompt.innerHTML = `
                 <div style="width:34px;height:34px;border-radius:8px;background:rgba(0,107,182,0.18);border:1px solid rgba(0,107,182,0.28);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1076,7 +1289,7 @@ ANALYSIS: [Analysis]
         // Split by the separator ---
         const players = content.split('---').filter(p => p.trim());
         if (players.length === 0 || !content.toLowerCase().includes('player:')) {
-            return `<p class="text-sm text-slate-600 mb-2">${formatTwitterContent(content)}</p>`;
+            return `<p style="font-size:0.875rem;color:var(--cm-text2);margin-bottom:0.5rem;">${formatTwitterContent(content)}</p>`;
         }
 
         return players.map(playerBlock => {
@@ -1102,7 +1315,7 @@ ANALYSIS: [Analysis]
             });
 
             if (!name && !grade && !stats) {
-                return `<p class="text-sm text-slate-600 mb-2">${formatTwitterContent(playerBlock)}</p>`;
+                return `<p style="font-size:0.875rem;color:var(--cm-text2);margin-bottom:0.5rem;">${formatTwitterContent(playerBlock)}</p>`;
             }
 
             const gradeClass = getGradeClass(grade);
@@ -1151,11 +1364,11 @@ ANALYSIS: [Analysis]
         };
         const accent = tagAccentMap[post.tag] || { bg: 'rgba(100,116,139,0.04)', border: '#e2e8f0', dot: '#64748b', badge: 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0' };
 
-        div.style.cssText = `background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);border:1.5px solid #f0f2f5;overflow:hidden;display:flex;cursor:pointer;transition:border-color 0.18s,box-shadow 0.18s;margin-bottom:0;`;
+        div.className = 'cm-post-card';
         div.dataset.id = post.id;
 
-        div.addEventListener('mouseenter', () => { div.style.borderColor = accent.border; div.style.boxShadow = '0 4px 16px rgba(0,0,0,0.09),0 1px 4px rgba(0,0,0,0.05)'; });
-        div.addEventListener('mouseleave', () => { div.style.borderColor = '#f0f2f5'; div.style.boxShadow = '0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04)'; });
+        div.addEventListener('mouseenter', () => { div.style.borderColor = accent.border; });
+        div.addEventListener('mouseleave', () => { div.style.borderColor = ''; });
 
         const user = window.auth ? window.auth.currentUser : null;
         const userVote = (user && post.voters) ? post.voters[user.uid] : post.voted;
@@ -1181,13 +1394,13 @@ ANALYSIS: [Analysis]
         const showTextBody = !isDiscussion && post.content && !isPlayerGrade;
 
         div.innerHTML = `
-            <!-- Vote Sidebar — refined pill style -->
-            <div style="width:52px;background:${accent.bg};padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;border-right:1.5px solid ${accent.border};flex-shrink:0;">
-                <button class="vote-up" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:${isUpvoted ? 'rgba(234,88,12,0.1)' : 'transparent'};color:${isUpvoted ? '#ea580c' : '#94a3b8'};cursor:pointer;transition:background 0.15s,color 0.15s;" title="Upvote">
+            <!-- Vote Sidebar -->
+            <div class="cm-vote-sidebar" style="background:${accent.bg};border-right:1.5px solid ${accent.border};">
+                <button class="vote-up cm-vote-btn ${isUpvoted ? 'active-up' : ''}" title="Upvote">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                 </button>
-                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:0.02em;color:${isUpvoted ? '#ea580c' : isDownvoted ? '#2563eb' : '#0f172a'};min-width:20px;text-align:center;line-height:1;">${formatVotes(post.votes)}</span>
-                <button class="vote-down" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:${isDownvoted ? 'rgba(37,99,235,0.1)' : 'transparent'};color:${isDownvoted ? '#2563eb' : '#94a3b8'};cursor:pointer;transition:background 0.15s,color 0.15s;" title="Downvote">
+                <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:0.02em;color:${isUpvoted ? '#ea580c' : isDownvoted ? '#3b82f6' : 'var(--cm-text)'};min-width:20px;text-align:center;line-height:1;">${formatVotes(post.votes)}</span>
+                <button class="vote-down cm-vote-btn ${isDownvoted ? 'active-down' : ''}" title="Downvote">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${isDownvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
             </div>
@@ -1207,9 +1420,9 @@ ANALYSIS: [Analysis]
                         <span style="${accent.badge};border-radius:20px;padding:2px 8px;font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px;">
                             ${isPlayerGrade ? '★ ' : ''}${post.tag}
                         </span>
-                        <span class="author-link" data-author-id="${post.authorId}" data-author-name="${post.author}" style="font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;color:#334155;cursor:pointer;transition:color 0.15s;" onmouseenter="this.style.color='${accent.dot}'" onmouseleave="this.style.color='#334155'">${post.author}${getMostActiveBadge(post.authorId)}</span>
-                        <span style="font-size:0.65rem;color:#cbd5e1;">·</span>
-                        <span style="font-family:'Barlow',sans-serif;font-size:0.68rem;color:#94a3b8;">${post.time}</span>
+                        <span class="author-link cm-author" data-author-id="${post.authorId}" data-author-name="${post.author}" style="font-size:0.72rem;">${post.author}${getMostActiveBadge(post.authorId)}</span>
+                        <span style="font-size:0.65rem;color:var(--cm-text4);">·</span>
+                        <span class="cm-time" style="font-size:0.68rem;">${post.time}</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
                         ${isAdmin ? `
@@ -1218,7 +1431,7 @@ ANALYSIS: [Analysis]
                             </button>
                         ` : ''}
                         ${canDelete ? `
-                            <button class="delete-post-btn" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:none;background:transparent;color:#fca5a5;cursor:pointer;transition:background 0.15s,color 0.15s;" title="Delete" onmouseenter="this.style.background='#fef2f2';this.style.color='#dc2626'" onmouseleave="this.style.background='transparent';this.style.color='#fca5a5'">
+                            <button class="delete-post-btn cm-action-btn cm-del-btn" style="width:28px;height:28px;padding:0;" title="Delete">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </button>
                         ` : ''}
@@ -1226,11 +1439,11 @@ ANALYSIS: [Analysis]
                 </div>
 
                 <!-- Title -->
-                <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:800;color:#0f172a;line-height:1.3;letter-spacing:-0.01em;margin:0 0 8px;">${post.title}</h3>
+                <h3 class="cm-post-title">${post.title}</h3>
 
                 <!-- Body text (hidden for Discussion — image is sufficient) -->
                 ${showTextBody ? `
-                    <p style="font-family:'Barlow',sans-serif;font-size:0.82rem;color:#64748b;line-height:1.55;margin:0 0 10px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${formatTwitterContent(post.content)}</p>
+                    <p class="cm-post-excerpt">${formatTwitterContent(post.content)}</p>
                 ` : ''}
                 ${isPlayerGrade && post.content ? `<div style="margin-bottom:10px;">${renderPlayerGrades(post.content)}</div>` : ''}
 
@@ -1239,22 +1452,22 @@ ANALYSIS: [Analysis]
 
                 <!-- Image (prominent, clean) -->
                 ${hasValidImage ? `
-                    <div style="margin-bottom:12px;border-radius:10px;overflow:hidden;border:1px solid #f1f5f9;background:#f8fafc;">
+                    <div style="margin-bottom:12px;border-radius:10px;overflow:hidden;border:1px solid var(--cm-border);background:var(--cm-bg2);">
                         <img src="${post.imageUrl}" style="width:100%;height:auto;max-height:340px;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'">
                     </div>
                 ` : ''}
 
                 <!-- Action bar -->
                 <div style="display:flex;align-items:center;gap:2px;margin-top:auto;padding-top:4px;">
-                    <button class="comment-btn" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;color:#64748b;background:transparent;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#f1f5f9';this.style.color='#334155'" onmouseleave="this.style.background='transparent';this.style.color='#64748b'">
+                    <button class="comment-btn cm-action-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         ${countTotalComments(post.comments)} Comments
                     </button>
-                    <button class="jump-to-comments-btn" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;color:#64748b;background:transparent;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#eff6ff';this.style.color='#2563eb'" onmouseleave="this.style.background='transparent';this.style.color='#64748b'">
+                    <button class="jump-to-comments-btn cm-action-btn blue-hover">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
                         Jump to Comments
                     </button>
-                    <button class="share-btn" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;color:#64748b;background:transparent;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#f1f5f9';this.style.color='#334155'" onmouseleave="this.style.background='transparent';this.style.color='#64748b'">
+                    <button class="share-btn cm-action-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                         Share
                     </button>
@@ -1390,9 +1603,9 @@ ANALYSIS: [Analysis]
         titleEl.innerText = "Share Post";
         msgEl.innerHTML = `
             <div class="mt-4">
-                <p class="text-xs text-slate-500 mb-3">Copy the link below to share this conversation:</p>
+                <p style="font-size:0.75rem;color:var(--cm-text3);margin-bottom:0.75rem;">Copy the link below to share this conversation:</p>
                 <div class="flex gap-2">
-                    <input type="text" value="${url}" readonly class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-xs outline-none">
+                    <input type="text" value="${url}" readonly class="cm-share-input">
                     <button id="copy-share-link" class="bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-700 transition-all">Copy</button>
                 </div>
             </div>
@@ -1710,7 +1923,8 @@ ANALYSIS: [Analysis]
 
         const entryId = Date.now();
         const div = document.createElement('div');
-        div.className = 'player-grade-entry bg-white p-4 rounded-xl border border-amber-100 shadow-sm space-y-3 relative group';
+        div.className = 'player-grade-entry p-4 rounded-xl border shadow-sm space-y-3 relative group';
+        div.style.cssText = 'background:var(--cm-card);border-color:rgba(217,119,6,0.25);';
         div.dataset.entryId = entryId;
 
         div.innerHTML = `
@@ -1724,7 +1938,7 @@ ANALYSIS: [Analysis]
                 </div>
                 <div class="col-span-1">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Grade</label>
-                    <select class="player-grade-input w-full p-2 border border-slate-100 rounded-lg text-sm focus:border-amber-400 outline-none bg-white">
+                    <select class="player-grade-input w-full p-2 border rounded-lg text-sm outline-none" style="background:var(--cm-input-bg);border-color:var(--cm-input-border);color:var(--cm-text);">
                         <option value="A+">A+</option>
                         <option value="A">A</option>
                         <option value="A-">A-</option>
@@ -2002,7 +2216,7 @@ ANALYSIS: [Analysis]
         const user = window.auth ? window.auth.currentUser : null;
         
         return `
-            <div class="pl-4 border-l-2 border-slate-200 space-y-4 mt-2">
+            <div class="cm-reply-thread">
                 ${replies.map((r, rIdx) => {
                     const rVoters = r.voters || {};
                     const rUserVote = user ? rVoters[user.uid] : null;
@@ -2012,10 +2226,10 @@ ANALYSIS: [Analysis]
                     const currentPath = parentPath ? `${parentPath}-${rIdx}` : `${rIdx}`;
 
                     return `
-                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                            <div class="cm-comment-card" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2 text-xs text-slate-500">
-                                        <span class="font-bold text-slate-900">${r.author}</span>
+                                        <span class="cm-comment-author">${r.author}</span>
                                         ${r.replyingTo ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-medium">replying to - <span class="font-bold">${r.replyingTo}</span></span>` : ''}
                                         <span>•</span>
                                         <span>${formatTimeAgo(r.createdAt) || 'just now'}</span>
@@ -2026,31 +2240,26 @@ ANALYSIS: [Analysis]
                                         </button>
                                     ` : ''}
                                 </div>
-                                <p class="text-slate-600 mb-2">${r.text}</p>
+                                <p class="cm-comment-text">${r.text}</p>
                                 <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-2 py-0.5">
-                                        <button class="reply-vote-up p-0.5 hover:text-orange-600 transition-colors ${rUpvoted ? 'text-orange-600' : 'text-slate-400'}" 
-                                                data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                                    <div class="cm-vote-pill">
+                                        <button class="reply-vote-up cm-vote-pill-btn ${rUpvoted ? 'up-active' : ''}" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                                         </button>
-                                        <span class="text-[10px] font-bold min-w-[12px] text-center ${rUpvoted ? 'text-orange-600' : (rDownvoted ? 'text-blue-600' : 'text-slate-600')}">${rVotes}</span>
-                                        <button class="reply-vote-down p-0.5 hover:text-blue-600 transition-colors ${rDownvoted ? 'text-blue-600' : 'text-slate-400'}" 
-                                                data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
+                                        <span class="cm-vote-pill-count">${rVotes}</span>
+                                        <button class="reply-vote-down cm-vote-pill-btn ${rDownvoted ? 'down-active' : ''}" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${rDownvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                         </button>
                                     </div>
-                                    <button class="text-[10px] font-bold text-slate-400 hover:text-blue-600 reply-to-reply-btn" 
-                                            data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
+                                    <button class="reply-to-reply-btn cm-link-btn" style="font-size:0.625rem;" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
                                 </div>
 
                         <!-- Nested Reply Input -->
                         <div class="reply-input-container hidden mt-3" id="reply-input-${commentIdx}-${currentPath}">
-                            <textarea class="w-full p-2 border border-slate-200 rounded-lg text-[11px] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none" placeholder="Write a reply..." rows="2"></textarea>
+                            <textarea class="cm-reply-input" style="font-size:0.69rem;" placeholder="Write a reply..." rows="2"></textarea>
                             <div class="flex justify-end gap-2 mt-2">
-                                <button class="px-2 py-1 rounded-full text-[10px] font-bold text-slate-500 hover:bg-slate-200 cancel-nested-reply-btn" 
-                                        data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Cancel</button>
-                                <button class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-bold hover:bg-blue-700 submit-nested-reply-btn" 
-                                        data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
+                                <button class="cancel-nested-reply-btn cm-reply-cancel" style="font-size:0.625rem;" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Cancel</button>
+                                <button class="submit-nested-reply-btn cm-reply-submit" style="font-size:0.625rem;" data-comment-idx="${commentIdx}" data-reply-path="${currentPath}">Reply</button>
                             </div>
                         </div>
 
@@ -2124,10 +2333,10 @@ ANALYSIS: [Analysis]
                         <span style="${mAccent.badge};border-radius:20px;padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;">
                             ${isPlayerGrade ? '★ ' : ''}${post.tag}
                         </span>
-                        <span class="author-link" data-author-id="${post.authorId}" data-author-name="${post.author}" style="font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:700;color:#334155;cursor:pointer;">${post.author}${getMostActiveBadge(post.authorId)}</span>
-                        <span style="font-size:0.65rem;color:#cbd5e1;">·</span>
-                        <span style="font-family:'Barlow',sans-serif;font-size:0.72rem;color:#94a3b8;">${post.time}</span>
-                        ${post.isPinned ? `<span style="display:inline-flex;align-items:center;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;border-radius:20px;padding:2px 7px;">📌 Pinned</span>` : ''}
+                        <span class="author-link" data-author-id="${post.authorId}" data-author-name="${post.author}" class="cm-author">${post.author}${getMostActiveBadge(post.authorId)}</span>
+                        <span style="font-size:0.65rem;color:var(--cm-text4);">·</span>
+                        <span style="font-family:'Barlow',sans-serif;font-size:0.72rem;color:var(--cm-text4);">${post.time}</span>
+                        ${post.isPinned ? `<span class="cm-pin-badge">📌 Pinned</span>` : ''}
                     </div>
                     <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-right:40px;">
                         <a href="${modalPostUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:${mAccent.dot};background:${mAccent.bg};border:1.5px solid ${mAccent.border};border-radius:8px;padding:5px 10px;text-decoration:none;transition:opacity 0.15s;" title="Open post in new tab">
@@ -2149,21 +2358,21 @@ ANALYSIS: [Analysis]
                         ` : ''}
                     </div>
                 </div>
-                <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:1.65rem;font-weight:900;color:#0f172a;line-height:1.2;letter-spacing:-0.02em;margin:0;">${post.title}</h2>
+                <h2 class="cm-modal-title">${post.title}</h2>
                 ${twitterId ? `<div class="mb-6 twitter-embed-container" data-twitter-id="${twitterId}"><blockquote class="twitter-tweet"><a href="https://twitter.com/i/status/${twitterId}"></a></blockquote></div>` : ''}
-                ${hasValidImage ? `<div style="border-radius:14px;overflow:hidden;border:1px solid #f0f2f5;box-shadow:0 2px 8px rgba(0,0,0,0.06);"><img src="${post.imageUrl}" style="width:100%;height:auto;object-contain;background:#f8fafc;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
-                <div class="${isPlayerGrade ? '' : 'text-slate-700 leading-relaxed whitespace-pre-wrap'}">
+                ${hasValidImage ? `<div style="border-radius:14px;overflow:hidden;border:1px solid var(--cm-border);box-shadow:var(--cm-shadow);"><img src="${post.imageUrl}" style="width:100%;height:auto;object-contain;background:var(--cm-bg2);display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
+                <div class="${isPlayerGrade ? '' : ''}" style="color:var(--cm-text2);line-height:1.7;white-space:pre-wrap;">
                     ${isDiscussionModal ? '' : (isPlayerGrade ? renderPlayerGrades(post.content) : formatTwitterContent(post.content))}
                 </div>
                 
-                <div class="border-t pt-6">
-                    <h3 class="font-bold mb-4 text-lg">Comments (${countTotalComments(post.comments)})</h3>
+                <div class="cm-modal-section">
+                    <h3 class="cm-modal-section-title">Comments (${countTotalComments(post.comments)})</h3>
                     
                     <!-- Add Comment -->
                     <div class="mb-8">
-                        <textarea id="comment-input" class="w-full p-4 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none" placeholder="What are your thoughts?" rows="5"></textarea>
+                        <textarea id="comment-input" class="cm-comment-textarea" placeholder="What are your thoughts?" rows="5"></textarea>
                         <div class="flex justify-end mt-2">
-                            <button id="submit-comment" class="bg-blue-600 text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">Post Comment</button>
+                            <button id="submit-comment" class="cm-submit-comment">Post Comment</button>
                         </div>
                     </div>
 
@@ -2177,10 +2386,10 @@ ANALYSIS: [Analysis]
                             const cVotes = c.votes || 0;
 
                             return `
-                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100" data-comment-idx="${idx}">
+                            <div class="cm-comment-card" data-comment-idx="${idx}">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2 text-xs text-slate-500">
-                                        <span class="font-bold text-slate-900 author-link" data-author-id="${c.authorId}" data-author-name="${c.author}">${c.author}${getMostActiveBadge(c.authorId)}</span>
+                                        <span class="cm-comment-author author-link" data-author-id="${c.authorId}" data-author-name="${c.author}">${c.author}${getMostActiveBadge(c.authorId)}</span>
                                         <span>•</span>
                                         <span>${c.time || formatTimeAgo(c.createdAt)}</span>
                                     </div>
@@ -2190,28 +2399,28 @@ ANALYSIS: [Analysis]
                                         </button>
                                     ` : ''}
                                 </div>
-                                <p class="text-sm text-slate-700 leading-normal mb-3">${c.text}</p>
+                                <p class="cm-comment-text">${c.text}</p>
                                 
                                 <div class="flex flex-col gap-3">
                                     <div class="flex items-center gap-4">
-                                        <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-2 py-0.5">
-                                            <button class="comment-vote-up p-0.5 hover:text-orange-600 transition-colors ${isUpvoted ? 'text-orange-600' : 'text-slate-400'}" data-comment-idx="${idx}">
+                                        <div class="cm-vote-pill">
+                                            <button class="comment-vote-up cm-vote-pill-btn ${isUpvoted ? 'up-active' : ''}" data-comment-idx="${idx}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                                             </button>
-                                            <span class="text-[10px] font-bold min-w-[12px] text-center ${isUpvoted ? 'text-orange-600' : (userVote === 'down' ? 'text-blue-600' : 'text-slate-600')}">${cVotes}</span>
-                                            <button class="comment-vote-down p-0.5 hover:text-blue-600 transition-colors ${userVote === 'down' ? 'text-blue-600' : 'text-slate-400'}" data-comment-idx="${idx}">
+                                            <span class="cm-vote-pill-count">${cVotes}</span>
+                                            <button class="comment-vote-down cm-vote-pill-btn ${userVote === 'down' ? 'down-active' : ''}" data-comment-idx="${idx}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${userVote === 'down' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                             </button>
                                         </div>
-                                        <button class="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors reply-btn" data-comment-idx="${idx}">Reply</button>
+                                        <button class="reply-btn cm-link-btn" data-comment-idx="${idx}">Reply</button>
                                     </div>
                                     
                                     <!-- Reply Input (hidden by default) -->
                                     <div class="reply-input-container hidden" id="reply-input-${idx}">
-                                        <textarea class="w-full p-3 border border-slate-200 rounded-xl text-xs focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none" placeholder="Write a reply..." rows="2"></textarea>
+                                        <textarea class="cm-reply-input" placeholder="Write a reply..." rows="2"></textarea>
                                         <div class="flex justify-end gap-2 mt-2">
-                                            <button class="px-3 py-1 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-200 cancel-reply-btn" data-comment-idx="${idx}">Cancel</button>
-                                            <button class="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-bold hover:bg-blue-700 submit-reply-btn" data-comment-idx="${idx}">Reply</button>
+                                            <button class="cancel-reply-btn cm-reply-cancel" data-comment-idx="${idx}">Cancel</button>
+                                            <button class="submit-reply-btn cm-reply-submit" data-comment-idx="${idx}">Reply</button>
                                         </div>
                                     </div>
 
@@ -2221,11 +2430,9 @@ ANALYSIS: [Analysis]
                             </div>
                             `;
                         }).reverse().join('') : `
-                            <div class="text-center py-8">
-                                <svg class="mx-auto h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                </svg>
-                                <p class="text-slate-500 text-sm italic">No comments yet. Be the first to share your thoughts!</p>
+                            <div class="cm-no-comments">
+                                <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <p>No comments yet. Be the first to share your thoughts!</p>
                             </div>
                         `}
                     </div>
@@ -2914,20 +3121,16 @@ ANALYSIS: [Analysis]
         const score = computeFanScore(postCount, votes, comments, repliesReceived || 0);
         renderFanScore(score);
         container.innerHTML = `
-            <div class="profile-stat">
-                <div class="profile-stat-val">${postCount}</div>
+            <div class="profile-stat"><div class="profile-stat-val">${postCount}</div>
                 <div class="profile-stat-label">Posts</div>
             </div>
-            <div class="profile-stat">
-                <div class="profile-stat-val">${votes >= 1000 ? (votes/1000).toFixed(1)+'k' : votes}</div>
+            <div class="profile-stat"><div class="profile-stat-val">${votes >= 1000 ? (votes/1000).toFixed(1)+'k' : votes}</div>
                 <div class="profile-stat-label">Upvotes</div>
             </div>
-            <div class="profile-stat">
-                <div class="profile-stat-val">${comments}</div>
+            <div class="profile-stat"><div class="profile-stat-val">${comments}</div>
                 <div class="profile-stat-label">Comments</div>
             </div>
-            <div class="profile-stat">
-                <div class="profile-stat-val">${repliesReceived || 0}</div>
+            <div class="profile-stat"><div class="profile-stat-val">${repliesReceived || 0}</div>
                 <div class="profile-stat-label">Replies</div>
             </div>
         `;
