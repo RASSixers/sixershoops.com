@@ -71,8 +71,21 @@
         /* Uppercase only the hero header, not the whole page */
         header.hero, header.hero * { text-transform: uppercase; }
 
-        /* Scope custom fonts to page content only — never touch the JS-injected navbar */
-        main, footer, main * { font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+        /* Scope custom fonts to page content only — never touch the JS-injected navbar or community feed */
+        footer,
+        main > .hero,
+        main > .hero *,
+        main > .feature-cards-section,
+        main > .feature-cards-section *,
+        main > .editorial-section,
+        main > .editorial-section *,
+        #community-feed-section > aside,
+        #community-feed-section > aside *,
+        #community-feed-section > div > .community-feed-heading,
+        #community-feed-section > div > .create-post-box,
+        #community-feed-section > div > .create-post-box *,
+        #community-feed-section > div > .feed-filters,
+        #community-feed-section > div > .feed-filters * { font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
 
         /* ─── HERO ──────────────────────────────────── */
         .hero {
@@ -568,9 +581,9 @@
 
         .sidebar-view-all:hover { text-decoration: underline; }
 
-        /* article item in sidebar */
-        #sidebar-articles-container a,
-        #sidebar-headlines-container a {
+        /* article/headline links — scoped so they don't override JS-rendered community items */
+        #sidebar-articles-container a:not(.cm-article-item),
+        #sidebar-headlines-container a:not(.cm-headline-item) {
             display: block;
             padding: 0.75rem 0;
             border-bottom: 1px solid var(--border-light);
@@ -578,11 +591,11 @@
             transition: opacity 0.2s;
         }
 
-        #sidebar-articles-container a:last-child,
-        #sidebar-headlines-container a:last-child { border-bottom: none; padding-bottom: 0; }
+        #sidebar-articles-container a:not(.cm-article-item):last-child,
+        #sidebar-headlines-container a:not(.cm-headline-item):last-child { border-bottom: none; padding-bottom: 0; }
 
-        #sidebar-articles-container a:hover,
-        #sidebar-headlines-container a:hover { opacity: 0.7; }
+        #sidebar-articles-container a:not(.cm-article-item):hover,
+        #sidebar-headlines-container a:not(.cm-headline-item):hover { opacity: 0.7; }
 
         /* ─── MODALS ────────────────────────────────── */
         .post-modal-overlay {
@@ -603,7 +616,7 @@
         .post-modal-overlay.active { opacity: 1; visibility: visible; }
 
         .post-modal {
-            background: white;
+            background: var(--cm-modal-bg, white);
             width: 90%;
             max-width: 800px;
             max-height: 90vh;
@@ -626,7 +639,7 @@
             width: 32px; height: 32px;
             border-radius: 50%;
             border: none;
-            background: #f4f6fa;
+            background: var(--cm-bg3, #f4f6fa);
             font-size: 1.1rem;
             cursor: pointer;
             color: var(--mid);
@@ -658,7 +671,7 @@
         .create-post-modal-overlay.active { opacity: 1; visibility: visible; }
 
         .create-post-modal {
-            background: white;
+            background: var(--cm-modal-bg, white);
             width: 95%;
             max-width: 750px;
             max-height: 90vh;
@@ -744,14 +757,15 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Voting */
-        .vote-btn-active-up { color: #ea580c !important; background: #ffedd5 !important; }
-        .vote-btn-active-down { color: #2563eb !important; background: #eff6ff !important; }
+        /* Voting — use .active-up/.active-down set by community.js instead */
+        /* Legacy classes kept for compatibility but community feed uses CSS vars now */
+        .vote-btn-active-up { color: #ea580c; background: rgba(234,88,12,0.1); }
+        .vote-btn-active-down { color: #2563eb; background: rgba(37,99,235,0.1); }
 
         /* Player Card */
         .player-card-render {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--cm-card, white);
+            border: 1px solid var(--cm-border, #e2e8f0);
             padding: 20px;
             margin-bottom: 16px;
             border-radius: 10px;
@@ -775,10 +789,10 @@
         }
 
         .player-header-render { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 16px; }
-        .player-name-render { font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--ink); }
+        .player-name-render { font-family: 'Barlow Condensed', 'Lexend', system-ui, sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--cm-text, var(--ink)); }
         .player-grade-render { font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 1rem; font-weight: 700; padding: 4px 12px; color: white; min-width: 44px; text-align: center; border-radius: 7px; }
-        .player-stats-render { font-size: 0.75rem; color: #64748b; font-weight: 500; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; }
-        .player-analysis-render { color: #475569; line-height: 1.6; font-size: 0.9rem; }
+        .player-stats-render { font-size: 0.75rem; color: var(--cm-text3, #64748b); font-weight: 500; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--cm-border, #e2e8f0); text-transform: uppercase; letter-spacing: 0.05em; }
+        .player-analysis-render { color: var(--cm-text2, #475569); line-height: 1.6; font-size: 0.9rem; }
 
         /* Grade Colors — clean scale from green → amber → red */
         .grade-a-plus { background: #1e7a4a; }
@@ -964,22 +978,23 @@
         :root.dark-mode h4, :root.dark-mode h5, :root.dark-mode h6 { color: var(--ink); }
         :root.dark-mode input, :root.dark-mode textarea, :root.dark-mode select { background: #1e2130; color: var(--ink); border-color: var(--border-light); }
         :root.dark-mode input::placeholder, :root.dark-mode textarea::placeholder { color: var(--mid); }
-        /* Tailwind utility overrides for dark mode */
-        :root.dark-mode .bg-white { background-color: var(--card-bg) !important; }
-        :root.dark-mode .bg-slate-50 { background-color: #1a1e2a !important; }
-        :root.dark-mode .bg-slate-100 { background-color: #1e2130 !important; }
-        :root.dark-mode .border-slate-200 { border-color: var(--border-light) !important; }
-        :root.dark-mode .border-slate-100 { border-color: var(--border-light) !important; }
-        :root.dark-mode .text-slate-900 { color: var(--ink) !important; }
-        :root.dark-mode .text-slate-800 { color: var(--ink) !important; }
-        :root.dark-mode .text-slate-700 { color: #c0c0d0 !important; }
-        :root.dark-mode .text-slate-600 { color: var(--mid) !important; }
-        :root.dark-mode .text-slate-500 { color: var(--mid) !important; }
-        :root.dark-mode .text-slate-400 { color: #666680 !important; }
-        :root.dark-mode .hover\:bg-slate-100:hover { background-color: #1e2130 !important; }
-        :root.dark-mode .hover\:bg-slate-50:hover { background-color: #1a1e2a !important; }
-        /* Feed post cards (dynamically injected) */
-        :root.dark-mode [class*="post-card"],
+        /* Tailwind utility overrides for dark mode
+           Scoped to exclude #feed-container and #post-modal-content
+           so the community CSS variable system isn't stomped on */
+        :root.dark-mode .bg-white:not(#feed-container *):not(#post-modal-content *) { background-color: var(--card-bg) !important; }
+        :root.dark-mode .bg-slate-50:not(#feed-container *):not(#post-modal-content *) { background-color: #1a1e2a !important; }
+        :root.dark-mode .bg-slate-100:not(#feed-container *):not(#post-modal-content *) { background-color: #1e2130 !important; }
+        :root.dark-mode .border-slate-200:not(#feed-container *):not(#post-modal-content *) { border-color: var(--border-light) !important; }
+        :root.dark-mode .border-slate-100:not(#feed-container *):not(#post-modal-content *) { border-color: var(--border-light) !important; }
+        :root.dark-mode .text-slate-900:not(#feed-container *):not(#post-modal-content *) { color: var(--ink) !important; }
+        :root.dark-mode .text-slate-800:not(#feed-container *):not(#post-modal-content *) { color: var(--ink) !important; }
+        :root.dark-mode .text-slate-700:not(#feed-container *):not(#post-modal-content *) { color: #c0c0d0 !important; }
+        :root.dark-mode .text-slate-600:not(#feed-container *):not(#post-modal-content *) { color: var(--mid) !important; }
+        :root.dark-mode .text-slate-500:not(#feed-container *):not(#post-modal-content *) { color: var(--mid) !important; }
+        :root.dark-mode .text-slate-400:not(#feed-container *):not(#post-modal-content *) { color: #666680 !important; }
+        :root.dark-mode .hover\:bg-slate-100:hover:not(#feed-container *):not(#post-modal-content *) { background-color: #1e2130 !important; }
+        :root.dark-mode .hover\:bg-slate-50:hover:not(#feed-container *):not(#post-modal-content *) { background-color: #1a1e2a !important; }
+        /* Feed post cards (dynamically injected) — community.js handles its own dark mode via --cm-* vars */
         :root.dark-mode .feed-post { background: var(--card-bg); border-color: var(--border-light); }
         /* Section label line */
         :root.dark-mode .section-label::after { background: var(--border-light); }
