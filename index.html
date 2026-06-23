@@ -581,21 +581,21 @@
 
         .sidebar-view-all:hover { text-decoration: underline; }
 
-        /* article/headline links — scoped so they don't override JS-rendered community items */
-        #sidebar-articles-container a:not(.cm-article-item),
-        #sidebar-headlines-container a:not(.cm-headline-item) {
+        /* sidebar links — scoped away from community JS-rendered items */
+        #sidebar-articles-container a:not(.cm-article-item):not(.cm-headline-link),
+        #sidebar-headlines-container a:not(.cm-headline-link):not(.cm-article-item) {
             display: block;
             padding: 0.75rem 0;
             border-bottom: 1px solid var(--border-light);
             text-decoration: none;
             transition: opacity 0.2s;
         }
-
-        #sidebar-articles-container a:not(.cm-article-item):last-child,
-        #sidebar-headlines-container a:not(.cm-headline-item):last-child { border-bottom: none; padding-bottom: 0; }
-
-        #sidebar-articles-container a:not(.cm-article-item):hover,
-        #sidebar-headlines-container a:not(.cm-headline-item):hover { opacity: 0.7; }
+        #sidebar-headlines-container a.cm-headline-link,
+        #sidebar-articles-container a.cm-article-item {
+            display: block !important;
+            padding: 0 !important;
+            border: none !important;
+        }
 
         /* ─── MODALS ────────────────────────────────── */
         .post-modal-overlay {
@@ -950,8 +950,8 @@
         /* ─── DARK MODE ────────────────────────────── */
         :root.dark-mode { --cream: #0b0f1a; --ink: #e8eaf0; --mid: #8892a4; --border-light: #1e2535; --card-bg: #131929; }
         :root.dark-mode body { background: var(--cream); color: var(--ink); }
-        :root.dark-mode .create-post-box,
-        :root.dark-mode .feed-filters,
+        :root.dark-mode .create-post-box { background: var(--card-bg); border-color: var(--border-light); }
+        :root.dark-mode .feed-filters { background: var(--card-bg); border-color: var(--border-light); }
         :root.dark-mode .sidebar-card { background: var(--card-bg); border-color: var(--border-light); }
         :root.dark-mode #create-post-trigger { background: #1e2130; color: var(--mid); }
         :root.dark-mode #create-post-trigger:hover { background: #252a3a; }
@@ -959,10 +959,10 @@
         :root.dark-mode .filter-btn:hover { background: #1e2130; color: var(--ink); }
         :root.dark-mode .filter-btn.active { background: var(--sixers-blue); color: white; }
         :root.dark-mode .sidebar-heading { color: var(--ink); }
-        :root.dark-mode #sidebar-articles-container a,
-        :root.dark-mode #sidebar-headlines-container a { border-color: var(--border-light); color: var(--ink); }
-        :root.dark-mode #sidebar-articles-container a:hover,
-        :root.dark-mode #sidebar-headlines-container a:hover { opacity: 0.75; }
+        :root.dark-mode #sidebar-articles-container a:not(.cm-headline-link):not(.cm-article-item),
+        :root.dark-mode #sidebar-headlines-container a:not(.cm-headline-link):not(.cm-article-item) { border-color: var(--border-light); color: var(--ink); }
+        :root.dark-mode #sidebar-articles-container a:not(.cm-headline-link):not(.cm-article-item):hover,
+        :root.dark-mode #sidebar-headlines-container a:not(.cm-headline-link):not(.cm-article-item):hover { opacity: 0.75; }
         :root.dark-mode .pagination button { background: var(--card-bg); border-color: var(--border-light); color: var(--ink); }
         :root.dark-mode .pagination button:hover:not(:disabled) { background: #1e2130; }
         :root.dark-mode .player-card-render { background: var(--card-bg); border-color: var(--border-light); }
@@ -1252,6 +1252,7 @@
             cursor: pointer;
             transition: color 0.15s;
         }
+        .author-link { cursor: pointer; transition: color 0.15s; }
         .author-link:hover { color: var(--sixers-blue) !important; }
         .community-feed-heading {
             display: flex;
