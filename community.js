@@ -1228,33 +1228,7 @@ ANALYSIS: [Analysis]
 
         container.innerHTML = '';
 
-        // Add a compact "Sign in" banner for guests — styled to match site theme
-        if (!user) {
-            const guestPrompt = document.createElement('div');
-            guestPrompt.className = 'cm-guest-banner';
-            guestPrompt.innerHTML = `
-                <div style="width:34px;height:34px;border-radius:8px;background:rgba(0,107,182,0.18);border:1px solid rgba(0,107,182,0.28);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:800;letter-spacing:0.04em;color:rgba(255,255,255,0.85);text-transform:uppercase;">Sign in to join the conversation</div>
-                    <div style="font-family:'Barlow',sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);margin-top:1px;">Vote, comment, and share your takes with the community</div>
-                </div>
-                <button onclick="CommunityFeed.triggerLogin()" style="
-                    flex-shrink:0;
-                    display:inline-flex;align-items:center;gap:0.35rem;
-                    background:var(--sixers-blue,#006BB6);color:white;
-                    font-family:'Barlow Condensed',sans-serif;font-weight:700;
-                    font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;
-                    padding:0.45rem 1rem;border-radius:7px;border:none;cursor:pointer;
-                    transition:background 0.2s;white-space:nowrap;
-                " onmouseover="this.style.background='#0080d4'" onmouseout="this.style.background='var(--sixers-blue,#006BB6)'">
-                    Sign In
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
-                </button>
-            `;
-            container.appendChild(guestPrompt);
-        }
+        // Guests see posts normally; voting/commenting triggers login via triggerLogin()
         
         // Sort posts: pinned first, then by existing order
         const sortedPosts = [...posts].sort((a, b) => {
@@ -1395,7 +1369,7 @@ ANALYSIS: [Analysis]
 
         div.innerHTML = `
             <!-- Vote Sidebar -->
-            <div class="cm-vote-sidebar" style="background:${accent.bg};border-right:1.5px solid ${accent.border};">
+            <div class="cm-vote-sidebar" style="border-right:1px solid var(--cm-border2);">
                 <button class="vote-up cm-vote-btn ${isUpvoted ? 'active-up' : ''}" title="Upvote">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${isUpvoted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                 </button>
@@ -1406,13 +1380,13 @@ ANALYSIS: [Analysis]
             </div>
 
             <!-- Content -->
-            <div style="flex:1;padding:14px 16px 12px;min-width:0;display:flex;flex-direction:column;gap:0;">
+            <div style="flex:1;padding:14px 16px 12px;min-width:0;display:flex;flex-direction:column;gap:0;background:var(--cm-card);">
 
                 <!-- Top meta row -->
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                         ${post.isPinned ? `
-                            <span style="display:inline-flex;align-items:center;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#dbeafe;border:1px solid #bfdbfe;border-radius:20px;padding:2px 7px;">
+                            <span style="display:inline-flex;align-items:center;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--cm-blue-text);background:var(--cm-blue-bg);border:1px solid var(--cm-blue-border);border-radius:20px;padding:2px 7px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m15 5-1.5-1.5L10 7l-2-2-1.5 1.5 3 3L3 17l1.5 1.5 7-6.5 3 3 1.5-1.5-2-2L17 10l-2-5Z"/></svg>
                                 Pinned
                             </span>
