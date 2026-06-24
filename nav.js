@@ -134,7 +134,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span></span>
                 <span></span>
             </button>
-            <a href="/" class="nav-brand"></a>
+            <a href="/" class="nav-brand">
+                <span class="brand-name">SixersHoops</span>
+            </a>
         </div>
 
         <ul class="nav-menu">
