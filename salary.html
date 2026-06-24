@@ -706,8 +706,8 @@ function buildShareCanvas(){
   const CAP_SECTION_H = 130; // NBA cap numbers block
   const SNAP_SECTION_H = 130; // sixers snapshot block
   const TABLE_H = HEADER_H + rows.length * ROW_H + 52; // +total row
-  const FOOTER_H = 60;
-  const TITLE_H = 100;
+  const FOOTER_H = 56;
+  const TITLE_H = 138;
   const SECTION_GAP = 28;
 
   const H = TITLE_H + SECTION_GAP + CAP_SECTION_H + SECTION_GAP + SNAP_SECTION_H + SECTION_GAP + TABLE_H + SECTION_GAP + FOOTER_H + PAD * 2;
@@ -754,30 +754,37 @@ function buildShareCanvas(){
   // ── BACKGROUND ──────────────────────────────────────────────────
   rect(0,0,W,H,0,WHITE);
 
-  // dark top bar
-  rect(0,0,W,TITLE_H,0,NAVY);
+  // ── HEADER ──────────────────────────────────────────────────────
+  rect(0,0,W,TITLE_H,0,WHITE);
 
-  // subtle diagonal stripe pattern on header
-  ctx.save();
-  ctx.globalAlpha=0.07;
-  ctx.strokeStyle=WHITE; ctx.lineWidth=18;
-  for(let i=-200;i<W+200;i+=60){
-    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+TITLE_H*1.5,TITLE_H); ctx.stroke();
-  }
-  ctx.restore();
+  const centerX = W/2;
 
-  // red accent line at bottom of header
-  rect(0, TITLE_H-4, W, 4, 0, RED);
+  // Title — SixersHoops, centered
+  text('SixersHoops', centerX, 84, '800 48px Lexend,sans-serif', INK, 'center');
 
-  // ── HEADER CONTENT ──────────────────────────────────────────────
-  // Logo / brand mark — simple pill
-  const pillW = 140, pillH = 30;
-  rect(PAD, 22, pillW, pillH, 15, 'rgba(255,255,255,0.12)');
-  text('SIXERSHOOPS', PAD + pillW/2, 22+20, '700 11px Lexend,sans-serif', WHITE, 'center');
+  // Subtitle — season + Salary Cap Breakdown, centered, bigger
+  const subParts = ['2026\u201327', 'SALARY CAP BREAKDOWN'];
+  const subFont = '700 22px Lexend,sans-serif';
+  ctx.font = subFont;
+  const dotGap = 18;
+  const partWidths = subParts.map(s => ctx.measureText(s.toUpperCase()).width);
+  const totalSubW = partWidths.reduce((a,b)=>a+b,0) + dotGap * (subParts.length - 1);
+  let sx = centerX - totalSubW/2;
+  subParts.forEach((s,i)=>{
+    const w = partWidths[i];
+    text(s.toUpperCase(), sx + w/2, 126, subFont, i===0?BLUE:INK, 'center');
+    sx += w;
+    if(i < subParts.length-1){
+      ctx.beginPath(); ctx.arc(sx + dotGap/2, 121, 2.4, 0, Math.PI*2);
+      ctx.fillStyle = BORDER; ctx.fill();
+      sx += dotGap;
+    }
+  });
 
-  // Title
-  text('2026-27 SALARY CAP', W/2, 42, '300 15px Lexend,sans-serif', 'rgba(255,255,255,0.65)', 'center');
-  text('PHILADELPHIA 76ERS', W/2, 74, '800 28px Lexend,sans-serif', WHITE, 'center');
+  // short centered rule beneath subtitle
+  const ruleW = 64;
+  ctx.fillStyle = BORDER;
+  ctx.fillRect(centerX - ruleW/2, TITLE_H - 1, ruleW, 2);
 
   let curY = TITLE_H + PAD;
 
@@ -885,11 +892,12 @@ function buildShareCanvas(){
     ctx.fillStyle=BORDER; ctx.fillRect(PAD, ry+ROW_H, TW, 1);
   });
 
-  // total row
+  // total row — white, clean border top
   const ty = curY + rows.length*ROW_H;
-  rect(PAD, ty, TW, 52, 0, INK);
-  text('TOTAL PAYROLL', cols.name.x, ty+32, '700 12px Lexend,sans-serif', WHITE, 'left');
-  text(fmt$(totalPayroll), cols.sal.x, ty+32, '700 16px Lexend,sans-serif', WHITE, 'right');
+  rect(PAD, ty, TW, 52, 0, WHITE);
+  ctx.fillStyle = INK; ctx.fillRect(PAD, ty, TW, 2);
+  text('TOTAL PAYROLL', cols.name.x, ty+32, '700 12px Lexend,sans-serif', MID, 'left');
+  text(fmt$(totalPayroll), cols.sal.x, ty+32, '700 16px Lexend,sans-serif', INK, 'right');
 
   // round bottom corners of table card
   ctx.save();
@@ -899,18 +907,21 @@ function buildShareCanvas(){
   ctx.arcTo(PAD+TW,bry-br,PAD+TW,bry,br); ctx.lineTo(PAD+TW,bry);
   ctx.lineTo(PAD,bry); ctx.lineTo(PAD,bry-br);
   ctx.arcTo(PAD,bry-br,PAD+br,bry-br,br);
-  ctx.closePath(); ctx.fillStyle=INK; ctx.fill();
+  ctx.closePath(); ctx.fillStyle=WHITE; ctx.fill();
   ctx.restore();
 
   curY += TABLE_H + SECTION_GAP;
 
   // ── FOOTER ──────────────────────────────────────────────────────
-  rect(0, curY, W, FOOTER_H, 0, NAVY);
-  // red accent top
-  rect(0, curY, W, 3, 0, RED);
+  rect(0, curY, W, FOOTER_H, 0, WHITE);
 
-  text('SixersHoops', PAD, curY+FOOTER_H/2+6, '700 15px Lexend,sans-serif', WHITE, 'left');
-  text('sixershoops.com/salary', W-PAD, curY+FOOTER_H/2+6, '400 13px Lexend,sans-serif', 'rgba(255,255,255,0.55)', 'right');
+  // short centered rule, top of footer
+  const fRuleW = 64;
+  ctx.fillStyle = BORDER;
+  ctx.fillRect(centerX - fRuleW/2, curY, fRuleW, 2);
+
+  // URL — centered, moved up where SixersHoops used to be
+  text('sixershoops.com/salary', centerX, curY + 38, '600 16px Lexend,sans-serif', MID, 'center');
 
   return canvas;
 }
