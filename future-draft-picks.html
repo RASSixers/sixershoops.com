@@ -1,710 +1,642 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Future Draft Picks — Sixers Hoops</title>
-  <meta name="description" content="Authoritative, data-first overview of Philadelphia 76ers future draft picks with interactive filters, sorting, and details." />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/favicon.ico" />
-  <link rel="stylesheet" href="navbar-styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Future Draft Picks | Sixers Hoops</title>
+<link rel="icon" type="image/png" href="/favicon.png" />
+<meta name="description" content="Philadelphia 76ers future draft picks — owned, incoming, swaps — with filters, sortable columns, and social export." />
+<link rel="canonical" href="https://sixershoops.com/future-draft-picks" />
 
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-T1V9Q0MNEM');
-  </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="navbar-styles.css">
+<link rel="stylesheet" href="footer-styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-  <style>
-    :root {
-      --navy: #001a57;
-      --navy-deep: #0b0f1a;
-      --sixers-blue: #006BB6;
-      --sixers-red: #ED174C;
-      --cream: #f7f8fc;
-      --ink: #0d0f1a;
-      --mid: #64748b;
-      --border-light: #e4e8f0;
-      --green: #16a34a;
-      --red: #dc2626;
-    }
-    *, *::before, *::after { box-sizing: border-box; }
-    body, html { font-family: 'Barlow', sans-serif; margin: 0; background: var(--cream); color: var(--ink); }
-    body { padding-top: 64px; line-height: 1.55; }
+<style>
+  :root{
+    --navy:#001a57; --navy-deep:#0b0f1a;
+    --sixers-blue:#006BB6; --sixers-blue-dark:#0057a0;
+    --sixers-red:#ED174C; --gold:#c9a84c;
+    --cream:#ffffff; --ink:#0d0f1a;
+    --mid:#64748b; --mid-2:#94a3b8;
+    --border-light:#e4e8f0; --card-bg:#ffffff; --surface-soft:#f6f8fc;
+    --green:#16a34a; --red:#dc2626; --amber:#d97706;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body,html{
+    margin:0; background:var(--cream); color:var(--ink);
+    font-family:'Lexend',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    overflow-x:hidden; max-width:100%;
+  }
+  body{padding-top:64px;}
+  @media(max-width:480px){body{padding-top:60px;}}
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer;}
 
-    /* HERO — matches standings page */
-    .page-hero { background: var(--cream); position: relative; overflow: hidden; }
-    .page-hero::before {
-      content: ''; position: absolute; inset: 0;
-      background-image: radial-gradient(circle, rgba(0,107,182,0.12) 1px, transparent 1px);
-      background-size: 28px 28px; opacity: .6; pointer-events: none; z-index: 0;
-    }
-    .hero-glow-blue {
-      position: absolute; right: -120px; top: -80px; width: 600px; height: 500px;
-      background: radial-gradient(ellipse at center, rgba(0,107,182,0.08) 0%, transparent 70%);
-      pointer-events: none; z-index: 0;
-    }
-    .hero-glow-red {
-      position: absolute; left: -60px; bottom: -40px; width: 400px; height: 300px;
-      background: radial-gradient(ellipse at center, rgba(237,23,76,0.05) 0%, transparent 70%);
-      pointer-events: none; z-index: 0;
-    }
-    .hero-inner {
-      position: relative; z-index: 1; max-width: 860px; margin: 0 auto;
-      padding: 4.5rem 2rem 3.5rem; display: flex; flex-direction: column;
-      align-items: center; text-align: center;
-    }
-    .hero-title-top, .hero-title-bottom {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: clamp(3.2rem, 8vw, 6rem); font-weight: 900;
-      line-height: .9; letter-spacing: -0.01em; text-transform: uppercase; margin: 0;
-    }
-    .hero-title-top { color: var(--ink); }
-    .hero-title-bottom { color: var(--sixers-blue); margin: 0 0 .2em; }
-    .hero-divider { width: 32px; height: 3px; background: var(--sixers-red); border-radius: 2px; margin: 1.4rem auto 1.2rem; }
-    .hero-sub { font-size: 1rem; color: var(--mid); max-width: 520px; line-height: 1.65; margin: 0 auto; }
-    .hero-cta-row { display: flex; align-items: center; gap: .7rem; margin-top: 2rem; flex-wrap: wrap; justify-content: center; }
+  /* ─── HERO ─────────────────────────── */
+  .hero{background:var(--cream); position:relative; overflow:hidden; padding:0;}
+  .hero-inner{
+    position:relative; z-index:1; max-width:860px; margin:0 auto;
+    padding:5rem 2rem 4rem; display:flex; flex-direction:column;
+    align-items:center; text-align:center;
+  }
+  .hero-title-top,.hero-title-bottom{
+    font-size:clamp(2.4rem,6vw,4.5rem); font-weight:700;
+    line-height:.95; letter-spacing:-.03em; margin:0;
+  }
+  .hero-title-top{color:var(--ink);}
+  .hero-title-bottom{color:var(--sixers-blue);}
 
-    .hero-btn-primary, .hero-btn-secondary {
-      display: inline-flex; align-items: center; gap: .45rem;
-      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-      font-size: .84rem; letter-spacing: .08em; text-transform: uppercase;
-      padding: .7rem 1.5rem; border-radius: 9px; cursor: pointer;
-      transition: all .2s; border: none;
-    }
-    .hero-btn-primary { background: var(--sixers-blue); color: #fff; box-shadow: 0 2px 12px rgba(0,107,182,.25); }
-    .hero-btn-primary:hover:not(:disabled) { background: #0057a0; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,107,182,.35); }
-    .hero-btn-secondary { background: transparent; color: var(--sixers-blue); border: 1px solid var(--sixers-blue); }
-    .hero-btn-secondary:hover:not(:disabled) { background: var(--sixers-blue); color: #fff; }
-    .hero-btn-primary:disabled, .hero-btn-secondary:disabled { opacity: .55; cursor: not-allowed; }
+  .share-btn-row{display:flex; justify-content:center; margin-bottom:1rem;}
+  .share-img-btn{
+    display:inline-flex; align-items:center; gap:.55rem;
+    padding:.65rem 1.3rem;
+    background:var(--sixers-blue); color:#fff; border:0;
+    border-radius:999px; font-weight:600; font-size:.82rem;
+    letter-spacing:-.005em; box-shadow:0 2px 10px rgba(0,107,182,.25);
+    transition:all .2s;
+  }
+  .share-img-btn:hover{background:var(--sixers-blue-dark); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,107,182,.3);}
+  .share-img-btn:active{transform:translateY(0);}
 
-    /* MAIN */
-    .tm-wrapper { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  /* ─── SHARE MODAL ──────────────────── */
+  .share-modal-overlay{
+    position:fixed; inset:0; background:rgba(13,15,26,.55);
+    display:none; align-items:center; justify-content:center;
+    padding:1.5rem; z-index:1000; backdrop-filter:blur(2px);
+  }
+  .share-modal-overlay.active{display:flex;}
+  .share-modal{
+    background:#fff; border-radius:16px; max-width:420px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    overflow:hidden; animation:modal-pop .18s ease;
+  }
+  @keyframes modal-pop{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
+  .share-modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 1.25rem; border-bottom:1px solid var(--border-light);
+  }
+  .share-modal-head h3{margin:0; font-size:.95rem; font-weight:700; color:var(--ink);}
+  .share-modal-close{
+    background:transparent; border:0; color:var(--mid); font-size:1rem;
+    width:28px; height:28px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; transition:all .15s;
+  }
+  .share-modal-close:hover{background:var(--surface-soft); color:var(--ink);}
+  .share-modal-body{padding:1.25rem; display:flex; flex-direction:column; gap:1rem; align-items:center;}
+  .share-modal-body img{width:100%; border-radius:10px; border:1px solid var(--border-light); display:block;}
+  .share-modal-actions{display:flex; gap:.6rem; width:100%;}
+  .share-modal-actions button{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:.5rem;
+    padding:.7rem .9rem; border-radius:10px; font-weight:600; font-size:.82rem;
+    border:1px solid var(--border-light); background:#fff; color:var(--ink);
+    transition:all .18s;
+  }
+  .share-modal-actions button:hover{border-color:var(--sixers-blue); color:var(--sixers-blue);}
+  .share-modal-actions button.primary{background:var(--sixers-blue); border-color:var(--sixers-blue); color:#fff;}
+  .share-modal-actions button.primary:hover{background:var(--sixers-blue-dark); color:#fff;}
+  .share-modal-actions button.copied{background:var(--green); border-color:var(--green); color:#fff;}
+  .share-modal-loading{
+    display:flex; flex-direction:column; align-items:center; gap:.75rem;
+    padding:2.5rem 1rem; color:var(--mid); font-size:.85rem;
+  }
+  .share-modal-loading i{font-size:1.4rem; color:var(--sixers-blue);}
 
-    .section-label {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: .65rem; letter-spacing: .18em;
-      text-transform: uppercase; color: var(--mid);
-      display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem;
-    }
-    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+  /* ─── LAYOUT ──────────────────────── */
+  .wrap{max-width:1200px; margin:0 auto; padding:1.5rem 2rem 4rem;}
+  .section-label{
+    font-weight:500; font-size:.7rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--mid);
+    display:flex; align-items:center; gap:.7rem; margin:0 0 1rem;
+  }
+  .section-label .line{flex:1; height:1px; background:var(--border-light);}
 
-    /* Snapshot stat cards */
-    .snapshot-grid {
-      display: grid; gap: 1.5rem;
-      grid-template-columns: 1fr 1fr;
-      max-width: 720px; margin: 0 auto 1.5rem;
-    }
-    @media (max-width: 600px) { .snapshot-grid { grid-template-columns: 1fr; } }
-    .snapshot-card {
-      position: relative; background: #fff;
-      border: 1px solid #e6eaf2; border-radius: 14px;
-      padding: 1.5rem 1.25rem; text-align: center; overflow: hidden;
-      box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
-    }
-    .snapshot-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
-    }
-    .snapshot-label {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: .7rem; letter-spacing: .18em;
-      text-transform: uppercase; color: var(--mid); display: block; margin-bottom: .5rem;
-    }
-    .snapshot-value {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900; font-size: 3rem; color: var(--sixers-blue);
-      line-height: 1; display: block;
-    }
+  /* ─── METRIC CARDS ────────────────── */
+  .metric-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:.75rem; margin-bottom:2.5rem;
+  }
+  .metric{
+    background:var(--card-bg); border:1px solid var(--border-light);
+    border-radius:12px; padding:1.15rem 1.2rem 1.1rem;
+    position:relative; overflow:hidden;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    transition:all .2s;
+  }
+  .metric:hover{border-color:rgba(0,107,182,.25); box-shadow:0 6px 18px rgba(0,107,182,.08); transform:translateY(-1px);}
+  .metric::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--sixers-blue);
+    transform:scaleY(0); transform-origin:top; transition:transform .25s ease;
+  }
+  .metric:hover::before{transform:scaleY(1);}
+  .metric .k{
+    font-size:.58rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--mid); font-weight:600; display:block; margin-bottom:.5rem;
+  }
+  .metric .v{
+    font-weight:700; font-size:1.35rem; color:var(--ink);
+    letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1;
+    display:block;
+  }
+  .metric .sub{font-size:.65rem; color:var(--mid-2); font-weight:500; margin-top:.4rem; display:block;}
+  .metric.blue .v{color:var(--sixers-blue);}
+  .metric.pos .v{color:var(--green);}
 
-    /* Asset Intelligence */
-    .asset-intel {
-      background: #fff; border: 1px solid #e6eaf2; border-radius: 14px;
-      padding: 1.5rem 1.5rem 1.25rem; margin: 0 0 2rem;
-      box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
-      position: relative; overflow: hidden;
-    }
-    .asset-intel::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--sixers-red), #f97391 60%, var(--sixers-red));
-    }
-    .intel-header {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900; font-size: 1.05rem; letter-spacing: .08em;
-      text-transform: uppercase; color: var(--ink);
-      display: flex; align-items: center; gap: .55rem; margin: .25rem 0 1rem;
-    }
-    .intel-header i { color: var(--sixers-blue); }
-    .intel-grid {
-      display: grid; gap: 1.5rem;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    }
-    .intel-item strong {
-      display: block; color: var(--ink); margin-bottom: 4px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: .95rem; letter-spacing: .04em; text-transform: uppercase;
-    }
-    .intel-item p { margin: 0; color: var(--mid); font-size: .92rem; line-height: 1.6; }
+  /* ─── NOTE CARD ─────────────────── */
+  .note{
+    background:var(--surface-soft); border:1px solid var(--border-light);
+    border-left:3px solid var(--sixers-blue);
+    padding:1rem 1.2rem; border-radius:0 10px 10px 0;
+    color:var(--ink); font-size:.88rem; line-height:1.6;
+    margin-bottom:0;
+  }
+  .note strong{color:var(--sixers-blue);}
+  .note-grid{display:grid; gap:.75rem; grid-template-columns:1fr 1fr; margin-bottom:2rem;}
+  @media(max-width:600px){.note-grid{grid-template-columns:1fr;}}
 
-    /* Filter chips */
-    .controls {
-      display: flex; flex-wrap: wrap; gap: .55rem; align-items: center;
-      margin: 0 0 1.25rem;
-    }
-    .chip {
-      display: inline-flex; align-items: center; gap: .4rem;
-      padding: .55rem 1rem; border-radius: 999px;
-      border: 1px solid var(--border-light); background: #fff; color: var(--ink);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase;
-      cursor: pointer; transition: all .2s; user-select: none;
-    }
-    .chip:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); transform: translateY(-1px); }
-    .chip.active {
-      background: var(--sixers-blue); color: #fff; border-color: var(--sixers-blue);
-      box-shadow: 0 2px 10px rgba(0,107,182,.25);
-    }
-    .chip.active[data-filter="traded"] { background: var(--sixers-red); border-color: var(--sixers-red); box-shadow: 0 2px 10px rgba(237,23,76,.25); }
-    .chip.active[data-filter="swap"] { background: var(--navy); border-color: var(--navy); }
+  /* ─── TOOLBAR ─────────────────────── */
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:.6rem; align-items:center;
+    padding:.85rem 1rem; background:var(--card-bg);
+    border:1px solid var(--border-light); border-radius:12px;
+    margin-bottom:1.5rem; box-shadow:0 1px 2px rgba(0,0,0,.03);
+  }
+  .filters{display:flex; gap:.35rem; flex-wrap:wrap;}
+  .filter-btn{
+    font-weight:500; font-size:.78rem; padding:.5rem .95rem;
+    background:transparent; border:1px solid var(--border-light);
+    border-radius:999px; color:var(--mid); transition:all .18s;
+  }
+  .filter-btn:hover{border-color:var(--sixers-blue); color:var(--sixers-blue);}
+  .filter-btn.active{
+    background:var(--sixers-blue); border-color:var(--sixers-blue);
+    color:#fff; box-shadow:0 2px 8px rgba(0,107,182,.2);
+  }
 
-    /* Table card */
-    .table-card {
-      position: relative; background: #fff;
-      border: 1px solid #e6eaf2; border-radius: 14px;
-      padding: 1.25rem; overflow: hidden;
-      box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
-    }
-    .table-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
-    }
-    .table-responsive { overflow-x: auto; }
-    table.picks-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
-    .picks-table thead th {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: .68rem; letter-spacing: .14em;
-      text-transform: uppercase; color: var(--mid);
-      text-align: left; padding: .65rem .6rem;
-      border-bottom: 1px solid var(--border-light);
-      cursor: pointer; white-space: nowrap; position: relative;
-    }
-    .picks-table thead th:hover { color: var(--sixers-blue); }
-    .picks-table thead th.sorted-asc::after,
-    .picks-table thead th.sorted-desc::after {
-      content: ''; position: absolute; right: .35rem; top: 50%;
-      border: 4px solid transparent;
-    }
-    .picks-table thead th.sorted-asc::after { border-bottom-color: var(--sixers-blue); margin-top: -6px; }
-    .picks-table thead th.sorted-desc::after { border-top-color: var(--sixers-blue); margin-top: -2px; }
+  /* ─── PICKS TABLE ────────────────── */
+  .table-card{
+    background:var(--card-bg); border:1px solid var(--border-light);
+    border-radius:12px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    margin-bottom:1.5rem;
+  }
+  table.p-table{width:100%; border-collapse:collapse;}
+  .p-table th{
+    text-align:left; font-weight:500; font-size:.62rem;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--mid);
+    padding:.85rem 1.25rem; border-bottom:1px solid var(--border-light);
+    background:var(--surface-soft); cursor:pointer; white-space:nowrap; position:relative;
+  }
+  .p-table th:hover{color:var(--sixers-blue);}
+  .p-table th.sorted-asc::after,.p-table th.sorted-desc::after{
+    content:''; position:absolute; right:.5rem; top:50%;
+    border:4px solid transparent;
+  }
+  .p-table th.sorted-asc::after{border-bottom-color:var(--sixers-blue); margin-top:-6px;}
+  .p-table th.sorted-desc::after{border-top-color:var(--sixers-blue); margin-top:-2px;}
+  .p-table td{
+    padding:.95rem 1.25rem; border-bottom:1px solid var(--border-light);
+    font-size:.88rem; color:var(--ink); vertical-align:middle;
+  }
+  .p-table tbody tr:last-child td{border-bottom:0;}
+  .p-table tbody tr{transition:background .15s;}
+  .p-table tbody tr:hover td{background:var(--surface-soft);}
+  .p-table tbody tr.is-detail td{
+    background:#fafbfe; color:var(--mid); font-size:.85rem;
+    padding:.75rem 1.5rem; border-bottom:1px solid var(--border-light);
+    border-left:3px solid var(--sixers-blue);
+  }
 
-    .picks-table tbody td {
-      padding: .8rem .6rem; border-bottom: 1px solid #f1f3f8;
-      color: var(--ink); vertical-align: middle;
-    }
-    .picks-table tbody tr:hover td { background: #f9fbff; }
-    .picks-table tbody tr.is-detail td {
-      background: #fafbfe; color: var(--mid); font-size: .88rem;
-      padding: .75rem 1rem; border-bottom: 1px solid #f1f3f8;
-    }
+  .year-cell{font-weight:700; font-size:.95rem; color:var(--sixers-blue); font-variant-numeric:tabular-nums; letter-spacing:-.01em;}
+  .round-cell{font-weight:600; color:var(--ink);}
+  .from-cell{color:var(--mid); font-size:.85rem; font-weight:500;}
 
-    .year-tag {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900; font-size: 1.05rem; color: var(--sixers-blue);
-    }
-    .round { font-weight: 700; }
-    .from { color: var(--mid); font-weight: 600; font-size: .9rem; }
+  /* badges */
+  .badge{
+    display:inline-block; font-size:.58rem; letter-spacing:.08em;
+    font-weight:600; padding:3px 9px; border-radius:999px;
+    text-transform:uppercase; border:1px solid var(--border-light);
+    background:var(--surface-soft); color:var(--mid);
+  }
+  .badge.own{background:rgba(22,163,74,.1); color:var(--green); border-color:transparent;}
+  .badge.incoming{background:rgba(0,107,182,.1); color:var(--sixers-blue); border-color:transparent;}
+  .badge.swap{background:rgba(217,119,6,.12); color:var(--amber); border-color:transparent;}
+  .badge.conditional{background:rgba(99,102,241,.14); color:#4338ca; border-color:transparent;}
+  .badge.prot{background:rgba(217,119,6,.12); color:var(--amber); border-color:transparent;}
+  .badge.unprot{background:var(--surface-soft); color:var(--mid-2); border-color:transparent;}
+  .badge.fake{background:rgba(237,23,76,.08); color:var(--sixers-red); border-color:transparent;}
+  .badge.encumbered{background:rgba(99,102,241,.1); color:#4338ca; border-color:transparent;}
 
-    .badge {
-      display: inline-block; padding: 3px 9px; border-radius: 6px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
-      background: #f1f3f8; color: var(--mid); border: 1px solid transparent;
-    }
-    .b-own { background: rgba(22,163,74,.12); color: var(--green); }
-    .b-incoming { background: rgba(0,107,182,.12); color: var(--sixers-blue); }
-    .b-traded { background: rgba(220,38,38,.12); color: var(--red); }
-    .b-swap { background: rgba(245,158,11,.14); color: #b45309; }
-    .b-conditional { background: rgba(99,102,241,.14); color: #4338ca; }
-    .b-none { background: #f1f3f8; color: var(--mid); }
-    .b-prot { background: rgba(245,158,11,.12); color: #b45309; }
-    .b-unprot { background: #f1f3f8; color: var(--mid); }
+  .notes-btn{
+    appearance:none; border:1px solid var(--border-light);
+    background:#fff; color:var(--sixers-blue);
+    font-family:inherit; font-weight:600; font-size:.72rem; letter-spacing:.04em;
+    text-transform:uppercase; padding:.3rem .7rem; border-radius:999px; cursor:pointer; transition:all .15s;
+  }
+  .notes-btn:hover{background:var(--sixers-blue); color:#fff; border-color:var(--sixers-blue);}
 
-    .notes-btn {
-      appearance: none; border: 1px solid var(--border-light);
-      background: #fff; color: var(--sixers-blue);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
-      padding: .35rem .7rem; border-radius: 6px; cursor: pointer; transition: all .15s;
-    }
-    .notes-btn:hover { background: var(--sixers-blue); color: #fff; border-color: var(--sixers-blue); }
+  .footnote{margin-top:1rem; font-size:.8rem; color:var(--mid); line-height:1.65;}
 
-    .footnote {
-      margin-top: 1.25rem; font-size: .82rem; color: var(--mid);
-      text-align: center; line-height: 1.6;
-    }
+  @media(max-width:720px){
+    .p-table th:nth-child(4),.p-table td:nth-child(4){display:none;}
+    .p-table td,.p-table th{padding:.75rem .85rem;}
+    .wrap{padding:1rem 1.1rem 3rem;}
+  }
+  @media(max-width:480px){
+    .hero-inner{padding:2.8rem 1.25rem 2.4rem;}
+    .p-table th:nth-child(5),.p-table td:nth-child(5){display:none;}
+  }
 
-    /* Social export (offscreen) — matches standings social style */
-    .social-offscreen { position: fixed; left: -10000px; top: 0; pointer-events: none; }
-    .social-card { background: var(--cream); padding: 40px; font-family: 'Barlow', sans-serif; width: 1200px; }
-    .social-header { text-align: center; margin-bottom: 28px; }
-    .social-eyebrow {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 14px; font-weight: 800; letter-spacing: .22em;
-      color: var(--sixers-red); text-transform: uppercase;
-    }
-    .social-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 52px; font-weight: 900; color: var(--ink);
-      text-transform: uppercase; margin: 6px 0 4px; letter-spacing: -.01em;
-    }
-    .social-divider { width: 48px; height: 4px; background: var(--sixers-red); border-radius: 2px; margin: 10px auto; }
-    .social-date { font-size: 13px; color: var(--mid); letter-spacing: .05em; }
-
-    .social-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-    .social-stat {
-      background: #fff; border: 1px solid #e6eaf2; border-radius: 14px;
-      padding: 24px; text-align: center; position: relative; overflow: hidden;
-      box-shadow: 0 8px 28px -18px rgba(15,23,42,.18);
-    }
-    .social-stat::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
-    }
-    .social-stat-label {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px; font-weight: 800; letter-spacing: .18em;
-      color: var(--mid); text-transform: uppercase; margin-bottom: 8px;
-    }
-    .social-stat-value {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 56px; font-weight: 900; color: var(--sixers-blue); line-height: 1;
-    }
-
-    .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .social-conference {
-      background: #fff; border: 1px solid #e6eaf2; border-radius: 14px;
-      padding: 18px; position: relative; overflow: hidden;
-      box-shadow: 0 8px 28px -18px rgba(15,23,42,.18);
-    }
-    .social-conference::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
-    }
-    .social-conf-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 22px; font-weight: 900; text-transform: uppercase;
-      color: var(--ink); margin: 4px 0 12px;
-    }
-    .social-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .social-table thead th {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: 11px; letter-spacing: .14em;
-      text-transform: uppercase; color: var(--mid);
-      text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border-light);
-    }
-    .social-table tbody td {
-      padding: 8px 4px; border-bottom: 1px solid #f1f3f8;
-      font-variant-numeric: tabular-nums; color: var(--ink);
-    }
-    .social-year { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; color: var(--sixers-blue); }
-    .social-from { color: var(--mid); font-size: 12px; }
-    .social-badge {
-      display: inline-block; padding: 3px 8px; border-radius: 6px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
-    }
-    .social-badge.own { background: rgba(22,163,74,.14); color: var(--green); }
-    .social-badge.incoming { background: rgba(0,107,182,.14); color: var(--sixers-blue); }
-    .social-badge.swap { background: rgba(245,158,11,.16); color: #b45309; }
-    .social-badge.conditional { background: rgba(99,102,241,.16); color: #4338ca; }
-    .social-footer-note { margin-top: 18px; font-size: 12px; color: var(--mid); text-align: center; font-style: italic; }
-
-    /* Modal */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 50;
-      background: rgba(11,15,26,.78); align-items: center; justify-content: center; padding: 1rem;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-card { width: 100%; max-width: 768px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.4); }
-    .modal-head, .modal-foot {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-light);
-    }
-    .modal-foot { border-bottom: none; border-top: 1px solid var(--border-light); justify-content: flex-end; gap: .5rem; }
-    .modal-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900; font-size: 1.1rem; letter-spacing: .08em; text-transform: uppercase;
-    }
-    .modal-body { padding: 1rem; background: var(--cream); max-height: 70vh; overflow: auto; }
-    .modal-body img { width: 100%; display: block; border-radius: 8px; }
-    .btn-primary {
-      background: var(--sixers-blue); color: #fff; border: none;
-      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-      font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
-      padding: .6rem 1.3rem; border-radius: 8px; cursor: pointer; transition: all .2s;
-    }
-    .btn-primary:hover { background: #0080d4; transform: translateY(-1px); }
-    .btn-ghost {
-      background: #fff; color: var(--mid);
-      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-      font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
-      padding: .55rem 1.1rem; border-radius: 8px;
-      border: 1px solid var(--border-light); cursor: pointer; transition: all .2s;
-    }
-    .btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
-
-    @media (max-width: 760px) {
-      .picks-table thead th:nth-child(4),
-      .picks-table tbody td:nth-child(4) { display: none; }
-    }
-  </style>
+  /* ─── SOCIAL OFFSCREEN ─────────────── */
+  .social-offscreen{position:fixed; left:-10000px; top:0; pointer-events:none;}
+</style>
 </head>
 <body>
-  <!-- navbar auto-injected by nav.js -->
-  <script src="nav.js"></script>
+<script src="nav.js"></script>
 
-  <section class="page-hero">
-    <div class="hero-glow-blue"></div>
-    <div class="hero-glow-red"></div>
-    <div class="hero-inner">
-      <h1 class="hero-title-top">Future</h1>
-      <h2 class="hero-title-bottom">Draft Picks</h2>
-      <div class="hero-divider"></div>
-      <p class="hero-sub">Track every Sixers future draft asset—owned picks, incoming, swaps, and trades—with filters, sortable columns, and a share-ready export.</p>
-      <div class="hero-cta-row">
-        <button class="hero-btn-primary" id="downloadSocialImage">
-          <i class="fas fa-camera"></i> Export Social Image
-        </button>
-      </div>
-    </div>
-  </section>
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-title-top">FUTURE</p>
+    <p class="hero-title-bottom">DRAFT PICKS</p>
+  </div>
+</header>
 
-  <main class="tm-wrapper">
-    <div class="section-label">Tradable Capital</div>
-    <div class="snapshot-grid">
-      <div class="snapshot-card">
-        <span class="snapshot-label">Tradable Firsts</span>
-        <span class="snapshot-value">4</span>
-      </div>
-      <div class="snapshot-card">
-        <span class="snapshot-label">Tradable Seconds</span>
-        <span class="snapshot-value">11<span style="font-size:1.6rem;color:var(--sixers-red);">*</span></span>
-      </div>
-    </div>
+<main class="wrap">
 
-    <div class="asset-intel">
-      <div class="intel-header"><i class="fas fa-info-circle"></i> Asset Intel</div>
-      <div class="intel-grid">
-        <div class="intel-item">
-          <strong>The "11*" Tradable Seconds</strong>
-          <p>Technically, the Sixers control 12 tradable second-round picks. However, the 2028 Detroit 2nd is Top-55 protected, meaning it only conveys if it's one of the last 5 picks in the draft—making it a "fake" asset that is highly unlikely to ever be used.</p>
-        </div>
-        <div class="intel-item">
-          <strong>The 2029 Swap</strong>
-          <p>The 2029 1st-round pick includes "Swap Best" rights with the LA Clippers. This is Top-3 Protected, allowing the Sixers to take the better of the two picks unless the Clippers land in the Top 3.</p>
-        </div>
-      </div>
-    </div>
+  <!-- ─── CAPITAL SNAPSHOT ─── -->
+  <div class="section-label"><span>Tradable Capital</span><span class="line"></span></div>
+  <div class="metric-grid">
+    <div class="metric blue"><span class="k">Tradable Firsts</span><span class="v">4</span><span class="sub">2028–2032 (excl. 2027 encumbered)</span></div>
+    <div class="metric pos"><span class="k">Tradable Seconds</span><span class="v">13<span style="font-size:.9rem;color:var(--sixers-red);">†</span></span><span class="sub">Incl. 1 fake (DET 31-55 prot.)</span></div>
+  </div>
 
-    <div class="section-label">All Picks</div>
+  <!-- ─── ASSET INTEL ─── -->
+  <div class="section-label"><span>Asset Intel</span><span class="line"></span></div>
+  <div class="note-grid">
+    <div class="note"><strong>The 2027 1st - Traded to Brooklyn</strong><br>Philadelphia's own 2027 1st-round pick is traded to the Brooklyn Nets, Top-8 Protected. If the pick falls in the Top 8, the Sixers retain it. If it does not convey in 2027, Brooklyn is owed the 2028 1st instead. If neither conveys, the 2028 pick remains Top-8 protected and converts into two second-round picks and $2 million in cash. Not trade-eligible.</div>
+    <div class="note"><strong>The 2029 Swap</strong><br>The 2029 1st-round pick includes "Swap Best" rights with the LA Clippers, Top-3 Protected. The Sixers take the better of the two picks unless the Clippers land in the Top 3.</div>
+    <div class="note"><strong>The 2028 PHI 2nd — Encumbered</strong><br>Philadelphia's own 2028 2nd is ineligible to be traded (encumbered to Brooklyn from the James Harden trade). It conveys but cannot be moved.</div>
+    <div class="note"><strong>The 2028 DET 2nd — Fake Asset</strong><br>The Detroit 2nd is 31-55 protected, meaning it only conveys as picks 56-60. With only 5 slots to convey, it is a near-certain non-conveyor and a functionally fake asset.</div>
+  </div>
 
-    <section class="controls" aria-label="Filters">
-      <button class="chip active" data-filter="own" aria-pressed="true">Owned</button>
-      <button class="chip" data-filter="swap" aria-pressed="false">Swap</button>
-      <button class="chip" data-filter="traded" aria-pressed="false">Traded</button>
-      <button class="chip" data-filter="firsts" aria-pressed="false">1st Round</button>
-      <button class="chip" data-filter="seconds" aria-pressed="false">2nd Round</button>
-      <button class="chip" data-filter="all" aria-pressed="false">All</button>
-    </section>
+  <!-- ─── ALL PICKS ─── -->
+  <div class="share-btn-row">
+    <button id="shareImgBtn" class="share-img-btn">
+      <i class="fas fa-camera"></i>
+      <span>Export Social Image</span>
+    </button>
+  </div>
 
-    <div class="table-card">
-      <div class="table-responsive">
-        <table class="picks-table" id="picksTable">
-          <thead>
-            <tr>
-              <th data-sort="year">Year</th>
-              <th data-sort="round">Round</th>
-              <th data-sort="type">Status</th>
-              <th data-sort="from">From / Owner</th>
-              <th data-sort="protection">Protection</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody id="picksBody"></tbody>
-        </table>
-      </div>
-    </div>
+  <div class="section-label"><span>All Picks</span><span class="line"></span></div>
 
-    <p class="footnote">
-      *2029 1st includes Swap Best rights vs. LAC (Top 3 Prot). 2028 PHI 2nd is untradable. 2028 DET 2nd is Top-55 protected and unlikely to convey.
-    </p>
-  </main>
-
-  <!-- Offscreen social export -->
-  <div class="social-offscreen">
-    <div id="social-export-container" class="social-card">
-      <div class="social-header">
-        <div class="social-eyebrow">Sixers Hoops</div>
-        <h1 class="social-title">Future Draft Capital</h1>
-        <div class="social-divider"></div>
-        <div class="social-date" id="social-date"></div>
-      </div>
-
-      <div class="social-summary">
-        <div class="social-stat">
-          <div class="social-stat-label">Tradable Firsts</div>
-          <div class="social-stat-value">4</div>
-        </div>
-        <div class="social-stat">
-          <div class="social-stat-label">Tradable Seconds</div>
-          <div class="social-stat-value">11*</div>
-        </div>
-      </div>
-
-      <div class="social-grid">
-        <div class="social-conference">
-          <h3 class="social-conf-title">1st Round Picks</h3>
-          <table class="social-table">
-            <thead><tr><th>Year</th><th>Status</th><th>Owner</th></tr></thead>
-            <tbody id="socialFirstsBody"></tbody>
-          </table>
-        </div>
-        <div class="social-conference">
-          <h3 class="social-conf-title">2nd Round Picks</h3>
-          <table class="social-table">
-            <thead><tr><th>Year</th><th>Status</th><th>Owner</th></tr></thead>
-            <tbody id="socialSecondsBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="social-footer-note">
-        *2029 1st includes Swap Best rights vs. LAC (Top 3 Prot). 2028 PHI 2nd is untradable. 2028 DET 2nd is Top-55 protected.
-      </div>
+  <div class="toolbar">
+    <div class="filters" role="group" aria-label="Filter picks">
+      <button class="filter-btn active" data-filter="own">All Owned</button>
+      <button class="filter-btn" data-filter="swap">Swap</button>
+      <button class="filter-btn" data-filter="firsts">1st Round</button>
+      <button class="filter-btn" data-filter="seconds">2nd Round</button>
+      <button class="filter-btn" data-filter="all">All</button>
     </div>
   </div>
 
-  <!-- Export Modal -->
-  <div class="modal-overlay" id="exportModal">
-    <div class="modal-card">
-      <div class="modal-head">
-        <div class="modal-title">Share Preview</div>
-        <button class="btn-ghost" id="modalCloseBtn">Close</button>
-      </div>
-      <div class="modal-body"><img id="exportPreview" alt="Draft picks preview" /></div>
-      <div class="modal-foot">
-        <button class="btn-ghost" id="modalCopyBtn">Copy to Clipboard</button>
-        <button class="btn-primary" id="modalDownloadBtn">Download PNG</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const PICKS = [
-        // 2026
-        { year: 2026, round: '1st', type: 'incoming', from: 'Via Houston', protection: 'Top-4 Protected', notes: 'Protected 1-4' },
-        { year: 2026, round: '1st', type: 'traded', from: 'OKC Thunder', protection: 'Top-4 protected to PHI', notes: 'Top-4: PHI keeps; 5-30 to OKC. If not conveyed in 2026, same in 2027. If still not conveyed in 2027, converts to 2027 2nd for OKC.' },
-        { year: 2026, round: '2nd', type: 'traded', from: "Philadelphia's own", protection: 'Traded away', notes: '' },
-        // 2027
-        { year: 2027, round: '1st', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        { year: 2027, round: '2nd', type: 'incoming', from: 'Most favorable of OKC/HOU/IND/MIA', protection: 'Incoming asset', notes: '' },
-        { year: 2027, round: '2nd', type: 'incoming', from: 'More favorable of GSW/PHX', protection: 'Incoming asset', notes: '' },
-        { year: 2027, round: '2nd', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        // 2028
-        { year: 2028, round: '1st', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        { year: 2028, round: '1st', type: 'incoming', from: 'Via LA Clippers', protection: 'Unprotected', notes: '' },
-        { year: 2028, round: '2nd', type: 'incoming', from: 'Via Milwaukee', protection: 'Unprotected', notes: '' },
-        { year: 2028, round: '2nd', type: 'incoming', from: 'Via OKC Thunder', protection: 'Unprotected', notes: '' },
-        { year: 2028, round: '2nd', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: 'Ineligible to be traded due to James Harden trade to the Sixers' },
-        { year: 2028, round: '2nd', type: 'incoming', from: 'Via Golden State', protection: 'Unprotected', notes: '' },
-        { year: 2028, round: '2nd', type: 'conditional', from: 'Via Detroit', protection: 'Top-55 protected', notes: 'Conveys only if pick 56-60; otherwise expires.' },
-        // 2029
-        { year: 2029, round: '1st', type: 'swap', from: "Swap Best w/ LAC (Top 3 Prot)", protection: 'Top-3 Protected', notes: "Sixers hold the right to swap their 2029 1st-round pick with the Clippers (Top 3 Protected)." },
-        { year: 2029, round: '2nd', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        // 2030
-        { year: 2030, round: '1st', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        { year: 2030, round: '2nd', type: 'incoming', from: 'More favorable of POR/PHX', protection: 'Incoming asset', notes: '' },
-        { year: 2030, round: '2nd', type: 'incoming', from: 'Via Washington', protection: 'Unprotected', notes: '' },
-        // 2031
-        { year: 2031, round: '1st', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        { year: 2031, round: '2nd', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        // 2032
-        { year: 2032, round: '1st', type: 'own', from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
-        { year: 2032, round: '2nd', type: 'swap', from: "Swap Worst w/ Memphis", protection: 'Unprotected', notes: 'Sixers will receive the worse of their own 2032 2nd and the Memphis 2032 2nd.' }
-      ];
-
-      const typeToBadge = (t) => ({
-        own: 'b-own', incoming: 'b-incoming', traded: 'b-traded',
-        swap: 'b-swap', conditional: 'b-conditional', none: 'b-none'
-      }[t] || 'b-none');
-
-      const picksBody = document.getElementById('picksBody');
-      const chips = Array.from(document.querySelectorAll('.chip'));
-      const headers = Array.from(document.querySelectorAll('.picks-table thead th[data-sort]'));
-
-      let state = { filterType: 'own', sort: { key: 'year', dir: 'asc' } };
-
-      function render() {
-        let rows = PICKS.filter(p => {
-          const controllable = (p.type === 'own' || p.type === 'incoming' || p.type === 'swap' || p.type === 'conditional');
-          switch (state.filterType) {
-            case 'all': return true;
-            case 'own': return controllable;
-            case 'swap': return p.type === 'swap';
-            case 'traded': return p.type === 'traded';
-            case 'firsts': return p.round === '1st' && p.type !== 'traded';
-            case 'seconds': return p.round === '2nd' && p.type !== 'traded';
-            default: return true;
-          }
-        });
-
-        const { key, dir } = state.sort;
-        rows.sort((a, b) => {
-          let va = a[key], vb = b[key];
-          if (key === 'year') { va = +va; vb = +vb; }
-          else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
-          if (va < vb) return dir === 'asc' ? -1 : 1;
-          if (va > vb) return dir === 'asc' ? 1 : -1;
-          if (a.year !== b.year) return a.year - b.year;
-          return String(a.round).localeCompare(String(b.round));
-        });
-
-        picksBody.innerHTML = '';
-        rows.forEach(p => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><span class="year-tag">${p.year}</span></td>
-            <td class="round">${p.round}</td>
-            <td><span class="badge ${typeToBadge(p.type)}">${p.type}</span></td>
-            <td class="from">${p.from}</td>
-            <td>${p.protection ? `<span class="badge ${/unprotected/i.test(p.protection) ? 'b-unprot' : 'b-prot'}">${p.protection}</span>` : ''}</td>
-            <td>${p.notes ? `<button class="notes-btn" type="button">Notes</button>` : ''}</td>
-          `;
-          picksBody.appendChild(tr);
-          if (p.notes) {
-            const d = document.createElement('tr');
-            d.className = 'is-detail';
-            const td = document.createElement('td');
-            td.colSpan = 6; td.innerHTML = p.notes;
-            d.appendChild(td); d.style.display = 'none';
-            picksBody.appendChild(d);
-            const btn = tr.querySelector('.notes-btn');
-            btn.addEventListener('click', () => {
-              const open = d.style.display === 'table-row';
-              d.style.display = open ? 'none' : 'table-row';
-              btn.textContent = open ? 'Notes' : 'Hide';
-            });
-          }
-        });
-      }
-
-      chips.forEach(ch => {
-        ch.addEventListener('click', () => {
-          chips.forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
-          ch.classList.add('active');
-          ch.setAttribute('aria-pressed','true');
-          state.filterType = ch.dataset.filter;
-          render();
-        });
-      });
-
-      function updateSortIndicators() {
-        headers.forEach(h => h.classList.remove('sorted-asc','sorted-desc'));
-        const active = headers.find(h => h.dataset.sort === state.sort.key);
-        if (active) active.classList.add(state.sort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc');
-      }
-
-      headers.forEach(h => {
-        h.addEventListener('click', () => {
-          const key = h.dataset.sort;
-          if (state.sort.key === key) state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
-          else { state.sort.key = key; state.sort.dir = 'asc'; }
-          updateSortIndicators(); render();
-        });
-      });
-
-      updateSortIndicators();
-      render();
-
-      // Social export
-      const downloadBtn = document.getElementById('downloadSocialImage');
-      const exportContainer = document.getElementById('social-export-container');
-      const socialFirstsBody = document.getElementById('socialFirstsBody');
-      const socialSecondsBody = document.getElementById('socialSecondsBody');
-      const exportModal = document.getElementById('exportModal');
-      const exportPreview = document.getElementById('exportPreview');
-      const modalDownloadBtn = document.getElementById('modalDownloadBtn');
-      const modalCopyBtn = document.getElementById('modalCopyBtn');
-      const modalCloseBtn = document.getElementById('modalCloseBtn');
-      const dateEl = document.getElementById('social-date');
-      let currentCanvas = null;
-
-      downloadBtn.addEventListener('click', function() {
-        downloadBtn.disabled = true;
-        const orig = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-
-        if (dateEl) dateEl.textContent = "Updated " + new Date().toLocaleDateString();
-
-        const owned = PICKS.filter(p => p.type !== 'traded' && p.type !== 'none');
-        const firsts = owned.filter(p => p.round === '1st');
-        const seconds = owned.filter(p => p.round === '2nd');
-
-        const rowHtml = (p) => `
+  <div class="table-card">
+    <div style="overflow-x:auto;">
+      <table class="p-table" id="picksTable">
+        <thead>
           <tr>
-            <td class="social-year">${p.year}</td>
-            <td><span class="social-badge ${p.type}">${p.type}</span></td>
-            <td class="social-from">${p.from}</td>
-          </tr>`;
-        socialFirstsBody.innerHTML = firsts.map(rowHtml).join('');
-        socialSecondsBody.innerHTML = seconds.map(rowHtml).join('');
+            <th data-sort="year">Year</th>
+            <th data-sort="round">Round</th>
+            <th data-sort="type">Status</th>
+            <th data-sort="from">From / Owner</th>
+            <th data-sort="protection">Protection</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="picksBody"></tbody>
+      </table>
+    </div>
+  </div>
 
-        html2canvas(exportContainer, { scale: 2, useCORS: true, backgroundColor: '#f7f8fc' })
-          .then(canvas => {
-            currentCanvas = canvas;
-            exportPreview.src = canvas.toDataURL('image/png');
-            exportModal.classList.add('open');
-            downloadBtn.disabled = false;
-            downloadBtn.innerHTML = orig;
-          })
-          .catch(err => {
-            console.error('Export failed:', err);
-            downloadBtn.disabled = false;
-            downloadBtn.innerHTML = orig;
-          });
-      });
+  <p class="footnote">† 2027 PHI 1st is traded to Brooklyn (Top-8 protected) and not trade-eligible. If it does not convey, the 2028 PHI 1st is owed to Brooklyn under the same terms. 2028 PHI 2nd is encumbered (not tradable). 2028 DET 2nd is 31-55 protected, conveys only as picks 56-60. 2029 1st includes Swap Best rights vs. LAC (Top-3 Protected). 2032 2nd is the lesser of PHI/MEM.</p>
 
-      modalDownloadBtn.addEventListener('click', () => {
-        if (!currentCanvas) return;
-        const link = document.createElement('a');
-        link.download = '76ers-future-draft-picks.png';
-        link.href = currentCanvas.toDataURL('image/png');
-        link.click();
-      });
+</main>
 
-      modalCopyBtn.addEventListener('click', () => {
-        if (!currentCanvas) return;
-        currentCanvas.toBlob(blob => {
-          const item = new ClipboardItem({ 'image/png': blob });
-          navigator.clipboard.write([item]).then(() => {
-            const o = modalCopyBtn.innerHTML;
-            modalCopyBtn.innerHTML = 'Copied!';
-            setTimeout(() => modalCopyBtn.innerHTML = o, 2000);
-          });
-        });
-      });
+<!-- ─── SHARE IMAGE MODAL ─── -->
+<div class="share-modal-overlay" id="shareModalOverlay">
+  <div class="share-modal">
+    <div class="share-modal-head">
+      <h3>Share Draft Capital</h3>
+      <button class="share-modal-close" id="shareModalClose" aria-label="Close">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+    <div class="share-modal-body" id="shareModalBody">
+      <div class="share-modal-loading">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <span>Generating image…</span>
+      </div>
+    </div>
+  </div>
+</div>
 
-      modalCloseBtn.addEventListener('click', () => exportModal.classList.remove('open'));
-      window.addEventListener('click', (e) => { if (e.target === exportModal) exportModal.classList.remove('open'); });
+<!-- Offscreen social export — all white, no red accents -->
+<div class="social-offscreen" id="social-export-container" style="width:1200px; background:#ffffff; padding:48px 48px 36px; font-family:'Lexend',sans-serif;">
+
+  <!-- Header -->
+  <div style="text-align:center; margin-bottom:32px;">
+    <div style="font-size:22px; font-weight:800; letter-spacing:.18em; color:#006BB6; text-transform:uppercase; margin-bottom:6px;">SixersHoops</div>
+    <div style="font-size:46px; font-weight:800; color:#0d0f1a; letter-spacing:-.03em; line-height:1; margin-bottom:14px;">Future Draft Capital</div>
+    <div id="social-date" style="font-size:12px; color:#64748b; letter-spacing:.06em;"></div>
+  </div>
+
+  <!-- Summary stats -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+    <div style="background:#f6f8fc; border:1px solid #e4e8f0; border-radius:12px; padding:18px; text-align:center;">
+      <div style="font-size:10px; font-weight:600; letter-spacing:.14em; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Tradeable 1st Round Picks</div>
+      <div style="font-size:48px; font-weight:800; color:#006BB6; line-height:1;">4</div>
+    </div>
+    <div style="background:#f6f8fc; border:1px solid #e4e8f0; border-radius:12px; padding:18px; text-align:center;">
+      <div style="font-size:10px; font-weight:600; letter-spacing:.14em; color:#64748b; text-transform:uppercase; margin-bottom:8px;">2nd Round Picks</div>
+      <div style="font-size:48px; font-weight:800; color:#16a34a; line-height:1;">13</div>
+    </div>
+  </div>
+
+  <!-- Pick tables -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+    <div style="background:#f6f8fc; border:1px solid #e4e8f0; border-radius:12px; padding:16px;">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#0d0f1a; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #e4e8f0;">1st Round Picks</div>
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead><tr>
+          <th style="text-align:left; font-weight:600; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; padding:3px 4px 6px;">Year</th>
+          <th style="text-align:left; font-weight:600; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; padding:3px 4px 6px;">Pick</th>
+          <th style="text-align:left; font-weight:600; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; padding:3px 4px 6px;">Protection</th>
+        </tr></thead>
+        <tbody id="socialFirstsBody"></tbody>
+      </table>
+    </div>
+    <div style="background:#f6f8fc; border:1px solid #e4e8f0; border-radius:12px; padding:16px;">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#0d0f1a; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #e4e8f0;">2nd Round Picks</div>
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead><tr>
+          <th style="text-align:left; font-weight:600; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; padding:3px 4px 6px;">Year</th>
+          <th style="text-align:left; font-weight:600; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; padding:3px 4px 6px;">Pick</th>
+          <th style="text-align:left; font-weight:600; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; padding:3px 4px 6px;">Note</th>
+        </tr></thead>
+        <tbody id="socialSecondsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer URL -->
+  <div style="text-align:center; padding-top:16px; border-top:1px solid #e4e8f0;">
+    <div style="font-size:13px; font-weight:600; color:#006BB6; letter-spacing:.02em;">sixershoops.com/future-draft-picks</div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ── PICKS DATA ─────────────────────────────────────────────────────
+  // Verified against: 7 firsts (2027–2033), 13 seconds (2027–2033)
+  const PICKS = [
+    // ── 2027 FIRSTS ──
+    { year: 2027, round: '1st', type: 'traded', tradable: false, from: "Philadelphia's own (owed to BKN)", protection: 'Top-8 Protected', notes: 'Traded to Brooklyn Nets, Top-8 Protected. If the pick lands Top 8, Philadelphia retains it and it does not convey to Brooklyn. Not trade-eligible.' },
+    { year: 2028, round: '1st', type: 'own', tradable: false, from: "Philadelphia's own", protection: 'Unprotected', notes: 'Owed to Brooklyn Nets if the 2027 1st does not convey. If neither the 2027 nor the 2028 1st conveys, the 2028 pick remains Top-8 protected and will convert into two second-round picks and $2 million in cash.' },
+    // ── 2027 SECONDS ──
+    { year: 2027, round: '2nd', type: 'own', tradable: true,  from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    { year: 2027, round: '2nd', type: 'incoming', tradable: true, from: 'Most favorable of OKC/HOU/IND/MIA', protection: 'Unprotected', notes: '' },
+    { year: 2027, round: '2nd', type: 'incoming', tradable: true, from: 'More favorable of GSW/PHO', protection: 'Unprotected', notes: '' },
+    // ── 2028 FIRSTS ──
+    { year: 2028, round: '1st', type: 'incoming', tradable: true, from: 'Via LA Clippers', protection: 'Unprotected', notes: '' },
+    // ── 2028 SECONDS ──
+    { year: 2028, round: '2nd', type: 'own', tradable: false, from: "Philadelphia's own", protection: 'Unprotected', notes: 'Encumbered — ineligible to trade (James Harden trade).' },
+    { year: 2028, round: '2nd', type: 'conditional', tradable: true, from: 'Via Detroit', protection: '31-55 Protected', notes: 'Conveys only as picks 56-60. Highly unlikely to convey — functionally a fake asset.' },
+    { year: 2028, round: '2nd', type: 'incoming', tradable: true, from: 'Via Golden State', protection: 'Unprotected', notes: '' },
+    { year: 2028, round: '2nd', type: 'incoming', tradable: true, from: 'Via OKC Thunder', protection: 'Unprotected', notes: '' },
+    { year: 2028, round: '2nd', type: 'incoming', tradable: true, from: 'Via Milwaukee', protection: 'Unprotected', notes: '' },
+    // ── 2029 FIRSTS ──
+    { year: 2029, round: '1st', type: 'swap', tradable: true, from: 'Swap Best w/ LAC (Top-3 Prot.)', protection: 'Top-3 Protected', notes: 'Sixers hold the right to swap their 2029 1st with the Clippers. Top-3 Protected — if Clippers land Top 3, Sixers keep their own pick.' },
+    // ── 2029 SECONDS ──
+    { year: 2029, round: '2nd', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    // ── 2030 FIRSTS ──
+    { year: 2030, round: '1st', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    // ── 2030 SECONDS ──
+    { year: 2030, round: '2nd', type: 'incoming', tradable: true, from: 'More favorable of PHO/POR', protection: 'Unprotected', notes: '' },
+    { year: 2030, round: '2nd', type: 'incoming', tradable: true, from: 'Via Washington', protection: 'Unprotected', notes: '' },
+    // ── 2031 FIRSTS ──
+    { year: 2031, round: '1st', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    // ── 2031 SECONDS ──
+    { year: 2031, round: '2nd', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    // ── 2032 FIRSTS ──
+    { year: 2032, round: '1st', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    // ── 2032 SECONDS ──
+    { year: 2032, round: '2nd', type: 'swap', tradable: true, from: 'Lesser of Own/MEM', protection: 'Unprotected', notes: 'Sixers receive the worse of their own 2032 2nd and the Memphis 2032 2nd.' },
+    // ── 2033 FIRSTS ──
+    { year: 2033, round: '1st', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    // ── 2033 SECONDS ──
+    { year: 2033, round: '2nd', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+  ];
+
+  const picksBody = document.getElementById('picksBody');
+  const filterBtns = Array.from(document.querySelectorAll('.filter-btn'));
+  const headers = Array.from(document.querySelectorAll('.p-table thead th[data-sort]'));
+
+  let state = { filterType: 'own', sort: { key: 'year', dir: 'asc' } };
+
+  function badgeClass(type) {
+    return { own:'own', incoming:'incoming', swap:'swap', conditional:'conditional' }[type] || '';
+  }
+
+  function render() {
+    let rows = PICKS.filter(p => {
+      switch (state.filterType) {
+        case 'all': return true;
+        case 'own': return true; // show all (owned = all controlled)
+        case 'swap': return p.type === 'swap';
+        case 'firsts': return p.round === '1st';
+        case 'seconds': return p.round === '2nd';
+        default: return true;
+      }
     });
-  </script>
+
+    const { key, dir } = state.sort;
+    rows.sort((a, b) => {
+      let va = a[key], vb = b[key];
+      if (key === 'year') { va = +va; vb = +vb; }
+      else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+      if (va < vb) return dir === 'asc' ? -1 : 1;
+      if (va > vb) return dir === 'asc' ? 1 : -1;
+      if (a.year !== b.year) return a.year - b.year;
+      return String(a.round).localeCompare(String(b.round));
+    });
+
+    picksBody.innerHTML = '';
+    rows.forEach(p => {
+      const isUnprot = /unprotected/i.test(p.protection);
+      const protClass = isUnprot ? 'unprot' : 'prot';
+
+      // trade eligibility badge
+      let tradeBadge = '';
+      if (!p.tradable) {
+        tradeBadge = `<span class="badge encumbered" style="margin-left:.4rem;">Not Tradable</span>`;
+      } else if (p.type === 'conditional') {
+        tradeBadge = `<span class="badge fake" style="margin-left:.4rem;">Fake</span>`;
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="year-cell">${p.year}</td>
+        <td class="round-cell">${p.round}</td>
+        <td><span class="badge ${badgeClass(p.type)}">${p.type}</span></td>
+        <td class="from-cell">${p.from}${tradeBadge}</td>
+        <td>${p.protection ? `<span class="badge ${protClass}">${p.protection}</span>` : ''}</td>
+        <td>${p.notes ? `<button class="notes-btn" type="button">Notes</button>` : ''}</td>
+      `;
+      picksBody.appendChild(tr);
+      if (p.notes) {
+        const d = document.createElement('tr');
+        d.className = 'is-detail';
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.innerHTML = p.notes;
+        d.appendChild(td);
+        d.style.display = 'none';
+        picksBody.appendChild(d);
+        const btn = tr.querySelector('.notes-btn');
+        btn.addEventListener('click', () => {
+          const open = d.style.display === 'table-row';
+          d.style.display = open ? 'none' : 'table-row';
+          btn.textContent = open ? 'Notes' : 'Hide';
+        });
+      }
+    });
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.filterType = btn.dataset.filter;
+      render();
+    });
+  });
+
+  function updateSortIndicators() {
+    headers.forEach(h => h.classList.remove('sorted-asc','sorted-desc'));
+    const active = headers.find(h => h.dataset.sort === state.sort.key);
+    if (active) active.classList.add(state.sort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+  }
+
+  headers.forEach(h => {
+    h.addEventListener('click', () => {
+      const key = h.dataset.sort;
+      if (state.sort.key === key) state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+      else { state.sort.key = key; state.sort.dir = 'asc'; }
+      updateSortIndicators(); render();
+    });
+  });
+
+  updateSortIndicators();
+  render();
+
+  // ─── SHARE IMAGE ──────────────────────────────────────────────────
+  const shareBtn = document.getElementById('shareImgBtn');
+  const shareOverlay = document.getElementById('shareModalOverlay');
+  const shareModalClose = document.getElementById('shareModalClose');
+  const shareModalBody = document.getElementById('shareModalBody');
+  const exportContainer = document.getElementById('social-export-container');
+  const socialFirstsBody = document.getElementById('socialFirstsBody');
+  const socialSecondsBody = document.getElementById('socialSecondsBody');
+  const dateEl = document.getElementById('social-date');
+
+  function renderShareLoading() {
+    shareModalBody.innerHTML = `<div class="share-modal-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Generating image…</span></div>`;
+  }
+
+  function renderShareResult(blob) {
+    const url = URL.createObjectURL(blob);
+    shareModalBody.innerHTML = `
+      <img src="${url}" alt="Draft picks preview" style="width:100%; border-radius:10px; border:1px solid var(--border-light);">
+      <div class="share-modal-actions">
+        <button id="modalCopyBtn"><i class="fas fa-copy"></i> Copy</button>
+        <button class="primary" id="modalDownloadBtn"><i class="fas fa-download"></i> Download PNG</button>
+      </div>`;
+    document.getElementById('modalDownloadBtn').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.download = '76ers-future-draft-picks.png';
+      a.href = url; a.click();
+    });
+    document.getElementById('modalCopyBtn').addEventListener('click', () => {
+      const btn = document.getElementById('modalCopyBtn');
+      navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => {
+        btn.textContent = '✓ Copied!'; btn.classList.add('copied');
+        setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  }
+
+  function renderShareError() {
+    shareModalBody.innerHTML = `<p style="color:var(--red);text-align:center;padding:2rem;">Failed to generate image. Please try again.</p>`;
+  }
+
+  function closeShareModal() { shareOverlay.classList.remove('active'); }
+
+  if (shareBtn && shareOverlay) {
+    shareBtn.addEventListener('click', async () => {
+      shareOverlay.classList.add('active');
+      renderShareLoading();
+
+      if (dateEl) dateEl.textContent = 'Updated ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+      const firsts  = PICKS.filter(p => p.round === '1st').sort((a,b) => a.year - b.year);
+      const seconds = PICKS.filter(p => p.round === '2nd').sort((a,b) => a.year - b.year);
+
+      const firstRowHtml = (p) => `<tr>
+        <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; font-weight:700; color:#006BB6; font-variant-numeric:tabular-nums; font-size:12px;">${p.year}</td>
+        <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; color:#0d0f1a; font-size:11px;">${p.from}</td>
+        <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; color:#64748b; font-size:10px;">${/unprotected/i.test(p.protection) ? '—' : p.protection}</td>
+      </tr>`;
+
+      const secondRowHtml = (p) => {
+        let note = '';
+        if (!p.tradable) note = 'Encumbered';
+        else if (p.type === 'conditional') note = 'Fake';
+        else if (p.type === 'swap') note = 'Swap worst';
+        return `<tr>
+          <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; font-weight:700; color:#006BB6; font-variant-numeric:tabular-nums; font-size:12px;">${p.year}</td>
+          <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; color:#0d0f1a; font-size:11px;">${p.from}</td>
+          <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; color:#64748b; font-size:10px;">${note}</td>
+        </tr>`;
+      };
+
+      socialFirstsBody.innerHTML = firsts.map(firstRowHtml).join('');
+      socialSecondsBody.innerHTML = seconds.map(secondRowHtml).join('');
+
+      try {
+        const canvas = await html2canvas(exportContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        canvas.toBlob((blob) => {
+          if (!blob) { renderShareError(); return; }
+          renderShareResult(blob);
+        }, 'image/png');
+      } catch(err) {
+        console.error('Export failed:', err);
+        renderShareError();
+      }
+    });
+
+    shareModalClose.addEventListener('click', closeShareModal);
+    shareOverlay.addEventListener('click', (e) => { if (e.target === shareOverlay) closeShareModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && shareOverlay.classList.contains('active')) closeShareModal(); });
+  }
+});
+</script>
 </body>
 </html>
