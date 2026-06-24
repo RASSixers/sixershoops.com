@@ -134,10 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span></span>
                 <span></span>
             </button>
-            <a href="/" class="nav-brand">
-                <img src="/favicon.png" alt="Sixers Hoops" class="nav-logo">
-                <span class="brand-name">SixersHoops</span>
-            </a>
+            <a href="/" class="nav-brand"></a>
         </div>
 
         <ul class="nav-menu">
@@ -427,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="footer-content">
             <div class="footer-section">
                 <a href="/" class="footer-brand">
-                    <span class="footer-brand-name">SIXERS HOOPS</span>
+
                 </a>
                 <span class="footer-brand-accent"></span>
                 <p class="footer-tagline">Independent Philadelphia 76ers analysis, advanced stats, and draft tools — built for fans who want the full picture.</p>
