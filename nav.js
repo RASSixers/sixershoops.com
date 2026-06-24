@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(link);
     }
 
-    // Add Google Fonts if not present (Lexend — matches homepage)
+    // Add Google Fonts if not present (Lexend matches homepage)
     if (!document.getElementById('nav-google-fonts')) {
         const preconnect1 = document.createElement('link');
         preconnect1.rel = 'preconnect';
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 </a>
                 <span class="footer-brand-accent"></span>
-                <p class="footer-tagline">Independent Philadelphia 76ers analysis, advanced stats, and draft tools — built for fans who want the full picture.</p>
+                <p class="footer-tagline">Independent Philadelphia 76ers analysis, advanced stats, and draft tools built for fans who want the full picture.</p>
             </div>
 
             <div class="footer-section">
@@ -1280,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Theme Toggle — query icons AFTER navbar is injected so elements exist
+    // Theme Toggle query icons AFTER navbar is injected so elements exist
     const themeToggle = document.getElementById('themeToggle');
     const htmlElement = document.documentElement;
 
