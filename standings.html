@@ -189,12 +189,12 @@ table.standings-table { width: 100%; border-collapse: collapse; font-size: 0.875
 
 /* ── OFFSCREEN SOCIAL EXPORT ── */
 .social-offscreen { position: fixed; left: -10000px; top: 0; pointer-events: none; }
-.social-card { background: #f7f8fc; padding: 40px; font-family: 'Lexend', sans-serif; }
+.social-card { background: #f7f8fc; padding: 40px; font-family: 'Lexend', sans-serif; color: #0d0f1a; }
 .social-header { text-align: center; margin-bottom: 28px; }
 .social-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .18em; color: var(--sixers-red); text-transform: uppercase; }
-.social-title { font-size: 48px; font-weight: 700; color: var(--ink); margin: 6px 0 4px; letter-spacing: -0.03em; line-height: 1; }
+.social-title { font-size: 48px; font-weight: 700; color: #0d0f1a; margin: 6px 0 4px; letter-spacing: -0.03em; line-height: 1; }
 .social-divider { width: 40px; height: 3px; background: var(--sixers-red); border-radius: 2px; margin: 10px auto; }
-.social-date { font-size: 13px; color: var(--mid); letter-spacing: .04em; }
+.social-date { font-size: 13px; color: #64748b; letter-spacing: .04em; }
 .social-grid { display: grid; gap: 20px; }
 .social-conference {
   background: #fff; border: 1px solid #e6eaf2; border-radius: 14px;
@@ -202,22 +202,29 @@ table.standings-table { width: 100%; border-collapse: collapse; font-size: 0.875
 }
 .social-conference::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+  background: linear-gradient(90deg, #006BB6, #1e90d8 60%, #006BB6);
 }
-.social-conf-title { font-size: 20px; font-weight: 700; color: var(--ink); margin: 4px 0 12px; letter-spacing: -0.02em; }
-.social-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.social-conf-title { font-size: 20px; font-weight: 700; color: #0d0f1a; margin: 4px 0 12px; letter-spacing: -0.02em; }
+.social-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.social-table colgroup col.col-team { width: auto; }
+.social-table colgroup col.col-wl   { width: 54px; }
+.social-table colgroup col.col-pct  { width: 48px; }
+.social-table colgroup col.col-strk { width: 52px; }
 .social-table thead th {
   font-weight: 600; font-size: 10px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--mid);
-  text-align: right; padding: 5px 4px; border-bottom: 1px solid #e6eaf2;
+  text-transform: uppercase; color: #64748b;
+  text-align: right; padding: 6px 6px; border-bottom: 1px solid #e6eaf2;
+  white-space: nowrap;
 }
 .social-table thead th:first-child { text-align: left; }
-.social-table tbody td { padding: 7px 4px; border-bottom: 1px solid #f1f3f8; text-align: right; font-variant-numeric: tabular-nums; }
+.social-table tbody td { padding: 7px 6px; border-bottom: 1px solid #f1f3f8; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
 .social-table tbody td:first-child { text-align: left; font-weight: 500; }
 .social-table tbody tr.social-sixers-row td { background: rgba(0,107,182,.06); font-weight: 700; }
-.social-team { display: flex; align-items: center; gap: 7px; }
-.social-team-rank { display: inline-block; width: 20px; text-align: center; font-weight: 700; font-size: 11px; color: var(--mid); background: #f1f3f8; border-radius: 3px; padding: 2px 0; }
-.social-team-logo { width: 20px; height: 20px; object-fit: contain; }
+.social-team { display: table; width: 100%; border-collapse: separate; border-spacing: 6px 0; }
+.social-team-rank { display: table-cell; vertical-align: middle; width: 22px; text-align: center; font-weight: 700; font-size: 11px; color: #64748b; background: #f1f3f8; border-radius: 3px; padding: 2px 0; white-space: nowrap; }
+.social-team-logo { display: table-cell; vertical-align: middle; width: 22px; }
+.social-team-logo img { width: 20px; height: 20px; object-fit: contain; display: block; }
+.social-team-name { display: table-cell; vertical-align: middle; font-weight: 500; font-size: 13px; color: #0d0f1a; white-space: nowrap; padding-left: 2px; }
 .social-streak-badge { display: inline-block; min-width: 34px; padding: 2px 7px; border-radius: 5px; font-weight: 700; font-size: 11px; background: #f1f3f8; color: var(--mid); }
 .social-streak-w { background: rgba(22,163,74,.12) !important; color: var(--green) !important; }
 .social-streak-l { background: rgba(220,38,38,.12) !important; color: var(--red) !important; }
@@ -274,10 +281,6 @@ table.standings-table { width: 100%; border-collapse: collapse; font-size: 0.875
 
 <section class="page-hero">
   <div class="hero-inner">
-    <div class="hero-eyebrow">
-      <span class="hero-eyebrow-dot"></span>
-      <span class="hero-eyebrow-text">Live · Auto-refreshing</span>
-    </div>
     <h1 class="hero-title">NBA <span>STANDINGS</span></h1>
     <div class="hero-cta-row">
       <button class="hero-btn hero-btn-primary" data-export-mode="east">Export East</button>
@@ -351,7 +354,7 @@ async function getNBAStandings() {
       html += '<div class="tm-board"><h2 class="conference-title">' + conf.name + '</h2><div class="table-responsive"><table class="standings-table"><thead><tr><th>Team</th><th>W</th><th>L</th><th>PCT</th><th>GB</th><th>L10</th><th>STRK</th></tr></thead><tbody>';
 
       const confKey = conf.name.toLowerCase().includes("east") ? "east" : "west";
-      socialHtml += '<div class="social-conference" data-conf="' + confKey + '"><h3 class="social-conf-title">' + conf.name + '</h3><table class="social-table"><thead><tr><th>Team</th><th>W-L</th><th>PCT</th><th>STRK</th></tr></thead><tbody>';
+      socialHtml += '<div class="social-conference" data-conf="' + confKey + '"><h3 class="social-conf-title">' + conf.name + '</h3><table class="social-table"><colgroup><col class="col-team"><col class="col-wl"><col class="col-pct"><col class="col-strk"></colgroup><thead><tr><th>Team</th><th>W-L</th><th>PCT</th><th>STRK</th></tr></thead><tbody>';
 
       entries.forEach((t, idx) => {
         const stats = {};
@@ -376,9 +379,11 @@ async function getNBAStandings() {
           + '<td><span class="status-badge ' + sCls + '">' + streak + '</span></td></tr>';
 
         socialHtml += '<tr class="' + (isSixers ? "social-sixers-row" : "") + '">'
-          + '<td><div class="social-team"><span class="social-team-rank">' + (idx+1) + '</span>'
-          + (logo ? '<img class="social-team-logo" src="' + logo + '" alt="" crossorigin="anonymous" />' : '')
-          + '<span>' + t.team.displayName + '</span></div></td>'
+          + '<td><div class="social-team">'
+          + '<span class="social-team-rank">' + (idx+1) + '</span>'
+          + '<span class="social-team-logo">' + (logo ? '<img src="' + logo + '" alt="" width="20" height="20" crossorigin="anonymous" />' : '') + '</span>'
+          + '<span class="social-team-name">' + t.team.displayName + '</span>'
+          + '</div></td>'
           + '<td>' + wins + '-' + losses + '</td>'
           + '<td style="font-weight:700">' + pct + '</td>'
           + '<td><span class="social-streak-badge ' + sSocial + '">' + streak + '</span></td></tr>';
