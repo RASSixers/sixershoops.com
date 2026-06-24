@@ -681,24 +681,249 @@ function renderShareResult(blob){
   });
 }
 
+function buildShareCanvas(){
+  const season = '2026-27';
+  const cap = CAP[season];
+  const rows = SEASONS[season].rows;
+  const totalPayroll = rows.reduce((a,b)=>a+b.salary,0);
+
+  const W = 1080, PAD = 54;
+  const NAVY = '#001a57', BLUE = '#006BB6', RED = '#ED174C';
+  const WHITE = '#ffffff', CREAM = '#f6f8fc', INK = '#0d0f1a';
+  const MID = '#64748b', BORDER = '#e4e8f0', SOFT = '#f0f4fa';
+  const GREEN = '#16a34a', AMBER = '#d97706';
+
+  // STATUS badge colours
+  const BADGE = {
+    'guaranteed':   { bg:'rgba(0,107,182,0.13)', text:BLUE },
+    'player-option':{ bg:'rgba(217,119,6,0.13)',  text:AMBER },
+    'team-option':  { bg:'rgba(22,163,74,0.13)',  text:GREEN },
+    'non-guaranteed':{ bg:'rgba(237,23,76,0.12)', text:RED },
+  };
+
+  // ── measure height ──────────────────────────────────────────────
+  const ROW_H = 44, HEADER_H = 34;
+  const CAP_SECTION_H = 130; // NBA cap numbers block
+  const SNAP_SECTION_H = 130; // sixers snapshot block
+  const TABLE_H = HEADER_H + rows.length * ROW_H + 52; // +total row
+  const FOOTER_H = 60;
+  const TITLE_H = 100;
+  const SECTION_GAP = 28;
+
+  const H = TITLE_H + SECTION_GAP + CAP_SECTION_H + SECTION_GAP + SNAP_SECTION_H + SECTION_GAP + TABLE_H + SECTION_GAP + FOOTER_H + PAD * 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // ── helpers ─────────────────────────────────────────────────────
+  function rect(x,y,w,h,r=0,fill=WHITE){
+    ctx.beginPath();
+    if(r){
+      ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+      ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+      ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+      ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+    } else { ctx.rect(x,y,w,h); }
+    ctx.closePath();
+    if(fill){ ctx.fillStyle=fill; ctx.fill(); }
+  }
+
+  function text(str,x,y,font,color,align='left'){
+    ctx.font=font; ctx.fillStyle=color; ctx.textAlign=align;
+    ctx.fillText(str,x,y);
+  }
+
+  function sectionLabel(label, y){
+    ctx.font='500 11px Lexend,sans-serif';
+    ctx.fillStyle=MID; ctx.textAlign='left';
+    ctx.fillText(label.toUpperCase(), PAD, y+12);
+    ctx.fillStyle=BORDER; ctx.fillRect(PAD + ctx.measureText(label.toUpperCase()).width + 10, y+7, W - PAD*2 - ctx.measureText(label.toUpperCase()).width - 10, 1);
+  }
+
+  function badge(label, x, y, status){
+    const cfg = BADGE[status] || { bg:SOFT, text:MID };
+    const fs = '600 9.5px Lexend,sans-serif';
+    ctx.font = fs;
+    const tw = ctx.measureText(label.toUpperCase()).width;
+    const bw = tw + 18, bh = 20;
+    rect(x - bw/2, y - bh/2, bw, bh, 10, cfg.bg);
+    text(label.toUpperCase(), x, y + 3.5, fs, cfg.text, 'center');
+  }
+
+  // ── BACKGROUND ──────────────────────────────────────────────────
+  rect(0,0,W,H,0,WHITE);
+
+  // dark top bar
+  rect(0,0,W,TITLE_H,0,NAVY);
+
+  // subtle diagonal stripe pattern on header
+  ctx.save();
+  ctx.globalAlpha=0.07;
+  ctx.strokeStyle=WHITE; ctx.lineWidth=18;
+  for(let i=-200;i<W+200;i+=60){
+    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+TITLE_H*1.5,TITLE_H); ctx.stroke();
+  }
+  ctx.restore();
+
+  // red accent line at bottom of header
+  rect(0, TITLE_H-4, W, 4, 0, RED);
+
+  // ── HEADER CONTENT ──────────────────────────────────────────────
+  // Logo / brand mark — simple pill
+  const pillW = 140, pillH = 30;
+  rect(PAD, 22, pillW, pillH, 15, 'rgba(255,255,255,0.12)');
+  text('SIXERSHOOPS', PAD + pillW/2, 22+20, '700 11px Lexend,sans-serif', WHITE, 'center');
+
+  // Title
+  text('2026-27 SALARY CAP', W/2, 42, '300 15px Lexend,sans-serif', 'rgba(255,255,255,0.65)', 'center');
+  text('PHILADELPHIA 76ERS', W/2, 74, '800 28px Lexend,sans-serif', WHITE, 'center');
+
+  let curY = TITLE_H + PAD;
+
+  // ── NBA CAP NUMBERS ─────────────────────────────────────────────
+  sectionLabel('Official 2026-27 NBA Cap Numbers', curY);
+  curY += 22;
+
+  const capCards = [
+    { k:'Salary Cap',    v:'$165,000,000' },
+    { k:'Luxury Tax',    v:'$200,474,000' },
+    { k:'First Apron',   v:'$209,063,000' },
+    { k:'Second Apron',  v:'$221,737,000' },
+  ];
+  const cw = (W - PAD*2 - 12*3) / 4;
+  capCards.forEach((c,i)=>{
+    const cx = PAD + i*(cw+12);
+    rect(cx, curY, cw, 80, 10, WHITE);
+    // left accent bar
+    rect(cx, curY, 3, 80, 0, BLUE);
+    // card shadow simulation
+    ctx.save(); ctx.globalAlpha=0.04;
+    rect(cx+2,curY+3,cw,80,10,INK);
+    ctx.restore();
+    text(c.k.toUpperCase(), cx+14, curY+22, '500 9px Lexend,sans-serif', MID, 'left');
+    text(c.v, cx+14, curY+54, '700 18px Lexend,sans-serif', INK, 'left');
+  });
+  curY += 80 + SECTION_GAP;
+
+  // ── SIXERS SNAPSHOT ─────────────────────────────────────────────
+  sectionLabel('Sixers Cap Snapshot', curY);
+  curY += 22;
+
+  const snapCards = [
+    { k:'Total Payroll',      v:'$186,152,322', color:BLUE },
+    { k:'Luxury Tax Room',    v:'$14,321,678',  color:GREEN },
+    { k:'Under First Apron',  v:'$22,910,678',  color:AMBER },
+    { k:'Under Second Apron', v:'$35,584,678',  color:BLUE },
+  ];
+  snapCards.forEach((c,i)=>{
+    const cx = PAD + i*(cw+12);
+    rect(cx, curY, cw, 80, 10, WHITE);
+    rect(cx, curY, 3, 80, 0, c.color);
+    text(c.k.toUpperCase(), cx+14, curY+22, '500 9px Lexend,sans-serif', MID, 'left');
+    text(c.v, cx+14, curY+54, '700 18px Lexend,sans-serif', c.color, 'left');
+  });
+  curY += 80 + SECTION_GAP;
+
+  // ── ROSTER PAYROLL TABLE ─────────────────────────────────────────
+  sectionLabel('2026-27 Roster Payroll', curY);
+  curY += 22;
+
+  const TW = W - PAD*2;
+  // table background card
+  rect(PAD, curY, TW, TABLE_H, 12, WHITE);
+
+  // Table header row
+  rect(PAD, curY, TW, HEADER_H, 0, SOFT);
+  // round top corners manually
+  rect(PAD, curY, TW, 12, 0, SOFT);
+
+  const cols = {
+    rk:  { x: PAD+18,        w: 36,  align:'left'  },
+    name:{ x: PAD+62,        w: 340, align:'left'  },
+    sal: { x: PAD+TW-220,    w: 160, align:'right' },
+    badge:{ x: PAD+TW-50,    w: 110, align:'center'},
+  };
+
+  // header labels
+  ctx.font='500 9px Lexend,sans-serif'; ctx.fillStyle=MID;
+  ctx.textAlign='left';  ctx.fillText('#',        cols.rk.x,   curY+22);
+  ctx.fillText('PLAYER', cols.name.x, curY+22);
+  ctx.textAlign='right'; ctx.fillText('SALARY',   cols.sal.x,  curY+22);
+  ctx.textAlign='center';ctx.fillText('STATUS',   PAD+TW-50,   curY+22);
+
+  curY += HEADER_H;
+
+  // divider
+  ctx.fillStyle=BORDER; ctx.fillRect(PAD, curY, TW, 1);
+
+  rows.forEach((r,i)=>{
+    const ry = curY + i*ROW_H;
+    // zebra
+    if(i%2===0) rect(PAD, ry, TW, ROW_H, 0, WHITE);
+    else         rect(PAD, ry, TW, ROW_H, 0, '#fafbfd');
+
+    // rank
+    text(String(r.rk).padStart(2,'0'), cols.rk.x, ry+ROW_H/2+5, '500 11px Lexend,sans-serif', '#94a3b8', 'left');
+
+    // name
+    text(r.name, cols.name.x, ry+ROW_H/2+2, '600 13px Lexend,sans-serif', INK, 'left');
+    // position pill
+    const ppW = 28; const ppX = cols.name.x + ctx.measureText(r.name).width + 8;
+    rect(ppX, ry+ROW_H/2-9, ppW+2, 18, 9, SOFT);
+    ctx.font='600 8px Lexend,sans-serif'; ctx.fillStyle=MID; ctx.textAlign='center';
+    ctx.fillText(r.pos, ppX+ppW/2+1, ry+ROW_H/2+4);
+
+    // salary
+    text(fmt$(r.salary), cols.sal.x, ry+ROW_H/2+5, '600 13px Lexend,sans-serif', BLUE, 'right');
+
+    // status badge
+    const sl = (STATUS_LABEL[r.status]||r.status);
+    badge(sl, PAD+TW-50, ry+ROW_H/2, r.status);
+
+    // row divider
+    ctx.fillStyle=BORDER; ctx.fillRect(PAD, ry+ROW_H, TW, 1);
+  });
+
+  // total row
+  const ty = curY + rows.length*ROW_H;
+  rect(PAD, ty, TW, 52, 0, INK);
+  text('TOTAL PAYROLL', cols.name.x, ty+32, '700 12px Lexend,sans-serif', WHITE, 'left');
+  text(fmt$(totalPayroll), cols.sal.x, ty+32, '700 16px Lexend,sans-serif', WHITE, 'right');
+
+  // round bottom corners of table card
+  ctx.save();
+  ctx.beginPath();
+  const bry = ty+52; const br=12;
+  ctx.moveTo(PAD+br,bry-br); ctx.lineTo(PAD+TW-br,bry-br);
+  ctx.arcTo(PAD+TW,bry-br,PAD+TW,bry,br); ctx.lineTo(PAD+TW,bry);
+  ctx.lineTo(PAD,bry); ctx.lineTo(PAD,bry-br);
+  ctx.arcTo(PAD,bry-br,PAD+br,bry-br,br);
+  ctx.closePath(); ctx.fillStyle=INK; ctx.fill();
+  ctx.restore();
+
+  curY += TABLE_H + SECTION_GAP;
+
+  // ── FOOTER ──────────────────────────────────────────────────────
+  rect(0, curY, W, FOOTER_H, 0, NAVY);
+  // red accent top
+  rect(0, curY, W, 3, 0, RED);
+
+  text('SixersHoops', PAD, curY+FOOTER_H/2+6, '700 15px Lexend,sans-serif', WHITE, 'left');
+  text('sixershoops.com/salary', W-PAD, curY+FOOTER_H/2+6, '400 13px Lexend,sans-serif', 'rgba(255,255,255,0.55)', 'right');
+
+  return canvas;
+}
+
 if(shareBtn && shareOverlay){
   shareBtn.addEventListener('click', async () => {
-    const target = document.querySelector('main.wrap');
-    if(!target || typeof html2canvas === 'undefined') return;
-
     shareOverlay.classList.add('active');
     renderShareLoading();
-
     try{
-      const canvas = await html2canvas(target, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        windowWidth: 900,
-        scrollY: 0,
-        height: target.scrollHeight,
-        width: target.scrollWidth,
-      });
+      // Load Google Font before drawing
+      await document.fonts.load('700 28px Lexend');
+      await document.fonts.load('400 13px Lexend');
+      const canvas = buildShareCanvas();
       canvas.toBlob((blob) => {
         if(!blob){ renderShareError(); return; }
         renderShareResult(blob);
