@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="navbar-styles.css">
 <link rel="stylesheet" href="footer-styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
   :root{
@@ -49,36 +50,78 @@
     padding:5rem 2rem 4rem; display:flex; flex-direction:column;
     align-items:center; text-align:center;
   }
-  .hero-eyebrow{
-    display:inline-flex; align-items:center; gap:7px;
-    background:rgba(0,107,182,0.07);
-    border:1px solid rgba(0,107,182,0.18);
-    border-radius:999px; padding:5px 14px 5px 8px; margin-bottom:2rem;
-  }
-  .hero-eyebrow-dot{
-    width:6px; height:6px; border-radius:50%;
-    background:var(--sixers-red); animation:pulse-dot 2s ease-in-out infinite;
-  }
-  @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.75);}}
-  .hero-eyebrow-text{
-    font-size:.7rem; font-weight:500; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--sixers-blue);
-  }
   .hero-title-top,.hero-title-bottom{
     font-size:clamp(2.4rem,6vw,4.5rem); font-weight:700;
     line-height:.95; letter-spacing:-.03em; margin:0;
   }
   .hero-title-top{color:var(--ink);}
   .hero-title-bottom{color:var(--sixers-blue);}
-  .hero-sub{
-    font-size:.92rem; color:var(--mid); max-width:520px;
-    line-height:1.65; margin:1.25rem auto 0;
-  }
   .hero-stats-row{display:flex; gap:2.5rem; margin-top:2.5rem; justify-content:center; flex-wrap:wrap;}
   .hero-stat{display:flex; flex-direction:column; align-items:center; gap:.2rem;}
   .hero-stat .v{font-weight:700; font-size:1.6rem; color:var(--ink); letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
   .hero-stat .k{font-size:.65rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--mid);}
   .hero-stat-divider{width:1px; height:36px; background:var(--border-light); align-self:center;}
+
+  .share-btn-row{display:flex; justify-content:center; margin-bottom:1rem;}
+  .share-img-btn{
+    display:inline-flex; align-items:center; gap:.55rem;
+    padding:.65rem 1.3rem;
+    background:var(--sixers-blue); color:#fff; border:0;
+    border-radius:999px; font-weight:600; font-size:.82rem;
+    letter-spacing:-.005em; box-shadow:0 2px 10px rgba(0,107,182,.25);
+    transition:all .2s;
+  }
+  .share-img-btn:hover{background:var(--sixers-blue-dark); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,107,182,.3);}
+  .share-img-btn:active{transform:translateY(0);}
+  .share-img-btn.is-busy{opacity:.7; pointer-events:none;}
+
+  /* ─── SHARE MODAL ──────────────────── */
+  .share-modal-overlay{
+    position:fixed; inset:0; background:rgba(13,15,26,.55);
+    display:none; align-items:center; justify-content:center;
+    padding:1.5rem; z-index:1000; backdrop-filter:blur(2px);
+  }
+  .share-modal-overlay.active{display:flex;}
+  .share-modal{
+    background:#fff; border-radius:16px; max-width:420px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    overflow:hidden; animation:modal-pop .18s ease;
+  }
+  @keyframes modal-pop{from{opacity:0; transform:scale(.96);}to{opacity:1; transform:scale(1);}}
+  .share-modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 1.25rem; border-bottom:1px solid var(--border-light);
+  }
+  .share-modal-head h3{margin:0; font-size:.95rem; font-weight:700; color:var(--ink);}
+  .share-modal-close{
+    background:transparent; border:0; color:var(--mid); font-size:1rem;
+    width:28px; height:28px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; transition:all .15s;
+  }
+  .share-modal-close:hover{background:var(--surface-soft); color:var(--ink);}
+  .share-modal-body{padding:1.25rem; display:flex; flex-direction:column; gap:1rem; align-items:center;}
+  .share-modal-body img{
+    width:100%; border-radius:10px; border:1px solid var(--border-light);
+    display:block;
+  }
+  .share-modal-actions{display:flex; gap:.6rem; width:100%;}
+  .share-modal-actions button{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:.5rem;
+    padding:.7rem .9rem; border-radius:10px; font-weight:600; font-size:.82rem;
+    border:1px solid var(--border-light); background:#fff; color:var(--ink);
+    transition:all .18s;
+  }
+  .share-modal-actions button:hover{border-color:var(--sixers-blue); color:var(--sixers-blue);}
+  .share-modal-actions button.primary{
+    background:var(--sixers-blue); border-color:var(--sixers-blue); color:#fff;
+  }
+  .share-modal-actions button.primary:hover{background:var(--sixers-blue-dark); color:#fff;}
+  .share-modal-actions button.copied{background:var(--green); border-color:var(--green); color:#fff;}
+  .share-modal-loading{
+    display:flex; flex-direction:column; align-items:center; gap:.75rem;
+    padding:2.5rem 1rem; color:var(--mid); font-size:.85rem;
+  }
+  .share-modal-loading i{font-size:1.4rem; color:var(--sixers-blue);}
 
   /* ─── LAYOUT ──────────────────────── */
   .wrap{max-width:1200px; margin:0 auto; padding:1.5rem 2rem 4rem;}
@@ -303,20 +346,8 @@
 
 <header class="hero">
   <div class="hero-inner">
-    <div class="hero-eyebrow">
-      <span class="hero-eyebrow-dot"></span>
-      <span class="hero-eyebrow-text">Updated Weekly · 2026-27 Season</span>
-    </div>
     <p class="hero-title-top">SIXERS</p>
     <p class="hero-title-bottom">SALARY CAP</p>
-    <p class="hero-sub">Full payroll breakdown, cap snapshot, trade exceptions and multi-year contract projections for the Philadelphia 76ers.</p>
-    <div class="hero-stats-row">
-      <div class="hero-stat"><span class="v">$186.2M</span><span class="k">Total Payroll</span></div>
-      <div class="hero-stat-divider"></div>
-      <div class="hero-stat"><span class="v">$165M</span><span class="k">Salary Cap</span></div>
-      <div class="hero-stat-divider"></div>
-      <div class="hero-stat"><span class="v">$14.3M</span><span class="k">Under Tax</span></div>
-    </div>
   </div>
 </header>
 
@@ -339,7 +370,7 @@
     <span>Sixers Cap Snapshot</span>
     <span class="line"></span>
   </div>
-  <div class="metric-grid">
+  <div class="metric-grid" id="payrollCard">
     <div class="metric blue"><span class="k">Total Payroll</span><span class="v">$186,152,322</span></div>
     <div class="metric pos"><span class="k">Luxury Tax Room</span><span class="v">$14,321,678</span></div>
     <div class="metric warn"><span class="k">Under First Apron</span><span class="v">$22,910,678</span></div>
@@ -358,6 +389,11 @@
   </div>
 
   <!-- ─── PAYROLL BREAKDOWN ─── -->
+  <div class="share-btn-row">
+    <button id="shareImgBtn" class="share-img-btn">
+      <span>Share to Social Media</span>
+    </button>
+  </div>
   <div class="section-label">
     <span>Payroll Breakdown</span>
     <span class="line"></span>
@@ -389,6 +425,24 @@
   <div id="seasonHost"></div>
 
 </main>
+
+<!-- ─── SHARE IMAGE MODAL ─── -->
+<div class="share-modal-overlay" id="shareModalOverlay">
+  <div class="share-modal">
+    <div class="share-modal-head">
+      <h3>Share Payroll Snapshot</h3>
+      <button class="share-modal-close" id="shareModalClose" aria-label="Close">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+    <div class="share-modal-body" id="shareModalBody">
+      <div class="share-modal-loading">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <span>Generating image…</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 const CAP = {
@@ -517,7 +571,6 @@ function buildSeason(key){
         <span class="ttl">${key} Roster Payroll</span>
         <div class="meta-pills">
           <span class="meta-pill"><i class="fas fa-users"></i><span class="val">${s.rows.length}</span> Players</span>
-          <span class="meta-pill"><i class="fas fa-chart-line"></i>Cap <span class="val">${fmt$(cap)}</span></span>
         </div>
       </div>
       <table class="s-table">
@@ -563,6 +616,110 @@ $$('.filter-btn').forEach(b=>b.addEventListener('click',()=>{
   applyFilters();
 }));
 $('#q').addEventListener('input', e => { query = e.target.value.toLowerCase().trim(); applyFilters(); });
+
+// ─── SHARE / DOWNLOAD PAYROLL IMAGE (MODAL) ───
+const shareBtn = $('#shareImgBtn');
+const shareOverlay = $('#shareModalOverlay');
+const shareModalBody = $('#shareModalBody');
+const shareModalClose = $('#shareModalClose');
+let currentShareBlob = null;
+let currentShareUrl = null;
+
+function closeShareModal(){
+  shareOverlay.classList.remove('active');
+  if(currentShareUrl){ URL.revokeObjectURL(currentShareUrl); currentShareUrl = null; }
+  currentShareBlob = null;
+}
+
+function renderShareLoading(){
+  shareModalBody.innerHTML = `
+    <div class="share-modal-loading">
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <span>Generating image…</span>
+    </div>`;
+}
+
+function renderShareError(){
+  shareModalBody.innerHTML = `
+    <div class="share-modal-loading">
+      <i class="fas fa-triangle-exclamation"></i>
+      <span>Couldn't generate the image. Please try again.</span>
+    </div>`;
+}
+
+function renderShareResult(blob){
+  currentShareBlob = blob;
+  currentShareUrl = URL.createObjectURL(blob);
+  shareModalBody.innerHTML = `
+    <img src="${currentShareUrl}" alt="Sixers payroll snapshot" />
+    <div class="share-modal-actions">
+      <button id="copyImgBtn"><i class="fas fa-copy"></i><span>Copy Image</span></button>
+      <button id="downloadImgBtn" class="primary"><i class="fas fa-download"></i><span>Download</span></button>
+    </div>
+  `;
+
+  $('#downloadImgBtn').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = currentShareUrl;
+    a.download = 'sixers-payroll-2026-27.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  $('#copyImgBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    try{
+      if(!navigator.clipboard || !window.ClipboardItem){ throw new Error('Clipboard API unsupported'); }
+      await navigator.clipboard.write([
+        new ClipboardItem({ [currentShareBlob.type]: currentShareBlob })
+      ]);
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<i class="fas fa-copy"></i><span>Copy Image</span>';
+      }, 1800);
+    }catch(err){
+      console.error('Copy to clipboard failed', err);
+      btn.innerHTML = '<i class="fas fa-circle-exclamation"></i><span>Copy unsupported</span>';
+      setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i><span>Copy Image</span>'; }, 1800);
+    }
+  });
+}
+
+if(shareBtn && shareOverlay){
+  shareBtn.addEventListener('click', async () => {
+    const target = $('#payrollCard');
+    if(!target || typeof html2canvas === 'undefined') return;
+
+    shareOverlay.classList.add('active');
+    renderShareLoading();
+
+    try{
+      const canvas = await html2canvas(target, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true
+      });
+      canvas.toBlob((blob) => {
+        if(!blob){ renderShareError(); return; }
+        renderShareResult(blob);
+      }, 'image/png');
+    }catch(err){
+      console.error('Could not generate image', err);
+      renderShareError();
+    }
+  });
+
+  shareModalClose.addEventListener('click', closeShareModal);
+  shareOverlay.addEventListener('click', (e) => {
+    if(e.target === shareOverlay) closeShareModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && shareOverlay.classList.contains('active')) closeShareModal();
+  });
+}
 
 render();
 </script>
