@@ -6,304 +6,319 @@
 <title>NBA Standings — Sixers Hoops</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="navbar-styles.css">
 <style>
-  :root {
-    --navy: #001a57;
-    --navy-deep: #0b0f1a;
-    --sixers-blue: #006BB6;
-    --sixers-red: #ED174C;
-    --cream: #f7f8fc;
-    --ink: #0d0f1a;
-    --mid: #64748b;
-    --border-light: #e4e8f0;
-    --green: #16a34a;
-    --red: #dc2626;
-  }
-  *, *::before, *::after { box-sizing: border-box; }
-  body, html { font-family: 'Barlow', sans-serif; margin: 0; background: var(--cream); color: var(--ink); }
-  body { padding-top: 64px; }
+/* ── Variables — matches homepage/roster/depth chart ── */
+:root {
+  --navy: #001a57;
+  --navy-deep: #0b0f1a;
+  --sixers-blue: #006BB6;
+  --sixers-red: #ED174C;
+  --cream: #ffffff;
+  --ink: #0d0f1a;
+  --mid: #64748b;
+  --border-light: #e4e8f0;
+  --card-bg: #ffffff;
+  --green: #16a34a;
+  --red: #dc2626;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body, html {
+  font-family: 'Lexend', system-ui, -apple-system, sans-serif;
+  margin: 0; background: var(--cream); color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+body { padding-top: 64px; }
+@media (max-width: 480px) { body { padding-top: 60px; } }
 
-  /* HERO */
-  .page-hero { background: var(--cream); position: relative; overflow: hidden; }
-  .page-hero::before {
-    content: ''; position: absolute; inset: 0;
-    background-image: radial-gradient(circle, rgba(0,107,182,0.12) 1px, transparent 1px);
-    background-size: 28px 28px; opacity: .6; pointer-events: none; z-index: 0;
-  }
-  .hero-glow-blue {
-    position: absolute; right: -120px; top: -80px; width: 600px; height: 500px;
-    background: radial-gradient(ellipse at center, rgba(0,107,182,0.08) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
-  .hero-glow-red {
-    position: absolute; left: -60px; bottom: -40px; width: 400px; height: 300px;
-    background: radial-gradient(ellipse at center, rgba(237,23,76,0.05) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
-  .hero-inner {
-    position: relative; z-index: 1; max-width: 860px; margin: 0 auto;
-    padding: 4.5rem 2rem 3.5rem; display: flex; flex-direction: column;
-    align-items: center; text-align: center;
-  }
-  .hero-title-top, .hero-title-bottom {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(3.2rem, 8vw, 6rem); font-weight: 900;
-    line-height: .9; letter-spacing: -0.01em; text-transform: uppercase; margin: 0;
-  }
-  .hero-title-top { color: var(--ink); }
-  .hero-title-bottom { color: var(--sixers-blue); margin: 0 0 .2em; }
-  .hero-divider { width: 32px; height: 3px; background: var(--sixers-red); border-radius: 2px; margin: 1.4rem auto 1.2rem; }
-  .hero-sub { font-size: 1rem; color: var(--mid); max-width: 460px; line-height: 1.65; margin: 0 auto; }
-  .hero-cta-row { display: flex; align-items: center; gap: .7rem; margin-top: 2rem; flex-wrap: wrap; justify-content: center; }
+/* ── Dark mode ── */
+:root.dark-mode {
+  --cream: #0b0f1a;
+  --ink: #e8eaf0;
+  --mid: #8892a4;
+  --border-light: #1e2535;
+  --card-bg: #131929;
+}
+:root.dark-mode body { background: var(--cream); color: var(--ink); }
 
-  .hero-btn-primary, .hero-btn-secondary, .hero-btn-analyze {
-    display: inline-flex; align-items: center; gap: .45rem;
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-    font-size: .84rem; letter-spacing: .08em; text-transform: uppercase;
-    padding: .7rem 1.5rem; border-radius: 9px; cursor: pointer;
-    transition: all .2s; border: none;
-  }
-  .hero-btn-primary { background: var(--sixers-blue); color: #fff; box-shadow: 0 2px 12px rgba(0,107,182,.25); }
-  .hero-btn-primary:hover:not(:disabled) { background: #0057a0; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,107,182,.35); }
-  .hero-btn-secondary { background: transparent; color: var(--sixers-blue); border: 1px solid var(--sixers-blue); }
-  .hero-btn-secondary:hover:not(:disabled) { background: var(--sixers-blue); color: #fff; }
-  .hero-btn-analyze { background: var(--navy); color: #fff; box-shadow: 0 2px 12px rgba(0,26,87,.2); }
-  .hero-btn-analyze:hover:not(:disabled) { background: #001240; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,26,87,.3); }
-  .hero-btn-primary:disabled, .hero-btn-secondary:disabled, .hero-btn-analyze:disabled { opacity: .55; cursor: not-allowed; }
+/* ── HERO ── */
+.page-hero {
+  background: var(--cream);
+  border-bottom: 1px solid var(--border-light);
+  position: relative; overflow: hidden;
+}
+.hero-inner {
+  position: relative; z-index: 1;
+  max-width: 860px; margin: 0 auto;
+  padding: 4rem 2rem 3.5rem;
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(0,107,182,0.07);
+  border: 1px solid rgba(0,107,182,0.18);
+  border-radius: 999px; padding: 5px 14px 5px 10px;
+  margin-bottom: 1.4rem;
+}
+.hero-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sixers-red); flex-shrink: 0; }
+.hero-eyebrow-text { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sixers-blue); }
+:root.dark-mode .hero-eyebrow { background: rgba(0,107,182,0.12); border-color: rgba(0,107,182,0.25); }
+:root.dark-mode .hero-eyebrow-text { color: #4da8ff; }
 
-  /* MAIN */
-  .tm-wrapper { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.hero-title {
+  font-family: 'Lexend', sans-serif;
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  font-weight: 700; line-height: 0.95;
+  letter-spacing: -0.03em; color: var(--ink); margin: 0 0 0.1em;
+}
+.hero-title span { color: var(--sixers-blue); display: block; }
+:root.dark-mode .hero-title { color: #f0f2f8; }
+:root.dark-mode .hero-title span { color: #4da8ff; }
 
-  .section-label {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800; font-size: .65rem; letter-spacing: .18em;
-    text-transform: uppercase; color: var(--mid);
-    display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem;
-  }
-  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+.hero-sub {
+  font-size: 0.9rem; font-weight: 400; color: var(--mid);
+  max-width: 460px; line-height: 1.65; margin: 1.1rem auto 0;
+}
 
-  .standings-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
-  @media (min-width: 1024px) { .standings-grid { grid-template-columns: 1fr 1fr; } }
+/* Export button row */
+.hero-cta-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-top: 1.75rem; flex-wrap: wrap; justify-content: center;
+}
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-weight: 600; font-size: 0.8rem;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 0.6rem 1.3rem; border-radius: 8px; cursor: pointer;
+  transition: all 0.2s; border: none;
+}
+.hero-btn-primary { background: var(--sixers-blue); color: #fff; box-shadow: 0 2px 10px rgba(0,107,182,.2); }
+.hero-btn-primary:hover:not(:disabled) { background: #0057a0; transform: translateY(-1px); }
+.hero-btn-secondary { background: var(--card-bg); color: var(--sixers-blue); border: 1px solid rgba(0,107,182,0.35); }
+.hero-btn-secondary:hover:not(:disabled) { background: var(--sixers-blue); color: #fff; }
+.hero-btn-navy { background: var(--navy); color: #fff; box-shadow: 0 2px 10px rgba(0,26,87,.18); }
+.hero-btn-navy:hover:not(:disabled) { background: #001240; transform: translateY(-1px); }
+.hero-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+:root.dark-mode .hero-btn-secondary { background: var(--card-bg); border-color: rgba(0,107,182,0.4); }
 
-  .tm-board {
-    position: relative; background: #fff;
-    border: 1px solid #e6eaf2; border-radius: 14px;
-    padding: 1.25rem;
-    box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 28px -18px rgba(15,23,42,.18);
-    overflow: hidden;
-  }
-  .tm-board::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
-  }
+/* ── LAYOUT ── */
+.tm-wrapper { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 
-  .conference-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.5rem; font-weight: 900; text-transform: uppercase;
-    letter-spacing: .02em; color: var(--ink);
-    margin: .35rem 0 1rem; line-height: 1;
-  }
+.section-label {
+  font-weight: 500; font-size: 0.7rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--mid);
+  display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
 
-  .table-responsive { overflow-x: auto; }
-  table.standings-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  .standings-table thead th {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800; font-size: .68rem; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--mid);
-    text-align: right; padding: .55rem .5rem;
-    border-bottom: 1px solid var(--border-light);
-  }
-  .standings-table thead th:first-child { text-align: left; }
-  .standings-table tbody td {
-    padding: .65rem .5rem; text-align: right;
-    border-bottom: 1px solid #f1f3f8;
-    font-variant-numeric: tabular-nums; color: var(--ink);
-  }
-  .standings-table tbody td:first-child { text-align: left; }
-  .standings-table tbody tr:hover { background: #f9fbff; }
-  .standings-table tbody tr.sixers-highlight {
-    background: linear-gradient(90deg, rgba(0,107,182,.07), transparent 70%);
-  }
-  .standings-table tbody tr.sixers-highlight td { font-weight: 700; }
+/* ── STANDINGS BOARDS ── */
+.standings-grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+@media (min-width: 1024px) { .standings-grid { grid-template-columns: 1fr 1fr; } }
 
-  .team-info { display: flex; align-items: center; gap: .65rem; font-weight: 600; }
-  .rank {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900; font-size: .78rem; color: var(--mid);
-    width: 22px; text-align: center; background: #f1f3f8;
-    border-radius: 4px; padding: 2px 0;
-  }
-  .team-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
-  .pct { font-weight: 700; }
-  .gb { color: var(--mid); }
+.tm-board {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 14px; padding: 1.25rem;
+  position: relative; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s;
+}
+.tm-board::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+}
+:root.dark-mode .tm-board { background: var(--card-bg); border-color: var(--border-light); }
 
-  .status-badge {
-    display: inline-block; min-width: 36px; padding: 3px 8px;
-    border-radius: 6px; font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800; font-size: .72rem; letter-spacing: .04em;
-    background: #f1f3f8; color: var(--mid);
-  }
-  .streak-w { background: rgba(22,163,74,.12); color: var(--green); }
-  .streak-l { background: rgba(220,38,38,.12); color: var(--red); }
+.conference-title {
+  font-size: 1.25rem; font-weight: 700;
+  letter-spacing: -0.02em; color: var(--ink);
+  margin: 0.35rem 0 1rem; line-height: 1;
+}
+:root.dark-mode .conference-title { color: var(--ink); }
 
-  /* OFFSCREEN SOCIAL EXPORT */
-  .social-offscreen { position: fixed; left: -10000px; top: 0; pointer-events: none; }
-  .social-card {
-    background: var(--cream); padding: 40px;
-    font-family: 'Barlow', sans-serif;
-  }
-  .social-header { text-align: center; margin-bottom: 28px; }
-  .social-eyebrow {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 14px; font-weight: 800; letter-spacing: .22em;
-    color: var(--sixers-red); text-transform: uppercase;
-  }
-  .social-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 52px; font-weight: 900; color: var(--ink);
-    text-transform: uppercase; margin: 6px 0 4px; letter-spacing: -.01em;
-  }
-  .social-divider { width: 48px; height: 4px; background: var(--sixers-red); border-radius: 2px; margin: 10px auto; }
-  .social-date { font-size: 13px; color: var(--mid); letter-spacing: .05em; }
-  .social-grid { display: grid; gap: 24px; }
-  .social-conference {
-    background: #fff; border: 1px solid #e6eaf2; border-radius: 14px;
-    padding: 18px; position: relative; overflow: hidden;
-    box-shadow: 0 8px 28px -18px rgba(15,23,42,.18);
-  }
-  .social-conference::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
-  }
-  .social-conf-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 22px; font-weight: 900; text-transform: uppercase;
-    color: var(--ink); margin: 4px 0 12px;
-  }
-  .social-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .social-table thead th {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800; font-size: 11px; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--mid);
-    text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--border-light);
-  }
-  .social-table thead th:first-child { text-align: left; }
-  .social-table tbody td {
-    padding: 8px 4px; border-bottom: 1px solid #f1f3f8;
-    text-align: right; font-variant-numeric: tabular-nums;
-  }
-  .social-table tbody td:first-child { text-align: left; font-weight: 600; }
-  .social-table tbody tr.social-sixers-row { background: rgba(0,107,182,.07); }
-  .social-table tbody tr.social-sixers-row td:first-child { font-weight: 800; }
-  .social-team { display: flex; align-items: center; gap: 8px; }
-  .social-team-rank {
-    display: inline-block; width: 22px; text-align: center;
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
-    font-size: 12px; color: var(--mid); background: #f1f3f8;
-    border-radius: 4px; padding: 2px 0;
-  }
-  .social-team-logo { width: 20px; height: 20px; object-fit: contain; }
-  .social-streak-badge {
-    display: inline-block; min-width: 36px; padding: 3px 8px;
-    border-radius: 6px; font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800; font-size: 12px; letter-spacing: .04em;
-    background: #f1f3f8; color: var(--mid);
-  }
-  .social-streak-w { background: rgba(22,163,74,.14); color: var(--green); }
-  .social-streak-l { background: rgba(220,38,38,.14); color: var(--red); }
+.table-responsive { overflow-x: auto; }
+table.standings-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 
-  /* MODAL */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 50;
-    background: rgba(11,15,26,.78); align-items: center; justify-content: center; padding: 1rem;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal-card { width: 100%; max-width: 768px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.4); }
-  .modal-head, .modal-foot {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-light);
-  }
-  .modal-foot { border-bottom: none; border-top: 1px solid var(--border-light); justify-content: flex-end; gap: .5rem; }
-  .modal-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900; font-size: 1.1rem; letter-spacing: .08em; text-transform: uppercase;
-  }
-  .modal-body { padding: 1rem; background: var(--cream); max-height: 70vh; overflow: auto; }
-  .modal-body img { width: 100%; display: block; }
-  .btn-primary {
-    background: var(--sixers-blue); color: #fff; border: none;
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-    font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
-    padding: .6rem 1.3rem; border-radius: 8px; cursor: pointer; transition: all .2s;
-  }
-  .btn-primary:hover { background: #0080d4; transform: translateY(-1px); }
-  .btn-ghost {
-    background: #fff; color: var(--mid);
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-    font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
-    padding: .55rem 1.1rem; border-radius: 8px;
-    border: 1px solid var(--border-light); cursor: pointer; transition: all .2s;
-  }
-  .btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+.standings-table thead th {
+  font-weight: 600; font-size: 0.62rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--mid);
+  text-align: right; padding: 0.5rem 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+.standings-table thead th:first-child { text-align: left; }
 
-  .empty-state { text-align: center; padding: 3rem; }
+.standings-table tbody td {
+  padding: 0.6rem 0.5rem; text-align: right;
+  border-bottom: 1px solid var(--border-light);
+  font-variant-numeric: tabular-nums; color: var(--ink);
+  font-size: 0.85rem;
+}
+.standings-table tbody td:first-child { text-align: left; }
+.standings-table tbody tr:last-child td { border-bottom: none; }
+.standings-table tbody tr:hover td { background: rgba(0,107,182,0.03); }
+:root.dark-mode .standings-table tbody tr:hover td { background: rgba(0,107,182,0.07); }
+:root.dark-mode .standings-table tbody td { color: var(--ink); border-color: var(--border-light); }
+:root.dark-mode .standings-table thead th { border-color: var(--border-light); }
+
+.standings-table tbody tr.sixers-highlight td { background: rgba(0,107,182,0.06); font-weight: 600; }
+:root.dark-mode .standings-table tbody tr.sixers-highlight td { background: rgba(0,107,182,0.12); }
+
+.team-info { display: flex; align-items: center; gap: 0.6rem; font-weight: 500; }
+.rank {
+  font-weight: 700; font-size: 0.72rem; color: var(--mid);
+  width: 20px; text-align: center;
+  background: rgba(0,0,0,0.04); border-radius: 4px; padding: 2px 0; flex-shrink: 0;
+}
+:root.dark-mode .rank { background: rgba(255,255,255,0.06); }
+.team-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+.pct { font-weight: 600; }
+.gb { color: var(--mid); }
+
+.status-badge {
+  display: inline-block; min-width: 34px; padding: 3px 7px;
+  border-radius: 6px; font-weight: 700; font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  background: rgba(0,0,0,0.04); color: var(--mid);
+}
+:root.dark-mode .status-badge { background: rgba(255,255,255,0.06); }
+.streak-w { background: rgba(22,163,74,.1) !important; color: var(--green) !important; }
+.streak-l { background: rgba(220,38,38,.1) !important; color: var(--red) !important; }
+
+/* ── OFFSCREEN SOCIAL EXPORT ── */
+.social-offscreen { position: fixed; left: -10000px; top: 0; pointer-events: none; }
+.social-card { background: #f7f8fc; padding: 40px; font-family: 'Lexend', sans-serif; }
+.social-header { text-align: center; margin-bottom: 28px; }
+.social-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .18em; color: var(--sixers-red); text-transform: uppercase; }
+.social-title { font-size: 48px; font-weight: 700; color: var(--ink); margin: 6px 0 4px; letter-spacing: -0.03em; line-height: 1; }
+.social-divider { width: 40px; height: 3px; background: var(--sixers-red); border-radius: 2px; margin: 10px auto; }
+.social-date { font-size: 13px; color: var(--mid); letter-spacing: .04em; }
+.social-grid { display: grid; gap: 20px; }
+.social-conference {
+  background: #fff; border: 1px solid #e6eaf2; border-radius: 14px;
+  padding: 18px; position: relative; overflow: hidden;
+}
+.social-conference::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--sixers-blue), #1e90d8 60%, var(--sixers-blue));
+}
+.social-conf-title { font-size: 20px; font-weight: 700; color: var(--ink); margin: 4px 0 12px; letter-spacing: -0.02em; }
+.social-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.social-table thead th {
+  font-weight: 600; font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--mid);
+  text-align: right; padding: 5px 4px; border-bottom: 1px solid #e6eaf2;
+}
+.social-table thead th:first-child { text-align: left; }
+.social-table tbody td { padding: 7px 4px; border-bottom: 1px solid #f1f3f8; text-align: right; font-variant-numeric: tabular-nums; }
+.social-table tbody td:first-child { text-align: left; font-weight: 500; }
+.social-table tbody tr.social-sixers-row td { background: rgba(0,107,182,.06); font-weight: 700; }
+.social-team { display: flex; align-items: center; gap: 7px; }
+.social-team-rank { display: inline-block; width: 20px; text-align: center; font-weight: 700; font-size: 11px; color: var(--mid); background: #f1f3f8; border-radius: 3px; padding: 2px 0; }
+.social-team-logo { width: 20px; height: 20px; object-fit: contain; }
+.social-streak-badge { display: inline-block; min-width: 34px; padding: 2px 7px; border-radius: 5px; font-weight: 700; font-size: 11px; background: #f1f3f8; color: var(--mid); }
+.social-streak-w { background: rgba(22,163,74,.12) !important; color: var(--green) !important; }
+.social-streak-l { background: rgba(220,38,38,.12) !important; color: var(--red) !important; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+  align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  width: 100%; max-width: 768px;
+  background: var(--card-bg); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+}
+:root.dark-mode .modal-card { background: var(--card-bg); border: 1px solid var(--border-light); }
+.modal-head, .modal-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-light);
+}
+.modal-foot { border-bottom: none; border-top: 1px solid var(--border-light); justify-content: flex-end; gap: 0.5rem; }
+.modal-title { font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; color: var(--ink); }
+.modal-body { padding: 1rem; background: rgba(0,0,0,0.02); max-height: 70vh; overflow: auto; }
+.modal-body img { width: 100%; display: block; border-radius: 8px; }
+:root.dark-mode .modal-body { background: rgba(0,0,0,0.2); }
+
+.btn-primary {
+  background: var(--sixers-blue); color: #fff; border: none;
+  font-weight: 600; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 0.55rem 1.2rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary:hover { background: #0080d4; transform: translateY(-1px); }
+.btn-ghost {
+  background: var(--card-bg); color: var(--mid);
+  font-weight: 600; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 0.5rem 1.1rem; border-radius: 8px;
+  border: 1px solid var(--border-light); cursor: pointer; transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+:root.dark-mode .btn-ghost { background: var(--card-bg); border-color: var(--border-light); }
+
+.empty-state { text-align: center; padding: 3rem; color: var(--mid); }
+
+@media (max-width: 640px) {
+  .hero-inner { padding: 2.5rem 1rem 2rem; }
+  .tm-wrapper { padding: 1.25rem 0.75rem 3rem; }
+  .standings-table { font-size: 0.8rem; }
+}
 </style>
 </head>
 <body>
-  <!-- Navigation injected by nav.js -->
-  <script src="nav.js"></script>
+<script src="nav.js"></script>
 
-  <section class="page-hero">
-    <div class="hero-glow-blue"></div>
-    <div class="hero-glow-red"></div>
-    <div class="hero-inner">
-      <h1 class="hero-title-top">NBA</h1>
-      <h2 class="hero-title-bottom">Standings</h2>
-      <div class="hero-divider"></div>
-      <p class="hero-sub">Live Eastern and Western Conference standings, refreshed automatically. Export any view as a share-ready graphic.</p>
-      <div class="hero-cta-row">
-        <button class="hero-btn-primary" data-export-mode="east">Export East</button>
-        <button class="hero-btn-secondary" data-export-mode="west">Export West</button>
-        <button class="hero-btn-analyze" data-export-mode="both">Export Full Image</button>
-      </div>
+<section class="page-hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="hero-eyebrow-dot"></span>
+      <span class="hero-eyebrow-text">Live · Auto-refreshing</span>
     </div>
-  </section>
-
-  <main class="tm-wrapper">
-    <div class="section-label">Conference Standings</div>
-    <div id="standings" class="standings-grid">
-      <div class="tm-board empty-state"><p style="color:var(--mid)">Loading standings…</p></div>
-    </div>
-  </main>
-
-  <div class="social-offscreen">
-    <div id="social-export-container" class="social-card" style="width: 1200px;">
-      <div class="social-header">
-        <div class="social-eyebrow">Sixers Hoops</div>
-        <div class="social-title-box"><h1 class="social-title">NBA Standings</h1></div>
-        <div class="social-divider"></div>
-        <div class="social-date" id="social-date"></div>
-      </div>
-      <div class="social-grid" id="social-export-content"></div>
+    <h1 class="hero-title">NBA <span>STANDINGS</span></h1>
+    <div class="hero-cta-row">
+      <button class="hero-btn hero-btn-primary" data-export-mode="east">Export East</button>
+      <button class="hero-btn hero-btn-secondary" data-export-mode="west">Export West</button>
+      <button class="hero-btn hero-btn-navy" data-export-mode="both">Full Image</button>
     </div>
   </div>
+</section>
 
-  <div class="modal-overlay" id="exportModal">
-    <div class="modal-card">
-      <div class="modal-head">
-        <div class="modal-title">Share Preview</div>
-        <button class="btn-ghost" id="closeModal">Close</button>
-      </div>
-      <div class="modal-body"><img id="exportPreview" alt="Standings preview" /></div>
-      <div class="modal-foot">
-        <button class="btn-ghost" id="copyBtn">Copy to Clipboard</button>
-        <button class="btn-primary" id="downloadBtn">Download PNG</button>
-      </div>
+<main class="tm-wrapper">
+  <div class="section-label">Conference Standings</div>
+  <div id="standings" class="standings-grid">
+    <div class="tm-board empty-state"><p style="color:var(--mid)">Loading standings…</p></div>
+  </div>
+</main>
+
+<div class="social-offscreen">
+  <div id="social-export-container" class="social-card" style="width:1200px;">
+    <div class="social-header">
+      <div class="social-eyebrow">Sixers Hoops</div>
+      <div><h1 class="social-title">NBA Standings</h1></div>
+      <div class="social-divider"></div>
+      <div class="social-date" id="social-date"></div>
+    </div>
+    <div class="social-grid" id="social-export-content"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Share Preview</div>
+      <button class="btn-ghost" id="closeModal">Close</button>
+    </div>
+    <div class="modal-body"><img id="exportPreview" alt="Standings preview" /></div>
+    <div class="modal-foot">
+      <button class="btn-ghost" id="copyBtn">Copy to Clipboard</button>
+      <button class="btn-primary" id="downloadBtn">Download PNG</button>
     </div>
   </div>
+</div>
 
 <script>
 async function getNBAStandings() {
@@ -342,19 +357,31 @@ async function getNBAStandings() {
         const stats = {};
         t.stats.forEach(s => { if (s.name) stats[s.name] = s; if (s.type) stats[s.type] = s; });
         const isSixers = t.team.abbreviation === "PHI";
-        const wins = (stats.wins || {}).displayValue || "-";
+        const wins   = (stats.wins || {}).displayValue || "-";
         const losses = (stats.losses || {}).displayValue || "-";
-        const pct = (stats.winPercent || {}).displayValue || "-";
-        const gb = (stats.gamesBehind || {}).displayValue || "-";
-        const l10 = (stats.lasttengames || stats.lastTenGames || {}).summary || "-";
+        const pct    = (stats.winPercent || {}).displayValue || "-";
+        const gb     = (stats.gamesBehind || {}).displayValue || "-";
+        const l10    = (stats.lasttengames || stats.lastTenGames || {}).summary || "-";
         const streak = (stats.streak || {}).displayValue || "-";
-        const sCls = streak.startsWith("W") ? "streak-w" : streak.startsWith("L") ? "streak-l" : "";
-        const sSocial = streak.startsWith("W") ? "social-streak-w" : streak.startsWith("L") ? "social-streak-l" : "";
-        const logo = (t.team.logos && t.team.logos[0] && t.team.logos[0].href) || "";
+        const sCls   = streak.startsWith("W") ? "streak-w" : streak.startsWith("L") ? "streak-l" : "";
+        const sSocial= streak.startsWith("W") ? "social-streak-w" : streak.startsWith("L") ? "social-streak-l" : "";
+        const logo   = (t.team.logos && t.team.logos[0] && t.team.logos[0].href) || "";
 
-        html += '<tr class="' + (isSixers ? "sixers-highlight" : "") + '"><td><div class="team-info"><span class="rank">' + (idx + 1) + '</span>' + (logo ? '<img class="team-logo" src="' + logo + '" alt="" loading="lazy" />' : '') + '<span>' + t.team.displayName + '</span></div></td><td>' + wins + '</td><td>' + losses + '</td><td class="pct">' + pct + '</td><td class="gb">' + gb + '</td><td>' + l10 + '</td><td><span class="status-badge ' + sCls + '">' + streak + '</span></td></tr>';
+        html += '<tr class="' + (isSixers ? "sixers-highlight" : "") + '">'
+          + '<td><div class="team-info"><span class="rank">' + (idx+1) + '</span>'
+          + (logo ? '<img class="team-logo" src="' + logo + '" alt="" loading="lazy" />' : '')
+          + '<span>' + t.team.displayName + '</span></div></td>'
+          + '<td>' + wins + '</td><td>' + losses + '</td>'
+          + '<td class="pct">' + pct + '</td><td class="gb">' + gb + '</td><td>' + l10 + '</td>'
+          + '<td><span class="status-badge ' + sCls + '">' + streak + '</span></td></tr>';
 
-        socialHtml += '<tr class="' + (isSixers ? "social-sixers-row" : "") + '"><td><div class="social-team"><span class="social-team-rank">' + (idx + 1) + '</span>' + (logo ? '<img class="social-team-logo" src="' + logo + '" alt="" crossorigin="anonymous" />' : '') + '<span>' + t.team.displayName + '</span></div></td><td>' + wins + '-' + losses + '</td><td style="font-weight:700">' + pct + '</td><td><span class="social-streak-badge ' + sSocial + '">' + streak + '</span></td></tr>';
+        socialHtml += '<tr class="' + (isSixers ? "social-sixers-row" : "") + '">'
+          + '<td><div class="social-team"><span class="social-team-rank">' + (idx+1) + '</span>'
+          + (logo ? '<img class="social-team-logo" src="' + logo + '" alt="" crossorigin="anonymous" />' : '')
+          + '<span>' + t.team.displayName + '</span></div></td>'
+          + '<td>' + wins + '-' + losses + '</td>'
+          + '<td style="font-weight:700">' + pct + '</td>'
+          + '<td><span class="social-streak-badge ' + sSocial + '">' + streak + '</span></td></tr>';
       });
 
       html += '</tbody></table></div></div>';
@@ -384,62 +411,32 @@ function initExport() {
       const original = btn.textContent;
       btn.textContent = "Generating…";
       btn.disabled = true;
-
       try {
         const grid = document.getElementById("social-export-container");
         const content = document.getElementById("social-export-content");
         const titleH1 = grid.querySelector(".social-title");
         const east = content.querySelector('[data-conf="east"]');
         const west = content.querySelector('[data-conf="west"]');
-
         if (mode === "east") {
-          grid.style.width = "800px";
-          content.style.gridTemplateColumns = "1fr";
-          if (east) east.style.display = "block";
-          if (west) west.style.display = "none";
+          grid.style.width = "800px"; content.style.gridTemplateColumns = "1fr";
+          if (east) east.style.display = "block"; if (west) west.style.display = "none";
           titleH1.textContent = "Eastern Conference";
         } else if (mode === "west") {
-          grid.style.width = "800px";
-          content.style.gridTemplateColumns = "1fr";
-          if (east) east.style.display = "none";
-          if (west) west.style.display = "block";
+          grid.style.width = "800px"; content.style.gridTemplateColumns = "1fr";
+          if (east) east.style.display = "none"; if (west) west.style.display = "block";
           titleH1.textContent = "Western Conference";
         } else {
-          grid.style.width = "1200px";
-          content.style.gridTemplateColumns = "1fr 1fr";
-          if (east) east.style.display = "block";
-          if (west) west.style.display = "block";
+          grid.style.width = "1200px"; content.style.gridTemplateColumns = "1fr 1fr";
+          if (east) east.style.display = "block"; if (west) west.style.display = "block";
           titleH1.textContent = "NBA Standings";
         }
-
-        const canvas = await html2canvas(grid, {
-          backgroundColor: "#f7f8fc",
-          scale: 2, useCORS: true, allowTaint: true, logging: false
-        });
+        const canvas = await html2canvas(grid, { backgroundColor: "#f7f8fc", scale: 2, useCORS: true, allowTaint: true, logging: false });
         preview.src = canvas.toDataURL("image/png");
         modal.classList.add("open");
-
-        dlBtn.onclick = () => {
-          const a = document.createElement("a");
-          a.download = "nba-" + mode + "-standings-" + new Date().toISOString().split("T")[0] + ".png";
-          a.href = canvas.toDataURL("image/png");
-          a.click();
-        };
-        copyBtn.onclick = () => {
-          canvas.toBlob(blob => {
-            navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(() => {
-              copyBtn.textContent = "Copied!";
-              setTimeout(() => { copyBtn.textContent = "Copy to Clipboard"; }, 2000);
-            });
-          });
-        };
-      } catch (e) {
-        console.error(e);
-        alert("Failed to generate image.");
-      } finally {
-        btn.textContent = original;
-        btn.disabled = false;
-      }
+        dlBtn.onclick = () => { const a = document.createElement("a"); a.download = "nba-" + mode + "-standings-" + new Date().toISOString().split("T")[0] + ".png"; a.href = canvas.toDataURL("image/png"); a.click(); };
+        copyBtn.onclick = () => { canvas.toBlob(blob => { navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(() => { copyBtn.textContent = "Copied!"; setTimeout(() => { copyBtn.textContent = "Copy to Clipboard"; }, 2000); }); }); };
+      } catch (e) { console.error(e); alert("Failed to generate image."); }
+      finally { btn.textContent = original; btn.disabled = false; }
     };
   });
 
