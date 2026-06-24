@@ -499,16 +499,13 @@ const $$ = (s,r=document)=>r.querySelectorAll(s);
 let currentSeason='2026-27', filter='all', query='';
 
 function rowHTML(r, cap){
-  const pct = ((r.salary/cap)*100).toFixed(1)+'%';
   const link = r.slug ? `<a href="/players/${r.slug}.html">${r.name}</a>` : r.name;
   return `<tr data-status="${r.status}" data-name="${r.name.toLowerCase()}">
     <td class="rk">${String(r.rk).padStart(2,'0')}</td>
     <td><span class="pname">${link}</span><span class="ppos">${r.pos}</span></td>
     <td class="num amt">${fmt$(r.salary)}</td>
-    <td class="num pct">${pct}</td>
     <td><span class="badge ${r.status}">${STATUS_LABEL[r.status]||r.status}</span></td>
-  </tr>${r.note?`<tr class="note-row"><td colspan="5"><div class="note" style="margin:.6rem 0 0;">${r.note}</div></td></tr>`:''}`;
-}
+  </tr>${r.note?`<tr class="note-row"><td colspan="4"><div class="note" style="margin:.6rem 0 0;">${r.note}</div></td></tr>`:''}`;}
 
 function buildSeason(key){
   const s = SEASONS[key]; const cap = CAP[key];
@@ -519,24 +516,22 @@ function buildSeason(key){
   let rowsHTML = s.rows.map(r=>rowHTML(r,cap)).join('');
 
   if(s.deadMoney && s.deadMoney.length){
-    rowsHTML += `<tr class="row-divider"><td colspan="5">Dead Money · ${fmt$(deadTotal)}</td></tr>`;
+    rowsHTML += `<tr class="row-divider"><td colspan="4">Dead Money · ${fmt$(deadTotal)}</td></tr>`;
     rowsHTML += s.deadMoney.map(r=>`
       <tr data-status="dead" data-name="${r.name.toLowerCase()}">
         <td class="rk">—</td>
         <td><span class="pname">${r.name}</span><span class="ppos">${r.pos}</span></td>
         <td class="num amt">${fmt$(r.salary)}</td>
-        <td class="num pct">${((r.salary/cap)*100).toFixed(1)}%</td>
         <td><span class="badge dead">Waived</span></td>
       </tr>`).join('');
   }
   if(s.adjustments && s.adjustments.length){
-    rowsHTML += `<tr class="row-divider"><td colspan="5">Tax Adjustments · ${fmt$(adjTotal)}</td></tr>`;
+    rowsHTML += `<tr class="row-divider"><td colspan="4">Tax Adjustments · ${fmt$(adjTotal)}</td></tr>`;
     rowsHTML += s.adjustments.map(r=>`
       <tr data-status="adj" data-name="${r.name.toLowerCase()}">
         <td class="rk">—</td>
         <td><span class="pname">${r.name}</span><span class="ppos">${r.pos}</span></td>
         <td class="num amt ${r.salary<0?'neg':''}">${fmt$(r.salary)}</td>
-        <td class="num pct">${((r.salary/cap)*100).toFixed(1)}%</td>
         <td><span class="badge">${r.badge}</span></td>
       </tr>`).join('');
   }
@@ -545,7 +540,6 @@ function buildSeason(key){
   rowsHTML += `<tr class="row-total">
     <td></td><td>Total Payroll</td>
     <td class="num amt">${fmt$(grandTotal)}</td>
-    <td class="num pct">${((grandTotal/cap)*100).toFixed(1)}%</td>
     <td></td>
   </tr>`;
 
@@ -553,13 +547,12 @@ function buildSeason(key){
     <div class="table-card">
       <div class="head"><span class="ttl">Two-Way Contracts</span><span class="meta">${s.twoway.length} Players</span></div>
       <table class="s-table"><thead><tr>
-        <th class="rk">#</th><th>Player</th><th class="num">Salary</th><th class="num">% of Cap</th><th>Status</th>
+        <th class="rk">#</th><th>Player</th><th class="num">Salary</th><th>Status</th>
       </tr></thead><tbody>
       ${s.twoway.map((p,i)=>`<tr data-status="twoway" data-name="${p.name.toLowerCase()}">
         <td class="rk">${String(i+1).padStart(2,'0')}</td>
         <td><span class="pname">${p.name}</span><span class="ppos">${p.pos}</span></td>
         <td class="num amt">Two-Way</td>
-        <td class="num pct">—</td>
         <td><span class="badge twoway">Two-Way</span></td>
       </tr>`).join('')}
       </tbody></table>
@@ -576,7 +569,7 @@ function buildSeason(key){
       <table class="s-table">
         <thead><tr>
           <th class="rk">#</th><th>Player</th>
-          <th class="num">Salary</th><th class="num">% of Cap</th><th>Status</th>
+          <th class="num">Salary</th><th>Status</th>
         </tr></thead>
         <tbody>${rowsHTML}</tbody>
       </table>
@@ -690,7 +683,7 @@ function renderShareResult(blob){
 
 if(shareBtn && shareOverlay){
   shareBtn.addEventListener('click', async () => {
-    const target = $('#payrollCard');
+    const target = document.querySelector('main.wrap');
     if(!target || typeof html2canvas === 'undefined') return;
 
     shareOverlay.classList.add('active');
@@ -700,7 +693,11 @@ if(shareBtn && shareOverlay){
       const canvas = await html2canvas(target, {
         backgroundColor: '#ffffff',
         scale: 2,
-        useCORS: true
+        useCORS: true,
+        windowWidth: 900,
+        scrollY: 0,
+        height: target.scrollHeight,
+        width: target.scrollWidth,
       });
       canvas.toBlob((blob) => {
         if(!blob){ renderShareError(); return; }
