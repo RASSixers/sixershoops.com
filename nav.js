@@ -156,12 +156,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <a href="https://sixershoops.com/future-draft-picks" class="dropdown-item">Draft Picks</a>
                 </div>
             </li>
-            <li class="nav-item dropdown">
-                <button class="dropdown-toggle">Draft Tools</button>
-                <div class="dropdown-menu">
-                    <a href="https://sixershoops.com/lottery-simulator" class="dropdown-item">Lottery Simulator</a>
-                </div>
-            </li>
             <li class="nav-item">
                 <a href="https://sixershoops.com/schedule" class="nav-link">Schedule</a>
             </li>
@@ -235,8 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="https://sixershoops.com/sixers-depth-chart" class="mobile-nav-link">Depth Chart</a>
         </div>
         <div class="mobile-nav-item">
-        </div>
-        <div class="mobile-nav-item">
             <a href="https://sixershoops.com/standings" class="mobile-nav-link">NBA Standings</a>
         </div>
         <div class="mobile-nav-item">
@@ -244,12 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/future-draft-picks" class="mobile-nav-link">Draft Picks</a>
-        </div>
-        <div class="mobile-nav-item" style="padding: 0.5rem 1.25rem 0.25rem; border-bottom: none;">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.3);">Draft Tools</span>
-        </div>
-        <div class="mobile-nav-item">
-            <a href="https://sixershoops.com/lottery-simulator" class="mobile-nav-link">Lottery Simulator</a>
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/schedule" class="mobile-nav-link">Schedule</a>
