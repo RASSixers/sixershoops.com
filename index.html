@@ -1,2240 +1,438 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sixers Hoops</title>
-    <link rel="icon" type="image/png" href="/favicon.ico">
-    <meta name="description" content="Sixers Hoops — your home for Philadelphia 76ers news, analysis, community discussions, player grades, and the latest NBA updates. Join the conversation with fellow Sixers fans.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            corePlugins: { preflight: false },
-            theme: {
-                extend: {
-                    colors: {
-                        border: "hsl(214.3 31.8% 91.4%)",
-                        input: "hsl(214.3 31.8% 91.4%)",
-                        ring: "hsl(222.2 84% 4.9%)",
-                        background: "hsl(0 0% 100%)",
-                        foreground: "hsl(222.2 84% 4.9%)",
-                        primary: { DEFAULT: "hsl(222.2 47.4% 11.2%)", foreground: "hsl(210 40% 98%)" },
-                        secondary: { DEFAULT: "hsl(210 40% 96.1%)", foreground: "hsl(222.2 47.4% 11.2%)" },
-                        muted: { DEFAULT: "hsl(210 40% 96.1%)", foreground: "hsl(215.4 16.3% 46.9%)" },
-                        accent: { DEFAULT: "hsl(210 40% 96.1%)", foreground: "hsl(222.2 47.4% 11.2%)" },
-                        card: { DEFAULT: "hsl(0 0% 100%)", foreground: "hsl(222.2 84% 4.9%)" },
-                    },
-                }
-            }
-        }
-    </script>
-    <link rel="stylesheet" href="navbar-styles.css">
-    <style>
-        :root {
-            --navy: #001a57;
-            --navy-deep: #0b0f1a;
-            --sixers-blue: #006BB6;
-            --sixers-red: #ED174C;
-            --cream: #ffffff;
-            --ink: #0d0f1a;
-            --mid: #64748b;
-            --border-light: #e4e8f0;
-            --card-bg: #ffffff;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; }
-
-        html { scroll-behavior: smooth; }
-
-        body, html {
-            margin-top: 0;
-            background: var(--cream);
-            color: var(--ink);
-            /* Prevent horizontal overflow on mobile */
-            overflow-x: hidden;
-            max-width: 100%;
-        }
-        /* Clear the fixed 64px navbar so content never overlaps */
-        body { padding-top: 64px; }
-
-        /* Navbar shrinks to 60px tall below 480px — match clearance */
-        @media (max-width: 480px) {
-            body { padding-top: 60px; }
-        }
-
-        /* Offset anchor jumps so content isn't hidden under the fixed navbar */
-        #community-feed-section, [id] { scroll-margin-top: 80px; }
-
-        /* Uppercase only the hero header, not the whole page */
-        header.hero, header.hero * { text-transform: uppercase; }
-
-        /* Scope custom fonts to page content only — never touch the JS-injected navbar or community feed */
-        footer,
-        main > .hero,
-        main > .hero *,
-        main > .feature-cards-section,
-        main > .feature-cards-section *,
-        main > .editorial-section,
-        main > .editorial-section *,
-        #community-feed-section > aside,
-        #community-feed-section > aside *,
-        #community-feed-section > div > .community-feed-heading,
-        #community-feed-section > div > .create-post-box,
-        #community-feed-section > div > .create-post-box *,
-        #community-feed-section > div > .feed-filters,
-        #community-feed-section > div > .feed-filters * { font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
-
-        /* ─── HERO ──────────────────────────────────── */
-        .hero {
-            background: var(--cream);
-            position: relative;
-            overflow: hidden;
-            padding: 0;
-        }
-
-        .hero-glow-blue, .hero-glow-red { display: none; }
-
-        .hero-inner {
-            position: relative;
-            z-index: 1;
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 5rem 2rem 4.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 0;
-        }
-
-        .hero-wordmark {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-            width: 100%;
-        }
-
-        .hero-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            background: rgba(0,107,182,0.07);
-            border: 1px solid rgba(0,107,182,0.18);
-            border-radius: 999px;
-            padding: 5px 14px 5px 8px;
-            margin-bottom: 2rem;
-            width: fit-content;
-        }
-
-        .hero-eyebrow-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--sixers-red);
-            animation: pulse-dot 2s ease-in-out infinite;
-            flex-shrink: 0;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.5; transform: scale(0.75); }
-        }
-
-        .hero-eyebrow-text {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--sixers-blue);
-        }
-
-        .hero-title-top {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: clamp(2.4rem, 6vw, 4.5rem);
-            font-weight: 700;
-            line-height: 0.95;
-            letter-spacing: -0.03em;
-            color: var(--ink);
-            margin: 0;
-        }
-
-        .hero-title-bottom {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: clamp(2.4rem, 6vw, 4.5rem);
-            font-weight: 700;
-            line-height: 0.95;
-            letter-spacing: -0.03em;
-            color: var(--sixers-blue);
-            margin: 0;
-        }
-
-        .hero-divider {
-            display: none;
-        }
-
-        .hero-sub {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.92rem;
-            font-weight: 400;
-            color: var(--mid);
-            max-width: 460px;
-            line-height: 1.65;
-            margin: 1.25rem auto 0;
-            text-transform: none;
-        }
-
-        .hero-cta-row {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            margin-top: 2.25rem;
-            flex-wrap: wrap;
-        }
-
-        .hero-cta-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            background: var(--sixers-blue);
-            color: white;
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 600;
-            font-size: 0.76rem;
-            letter-spacing: 0.02em;
-            padding: 0.75rem 1.6rem;
-            border-radius: 8px;
-            text-decoration: none;
-            border: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            box-shadow: 0 2px 12px rgba(0,107,182,0.25);
-        }
-
-        .hero-cta-primary:hover {
-            background: #0057a0;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0,107,182,0.35);
-        }
-
-        .hero-cta-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            background: transparent;
-            color: var(--sixers-blue);
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 600;
-            font-size: 0.76rem;
-            letter-spacing: 0.02em;
-            padding: 0.75rem 1.6rem;
-            border-radius: 8px;
-            text-decoration: none;
-            border: 1px solid var(--sixers-blue);
-            transition: all 0.2s;
-        }
-
-        .hero-cta-secondary:hover {
-            background: var(--sixers-blue);
-            color: white;
-        }
-
-        /* hide old unused */
-        .hero-accent-line, .hero-nummark, .hero-statbar, .hero-statbar-inner, .hs-item, .hero-stats-strip { display: none; }
-
-        /* ─── FEATURE CARDS ─────────────────────────── */
-        .feature-cards-section {
-            position: relative;
-            z-index: 1;
-            background: var(--cream);
-            border-top: 1px solid var(--border-light);
-            padding: 0.5rem 0 2.5rem;
-        }
-
-        .feature-cards-inner {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.6rem;
-        }
-
-        .feature-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-light);
-            padding: 0.9rem 0.9rem 0.85rem;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.22s ease;
-            border-radius: 10px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
-        }
-
-        .feature-card::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: var(--sixers-blue);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.28s ease;
-            border-radius: 0 0 0 0;
-        }
-
-        .feature-card:hover::after { transform: scaleX(1); }
-
-        .feature-card:hover {
-            border-color: rgba(0,107,182,0.25);
-            box-shadow: 0 4px 20px rgba(0,107,182,0.07);
-            transform: translateY(-2px);
-        }
-
-        .feature-card-icon {
-            width: 28px; height: 28px;
-            border-radius: 7px;
-            background: rgba(0,107,182,0.08);
-            border: 1px solid rgba(0,107,182,0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--sixers-blue);
-            flex-shrink: 0;
-            transition: background 0.2s, border-color 0.2s;
-        }
-
-        .feature-card:hover .feature-card-icon {
-            background: rgba(0,107,182,0.14);
-            border-color: rgba(0,107,182,0.3);
-        }
-
-        .feature-card-title {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.82rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            color: var(--ink);
-            line-height: 1.1;
-        }
-
-        .feature-card-desc {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.7rem;
-            font-weight: 400;
-            color: var(--mid);
-            line-height: 1.45;
-            flex: 1;
-        }
-
-        .feature-card-arrow {
-            margin-top: auto;
-            color: var(--sixers-blue);
-            opacity: 0.45;
-            transition: opacity 0.2s, transform 0.2s;
-        }
-
-        .feature-card:hover .feature-card-arrow {
-            opacity: 1;
-            transform: translateX(3px);
-        }
-
-        /* ─── DARK MODE HERO & FEATURE CARDS ───── */
-        :root.dark-mode .hero {
-            background: var(--navy-deep);
-        }
-
-        :root.dark-mode .hero-eyebrow {
-            background: rgba(0,107,182,0.12);
-            border-color: rgba(0,107,182,0.25);
-        }
-
-        :root.dark-mode .hero-eyebrow-text { color: #4da8ff; }
-
-        :root.dark-mode .hero-title-top { color: #f0f2f8; }
-        :root.dark-mode .hero-title-bottom { color: #4da8ff; }
-        :root.dark-mode .hero-sub { color: rgba(255,255,255,0.45); }
-
-        :root.dark-mode .hero-cta-secondary {
-            border-color: #4da8ff;
-            color: #4da8ff;
-        }
-
-        :root.dark-mode .hero-cta-secondary:hover {
-            background: #4da8ff;
-            color: #0b0f1a;
-        }
-
-        :root.dark-mode .hero-stats-strip {
-            border-top-color: rgba(255,255,255,0.08);
-        }
-
-        :root.dark-mode .hero-stat-val { color: #f0f2f8; }
-        :root.dark-mode .hero-stat-label { color: rgba(255,255,255,0.35); }
-        :root.dark-mode .hero-stat-divider { background: rgba(255,255,255,0.08); }
-
-        :root.dark-mode .feature-cards-section {
-            background: var(--navy-deep);
-            border-top-color: rgba(255,255,255,0.06);
-        }
-
-        :root.dark-mode .feature-card {
-            background: rgba(255,255,255,0.03);
-            border-color: rgba(255,255,255,0.07);
-        }
-
-        :root.dark-mode .feature-card:hover {
-            background: rgba(0,107,182,0.07);
-            border-color: rgba(0,107,182,0.25);
-        }
-
-        :root.dark-mode .feature-card-title { color: #e8eaf0; }
-        :root.dark-mode .feature-card-desc { color: rgba(255,255,255,0.38); }
-
-
-
-        /* ─── LAYOUT ────────────────────────────────── */
-        .main-layout {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 1.5rem;
-            align-items: start;
-        }
-
-        /* ─── SECTION LABEL ────────────────────────── */
-        .section-label {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 500;
-            font-size: 0.7rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--mid);
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1rem;
-        }
-
-        .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-light);
-        }
-
-        /* ─── CREATE POST BOX ───────────────────────── */
-        .create-post-box {
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .create-post-box:hover {
-            border-color: var(--sixers-blue);
-            box-shadow: 0 0 0 3px rgba(0,107,182,0.06);
-        }
-
-        #create-post-avatar-container {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #eef2f8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            border: 1px solid var(--border-light);
-            overflow: hidden;
-        }
-
-        #create-post-trigger {
-            flex: 1;
-            border: none;
-            background: #f4f6fa;
-            border-radius: 999px;
-            padding: 0.5rem 1rem;
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.9rem;
-            color: var(--mid);
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        #create-post-trigger:hover { background: #eaecf4; }
-        #create-post-trigger:focus { outline: none; }
-
-        #create-post-btn {
-            background: var(--sixers-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 0.5rem 1.1rem;
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 500;
-            font-size: 0.85rem;
-            letter-spacing: 0.01em;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.15s;
-            flex-shrink: 0;
-        }
-
-        #create-post-btn:hover { background: #005a9a; transform: translateY(-1px); }
-
-        /* ─── FILTER TABS ───────────────────────────── */
-        .feed-filters {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            margin-bottom: 1.25rem;
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            padding: 0.4rem;
-        }
-
-        .filter-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.45rem 0.9rem;
-            border: none;
-            background: none;
-            border-radius: 7px;
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 500;
-            font-size: 0.85rem;
-            letter-spacing: 0.02em;
-            color: var(--mid);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .filter-btn:hover { background: #f4f6fa; color: var(--ink); }
-
-        .filter-btn.active {
-            background: var(--navy);
-            color: white;
-        }
-
-        /* ─── FEED POSTS ────────────────────────────── */
-        #feed-container { display: flex; flex-direction: column; gap: 1rem; }
-
-        /* ─── SIDEBAR ───────────────────────────────── */
-        .sidebar-card {
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            padding: 1.25rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .sidebar-card:last-child { margin-bottom: 0; }
-
-        .sidebar-heading {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 600;
-            font-size: 0.75rem;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-            color: var(--ink);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .sidebar-card {
-            border-top: 2px solid var(--navy) !important;
-        }
-        .sidebar-card.headlines-card {
-            border-top-color: var(--navy) !important;
-        }
-
-        .sidebar-view-all {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.72rem;
-            font-weight: 500;
-            color: var(--sixers-blue);
-            text-transform: none;
-            letter-spacing: 0;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            text-decoration: none;
-        }
-
-        .sidebar-view-all:hover { text-decoration: underline; }
-
-        /* sidebar links — scoped away from community JS-rendered items */
-        #sidebar-articles-container a:not(.cm-article-item):not(.cm-headline-link),
-        #sidebar-headlines-container a:not(.cm-headline-link):not(.cm-article-item) {
-            display: block;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-light);
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-        #sidebar-headlines-container a.cm-headline-link,
-        #sidebar-articles-container a.cm-article-item {
-            display: block !important;
-            padding: 0 !important;
-            border: none !important;
-        }
-
-        /* ─── MODALS ────────────────────────────────── */
-        .post-modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(6px);
-        }
-
-        .post-modal-overlay.active { opacity: 1; visibility: visible; }
-
-        .post-modal {
-            background: var(--cm-modal-bg, white);
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            border-radius: 12px;
-            position: relative;
-            overflow-y: auto;
-            transform: translateY(20px) scale(0.98);
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            padding: 2rem;
-            box-shadow: 0 32px 64px rgba(0,0,0,0.2);
-        }
-
-        .post-modal-overlay.active .post-modal {
-            transform: translateY(0) scale(1);
-        }
-
-        .post-modal-close {
-            position: absolute;
-            top: 1.25rem; right: 1.25rem;
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            border: none;
-            background: var(--cm-bg3, #f4f6fa);
-            font-size: 1.1rem;
-            cursor: pointer;
-            color: var(--mid);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            line-height: 1;
-        }
-
-        .post-modal-close:hover { background: var(--ink); color: white; }
-
-        /* Create post modal */
-        .create-post-modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,13,46,0.85);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .create-post-modal-overlay.active { opacity: 1; visibility: visible; }
-
-        .create-post-modal {
-            background: var(--cm-modal-bg, white);
-            width: 95%;
-            max-width: 750px;
-            max-height: 90vh;
-            border-radius: 12px;
-            position: relative;
-            overflow-y: auto;
-            transform: scale(0.95) translateY(20px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 2.5rem;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.3);
-        }
-
-        .create-post-modal-overlay.active .create-post-modal {
-            transform: scale(1) translateY(0);
-        }
-
-        .create-post-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        /* ─── UTILITIES ────────────────────────────── */
-        .line-clamp-2 {
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-        }
-
-        .line-clamp-3 {
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 3;
-        }
-
-        .article-item { display: none; }
-        .article-item.active { display: flex; }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-            padding: 1rem;
-        }
-
-        .pagination button {
-            padding: 8px 14px;
-            border: 1px solid var(--border-light);
-            border-radius: 7px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 500;
-            font-size: 0.9rem;
-            letter-spacing: 0.01em;
-            color: var(--ink);
-        }
-
-        .pagination button:hover:not(:disabled) { background: #f4f6fa; }
-
-        .pagination button.active {
-            background: var(--sixers-blue);
-            color: white;
-            border-color: var(--sixers-blue);
-        }
-
-        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f4f6fa; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Voting — use .active-up/.active-down set by community.js instead */
-        /* Legacy classes kept for compatibility but community feed uses CSS vars now */
-        .vote-btn-active-up { color: #ea580c; background: rgba(234,88,12,0.1); }
-        .vote-btn-active-down { color: #2563eb; background: rgba(37,99,235,0.1); }
-
-        /* Player Card */
-        .player-card-render {
-            background: var(--cm-card, white);
-            border: 1px solid var(--cm-border, #e2e8f0);
-            padding: 20px;
-            margin-bottom: 16px;
-            border-radius: 10px;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .player-card-render::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 3px; height: 100%;
-            background: var(--sixers-blue);
-        }
-
-        .player-card-render:hover {
-            border-color: var(--sixers-blue);
-            box-shadow: 0 6px 20px rgba(0,107,182,0.08);
-            transform: translateY(-2px);
-        }
-
-        .player-header-render { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 16px; }
-        .player-name-render { font-family: 'Barlow Condensed', 'Lexend', system-ui, sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--cm-text, var(--ink)); }
-        .player-grade-render { font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 1rem; font-weight: 700; padding: 4px 12px; color: white; min-width: 44px; text-align: center; border-radius: 7px; }
-        .player-stats-render { font-size: 0.75rem; color: var(--cm-text3, #64748b); font-weight: 500; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--cm-border, #e2e8f0); text-transform: uppercase; letter-spacing: 0.05em; }
-        .player-analysis-render { color: var(--cm-text2, #475569); line-height: 1.6; font-size: 0.9rem; }
-
-        /* Grade Colors — clean scale from green → amber → red */
-        .grade-a-plus { background: #1e7a4a; }
-        .grade-a     { background: #228b52; }
-        .grade-a-minus { background: #2a9d5e; }
-        .grade-b-plus { background: #006BB6; }
-        .grade-b     { background: #0077cc; }
-        .grade-b-minus { background: #2a85d0; }
-        .grade-c-plus { background: #b06b00; }
-        .grade-c     { background: #c27800; }
-        .grade-d-plus { background: #b83232; }
-        .grade-d     { background: #a02828; }
-        .grade-f     { background: #7a1a1a; }
-
-        /* Pro grade editor */
-        #player-grades-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .player-grade-entry {
-            background: #f8f9fc;
-            border: 1px solid #e2e8f0;
-            padding: 1.25rem;
-            border-radius: 10px;
-            position: relative;
-            transition: all 0.2s;
-        }
-
-        .player-grade-entry:hover { border-color: var(--sixers-blue); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-
-        .remove-player-entry {
-            position: absolute;
-            top: -0.5rem; right: -0.5rem;
-            background: #ef4444;
-            color: white;
-            border-radius: 9999px;
-            padding: 0.25rem;
-            opacity: 0;
-            transition: opacity 0.2s;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .player-grade-entry:hover .remove-player-entry { opacity: 1; }
-
-        /* ─── RESPONSIVE ────────────────────────────── */
-        @media (max-width: 900px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-                padding: 1rem;
-                gap: 1rem;
-            }
-            .feature-cards-inner { grid-template-columns: repeat(2, 1fr); }
-            /* Sidebar loses sticky and flows below feed */
-            aside { position: static !important; top: auto !important; }
-        }
-
-        @media (max-width: 600px) {
-            /* ── Global containment — stops horizontal scroll ── */
-            .hero, .feature-cards-section, .main-layout,
-            .editorial-section, #feed-container,
-            #feed-container > *, #feed-container > * > * {
-                max-width: 100%;
-                min-width: 0;
-                overflow-x: hidden;
-            }
-
-            /* ── Hero ── */
-            .hero-inner { padding: 2.5rem 1rem 2rem; }
-            .hero-sub { font-size: 0.88rem; max-width: 100%; }
-            .hero-eyebrow { margin-bottom: 1rem; }
-            .hero-cta-row {
-                flex-direction: column;
-                align-items: stretch;
-                width: 100%;
-                gap: 0.6rem;
-                margin-top: 1.25rem;
-            }
-            .hero-cta-primary, .hero-cta-secondary {
-                justify-content: center;
-                width: 100%;
-                padding: 0.8rem 1rem;
-            }
-
-            /* ── Feature cards ── */
-            .feature-cards-section { padding: 0; }
-            .feature-cards-inner {
-                grid-template-columns: repeat(2, 1fr);
-                padding: 0.75rem !important;
-                gap: 0.5rem;
-            }
-            .feature-card { padding: 0.85rem; gap: 0.35rem; }
-            .feature-card-desc { display: none; }
-            .feature-card-title { font-size: 0.75rem; }
-            .feature-card-icon { width: 28px; height: 28px; }
-
-            /* ── Main layout ── */
-            .main-layout { padding: 0.75rem; gap: 0.75rem; }
-
-            /* ── Community feed heading ── */
-            .community-feed-title { font-size: 1.3rem; }
-            .community-feed-heading { margin-bottom: 0.65rem; }
-
-            /* ── Create post box ── */
-            .create-post-box { padding: 0.65rem 0.85rem; gap: 0.5rem; margin-bottom: 0.65rem; }
-            #create-post-avatar-container { width: 32px; height: 32px; flex-shrink: 0; }
-            #create-post-trigger { font-size: 0.82rem; padding: 0.4rem 0.7rem; min-width: 0; }
-            #create-post-btn { padding: 0.42rem 0.85rem; font-size: 0.78rem; flex-shrink: 0; }
-
-            /* ── Feed filters: horizontal scroll, no wrap ── */
-            .feed-filters {
-                overflow-x: auto;
-                flex-wrap: nowrap;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                padding: 0.3rem;
-                margin-bottom: 0.65rem;
-            }
-            .feed-filters::-webkit-scrollbar { display: none; }
-            .filter-btn {
-                white-space: nowrap;
-                flex-shrink: 0;
-                padding: 0.38rem 0.7rem;
-                font-size: 0.78rem;
-                min-height: 36px;
-            }
-
-            /* ── Feed cards — clamp everything inside ── */
-            #feed-container { gap: 0.65rem; }
-
-            /* ── Sidebar ── */
-            .sidebar-card { padding: 0.9rem; margin-bottom: 0.65rem; }
-
-            /* ── Editorial ── */
-            .editorial-section { padding: 0 0.75rem; margin-top: 1rem; }
-            .editorial-grid.count-2,
-            .editorial-grid.count-3 { grid-template-columns: 1fr; }
-            .editorial-grid.count-3 .article-card:first-child { grid-row: auto; }
-            .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height: 140px; }
-            .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size: 1.08rem; }
-
-            /* ── Pagination ── */
-            .pagination { padding: 0.5rem; gap: 3px; margin-top: 0.75rem; }
-            .pagination button { padding: 5px 9px; font-size: 0.8rem; }
-        }
-
-        @media (max-width: 380px) {
-            .hero-title-top, .hero-title-bottom { font-size: 2.1rem; }
-            .feature-card-icon { display: none; }
-        }
-
-        /* ─── DARK MODE ────────────────────────────── */
-        :root.dark-mode { --cream: #0b0f1a; --ink: #e8eaf0; --mid: #8892a4; --border-light: #1e2535; --card-bg: #131929; }
-        :root.dark-mode body { background: var(--cream); color: var(--ink); }
-        :root.dark-mode .create-post-box { background: var(--card-bg); border-color: var(--border-light); }
-        :root.dark-mode .feed-filters { background: var(--card-bg); border-color: var(--border-light); }
-        :root.dark-mode .sidebar-card { background: var(--card-bg); border-color: var(--border-light); }
-        :root.dark-mode #create-post-trigger { background: #1e2130; color: var(--mid); }
-        :root.dark-mode #create-post-trigger:hover { background: #252a3a; }
-        :root.dark-mode .filter-btn { color: var(--mid); }
-        :root.dark-mode .filter-btn:hover { background: #1e2130; color: var(--ink); }
-        :root.dark-mode .filter-btn.active { background: var(--sixers-blue); color: white; }
-        :root.dark-mode .sidebar-heading { color: var(--ink); }
-        :root.dark-mode #sidebar-articles-container a:not(.cm-headline-link):not(.cm-article-item),
-        :root.dark-mode #sidebar-headlines-container a:not(.cm-headline-link):not(.cm-article-item) { border-color: var(--border-light); color: var(--ink); }
-        :root.dark-mode #sidebar-articles-container a:not(.cm-headline-link):not(.cm-article-item):hover,
-        :root.dark-mode #sidebar-headlines-container a:not(.cm-headline-link):not(.cm-article-item):hover { opacity: 0.75; }
-        :root.dark-mode .pagination button { background: var(--card-bg); border-color: var(--border-light); color: var(--ink); }
-        :root.dark-mode .pagination button:hover:not(:disabled) { background: #1e2130; }
-        :root.dark-mode .player-card-render { background: var(--card-bg); border-color: var(--border-light); }
-        :root.dark-mode .player-name-render { color: var(--ink); }
-        :root.dark-mode .player-analysis-render { color: var(--mid); }
-        :root.dark-mode .player-stats-render { color: var(--mid); border-color: var(--border-light); }
-        :root.dark-mode .player-grade-entry { background: #1e2130; border-color: var(--border-light); }
-        :root.dark-mode .post-modal,
-        :root.dark-mode .create-post-modal { background: var(--card-bg); color: var(--ink); }
-        :root.dark-mode .post-modal-close { background: #1e2130; color: var(--mid); }
-        :root.dark-mode .create-post-header { border-color: var(--border-light); }
-        :root.dark-mode h1, :root.dark-mode h2, :root.dark-mode h3,
-        :root.dark-mode h4, :root.dark-mode h5, :root.dark-mode h6 { color: var(--ink); }
-        :root.dark-mode input, :root.dark-mode textarea, :root.dark-mode select { background: #1e2130; color: var(--ink); border-color: var(--border-light); }
-        :root.dark-mode input::placeholder, :root.dark-mode textarea::placeholder { color: var(--mid); }
-        /* Tailwind utility overrides for dark mode
-           Scoped to exclude #feed-container and #post-modal-content
-           so the community CSS variable system isn't stomped on */
-        :root.dark-mode .bg-white:not(#feed-container *):not(#post-modal-content *) { background-color: var(--card-bg) !important; }
-        :root.dark-mode .bg-slate-50:not(#feed-container *):not(#post-modal-content *) { background-color: #1a1e2a !important; }
-        :root.dark-mode .bg-slate-100:not(#feed-container *):not(#post-modal-content *) { background-color: #1e2130 !important; }
-        :root.dark-mode .border-slate-200:not(#feed-container *):not(#post-modal-content *) { border-color: var(--border-light) !important; }
-        :root.dark-mode .border-slate-100:not(#feed-container *):not(#post-modal-content *) { border-color: var(--border-light) !important; }
-        :root.dark-mode .text-slate-900:not(#feed-container *):not(#post-modal-content *) { color: var(--ink) !important; }
-        :root.dark-mode .text-slate-800:not(#feed-container *):not(#post-modal-content *) { color: var(--ink) !important; }
-        :root.dark-mode .text-slate-700:not(#feed-container *):not(#post-modal-content *) { color: #c0c0d0 !important; }
-        :root.dark-mode .text-slate-600:not(#feed-container *):not(#post-modal-content *) { color: var(--mid) !important; }
-        :root.dark-mode .text-slate-500:not(#feed-container *):not(#post-modal-content *) { color: var(--mid) !important; }
-        :root.dark-mode .text-slate-400:not(#feed-container *):not(#post-modal-content *) { color: #666680 !important; }
-        :root.dark-mode .hover\:bg-slate-100:hover:not(#feed-container *):not(#post-modal-content *) { background-color: #1e2130 !important; }
-        :root.dark-mode .hover\:bg-slate-50:hover:not(#feed-container *):not(#post-modal-content *) { background-color: #1a1e2a !important; }
-        /* Feed post cards (dynamically injected) — community.js handles its own dark mode via --cm-* vars */
-        :root.dark-mode .feed-post { background: var(--card-bg); border-color: var(--border-light); }
-        /* Section label line */
-        :root.dark-mode .section-label::after { background: var(--border-light); }
-        :root.dark-mode .section-label { color: var(--mid); }
-        /* Community feed heading */
-        :root.dark-mode .community-feed-title { color: var(--ink); }
-        /* Sidebar view-all stays blue — no override needed */
-        /* Article/headline tag badges in dark mode */
-        :root.dark-mode .sidebar-view-all { color: #4da8ff; }
-        /* Poll widget dark mode */
-        :root.dark-mode .poll-option-bar-bg { background: #1e2130 !important; }
-        :root.dark-mode .poll-option-btn { background: #1e2130 !important; border-color: var(--border-light) !important; color: var(--ink) !important; }
-        :root.dark-mode .poll-option-btn:hover { background: #252a3a !important; border-color: var(--sixers-blue) !important; }
-        :root.dark-mode .poll-option-btn.voted { background: rgba(0,107,182,0.18) !important; border-color: var(--sixers-blue) !important; }
-        /* Char counter dark mode */
-        :root.dark-mode #post-char-counter { color: var(--mid); }
-        /* Inbox/notification section inside dropdown */
-        :root.dark-mode .notification-item { border-color: var(--border-light); }
-        :root.dark-mode .notification-item:hover { background: #1e2130; }
-        :root.dark-mode .notification-item.unread { background: rgba(0,107,182,0.12); }
-        :root.dark-mode .notification-item.unread:hover { background: rgba(0,107,182,0.2); }
-
-        /* ─── USER PROFILE MODAL ────────────────────── */
-        .profile-modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.55);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1500;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.25s ease;
-            backdrop-filter: blur(4px);
-        }
-        .profile-modal-overlay.active { opacity: 1; visibility: visible; }
-
-        .profile-modal {
-            background: white;
-            width: 95%;
-            max-width: 900px;
-            max-height: 92vh;
-            border-radius: 14px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transform: translateY(16px) scale(0.98);
-            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 40px 80px rgba(0,0,0,0.28);
-        }
-        .profile-modal-overlay.active .profile-modal {
-            transform: translateY(0) scale(1);
-        }
-
-        .profile-modal-header {
-            background: var(--navy-deep);
-            padding: 2.5rem 2.5rem 0;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        /* ─── FAN SCORE STRIP ──────────────────────── */
-        .profile-rank-section {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.85rem 2rem;
-            background: rgba(0,0,0,0.25);
-            border-top: 1px solid rgba(255,255,255,0.07);
-            gap: 1rem;
-        }
-
-        .profile-rank-left {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .profile-rank-icon { font-size: 1rem; line-height: 1; }
-
-        .profile-rank-info { display: flex; flex-direction: column; gap: 1px; }
-
-        .profile-rank-label {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.6rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.3);
-        }
-
-        .profile-rank-title {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #4da8ff;
-            letter-spacing: 0.03em;
-            line-height: 1;
-        }
-
-        .profile-rank-score-block {
-            display: flex;
-            align-items: baseline;
-            gap: 0.35rem;
-        }
-
-        .profile-rank-score-val {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: white;
-            line-height: 1;
-        }
-
-        .profile-rank-score-label {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.6rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.35);
-        }
-        .profile-modal-close {
-            position: absolute;
-            top: 1rem; right: 1rem;
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.7);
-            font-size: 1.1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-            line-height: 1;
-        }
-        .profile-modal-close:hover { background: rgba(255,255,255,0.2); }
-
-        .profile-avatar-large {
-            width: 96px; height: 96px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 700;
-            font-size: 2.2rem;
-            color: white;
-            border: 4px solid rgba(255,255,255,0.2);
-            flex-shrink: 0;
-        }
-        .profile-username {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: white;
-            letter-spacing: 0.02em;
-            line-height: 1;
-        }
-        .profile-joined {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.4);
-            margin-top: 0.3rem;
-        }
-        .profile-stats-row {
-            display: flex;
-            gap: 0;
-            margin-top: 0;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 1rem;
-            padding-bottom: 1rem;
-        }
-        .profile-stat {
-            flex: 1;
-            text-align: center;
-        }
-        .profile-stat + .profile-stat {
-            border-left: 1px solid rgba(255,255,255,0.08);
-        }
-        .profile-stat-val {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: white;
-            line-height: 1;
-        }
-        .profile-stat-label {
-            font-size: 0.65rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.35);
-            margin-top: 3px;
-        }
-
-        .profile-modal-body {
-            overflow-y: auto;
-            flex: 1;
-            padding: 2rem 2.5rem;
-        }
-        .profile-section-label {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.65rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            
-            color: var(--mid);
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .profile-section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-light);
-        }
-        .profile-post-item {
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-light);
-            cursor: pointer;
-            transition: opacity 0.15s;
-        }
-        .profile-post-item:last-child { border-bottom: none; }
-        .profile-post-item:hover { opacity: 0.7; }
-        .profile-post-title {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--ink);
-            line-height: 1.4;
-            margin-bottom: 0.35rem;
-        }
-        .profile-post-meta {
-            font-size: 0.75rem;
-            color: var(--mid);
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        /* Dark mode */
-        :root.dark-mode .profile-modal { background: var(--card-bg); }
-        :root.dark-mode .profile-modal-body { background: var(--card-bg); }
-        :root.dark-mode .profile-post-title { color: var(--ink); }
-        :root.dark-mode .profile-post-item { border-color: var(--border-light); }
-
-        /* ─── CLICKABLE AUTHOR NAMES ────────────────── */
-        .author-link {
-            cursor: pointer;
-            transition: color 0.15s;
-        }
-        .author-link { cursor: pointer; transition: color 0.15s; }
-        .author-link:hover { color: var(--sixers-blue) !important; }
-        .community-feed-heading {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.1rem;
-        }
-
-        #community-feed-section, #community-feed-section * {
-            text-transform: none;
-        }
-
-        .community-feed-title {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            color: var(--ink);
-            line-height: 1;
-        }
-
-        .community-feed-badge {
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.6rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            
-            color: var(--sixers-red);
-            background: rgba(237,23,76,0.08);
-            border: 1px solid rgba(237,23,76,0.2);
-            border-radius: 4px;
-            padding: 2px 7px;
-            position: relative;
-            top: -1px;
-        }
-
-        :root.dark-mode .community-feed-title { color: var(--ink); }
-
-        /* ─── AVATAR PICKER ─────────────────────────── */
-        .avatar-picker-row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 0;
-            margin-bottom: 0.25rem;
-        }
-
-        .avatar-option {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border-color 0.15s, transform 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .avatar-option:hover { transform: scale(1.1); }
-        .avatar-option.selected { border-color: var(--sixers-blue); box-shadow: 0 0 0 2px rgba(0,107,182,0.3); }
-
-        .avatar-option-navy  { background: #001a57; }
-        .avatar-option-blue  { background: #006BB6; }
-        .avatar-option-red   { background: #ED174C; }
-        .avatar-option-slate { background: #475569; }
-        .avatar-option-dark  { background: #1e293b; }
-
-        /* ─── EDITORIAL ARTICLES SECTION ───────────── */
-        .editorial-section { max-width:1200px;margin:2.5rem auto 0;padding:0 1.5rem; }
-        .editorial-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem; }
-        .editorial-title { font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.85rem;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:0.6rem; }
-        .editorial-title::before { content:'';display:inline-block;width:3px;height:1em;background:var(--sixers-red);border-radius:2px; }
-        .editorial-view-all { font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.75rem;font-weight:500;letter-spacing:0.01em;color:var(--sixers-blue);text-decoration:none; }
-        .editorial-view-all:hover { text-decoration:underline; }
-
-        /* Grid adapts: 1 card = full width, 2 = side by side, 3 = featured left + 2 stacked */
-        .editorial-grid { display:grid;gap:1rem; }
-        .editorial-grid.count-1 { grid-template-columns:1fr;max-width:640px; }
-        .editorial-grid.count-2 { grid-template-columns:1fr 1fr; }
-        .editorial-grid.count-3 { grid-template-columns:3fr 2fr; }
-        .editorial-grid.count-3 .article-card:first-child { grid-row:1/3; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-thumb { height:220px; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-title { font-size:1.35rem; line-height:1.15; }
-        .editorial-grid.count-3 .article-card:first-child .article-card-excerpt { -webkit-line-clamp:3; }
-
-        /* ── Article Cards — improved ── */
-        .article-card {
-            background:var(--card-bg);
-            border:1px solid var(--border-light);
-            border-radius:16px;
-            overflow:hidden;
-            cursor:pointer;
-            display:flex;
-            flex-direction:column;
-            transition:transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-        .article-card:hover {
-            transform:translateY(-4px);
-            box-shadow:0 14px 36px rgba(0,0,0,0.11);
-            border-color:rgba(0,107,182,0.35);
-        }
-        /* Thumb */
-        .article-card-thumb {
-            height:140px;
-            background:var(--navy-deep);
-            position:relative;
-            overflow:hidden;
-            flex-shrink:0;
-            display:flex;
-            align-items:flex-end;
-            padding:0.8rem 1rem;
-        }
-        .article-card-thumb::after {
-            content:'';
-            position:absolute;
-            inset:0;
-            background:linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%);
-            pointer-events:none;
-            z-index:1;
-        }
-        /* The old centered category text — now hidden; pill takes its place */
-        .article-card-thumb-cat { display:none; }
-        /* Category pill overlaid on thumb */
-        .article-card-cat-pill {
-            position:relative;
-            z-index:2;
-            font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size:0.6rem;
-            font-weight:500;
-            letter-spacing: 0.08em;
-            text-transform:uppercase;
-            padding:3px 10px;
-            border-radius:999px;
-            background:rgba(255,255,255,0.18);
-            border:1px solid rgba(255,255,255,0.3);
-            color:#fff;
-            backdrop-filter:blur(4px);
-            -webkit-backdrop-filter:blur(4px);
-        }
-        /* Body */
-        .article-card-body {
-            padding:1rem 1.15rem 0;
-            flex:1;
-            display:flex;
-            flex-direction:column;
-            gap:0.35rem;
-        }
-        /* Hide old tag — pill on thumb replaces it */
-        .article-card-tag { display:none; }
-        .article-card-title {
-            font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size:1.08rem;
-            font-weight:800;
-            line-height:1.2;
-            color:var(--ink);
-        }
-        .article-card-excerpt {
-            font-size:0.79rem;
-            color:var(--mid);
-            line-height:1.55;
-            display:-webkit-box;
-            -webkit-line-clamp:2;
-            -webkit-box-orient:vertical;
-            overflow:hidden;
-            flex:1;
-        }
-        /* Old meta — replaced by footer */
-        .article-card-meta { display:none; }
-        /* Footer with date + read link */
-        .article-card-footer {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            border-top:1px solid var(--border-light);
-            padding:0.6rem 1.15rem 0.7rem;
-            margin-top:0.75rem;
-        }
-        .article-card-footer-meta {
-            font-size:0.68rem;
-            color:var(--mid);
-            font-weight:500;
-            display:flex;
-            align-items:center;
-            gap:0.35rem;
-        }
-        .article-card-footer-dot {
-            width:3px;height:3px;border-radius:50%;
-            background:var(--mid);opacity:0.45;display:inline-block;
-        }
-        .article-card-read {
-            font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size:0.68rem;
-            font-weight:700;
-            letter-spacing:0.08em;
-            text-transform:uppercase;
-            color:var(--sixers-blue);
-            white-space:nowrap;
-        }
-
-        .article-card:hover .article-card-thumb-bg { transform:scale(1.05); }
-        :root.dark-mode .article-card { background:var(--card-bg);border-color:var(--border-light); }
-        :root.dark-mode .article-card-title { color:var(--ink); }
-        :root.dark-mode .article-card-footer { border-color:var(--border-light); }
-        @media(max-width:700px) {
-            .editorial-grid.count-2,.editorial-grid.count-3 { grid-template-columns:1fr; }
-            .editorial-grid.count-3 .article-card:first-child { grid-row:auto; }
-        }
-
-        /* ─── ARTICLE FULL-PAGE VIEW ─────────────────── */
-        #article-page {
-            position:fixed;inset:0;top:64px;
-            background:var(--cream);
-            z-index:1800;
-            overflow-y:auto;
-            transform:translateX(100%);
-            transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);
-            visibility:hidden;
-        }
-        #article-page.active {
-            transform:translateX(0);
-            visibility:visible;
-        }
-        .art-hero {
-            background:var(--navy-deep);
-            padding:4rem 1.5rem 3rem;
-            position:relative;
-            overflow:hidden;
-            text-align:center;
-        }
-        .art-hero::before {
-            content:'';position:absolute;inset:0;
-            background-image:linear-gradient(rgba(0,107,182,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,107,182,0.04) 1px,transparent 1px);
-            background-size:48px 48px;pointer-events:none;
-        }
-        .art-hero-inner { max-width:860px;margin:0 auto;position:relative;z-index:1; }
-        .art-back-btn { display:none; }
-        .art-cat-badge {
-            display:inline-block;font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size:0.7rem;font-weight:500;letter-spacing: 0.05em;text-transform:uppercase;
-            padding:5px 14px;border-radius:6px;margin-bottom:1.5rem;
-        }
-        .art-headline {
-            font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size:clamp(2.4rem,6vw,4rem);font-weight:700;
-            line-height:1.0;color:#ffffff;
-            margin:0 0 1.5rem;letter-spacing:-0.01em;
-        }
-        .art-byline {
-            font-size:0.82rem;color:rgba(255,255,255,0.4);
-            display:flex;align-items:center;justify-content:center;gap:1.25rem;flex-wrap:wrap;
-        }
-        .art-byline-item { display:flex;align-items:center;gap:0.35rem; }
-        .art-body-wrap { max-width:760px;margin:2.5rem auto;padding:0 1.5rem 4rem; }
-        .art-body p { font-size:1rem;line-height:1.8;color:var(--ink);margin:0 0 1.4rem; }
-        .art-body h2 {
-            font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:1.3rem;font-weight:600;
-            letter-spacing: -0.02em;color:var(--ink);
-            margin:2.5rem 0 0.75rem;padding-left:0.75rem;border-left:3px solid var(--sixers-red);
-        }
-        .art-grade-card { background:var(--card-bg);border:1px solid var(--border-light);border-radius:14px;padding:1.25rem 1.4rem;margin:1rem 0; }
-        .art-grade-header { display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem; }
-        .art-grade-name { font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:1.2rem;font-weight:600;color:var(--ink); }
-        .art-grade-badge { font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:1rem;font-weight:700;color:white;padding:4px 14px;border-radius:8px;flex-shrink:0; }
-        .art-grade-stats { font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--mid);padding-bottom:0.6rem;border-bottom:1px dashed var(--border-light);margin-bottom:0.6rem; }
-        .art-grade-analysis { font-size:0.92rem;line-height:1.65;color:#475569; }
-        .art-grade-tweet { margin-top:1rem;border-top:1px solid var(--border-light);padding-top:1rem;min-height:32px; }
-        .art-grade-tweet iframe { border-radius:12px !important; }
-        .art-grade-tweet-loading { font-size:0.78rem;color:var(--mid);padding:0.5rem 0;font-style:italic; }
-        .art-grade-tweet-error { font-size:0.78rem;color:#b83232;padding:0.5rem 0; }
-        :root.dark-mode #article-page { background:var(--cream); }
-        :root.dark-mode .art-grade-card { background:var(--card-bg);border-color:var(--border-light); }
-        :root.dark-mode .art-grade-name,:root.dark-mode .art-body p,:root.dark-mode .art-body h2 { color:var(--ink); }
-        :root.dark-mode .art-grade-analysis { color:var(--mid); }
-
-        /* Google Analytics & AdSense passthrough */
-    </style>
-
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1V9Q0MNEM"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-T1V9Q0MNEM');
-    </script>
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8055761449140377" crossorigin="anonymous"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8046070602394287"
-     crossorigin="anonymous"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sixers Hoops — News, Analysis & Community</title>
+<meta name="description" content="The ultimate destination for Philadelphia 76ers fans. News, analysis, and community for everything Sixers." />
+<meta property="og:title" content="Sixers Hoops" />
+<meta property="og:description" content="The ultimate destination for Philadelphia 76ers fans. News, analysis, and community for everything Sixers." />
+<link rel="icon" href="/favicon.ico" />
+<link rel="canonical" href="/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/navbar-styles.css" />
+<style>
+  :root {
+    --navy: #001a57;
+    --sixers-blue: #006bb6;
+    --sixers-red: #ed174c;
+    --cream: #ffffff;
+    --ink: #0d0f1a;
+    --mid: #64748b;
+    --border-light: #e4e8f0;
+    --card-bg: #ffffff;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Lexend", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    margin-top: 64px;
+  }
+  a { color: inherit; }
+
+  /* HERO */
+  .hero { background: var(--cream); position: relative; overflow: hidden; text-transform: uppercase; }
+  .hero-inner {
+    position: relative; z-index: 1; max-width: 860px; margin: 0 auto;
+    padding: 5rem 2rem 4.5rem; display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+  }
+  .hero-wordmark { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(0,107,182,0.07); border: 1px solid rgba(0,107,182,0.18);
+    border-radius: 999px; padding: 5px 14px 5px 8px; margin-bottom: 2rem; width: fit-content;
+  }
+  .hero-eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--sixers-red);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.75); }
+  }
+  .hero-eyebrow-text { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.06em; color: var(--sixers-blue); }
+  .hero-title-top, .hero-title-bottom {
+    font-size: clamp(2.4rem, 6vw, 4.5rem); font-weight: 700; line-height: 0.95;
+    letter-spacing: -0.03em; margin: 0;
+  }
+  .hero-title-top { color: var(--ink); }
+  .hero-title-bottom { color: var(--sixers-blue); }
+  .hero-sub {
+    font-size: 0.92rem; color: var(--mid); max-width: 460px;
+    line-height: 1.65; margin: 1.25rem auto 0; text-transform: none;
+  }
+  .hero-cta-row { display: flex; align-items: center; gap: 0.7rem; margin-top: 2.25rem; flex-wrap: wrap; }
+  .hero-cta-primary {
+    background: var(--sixers-blue); color: white; font-weight: 600; font-size: 0.76rem;
+    letter-spacing: 0.02em; padding: 0.75rem 1.6rem; border-radius: 8px;
+    text-decoration: none; transition: all 0.2s; box-shadow: 0 2px 12px rgba(0,107,182,0.25);
+  }
+  .hero-cta-primary:hover { background: #0057a0; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,107,182,0.35); }
+  .hero-cta-secondary {
+    color: var(--sixers-blue); font-weight: 600; font-size: 0.76rem;
+    letter-spacing: 0.02em; padding: 0.75rem 1.6rem; border-radius: 8px;
+    text-decoration: none; border: 1px solid var(--sixers-blue); transition: all 0.2s;
+  }
+  .hero-cta-secondary:hover { background: var(--sixers-blue); color: white; }
+
+  /* FEATURE CARDS */
+  .feature-cards-section { background: var(--cream); border-top: 1px solid var(--border-light); padding: 0.5rem 0 2.5rem; }
+  .feature-cards-inner {
+    max-width: 1080px; margin: 0 auto; padding: 1.5rem 2rem 0;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem;
+  }
+  .feature-card {
+    background: var(--card-bg); border: 1px solid var(--border-light);
+    padding: 0.9rem 0.9rem 0.85rem; text-decoration: none; display: flex;
+    flex-direction: column; gap: 0.4rem; position: relative; overflow: hidden;
+    transition: all 0.22s ease; border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .feature-card::after {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--sixers-blue); transform: scaleX(0); transform-origin: left;
+    transition: transform 0.28s ease;
+  }
+  .feature-card:hover::after { transform: scaleX(1); }
+  .feature-card:hover {
+    border-color: rgba(0,107,182,0.25); box-shadow: 0 4px 20px rgba(0,107,182,0.07);
+    transform: translateY(-2px);
+  }
+  .feature-card-title { font-size: 0.82rem; font-weight: 600; color: var(--ink); line-height: 1.1; }
+  .feature-card-desc { font-size: 0.7rem; color: var(--mid); line-height: 1.45; flex: 1; }
+  .feature-card-arrow { margin-top: auto; color: var(--sixers-blue); opacity: 0.45; transition: opacity 0.2s, transform 0.2s; }
+  .feature-card:hover .feature-card-arrow { opacity: 1; transform: translateX(3px); }
+
+  /* NEWS */
+  .news-section { background: var(--cream); padding: 3rem 0 4rem; border-top: 1px solid var(--border-light); }
+  .news-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+  .news-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .news-eyebrow { display: block; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sixers-blue); margin-bottom: 0.4rem; }
+  .news-title { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); margin: 0; line-height: 1.1; }
+  .news-view-all { font-size: 0.8rem; font-weight: 600; color: var(--sixers-blue); text-decoration: none; }
+  .news-view-all:hover { text-decoration: underline; }
+  .news-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .news-card {
+    display: flex; flex-direction: column; background: var(--card-bg);
+    border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden;
+    text-decoration: none; color: inherit; transition: all 0.22s ease;
+  }
+  .news-card:hover { border-color: rgba(0,107,182,0.3); box-shadow: 0 8px 28px rgba(0,107,182,0.08); transform: translateY(-2px); }
+  .news-card-thumb {
+    aspect-ratio: 16/9;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(237,23,76,0.5), transparent 60%),
+      linear-gradient(135deg, #006bb6, #001a57);
+  }
+  .news-card-body { padding: 1.25rem 1.4rem 1.4rem; display: flex; flex-direction: column; gap: 0.55rem; }
+  .news-tag {
+    align-self: flex-start; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--sixers-blue);
+    background: rgba(0,107,182,0.08); border: 1px solid rgba(0,107,182,0.15);
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .news-card-title { font-size: 1.25rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em; color: var(--ink); margin: 0; }
+  .news-card-excerpt { font-size: 0.9rem; line-height: 1.55; color: var(--mid); margin: 0; }
+  .news-card-meta { display: flex; gap: 0.5rem; font-size: 0.75rem; color: var(--mid); margin-top: 0.25rem; }
+  .news-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .news-list-item {
+    display: flex; flex-direction: column; gap: 0.4rem; background: var(--card-bg);
+    border: 1px solid var(--border-light); border-radius: 10px; padding: 1rem 1.1rem;
+    text-decoration: none; color: inherit; transition: all 0.2s ease;
+  }
+  .news-list-item:hover { border-color: rgba(0,107,182,0.3); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,107,182,0.06); }
+  .news-list-title { font-size: 0.98rem; font-weight: 600; line-height: 1.3; color: var(--ink); margin: 0; }
+  .news-list-excerpt { font-size: 0.82rem; line-height: 1.5; color: var(--mid); margin: 0; }
+  .news-empty, .news-loading {
+    grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: var(--mid);
+    background: var(--card-bg); border: 1px solid var(--border-light); border-radius: 12px;
+    font-size: 0.85rem;
+  }
+  .news-skel {
+    background: linear-gradient(90deg, var(--border-light) 25%, #f0f3f8 37%, var(--border-light) 63%);
+    background-size: 400% 100%; animation: skel-shine 1.4s ease infinite; border-radius: 8px;
+  }
+  @keyframes skel-shine { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+  .grade-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.68rem; font-weight: 700; color: white; border-radius: 5px;
+    padding: 1px 6px; min-width: 26px; text-align: center;
+  }
+  .news-card-grades { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+
+  /* SIXERS UPDATES (replaces social embed placeholders) */
+  .updates-section { background: #f8fafc; padding: 3rem 0 4rem; border-top: 1px solid var(--border-light); }
+  .updates-inner { max-width: 760px; margin: 0 auto; padding: 0 2rem; }
+  .updates-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .updates-feed { display: flex; flex-direction: column; gap: 0.85rem; }
+  .update-card {
+    background: var(--card-bg); border: 1px solid var(--border-light); border-radius: 14px;
+    padding: 1.1rem 1.25rem; display: flex; gap: 0.85rem; transition: all 0.2s ease;
+  }
+  .update-card:hover { border-color: rgba(0,107,182,0.25); box-shadow: 0 4px 18px rgba(0,107,182,0.06); }
+  .update-avatar {
+    flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #006bb6, #001a57);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem;
+  }
+  .update-body { flex: 1; min-width: 0; }
+  .update-head { display: flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; }
+  .update-handle { font-size: 0.92rem; font-weight: 700; color: var(--ink); }
+  .update-sub { font-size: 0.8rem; color: var(--mid); }
+  .update-dot { color: var(--mid); font-size: 0.7rem; }
+  .update-time { font-size: 0.8rem; color: var(--mid); }
+  .update-text { font-size: 0.92rem; line-height: 1.5; color: var(--ink); margin: 0.3rem 0 0; white-space: pre-wrap; word-break: break-word; }
+  .updates-empty, .updates-loading {
+    text-align: center; padding: 2.5rem 1rem; color: var(--mid);
+    background: var(--card-bg); border: 1px solid var(--border-light); border-radius: 14px;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 900px) {
+    .feature-cards-inner { grid-template-columns: repeat(2, 1fr); }
+    .news-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .hero-inner { padding: 2.5rem 1rem 2rem; }
+    .hero-sub { font-size: 0.88rem; max-width: 100%; }
+    .hero-cta-row { flex-direction: column; align-items: stretch; width: 100%; gap: 0.6rem; margin-top: 1.25rem; }
+    .hero-cta-primary, .hero-cta-secondary { text-align: center; width: 100%; padding: 0.8rem 1rem; }
+    .feature-cards-inner { padding: 1.5rem 0.75rem 0; gap: 0.5rem; }
+    .feature-card { padding: 0.85rem; }
+    .feature-card-desc { display: none; }
+    .news-section { padding: 2rem 0 2.5rem; }
+    .news-inner, .updates-inner { padding: 0 1rem; }
+  }
+</style>
 </head>
 <body>
-  <!-- Navigation injected by nav.js -->
-  <script src="nav.js"></script>
-<div class="min-h-screen">
 <main>
-
-<!-- HERO -->
-<header class="hero">
-    <div class="hero-glow-blue"></div>
-    <div class="hero-glow-red"></div>
+  <header class="hero">
     <div class="hero-inner">
-        <div class="hero-wordmark">
-            <p class="hero-title-top">Sixers</p>
-            <p class="hero-title-bottom">Hoops</p>
-            <div class="hero-divider"></div>
-            <p class="hero-sub">The ultimate destination for Sixers fans. News, analysis, community, and everything 76ers.</p>
-            <div class="hero-cta-row">
-                <button onclick="if(window.auth&&window.auth.currentUser){document.getElementById('community-feed-section').scrollIntoView({behavior:'smooth'})}else{if(typeof openAuthModal==='function')openAuthModal();else document.getElementById('navSignInBtn')&&document.getElementById('navSignInBtn').click()}" class="hero-cta-primary" style="cursor:pointer;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    Join Community
-                </button>
-                <a href="https://sixershoops.com/news" class="hero-cta-secondary">
-                    Latest News &amp; Analysis →
-                </a>
-            </div>
+      <div class="hero-wordmark">
+        <span class="hero-eyebrow">
+          <span class="hero-eyebrow-dot"></span>
+          <span class="hero-eyebrow-text">Live · 76ers HQ</span>
+        </span>
+        <p class="hero-title-top">Sixers</p>
+        <p class="hero-title-bottom">Hoops</p>
+        <p class="hero-sub">The ultimate destination for Sixers fans. News, analysis, community, and everything 76ers.</p>
+        <div class="hero-cta-row">
+          <a href="#news" class="hero-cta-primary">Latest News</a>
+          <a href="#features" class="hero-cta-secondary">Explore the site →</a>
         </div>
+      </div>
     </div>
 
-    <!-- Feature Cards -->
-    <div class="feature-cards-section">
-        <div class="feature-cards-inner" style="padding-top:1.5rem;">
-            <a href="https://www.nba.com/trade-machine" target="_blank" rel="noopener" class="feature-card">
-                <div class="feature-card-title">NBA Trade Machine</div>
-                <div class="feature-card-desc">Build and simulate trades to see how they affect the Sixers roster.</div>
-                <div class="feature-card-arrow">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </div>
-            </a>
-            <a href="https://sixershoops.com/roster" class="feature-card">
-                <div class="feature-card-title">Roster &amp; Depth Chart</div>
-                <div class="feature-card-desc">Full squad, lineups, and player stats at a glance.</div>
-                <div class="feature-card-arrow">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </div>
-            </a>
-            <a href="https://sixershoops.com/schedule" class="feature-card">
-                <div class="feature-card-title">2025–26 Schedule</div>
-                <div class="feature-card-desc">Full game schedule, results and upcoming matchups.</div>
-                <div class="feature-card-arrow">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </div>
-            </a>
-            <a href="/pickem" class="feature-card">
-                <div class="feature-card-title">Community Pick'em</div>
-                <div class="feature-card-desc">Make your predictions and compete with the Sixers fanbase.</div>
-                <div class="feature-card-arrow" style="color:var(--sixers-red);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </div>
-            </a>
-        </div>
+    <div class="feature-cards-section" id="features">
+      <div class="feature-cards-inner">
+        <a href="https://www.nba.com/trade-machine" target="_blank" rel="noopener noreferrer" class="feature-card">
+          <div class="feature-card-title">NBA Trade Machine</div>
+          <div class="feature-card-desc">Build and simulate trades to see how they affect the Sixers roster.</div>
+          <div class="feature-card-arrow">→</div>
+        </a>
+        <a href="#" class="feature-card">
+          <div class="feature-card-title">Roster &amp; Depth Chart</div>
+          <div class="feature-card-desc">Full squad, lineups, and player stats at a glance.</div>
+          <div class="feature-card-arrow">→</div>
+        </a>
+        <a href="#" class="feature-card">
+          <div class="feature-card-title">2025–26 Schedule</div>
+          <div class="feature-card-desc">Full game schedule, results and upcoming matchups.</div>
+          <div class="feature-card-arrow">→</div>
+        </a>
+        <a href="#" class="feature-card">
+          <div class="feature-card-title">Community Pick'em</div>
+          <div class="feature-card-desc">Make your predictions and compete with the Sixers fanbase.</div>
+          <div class="feature-card-arrow" style="color: var(--sixers-red);">→</div>
+        </a>
+      </div>
     </div>
+  </header>
 
-</header>
-
-
-
-<!-- ─── MAIN CONTENT ──────────────────────────────────── -->
-<section id="community-feed-section" class="main-layout">
-
-    <!-- Left: Feed -->
-    <div>
-        <div class="community-feed-heading">
-            <span class="community-feed-title">Community Feed</span>
+  <section id="news" class="news-section">
+    <div class="news-inner">
+      <div class="news-heading">
+        <div>
+          <span class="news-eyebrow">Latest</span>
+          <h2 class="news-title">News &amp; Analysis</h2>
         </div>
+        <a href="#" class="news-view-all">View all news →</a>
+      </div>
 
-        <!-- Create Post -->
-        <div class="create-post-box" id="create-post-box">
-            <div id="create-post-avatar-container">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" id="create-post-default-avatar"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </div>
-            <input type="text" placeholder="What's on your mind?" id="create-post-trigger" class="flex-1" readonly>
-            <button id="create-post-btn">Post</button>
-        </div>
-
-        <!-- Feed Filters -->
-        <div class="feed-filters" id="feed-filter-bar">
-            <button id="filter-hot" class="filter-btn active">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                Hot
-            </button>
-            <button id="filter-new" class="filter-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 7v5l3 3"/></svg>
-                New
-            </button>
-            <button id="filter-top" class="filter-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4-4 4 4"/><path d="m7 12V4"/><path d="m21 8-4 4-4-4"/><path d="m17 12V4"/><path d="M3 20h18"/></svg>
-                Top
-            </button>
-        </div>
-
-        <!-- Posts injected by JS -->
-        <div id="feed-container"></div>
+      <div class="news-grid" id="news-grid">
+        <div class="news-loading">Loading the latest…</div>
+      </div>
     </div>
+  </section>
 
-    <!-- Right: Sidebar -->
-    <aside style="position: sticky; top: 80px;">
+  <section id="updates" class="updates-section">
+    <div class="updates-inner">
+      <div class="updates-heading">
+        <div>
+          <span class="news-eyebrow">From the desk</span>
+          <h2 class="news-title">Sixers Updates</h2>
+        </div>
+      </div>
 
-        <!-- Weekly Poll -->
-        <div class="sidebar-card" id="poll-sidebar-card">
-            <div class="sidebar-heading">
-                Fan Poll
-                <span id="poll-ends-label" style="font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.65rem;font-weight:400;color:var(--mid);letter-spacing:0.01em;"></span>
-            </div>
-            <div id="poll-container">
-                <p style="font-size:0.8rem;color:var(--mid);text-align:center;padding:1rem 0;">Loading poll…</p>
-            </div>
-        </div>
-
-        <!-- Trending Headlines -->
-        <div class="sidebar-card headlines-card">
-            <div class="sidebar-heading">
-                Trending Headlines
-                <button id="view-all-headlines" class="sidebar-view-all">View All</button>
-            </div>
-            <div id="sidebar-headlines-container"></div>
-            <div id="mod-headline-controls" class="mt-4 pt-4 hidden" style="border-top: 1px solid var(--border-light);">
-                <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <div style="width:28px;height:28px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.7rem;flex-shrink:0;">H</div>
-                    <input type="text" placeholder="Add headline..." id="create-headline-trigger" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs transition-all cursor-pointer" readonly style="font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;">
-                    <button id="add-headline-btn-sidebar" style="background:#7c3aed;color:white;border:none;border-radius:7px;padding:0.35rem 0.75rem;font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Add</button>
-                </div>
-            </div>
-        </div>
-
-    </aside>
-</section>
-
-<!-- User Profile Modal -->
-<div class="profile-modal-overlay" id="profile-modal-overlay">
-    <div class="profile-modal">
-        <div class="profile-modal-header" id="profile-modal-header">
-            <button class="profile-modal-close" id="profile-modal-close">&times;</button>
-            <div style="display:flex;align-items:center;gap:1.5rem;padding-bottom:1.5rem;">
-                <div class="profile-avatar-large" id="profile-modal-avatar"></div>
-                <div style="flex:1;min-width:0;">
-                    <div class="profile-username" id="profile-modal-username"></div>
-                    <div class="profile-joined" id="profile-modal-joined"></div>
-                    <div id="profile-follower-count" style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;"></div>
-                    <div id="profile-modal-badges" style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.6rem;align-items:center;"></div>
-                </div>
-            </div>
-            <div class="profile-stats-row" id="profile-modal-stats"></div>
-        </div>
-        <!-- Rank / Score Strip -->
-        <div class="profile-rank-section" id="profile-rank-section" style="display:none;">
-            <div class="profile-rank-left">
-                <div class="profile-rank-info">
-                    <div class="profile-rank-label">Community Rank</div>
-                    <div class="profile-rank-title" id="profile-rank-number">—</div>
-                </div>
-            </div>
-            <div class="profile-rank-score-block">
-                <div class="profile-rank-score-val" id="profile-rank-score-val">—</div>
-                <div class="profile-rank-score-label">pts</div>
-            </div>
-        </div>
-        <div class="profile-modal-body">
-            <div class="profile-section-label">Recent Posts</div>
-            <div id="profile-modal-posts">
-                <p style="font-size:0.82rem;color:var(--mid);text-align:center;padding:2rem 0;">Loading…</p>
-            </div>
-        </div>
+      <div class="updates-feed" id="updates-feed">
+        <div class="updates-loading">Loading updates…</div>
+      </div>
     </div>
-</div>
-
+  </section>
 </main>
-</div>
 
-<!-- ─── ALL MODALS (unchanged IDs for JS compatibility) ──────── -->
-
-<!-- Post Detail Modal -->
-<div class="post-modal-overlay" id="post-modal-overlay">
-    <div class="post-modal">
-        <button class="post-modal-close" id="post-modal-close">&times;</button>
-        <div id="post-modal-content"></div>
-    </div>
-</div>
-
-<!-- Confirm Modal -->
-<div class="post-modal-overlay" id="confirm-modal-overlay" style="z-index: 2000;">
-    <div class="post-modal max-w-sm p-8 text-center">
-        <div class="h-16 w-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-        </div>
-        <h3 class="text-xl font-bold text-slate-900 mb-2">Are you sure?</h3>
-        <p class="text-slate-500 mb-8 text-sm">This action cannot be undone.</p>
-        <div class="flex justify-center gap-3">
-            <button id="confirm-modal-cancel" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
-            <button id="confirm-modal-submit" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-all shadow-sm">Delete</button>
-        </div>
-    </div>
-</div>
-
-<!-- Alert Modal -->
-<div class="post-modal-overlay" id="alert-modal-overlay" style="z-index: 2100;">
-    <div class="post-modal max-w-sm p-8 text-center">
-        <div id="alert-modal-icon" class="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        </div>
-        <h3 id="alert-modal-title" class="text-xl font-bold text-slate-900 mb-2">Notice</h3>
-        <p id="alert-modal-message" class="text-slate-500 mb-8 text-sm">Message goes here.</p>
-        <button id="alert-modal-close-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm">OK</button>
-    </div>
-</div>
-
-<!-- Articles Modal -->
-<div class="post-modal-overlay" id="articles-modal-overlay">
-    <div class="post-modal max-w-2xl">
-        <button class="post-modal-close" id="articles-modal-close">&times;</button>
-        <div id="articles-modal-content" class="space-y-6">
-            <div class="flex items-center justify-between">
-                <h2 class="text-2xl font-bold text-slate-900" id="articles-modal-title">Latest Articles</h2>
-                <button id="modal-add-article-btn" class="hidden bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors">+ Add Article</button>
-            </div>
-            <div id="all-articles-list" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Article Edit Modal -->
-<div class="post-modal-overlay" id="edit-article-modal-overlay">
-    <div class="post-modal max-w-md">
-        <button class="post-modal-close" id="edit-article-modal-close">&times;</button>
-        <div class="space-y-6">
-            <h2 class="text-xl font-bold text-slate-900" id="article-edit-title">Add New Article</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Title</label>
-                    <input type="text" id="article-title-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none" placeholder="Article title">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Category</label>
-                    <input type="text" id="article-category-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none" placeholder="e.g., Player Grades">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Date</label>
-                    <input type="text" id="article-date-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none" placeholder="e.g., Dec 07, 2025">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">URL</label>
-                    <input type="text" id="article-url-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none" placeholder="https://...">
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button id="cancel-article-btn" class="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all">Cancel</button>
-                    <button id="save-article-btn" class="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20">Save Article</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Headlines Modal -->
-<div class="post-modal-overlay" id="headlines-modal-overlay">
-    <div class="post-modal max-w-2xl">
-        <button class="post-modal-close" id="headlines-modal-close">&times;</button>
-        <div id="headlines-modal-content" class="space-y-6">
-            <div class="flex items-center justify-between">
-                <h2 class="text-2xl font-bold text-slate-900" id="headlines-modal-title">Trending Headlines</h2>
-                <button id="modal-add-headline-btn" class="hidden bg-purple-50 text-purple-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition-colors">+ Add Headline</button>
-            </div>
-            <div id="all-headlines-list" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Headline Edit Modal -->
-<div class="post-modal-overlay" id="edit-headline-modal-overlay">
-    <div class="post-modal max-w-md">
-        <button class="post-modal-close" id="edit-headline-modal-close">&times;</button>
-        <div class="space-y-6">
-            <h2 class="text-xl font-bold text-slate-900" id="headline-edit-title">Add New Headline</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Headline Title</label>
-                    <input type="text" id="headline-title-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none" placeholder="Headline title">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Category/Tag</label>
-                    <input type="text" id="headline-category-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none" placeholder="e.g., Community, Schedule">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">URL</label>
-                    <input type="text" id="headline-url-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none" placeholder="https://...">
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button id="cancel-headline-btn" class="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all">Cancel</button>
-                    <button id="save-headline-btn" class="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 transition-all shadow-md shadow-purple-500/20">Save Headline</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Create Post Modal -->
-<div class="create-post-modal-overlay" id="create-post-modal-overlay">
-    <div class="create-post-modal">
-        <button class="post-modal-close" id="create-post-modal-close">&times;</button>
-        <div class="create-post-header">
-            <h2 class="text-2xl font-bold text-slate-900">Create a Post</h2>
-        </div>
-        <div class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Post Title</label>
-                    <input type="text" id="post-title-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-medium" placeholder="Give your post a title">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Category</label>
-                    <select id="post-tag-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-medium">
-                        <option value="Discussion">Discussion</option>
-                        <option value="Highlight">Highlight</option>
-                        <option value="News">News</option>
-                        <option value="Question">Question</option>
-                        <option value="Player Grade">Player Grade</option>
-                    </select>
-                </div>
-            </div>
-            <div id="player-grade-template-container" class="hidden">
-                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="h-8 w-8 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-slate-800">Player Grades Template</p>
-                            <p class="text-[10px] text-slate-500 font-medium">Use the Pro Editor to grade multiple players quickly.</p>
-                        </div>
-                    </div>
-                    <button id="apply-grade-template" class="bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm">Switch to Pro Editor</button>
-                </div>
-            </div>
-            <div id="standard-content-editor" class="space-y-4">
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Post Content</label>
-                <textarea id="post-content-input" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none resize-none min-h-[200px]" placeholder="What are your thoughts?" maxlength="2000"></textarea>
-                <div class="flex justify-end" style="margin-top:-0.5rem;">
-                    <span id="post-char-counter" style="font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.7rem;color:var(--mid);transition:color 0.2s;">0 / 2000</span>
-                </div>
-            </div>
-            <div id="player-grade-editor" class="hidden space-y-4">
-                <div class="flex items-center justify-between">
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Player Grades</label>
-                    <button id="add-another-player" class="text-xs font-bold text-blue-600 hover:text-blue-700">+ Add Another Player</button>
-                </div>
-                <div id="player-grades-container"></div>
-            </div>
-            <div class="flex gap-4 pt-6 border-t border-slate-100">
-                <button id="cancel-post-btn" class="flex-1 px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all">Cancel</button>
-                <button id="submit-post-btn" class="flex-[2] px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30">Post to Community</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Full-Page Article View -->
-<div id="article-page">
-    <div class="art-hero" id="art-hero-section">
-        <div class="art-hero-inner">
-            <div id="art-cat-badge" class="art-cat-badge"></div>
-            <h1 id="art-headline" class="art-headline"></h1>
-            <div id="art-byline" class="art-byline">
-                <span class="art-byline-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Sixers Hoops Staff
-                </span>
-                <span class="art-byline-item" id="art-date-byline">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                    <span id="art-date-text"></span>
-                </span>
-                <span class="art-byline-item" id="art-read-byline">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span id="art-read-text"></span>
-                </span>
-                <button id="art-share-btn" onclick="shareArticle()" style="display:inline-flex;align-items:center;gap:0.3rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:6px;padding:3px 10px;font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
-                    Share
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="art-body-wrap">
-        <div class="art-body" id="art-body"></div>
-    </div>
-</div>
-
-<script src="community.js"></script>
+<script src="/nav.js"></script>
 <script>
-// Strip any emoji/icons prepended to Community Feed title by community.js
-function cleanCommunityTitle() {
-    document.querySelectorAll('.community-feed-title').forEach(function(el) {
-        el.textContent = el.textContent.replace(/^[^\w\s]+\s*/, '');
-    });
+const NEWS_COLLECTION = 'editorial_articles';
+const UPDATES_COLLECTION = 'social_posts';
+const CATEGORY_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
+const GRADE_COLORS = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a','INC':'#6b21a8'};
+
+function waitForDb(cb, tries) {
+  tries = tries || 0;
+  if (window.db) { cb(); return; }
+  if (tries > 60) { console.error('Firestore did not initialize in time.'); return; }
+  setTimeout(function () { waitForDb(cb, tries + 1); }, 250);
 }
-cleanCommunityTitle();
-setTimeout(cleanCommunityTitle, 500);
-setTimeout(cleanCommunityTitle, 1500);
-</script>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<script>
-// ─── EDITORIAL ARTICLES (Firestore-driven) ────────────────────────────────────
-const EDITORIAL_COLLECTION = 'editorial_articles';
-const ED_CAT_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
-const ED_CAT_GRADIENTS = {
-    'Player Grades':'linear-gradient(135deg,#001a57 0%,#00381a 60%,rgba(30,125,70,0.55) 100%)',
-    'Analysis':     'linear-gradient(135deg,#001a57 0%,#003a8c 60%,rgba(0,107,182,0.6) 100%)',
-    'Opinion':      'linear-gradient(135deg,#001a57 0%,#3d2500 60%,rgba(176,107,0,0.55) 100%)',
-    'Preview':      'linear-gradient(135deg,#001a57 0%,#5a0020 60%,rgba(237,23,76,0.5) 100%)',
-    'Recap':        'linear-gradient(135deg,#001a57 0%,#1e2a3a 60%,rgba(71,85,105,0.6) 100%)',
-    'News':         'linear-gradient(135deg,#001a57 0%,#003060 60%,rgba(0,119,204,0.55) 100%)'
-};
-const GRADE_COLORS_ED = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a'};
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-let editorialArticlesCache = [];
+function timeAgo(date) {
+  if (!date) return '';
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'Just now';
+  const mins = Math.floor(seconds / 60);
+  if (mins < 60) return mins + 'm ago';
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return days + 'd ago';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
-function renderEditorialGrid(articles) {
-    editorialArticlesCache = articles;
-    const grid = document.getElementById('editorial-grid');
-    if (!grid) return;
-    const section = grid.closest('.editorial-section');
-    if (!articles || articles.length === 0) { if (section) section.style.display = 'none'; return; }
-    if (section) section.style.display = '';
+function toDate(ts) {
+  if (!ts) return null;
+  if (ts.toDate) return ts.toDate();
+  return new Date(ts);
+}
 
-    // Set count class for adaptive grid layout
-    grid.className = 'editorial-grid count-' + Math.min(articles.length, 3);
+// ── NEWS & ANALYSIS ──
+function renderNews(articles) {
+  const grid = document.getElementById('news-grid');
+  if (!articles.length) {
+    grid.innerHTML = '<div class="news-empty">No articles published yet. Check back soon.</div>';
+    return;
+  }
 
-    grid.innerHTML = articles.slice(0, 3).map(a => {
-        const color = ED_CAT_COLORS[a.category] || '#006BB6';
-        const gradient = a.gradient || ED_CAT_GRADIENTS[a.category] || ED_CAT_GRADIENTS['Analysis'];
-        const date = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
-        const playerCount = (a.grades||[]).filter(g => g.grade && g.grade !== 'DNP').length;
-        const title = (a.title || '').replace(/</g,'&lt;');
-        const excerpt = (a.excerpt || '').replace(/</g,'&lt;');
-        const category = (a.category || '').replace(/</g,'&lt;');
-        const tweetBadge = a.tweetUrl ? `<span style="display:inline-flex;align-items:center;gap:3px;background:#1d9bf0;color:white;font-family:'Lexend', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Tweet</span>` : '';
-        const footerLeft = [date, playerCount > 0 ? playerCount + ' graded' : ''].filter(Boolean).join(' · ');
-        return `<div class="article-card" onclick="openArticleModal('${a.id}')">
-            <div class="article-card-thumb">
-                <div style="position:absolute;inset:0;background:${gradient};transition:transform 0.4s ease;" class="article-card-thumb-bg"></div>
-                <span class="article-card-cat-pill">${category}</span>
-            </div>
-            <div class="article-card-body">
-                <div class="article-card-title">${title}</div>
-                ${excerpt ? `<div class="article-card-excerpt">${excerpt}</div>` : ''}
-            </div>
-            <div class="article-card-footer">
-                <div class="article-card-footer-meta">
-                    <span>${footerLeft}</span>
-                    ${tweetBadge ? `<span class="article-card-footer-dot"></span>${tweetBadge}` : ''}
-                </div>
-                <span class="article-card-read">Read →</span>
-            </div>
-        </div>`;
+  const featured = articles[0];
+  const rest = articles.slice(1, 4);
+
+  function gradeChips(a) {
+    const grades = (a.grades || []).filter(function (g) { return g.grade && g.grade !== 'DNP'; });
+    if (!grades.length) return '';
+    const chips = grades.slice(0, 6).map(function (g) {
+      const color = GRADE_COLORS[g.grade] || '#006bb6';
+      return '<span class="grade-chip" style="background:' + color + ';">' + escapeHtml(g.name ? g.name.split(' ').slice(-1)[0] : '') + ' ' + escapeHtml(g.grade) + '</span>';
     }).join('');
+    return '<div class="news-card-grades">' + chips + '</div>';
+  }
+
+  function featuredThumbStyle(a) {
+    return a.gradient ? ('background:' + a.gradient + ';') : '';
+  }
+
+  const featuredColor = CATEGORY_COLORS[featured.category] || '#006bb6';
+  const featuredHtml =
+    '<a href="#" class="news-card">' +
+      '<div class="news-card-thumb" style="' + featuredThumbStyle(featured) + '" aria-hidden="true"></div>' +
+      '<div class="news-card-body">' +
+        '<span class="news-tag" style="color:' + featuredColor + ';border-color:' + featuredColor + '33;background:' + featuredColor + '14;">' + escapeHtml(featured.category || 'News') + '</span>' +
+        '<h3 class="news-card-title">' + escapeHtml(featured.title) + '</h3>' +
+        (featured.excerpt ? '<p class="news-card-excerpt">' + escapeHtml(featured.excerpt) + '</p>' : '') +
+        gradeChips(featured) +
+        '<div class="news-card-meta"><span>Sixers Hoops Staff</span><span>·</span><span>' + escapeHtml(timeAgo(toDate(featured.createdAt))) + '</span></div>' +
+      '</div>' +
+    '</a>';
+
+  const listHtml = rest.map(function (a) {
+    const color = CATEGORY_COLORS[a.category] || '#006bb6';
+    return (
+      '<a href="#" class="news-list-item">' +
+        '<span class="news-tag" style="color:' + color + ';border-color:' + color + '33;background:' + color + '14;">' + escapeHtml(a.category || 'News') + '</span>' +
+        '<h3 class="news-list-title">' + escapeHtml(a.title) + '</h3>' +
+        (a.excerpt ? '<p class="news-list-excerpt">' + escapeHtml(a.excerpt) + '</p>' : '') +
+        '<div class="news-card-meta"><span>Sixers Hoops Staff</span><span>·</span><span>' + escapeHtml(timeAgo(toDate(a.createdAt))) + '</span></div>' +
+      '</a>'
+    );
+  }).join('');
+
+  grid.innerHTML = featuredHtml + '<div class="news-list">' + (listHtml || '<div class="news-empty">More articles coming soon.</div>') + '</div>';
 }
 
-// ─── ARTICLE FULL-PAGE VIEW ───────────────────────────────────────────────────
-function openArticleModal(id) {
-    const a = editorialArticlesCache.find(x => x.id === id);
-    if (!a) return;
-
-    const color = ED_CAT_COLORS[a.category] || '#006BB6';
-    const gradient = a.gradient || ED_CAT_GRADIENTS[a.category] || '';
-    const date = a.createdAt
-        ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt))
-            .toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
-        : '';
-
-    // Hero
-    const heroSection = document.getElementById('art-hero-section');
-    const existingOverlay = heroSection.querySelector('.art-hero-gradient-overlay');
-    if (existingOverlay) existingOverlay.remove();
-    if (a.gradient) {
-        const overlay = document.createElement('div');
-        overlay.className = 'art-hero-gradient-overlay';
-        overlay.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;background:' + a.gradient + ';opacity:0.35;';
-        heroSection.insertBefore(overlay, heroSection.firstChild);
-    }
-
-    const badge = document.getElementById('art-cat-badge');
-    badge.textContent = a.category;
-    badge.style.cssText = 'display:inline-block;font-family:\'Lexend\', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:5px 14px;border-radius:6px;margin-bottom:1.5rem;background:' + color + '28;color:' + color + ';border:1px solid ' + color + '50;';
-
-    document.getElementById('art-headline').textContent = a.title;
-    document.getElementById('art-date-text').textContent = date;
-
-    // Calculate approx read time
-    const wordCount = [(a.intro||''), (a.closing||''), ...(a.grades||[]).map(g => g.analysis||'')].join(' ').split(/\s+/).filter(Boolean).length;
-    const mins = Math.max(1, Math.round(wordCount / 200));
-    document.getElementById('art-read-text').textContent = mins + ' min read';
-
-    // Body
-    let html = '';
-    if (a.intro) html += '<p>' + a.intro + '</p>';
-
-    // Collect tweet IDs per player so we can render them after innerHTML is set
-    const playerTweets = [];
-
-    if (a.grades && a.grades.length > 0) {
-        const visibleGrades = a.grades.filter(g => g.grade !== 'DNP');
-        if (visibleGrades.length > 0) {
-            html += '<h2>Player Grades</h2>';
-            visibleGrades.forEach((g, idx) => {
-                const gc = GRADE_COLORS_ED[g.grade] || '#475569';
-                const tweetId = g.tweetUrl && g.tweetUrl.trim()
-                    ? (g.tweetUrl.trim().match(/\/status\/(\d+)/) || [])[1]
-                    : null;
-                const tweetContainerId = tweetId ? 'tweet-container-' + idx : '';
-                if (tweetId) playerTweets.push({ id: tweetId, containerId: tweetContainerId });
-                html += '<div class="art-grade-card">'
-                    + '<div class="art-grade-header"><span class="art-grade-name">' + g.name + '</span><span class="art-grade-badge" style="background:' + gc + ';">' + g.grade + '</span></div>'
-                    + (g.stats ? '<div class="art-grade-stats">' + g.stats + '</div>' : '')
-                    + (g.analysis ? '<div class="art-grade-analysis">' + g.analysis + '</div>' : '')
-                    + (tweetId ? '<div class="art-grade-tweet" id="' + tweetContainerId + '"><div class="art-grade-tweet-loading">Loading tweet…</div></div>' : '')
-                    + '</div>';
-            });
-        }
-    }
-
-    if (a.closing) html += '<h2>Bottom Line</h2><p>' + a.closing + '</p>';
-    document.getElementById('art-body').innerHTML = html || '<p>Article content coming soon.</p>';
-
-    // Use createTweet (most reliable method — works inside overflow/fixed containers)
-    if (playerTweets.length > 0) {
-        function renderTweets() {
-            playerTweets.forEach(({ id, containerId }) => {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                container.innerHTML = ''; // clear loading text
-                window.twttr.widgets.createTweet(id, container, {
-                    dnt: true,
-                    theme: 'light',
-                    align: 'center',
-                    width: 500
-                }).catch(() => {
-                    container.innerHTML = '<div class="art-grade-tweet-error">Could not load tweet.</div>';
-                });
-            });
-        }
-        if (window.twttr && window.twttr.widgets && window.twttr.widgets.createTweet) {
-            renderTweets();
-        } else {
-            // Twitter script not ready yet — wait for it
-            window.twttr = window.twttr || {};
-            window.twttr._e = window.twttr._e || [];
-            window.twttr._e.push(renderTweets);
-        }
-    }
-
-    // Show full-page view
-    const page = document.getElementById('article-page');
-    page.classList.add('active');
-    page.scrollTop = 0;
-    document.body.style.overflow = 'hidden';
-
-    // Push URL so it's shareable — use ?article= so the auto-open listener matches
-    history.pushState({ articleId: id, _pushed: true }, '', window.location.pathname + '?article=' + id);
+function listenToNews() {
+  waitForDb(function () {
+    window.db.collection(NEWS_COLLECTION).orderBy('createdAt', 'desc').limit(8).onSnapshot(
+      function (snap) { renderNews(snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); })); },
+      function (err) {
+        console.error(err);
+        document.getElementById('news-grid').innerHTML = '<div class="news-empty">Couldn\'t load news right now.</div>';
+      }
+    );
+  });
 }
 
-function shareArticle() {
-    const id = history.state && history.state.articleId ? history.state.articleId : new URLSearchParams(window.location.search).get('article');
-    const url = window.location.origin + window.location.pathname + (id ? '?article=' + id : '');
-    navigator.clipboard.writeText(url).then(() => {
-        const btn = document.getElementById('art-share-btn');
-        const orig = btn.innerHTML;
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
-        btn.style.color = '#5dbf88';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.color = 'rgba(255,255,255,0.6)'; }, 2000);
-    }).catch(() => {
-        // Fallback for browsers that block clipboard without HTTPS focus
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        ta.style.cssText = 'position:fixed;opacity:0;';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        const btn = document.getElementById('art-share-btn');
-        const orig = btn.innerHTML;
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
-        btn.style.color = '#5dbf88';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.color = 'rgba(255,255,255,0.6)'; }, 2000);
-    });
+// ── SIXERS UPDATES ──
+function renderUpdates(posts) {
+  const feed = document.getElementById('updates-feed');
+  if (!posts.length) {
+    feed.innerHTML = '<div class="updates-empty">No updates posted yet. Check back soon.</div>';
+    return;
+  }
+  feed.innerHTML = posts.map(function (p) {
+    const handle = p.handle || 'SixersHoops';
+    const initial = handle.replace('@', '').charAt(0).toUpperCase() || 'S';
+    return (
+      '<div class="update-card">' +
+        '<div class="update-avatar">' + escapeHtml(initial) + '</div>' +
+        '<div class="update-body">' +
+          '<div class="update-head">' +
+            '<span class="update-handle">@' + escapeHtml(handle.replace('@', '')) + '</span>' +
+            '<span class="update-dot">·</span>' +
+            '<span class="update-time">' + escapeHtml(timeAgo(toDate(p.createdAt))) + '</span>' +
+          '</div>' +
+          '<p class="update-text">' + escapeHtml(p.text) + '</p>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
 }
 
-function closeArticlePage() {
-    document.getElementById('article-page').classList.remove('active');
-    document.body.style.overflow = '';
-    // Only go back if we pushed this state ourselves (not a direct shared link visit)
-    if (history.state && history.state.articleId && history.state._pushed) {
-        history.back();
-    } else {
-        // Clean URL without reloading
-        history.replaceState({}, '', window.location.pathname);
-    }
+function listenToUpdates() {
+  waitForDb(function () {
+    window.db.collection(UPDATES_COLLECTION).orderBy('createdAt', 'desc').limit(20).onSnapshot(
+      function (snap) { renderUpdates(snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); })); },
+      function (err) {
+        console.error(err);
+        document.getElementById('updates-feed').innerHTML = '<div class="updates-empty">Couldn\'t load updates right now.</div>';
+      }
+    );
+  });
 }
 
-// Handle browser back button
-window.addEventListener('popstate', (e) => {
-    const page = document.getElementById('article-page');
-    if (page && page.classList.contains('active')) {
-        page.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-    // If popped back to a state with an article, re-open it
-    if (e.state && e.state.articleId) {
-        const found = editorialArticlesCache.find(a => a.id === e.state.articleId);
-        if (found) openArticleModal(e.state.articleId);
-    }
-});
-
-// If someone navigates directly to index.html?article=ID, open it once articles load
-(function() {
-    const id = new URLSearchParams(window.location.search).get('article');
-    if (!id) return;
-
-    // Show the article page shell immediately with a loading state so there's no flash
-    const page = document.getElementById('article-page');
-    const body = document.getElementById('art-body');
-    const headline = document.getElementById('art-headline');
-    const badge = document.getElementById('art-cat-badge');
-
-    headline.textContent = '';
-    badge.textContent = '';
-    if (body) body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:4rem 0;gap:0.75rem;color:rgba(255,255,255,0.4);font-family:\'Lexend\',sans-serif;font-size:0.9rem;"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'18\' height=\'18\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\' style=\'animation:spin 1s linear infinite\'><path d=\'M21 12a9 9 0 1 1-6.219-8.56\'/></svg>Loading article…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
-    page.classList.add('active');
-    document.body.style.overflow = 'hidden';
-
-    // Wait for Firestore data, then populate — no hard timeout
-    function tryOpen() {
-        if (editorialArticlesCache.length > 0) {
-            const found = editorialArticlesCache.find(a => a.id === id);
-            if (found) {
-                openArticleModal(id);
-            } else {
-                // Article ID not in the top-3 cache — fetch it directly
-                (function fetchDirect(tries) {
-                    if (window.db) {
-                        window.db.collection(EDITORIAL_COLLECTION).doc(id).get().then(doc => {
-                            if (doc.exists) {
-                                editorialArticlesCache = [{ id: doc.id, ...doc.data() }, ...editorialArticlesCache];
-                                openArticleModal(id);
-                            } else {
-                                if (body) body.innerHTML = '<p style="color:var(--mid);text-align:center;padding:3rem 0;">Article not found.</p>';
-                            }
-                        }).catch(() => {
-                            if (body) body.innerHTML = '<p style="color:var(--mid);text-align:center;padding:3rem 0;">Could not load article.</p>';
-                        });
-                    } else if (tries < 40) { setTimeout(() => fetchDirect(tries + 1), 250); }
-                })(0);
-            }
-        } else {
-            setTimeout(tryOpen, 150);
-        }
-    }
-    setTimeout(tryOpen, 150);
-})();
-
-// Load from Firestore
-(function loadEditorial(tries) {
-    if (window.db) {
-        window.db.collection(EDITORIAL_COLLECTION).orderBy('createdAt','desc').limit(3).onSnapshot(snap => {
-            renderEditorialGrid(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        }, () => { const s = document.querySelector('.editorial-section'); if (s) s.style.display = 'none'; });
-    } else if (tries < 40) { setTimeout(() => loadEditorial(tries + 1), 250); }
-})(0);
-</script>
-
-<script>
-    // Filter button active state
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
+listenToNews();
+listenToUpdates();
 </script>
 </body>
 </html>
