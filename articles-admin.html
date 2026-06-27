@@ -165,6 +165,12 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
               <label class="form-label">Headline *</label>
               <input type="text" class="form-input" id="f-title" placeholder="e.g. Sixers Player Grades: April 18">
             </div>
+            <div class="form-group">
+              <label class="form-label">URL Slug *</label>
+              <input type="text" class="form-input" id="f-slug" placeholder="e.g. sixers-player-grades-april-18" oninput="handleSlugInput(this.value)">
+              <div style="font-size:0.72rem;color:var(--mid);margin-top:0.4rem;" id="f-slug-preview">sixershoops.com/articles/<span id="f-slug-preview-text" style="color:var(--sixers-blue);font-weight:600;">your-slug-here</span></div>
+              <div style="font-size:0.72rem;margin-top:0.3rem;display:none;color:#b06b00;" id="f-slug-hint">Use only lowercase letters, numbers, and hyphens — no spaces or special characters.</div>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
               <div class="form-group">
                 <label class="form-label">Category *</label>
@@ -476,6 +482,18 @@ function handleTweetInput(val) {
   }
 }
 
+// Slug handling
+function handleSlugInput(val) {
+  const clean = val.trim();
+  const previewText = document.getElementById('f-slug-preview-text');
+  const hint = document.getElementById('f-slug-hint');
+  const valid = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(clean);
+  previewText.textContent = clean || 'your-slug-here';
+  if (!clean) { hint.style.display = 'none'; return; }
+  if (valid) { hint.style.display = 'none'; }
+  else { hint.style.display = 'block'; }
+}
+
 // Preview update
 function updatePreview() {
   const title = document.getElementById('f-title').value.trim() || 'Your article headline will appear here';
@@ -644,6 +662,7 @@ function renderArticleList() {
             <span>${date}</span>
             ${gradeInfo}
           </div>
+          ${a.slug ? `<div style="font-size:0.72rem;color:var(--sixers-blue);margin-top:0.3rem;font-family:ui-monospace,monospace;">/articles/${a.slug}</div>` : `<div style="font-size:0.72rem;color:#b06b00;margin-top:0.3rem;">No URL slug set — edit to add one</div>`}
           ${a.excerpt ? `<div class="article-item-excerpt">${a.excerpt}</div>` : ''}
         </div>
         <div class="article-item-actions">
@@ -660,11 +679,12 @@ document.getElementById('cancel-editor-btn').addEventListener('click', () => swi
 
 function clearEditor() {
   document.getElementById('editing-doc-id').value = '';
-  ['f-title','f-excerpt','f-intro','f-closing','f-tweet-url'].forEach(id => document.getElementById(id).value = '');
+  ['f-title','f-slug','f-excerpt','f-intro','f-closing','f-tweet-url'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-category').value = 'Player Grades';
   document.getElementById('grade-entries').innerHTML = '';
   document.getElementById('tweet-preview-box').classList.remove('visible');
   document.getElementById('prev-tweet-badge').style.display = 'none';
+  handleSlugInput('');
   gradeCount = 0;
   ROSTER.forEach(p => addGradeEntry({ name: p.name, grade: 'DNP' }));
   updatePreview();
@@ -676,6 +696,8 @@ function editArticle(id) {
   clearEditor();
   document.getElementById('editing-doc-id').value = id;
   document.getElementById('f-title').value = a.title || '';
+  document.getElementById('f-slug').value = a.slug || '';
+  handleSlugInput(a.slug || '');
   document.getElementById('f-category').value = a.category || 'Analysis';
   document.getElementById('f-excerpt').value = a.excerpt || '';
   document.getElementById('f-intro').value = a.intro || '';
@@ -785,13 +807,24 @@ document.getElementById('post-update-btn').addEventListener('click', postUpdate)
 document.getElementById('publish-btn').addEventListener('click', async () => {
   const title = document.getElementById('f-title').value.trim();
   const category = document.getElementById('f-category').value;
+  const slug = document.getElementById('f-slug').value.trim().toLowerCase();
   if (!title) { toast('Please add a headline', 'error'); return; }
+  if (!slug) { toast('Please add a URL slug', 'error'); return; }
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+    toast('Slug can only have lowercase letters, numbers, and hyphens', 'error');
+    return;
+  }
   const docId = document.getElementById('editing-doc-id').value;
+  const slugTaken = articles.some(a => a.slug === slug && a.id !== docId);
+  if (slugTaken) {
+    toast('That slug is already used by another article — pick a different one', 'error');
+    return;
+  }
   const grades = collectGrades();
   const tweetUrl = document.getElementById('f-tweet-url').value.trim();
   const gradient = CATEGORY_GRADIENTS[category] || CATEGORY_GRADIENTS['Analysis'];
   const data = {
-    title, category,
+    title, category, slug,
     excerpt: document.getElementById('f-excerpt').value.trim(),
     intro: document.getElementById('f-intro').value.trim(),
     closing: document.getElementById('f-closing').value.trim(),
