@@ -218,10 +218,6 @@
   <header class="hero">
     <div class="hero-inner">
       <div class="hero-wordmark">
-        <span class="hero-eyebrow">
-          <span class="hero-eyebrow-dot"></span>
-          <span class="hero-eyebrow-text">Live · 76ers HQ</span>
-        </span>
         <p class="hero-title-top">Sixers</p>
         <p class="hero-title-bottom">Hoops</p>
         <p class="hero-sub">The ultimate destination for Sixers fans. News, analysis, community, and everything 76ers.</p>
@@ -339,6 +335,10 @@ function renderNews(articles) {
   const featured = articles[0];
   const rest = articles.slice(1, 4);
 
+  function articleUrl(a) {
+    return a.slug ? ('/articles/' + encodeURIComponent(a.slug)) : '#';
+  }
+
   function gradeChips(a) {
     const grades = (a.grades || []).filter(function (g) { return g.grade && g.grade !== 'DNP'; });
     if (!grades.length) return '';
@@ -355,7 +355,7 @@ function renderNews(articles) {
 
   const featuredColor = CATEGORY_COLORS[featured.category] || '#006bb6';
   const featuredHtml =
-    '<a href="#" class="news-card">' +
+    '<a href="' + articleUrl(featured) + '" class="news-card">' +
       '<div class="news-card-thumb" style="' + featuredThumbStyle(featured) + '" aria-hidden="true"></div>' +
       '<div class="news-card-body">' +
         '<span class="news-tag" style="color:' + featuredColor + ';border-color:' + featuredColor + '33;background:' + featuredColor + '14;">' + escapeHtml(featured.category || 'News') + '</span>' +
@@ -369,7 +369,7 @@ function renderNews(articles) {
   const listHtml = rest.map(function (a) {
     const color = CATEGORY_COLORS[a.category] || '#006bb6';
     return (
-      '<a href="#" class="news-list-item">' +
+      '<a href="' + articleUrl(a) + '" class="news-list-item">' +
         '<span class="news-tag" style="color:' + color + ';border-color:' + color + '33;background:' + color + '14;">' + escapeHtml(a.category || 'News') + '</span>' +
         '<h3 class="news-list-title">' + escapeHtml(a.title) + '</h3>' +
         (a.excerpt ? '<p class="news-list-excerpt">' + escapeHtml(a.excerpt) + '</p>' : '') +
