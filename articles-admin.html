@@ -131,6 +131,7 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
   <div class="admin-tabs">
     <button class="admin-tab active" data-tab="list">All Articles</button>
     <button class="admin-tab" data-tab="editor">Write Article</button>
+    <button class="admin-tab" data-tab="updates">Updates</button>
     <button class="admin-tab" data-tab="polls">Fan Polls</button>
   </div>
 
@@ -291,6 +292,42 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
       </div>
     </div>
 
+    <!-- UPDATES TAB -->
+    <div class="tab-panel" id="tab-updates">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;text-transform:uppercase;">Sixers Updates</div>
+          <div style="font-size:0.8rem;color:var(--mid);margin-top:2px;">Short, tweet-style posts that appear in the "Sixers Updates" feed on your homepage</div>
+        </div>
+      </div>
+
+      <div class="editor-card" style="margin-top:1.25rem;max-width:560px;">
+        <h3>New Update</h3>
+        <div class="form-group">
+          <label class="form-label">Handle</label>
+          <input type="text" class="form-input" id="u-handle" placeholder="SixersHoops" value="SixersHoops">
+        </div>
+        <div class="form-group" style="margin-bottom:0.5rem;">
+          <label class="form-label">Update Text *</label>
+          <textarea class="form-textarea" id="u-text" rows="3" maxlength="280" placeholder="What's happening?" oninput="document.getElementById('u-char-count').textContent = (280 - this.value.length) + ' characters left'"></textarea>
+          <div id="u-char-count" style="font-size:0.72rem;color:var(--mid);margin-top:0.3rem;text-align:right;">280 characters left</div>
+        </div>
+        <button class="btn-primary" id="post-update-btn">Post Update</button>
+      </div>
+
+      <div style="margin-top:1.75rem;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;">
+          Posted Updates <span style="flex:1;height:1px;background:var(--border-light);display:inline-block;"></span>
+        </div>
+        <div class="article-list" id="updates-admin-list">
+          <div class="empty-state">
+            <h3>No updates yet</h3>
+            <p>Post your first update above — it'll show up live on the homepage.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- POLLS TAB -->
     <div class="tab-panel" id="tab-polls">
       <!-- Create Poll Form -->
@@ -359,6 +396,7 @@ body,html{font-family:'Barlow',sans-serif;margin-top:64px;background:var(--cream
 <script>
 const MOD_EMAIL = 'rhatus13@gmail.com';
 const COLLECTION = 'editorial_articles';
+const UPDATES_COLLECTION = 'social_posts';
 
 // ── ROSTER: first 8 are pinned in order, rest follow ──
 const PINNED_ROSTER = [
@@ -661,6 +699,89 @@ async function deleteArticle(id) {
   catch (e) { toast('Error: ' + e.message, 'error'); }
 }
 
+// ─── SIXERS UPDATES (tweet-style posts) ───────────────────────────────────────
+let updatesCache = [];
+
+function timeAgoAdmin(date) {
+  if (!date) return '';
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'Just now';
+  const mins = Math.floor(seconds / 60);
+  if (mins < 60) return mins + 'm ago';
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return days + 'd ago';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function listenToUpdates() {
+  waitForDb(() => {
+    window.db.collection(UPDATES_COLLECTION).orderBy('createdAt', 'desc').onSnapshot(snap => {
+      updatesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderUpdatesAdminList();
+    }, err => { console.error(err); toast('Could not load updates: ' + err.message, 'error'); });
+  });
+}
+
+function renderUpdatesAdminList() {
+  const list = document.getElementById('updates-admin-list');
+  if (!list) return;
+  if (updatesCache.length === 0) {
+    list.innerHTML = '<div class="empty-state"><h3>No updates yet</h3><p>Post your first update above — it\'ll show up live on the homepage.</p></div>';
+    return;
+  }
+  list.innerHTML = updatesCache.map(u => {
+    const date = u.createdAt ? (u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
+    const handle = (u.handle || 'SixersHoops').replace('@', '');
+    const text = (u.text || '').replace(/</g, '&lt;');
+    return `
+      <div class="article-item">
+        <div class="article-item-accent" style="background:#1d9bf0;"></div>
+        <div class="article-item-body">
+          <div class="article-item-tag-row">
+            <span class="article-item-tag" style="color:#1d9bf0;border-color:#1d9bf0;">@${handle}</span>
+          </div>
+          <div class="article-item-excerpt" style="font-size:0.9rem;color:var(--ink);-webkit-line-clamp:4;">${text}</div>
+          <div class="article-item-meta" style="margin-top:0.5rem;"><span>${date ? timeAgoAdmin(date) : 'Posting…'}</span></div>
+        </div>
+        <div class="article-item-actions">
+          <button class="btn-delete" onclick="deleteUpdate('${u.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function postUpdate() {
+  const handle = document.getElementById('u-handle').value.trim() || 'SixersHoops';
+  const text = document.getElementById('u-text').value.trim();
+  if (!text) { toast('Write something to post', 'error'); return; }
+  if (text.length > 280) { toast('Keep it under 280 characters', 'error'); return; }
+  const btn = document.getElementById('post-update-btn');
+  btn.textContent = 'Posting...';
+  btn.disabled = true;
+  try {
+    await window.db.collection(UPDATES_COLLECTION).add({
+      handle, text,
+      createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('u-text').value = '';
+    document.getElementById('u-char-count').textContent = '280 characters left';
+    toast('Update posted');
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+  finally { btn.textContent = 'Post Update'; btn.disabled = false; }
+}
+
+async function deleteUpdate(id) {
+  if (!confirm('Delete this update? This cannot be undone.')) return;
+  try { await window.db.collection(UPDATES_COLLECTION).doc(id).delete(); toast('Update deleted'); }
+  catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+document.getElementById('post-update-btn').addEventListener('click', postUpdate);
+
 document.getElementById('publish-btn').addEventListener('click', async () => {
   const title = document.getElementById('f-title').value.trim();
   const category = document.getElementById('f-category').value;
@@ -697,6 +818,7 @@ function initAdmin() {
         document.getElementById('auth-gate').style.display = 'none';
         document.getElementById('admin-ui').style.display = 'block';
         listenToArticles();
+        listenToUpdates();
         listenToPolls();
       } else {
         document.getElementById('auth-gate').style.display = 'flex';
