@@ -457,6 +457,930 @@ const SEASONS = {
       {rk:3, name:'Tyrese Maxey', slug:'tyrese-maxey', pos:'PG', salary:40770520, status:'guaranteed'},
       {rk:4, name:'VJ Edgecombe', pos:'SG', salary:11663880, status:'guaranteed'},
       {rk:5, name:'Labaron Philon Jr.', pos:'PG', salary:3597840, status:'guaranteed'},
+      {rk:6, name:'Dominick Barlow', pos:'PF', salary:3415000, status:'guaranteed'},
+      {rk:7, name:'Trendon Watford', pos:'PF', salary:2801346, status:'team-option'},
+      {rk:8, name:'Dalen Terry', pos:'SG', salary:2584539, status:'non-guaranteed', note:'Becomes fully guaranteed on <strong>January 10, 2027</strong>.'},
+      {rk:9, name:'Jabari Walker', pos:'PF', salary:2584539, status:'non-guaranteed'},
+      {rk:10, name:'Justin Edwards', pos:'SG', salary:2411090, status:'guaranteed'},
+      {rk:11, name:'Adem Bona', pos:'C', salary:2296271, status:'non-guaranteed'},
+      {rk:12, name:'Johni Broome', pos:'C', salary:2150917, status:'guaranteed'},
+    ]
+  },
+  '2027-28':{
+    rows:[
+      {rk:1, name:'Joel Embiid', slug:'joel-embiid', pos:'C', salary:62548416, status:'guaranteed'},
+      {rk:2, name:'Paul George', slug:'paul-george', pos:'SG', salary:56586670, status:'player-option'},
+      {rk:3, name:'Tyrese Maxey', slug:'tyrese-maxey', pos:'PG', salary:43582280, status:'guaranteed'},
+      {rk:4, name:'VJ Edgecombe', pos:'SG', salary:12219840, status:'team-option'},
+      {rk:5, name:'Justin Edwards', pos:'SG', salary:2616754, status:'team-option'},
+      {rk:6, name:'Johnni Broome', pos:'C', salary:2525901, status:'team-option'},
+      {rk:7, name:'Adem Bona', pos:'C', salary:2486995, status:'team-option'},
+    ]
+  },
+  '2028-29':{
+    rows:[
+      {rk:1, name:'Joel Embiid', slug:'joel-embiid', pos:'C', salary:67181632, status:'guaranteed'},
+      {rk:2, name:'Tyrese Maxey', slug:'tyrese-maxey', pos:'PG', salary:46394040, status:'guaranteed'},
+      {rk:3, name:'VJ Edgecombe', pos:'SG', salary:15445878, status:'team-option'},
+      {rk:4, name:'Johnni Broome', pos:'C', salary:2735698, status:'team-option'},
+    ]
+  },
+};
+
+const STATUS_LABEL = {
+  'guaranteed':'Guaranteed', 'player-option':'Player Option',
+  'team-option':'Team Option', 'non-guaranteed':'Non-Guaranteed',
+};
+
+const fmt$ = (n) => (n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US');
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>r.querySelectorAll(s);
+
+let currentSeason='2026-27', filter='all', query='';
+
+function rowHTML(r, cap){
+  const link = r.slug ? `<a href="/players/${r.slug}.html">${r.name}</a>` : r.name;
+  return `<tr data-status="${r.status}" data-name="${r.name.toLowerCase()}">
+    <td class="rk">${String(r.rk).padStart(2,'0')}</td>
+    <td><span class="pname">${link}</span><span class="ppos">${r.pos}</span></td>
+    <td class="num amt">${fmt$(r.salary)}</td>
+    <td><span class="badge ${r.status}">${STATUS_LABEL[r.status]||r.status}</span></td>
+  </tr>${r.note?`<tr class="note-row"><td colspan="4"><div class="note" style="margin:.6rem 0 0;">${r.note}</div></td></tr>`:''}`;}
+
+function buildSeason(key){
+  const s = SEASONS[key]; const cap = CAP[key];
+  const total = s.rows.reduce((a,b)=>a+b.salary,0);
+  const adjTotal = (s.adjustments||[]).reduce((a,b)=>a+b.salary,0);
+  const deadTotal = (s.deadMoney||[]).reduce((a,b)=>a+b.salary,0);
+
+  let rowsHTML = s.rows.map(r=>rowHTML(r,cap)).join('');
+
+  if(s.deadMoney && s.deadMoney.length){
+    rowsHTML += `<tr class="row-divider"><td colspan="4">Dead Money · ${fmt$(deadTotal)}</td></tr>`;
+    rowsHTML += s.deadMoney.map(r=>`
+      <tr data-status="dead" data-name="${r.name.toLowerCase()}">
+        <td class="rk">—</td>
+        <td><span class="pname">${r.name}</span><span class="ppos">${r.pos}</span></td>
+        <td class="num amt">${fmt$(r.salary)}</td>
+        <td><span class="badge dead">Waived</span></td>
+      </tr>`).join('');
+  }
+  if(s.adjustments && s.adjustments.length){
+    rowsHTML += `<tr class="row-divider"><td colspan="4">Tax Adjustments · ${fmt$(adjTotal)}</td></tr>`;
+    rowsHTML += s.adjustments.map(r=>`
+      <tr data-status="adj" data-name="${r.name.toLowerCase()}">
+        <td class="rk">—</td>
+        <td><span class="pname">${r.name}</span><span class="ppos">${r.pos}</span></td>
+        <td class="num amt ${r.salary<0?'neg':''}">${fmt$(r.salary)}</td>
+        <td><span class="badge">${r.badge}</span></td>
+      </tr>`).join('');
+  }
+
+  const grandTotal = total + deadTotal + adjTotal;
+  rowsHTML += `<tr class="row-total">
+    <td></td><td>Total Payroll</td>
+    <td class="num amt">${fmt$(grandTotal)}</td>
+    <td></td>
+  </tr>`;
+
+  const twowayHTML = s.twoway ? `
+    <div class="table-card">
+      <div class="head"><span class="ttl">Two-Way Contracts</span><span class="meta">${s.twoway.length} Players</span></div>
+      <table class="s-table"><thead><tr>
+        <th class="rk">#</th><th>Player</th><th class="num">Salary</th><th>Status</th>
+      </tr></thead><tbody>
+      ${s.twoway.map((p,i)=>`<tr data-status="twoway" data-name="${p.name.toLowerCase()}">
+        <td class="rk">${String(i+1).padStart(2,'0')}</td>
+        <td><span class="pname">${p.name}</span><span class="ppos">${p.pos}</span></td>
+        <td class="num amt">Two-Way</td>
+        <td><span class="badge twoway">Two-Way</span></td>
+      </tr>`).join('')}
+      </tbody></table>
+    </div>` : '';
+
+  return `
+    <div class="table-card">
+      <div class="head">
+        <span class="ttl">${key} Roster Payroll</span>
+        <div class="meta-pills">
+          <span class="meta-pill"><i class="fas fa-users"></i><span class="val">${s.rows.length}</span> Players</span>
+        </div>
+      </div>
+      <table class="s-table">
+        <thead><tr>
+          <th class="rk">#</th><th>Player</th>
+          <th class="num">Salary</th><th>Status</th>
+        </tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>
+    ${twowayHTML}
+  `;
+}
+
+function render(){
+  $('#seasonHost').innerHTML = buildSeason(currentSeason);
+  $('#rosterCount').textContent = SEASONS[currentSeason].rows.length + ' Players';
+  applyFilters();
+}
+function applyFilters(){
+  $$('#seasonHost .s-table tbody tr').forEach(tr=>{
+    if(tr.classList.contains('row-divider')||tr.classList.contains('row-total')||tr.classList.contains('note-row')){
+      tr.style.display=''; return;
+    }
+    const name = tr.dataset.name||'';
+    const st = tr.dataset.status||'';
+    const matchQ = !query || name.includes(query);
+    const matchF = filter==='all' || st===filter;
+    tr.style.display = (matchQ && matchF) ? '' : 'none';
+  });
+}
+
+$$('.season-tab').forEach(b=>b.addEventListener('click',()=>{
+  $$('.season-tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  currentSeason = b.dataset.season;
+  render();
+}));
+$$('.filter-btn').forEach(b=>b.addEventListener('click',()=>{
+  $$('.filter-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  filter = b.dataset.filter;
+  applyFilters();
+}));
+$('#q').addEventListener('input', e => { query = e.target.value.toLowerCase().trim(); applyFilters(); });
+
+// ─── SHARE / DOWNLOAD PAYROLL IMAGE (MODAL) ───
+const shareBtn = $('#shareImgBtn');
+const shareOverlay = $('#shareModalOverlay');
+const shareModalBody = $('#shareModalBody');
+const shareModalClose = $('#shareModalClose');
+let currentShareBlob = null;
+let currentShareUrl = null;
+
+function closeShareModal(){
+  shareOverlay.classList.remove('active');
+  if(currentShareUrl){ URL.revokeObjectURL(currentShareUrl); currentShareUrl = null; }
+  currentShareBlob = null;
+}
+
+function renderShareLoading(){
+  shareModalBody.innerHTML = `
+    <div class="share-modal-loading">
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <span>Generating image…</span>
+    </div>`;
+}
+
+function renderShareError(){
+  shareModalBody.innerHTML = `
+    <div class="share-modal-loading">
+      <i class="fas fa-triangle-exclamation"></i>
+      <span>Couldn't generate the image. Please try again.</span>
+    </div>`;
+}
+
+function renderShareResult(blob){
+  currentShareBlob = blob;
+  currentShareUrl = URL.createObjectURL(blob);
+  shareModalBody.innerHTML = `
+    <img src="${currentShareUrl}" alt="Sixers payroll snapshot" />
+    <div class="share-modal-actions">
+      <button id="copyImgBtn"><i class="fas fa-copy"></i><span>Copy Image</span></button>
+      <button id="downloadImgBtn" class="primary"><i class="fas fa-download"></i><span>Download</span></button>
+    </div>
+  `;
+
+  $('#downloadImgBtn').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = currentShareUrl;
+    a.download = 'sixers-payroll-2026-27.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  $('#copyImgBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    try{
+      if(!navigator.clipboard || !window.ClipboardItem){ throw new Error('Clipboard API unsupported'); }
+      await navigator.clipboard.write([
+        new ClipboardItem({ [currentShareBlob.type]: currentShareBlob })
+      ]);
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<i class="fas fa-copy"></i><span>Copy Image</span>';
+      }, 1800);
+    }catch(err){
+      console.error('Copy to clipboard failed', err);
+      btn.innerHTML = '<i class="fas fa-circle-exclamation"></i><span>Copy unsupported</span>';
+      setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i><span>Copy Image</span>'; }, 1800);
+    }
+  });
+}
+
+function buildShareCanvas(){
+  const season = '2026-27';
+  const cap = CAP[season];
+  const rows = SEASONS[season].rows;
+  const totalPayroll = rows.reduce((a,b)=>a+b.salary,0);
+
+  const W = 1080, PAD = 54;
+  const NAVY = '#001a57', BLUE = '#006BB6', RED = '#ED174C';
+  const WHITE = '#ffffff', CREAM = '#f6f8fc', INK = '#0d0f1a';
+  const MID = '#64748b', BORDER = '#e4e8f0', SOFT = '#f0f4fa';
+  const GREEN = '#16a34a', AMBER = '#d97706';
+
+  // STATUS badge colours
+  const BADGE = {
+    'guaranteed':   { bg:'rgba(0,107,182,0.13)', text:BLUE },
+    'player-option':{ bg:'rgba(217,119,6,0.13)',  text:AMBER },
+    'team-option':  { bg:'rgba(22,163,74,0.13)',  text:GREEN },
+    'non-guaranteed':{ bg:'rgba(237,23,76,0.12)', text:RED },
+  };
+
+  // ── measure height ──────────────────────────────────────────────
+  const ROW_H = 44, HEADER_H = 34;
+  const CAP_SECTION_H = 130; // NBA cap numbers block
+  const SNAP_SECTION_H = 130; // sixers snapshot block
+  const TABLE_H = HEADER_H + rows.length * ROW_H + 52; // +total row
+  const FOOTER_H = 56;
+  const TITLE_H = 138;
+  const SECTION_GAP = 28;
+
+  const H = TITLE_H + SECTION_GAP + CAP_SECTION_H + SECTION_GAP + SNAP_SECTION_H + SECTION_GAP + TABLE_H + SECTION_GAP + FOOTER_H + PAD * 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // ── helpers ─────────────────────────────────────────────────────
+  function rect(x,y,w,h,r=0,fill=WHITE){
+    ctx.beginPath();
+    if(r){
+      ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+      ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+      ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+      ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+    } else { ctx.rect(x,y,w,h); }
+    ctx.closePath();
+    if(fill){ ctx.fillStyle=fill; ctx.fill(); }
+  }
+
+  function text(str,x,y,font,color,align='left'){
+    ctx.font=font; ctx.fillStyle=color; ctx.textAlign=align;
+    ctx.fillText(str,x,y);
+  }
+
+  function sectionLabel(label, y){
+    ctx.font='500 11px Lexend,sans-serif';
+    ctx.fillStyle=MID; ctx.textAlign='left';
+    ctx.fillText(label.toUpperCase(), PAD, y+12);
+    ctx.fillStyle=BORDER; ctx.fillRect(PAD + ctx.measureText(label.toUpperCase()).width + 10, y+7, W - PAD*2 - ctx.measureText(label.toUpperCase()).width - 10, 1);
+  }
+
+  function badge(label, x, y, status){
+    const cfg = BADGE[status] || { bg:SOFT, text:MID };
+    const fs = '600 9.5px Lexend,sans-serif';
+    ctx.font = fs;
+    const tw = ctx.measureText(label.toUpperCase()).width;
+    const bw = tw + 18, bh = 20;
+    rect(x - bw/2, y - bh/2, bw, bh, 10, cfg.bg);
+    text(label.toUpperCase(), x, y + 3.5, fs, cfg.text, 'center');
+  }
+
+  // ── BACKGROUND ──────────────────────────────────────────────────
+  rect(0,0,W,H,0,WHITE);
+
+  // ── HEADER ──────────────────────────────────────────────────────
+  rect(0,0,W,TITLE_H,0,WHITE);
+
+  const centerX = W/2;
+
+  // Title — SixersHoops, centered
+  text('SixersHoops', centerX, 84, '800 48px Lexend,sans-serif', INK, 'center');
+
+  // Subtitle — season + Salary Cap Breakdown, centered, bigger
+  const subParts = ['2026\u201327', 'SALARY CAP BREAKDOWN'];
+  const subFont = '700 22px Lexend,sans-serif';
+  ctx.font = subFont;
+  const dotGap = 18;
+  const partWidths = subParts.map(s => ctx.measureText(s.toUpperCase()).width);
+  const totalSubW = partWidths.reduce((a,b)=>a+b,0) + dotGap * (subParts.length - 1);
+  let sx = centerX - totalSubW/2;
+  subParts.forEach((s,i)=>{
+    const w = partWidths[i];
+    text(s.toUpperCase(), sx + w/2, 126, subFont, i===0?BLUE:INK, 'center');
+    sx += w;
+    if(i < subParts.length-1){
+      ctx.beginPath(); ctx.arc(sx + dotGap/2, 121, 2.4, 0, Math.PI*2);
+      ctx.fillStyle = BORDER; ctx.fill();
+      sx += dotGap;
+    }
+  });
+
+  // short centered rule beneath subtitle
+  const ruleW = 64;
+  ctx.fillStyle = BORDER;
+  ctx.fillRect(centerX - ruleW/2, TITLE_H - 1, ruleW, 2);
+
+  let curY = TITLE_H + PAD;
+
+  // ── NBA CAP NUMBERS ─────────────────────────────────────────────
+  sectionLabel('Official 2026-27 NBA Cap Numbers', curY);
+  curY += 22;
+
+  const capCards = [
+    { k:'Salary Cap',    v:'$165,000,000' },
+    { k:'Luxury Tax',    v:'$200,474,000' },
+    { k:'First Apron',   v:'$209,063,000' },
+    { k:'Second Apron',  v:'$221,737,000' },
+  ];
+  const cw = (W - PAD*2 - 12*3) / 4;
+  capCards.forEach((c,i)=>{
+    const cx = PAD + i*(cw+12);
+    rect(cx, curY, cw, 80, 10, WHITE);
+    // left accent bar
+    rect(cx, curY, 3, 80, 0, BLUE);
+    // card shadow simulation
+    ctx.save(); ctx.globalAlpha=0.04;
+    rect(cx+2,curY+3,cw,80,10,INK);
+    ctx.restore();
+    text(c.k.toUpperCase(), cx+14, curY+22, '500 9px Lexend,sans-serif', MID, 'left');
+    text(c.v, cx+14, curY+54, '700 18px Lexend,sans-serif', INK, 'left');
+  });
+  curY += 80 + SECTION_GAP;
+
+  // ── SIXERS SNAPSHOT ─────────────────────────────────────────────
+  sectionLabel('Sixers Cap Snapshot', curY);
+  curY += 22;
+
+  const snapCards = [
+    { k:'Total Payroll',      v:'$186,152,322', color:BLUE },
+    { k:'Luxury Tax Room',    v:'$14,321,678',  color:GREEN },
+    { k:'Under First Apron',  v:'$22,910,678',  color:AMBER },
+    { k:'Under Second Apron', v:'$35,584,678',  color:BLUE },
+  ];
+  snapCards.forEach((c,i)=>{
+    const cx = PAD + i*(cw+12);
+    rect(cx, curY, cw, 80, 10, WHITE);
+    rect(cx, curY, 3, 80, 0, c.color);
+    text(c.k.toUpperCase(), cx+14, curY+22, '500 9px Lexend,sans-serif', MID, 'left');
+    text(c.v, cx+14, curY+54, '700 18px Lexend,sans-serif', c.color, 'left');
+  });
+  curY += 80 + SECTION_GAP;
+
+  // ── ROSTER PAYROLL TABLE ─────────────────────────────────────────
+  sectionLabel('2026-27 Roster Payroll', curY);
+  curY += 22;
+
+  const TW = W - PAD*2;
+  // table background card
+  rect(PAD, curY, TW, TABLE_H, 12, WHITE);
+
+  // Table header row
+  rect(PAD, curY, TW, HEADER_H, 0, SOFT);
+  // round top corners manually
+  rect(PAD, curY, TW, 12, 0, SOFT);
+
+  const cols = {
+    rk:  { x: PAD+18,        w: 36,  align:'left'  },
+    name:{ x: PAD+62,        w: 340, align:'left'  },
+    sal: { x: PAD+TW-220,    w: 160, align:'right' },
+    badge:{ x: PAD+TW-50,    w: 110, align:'center'},
+  };
+
+  // header labels
+  ctx.font='500 9px Lexend,sans-serif'; ctx.fillStyle=MID;
+  ctx.textAlign='left';  ctx.fillText('#',        cols.rk.x,   curY+22);
+  ctx.fillText('PLAYER', cols.name.x, curY+22);
+  ctx.textAlign='right'; ctx.fillText('SALARY',   cols.sal.x,  curY+22);
+  ctx.textAlign='center';ctx.fillText('STATUS',   PAD+TW-50,   curY+22);
+
+  curY += HEADER_H;
+
+  // divider
+  ctx.fillStyle=BORDER; ctx.fillRect(PAD, curY, TW, 1);
+
+  rows.forEach((r,i)=>{
+    const ry = curY + i*ROW_H;
+    // zebra
+    if(i%2===0) rect(PAD, ry, TW, ROW_H, 0, WHITE);
+    else         rect(PAD, ry, TW, ROW_H, 0, '#fafbfd');
+
+    // rank
+    text(String(r.rk).padStart(2,'0'), cols.rk.x, ry+ROW_H/2+5, '500 11px Lexend,sans-serif', '#94a3b8', 'left');
+
+    // name
+    text(r.name, cols.name.x, ry+ROW_H/2+2, '600 13px Lexend,sans-serif', INK, 'left');
+    // position pill
+    const ppW = 28; const ppX = cols.name.x + ctx.measureText(r.name).width + 8;
+    rect(ppX, ry+ROW_H/2-9, ppW+2, 18, 9, SOFT);
+    ctx.font='600 8px Lexend,sans-serif'; ctx.fillStyle=MID; ctx.textAlign='center';
+    ctx.fillText(r.pos, ppX+ppW/2+1, ry+ROW_H/2+4);
+
+    // salary
+    text(fmt$(r.salary), cols.sal.x, ry+ROW_H/2+5, '600 13px Lexend,sans-serif', BLUE, 'right');
+
+    // status badge
+    const sl = (STATUS_LABEL[r.status]||r.status);
+    badge(sl, PAD+TW-50, ry+ROW_H/2, r.status);
+
+    // row divider
+    ctx.fillStyle=BORDER; ctx.fillRect(PAD, ry+ROW_H, TW, 1);
+  });
+
+  // total row — white, clean border top
+  const ty = curY + rows.length*ROW_H;
+  rect(PAD, ty, TW, 52, 0, WHITE);
+  ctx.fillStyle = INK; ctx.fillRect(PAD, ty, TW, 2);
+  text('TOTAL PAYROLL', cols.name.x, ty+32, '700 12px Lexend,sans-serif', MID, 'left');
+  text(fmt$(totalPayroll), cols.sal.x, ty+32, '700 16px Lexend,sans-serif', INK, 'right');
+
+  // round bottom corners of table card
+  ctx.save();
+  ctx.beginPath();
+  const bry = ty+52; const br=12;
+  ctx.moveTo(PAD+br,bry-br); ctx.lineTo(PAD+TW-br,bry-br);
+  ctx.arcTo(PAD+TW,bry-br,PAD+TW,bry,br); ctx.lineTo(PAD+TW,bry);
+  ctx.lineTo(PAD,bry); ctx.lineTo(PAD,bry-br);
+  ctx.arcTo(PAD,bry-br,PAD+br,bry-br,br);
+  ctx.closePath(); ctx.fillStyle=WHITE; ctx.fill();
+  ctx.restore();
+
+  curY += TABLE_H + SECTION_GAP;
+
+  // ── FOOTER ──────────────────────────────────────────────────────
+  rect(0, curY, W, FOOTER_H, 0, WHITE);
+
+  // short centered rule, top of footer
+  const fRuleW = 64;
+  ctx.fillStyle = BORDER;
+  ctx.fillRect(centerX - fRuleW/2, curY, fRuleW, 2);
+
+  // URL — centered, moved up where SixersHoops used to be
+  text('sixershoops.com/salary', centerX, curY + 38, '600 16px Lexend,sans-serif', MID, 'center');
+
+  return canvas;
+}
+
+if(shareBtn && shareOverlay){
+  shareBtn.addEventListener('click', async () => {
+    shareOverlay.classList.add('active');
+    renderShareLoading();
+    try{
+      // Load Google Font before drawing
+      await document.fonts.load('700 28px Lexend');
+      await document.fonts.load('400 13px Lexend');
+      const canvas = buildShareCanvas();
+      canvas.toBlob((blob) => {
+        if(!blob){ renderShareError(); return; }
+        renderShareResult(blob);
+      }, 'image/png');
+    }catch(err){
+      console.error('Could not generate image', err);
+      renderShareError();
+    }
+  });
+
+  shareModalClose.addEventListener('click', closeShareModal);
+  shareOverlay.addEventListener('click', (e) => {
+    if(e.target === shareOverlay) closeShareModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && shareOverlay.classList.contains('active')) closeShareModal();
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>    -webkit-font-smoothing:antialiased; line-height:1.5;
+    overflow-x:hidden; max-width:100%;
+  }
+  body{padding-top:64px;}
+  @media (max-width:480px){body{padding-top:60px;}}
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer;}
+  [id]{scroll-margin-top:80px;}
+
+  /* ─── HERO ─────────────────────────── */
+  .hero{background:var(--cream); position:relative; overflow:hidden; padding:0;}
+  .hero-inner{
+    position:relative; z-index:1; max-width:860px; margin:0 auto;
+    padding:5rem 2rem 4rem; display:flex; flex-direction:column;
+    align-items:center; text-align:center;
+  }
+  .hero-title-top,.hero-title-bottom{
+    font-size:clamp(2.4rem,6vw,4.5rem); font-weight:700;
+    line-height:.95; letter-spacing:-.03em; margin:0;
+  }
+  .hero-title-top{color:var(--ink);}
+  .hero-title-bottom{color:var(--sixers-blue);}
+  .hero-stats-row{display:flex; gap:2.5rem; margin-top:2.5rem; justify-content:center; flex-wrap:wrap;}
+  .hero-stat{display:flex; flex-direction:column; align-items:center; gap:.2rem;}
+  .hero-stat .v{font-weight:700; font-size:1.6rem; color:var(--ink); letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+  .hero-stat .k{font-size:.65rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--mid);}
+  .hero-stat-divider{width:1px; height:36px; background:var(--border-light); align-self:center;}
+
+  .share-btn-row{display:flex; justify-content:center; margin-bottom:1rem;}
+  .share-img-btn{
+    display:inline-flex; align-items:center; gap:.55rem;
+    padding:.65rem 1.3rem;
+    background:var(--sixers-blue); color:#fff; border:0;
+    border-radius:999px; font-weight:600; font-size:.82rem;
+    letter-spacing:-.005em; box-shadow:0 2px 10px rgba(0,107,182,.25);
+    transition:all .2s;
+  }
+  .share-img-btn:hover{background:var(--sixers-blue-dark); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,107,182,.3);}
+  .share-img-btn:active{transform:translateY(0);}
+  .share-img-btn.is-busy{opacity:.7; pointer-events:none;}
+
+  /* ─── SHARE MODAL ──────────────────── */
+  .share-modal-overlay{
+    position:fixed; inset:0; background:rgba(13,15,26,.55);
+    display:none; align-items:center; justify-content:center;
+    padding:1.5rem; z-index:1000; backdrop-filter:blur(2px);
+  }
+  .share-modal-overlay.active{display:flex;}
+  .share-modal{
+    background:#fff; border-radius:16px; max-width:420px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    overflow:hidden; animation:modal-pop .18s ease;
+  }
+  @keyframes modal-pop{from{opacity:0; transform:scale(.96);}to{opacity:1; transform:scale(1);}}
+  .share-modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 1.25rem; border-bottom:1px solid var(--border-light);
+  }
+  .share-modal-head h3{margin:0; font-size:.95rem; font-weight:700; color:var(--ink);}
+  .share-modal-close{
+    background:transparent; border:0; color:var(--mid); font-size:1rem;
+    width:28px; height:28px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; transition:all .15s;
+  }
+  .share-modal-close:hover{background:var(--surface-soft); color:var(--ink);}
+  .share-modal-body{padding:1.25rem; display:flex; flex-direction:column; gap:1rem; align-items:center;}
+  .share-modal-body img{
+    width:100%; border-radius:10px; border:1px solid var(--border-light);
+    display:block;
+  }
+  .share-modal-actions{display:flex; gap:.6rem; width:100%;}
+  .share-modal-actions button{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:.5rem;
+    padding:.7rem .9rem; border-radius:10px; font-weight:600; font-size:.82rem;
+    border:1px solid var(--border-light); background:#fff; color:var(--ink);
+    transition:all .18s;
+  }
+  .share-modal-actions button:hover{border-color:var(--sixers-blue); color:var(--sixers-blue);}
+  .share-modal-actions button.primary{
+    background:var(--sixers-blue); border-color:var(--sixers-blue); color:#fff;
+  }
+  .share-modal-actions button.primary:hover{background:var(--sixers-blue-dark); color:#fff;}
+  .share-modal-actions button.copied{background:var(--green); border-color:var(--green); color:#fff;}
+  .share-modal-loading{
+    display:flex; flex-direction:column; align-items:center; gap:.75rem;
+    padding:2.5rem 1rem; color:var(--mid); font-size:.85rem;
+  }
+  .share-modal-loading i{font-size:1.4rem; color:var(--sixers-blue);}
+
+  /* ─── LAYOUT ──────────────────────── */
+  .wrap{max-width:1200px; margin:0 auto; padding:1.5rem 2rem 4rem;}
+  .section-label{
+    font-weight:500; font-size:.7rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--mid);
+    display:flex; align-items:center; gap:.7rem; margin:0 0 1rem;
+  }
+  .section-label .line{flex:1; height:1px; background:var(--border-light);}
+  .section-label .count{color:var(--mid-2); font-weight:500;}
+
+  /* ─── CAP METRIC CARDS ────────────── */
+  .metric-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:.75rem; margin-bottom:2.5rem;
+  }
+  .metric{
+    background:var(--card-bg); border:1px solid var(--border-light);
+    border-radius:12px; padding:1.15rem 1.2rem 1.1rem;
+    position:relative; overflow:hidden;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    transition:all .2s;
+  }
+  .metric:hover{border-color:rgba(0,107,182,.25); box-shadow:0 6px 18px rgba(0,107,182,.08); transform:translateY(-1px);}
+  .metric::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--sixers-blue);
+    transform:scaleY(0); transform-origin:top; transition:transform .25s ease;
+  }
+  .metric:hover::before{transform:scaleY(1);}
+  .metric .k{
+    font-size:.58rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--mid); font-weight:600; display:block; margin-bottom:.5rem;
+  }
+  .metric .v{
+    font-weight:700; font-size:1.35rem; color:var(--ink);
+    letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1;
+    display:block;
+  }
+  .metric .sub{font-size:.65rem; color:var(--mid-2); font-weight:500; margin-top:.4rem; display:block;}
+  .metric.pos .v{color:var(--green);}
+  .metric.neg .v{color:var(--red);}
+  .metric.warn .v{color:var(--amber);}
+  .metric.blue .v{color:var(--sixers-blue);}
+
+  /* ─── TOOLBAR / SEASON TABS ───────── */
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:.6rem; align-items:center;
+    padding:.85rem 1rem; background:var(--card-bg);
+    border:1px solid var(--border-light); border-radius:12px;
+    margin-bottom:1.5rem; box-shadow:0 1px 2px rgba(0,0,0,.03);
+  }
+  .search{position:relative; flex:1; min-width:220px; max-width:380px;}
+  .search i{position:absolute; left:.9rem; top:50%; transform:translateY(-50%); color:var(--mid-2); font-size:.85rem;}
+  .search input{
+    width:100%; padding:.6rem 1rem .6rem 2.4rem;
+    background:#f4f6fa; border:1px solid transparent;
+    border-radius:999px; font-family:inherit; font-size:.88rem;
+    color:var(--ink); outline:none; transition:all .2s;
+  }
+  .search input:focus{background:#fff; border-color:var(--sixers-blue); box-shadow:0 0 0 3px rgba(0,107,182,.08);}
+  .filters{display:flex; gap:.35rem; flex-wrap:wrap; margin-left:auto;}
+  .filter-btn{
+    font-weight:500; font-size:.78rem; padding:.5rem .95rem;
+    background:transparent; border:1px solid var(--border-light);
+    border-radius:999px; color:var(--mid); transition:all .18s;
+  }
+  .filter-btn:hover{border-color:var(--sixers-blue); color:var(--sixers-blue);}
+  .filter-btn.active{
+    background:var(--sixers-blue); border-color:var(--sixers-blue);
+    color:#fff; box-shadow:0 2px 8px rgba(0,107,182,.2);
+  }
+
+  /* ─── SALARY TABLE ────────────────── */
+  .table-card{
+    background:var(--card-bg); border:1px solid var(--border-light);
+    border-radius:12px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    margin-bottom:1.5rem;
+  }
+  .table-card .head{
+    padding:1.1rem 1.25rem; border-bottom:1px solid var(--border-light);
+    display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    background:var(--surface-soft);
+  }
+  .table-card .head .ttl{font-weight:600; font-size:.95rem; letter-spacing:-.01em; color:var(--ink); display:flex; align-items:center; gap:.6rem;}
+  .table-card .head .ttl::before{content:''; width:4px; height:18px; background:var(--sixers-blue); border-radius:2px;}
+  .meta-pills{display:flex; gap:.45rem; flex-wrap:wrap; align-items:center;}
+  .meta-pill{
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
+    font-weight:600; color:var(--mid); background:#fff;
+    border:1px solid var(--border-light); border-radius:999px;
+    padding:.35rem .7rem; font-variant-numeric:tabular-nums;
+  }
+  .meta-pill i{font-size:.7rem; color:var(--sixers-blue);}
+  .meta-pill .val{color:var(--ink); font-weight:700; letter-spacing:-.01em; text-transform:none; font-size:.78rem;}
+  table.s-table{width:100%; border-collapse:collapse;}
+  .s-table th{
+    text-align:left; font-weight:500; font-size:.62rem;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--mid);
+    padding:.85rem 1.25rem; border-bottom:1px solid var(--border-light);
+    background:#fff;
+  }
+  .s-table th.num,.s-table td.num{text-align:right; font-variant-numeric:tabular-nums;}
+  .s-table td{
+    padding:.95rem 1.25rem; border-bottom:1px solid var(--border-light);
+    font-size:.88rem; color:var(--ink); vertical-align:middle;
+  }
+  .s-table tbody tr:last-child td{border-bottom:0;}
+  .s-table tbody tr{transition:background .15s;}
+  .s-table tbody tr:hover{background:var(--surface-soft);}
+  .s-table .rk{
+    font-size:.7rem; color:var(--mid-2); font-weight:500;
+    font-variant-numeric:tabular-nums; width:42px;
+  }
+  .s-table .pname{font-weight:600; color:var(--ink); letter-spacing:-.01em;}
+  .s-table .pname a{text-decoration:none;}
+  .s-table .ppos{
+    display:inline-block; margin-left:.55rem;
+    font-size:.58rem; letter-spacing:.08em; font-weight:600;
+    padding:2px 7px; background:var(--surface-soft);
+    color:var(--mid); border:1px solid var(--border-light);
+    border-radius:999px; text-transform:uppercase;
+    vertical-align:middle;
+  }
+  .s-table .amt{font-weight:600; color:var(--sixers-blue); font-variant-numeric:tabular-nums;}
+  .s-table .amt.neg{color:var(--red);}
+  .s-table .pct{color:var(--mid); font-variant-numeric:tabular-nums; font-size:.82rem;}
+  .badge{
+    display:inline-block; font-size:.58rem; letter-spacing:.08em;
+    font-weight:600; padding:3px 9px; border-radius:999px;
+    text-transform:uppercase; border:1px solid var(--border-light);
+    background:var(--surface-soft); color:var(--mid);
+  }
+  .badge.guaranteed{background:rgba(0,107,182,.1); color:var(--sixers-blue); border-color:transparent;}
+  .badge.player-option{background:rgba(217,119,6,.12); color:var(--amber); border-color:transparent;}
+  .badge.team-option{background:rgba(22,163,74,.12); color:var(--green); border-color:transparent;}
+  .badge.non-guaranteed{background:rgba(237,23,76,.1); color:var(--sixers-red); border-color:transparent;}
+  .badge.twoway{background:var(--gold); color:#1a1306; border-color:var(--gold);}
+  .badge.dead{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .row-divider td{
+    background:var(--surface-soft); padding:.55rem 1.25rem;
+    font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--mid); font-weight:600;
+    border-top:1px solid var(--border-light);
+    border-bottom:1px solid var(--border-light);
+  }
+  .row-total td{
+    background:#fff; font-weight:700; color:var(--ink);
+    border-top:2px solid var(--ink); font-size:.92rem;
+  }
+  .row-total td.amt{color:var(--ink);}
+
+  /* season tabs */
+  .season-tabs{
+    display:flex; gap:.35rem; flex-wrap:wrap;
+    padding:.5rem; background:var(--card-bg);
+    border:1px solid var(--border-light); border-radius:999px;
+    margin-bottom:1.5rem; width:fit-content; margin-left:auto; margin-right:auto;
+    box-shadow:0 1px 2px rgba(0,0,0,.03);
+  }
+  .season-tab{
+    font-weight:500; font-size:.78rem; padding:.5rem 1.05rem;
+    background:transparent; border:0; border-radius:999px;
+    color:var(--mid); transition:all .18s;
+  }
+  .season-tab:hover{color:var(--sixers-blue);}
+  .season-tab.active{
+    background:var(--sixers-blue); color:#fff;
+    box-shadow:0 2px 8px rgba(0,107,182,.2);
+  }
+  .season-content{display:none;}
+  .season-content.active{display:block;}
+
+  /* TPE cards */
+  .tpe-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:.75rem;
+  }
+  .tpe{
+    background:var(--card-bg); border:1px solid var(--border-light);
+    border-radius:12px; padding:1.1rem 1.2rem; position:relative;
+    overflow:hidden; transition:all .2s;
+    box-shadow:0 1px 2px rgba(0,0,0,.03);
+  }
+  .tpe::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--sixers-blue),#06b6d4);
+  }
+  .tpe:hover{border-color:rgba(0,107,182,.25); box-shadow:0 6px 18px rgba(0,107,182,.08); transform:translateY(-1px);}
+  .tpe .k{font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; color:var(--mid); font-weight:600; display:block; margin-bottom:.5rem;}
+  .tpe .v{font-weight:700; font-size:1.25rem; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.02em; display:block;}
+  .tpe .exp{font-size:.65rem; color:var(--mid-2); font-weight:500; margin-top:.4rem; display:block;}
+
+  /* note row */
+  .note{
+    background:var(--surface-soft); border:1px solid var(--border-light);
+    border-left:3px solid var(--sixers-blue);
+    padding:1rem 1.2rem; border-radius:0 10px 10px 0;
+    color:var(--ink); font-size:.88rem; line-height:1.6;
+    margin-bottom:1.5rem;
+  }
+  .note strong{color:var(--sixers-blue);}
+
+  /* ─── RESPONSIVE ──────────────────── */
+  @media (max-width:720px){
+    .s-table th:nth-child(4),.s-table td:nth-child(4){display:none;}
+    .s-table td,.s-table th{padding:.75rem .85rem;}
+    .wrap{padding:1rem 1.1rem 3rem;}
+  }
+  @media (max-width:480px){
+    .hero-inner{padding:2.8rem 1.25rem 2.4rem;}
+    .hero-stats-row{gap:1.2rem;}
+    .s-table th:nth-child(1),.s-table td.rk{display:none;}
+  }
+</style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-title-top">SIXERS</p>
+    <p class="hero-title-bottom">SALARY CAP</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ─── OFFICIAL NBA CAP NUMBERS ─── -->
+  <div class="section-label">
+    <span>Official 2026-27 NBA Cap Numbers</span>
+    <span class="line"></span>
+  </div>
+  <div class="metric-grid">
+    <div class="metric"><span class="k">Salary Cap</span><span class="v">$165,000,000</span></div>
+    <div class="metric"><span class="k">Luxury Tax</span><span class="v">$200,474,000</span></div>
+    <div class="metric"><span class="k">First Apron</span><span class="v">$209,063,000</span></div>
+    <div class="metric"><span class="k">Second Apron</span><span class="v">$221,737,000</span></div>
+  </div>
+
+  <!-- ─── SIXERS CAP SNAPSHOT ─── -->
+  <div class="section-label">
+    <span>Sixers Cap Snapshot</span>
+    <span class="line"></span>
+  </div>
+  <div class="metric-grid" id="payrollCard">
+    <div class="metric blue"><span class="k">Total Payroll</span><span class="v">$186,152,322</span></div>
+    <div class="metric pos"><span class="k">Luxury Tax Room</span><span class="v">$14,321,678</span></div>
+    <div class="metric warn"><span class="k">Under First Apron</span><span class="v">$22,910,678</span></div>
+    <div class="metric blue"><span class="k">Under Second Apron</span><span class="v">$35,584,678</span></div>
+  </div>
+
+  <!-- ─── TRADE EXCEPTIONS ─── -->
+  <div class="section-label">
+    <span>Active Trade Exceptions</span>
+    <span class="line"></span>
+    <span class="count">02</span>
+  </div>
+  <div class="tpe-grid" style="margin-bottom:2.5rem;">
+    <div class="tpe"><span class="k">Jared McCain TPE</span><span class="v">$4,221,360</span><span class="exp">Expires 2/4/27</span></div>
+    <div class="tpe"><span class="k">Eric Gordon TPE</span><span class="v">$2,296,274</span><span class="exp">Expires 2/4/27</span></div>
+  </div>
+
+  <!-- ─── PAYROLL BREAKDOWN ─── -->
+  <div class="share-btn-row">
+    <button id="shareImgBtn" class="share-img-btn">
+      <span>Share to Social Media</span>
+    </button>
+  </div>
+  <div class="section-label">
+    <span>Payroll Breakdown</span>
+    <span class="line"></span>
+    <span class="count" id="rosterCount">12 Players</span>
+  </div>
+
+  <div class="season-tabs" role="tablist">
+    <button class="season-tab active" data-season="2026-27">2026-27</button>
+    <button class="season-tab" data-season="2027-28">2027-28</button>
+    <button class="season-tab" data-season="2028-29">2028-29</button>
+  </div>
+
+
+  <div class="toolbar">
+    <div class="search">
+      <i class="fas fa-search"></i>
+      <input id="q" type="text" placeholder="Search players…" />
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="guaranteed">Guaranteed</button>
+      <button class="filter-btn" data-filter="player-option">Player Option</button>
+      <button class="filter-btn" data-filter="team-option">Team Option</button>
+      <button class="filter-btn" data-filter="non-guaranteed">Non-Guaranteed</button>
+    </div>
+  </div>
+
+  <!-- season content slots -->
+  <div id="seasonHost"></div>
+
+</main>
+
+<!-- ─── SHARE IMAGE MODAL ─── -->
+<div class="share-modal-overlay" id="shareModalOverlay">
+  <div class="share-modal">
+    <div class="share-modal-head">
+      <h3>Share Payroll Snapshot</h3>
+      <button class="share-modal-close" id="shareModalClose" aria-label="Close">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+    <div class="share-modal-body" id="shareModalBody">
+      <div class="share-modal-loading">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <span>Generating image…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CAP = {
+  '2026-27':165000000, '2027-28':181500000, '2028-29':199650000
+};
+
+const SEASONS = {
+  '2026-27':{
+    rows:[
+      {rk:1, name:'Joel Embiid', slug:'joel-embiid', pos:'C', salary:57750000, status:'guaranteed'},
+      {rk:2, name:'Paul George', slug:'paul-george', pos:'SG', salary:54126380, status:'guaranteed'},
+      {rk:3, name:'Tyrese Maxey', slug:'tyrese-maxey', pos:'PG', salary:40770520, status:'guaranteed'},
+      {rk:4, name:'VJ Edgecombe', pos:'SG', salary:11663880, status:'guaranteed'},
+      {rk:5, name:'Labaron Philon Jr.', pos:'PG', salary:3597840, status:'guaranteed'},
       {rk:6, name:'Dominick Barlow', pos:'PF', salary:3415000, status:'team-option'},
       {rk:7, name:'Trendon Watford', pos:'PF', salary:2801346, status:'team-option'},
       {rk:8, name:'Dalen Terry', pos:'SG', salary:2584539, status:'team-option'},
