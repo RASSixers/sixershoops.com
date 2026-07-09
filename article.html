@@ -34,24 +34,31 @@
   a { color: inherit; }
 
   .article-wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
-  .article-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; color: var(--sixers-blue); text-decoration: none; margin-bottom: 1.5rem; }
+  .article-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; color: var(--sixers-blue); text-decoration: none; margin-bottom: 1.75rem; }
   .article-back:hover { text-decoration: underline; }
 
+  /* Centered header block */
+  .article-header { text-align: center; margin-bottom: 2rem; }
   .article-tag {
     display: inline-flex; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
     text-transform: uppercase; padding: 4px 11px; border-radius: 999px; margin-bottom: 1rem;
   }
   .article-title { font-size: clamp(1.8rem, 4.5vw, 2.6rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 0.75rem; }
-  .article-meta { display: flex; gap: 0.5rem; font-size: 0.85rem; color: var(--mid); margin-bottom: 2rem; }
-  .article-thumb { aspect-ratio: 21/9; border-radius: 14px; margin-bottom: 2rem; }
-  .article-excerpt { font-size: 1.1rem; line-height: 1.6; color: var(--mid); margin: 0 0 1.75rem; font-weight: 500; }
+  .article-meta { display: flex; gap: 0.5rem; font-size: 0.85rem; color: var(--mid); justify-content: center; }
+  .article-excerpt { font-size: 1.1rem; line-height: 1.6; color: var(--mid); margin: 1.5rem 0 0; font-weight: 500; }
   .article-body p { font-size: 1.05rem; line-height: 1.75; color: var(--ink); margin: 0 0 1.5rem; white-space: pre-wrap; }
 
-  .tweet-embed-wrap { margin: 1.75rem 0; }
-  .tweet-fallback-card {
-    border: 1px solid var(--border-light); border-radius: 12px; padding: 1rem 1.25rem;
-    font-size: 0.85rem; color: var(--mid); background: #f8fafc;
+  /* Tweet embed — nice card wrapper */
+  .tweet-embed-wrap {
+    margin: 1.25rem 0;
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1rem 1.25rem 0.5rem;
+    overflow: hidden;
   }
+  .tweet-embed-wrap .twitter-tweet { margin: 0 auto !important; }
+  .tweet-fallback-card { font-size: 0.85rem; color: var(--mid); }
   .tweet-fallback-card a { color: var(--sixers-blue); font-weight: 600; text-decoration: none; }
   .tweet-fallback-card a:hover { text-decoration: underline; }
 
@@ -62,13 +69,14 @@
     margin-bottom: 1rem; display: flex; gap: 1rem; align-items: flex-start;
   }
   .grade-pill {
-    flex-shrink: 0; width: 48px; height: 48px; border-radius: 10px; color: white;
+    flex-shrink: 0; width: 48px; height: 48px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem;
   }
   .grade-card-body { flex: 1; min-width: 0; }
   .grade-card-name { font-size: 1rem; font-weight: 700; margin: 0 0 0.2rem; }
   .grade-card-stats { font-size: 0.82rem; color: var(--mid); margin: 0 0 0.5rem; }
   .grade-card-analysis { font-size: 0.92rem; line-height: 1.55; color: var(--ink); margin: 0; }
+  .grade-card-tweet { margin-top: 0.85rem; }
 
   .article-closing { font-size: 1.05rem; line-height: 1.75; color: var(--ink); margin-top: 2rem; padding-top: 1.75rem; border-top: 1px solid var(--border-light); white-space: pre-wrap; }
 
@@ -100,7 +108,6 @@
 <script>
 const NEWS_COLLECTION = 'editorial_articles';
 const CATEGORY_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
-const GRADE_COLORS = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a','INC':'#6b21a8'};
 
 function waitForDb(cb, tries) {
   tries = tries || 0;
@@ -140,21 +147,35 @@ function renderError(message) {
     '<div class="article-state"><h2>' + escapeHtml(message) + '</h2><p>Head back to the homepage for the latest news.</p></div>';
 }
 
+const PILL_COLORS = [
+  { bg: '#ED174C', text: '#ffffff' }, // red
+  { bg: '#006BB6', text: '#ffffff' }, // blue
+  { bg: '#000000', text: '#ffffff' }, // black
+  { bg: '#ffffff', text: '#000000' }  // white
+];
+let pillColorIndex = 0;
+function nextPillColor() {
+  const c = PILL_COLORS[pillColorIndex % PILL_COLORS.length];
+  pillColorIndex++;
+  return c;
+}
+
 function renderArticle(a) {
+  pillColorIndex = 0; // reset so colors are consistent on re-render
   const color = CATEGORY_COLORS[a.category] || '#006bb6';
   const date = a.createdAt ? toDate(a.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   document.title = a.title + ' — Sixers Hoops';
 
   let html = '<a href="/" class="article-back">← Back to Sixers Hoops</a>';
+
+  // Centered header
+  html += '<div class="article-header">';
   html += '<span class="article-tag" style="color:' + color + ';border:1px solid ' + color + '33;background:' + color + '14;">' + escapeHtml(a.category || 'News') + '</span>';
   html += '<h1 class="article-title">' + escapeHtml(a.title) + '</h1>';
   html += '<div class="article-meta"><span>Sixers Hoops Staff</span><span>·</span><span>' + escapeHtml(date) + '</span></div>';
-  if (a.imageUrl) {
-    html += '<img class="article-thumb" src="' + escapeHtml(a.imageUrl) + '" alt="' + escapeHtml(a.title) + '" style="width:100%;object-fit:cover;" />';
-  } else if (a.gradient) {
-    html += '<div class="article-thumb" style="background:' + a.gradient + ';"></div>';
-  }
   if (a.excerpt) html += '<p class="article-excerpt">' + escapeHtml(a.excerpt) + '</p>';
+  html += '</div>';
+
   if (a.intro) html += '<div class="article-body"><p>' + escapeHtml(a.intro) + '</p></div>';
   if (a.tweetUrl) html += tweetEmbedHtml(a.tweetUrl);
 
@@ -162,15 +183,15 @@ function renderArticle(a) {
   if (grades.length) {
     html += '<div class="grades-section"><h2 class="grades-heading">Player Grades</h2>';
     grades.forEach(function (g) {
-      const gColor = GRADE_COLORS[g.grade] || '#006bb6';
+      const pill = nextPillColor();
       html += '<div class="grade-card">';
-      html += '<div class="grade-pill" style="background:' + gColor + ';">' + escapeHtml(g.grade) + '</div>';
+      html += '<div class="grade-pill" style="background:' + pill.bg + ';color:' + pill.text + ';border:' + (pill.bg === '#ffffff' ? '1px solid #e4e8f0' : 'none') + ';">' + escapeHtml(g.grade) + '</div>';
       html += '<div class="grade-card-body">';
       html += '<h3 class="grade-card-name">' + escapeHtml(g.name) + '</h3>';
       if (g.stats) html += '<p class="grade-card-stats">' + escapeHtml(g.stats) + '</p>';
       if (g.analysis) html += '<p class="grade-card-analysis">' + escapeHtml(g.analysis) + '</p>';
+      if (g.tweetUrl) html += '<div class="grade-card-tweet">' + tweetEmbedHtml(g.tweetUrl) + '</div>';
       html += '</div></div>';
-      if (g.tweetUrl) html += tweetEmbedHtml(g.tweetUrl);
     });
     html += '</div>';
   }
@@ -179,13 +200,17 @@ function renderArticle(a) {
 
   document.getElementById('article-root').innerHTML = html;
 
-  // Load Twitter widgets script only if there's at least one embed
+  // Load Twitter widgets if any embeds present
   if (a.tweetUrl || grades.some(function (g) { return g.tweetUrl; })) {
-    const s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://platform.twitter.com/widgets.js';
-    s.charset = 'utf-8';
-    document.body.appendChild(s);
+    if (window.twttr && window.twttr.widgets) {
+      window.twttr.widgets.load();
+    } else {
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://platform.twitter.com/widgets.js';
+      s.charset = 'utf-8';
+      document.body.appendChild(s);
+    }
   }
 }
 
