@@ -114,11 +114,8 @@ function escapeHtml(str) {
 }
 
 function getSlugFromPath() {
-  // Matches /articles/some-slug (trailing slash optional)
-  const parts = window.location.pathname.split('/').filter(Boolean);
-  const idx = parts.indexOf('articles');
-  if (idx === -1 || !parts[idx + 1]) return null;
-  return decodeURIComponent(parts[idx + 1]);
+  const params = new URLSearchParams(window.location.search);
+  return params.get('slug') || null;
 }
 
 function toDate(ts) {
@@ -152,7 +149,11 @@ function renderArticle(a) {
   html += '<span class="article-tag" style="color:' + color + ';border:1px solid ' + color + '33;background:' + color + '14;">' + escapeHtml(a.category || 'News') + '</span>';
   html += '<h1 class="article-title">' + escapeHtml(a.title) + '</h1>';
   html += '<div class="article-meta"><span>Sixers Hoops Staff</span><span>·</span><span>' + escapeHtml(date) + '</span></div>';
-  if (a.gradient) html += '<div class="article-thumb" style="background:' + a.gradient + ';"></div>';
+  if (a.imageUrl) {
+    html += '<img class="article-thumb" src="' + escapeHtml(a.imageUrl) + '" alt="' + escapeHtml(a.title) + '" style="width:100%;object-fit:cover;" />';
+  } else if (a.gradient) {
+    html += '<div class="article-thumb" style="background:' + a.gradient + ';"></div>';
+  }
   if (a.excerpt) html += '<p class="article-excerpt">' + escapeHtml(a.excerpt) + '</p>';
   if (a.intro) html += '<div class="article-body"><p>' + escapeHtml(a.intro) + '</p></div>';
   if (a.tweetUrl) html += tweetEmbedHtml(a.tweetUrl);
