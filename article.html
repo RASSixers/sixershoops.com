@@ -122,7 +122,9 @@ function escapeHtml(str) {
 }
 
 function getSlugFromPath() {
-  return new URLSearchParams(window.location.search).get('slug') || null;
+  // URL is /article.html?your-slug — the whole query string is the slug
+  const qs = window.location.search.slice(1); // strip leading ?
+  return qs ? decodeURIComponent(qs) : null;
 }
 
 function toDate(ts) {
