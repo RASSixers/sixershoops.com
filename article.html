@@ -108,6 +108,7 @@
 <script>
 const NEWS_COLLECTION = 'editorial_articles';
 const CATEGORY_COLORS = {'Player Grades':'#1e7d46','Analysis':'#006BB6','Opinion':'#b06b00','Preview':'#ED174C','Recap':'#475569','News':'#0077cc'};
+const GRADE_COLORS = {'A+':'#1a6b3c','A':'#1e7d46','A-':'#2d8f56','B+':'#006BB6','B':'#0077cc','B-':'#2a85d0','C+':'#b06b00','C':'#c27800','D+':'#b83232','D':'#a02828','F':'#7a1a1a','INC':'#6b21a8'};
 
 function waitForDb(cb, tries) {
   tries = tries || 0;
@@ -121,8 +122,12 @@ function escapeHtml(str) {
 }
 
 function getSlugFromPath() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('slug') || null;
+  // Matches /article/some-slug
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  const idx = parts.indexOf('article');
+  if (idx !== -1 && parts[idx + 1]) return decodeURIComponent(parts[idx + 1]);
+  // Fallback: ?slug= query param
+  return new URLSearchParams(window.location.search).get('slug') || null;
 }
 
 function toDate(ts) {
@@ -147,21 +152,7 @@ function renderError(message) {
     '<div class="article-state"><h2>' + escapeHtml(message) + '</h2><p>Head back to the homepage for the latest news.</p></div>';
 }
 
-const PILL_COLORS = [
-  { bg: '#ED174C', text: '#ffffff' }, // red
-  { bg: '#006BB6', text: '#ffffff' }, // blue
-  { bg: '#000000', text: '#ffffff' }, // black
-  { bg: '#ffffff', text: '#000000' }  // white
-];
-let pillColorIndex = 0;
-function nextPillColor() {
-  const c = PILL_COLORS[pillColorIndex % PILL_COLORS.length];
-  pillColorIndex++;
-  return c;
-}
-
 function renderArticle(a) {
-  pillColorIndex = 0; // reset so colors are consistent on re-render
   const color = CATEGORY_COLORS[a.category] || '#006bb6';
   const date = a.createdAt ? toDate(a.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   document.title = a.title + ' — Sixers Hoops';
@@ -183,9 +174,9 @@ function renderArticle(a) {
   if (grades.length) {
     html += '<div class="grades-section"><h2 class="grades-heading">Player Grades</h2>';
     grades.forEach(function (g) {
-      const pill = nextPillColor();
+      const gColor = GRADE_COLORS[g.grade] || '#006bb6';
       html += '<div class="grade-card">';
-      html += '<div class="grade-pill" style="background:' + pill.bg + ';color:' + pill.text + ';border:' + (pill.bg === '#ffffff' ? '1px solid #e4e8f0' : 'none') + ';">' + escapeHtml(g.grade) + '</div>';
+      html += '<div class="grade-pill" style="background:' + gColor + ';color:#fff;">' + escapeHtml(g.grade) + '</div>';
       html += '<div class="grade-card-body">';
       html += '<h3 class="grade-card-name">' + escapeHtml(g.name) + '</h3>';
       if (g.stats) html += '<p class="grade-card-stats">' + escapeHtml(g.stats) + '</p>';
