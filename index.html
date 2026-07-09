@@ -325,6 +325,8 @@ function toDate(ts) {
 }
 
 // ── NEWS & ANALYSIS ──
+const THUMB_COLORS = ['#ED174C', '#006BB6', '#000000', '#001a57'];
+
 function renderNews(articles) {
   const grid = document.getElementById('news-grid');
   if (!articles.length) {
@@ -336,7 +338,7 @@ function renderNews(articles) {
   const rest = articles.slice(1, 4);
 
   function articleUrl(a) {
-    return a.slug ? ('/article.html?slug=' + encodeURIComponent(a.slug)) : '#';
+    return a.slug ? ('/article/' + encodeURIComponent(a.slug)) : '#';
   }
 
   function gradeChips(a) {
@@ -349,15 +351,15 @@ function renderNews(articles) {
     return '<div class="news-card-grades">' + chips + '</div>';
   }
 
-  function featuredThumbStyle(a) {
-    if (a.imageUrl) return 'background-image:url(' + a.imageUrl + ');background-size:cover;background-position:center;';
-    return a.gradient ? ('background:' + a.gradient + ';') : '';
+  function featuredThumbStyle(a, idx) {
+    const color = a.gradient || THUMB_COLORS[idx % THUMB_COLORS.length];
+    return 'background:' + color + ';';
   }
 
   const featuredColor = CATEGORY_COLORS[featured.category] || '#006bb6';
   const featuredHtml =
     '<a href="' + articleUrl(featured) + '" class="news-card">' +
-      '<div class="news-card-thumb" style="' + featuredThumbStyle(featured) + '" aria-hidden="true"></div>' +
+      '<div class="news-card-thumb" style="' + featuredThumbStyle(featured, 0) + '" aria-hidden="true"></div>' +
       '<div class="news-card-body">' +
         '<span class="news-tag" style="color:' + featuredColor + ';border-color:' + featuredColor + '33;background:' + featuredColor + '14;">' + escapeHtml(featured.category || 'News') + '</span>' +
         '<h3 class="news-card-title">' + escapeHtml(featured.title) + '</h3>' +
