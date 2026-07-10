@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting...</title>
-  <script>
-    if (window.location.pathname.endsWith('.html')) {
-      window.location.replace(window.location.pathname.replace(/\.html$/, ''));
-    } else {
-      window.location.replace('https://sixershoops.com/');
+<meta charset="utf-8">
+<title>Sixers Hoops</title>
+<script>
+  // GitHub Pages SPA redirect trick
+  // Converts /article/some-slug → article.html, storing the path so it can be restored
+  (function() {
+    var path = window.location.pathname;
+    // Only intercept /article/* paths
+    if (path.indexOf('/article/') === 0) {
+      var slug = path.replace('/article/', '').replace(/\/$/, '');
+      if (slug) {
+        window.location.replace('/article.html?slug=' + encodeURIComponent(slug));
+        return;
+      }
     }
-  </script>
+    // All other 404s — redirect home
+    window.location.replace('/');
+  })();
+</script>
 </head>
-<body>
-  <p>Redirecting...</p>
-</body>
+<body></body>
 </html>
