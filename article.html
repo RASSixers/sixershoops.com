@@ -122,9 +122,12 @@ function escapeHtml(str) {
 }
 
 function getSlugFromPath() {
-  // URL is /article.html?your-slug — the whole query string is the slug
-  const qs = window.location.search.slice(1); // strip leading ?
-  return qs ? decodeURIComponent(qs) : null;
+  // /article/some-slug → extract "some-slug"
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  const idx = parts.indexOf('article');
+  if (idx !== -1 && parts[idx + 1]) return decodeURIComponent(parts[idx + 1]);
+  // fallback for old ?slug= links
+  return new URLSearchParams(window.location.search).get('slug') || null;
 }
 
 function toDate(ts) {
@@ -153,6 +156,28 @@ function renderArticle(a) {
   const color = CATEGORY_COLORS[a.category] || '#006bb6';
   const date = a.createdAt ? toDate(a.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   document.title = a.title + ' — Sixers Hoops';
+
+  // Dynamic SEO meta tags
+  function setMeta(name, content, prop) {
+    const sel = prop ? 'meta[property="' + name + '"]' : 'meta[name="' + name + '"]';
+    let el = document.querySelector(sel);
+    if (!el) { el = document.createElement('meta'); if (prop) el.setAttribute('property', name); else el.setAttribute('name', name); document.head.appendChild(el); }
+    el.setAttribute('content', content);
+  }
+  const desc = a.excerpt || (a.intro ? a.intro.slice(0, 155) : 'Sixers Hoops — Philadelphia 76ers news and analysis.');
+  const canonical = 'https://sixershoops.com/article/' + encodeURIComponent(a.slug || '');
+  setMeta('description', desc);
+  setMeta('og:title', a.title + ' — Sixers Hoops', true);
+  setMeta('og:description', desc, true);
+  setMeta('og:url', canonical, true);
+  setMeta('og:type', 'article', true);
+  setMeta('twitter:card', 'summary');
+  setMeta('twitter:title', a.title + ' — Sixers Hoops');
+  setMeta('twitter:description', desc);
+  // Canonical link
+  let canonEl = document.querySelector('link[rel="canonical"]');
+  if (!canonEl) { canonEl = document.createElement('link'); canonEl.setAttribute('rel', 'canonical'); document.head.appendChild(canonEl); }
+  canonEl.setAttribute('href', canonical);
 
   let html = '<a href="/" class="article-back">← Back to Sixers Hoops</a>';
 
