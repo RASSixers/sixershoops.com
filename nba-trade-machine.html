@@ -4021,7 +4021,7 @@
             t.selectedPlayers.push(playerId);
         }
         updateStats();
-        renderTeamCard(teamId);
+        renderAll(); // refresh both sides so Incoming/Outgoing + live cap update
     }
 
     function togglePick(teamId, pickId) {
@@ -4034,7 +4034,7 @@
         if (idx >= 0) t.selectedPicks.splice(idx, 1);
         else t.selectedPicks.push(pickId);
         updateStats();
-        renderTeamCard(teamId);
+        renderAll();
     }
 
     function toggleTPE(teamId, tpeId) {
@@ -4044,7 +4044,7 @@
         if (idx >= 0) t.selectedTPEs.splice(idx, 1);
         else t.selectedTPEs.push(tpeId);
         updateStats();
-        renderTeamCard(teamId);
+        renderAll();
     }
 
     // ─── FA SIGNING FUNCTIONS ─────────────────────────────────────────────────
@@ -4231,8 +4231,12 @@
 
         // In a 3+ team trade, salary routing is ambiguous without an explicit destination per
         // player, so show a "Send to" picker on each selected player when this applies.
+        const teamsWithAssetsNow = teams.filter(x => x.abbr && TEAM_DATA[x.abbr] && (
+            x.selectedPlayers.length > 0 || x.selectedPicks.length > 0 || (x.cashOut || 0) > 0
+        ));
         const teamsWithPlayersNow = teams.filter(x => x.abbr && TEAM_DATA[x.abbr] && x.selectedPlayers.length > 0);
-        const isMultiTeamTrade = teamsWithPlayersNow.length > 2;
+        const isMultiTeamTrade = teamsWithAssetsNow.length > 2;
+        const isTwoTeamTrade = teamsWithAssetsNow.length === 2;
         const otherTeamsForDest = teams.filter(x => x.id !== t.id && x.abbr);
 
         // Tab bar
@@ -4264,28 +4268,40 @@
         } else if (!data || !data.players || data.players.length === 0) {
             rosterContent = `<div class="empty-state"><div class="empty-state-text">No roster data loaded yet.<br>Import team data to populate.</div></div>`;
         } else {
-            // Incoming players from other teams (visual "moving to this team")
-            const incomingRows = [];
+            // Incoming players + picks from other teams
+            const incomingPlayerRows = [];
+            const incomingPickRows = [];
             teams.forEach(other => {
                 if (other.id === t.id || !other.abbr || !TEAM_DATA[other.abbr]) return;
                 const odata = TEAM_DATA[other.abbr];
-                other.selectedPlayers.forEach(pid => {
+                (other.selectedPlayers || []).forEach(pid => {
                     const destId = (other.playerDestinations || {})[pid];
-                    // 2-team: auto goes to the other team. 3+: only if dest assigned to us
                     let comesHere = false;
-                    if (teamsWithPlayersNow.length === 2) comesHere = true;
+                    if (isTwoTeamTrade) comesHere = true;
                     else if (destId != null && Number(destId) === t.id) comesHere = true;
                     if (!comesHere) return;
                     const p = odata.players.find(pp => pp.id === pid);
-                    if (p) incomingRows.push({ p, fromAbbr: other.abbr, fromId: other.id });
+                    if (p) incomingPlayerRows.push({ p, fromAbbr: other.abbr });
+                });
+                (other.selectedPicks || []).forEach(pkid => {
+                    let comesHere = false;
+                    if (isTwoTeamTrade) comesHere = true;
+                    else {
+                        // 3+: if only one other counterparty, route there; else show if this is the only other team with assets
+                        const others = teamsWithAssetsNow.filter(x => x.id !== other.id);
+                        comesHere = others.length === 1 && others[0].id === t.id;
+                    }
+                    if (!comesHere) return;
+                    const pk = (odata.picks || []).find(pp => pp.id === pkid);
+                    if (pk) incomingPickRows.push({ pk, fromAbbr: other.abbr });
                 });
             });
 
             rosterContent = '';
-            if (incomingRows.length) {
-                rosterContent += `<div style="padding:.5rem .65rem .25rem;font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#059669;">INCOMING</div>`;
+            if (incomingPlayerRows.length || incomingPickRows.length) {
+                rosterContent += `<div class="roster-section-label" style="color:#059669;">INCOMING</div>`;
                 rosterContent += `<div class="player-list" style="padding-top:0;">`;
-                incomingRows.forEach(({ p, fromAbbr }) => {
+                incomingPlayerRows.forEach(({ p, fromAbbr }) => {
                     rosterContent += `<div class="player-item" style="background:rgba(5,150,105,.06);border-color:rgba(5,150,105,.2);cursor:default;">
                         ${playerHeadshotHtml(p.name, fromAbbr)}
                         <div class="player-checkbox" style="background:#059669;border-color:#059669;"><svg class="player-checkbox-check" style="display:block;color:#fff;" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
@@ -4299,17 +4315,33 @@
                         <div class="player-salary" style="color:#059669;">${fmtM(p.salary)}</div>
                     </div>`;
                 });
+                incomingPickRows.forEach(({ pk, fromAbbr }) => {
+                    const label = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
+                    rosterContent += `<div class="player-item" style="background:rgba(5,150,105,.06);border-color:rgba(5,150,105,.2);cursor:default;">
+                        <div class="player-headshot fallback" style="background:#059669;font-size:.55rem;">PICK</div>
+                        <div class="player-checkbox" style="background:#059669;border-color:#059669;"><svg class="player-checkbox-check" style="display:block;color:#fff;" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div class="player-info">
+                            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+                                <div class="player-name">${label}</div>
+                                <span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(5,150,105,.12);color:#047857;border:1px solid rgba(5,150,105,.25);">from ${fromAbbr}</span>
+                            </div>
+                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">Draft pick</div>
+                        </div>
+                        <div class="player-salary" style="color:#059669;">—</div>
+                    </div>`;
+                });
                 rosterContent += `</div>`;
             }
 
-            const outgoing = data.players.filter(p => t.selectedPlayers.includes(p.id));
-            if (outgoing.length) {
-                rosterContent += `<div style="padding:.5rem .65rem .25rem;font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#dc2626;">OUTGOING${isMultiTeamTrade ? ' — pick destination' : ''}</div>`;
+            const outgoingPlayers = data.players.filter(p => t.selectedPlayers.includes(p.id));
+            const outgoingPicks = (data.picks || []).filter(pk => t.selectedPicks.includes(pk.id));
+            if (outgoingPlayers.length || outgoingPicks.length) {
+                rosterContent += `<div class="roster-section-label" style="color:#dc2626;">OUTGOING${isMultiTeamTrade ? ' — pick destination' : ''}</div>`;
                 rosterContent += `<div class="player-list" style="padding-top:0;">`;
-                outgoing.forEach(p => {
+                outgoingPlayers.forEach(p => {
                     const destVal = (t.playerDestinations || {})[p.id];
                     let destLabel = '';
-                    if (teamsWithPlayersNow.length === 2 && otherTeamsForDest.length === 1) {
+                    if (isTwoTeamTrade && otherTeamsForDest.length === 1) {
                         destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.2);">→ ${otherTeamsForDest[0].abbr}</span>`;
                     } else if (isMultiTeamTrade) {
                         destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">
@@ -4331,6 +4363,25 @@
                             <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">${p.contractType || ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</div>
                         </div>
                         <div class="player-salary">${fmtM(p.salary)}</div>
+                    </div>`;
+                });
+                outgoingPicks.forEach(pk => {
+                    const label = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
+                    let destLabel = '';
+                    if (isTwoTeamTrade && otherTeamsForDest.length === 1) {
+                        destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.2);">→ ${otherTeamsForDest[0].abbr}</span>`;
+                    }
+                    rosterContent += `<div class="player-item selected" style="background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.25);" onclick="togglePick(${t.id},'${pk.id}')">
+                        <div class="player-headshot fallback" style="background:#dc2626;font-size:.55rem;">PICK</div>
+                        <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div class="player-info">
+                            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+                                <div class="player-name">${label}</div>
+                                ${destLabel}
+                            </div>
+                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">Draft pick${pk.protections ? ' · ' + pk.protections : ''}</div>
+                        </div>
+                        <div class="player-salary">—</div>
                     </div>`;
                 });
                 rosterContent += `</div>`;
@@ -4625,34 +4676,77 @@
         const teamSal = data ? fmtM(data.teamSalary || 0) : '—';
         const sendingStr = sendingSalary > 0 ? `Sending: ${fmtM(sendingSalary)}` : 'Select players to trade';
 
-        // Spotrac-style cap bar
+        // Live cap bar: current vs post-trade as selections change
         let capBarHtml = '';
-        if (data && data.teamSalary) {
-            const sal = data.teamSalary;
-            const capPct = Math.min(100, (sal / CBA.secondApron) * 100);
-            const luxPct = Math.min(100, (CBA.luxuryTax / CBA.secondApron) * 100);
-            const ap1Pct = Math.min(100, (CBA.firstApron / CBA.secondApron) * 100);
+        if (data && data.teamSalary != null) {
+            const currentSal = data.teamSalary || 0;
+            // Incoming salary from other teams (same routing as roster INCOMING)
+            let recvSal = 0;
+            teams.forEach(other => {
+                if (other.id === t.id || !other.abbr || !TEAM_DATA[other.abbr]) return;
+                const odata = TEAM_DATA[other.abbr];
+                (other.selectedPlayers || []).forEach(pid => {
+                    const destId = (other.playerDestinations || {})[pid];
+                    let comesHere = false;
+                    if (isTwoTeamTrade) comesHere = true;
+                    else if (destId != null && Number(destId) === t.id) comesHere = true;
+                    if (!comesHere) return;
+                    const p = odata.players.find(pp => pp.id === pid);
+                    if (p) recvSal += p.salary;
+                });
+            });
+            const faSal = (t.faSignings || []).reduce((s, f) => s + (f.salary || 0), 0);
+            const postSal = currentSal - sendingSalary + recvSal + faSal;
+            const hasTrade = sendingSalary > 0 || recvSal > 0 || faSal > 0;
+            const sal = hasTrade ? postSal : currentSal;
+            const scaleMax = Math.max(CBA.secondApron * 1.05, sal * 1.02);
+            const salPct = Math.min(100, (sal / scaleMax) * 100);
+            const luxPct = Math.min(100, (CBA.luxuryTax / scaleMax) * 100);
+            const ap1Pct = Math.min(100, (CBA.firstApron / scaleMax) * 100);
+            const ap2Pct = Math.min(100, (CBA.secondApron / scaleMax) * 100);
+            const capPctMark = Math.min(100, (CBA.salaryCap / scaleMax) * 100);
             const isOver2nd = sal > CBA.secondApron;
             const isOver1st = sal > CBA.firstApron;
             const isOverLux = sal > CBA.luxuryTax;
-            const barColor = isOver2nd ? '#dc2626' : isOver1st ? '#ea580c' : isOverLux ? '#ca8a04' : '#16a34a';
-            const statusLabel = isOver2nd ? 'Above 2nd Apron' : isOver1st ? 'Above 1st Apron' : isOverLux ? 'Luxury Tax' : 'Under Tax';
+            const isOverCap = sal > CBA.salaryCap;
+            const barColor = isOver2nd ? '#dc2626' : isOver1st ? '#ea580c' : isOverLux ? '#ca8a04' : isOverCap ? '#2563eb' : '#16a34a';
+            const statusLabel = isOver2nd ? 'Above 2nd Apron' : isOver1st ? 'Above 1st Apron' : isOverLux ? 'Luxury Tax' : isOverCap ? 'Over Cap' : 'Under Cap';
+            const delta = postSal - currentSal;
+            const deltaStr = hasTrade
+                ? `<span style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:700;color:${delta > 0 ? '#dc2626' : delta < 0 ? '#059669' : '#64748b'};">${delta > 0 ? '+' : ''}${fmtM(delta)}</span>`
+                : '';
+            function distChip(label, threshold, color) {
+                const dist = threshold - sal;
+                const over = dist < 0;
+                return `<div style="flex:1;min-width:0;background:#fff;border:1px solid #e8ebf2;border-radius:6px;padding:.35rem .4rem;">
+                    <div style="font-family:'Lexend',sans-serif;font-size:.5rem;font-weight:800;letter-spacing:.06em;color:#94a3b8;">${label}</div>
+                    <div style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;color:${over ? color : '#0f172a'};margin-top:1px;">${over ? '+' + fmtM(-dist) : fmtM(dist)}</div>
+                    <div style="font-family:'Lexend',sans-serif;font-size:.48rem;font-weight:600;color:${over ? color : '#94a3b8'};">${over ? 'over' : 'under'}</div>
+                </div>`;
+            }
             capBarHtml = `
-            <div style="padding:.6rem 1rem .5rem;background:#f8f8f6;border-bottom:1px solid var(--border-light);">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
-                    <span style="font-family:'Lexend',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:.1em;color:var(--mid);">Payroll</span>
-                    <div style="display:flex;align-items:center;gap:.5rem;">
+            <div style="padding:.55rem .75rem .55rem;background:#f8f8f6;border-bottom:1px solid var(--border-light);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+                    <span style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.08em;color:var(--mid);">${hasTrade ? 'POST-TRADE' : 'PAYROLL'}</span>
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        ${hasTrade ? `<span style="font-family:'Lexend',sans-serif;font-size:.58rem;color:#94a3b8;text-decoration:line-through;">${fmtM(currentSal)}</span>` : ''}
                         <span style="font-family:'Lexend',sans-serif;font-size:.8rem;font-weight:900;color:var(--ink);">${fmtM(sal)}</span>
-                        <span style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.08em;padding:2px 6px;border-radius:4px;background:${barColor}18;color:${barColor};">${statusLabel}</span>
+                        ${deltaStr}
+                        <span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:4px;background:${barColor}18;color:${barColor};">${statusLabel}</span>
                     </div>
                 </div>
-                <div style="position:relative;height:6px;background:#e5e7eb;border-radius:3px;overflow:visible;">
-                    <div style="position:absolute;left:0;top:0;height:100%;width:${capPct}%;background:${barColor};border-radius:3px;transition:width .3s;"></div>
-                    <div style="position:absolute;left:${luxPct}%;top:-2px;height:10px;width:1.5px;background:#ca8a04;opacity:.6;" title="Lux Tax: $201.0M"></div>
-                    <div style="position:absolute;left:${ap1Pct}%;top:-2px;height:10px;width:1.5px;background:#ea580c;opacity:.6;" title="1st Apron: $209.0M"></div>
+                <div style="position:relative;height:7px;background:#e5e7eb;border-radius:4px;overflow:visible;margin-bottom:.35rem;">
+                    <div style="position:absolute;left:0;top:0;height:100%;width:${salPct}%;background:${barColor};border-radius:4px;transition:width .25s;"></div>
+                    <div style="position:absolute;left:${capPctMark}%;top:-2px;height:11px;width:1.5px;background:#16a34a;opacity:.7;" title="Salary Cap"></div>
+                    <div style="position:absolute;left:${luxPct}%;top:-2px;height:11px;width:1.5px;background:#ca8a04;opacity:.7;" title="Luxury Tax"></div>
+                    <div style="position:absolute;left:${ap1Pct}%;top:-2px;height:11px;width:1.5px;background:#ea580c;opacity:.7;" title="1st Apron"></div>
+                    <div style="position:absolute;left:${ap2Pct}%;top:-2px;height:11px;width:1.5px;background:#dc2626;opacity:.7;" title="2nd Apron"></div>
                 </div>
-                <div style="display:flex;justify-content:space-between;margin-top:.3rem;font-family:'Lexend',sans-serif;font-size:.58rem;color:#9ca3af;">
-                    <span>Tax: $201.0M</span><span>1st: $209.0M</span><span>2nd: $222.0M</span>
+                <div style="display:flex;gap:.3rem;">
+                    ${distChip('CAP', CBA.salaryCap, '#2563eb')}
+                    ${distChip('TAX', CBA.luxuryTax, '#ca8a04')}
+                    ${distChip('1ST', CBA.firstApron, '#ea580c')}
+                    ${distChip('2ND', CBA.secondApron, '#dc2626')}
                 </div>
             </div>`;
         }
