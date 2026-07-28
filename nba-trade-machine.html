@@ -505,6 +505,33 @@
             border-color: rgba(220,38,38,.12);
         }
         .pick-item.ineligible .pick-name { color: var(--mid); }
+        .picks-section-label {
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            padding: .75rem .85rem .4rem;
+            margin-top: .15rem;
+            border-top: 1px solid var(--border-light);
+        }
+        .picks-section-label:first-child {
+            border-top: none;
+            margin-top: 0;
+            padding-top: .45rem;
+        }
+        .picks-section-title {
+            font-family: 'Lexend', sans-serif;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            color: var(--dark, #1a1d27);
+        }
+        .picks-section-count {
+            font-family: 'Lexend', sans-serif;
+            font-size: .68rem;
+            font-weight: 500;
+            color: var(--mid, #6b7280);
+            letter-spacing: 0;
+        }
         .pick-lock {
             width: 16px; height: 16px;
             display: flex; align-items: center; justify-content: center;
@@ -3860,11 +3887,11 @@
             const firsts = data.picks.filter(pk => Number(pk.round) === 1);
             const seconds = data.picks.filter(pk => Number(pk.round) !== 1);
             if (firsts.length) {
-                picksContent += `<div class="picks-section-label">1st Round Picks <span class="picks-section-count">${firsts.length}</span></div>`;
+                picksContent += `<div class="picks-section-label"><span class="picks-section-title">1st Round</span><span class="picks-section-count">(${firsts.length})</span></div>`;
                 firsts.forEach(pk => { picksContent += renderPickItem(pk); });
             }
             if (seconds.length) {
-                picksContent += `<div class="picks-section-label">2nd Round Picks <span class="picks-section-count">${seconds.length}</span></div>`;
+                picksContent += `<div class="picks-section-label"><span class="picks-section-title">2nd Round</span><span class="picks-section-count">(${seconds.length})</span></div>`;
                 seconds.forEach(pk => { picksContent += renderPickItem(pk); });
             }
             if (!firsts.length && !seconds.length) {
@@ -5396,7 +5423,7 @@
     // pill status badges, zebra-striped rows. Replaces the old dark
     // "transaction wire" look.
     function drawTradeCard(customTitle) {
-        const W = 1200, H = 760;
+        const W = 1200, H = 780;
         const canvas = document.createElement('canvas');
         canvas.width = W; canvas.height = H;
         const ctx = canvas.getContext('2d');
@@ -5407,64 +5434,75 @@
 
         const F = (w, sz, fam) => `${w} ${sz}px ${fam || '"Lexend", "Helvetica Neue", Helvetica, Arial, sans-serif'}`;
 
-        // ── Palette — SixersHoops light house style ────────────────────────
-        const BG        = '#ffffff';
-        const PANEL_BG  = '#f6f6f6';
-        const STRIPE    = '#fafbfd';
-        const RULE      = '#e2e6ef';
-        const RULE_SOFT = '#eef1f6';
-        const TEXT_PRI  = '#12141c';
-        const TEXT_SEC  = '#6b7280';
-        const TEXT_DIM  = '#9ca3af';
-        const ACCENT    = '#006BB6';
-        const RED       = '#ED174C';
-        const GREEN     = '#10893e';
+        // Palette
+        const BG        = '#0b0d12';
+        const PANEL     = '#14171f';
+        const PANEL_ALT = '#1a1e28';
+        const RULE      = '#2a2f3d';
+        const TEXT_PRI  = '#f4f5f7';
+        const TEXT_SEC  = '#9aa3b5';
+        const TEXT_DIM  = '#6b7385';
+        const ACCENT    = '#3b9eff';
+        const RED       = '#ff3b5c';
+        const GREEN     = '#2ecc71';
 
-        // ── Solid white background ───────────────────────────────────────
+        // Background
         ctx.fillStyle = BG;
         ctx.fillRect(0, 0, W, H);
 
-        const PAD = 44;
+        // Subtle top accent bar
+        const grad = ctx.createLinearGradient(0, 0, W, 0);
+        grad.addColorStop(0, isValid ? GREEN : RED);
+        grad.addColorStop(0.35, ACCENT);
+        grad.addColorStop(1, isValid ? ACCENT : RED);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, 4);
 
-        // ── Header ────────────────────────────────────────────────────────
-        ctx.font = F(900, 30);
+        const PAD = 40;
+
+        // ── Brand row ────────────────────────────────────────────────────
+        ctx.font = F(800, 22);
         ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
-        ctx.fillText('SixersHoops', PAD, 52);
+        ctx.fillText('SixersHoops', PAD, 42);
 
-        const wordmarkW = ctx.measureText('SixersHoops').width;
+        ctx.font = F(600, 12);
+        ctx.fillStyle = TEXT_DIM;
+        ctx.fillText('TRADE MACHINE  ·  2026–27', PAD, 62);
 
-        ctx.font = F(800, 13);
-        ctx.fillStyle = ACCENT;
-        ctx.fillText('2026–27', PAD, 76);
-        const seasonW = ctx.measureText('2026–27').width;
-
-        ctx.font = F(700, 13);
-        ctx.fillStyle = TEXT_SEC;
-        ctx.fillText('  TRADE MACHINE', PAD + seasonW, 76);
-
-        // Status pill — top right
-        const statusColor = isValid ? GREEN : RED;
+        // Status pill
         const statusLabel = isValid ? 'CBA VALID' : 'CBA VIOLATION';
+        const statusColor = isValid ? GREEN : RED;
         ctx.font = F(800, 11);
-        const badgeW = ctx.measureText(statusLabel).width + 30;
-        const badgeH = 28;
+        const badgeW = ctx.measureText(statusLabel).width + 28;
+        const badgeH = 26;
         const badgeX = W - PAD - badgeW;
-        const badgeY = 24;
-        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 14);
-        ctx.fillStyle = statusColor;
+        const badgeY = 28;
+        // pill
+        ctx.beginPath();
+        const r = 13;
+        ctx.moveTo(badgeX + r, badgeY);
+        ctx.arcTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + badgeH, r);
+        ctx.arcTo(badgeX + badgeW, badgeY + badgeH, badgeX, badgeY + badgeH, r);
+        ctx.arcTo(badgeX, badgeY + badgeH, badgeX, badgeY, r);
+        ctx.arcTo(badgeX, badgeY, badgeX + badgeW, badgeY, r);
+        ctx.closePath();
+        ctx.fillStyle = statusColor + '22';
         ctx.fill();
-        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = statusColor;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = statusColor;
         ctx.textAlign = 'left';
-        ctx.fillText(statusLabel, badgeX + 15, badgeY + badgeH / 2 + 4);
+        ctx.fillText(statusLabel, badgeX + 14, badgeY + 17);
 
-        // Header rule
+        // Divider under header
         ctx.fillStyle = RULE;
-        ctx.fillRect(0, 96, W, 1);
+        ctx.fillRect(PAD, 78, W - PAD * 2, 1);
 
         // ── Trade title ──────────────────────────────────────────────────
         let displayTitle = tradeTitle;
-        ctx.font = F(900, 30);
+        ctx.font = F(800, 26);
         const maxTitleW = W - PAD * 2;
         while (ctx.measureText(displayTitle).width > maxTitleW && displayTitle.length > 4) {
             displayTitle = displayTitle.slice(0, -1);
@@ -5472,9 +5510,9 @@
         if (displayTitle.length < tradeTitle.length) displayTitle += '…';
         ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
-        ctx.fillText(displayTitle, PAD, 136);
+        ctx.fillText(displayTitle, PAD, 112);
 
-        // ── Stat strip (teams / salary moving / status) ────────────────────
+        // ── Stats row ────────────────────────────────────────────────────
         const totalSalaryMoving = activeTeams.reduce((sum, t) => {
             const d = TEAM_DATA[t.abbr];
             return sum + t.selectedPlayers.reduce((s, pid) => {
@@ -5483,218 +5521,230 @@
             }, 0);
         }, 0);
 
-        const STAT_TOP = 160;
-        const STAT_H   = 62;
+        const STAT_TOP = 132;
+        const STAT_H = 56;
         const stats = [
-            { label: 'TEAMS INVOLVED', value: String(activeTeams.length), color: ACCENT },
-            { label: 'SALARY MOVING',  value: '$' + (totalSalaryMoving / 1e6).toFixed(1) + 'M', color: ACCENT },
-            { label: 'STATUS',         value: isValid ? 'Compliant' : 'Violation', color: isValid ? GREEN : RED },
+            { label: 'TEAMS', value: String(activeTeams.length) },
+            { label: 'SALARY MOVING', value: '$' + (totalSalaryMoving / 1e6).toFixed(1) + 'M' },
+            { label: 'STATUS', value: isValid ? 'Compliant' : 'Violation', color: isValid ? GREEN : RED },
         ];
-        const STAT_GAP = 16;
+        const STAT_GAP = 12;
         const STAT_W = (W - PAD * 2 - STAT_GAP * (stats.length - 1)) / stats.length;
         stats.forEach((s, i) => {
             const sx = PAD + i * (STAT_W + STAT_GAP);
-            ctx.fillStyle = PANEL_BG;
-            ctx.fillRect(sx, STAT_TOP, STAT_W, STAT_H);
-            ctx.fillStyle = s.color;
-            ctx.fillRect(sx, STAT_TOP, 4, STAT_H);
+            // panel
+            ctx.fillStyle = PANEL;
+            ctx.beginPath();
+            const rr = 8;
+            ctx.moveTo(sx + rr, STAT_TOP);
+            ctx.arcTo(sx + STAT_W, STAT_TOP, sx + STAT_W, STAT_TOP + STAT_H, rr);
+            ctx.arcTo(sx + STAT_W, STAT_TOP + STAT_H, sx, STAT_TOP + STAT_H, rr);
+            ctx.arcTo(sx, STAT_TOP + STAT_H, sx, STAT_TOP, rr);
+            ctx.arcTo(sx, STAT_TOP, sx + STAT_W, STAT_TOP, rr);
+            ctx.closePath();
+            ctx.fill();
 
-            ctx.font = F(700, 10.5);
+            ctx.font = F(600, 10);
             ctx.fillStyle = TEXT_DIM;
             ctx.textAlign = 'left';
-            ctx.letterSpacing = '0.08em';
-            ctx.fillText(s.label, sx + 20, STAT_TOP + 24);
-            ctx.letterSpacing = '0';
+            ctx.fillText(s.label, sx + 16, STAT_TOP + 20);
 
-            ctx.font = F(800, 20);
-            ctx.fillStyle = TEXT_PRI;
-            ctx.fillText(s.value, sx + 20, STAT_TOP + 48);
+            ctx.font = F(800, 18);
+            ctx.fillStyle = s.color || TEXT_PRI;
+            ctx.fillText(s.value, sx + 16, STAT_TOP + 44);
         });
 
-        // ── Section label ────────────────────────────────────────────────
-        const SECTION_LABEL_Y = STAT_TOP + STAT_H + 34;
-        ctx.font = F(700, 11);
-        ctx.fillStyle = TEXT_DIM;
-        ctx.textAlign = 'left';
-        ctx.letterSpacing = '0.08em';
-        ctx.fillText('WHO SENDS WHAT', PAD, SECTION_LABEL_Y);
-        ctx.letterSpacing = '0';
-        ctx.fillStyle = RULE_SOFT;
-        ctx.fillRect(PAD, SECTION_LABEL_Y + 10, W - PAD * 2, 1);
+        // ── Team cards ───────────────────────────────────────────────────
+        const CARD_TOP = STAT_TOP + STAT_H + 28;
+        const FOOTER_H = 48;
+        const CARD_H = H - CARD_TOP - FOOTER_H - 16;
+        const maxCards = Math.min(activeTeams.length, 4);
+        const GAP = 14;
+        const CARD_W = (W - PAD * 2 - GAP * (maxCards - 1)) / maxCards;
 
-        // ── TEAM PANELS ──────────────────────────────────────────────────
-        const CARD_TOP = SECTION_LABEL_Y + 26;
-        const CARD_BOT = H - 64;
-        const CARD_H   = CARD_BOT - CARD_TOP;
-        const maxCards = Math.min(activeTeams.length, 5);
-        const GAP      = maxCards >= 4 ? 10 : 14;
-        const CARD_W   = Math.floor((W - PAD * 2 - GAP * (maxCards - 1)) / maxCards);
+        const fmtSal = (n) => {
+            if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+            if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+            return '$' + n;
+        };
 
-        activeTeams.slice(0, 5).forEach((t, i) => {
+        for (let i = 0; i < maxCards; i++) {
+            const t = activeTeams[i];
             const d = TEAM_DATA[t.abbr];
-            const teamInfo = NBA_TEAMS[t.abbr];
-            const teamColor = (teamInfo && teamInfo.color && teamInfo.color !== '#000000') ? teamInfo.color : ACCENT;
+            const teamMeta = NBA_TEAMS[t.abbr] || {};
+            const teamColor = teamMeta.color || ACCENT;
             const cx = PAD + i * (CARD_W + GAP);
 
-            const selectedPlayers = t.selectedPlayers.map(pid => d.players.find(p => p.id === pid)).filter(Boolean);
-            const selectedPicks   = t.selectedPicks.map(pkid => (d.picks || []).find(pk => pk.id === pkid)).filter(Boolean);
-            const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary || 0), 0);
-            const totalItems = selectedPlayers.length + selectedPicks.length;
-
-            // Panel background + border
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 6);
-            ctx.fillStyle = PANEL_BG;
+            // Card background
+            ctx.fillStyle = PANEL;
+            ctx.beginPath();
+            const cr = 10;
+            ctx.moveTo(cx + cr, CARD_TOP);
+            ctx.arcTo(cx + CARD_W, CARD_TOP, cx + CARD_W, CARD_TOP + CARD_H, cr);
+            ctx.arcTo(cx + CARD_W, CARD_TOP + CARD_H, cx, CARD_TOP + CARD_H, cr);
+            ctx.arcTo(cx, CARD_TOP + CARD_H, cx, CARD_TOP, cr);
+            ctx.arcTo(cx, CARD_TOP, cx + CARD_W, CARD_TOP, cr);
+            ctx.closePath();
             ctx.fill();
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 6);
-            ctx.strokeStyle = RULE;
-            ctx.lineWidth = 1;
-            ctx.stroke();
 
             // Team color top bar
-            roundRect(ctx, cx, CARD_TOP, CARD_W, 4, [6, 6, 0, 0]);
             ctx.fillStyle = teamColor;
+            ctx.beginPath();
+            ctx.moveTo(cx + cr, CARD_TOP);
+            ctx.arcTo(cx + CARD_W, CARD_TOP, cx + CARD_W, CARD_TOP + 6, cr);
+            ctx.lineTo(cx + CARD_W, CARD_TOP + 6);
+            ctx.lineTo(cx, CARD_TOP + 6);
+            ctx.lineTo(cx, CARD_TOP + cr);
+            ctx.arcTo(cx, CARD_TOP, cx + cr, CARD_TOP, cr);
+            ctx.closePath();
             ctx.fill();
 
-            // Header block (white)
-            const HEAD_H = 54;
-            ctx.fillStyle = BG;
-            ctx.fillRect(cx + 1, CARD_TOP + 4, CARD_W - 2, HEAD_H - 4);
-            ctx.fillStyle = RULE;
-            ctx.fillRect(cx, CARD_TOP + HEAD_H, CARD_W, 1);
+            // Team name header
+            const HDR = 44;
+            ctx.fillStyle = PANEL_ALT;
+            ctx.fillRect(cx, CARD_TOP + 6, CARD_W, HDR);
 
-            const isSmall = maxCards >= 4;
-            ctx.font = F(900, isSmall ? 20 : 24);
+            ctx.font = F(800, 13);
             ctx.fillStyle = TEXT_PRI;
             ctx.textAlign = 'left';
-            ctx.fillText(t.abbr, cx + 14, CARD_TOP + (isSmall ? 30 : 34));
+            let tName = teamMeta.name || t.abbr;
+            while (ctx.measureText(tName).width > CARD_W - 24 && tName.length > 3) tName = tName.slice(0, -1);
+            if (tName.length < (teamMeta.name || t.abbr).length) tName += '…';
+            ctx.fillText(tName, cx + 14, CARD_TOP + 6 + 28);
 
-            ctx.font = F(600, isSmall ? 8 : 9);
-            ctx.fillStyle = TEXT_DIM;
-            ctx.letterSpacing = '0.08em';
-            ctx.fillText('SENDS', cx + 14, CARD_TOP + (isSmall ? 44 : 47));
-            ctx.letterSpacing = '0';
+            // Assets
+            const selectedPlayers = t.selectedPlayers.map(pid => d.players.find(p => p.id === pid)).filter(Boolean);
+            const selectedPicks = t.selectedPicks.map(pid => d.picks.find(p => p.id === pid)).filter(Boolean);
+            const totalOut = selectedPlayers.reduce((s, p) => s + p.salary, 0);
+            const totalItems = selectedPlayers.length + selectedPicks.length;
 
-            // Salary chip — top right of header
-            if (sendSal > 0) {
-                const chipTxt = '$' + (sendSal / 1e6).toFixed(1) + 'M';
-                ctx.font = F(800, isSmall ? 9 : 10);
-                const cw = ctx.measureText(chipTxt).width + 16;
-                const chY = CARD_TOP + 14, chH = 22;
-                const chX = cx + CARD_W - cw - 10;
-                roundRect(ctx, chX, chY, cw, chH, 11);
-                ctx.fillStyle = ACCENT + '18';
-                ctx.fill();
-                ctx.fillStyle = ACCENT;
-                ctx.textAlign = 'left';
-                ctx.fillText(chipTxt, chX + 8, chY + chH / 2 + 3.5);
-            }
-
-            // Player / pick rows — zebra striped like the roster table
-            let cursor = CARD_TOP + HEAD_H + 1;
-            const LINE_H = isSmall ? 27 : 33;
-            const innerW = CARD_W - 28;
-            const MAX_ITEMS = Math.floor((CARD_H - HEAD_H - 6) / LINE_H);
-            const showCount = Math.min(totalItems, MAX_ITEMS);
+            const LINE_H = 28;
+            const listTop = CARD_TOP + 6 + HDR + 8;
+            const listBottom = CARD_TOP + CARD_H - 36;
+            const maxRows = Math.floor((listBottom - listTop) / LINE_H);
             let shown = 0;
-            let rowIdx = 0;
+            let cursor = listTop;
+            const innerW = CARD_W - 28;
 
-            const drawRowBg = (rowCursor) => {
-                ctx.fillStyle = (rowIdx % 2 === 0) ? STRIPE : BG;
-                ctx.fillRect(cx + 1, rowCursor, CARD_W - 2, LINE_H);
-                rowIdx++;
+            const drawRow = (y, alt) => {
+                if (alt) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+                    ctx.fillRect(cx + 6, y, CARD_W - 12, LINE_H);
+                }
             };
 
-            selectedPlayers.forEach((p) => {
-                if (shown >= showCount) return;
-                if (shown === showCount - 1 && totalItems > showCount) {
-                    drawRowBg(cursor);
-                    ctx.font = F(600, isSmall ? 9 : 10);
+            selectedPlayers.forEach((p, pi) => {
+                if (shown >= maxRows) return;
+                if (shown === maxRows - 1 && totalItems > maxRows) {
+                    drawRow(cursor, true);
+                    ctx.font = F(600, 11);
                     ctx.fillStyle = TEXT_DIM;
                     ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + LINE_H / 2 + 3.5);
+                    ctx.fillText('+' + (totalItems - shown) + ' more', cx + 14, cursor + LINE_H / 2 + 4);
                     shown++; return;
                 }
-                drawRowBg(cursor);
-                // Name
-                ctx.font = F(700, isSmall ? 11 : 13);
+                drawRow(cursor, shown % 2 === 1);
+                ctx.font = F(600, 12);
                 ctx.fillStyle = TEXT_PRI;
                 ctx.textAlign = 'left';
-                let pName = p.name;
-                while (ctx.measureText(pName).width > innerW - 60 && pName.length > 4) pName = pName.slice(0, -1);
-                if (pName.length < p.name.length) pName += '…';
-                ctx.fillText(pName, cx + 14, cursor + LINE_H / 2 + (isSmall ? 2 : 3));
-                // Position
-                if (p.position && p.position !== '—' && !isSmall) {
-                    ctx.font = F(600, 8.5);
-                    ctx.fillStyle = TEXT_DIM;
-                    ctx.fillText(p.position, cx + 14, cursor + LINE_H / 2 + 14);
-                }
-                // Salary
-                if (p.salary) {
-                    ctx.font = F(700, isSmall ? 9 : 10.5);
-                    ctx.fillStyle = ACCENT;
-                    ctx.textAlign = 'right';
-                    ctx.fillText('$' + (p.salary / 1e6).toFixed(1) + 'M', cx + CARD_W - 12, cursor + LINE_H / 2 + 3.5);
-                }
+                let nm = p.name;
+                while (ctx.measureText(nm).width > innerW - 52 && nm.length > 4) nm = nm.slice(0, -1);
+                if (nm.length < p.name.length) nm += '…';
+                ctx.fillText(nm, cx + 14, cursor + LINE_H / 2 + 4);
+
+                ctx.font = F(700, 11);
+                ctx.fillStyle = TEXT_SEC;
+                ctx.textAlign = 'right';
+                ctx.fillText(fmtSal(p.salary), cx + CARD_W - 14, cursor + LINE_H / 2 + 4);
                 cursor += LINE_H; shown++;
             });
 
             selectedPicks.forEach((pk) => {
-                if (shown >= showCount) return;
-                if (shown === showCount - 1 && totalItems > showCount) {
-                    drawRowBg(cursor);
-                    ctx.font = F(600, isSmall ? 9 : 10); ctx.fillStyle = TEXT_DIM; ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + LINE_H / 2 + 3.5);
+                if (shown >= maxRows) return;
+                if (shown === maxRows - 1 && totalItems > maxRows) {
+                    drawRow(cursor, true);
+                    ctx.font = F(600, 11);
+                    ctx.fillStyle = TEXT_DIM;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('+' + (totalItems - shown) + ' more', cx + 14, cursor + LINE_H / 2 + 4);
                     shown++; return;
                 }
-                drawRowBg(cursor);
-                ctx.font = F(600, isSmall ? 10 : 11.5);
+                drawRow(cursor, shown % 2 === 1);
+                ctx.font = F(500, 11);
                 ctx.fillStyle = TEXT_SEC;
                 ctx.textAlign = 'left';
-                let pkName = pk.name;
+                let pkName = (typeof formatPickName === 'function' ? formatPickName(pk) : pk.name);
                 while (ctx.measureText(pkName).width > innerW && pkName.length > 4) pkName = pkName.slice(0, -1);
-                if (pkName.length < pk.name.length) pkName += '…';
-                ctx.fillText(pkName, cx + 14, cursor + LINE_H / 2 + 3.5);
+                if (pkName.length < (pk.name || '').length) pkName += '…';
+                ctx.fillText(pkName, cx + 14, cursor + LINE_H / 2 + 4);
                 cursor += LINE_H; shown++;
             });
 
-            // Empty state
             if (totalItems === 0) {
-                ctx.font = F(500, 11);
+                ctx.font = F(500, 12);
                 ctx.fillStyle = TEXT_DIM;
                 ctx.textAlign = 'center';
                 ctx.fillText('No assets selected', cx + CARD_W / 2, CARD_TOP + CARD_H / 2);
             }
 
-            // ── Arrow connector (between panels) ──────────────────────────
+            // Salary footer strip on card
+            ctx.fillStyle = PANEL_ALT;
+            ctx.fillRect(cx, CARD_TOP + CARD_H - 32, CARD_W, 32);
+            ctx.font = F(600, 10);
+            ctx.fillStyle = TEXT_DIM;
+            ctx.textAlign = 'left';
+            ctx.fillText('OUTGOING', cx + 14, CARD_TOP + CARD_H - 12);
+            ctx.font = F(800, 13);
+            ctx.fillStyle = TEXT_PRI;
+            ctx.textAlign = 'right';
+            ctx.fillText(fmtSal(totalOut), cx + CARD_W - 14, CARD_TOP + CARD_H - 12);
+
+            // Arrow between cards
             if (i < maxCards - 1) {
                 const axX = cx + CARD_W + GAP / 2;
                 const axY = CARD_TOP + CARD_H / 2;
+                ctx.strokeStyle = RULE;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(axX - 8, axY);
+                ctx.lineTo(axX + 8, axY);
+                ctx.stroke();
+                // arrow heads both ways
+                ctx.beginPath();
+                ctx.moveTo(axX + 8, axY);
+                ctx.lineTo(axX + 3, axY - 4);
+                ctx.lineTo(axX + 3, axY + 4);
+                ctx.closePath();
                 ctx.fillStyle = TEXT_DIM;
-                ctx.font = F(400, 14);
-                ctx.textAlign = 'center';
-                ctx.fillText('⇄', axX, axY + 5);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(axX - 8, axY);
+                ctx.lineTo(axX - 3, axY - 4);
+                ctx.lineTo(axX - 3, axY + 4);
+                ctx.closePath();
+                ctx.fill();
             }
-        });
+        }
 
         // ── Footer ───────────────────────────────────────────────────────
         const footY = H - 40;
         ctx.fillStyle = RULE;
-        ctx.fillRect(0, footY, W, 1);
+        ctx.fillRect(PAD, footY, W - PAD * 2, 1);
 
-        ctx.font = F(700, 11);
+        ctx.font = F(600, 11);
         ctx.fillStyle = TEXT_DIM;
         ctx.textAlign = 'left';
-        ctx.fillText('sixershoops.com/trade', PAD, footY + 26);
+        ctx.fillText('sixershoops.com/trade', PAD, footY + 24);
 
-        const statusStr = isValid ? '✓ CBA Compliant' : '✗ CBA Violation';
+        ctx.font = F(700, 11);
         ctx.fillStyle = isValid ? GREEN : RED;
-        ctx.font = F(800, 11);
         ctx.textAlign = 'right';
-        ctx.fillText(statusStr, W - PAD, footY + 26);
+        ctx.fillText(isValid ? 'CBA Compliant' : 'CBA Violation', W - PAD, footY + 24);
 
         return canvas;
     }
+
+    // Helper: rounded rectangle path
 
     // Helper: rounded rectangle path
     function roundRect(ctx, x, y, w, h, r) {
