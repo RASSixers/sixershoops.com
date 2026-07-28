@@ -2510,6 +2510,87 @@
     function apronMatchMax(outgoing) { return outgoing; } // 100%, no buffer
     function apronMatchMin(incoming) { return incoming; } // 100%, no buffer
 
+    // ─── PLAYER TRADE-HOLD HELPERS (Art. VII) ────────────────────────────────
+    // Supported optional fields on player objects (set via importTeamData):
+    //   restriction: 'recently-signed' | 'recently-traded' | 'rookie-scale' | 'no-trade' | null
+    //   restrictionUntil: 'YYYY-MM-DD' (optional end date; if past, hold is lifted)
+    //   restrictionNote: free-text shown in UI
+    //
+    // CBA summary:
+    //   • Recently signed FA  → cannot be traded for 3 months or until Dec 15, whichever later
+    //   • Recently traded     → cannot be re-traded for 60 days (or until Dec 15 if applicable)
+    //   • Rookie Scale (Y1)   → cannot be traded until Dec 15 of the first season of the contract
+    //   • Explicit no-trade   → blocked until restrictionUntil (or indefinitely if no date)
+    const TRADE_HOLD_LABELS = {
+        'recently-signed': 'Recently Signed',
+        'recently-traded':  'Recently Traded',
+        'rookie-scale':     'Rookie Scale Hold',
+        'no-trade':         'No-Trade Hold',
+    };
+
+    function isRestrictionActive(p) {
+        if (!p) return false;
+        const key = (p.restriction || '').toLowerCase().trim();
+        if (!key || key === 'none') return false;
+        if (p.restrictionUntil) {
+            const until = new Date(p.restrictionUntil + 'T23:59:59');
+            if (!isNaN(until.getTime()) && until < new Date()) return false; // expired
+        }
+        return true;
+    }
+
+    function getPlayerTradeHold(p) {
+        if (!p) return null;
+        if (isRestrictionActive(p)) {
+            const key = (p.restriction || '').toLowerCase().trim();
+            return {
+                key,
+                label: TRADE_HOLD_LABELS[key] || 'Trade Hold',
+                until: p.restrictionUntil || null,
+                note: p.restrictionNote || null,
+                hard: true, // blocks the trade
+            };
+        }
+        // Soft rule: first-year Rookie Scale contracts are held until Dec 15 unless
+        // the dataset explicitly clears them (restriction: 'none').
+        if ((p.contractType || '') === 'Rookie Scale' && p.restriction !== 'none') {
+            // Only treat as a hold when the dataset marks year-1 OR leaves restriction unset
+            // with a rookieYear flag. Without year data, surface as a warning only.
+            if (p.rookieYear === 1 || p.restriction === 'rookie-scale') {
+                return {
+                    key: 'rookie-scale',
+                    label: 'Rookie Scale Hold',
+                    until: p.restrictionUntil || null,
+                    note: p.restrictionNote || 'First-year Rookie Scale contracts cannot be traded until Dec 15 of Year 1 (CBA Art. VII).',
+                    hard: true,
+                };
+            }
+            return {
+                key: 'rookie-scale-soft',
+                label: 'Rookie Scale',
+                until: null,
+                note: 'Verify Dec 15 eligibility for first-year Rookie Scale contracts.',
+                hard: false,
+            };
+        }
+        return null;
+    }
+
+    function getSelectedTPERoom(team) {
+        // Only true Traded Player Exceptions absorb incoming trade salary.
+        // Mid-Level / Bi-Annual / Room exceptions are for free-agent signings, not trades.
+        if (!team || !team.abbr || !TEAM_DATA[team.abbr]) return { room: 0, tpes: [], exceptions: [] };
+        const data = TEAM_DATA[team.abbr];
+        const selected = (team.selectedTPEs || []).map(id => (data.tpes || []).find(t => t.id === id)).filter(Boolean);
+        const tpes = selected.filter(t => {
+            const isExc = (t.type === 'exception') || /mid-level|bi-annual|room mid|taxpayer mid|non-taxpayer/i.test(t.source || '');
+            return !isExc;
+        });
+        const exceptions = selected.filter(t => !tpes.includes(t));
+        const room = tpes.reduce((s, t) => s + (t.amount || 0), 0);
+        return { room, tpes, exceptions };
+    }
+
     // ─── ESPN TEAM LOGO MAPPING ─────────────────────────────────────────────
     const ESPN_TEAM_CODE = {
         ATL:'atl', BOS:'bos', BKN:'bkn', CHA:'cha', CHI:'chi', CLE:'cle',
@@ -4153,6 +4234,8 @@
             rosterContent = `<div class="player-list">`;
             data.players.forEach(p => {
                 const sel = t.selectedPlayers.includes(p.id) ? 'selected' : '';
+                const hold = getPlayerTradeHold(p);
+                const holdHard = hold && hold.hard;
                 const contractBadgeColor = p.contractType === 'Guaranteed' ? '#16a34a' :
                     p.contractType === 'Non-Guaranteed' ? '#dc2626' :
                     p.contractType === 'Team Option' ? '#2563eb' :
@@ -4165,15 +4248,22 @@
                         <option value="" ${!destVal ? 'selected' : ''}>Send to…</option>
                         ${otherTeamsForDest.map(ot => `<option value="${ot.id}" ${destVal == ot.id ? 'selected' : ''}>${ot.abbr}</option>`).join('')}
                     </select>` : '';
-                rosterContent += `<div class="player-item ${sel}" onclick="togglePlayer(${t.id},'${p.id}')">
+                const holdBadge = hold ? `<span title="${(hold.note || hold.label)}${hold.until ? ' · until ' + hold.until : ''}"
+                    style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;white-space:nowrap;
+                    ${holdHard
+                        ? 'background:rgba(220,38,38,.12);color:#b91c1c;border:1px solid rgba(220,38,38,.25);'
+                        : 'background:rgba(234,88,12,.12);color:#c2410c;border:1px solid rgba(234,88,12,.25);'}">${hold.label}</span>` : '';
+                const itemStyle = holdHard ? 'opacity:.72;' : '';
+                rosterContent += `<div class="player-item ${sel}" style="${itemStyle}" onclick="togglePlayer(${t.id},'${p.id}')">
                     ${playerHeadshotHtml(p.name, t.abbr)}
                     <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
                     <div class="player-info">
-                        <div style="display:flex;align-items:center;gap:.4rem;">
+                        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
                             <div class="player-name">${p.name}</div>
                             ${p.position && p.position !== '—' ? `<span style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.08em;background:#f1f5f9;color:#64748b;border-radius:3px;padding:1px 4px;">${p.position}</span>` : ''}
+                            ${holdBadge}
                         </div>
-                        <div style="display:flex;align-items:center;gap:.35rem;margin-top:2px;">
+                        <div style="display:flex;align-items:center;gap:.35rem;margin-top:2px;flex-wrap:wrap;">
                             <span style="font-family:'Lexend',sans-serif;font-size:.6rem;font-weight:600;color:${contractBadgeColor};background:${contractBadgeColor}18;border-radius:3px;padding:1px 5px;">${p.contractType || ''}</span>
                             ${destPicker}
                         </div>
@@ -4243,24 +4333,42 @@
         } else if (!data || !data.tpes || data.tpes.length === 0) {
             tpeContent = `<div class="empty-state"><div class="empty-state-text">No TPEs or exceptions available for this team.</div></div>`;
         } else {
-            tpeContent = `<div class="tpe-list">`;
-            data.tpes.forEach(tpe => {
-                const sel = t.selectedTPEs.includes(tpe.id) ? 'selected' : '';
-                const isExc = (tpe.type === 'exception') || /mid-level|bi-annual|room mid/i.test(tpe.source || '');
-                const title = isExc
-                    ? `${fmtM(tpe.amount)} ${tpe.source || 'Exception'}`
-                    : `${fmtM(tpe.amount)} TPE`;
-                const detail = isExc
-                    ? `Expires: ${tpe.expires || 'TBD'} · Exception`
-                    : `Expires: ${tpe.expires || 'TBD'} · From ${tpe.source || 'Trade'} · TPE`;
-                tpeContent += `<div class="tpe-item ${sel}" onclick="toggleTPE(${t.id},'${tpe.id}')">
-                    <div class="tpe-checkbox"><svg style="display:${sel?'block':'none'}" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-                    <div>
-                        <div class="tpe-name">${title}</div>
-                        <div class="tpe-detail">${detail}</div>
-                    </div>
-                </div>`;
+            const trueTPEs = data.tpes.filter(tpe => {
+                const isExc = (tpe.type === 'exception') || /mid-level|bi-annual|room mid|taxpayer mid|non-taxpayer/i.test(tpe.source || '');
+                return !isExc;
             });
+            const roomExcs = data.tpes.filter(tpe => !trueTPEs.includes(tpe));
+            tpeContent = `<div class="tpe-list">`;
+            if (trueTPEs.length) {
+                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#64748b;padding:.35rem .7rem .2rem;">TRADED PLAYER EXCEPTIONS</div>`;
+                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;color:#94a3b8;padding:0 .7rem .45rem;line-height:1.35;">Select a TPE to absorb incoming salary without matching outgoing salary (up to the TPE amount).</div>`;
+                trueTPEs.forEach(tpe => {
+                    const sel = t.selectedTPEs.includes(tpe.id) ? 'selected' : '';
+                    tpeContent += `<div class="tpe-item ${sel}" onclick="toggleTPE(${t.id},'${tpe.id}')">
+                        <div class="tpe-checkbox"><svg style="display:${sel?'block':'none'}" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div>
+                            <div class="tpe-name">${fmtM(tpe.amount)} TPE</div>
+                            <div class="tpe-detail">Expires: ${tpe.expires || 'TBD'} · From ${tpe.source || 'Trade'}</div>
+                        </div>
+                    </div>`;
+                });
+            }
+            if (roomExcs.length) {
+                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#64748b;padding:.65rem .7rem .2rem;">FA EXCEPTIONS (not usable in trades)</div>`;
+                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;color:#94a3b8;padding:0 .7rem .45rem;line-height:1.35;">MLE / BAE are for free-agent signings only — they do not absorb trade salary.</div>`;
+                roomExcs.forEach(tpe => {
+                    tpeContent += `<div class="tpe-item" style="opacity:.55;cursor:default;pointer-events:none;">
+                        <div class="tpe-checkbox" style="border-color:#cbd5e1;"></div>
+                        <div>
+                            <div class="tpe-name">${fmtM(tpe.amount)} ${tpe.source || 'Exception'}</div>
+                            <div class="tpe-detail">Expires: ${tpe.expires || 'TBD'} · FA signing only</div>
+                        </div>
+                    </div>`;
+                });
+            }
+            if (!trueTPEs.length && !roomExcs.length) {
+                tpeContent += `<div class="empty-state"><div class="empty-state-text">No TPEs or exceptions available.</div></div>`;
+            }
             tpeContent += `</div>`;
         }
         panels += `<div class="team-tab-panel ${tpeActive}">${tpeContent}</div>`;
@@ -4652,6 +4760,24 @@
             t.minExceptionSalary = f.minExceptionSalary;
             t.unassignedSalary = f.unassignedSalary || 0;
             t.incomingCount = f.incomingCount || 0;
+
+            // ── TPE absorption (Art. VII §6(g)) ───────────────────────────
+            // True Traded Player Exceptions reduce the amount of incoming salary that must be matched.
+            // MLE / BAE listed under "exceptions" cannot absorb trade salary.
+            const tpeInfo = getSelectedTPERoom(t);
+            t.tpeRoom = tpeInfo.room;
+            t.tpeUsed = 0;
+            t.tpeList = tpeInfo.tpes;
+            if (tpeInfo.exceptions.length > 0) {
+                // Should not be selectable anymore, but guard if stale selection exists
+                t.selectedTPEs = (t.selectedTPEs || []).filter(id => tpeInfo.tpes.some(x => x.id === id));
+            }
+            if (tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
+                const absorbed = Math.min(tpeInfo.room, t.matchableReceivingSalary);
+                t.tpeUsed = absorbed;
+                t.matchableReceivingSalary -= absorbed;
+                t.usedTPE = true;
+            }
         });
         if (isMultiTeamTrade) {
             tradeSummary.forEach(t => {
@@ -4661,9 +4787,28 @@
             });
         }
 
+        // ── Player trade holds (recently signed / traded / rookie-scale) ──
+        tradeSummary.forEach(t => {
+            if (!t.abbr || !t.data) return;
+            const name = t.teamInfo ? t.teamInfo.name : t.abbr;
+            t.selectedPlayers.forEach(pid => {
+                const p = t.data.players.find(pp => pp.id === pid);
+                if (!p) return;
+                const hold = getPlayerTradeHold(p);
+                if (!hold) return;
+                const untilStr = hold.until ? ` until ${hold.until}` : '';
+                const detail = hold.note ? ` ${hold.note}` : '';
+                if (hold.hard) {
+                    violations.push({ type: 'error', msg: `${name}: ${p.name} cannot be traded — ${hold.label}${untilStr}.${detail}` });
+                } else {
+                    warnings.push({ type: 'warning', msg: `${name}: ${p.name} is on a Rookie Scale contract — verify Dec 15 / Year-1 trade eligibility.${detail}` });
+                }
+            });
+        });
+
         // Modeling limitations disclosure — shown once so numbers aren't taken as more precise
         // than the underlying data actually supports.
-        infos.push({ type: 'info', msg: `Modeling notes: uses full listed salary for Non-Guaranteed contracts (not a partial-guarantee amount, which isn't in this dataset), does not model trade kickers/likely-to-be-earned bonuses or Sign-and-Trade Base Year Compensation, and uses standard Team Salary rather than the CBA's Apron-specific Team Salary definition (which adjusts for incentives and cap holds). Figures near an apron line should be independently verified.` });
+        infos.push({ type: 'info', msg: `Modeling notes: uses full listed salary for Non-Guaranteed contracts (not a partial-guarantee amount, which isn't in this dataset), does not model trade kickers/likely-to-be-earned bonuses or Sign-and-Trade Base Year Compensation, and uses standard Team Salary rather than the CBA's Apron-specific Team Salary definition (which adjusts for incentives and cap holds). Figures near an apron line should be independently verified. Player trade holds (recently signed / recently traded / rookie-scale) apply when those fields are set on the player data.` });
 
         // ── CBA RULE CHECKS ────────────────────────────────────────────────
         tradeSummary.forEach(t => {
@@ -4692,22 +4837,36 @@
                 }
             }
 
+            // ── TPE usage notes ───────────────────────────────────────────
+            if (t.tpeUsed > 0) {
+                infos.push({ type: 'info', msg: `${name}: Using $${fmtFull(t.tpeUsed)} of Traded Player Exception room to absorb incoming salary (TPE room selected: $${fmtFull(t.tpeRoom)}). Remaining salary requiring a match: $${fmtFull(t.matchableReceivingSalary)}.` });
+            } else if (t.tpeRoom > 0 && t.receivingSalary === 0) {
+                warnings.push({ type: 'warning', msg: `${name}: A TPE is selected but this team is not receiving any players — TPE room is only applied to incoming trade salary.` });
+            }
+
             // ── Salary matching rules (Art. VII Sec. 6(j)) ────────────────
             // isAboveFirstApron here reflects "will this team be an Apron team" (current OR post-trade),
             // which is the correct test for which matching regime applies. Incoming players acquired
             // under the Minimum Player Salary Exception (t.minExceptionSalary) are excluded from the
-            // amount that must be matched.
+            // amount that must be matched. TPE absorption already reduced matchableReceivingSalary.
             if (t.minExceptionSalary > 0) {
                 infos.push({ type: 'info', msg: `${name}: $${fmtFull(t.minExceptionSalary)} of incoming salary qualifies for the Minimum Player Salary Exception and is excluded from the salary-matching requirement below.` });
             }
-            if (isAboveCap && t.sendingSalary > 0 && t.matchableReceivingSalary > 0) {
+            // Over-cap teams must match remaining incoming (after min-exception + TPE absorption).
+            // Under-cap teams can take free agents / trades into cap space without matching.
+            if (isAboveCap && t.matchableReceivingSalary > 0) {
                 const outgoing = t.sendingSalary;
-                const apronMax = isAboveFirstApron ? apronMatchMax(outgoing) : standardMatchMax(outgoing);
-
-                if (t.matchableReceivingSalary > apronMax) {
-                    violations.push({ type: 'error', msg: `${name}: Incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) exceeds the max allowed ($${fmtFull(apronMax)}) under CBA salary matching rules${isAboveFirstApron ? ' (Apron teams are limited to a 100% match, with no $250k buffer)' : ''}.` });
-                } else if (!isAboveFirstApron && t.matchableReceivingSalary > outgoing + CBA.matchBuffer) {
-                    infos.push({ type: 'info', msg: `${name}: Using expanded salary-matching rules (up to ${fmtPct(apronMax/outgoing)}% of outgoing salary at this level).` });
+                // TPE-only absorption with zero outgoing is legal if remaining matchable is 0.
+                // If matchable remains and outgoing is 0, fail.
+                if (outgoing <= 0) {
+                    violations.push({ type: 'error', msg: `${name}: Incoming salary still requiring a match ($${fmtFull(t.matchableReceivingSalary)}) after TPE/min-exception absorption, but the team is sending $0 in salary. Send matching salary or select a larger TPE.` });
+                } else {
+                    const apronMax = isAboveFirstApron ? apronMatchMax(outgoing) : standardMatchMax(outgoing);
+                    if (t.matchableReceivingSalary > apronMax) {
+                        violations.push({ type: 'error', msg: `${name}: Incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) exceeds the max allowed ($${fmtFull(apronMax)}) under CBA salary matching rules${isAboveFirstApron ? ' (Apron teams are limited to a 100% match, with no $250k buffer)' : ''}${t.tpeUsed ? ' after TPE absorption' : ''}.` });
+                    } else if (!isAboveFirstApron && t.matchableReceivingSalary > outgoing + CBA.matchBuffer) {
+                        infos.push({ type: 'info', msg: `${name}: Using expanded salary-matching rules (up to ${fmtPct(apronMax/outgoing)}% of outgoing salary at this level).` });
+                    }
                 }
             }
 
@@ -4841,13 +5000,20 @@
             });
         });
 
-        // ── Non-aggregation: teams can't combine exceptions ───────────────
-        const teamsUsingTPEAndPlayer = tradeSummary.filter(t => t.selectedTPEs.length > 0 && t.selectedPlayers.length > 0);
-        if (teamsUsingTPEAndPlayer.length > 0) {
-            teamsUsingTPEAndPlayer.forEach(t => {
-                warnings.push({ type: 'warning', msg: `${t.teamInfo?.name || t.abbr}: Cannot combine a TPE with other exceptions in the same transaction (CBA Art. VII Sec. 6(m)).` });
-            });
-        }
+        // ── Exception stacking ────────────────────────────────────────────
+        // Sending matching salary while also using a TPE is legal — TPE covers part of
+        // incoming, outgoing salary covers the rest. What is NOT allowed is stacking a
+        // TPE with MLE/BAE to acquire the same player (those FA exceptions are blocked in UI).
+        tradeSummary.forEach(t => {
+            if (!t.abbr) return;
+            const tpeInfo = getSelectedTPERoom(t);
+            if (tpeInfo.tpes.length > 1) {
+                // Multiple TPEs may be used in one trade as long as each absorbs distinct incoming
+                // salary and none is combined with another exception on the same player. Allowed,
+                // but note residual room isn't fungible across leftover slices in this model.
+                infos.push({ type: 'info', msg: `${t.teamInfo?.name || t.abbr}: Multiple TPEs selected (combined room $${fmtFull(tpeInfo.room)}). Residual TPE amounts that aren't fully used do not carry as a new combined exception.` });
+            }
+        });
 
         // ── FA SIGNING & SIGN-AND-TRADE RULES ────────────────────────────
         // Reference: CBA Art. VII Sec. 4 (Free Agent Signings) & Sec. 5 (S&T)
@@ -5599,7 +5765,8 @@
                     <div class="breakdown-divider"></div>
                     <div class="breakdown-row"><span class="breakdown-row-label">Players sent</span><span class="breakdown-row-val">${t.selectedPlayers.length}</span></div>
                     <div class="breakdown-row"><span class="breakdown-row-label">Picks sent</span><span class="breakdown-row-val">${t.selectedPicks.length}</span></div>
-                    ${t.selectedTPEs.length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">TPEs used</span><span class="breakdown-row-val">${t.selectedTPEs.length}</span></div>` : ''}
+                    ${t.tpeUsed > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">TPE absorbed</span><span class="breakdown-row-val positive">${fmtM(t.tpeUsed)}</span></div>` : ''}
+                    ${t.selectedTPEs && t.selectedTPEs.length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">TPEs selected</span><span class="breakdown-row-val">${t.selectedTPEs.length}${t.tpeRoom ? ' (' + fmtM(t.tpeRoom) + ' room)' : ''}</span></div>` : ''}
                     ${(t.faSignings||[]).length > 0 ? `<div class="breakdown-row"><span class="breakdown-row-label">FA signings</span><span class="breakdown-row-val">${(t.faSignings||[]).filter(s=>s.type==='direct').length} direct${(t.faSignings||[]).filter(s=>s.type==='sat').length > 0 ? ', '+(t.faSignings||[]).filter(s=>s.type==='sat').length+' S&T' : ''}</span></div>` : ''}
                     <div style="margin-top:.5rem;"><span class="apron-pill ${apronStatus.cls}">${apronStatus.label}</span></div>
                 </div>
@@ -6618,14 +6785,23 @@
            apronStatus: 'first',       // 'under' | 'tax' | 'first' | 'second'
            players: [
              { id: 'phia-001', name: 'Joel Embiid', position: 'C', salary: 47_607_350,
-               contractYears: 2, contractType: 'Supermax', salaryProtected: true }
+               contractYears: 2, contractType: 'Supermax', salaryProtected: true,
+               // Optional trade-hold fields (CBA Art. VII):
+               // restriction: 'recently-signed' | 'recently-traded' | 'rookie-scale' | 'no-trade' | 'none'
+               // restrictionUntil: '2026-12-15',
+               // restrictionNote: 'Signed 7/6/26 — 3-month / Dec 15 hold',
+               // rookieYear: 1   // marks Year-1 Rookie Scale (hard hold until Dec 15)
+             }
            ],
            picks: [
              { id: 'phia-pk1', name: '2025 1st', year: 2025, round: 1,
                protections: 'Top-5 Protected', owner: 'PHI' }
            ],
            tpes: [
-             { id: 'phia-tpe1', amount: 9_700_000, expires: 'July 2025', source: 'Harden Trade' }
+             // type:'tpe' (or omit) = Traded Player Exception — usable to absorb trade salary
+             { id: 'phia-tpe1', amount: 9_700_000, expires: '2/5/27', source: 'Harden Trade', type: 'tpe' },
+             // type:'exception' = MLE/BAE — FA signings only, NOT usable in trades
+             { id: 'phia-mle1', amount: 6_064_000, expires: '4/11/27', source: 'Taxpayer Mid-Level', type: 'exception' }
            ]
          },
          // ...more teams
