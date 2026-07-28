@@ -5794,23 +5794,12 @@
         const prev = btn ? btn.textContent : 'Copy Graphic';
         try {
             if (btn) btn.textContent = 'Copying…';
-            const canvas = await captureAnalyzeHero();
+            // Always use pure canvas draw — matches the compact share screenshot exactly
+            const canvas = drawTradeCard('');
             _lastTradeCanvas = canvas;
-            let blob;
-            try {
-                blob = await new Promise((resolve, reject) =>
-                    canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
-                );
-            } catch (taintErr) {
-                // Last resort untainted redraw
-                const nameEl = document.getElementById('modalTradeName');
-                const title = (nameEl && nameEl.value.trim()) || 'Trade Summary';
-                const safe = drawTradeCard(title);
-                _lastTradeCanvas = safe;
-                blob = await new Promise((resolve, reject) =>
-                    safe.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
-                );
-            }
+            const blob = await new Promise((resolve, reject) =>
+                canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
+            );
             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
             if (btn) {
                 btn.textContent = 'Copied!';
@@ -5829,17 +5818,9 @@
         const prev = btn ? btn.textContent : 'Download PNG';
         try {
             if (btn) btn.textContent = 'Saving…';
-            let canvas = await captureAnalyzeHero();
-            let url;
-            try {
-                url = canvas.toDataURL('image/png');
-            } catch (taintErr) {
-                const nameEl = document.getElementById('modalTradeName');
-                const title = (nameEl && nameEl.value.trim()) || 'Trade Summary';
-                canvas = drawTradeCard(title);
-                url = canvas.toDataURL('image/png');
-            }
+            const canvas = drawTradeCard('');
             _lastTradeCanvas = canvas;
+            const url = canvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.href = url;
             a.download = 'sixershoops-trade-' + Date.now() + '.png';
@@ -5908,23 +5889,17 @@
 
     
     function drawTradeCard(customTitle) {
-        // Sync version used by share preview; logos drawn if already cached
-        return _drawTradeCardSync(customTitle, {});
+        return _drawTradeCardSync(customTitle || '', {});
     }
 
     async function drawTradeCardWithLogos(customTitle) {
-        // Skip external logos for export safety (CORS taints canvas on file://)
-        return _drawTradeCardSync(customTitle, {});
+        return _drawTradeCardSync(customTitle || '', {});
     }
 
     function _drawTradeCardSync(customTitle, logos) {
-        const W = 1280, H = 720;
-        const canvas = document.createElement('canvas');
-        canvas.width = W; canvas.height = H;
-        const ctx = canvas.getContext('2d');
-
+        // Compact share graphic matching the on-screen screenshot proportions.
+        // Height is content-driven — no tall empty boxes.
         const isValid = document.getElementById('modalBadge') && document.getElementById('modalBadge').classList.contains('valid');
-        const tradeTitle = customTitle || (document.getElementById('modalTitle') || {}).textContent || 'Trade Summary';
         const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (
             t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.cashOut || 0) > 0
         ));
@@ -5937,212 +5912,290 @@
         };
 
         const BG = '#ffffff', INK = '#0f172a', MUTED = '#94a3b8', LABEL = '#64748b';
-        const BLUE = '#0066cc', GREEN = '#059669', RED = '#dc2626', LINE = '#e2e8f0', CARD = '#f7f8fb';
+        const BLUE = '#0066cc', GREEN = '#059669', RED = '#dc2626', LINE = '#e8ebf2', CARD = '#f7f8fb';
 
-        ctx.fillStyle = BG;
-        ctx.fillRect(0, 0, W, H);
-
-        // Brand
-        ctx.font = font('800', 34);
-        ctx.fillStyle = INK;
-        ctx.textAlign = 'center';
-        ctx.fillText('SixersHoops', W / 2, 48);
-
-        ctx.font = font('700', 12);
-        ctx.fillStyle = BLUE;
-        ctx.fillText('2026–27  ·  TRADE SUMMARY', W / 2, 74);
-        const subW = ctx.measureText('2026–27  ·  TRADE SUMMARY').width;
-        ctx.fillRect(W / 2 - subW / 2, 82, subW, 2);
-
-        // Status circle + text
-        const cy = 128;
-        ctx.beginPath();
-        ctx.arc(W / 2, cy, 28, 0, Math.PI * 2);
-        ctx.fillStyle = isValid ? 'rgba(5,150,105,0.12)' : 'rgba(220,38,38,0.12)';
-        ctx.fill();
-        ctx.strokeStyle = isValid ? GREEN : RED;
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-        if (isValid) {
-            ctx.strokeStyle = GREEN;
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.beginPath();
-            ctx.moveTo(W / 2 - 10, cy);
-            ctx.lineTo(W / 2 - 3, cy + 8);
-            ctx.lineTo(W / 2 + 12, cy - 8);
-            ctx.stroke();
-        } else {
-            ctx.strokeStyle = RED;
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(W / 2 - 9, cy - 9);
-            ctx.lineTo(W / 2 + 9, cy + 9);
-            ctx.moveTo(W / 2 + 9, cy - 9);
-            ctx.lineTo(W / 2 - 9, cy + 9);
-            ctx.stroke();
-        }
-
-        ctx.font = font('700', 13);
-        ctx.fillStyle = isValid ? GREEN : RED;
-        ctx.textAlign = 'center';
-        ctx.fillText(isValid ? 'Trade Success' : 'Trade Failed', W / 2, cy + 52);
-
-        if (tradeTitle && tradeTitle !== 'Trade Summary' && tradeTitle !== 'Trade Analysis') {
-            let t = tradeTitle;
-            ctx.font = font('600', 13);
-            ctx.fillStyle = LABEL;
-            while (ctx.measureText(t).width > W - 100 && t.length > 5) t = t.slice(0, -1);
-            if (t.length < tradeTitle.length) t += '…';
-            ctx.fillText(t, W / 2, cy + 74);
-        }
-
-        const n = Math.min(Math.max(activeTeams.length, 1), 4);
-        const padX = 48;
-        const areaTop = 210;
-        const areaBot = H - 52;
-        const areaH = areaBot - areaTop;
-        const arrowW = 56;
-        const totalArrowSpace = n > 1 ? arrowW * (n - 1) : 0;
-        const colW = (W - padX * 2 - totalArrowSpace) / n;
-
-        if (!activeTeams.length) {
-            ctx.font = font('500', 16);
-            ctx.fillStyle = MUTED;
-            ctx.fillText('No assets selected', W / 2, H / 2);
-        }
-
-        for (let i = 0; i < activeTeams.length && i < 4; i++) {
-            const t = activeTeams[i];
+        // Build per-team asset lists first so we can size the canvas tightly
+        const teamPayload = activeTeams.slice(0, 4).map(t => {
             const d = TEAM_DATA[t.abbr];
             const meta = NBA_TEAMS[t.abbr] || {};
-            const teamColor = meta.color || BLUE;
-            const x = padX + i * (colW + arrowW);
-
-            // card
-            ctx.fillStyle = CARD;
-            const r = 12;
-            ctx.beginPath();
-            ctx.moveTo(x + r, areaTop);
-            ctx.arcTo(x + colW, areaTop, x + colW, areaTop + areaH, r);
-            ctx.arcTo(x + colW, areaTop + areaH, x, areaTop + areaH, r);
-            ctx.arcTo(x, areaTop + areaH, x, areaTop, r);
-            ctx.arcTo(x, areaTop, x + colW, areaTop, r);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = teamColor;
-            ctx.fillRect(x, areaTop, colW, 4);
-
-            // logo + name
-            const logo = logos[t.abbr];
-            let textX = x + 16;
-            if (logo) {
-                try {
-                    ctx.drawImage(logo, x + 14, areaTop + 14, 32, 32);
-                    textX = x + 54;
-                } catch (e) {}
-            }
-            ctx.font = font('800', 15);
-            ctx.fillStyle = INK;
-            ctx.textAlign = 'left';
-            let name = meta.name || t.abbr;
-            while (ctx.measureText(name).width > colW - (textX - x) - 14 && name.length > 3) name = name.slice(0, -1);
-            ctx.fillText(name, textX, areaTop + 28);
-            ctx.font = font('600', 11);
-            ctx.fillStyle = LABEL;
-            ctx.fillText(t.abbr, textX, areaTop + 46);
-
-            ctx.fillStyle = LINE;
-            ctx.fillRect(x + 16, areaTop + 58, colW - 32, 1);
-
             const players = t.selectedPlayers.map(id => d.players.find(p => p.id === id)).filter(Boolean);
             const picks = t.selectedPicks.map(id => d.picks.find(p => p.id === id)).filter(Boolean);
             const cash = t.cashOut || 0;
             const outSalary = players.reduce((s, p) => s + p.salary, 0) + cash;
-            const totalItems = players.length + picks.length + (cash > 0 ? 1 : 0);
-
-            const rowH = 26;
-            let y = areaTop + 72;
-            const listBot = areaTop + areaH - 44;
-            const maxRows = Math.max(1, Math.floor((listBot - y) / rowH));
-            let row = 0;
-            const trunc = (text, maxW, f) => {
-                ctx.font = f;
-                let s = text;
-                while (ctx.measureText(s).width > maxW && s.length > 4) s = s.slice(0, -1);
-                if (s.length < text.length) s += '…';
-                return s;
+            const items = [];
+            players.forEach(p => items.push({ kind: 'player', name: p.name, sal: money(p.salary) }));
+            picks.forEach(pk => {
+                const nm = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
+                items.push({ kind: 'pick', name: nm, sal: '' });
+            });
+            if (cash > 0) items.push({ kind: 'cash', name: 'Cash', sal: money(cash) });
+            return {
+                abbr: t.abbr,
+                name: meta.name || t.abbr,
+                color: meta.color || BLUE,
+                items,
+                outSalary,
+                logo: logos[t.abbr] || null
             };
+        });
 
-            players.forEach((p) => {
-                if (row >= maxRows) return;
-                if (row === maxRows - 1 && totalItems > maxRows) {
-                    ctx.font = font('500', 12); ctx.fillStyle = MUTED; ctx.textAlign = 'left';
-                    ctx.fillText('+' + (totalItems - row) + ' more', x + 16, y + 16);
-                    row++; return;
+        const n = Math.max(teamPayload.length, 1);
+        const colW = 280;
+        const arrowW = 48;
+        const padX = 40;
+        const totalArrowSpace = n > 1 ? arrowW * (n - 1) : 0;
+        const W = padX * 2 + n * colW + totalArrowSpace;
+
+        const maxItems = teamPayload.reduce((m, t) => Math.max(m, t.items.length), 1);
+        const rowH = 28;
+        const headH = 58;   // color bar + logo/name block
+        const footH = 40;   // TOTAL OUT
+        const bodyPad = 10;
+        const cardH = headH + bodyPad + Math.max(1, maxItems) * rowH + bodyPad + footH;
+
+        const headerH = 168; // brand + status
+        const footerH = 48;
+        const gapCards = 16;
+        const H = headerH + gapCards + cardH + footerH;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // Background
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, W, H);
+
+        // Outer soft border (matches screenshot card frame)
+        ctx.strokeStyle = '#e8ebf2';
+        ctx.lineWidth = 1;
+        const outerR = 16;
+        ctx.beginPath();
+        ctx.moveTo(outerR, 0.5);
+        ctx.arcTo(W - 0.5, 0.5, W - 0.5, outerR, outerR);
+        ctx.arcTo(W - 0.5, H - 0.5, W - outerR, H - 0.5, outerR);
+        ctx.arcTo(0.5, H - 0.5, 0.5, H - outerR, outerR);
+        ctx.arcTo(0.5, 0.5, outerR, 0.5, outerR);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Brand
+        ctx.font = font('800', 32);
+        ctx.fillStyle = INK;
+        ctx.textAlign = 'center';
+        ctx.fillText('SixersHoops', W / 2, 42);
+
+        ctx.font = font('700', 11);
+        ctx.fillStyle = BLUE;
+        ctx.fillText('2026–27  ·  TRADE SUMMARY', W / 2, 66);
+        const subW = ctx.measureText('2026–27  ·  TRADE SUMMARY').width;
+        ctx.fillRect(W / 2 - subW / 2, 72, subW, 2.5);
+
+        // Status circle
+        const cy = 110;
+        ctx.beginPath();
+        ctx.arc(W / 2, cy, 22, 0, Math.PI * 2);
+        ctx.fillStyle = isValid ? 'rgba(5,150,105,0.12)' : 'rgba(220,38,38,0.12)';
+        ctx.fill();
+        ctx.strokeStyle = isValid ? GREEN : RED;
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+        if (isValid) {
+            ctx.strokeStyle = GREEN;
+            ctx.lineWidth = 2.8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(W / 2 - 8, cy);
+            ctx.lineTo(W / 2 - 2, cy + 7);
+            ctx.lineTo(W / 2 + 10, cy - 7);
+            ctx.stroke();
+        } else {
+            ctx.strokeStyle = RED;
+            ctx.lineWidth = 2.8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(W / 2 - 7, cy - 7);
+            ctx.lineTo(W / 2 + 7, cy + 7);
+            ctx.moveTo(W / 2 + 7, cy - 7);
+            ctx.lineTo(W / 2 - 7, cy + 7);
+            ctx.stroke();
+        }
+
+        ctx.font = font('700', 12);
+        ctx.fillStyle = isValid ? GREEN : RED;
+        ctx.textAlign = 'center';
+        ctx.fillText(isValid ? 'Trade Success' : 'Trade Failed', W / 2, cy + 40);
+
+        // Optional custom title (skip empty / default labels)
+        if (customTitle && customTitle.trim() &&
+            customTitle !== 'Trade Summary' && customTitle !== 'Trade Analysis') {
+            let t = customTitle.trim();
+            ctx.font = font('600', 12);
+            ctx.fillStyle = LABEL;
+            while (ctx.measureText(t).width > W - 80 && t.length > 5) t = t.slice(0, -1);
+            if (t.length < customTitle.trim().length) t += '…';
+            ctx.fillText(t, W / 2, cy + 58);
+        }
+
+        const areaTop = headerH + gapCards;
+        const trunc = (text, maxW, f) => {
+            ctx.font = f;
+            let s = text;
+            while (ctx.measureText(s).width > maxW && s.length > 4) s = s.slice(0, -1);
+            if (s.length < text.length) s += '…';
+            return s;
+        };
+
+        if (!teamPayload.length) {
+            ctx.font = font('500', 15);
+            ctx.fillStyle = MUTED;
+            ctx.fillText('No assets selected', W / 2, areaTop + cardH / 2);
+        }
+
+        for (let i = 0; i < teamPayload.length; i++) {
+            const t = teamPayload[i];
+            const x = padX + i * (colW + arrowW);
+
+            // Card background
+            const r = 12;
+            ctx.fillStyle = CARD;
+            ctx.beginPath();
+            ctx.moveTo(x + r, areaTop);
+            ctx.arcTo(x + colW, areaTop, x + colW, areaTop + cardH, r);
+            ctx.arcTo(x + colW, areaTop + cardH, x, areaTop + cardH, r);
+            ctx.arcTo(x, areaTop + cardH, x, areaTop, r);
+            ctx.arcTo(x, areaTop, x + colW, areaTop, r);
+            ctx.closePath();
+            ctx.fill();
+            // subtle border
+            ctx.strokeStyle = LINE;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Color bar
+            ctx.fillStyle = t.color;
+            ctx.fillRect(x, areaTop, colW, 4);
+
+            // Logo badge (team color circle + abbr) — always available, no CORS
+            const lx = x + 14, ly = areaTop + 14, ls = 32;
+            if (t.logo) {
+                try { ctx.drawImage(t.logo, lx, ly, ls, ls); } catch (e) {
+                    ctx.fillStyle = t.color;
+                    ctx.beginPath(); ctx.arc(lx + ls / 2, ly + ls / 2, ls / 2, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = font('800', 10);
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(t.abbr.slice(0, 3), lx + ls / 2, ly + ls / 2 + 1);
+                    ctx.textBaseline = 'alphabetic';
                 }
-                const sal = money(p.salary);
-                ctx.font = font('700', 12);
-                const salW = ctx.measureText(sal).width;
-                const nm = trunc(p.name, colW - 40 - salW, font('600', 13));
-                ctx.font = font('600', 13); ctx.fillStyle = INK; ctx.textAlign = 'left';
-                ctx.fillText(nm, x + 16, y + 16);
-                ctx.font = font('700', 12); ctx.fillStyle = BLUE; ctx.textAlign = 'right';
-                ctx.fillText(sal, x + colW - 16, y + 16);
-                y += rowH; row++;
-            });
-            picks.forEach((pk) => {
-                if (row >= maxRows) return;
-                if (row === maxRows - 1 && totalItems > maxRows) {
-                    ctx.font = font('500', 12); ctx.fillStyle = MUTED; ctx.textAlign = 'left';
-                    ctx.fillText('+' + (totalItems - row) + ' more', x + 16, y + 16);
-                    row++; return;
+            } else {
+                ctx.fillStyle = t.color;
+                ctx.beginPath(); ctx.arc(lx + ls / 2, ly + ls / 2, ls / 2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = font('800', 10);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(t.abbr.slice(0, 3), lx + ls / 2, ly + ls / 2 + 1);
+                ctx.textBaseline = 'alphabetic';
+            }
+
+            const textX = x + 54;
+            ctx.font = font('800', 14);
+            ctx.fillStyle = INK;
+            ctx.textAlign = 'left';
+            ctx.fillText(trunc(t.name, colW - 70, font('800', 14)), textX, areaTop + 28);
+            ctx.font = font('600', 11);
+            ctx.fillStyle = MUTED;
+            ctx.fillText(t.abbr, textX, areaTop + 46);
+
+            // Divider under header
+            ctx.fillStyle = LINE;
+            ctx.fillRect(x + 12, areaTop + headH - 2, colW - 24, 1);
+
+            // Assets
+            let y = areaTop + headH + bodyPad;
+            t.items.forEach(item => {
+                if (item.kind === 'pick') {
+                    ctx.font = font('500', 13);
+                    ctx.fillStyle = LABEL;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(trunc(item.name, colW - 28, font('500', 13)), x + 14, y + 16);
+                } else {
+                    const sal = item.sal;
+                    ctx.font = font('700', 12);
+                    const salW = sal ? ctx.measureText(sal).width : 0;
+                    ctx.font = font('600', 13);
+                    ctx.fillStyle = INK;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(trunc(item.name, colW - 36 - salW, font('600', 13)), x + 14, y + 16);
+                    if (sal) {
+                        ctx.font = font('700', 12);
+                        ctx.fillStyle = BLUE;
+                        ctx.textAlign = 'right';
+                        ctx.fillText(sal, x + colW - 14, y + 16);
+                    }
                 }
-                let pkName = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
-                pkName = trunc(pkName, colW - 32, font('500', 12));
-                ctx.font = font('500', 12); ctx.fillStyle = LABEL; ctx.textAlign = 'left';
-                ctx.fillText(pkName, x + 16, y + 16);
-                y += rowH; row++;
+                y += rowH;
             });
-            if (cash > 0 && row < maxRows) {
-                ctx.font = font('600', 13); ctx.fillStyle = INK; ctx.textAlign = 'left';
-                ctx.fillText('Cash', x + 16, y + 16);
-                ctx.font = font('700', 12); ctx.fillStyle = BLUE; ctx.textAlign = 'right';
-                ctx.fillText(money(cash), x + colW - 16, y + 16);
-            }
-            if (totalItems === 0) {
-                ctx.font = font('500', 13); ctx.fillStyle = MUTED; ctx.textAlign = 'center';
-                ctx.fillText('No assets', x + colW / 2, areaTop + areaH / 2);
+            if (t.items.length === 0) {
+                ctx.font = font('500', 13);
+                ctx.fillStyle = MUTED;
+                ctx.textAlign = 'center';
+                ctx.fillText('No assets', x + colW / 2, areaTop + headH + bodyPad + 16);
             }
 
-            ctx.font = font('600', 10); ctx.fillStyle = MUTED; ctx.textAlign = 'left';
-            ctx.fillText('TOTAL OUT', x + 16, areaTop + areaH - 16);
-            ctx.font = font('800', 14); ctx.fillStyle = INK; ctx.textAlign = 'right';
-            ctx.fillText(money(outSalary), x + colW - 16, areaTop + areaH - 14);
+            // Footer TOTAL OUT
+            const footY = areaTop + cardH - footH;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x + 1, footY, colW - 2, footH - 1);
+            ctx.fillStyle = LINE;
+            ctx.fillRect(x + 12, footY, colW - 24, 1);
 
-            if (i < activeTeams.length - 1 && i < 3) {
+            ctx.font = font('600', 10);
+            ctx.fillStyle = MUTED;
+            ctx.textAlign = 'left';
+            ctx.fillText('TOTAL OUT', x + 14, footY + 26);
+            ctx.font = font('800', 14);
+            ctx.fillStyle = INK;
+            ctx.textAlign = 'right';
+            ctx.fillText(money(t.outSalary), x + colW - 14, footY + 26);
+
+            // Bidirectional arrow between cards
+            if (i < teamPayload.length - 1) {
                 const ax = x + colW + arrowW / 2;
-                const ay = areaTop + areaH / 2;
-                ctx.strokeStyle = BLUE; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                ctx.beginPath(); ctx.moveTo(ax - 16, ay); ctx.lineTo(ax + 16, ay); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(ax + 16, ay); ctx.lineTo(ax + 8, ay - 6); ctx.lineTo(ax + 8, ay + 6); ctx.closePath();
-                ctx.fillStyle = BLUE; ctx.fill();
-                ctx.beginPath(); ctx.moveTo(ax - 16, ay); ctx.lineTo(ax - 8, ay - 6); ctx.lineTo(ax - 8, ay + 6); ctx.closePath();
+                const ay = areaTop + cardH / 2;
+                ctx.strokeStyle = BLUE;
+                ctx.lineWidth = 2.4;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(ax - 14, ay);
+                ctx.lineTo(ax + 14, ay);
+                ctx.stroke();
+                // right head
+                ctx.beginPath();
+                ctx.moveTo(ax + 14, ay);
+                ctx.lineTo(ax + 7, ay - 5);
+                ctx.lineTo(ax + 7, ay + 5);
+                ctx.closePath();
+                ctx.fillStyle = BLUE;
+                ctx.fill();
+                // left head
+                ctx.beginPath();
+                ctx.moveTo(ax - 14, ay);
+                ctx.lineTo(ax - 7, ay - 5);
+                ctx.lineTo(ax - 7, ay + 5);
+                ctx.closePath();
                 ctx.fill();
             }
         }
 
-        ctx.fillStyle = LINE;
-        ctx.fillRect(48, H - 40, W - 96, 1);
-        ctx.fillStyle = BLUE;
-        ctx.fillRect(W / 2 - 16, H - 28, 32, 2);
+        // Footer URL
         ctx.font = font('500', 12);
         ctx.fillStyle = BLUE;
         ctx.textAlign = 'center';
-        ctx.fillText('sixershoops.com/nba-trade-machine', W / 2, H - 12);
+        ctx.fillText('sixershoops.com/nba-trade-machine', W / 2, H - 18);
 
         return canvas;
     }
