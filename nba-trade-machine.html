@@ -2331,14 +2331,12 @@
     </style>
 </head>
 <body>
-    <!-- Navigation injected by nav.js -->
-    <script src="nav.js"></script>
-
-    <!-- HERO — identical structure to index.html -->
+    <!-- HERO -->
     <header class="page-hero">
         <div class="hero-inner">
             <p class="hero-title-top">NBA TRADE</p>
             <p class="hero-title-bottom">MACHINE</p>
+            <p style="font-family:Lexend,sans-serif;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.55);margin:.35rem 0 0;letter-spacing:.04em;">SixersHoops · 2026–27 · Fan tool — not affiliated with the NBA</p>
         </div>
     </header>
 
@@ -2356,8 +2354,10 @@
                 <div class="cba-stat"><span class="cba-stat-val" id="cba-first">$209.0M</span><span class="cba-stat-key">First Apron</span></div>
                 <div class="cba-divider"></div>
                 <div class="cba-stat"><span class="cba-stat-val" id="cba-second">$222.0M</span><span class="cba-stat-key">Second Apron</span></div>
-                <div class="cba-divider"></div>
-                <div class="cba-stat"><span class="cba-stat-val">$6.0M</span><span class="cba-stat-key">Cash Limit/Year</span></div>
+            </div>
+
+            <div style="padding:.55rem 1rem;background:#fffbeb;border-bottom:1px solid #fde68a;font-family:Lexend,sans-serif;font-size:.68rem;line-height:1.45;color:#92400e;">
+                <strong>Estimates only.</strong> Matching, aprons, TPEs, holds, and Stepien are modeled from the CBA — but salaries near apron lines, non-guaranteed deals, incentives, and BYC can differ from league books. Always verify before treating a result as official.
             </div>
 
             <!-- hidden stat holders for JS references that still exist -->
@@ -2372,11 +2372,12 @@
                 <div class="board-toolbar-label">Teams in this trade</div>
                 <div class="board-toolbar-actions">
                     <button class="board-btn board-btn-ghost" onclick="clearAll()" title="Clear all teams and players">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.31"/></svg>
                         Reset
                     </button>
+                    <button class="board-btn board-btn-ghost" onclick="copyShareLink()" title="Copy a link to this trade">
+                        Copy Link
+                    </button>
                     <button class="board-btn board-btn-primary" id="addTeamBtn" onclick="addTeam()" title="Add another team to the trade">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Team
                     </button>
                     <button class="board-btn board-btn-analyze" onclick="analyzeTrade()" title="Run CBA analysis on this trade">
@@ -2408,6 +2409,10 @@
             </div>
         </div>
 
+        <footer style="margin:1.75rem 0 2.5rem;padding:1rem 1.1rem;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;font-family:Lexend,sans-serif;font-size:.65rem;line-height:1.55;color:#64748b;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:.35rem;">SixersHoops Trade Machine · v2026.07 · Public release</div>
+            Independent fan tool. Not affiliated with, endorsed by, or connected to the NBA, NBPA, or any NBA team. Salary and roster data are estimates compiled for simulation; verify critical numbers independently. Trades are saved in this browser and can be shared via Copy Link.
+        </footer>
     </div>
 
     <!-- Trade Result Modal -->
@@ -3958,11 +3963,105 @@
     // ─── STATE ──────────────────────────────────────────────────────────────
     let teams = []; // array of { id, abbr, selectedPlayers: [], selectedPicks: [], selectedTPEs: [], faSignings: [], activeTab: 'roster' }
     let nextId = 0;
+    const TM_STORAGE_KEY = 'sixershoops_trade_machine_v1';
+    let _persistTimer = null;
+    let _restoring = false;
+
+    function serializeTradeState() {
+        return {
+            v: 1,
+            nextId,
+            teams: teams.map(t => ({
+                id: t.id,
+                abbr: t.abbr,
+                selectedPlayers: t.selectedPlayers || [],
+                selectedPicks: t.selectedPicks || [],
+                selectedTPEs: t.selectedTPEs || [],
+                faSignings: t.faSignings || [],
+                waivedPlayers: t.waivedPlayers || [],
+                activeTab: t.activeTab || 'roster',
+                playerDestinations: t.playerDestinations || {},
+                pickMods: t.pickMods || {},
+                hardCappedAt: t.hardCappedAt || null,
+            })),
+        };
+    }
+    function applyTradeState(state) {
+        if (!state || !Array.isArray(state.teams) || state.teams.length < 2) return false;
+        _restoring = true;
+        teams = state.teams.map(t => ({
+            id: t.id,
+            abbr: t.abbr || null,
+            selectedPlayers: t.selectedPlayers || [],
+            selectedPicks: t.selectedPicks || [],
+            selectedTPEs: t.selectedTPEs || [],
+            faSignings: t.faSignings || [],
+            waivedPlayers: t.waivedPlayers || [],
+            activeTab: t.activeTab || 'roster',
+            playerDestinations: t.playerDestinations || {},
+            pickMods: t.pickMods || {},
+            cashOut: 0,
+            hardCappedAt: t.hardCappedAt || null,
+        }));
+        nextId = Math.max(state.nextId || 0, ...teams.map(t => t.id + 1));
+        _restoring = false;
+        return true;
+    }
+    function persistTradeState() {
+        if (_restoring) return;
+        try {
+            const json = JSON.stringify(serializeTradeState());
+            localStorage.setItem(TM_STORAGE_KEY, json);
+        } catch (e) { /* private mode / quota */ }
+    }
+    function schedulePersist() {
+        if (_restoring) return;
+        clearTimeout(_persistTimer);
+        _persistTimer = setTimeout(persistTradeState, 200);
+    }
+    function loadTradeFromHash() {
+        try {
+            const h = (location.hash || '').replace(/^#/, '');
+            if (!h.startsWith('trade=')) return false;
+            const raw = decodeURIComponent(h.slice(6));
+            const state = JSON.parse(atob(raw));
+            return applyTradeState(state);
+        } catch (e) { return false; }
+    }
+    function loadTradeFromStorage() {
+        try {
+            const raw = localStorage.getItem(TM_STORAGE_KEY);
+            if (!raw) return false;
+            return applyTradeState(JSON.parse(raw));
+        } catch (e) { return false; }
+    }
+    async function copyShareLink() {
+        try {
+            const encoded = btoa(JSON.stringify(serializeTradeState()));
+            const url = location.origin + location.pathname + location.search + '#trade=' + encodeURIComponent(encoded);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(url);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = url; document.body.appendChild(ta); ta.select();
+                document.execCommand('copy'); ta.remove();
+            }
+            alert('Share link copied. Anyone with the link can open this trade setup.');
+        } catch (e) {
+            alert('Could not copy link. Try again or use a modern browser.');
+        }
+    }
 
     // ─── INIT ────────────────────────────────────────────────────────────────
     function init() {
-        addTeam();
-        addTeam();
+        const fromHash = loadTradeFromHash();
+        const fromStore = fromHash ? true : loadTradeFromStorage();
+        if (!fromStore) {
+            addTeam();
+            addTeam();
+        } else {
+            renderAll();
+        }
     }
 
     function addTeam() {
@@ -3982,6 +4081,10 @@
         teams = [];
         nextId = 0;
         document.getElementById('resultPanel').classList.remove('visible');
+        try { localStorage.removeItem(TM_STORAGE_KEY); } catch (e) {}
+        if (location.hash && location.hash.indexOf('trade=') === 1) {
+            history.replaceState(null, '', location.pathname + location.search);
+        }
         addTeam();
         addTeam();
     }
@@ -4245,6 +4348,7 @@
         updateStats();
         document.getElementById('addTeamBtn').disabled = teams.length >= 5;
         ['teamCountLabel','totalTeams'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = teams.length; });
+        schedulePersist();
     }
 
     function renderTeamCard(teamId) {
@@ -5092,7 +5196,9 @@
                 t.selectedTPEs = (t.selectedTPEs || []).filter(id => tpeInfo.tpes.some(x => x.id === id));
             }
             t.tpesConsumed = [];
-            if (tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
+            // Second Apron teams cannot use prior TPEs (Art. VII)
+            const atSecondApron = (t.currentSalary || 0) > CBA.secondApron;
+            if (!atSecondApron && tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
                 let remaining = t.matchableReceivingSalary;
                 for (const tpe of tpeInfo.tpes) {
                     if (remaining <= 0) break;
@@ -5105,6 +5211,9 @@
                 }
                 t.matchableReceivingSalary = remaining;
                 t.usedTPE = t.tpeUsed > 0;
+            } else if (atSecondApron && tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
+                // Leave matchable intact; violation flagged in Second Apron checks if they tried to lean on TPE
+                t.blockedTPEByApron = true;
             }
             // TPE creation: over-cap team sends more salary than it takes back → residual becomes a new TPE
             t.createdTPE = 0;
@@ -5241,21 +5350,10 @@
                         infos.push({ type: 'info', msg: `${name}: Sending multiple players is fine here since the incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) fits under the largest single outgoing salary ($${fmtFull(maxSingleOutgoing)}) — no aggregation is required.` });
                     }
                 }
-                // Cannot use TPE from prior trade
-                if (t.selectedTPEs.length > 0) {
-                    violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot use prior Traded Player Exceptions.` });
+                // Cannot use TPE from prior trade (auto-use is already suppressed above)
+                if (t.blockedTPEByApron) {
+                    infos.push({ type: 'info', msg: `${name}: Second Apron teams cannot use prior Traded Player Exceptions — existing TPE room was not applied to this trade.` });
                 }
-                // Cash: Second Apron teams cannot send or receive cash at all in a trade.
-                if ((t.cashOut || 0) > 0) {
-                    violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot send or receive cash in a trade — remove the $${fmtFull(t.cashOut)} cash included here.` });
-                } else {
-                    warnings.push({ type: 'warning', msg: `${name} is above the Second Apron — cannot send or receive cash in this trade.` });
-                }
-            }
-
-            // ── Cash trade limit (Art. VII Sec. 3(c)) — $6.0M per season ─────
-            if ((t.cashOut || 0) > CBA.cashLimit) {
-                violations.push({ type: 'error', msg: `${name}: Cash included ($${fmtFull(t.cashOut)}) exceeds the ${fmtM(CBA.cashLimit)} cash-in-trades limit for the season (this checks only the cash entered here, not cash sent in other trades this season).` });
             }
 
             // ── First Apron restrictions ───────────────────────────────────
@@ -5292,15 +5390,16 @@
                 }
             });
 
-            // ── Second Apron: cannot trade 1st-round picks more than 2 draft classes out ──
+            // ── Second Apron: cannot trade 1st-round picks 7+ years out (Art. VII) ──
             if (isAboveSecondApron) {
                 picksBeingSent.forEach(p => {
-                    if (p.round !== 1) return;
-                    const yearMatch = p.name.match(/(\d{4})/);
+                    if (Number(p.round) !== 1) return;
+                    const yearMatch = (p.name || '').match(/(20\d{2})/);
                     if (!yearMatch) return;
-                    const pickYear = parseInt(yearMatch[1]);
-                    if (pickYear > CURRENT_DRAFT_YEAR + 1) {
-                        violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot trade first-round picks more than 2 draft classes away (${p.name} is ${pickYear - CURRENT_DRAFT_YEAR + 1} years out).` });
+                    const pickYear = parseInt(yearMatch[1], 10);
+                    // 7+ years from the next draft class is prohibited
+                    if (pickYear >= CURRENT_DRAFT_YEAR + 6) {
+                        violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot trade first-round picks seven or more years out (${p.name}).` });
                     }
                 });
             }
@@ -5585,7 +5684,7 @@
         let title, sub;
         if (isValid) {
             title = teamAbbrList || 'Trade Appears Valid';
-            sub = hasWarnings ? 'Review warnings before finalizing.' : 'No CBA violations detected — trade can proceed.';
+            sub = hasWarnings ? 'No hard CBA violations in this model — review warnings. Verify salaries near apron lines.' : 'No hard CBA violations detected in this model. Treat as an estimate and verify critical numbers.';
         } else if (allTimedOnly && earliestUntil) {
             title = `Trade fails until ${earliestUntil}`;
             sub = `Structure is otherwise legal — becomes successful after ${earliestUntil}.`;
@@ -6176,13 +6275,15 @@
         } else {
             header.className = 'modal-header ' + (isValid ? 'valid' : 'invalid');
             badge.className  = 'modal-badge '  + (isValid ? 'valid' : 'invalid');
-            badge.textContent = isValid ? 'Valid' : 'Invalid';
+            badge.textContent = isValid ? 'Appears Legal' : 'Invalid';
         }
         titleEl.textContent = title;
         subEl.textContent   = sub;
 
-        // Messages
-        violList.innerHTML = messages.map(m => `
+        // Messages (+ release disclaimer at bottom of list)
+        const msgList = messages.slice();
+        msgList.push({ type: 'info', msg: 'Public estimate: not official NBA/NBPA output. Near-apron numbers, non-guaranteed salaries, incentives, and S&T BYC may differ from league books.' });
+        violList.innerHTML = msgList.map(m => `
             <div class="violation-item ${m.type}">
                 <span style="font-family:'Lexend',sans-serif;font-weight:800;font-size:.75rem;flex-shrink:0">${
                     m.type === 'error'   ? 'Err'  :
@@ -6252,7 +6353,7 @@
                </div>`;
         const statusHtml = `<div class="sh-status-wrap">
             ${statusIcon}
-            <div class="sh-status ${isValid?'ok':'bad'}">${isValid ? 'Trade Success' : 'Trade Failed'}</div>
+            <div class="sh-status ${isValid?'ok':'bad'}">${isValid ? 'Appears Legal' : 'Trade Failed'}</div>
         </div>`;
 
         if (active.length === 0) {
@@ -6431,38 +6532,7 @@
             restrictionsEl.innerHTML = '';
         }
 
-        // ── Apron Consequences (plain English, per team) ──
-        const activeTeams = tradeSummary.filter(t => t.abbr && t.data);
-        if (activeTeams.length > 0) {
-            const conseqHtml = activeTeams.map(t => {
-                const post = t.currentSalary - t.sendingSalary + (t.receivingSalary || 0);
-                return buildConsequenceHtml(t, t.teamInfo, t.currentSalary, post, t.sendingSalary, t.matchableReceivingSalary || 0, false);
-            }).join('');
-            restrictionsEl.innerHTML += `
-                <div class="consequences-section">
-                    <div class="section-label">Why this works (or doesn't) — plain English</div>
-                    ${conseqHtml}
-                </div>`;
-
-            // ── 3-Year Cap Outlook ──
-            const outlookHtml = activeTeams.map(t => {
-                const post = t.currentSalary - t.sendingSalary + (t.receivingSalary || 0) + (t.faSignings || []).reduce((s,f)=>s+f.salary,0);
-                const proj = projectPayroll(t, post);
-                return `<div class="outlook-card">
-                    <div class="outlook-head">
-                        <span style="width:10px;height:10px;border-radius:50%;background:${t.teamInfo?.color || '#4a4a5a'};"></span>
-                        <span class="outlook-head-name">${t.teamInfo?.name || t.abbr}</span>
-                    </div>
-                    ${buildOutlookSvg(proj)}
-                </div>`;
-            }).join('');
-            restrictionsEl.innerHTML += `
-                <div class="outlook-section">
-                    <div class="section-label">3-Year Cap Outlook</div>
-                    <div class="outlook-grid">${outlookHtml}</div>
-                    <div class="outlook-disclaimer">Y2-Y3 are estimates: guaranteed contracts roll forward (5%/10% raises); non-guaranteed and team-option deals are assumed to expire. Cap thresholds use the league's projected 10%/yr growth.</div>
-                </div>`;
-        }
+        // Detailed plain-English consequences + 3-year outlook live under Why Blocked? / Cap Outlook tools — not duplicated here.
     }
 
     function closeModal() {
@@ -6924,7 +6994,7 @@
         ctx.font = font('700', 12);
         ctx.fillStyle = isValid ? GREEN : RED;
         ctx.textAlign = 'center';
-        ctx.fillText(isValid ? 'Trade Success' : 'Trade Failed', W / 2, cy + 40);
+        ctx.fillText(isValid ? 'Appears Legal' : 'Trade Failed', W / 2, cy + 40);
 
         // Optional custom title (skip empty / default labels)
         if (customTitle && customTitle.trim() &&
