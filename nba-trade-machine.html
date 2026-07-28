@@ -2553,7 +2553,8 @@
         }
         // Soft rule: first-year Rookie Scale contracts are held until Dec 15 unless
         // the dataset explicitly clears them (restriction: 'none').
-        if ((p.contractType || '') === 'Rookie Scale' && p.restriction !== 'none') {
+        const ct = (p.contractType || '');
+        if ((ct === 'Rookie Scale' || ct === 'Rookie Scale Est.') && p.restriction !== 'none') {
             // Only treat as a hold when the dataset marks year-1 OR leaves restriction unset
             // with a rookieYear flag. Without year data, surface as a warning only.
             if (p.rookieYear === 1 || p.restriction === 'rookie-scale') {
@@ -2570,6 +2571,27 @@
                 label: 'Rookie Scale',
                 until: null,
                 note: 'Verify Dec 15 eligibility for first-year Rookie Scale contracts.',
+                hard: false,
+            };
+        }
+        // Explicit full / limited no-trade clause (optional data fields)
+        // p.ntc: true | 'full' | 'limited'
+        // p.ntcTeams: ['BOS','MIA',...] — for limited NTCs, list of teams the player can block
+        if (p.ntc === true || p.ntc === 'full' || p.restriction === 'no-trade-clause') {
+            return {
+                key: 'no-trade',
+                label: 'No-Trade Clause',
+                until: p.restrictionUntil || null,
+                note: p.restrictionNote || 'Player has a full no-trade clause and must waive it before any trade.',
+                hard: true,
+            };
+        }
+        if (p.ntc === 'limited') {
+            return {
+                key: 'ntc-limited',
+                label: 'Limited NTC',
+                until: null,
+                note: p.restrictionNote || 'Player has a limited no-trade clause — confirm destination is not on the blocked list.',
                 hard: false,
             };
         }
@@ -2724,20 +2746,20 @@
                 { id:'atl-01', name:'Jalen Johnson',             position:'SF', salary:30_000_000, contractType:'Guaranteed' },
                 { id:'atl-02', name:'Dyson Daniels',             position:'SG', salary:25_000_000, contractType:'Guaranteed' },
                 { id:'atl-03', name:'C.J. McCollum',             position:'SG', salary:21_000_000, contractType:'Guaranteed' },
-                { id:'atl-04', name:'Luguentz Dort',             position:'SF', salary:17_722_222, contractType:'Guaranteed' },
+                { id:'atl-04', name:'Luguentz Dort',             position:'SF', salary:17_722_222, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-17', restrictionNote:'Traded OKC→ATL on 2026-07-19 — 60-day re-trade hold until 2026-09-17' },
                 { id:'atl-05', name:'Onyeka Okongwu',            position:'C',  salary:16_120_000, contractType:'Guaranteed' },
                 { id:'atl-06', name:'Nickeil Alexander-Walker',  position:'SG', salary:14_403_710, contractType:'Guaranteed' },
-                { id:'atl-07', name:'Jock Landale',              position:'C',  salary:14_100_000, contractType:'Guaranteed' },
+                { id:'atl-07', name:'Jock Landale',              position:'C',  salary:14_100_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'ATL re-signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'atl-08', name:'Corey Kispert',             position:'SF', salary:13_975_000, contractType:'Guaranteed' },
                 { id:'atl-09', name:'Buddy Hield',               position:'SG', salary: 9_658_536, contractType:'Non-Guaranteed' },
-                { id:'atl-10', name:'Aaron Wiggins',             position:'SG', salary: 8_831_776, contractType:'Guaranteed' },
-                { id:'atl-11', name:'Kingston Flemings',         position:'PG', salary: 7_348_680, contractType:'Rookie Scale' },
-                { id:'atl-12', name:'Devin Carter',              position:'PG', salary: 5_158_080, contractType:'Guaranteed' },
+                { id:'atl-10', name:'Aaron Wiggins',             position:'SG', salary: 8_831_776, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded OKC→ATL on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
+                { id:'atl-11', name:'Kingston Flemings',         position:'PG', salary: 7_348_680, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'ATL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'atl-12', name:'Devin Carter',              position:'PG', salary: 5_158_080, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-08-29', restrictionNote:'Traded SAC→ATL on 2026-06-30 — 60-day re-trade hold until 2026-08-29' },
                 { id:'atl-13', name:'Asa Newell',                position:'PF', salary: 3_399_880, contractType:'Guaranteed' },
-                { id:'atl-14', name:'Zuby Ejiofor',              position:'PF', salary: 3_453_360, contractType:'Rookie Scale' },
+                { id:'atl-14', name:'Zuby Ejiofor',              position:'PF', salary: 3_453_360, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'ATL Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'atl-15', name:'Mouhamed Gueye',            position:'PF', salary: 2_406_205, contractType:'Team Option' },
-                { id:'atl-16', name:'Ryan Nembhard',             position:'PG', salary: 2_150_917, contractType:'Guaranteed' },
-                { id:'atl-17', name:'Henri Veesaar',             position:'C',  salary: 1_357_763, contractType:'Rookie Scale' },
+                { id:'atl-16', name:'Ryan Nembhard',             position:'PG', salary: 2_150_917, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-17', restrictionNote:'Traded DAL→ATL on 2026-07-19 — 60-day re-trade hold until 2026-09-17' },
+                { id:'atl-17', name:'Henri Veesaar',             position:'C',  salary: 1_357_763, contractType:'Rookie Scale' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'ATL signed 2026-07-01 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'atl-pk01', name:'2027 Lesser of MIL/NOP 1st',   round:1, protections:'Top-4 Protected',      owner:'ATL' },
@@ -2766,9 +2788,9 @@
             teamSalary: 198_722_406,
             players: [
                 { id:'bos-01', name:'Jayson Tatum',       position:'SF', salary:58_456_566, contractType:'Guaranteed' },
-                { id:'bos-02', name:'Paul George',        position:'SG', salary:54_126_380, contractType:'Guaranteed' },
+                { id:'bos-02', name:'Paul George',        position:'SG', salary:54_126_380, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded PHI→BOS on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'bos-03', name:'Derrick White',      position:'PG', salary:30_348_000, contractType:'Guaranteed' },
-                { id:'bos-04', name:'Mitchell Robinson',  position:'C',  salary:15_044_000, contractType:'Guaranteed' },
+                { id:'bos-04', name:'Mitchell Robinson',  position:'C',  salary:15_044_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'BOS signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'bos-05', name:'Sam Hauser',         position:'SF', salary:10_848_215, contractType:'Guaranteed' },
                 { id:'bos-06', name:'Payton Pritchard',   position:'PG', salary: 7_767_857, contractType:'Guaranteed' },
                 { id:'bos-07', name:'Ron Harper Jr.',     position:'SG', salary: 3_150_752, contractType:'Team Option' },
@@ -2777,7 +2799,7 @@
                 { id:'bos-10', name:'Luka Garza',         position:'C',  salary: 2_801_346, contractType:'Guaranteed' },
                 { id:'bos-11', name:'Baylor Scheierman',  position:'SG', salary: 2_744_040, contractType:'Guaranteed' },
                 { id:'bos-12', name:'Neemias Queta',      position:'C',  salary: 2_667_944, contractType:'Team Option' },
-                { id:'bos-13', name:'Mike Conley Jr.',    position:'PG', salary: 2_449_421, contractType:'Guaranteed' },
+                { id:'bos-13', name:'Mike Conley Jr.',    position:'PG', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'BOS signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'bos-14', name:'Jordan Walsh',       position:'SF', salary: 2_406_205, contractType:'Team Option' },
             ],
             picks: [
@@ -2810,19 +2832,19 @@
             teamSalary: 160_422_358,
             players: [
                 { id:'bkn-01', name:'Michael Porter Jr.',  position:'SF', salary:40_806_150, contractType:'Guaranteed' },
-                { id:'bkn-02', name:'Julius Randle',       position:'PF', salary:33_333_334, contractType:'Guaranteed' },
+                { id:'bkn-02', name:'Julius Randle',       position:'PF', salary:33_333_334, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-08', restrictionNote:'Traded MIN→BKN on 2026-07-10 — 60-day re-trade hold until 2026-09-08' },
                 { id:'bkn-03', name:'Terance Mann',        position:'SG', salary:15_500_000, contractType:'Guaranteed' },
                 { id:'bkn-04', name:"Day'Ron Sharpe",      position:'C',  salary:10_000_000, contractType:'Guaranteed' },
                 { id:'bkn-05', name:'Moe Wagner',          position:'C',  salary: 9_366_000, contractType:'Guaranteed' },
-                { id:'bkn-06', name:'Keon Ellis',          position:'SG', salary: 9_000_000, contractType:'Guaranteed' },
-                { id:'bkn-07', name:'Mikel Brown Jr.',     position:'PG', salary: 8_787_000, contractType:'Rookie Scale' },
+                { id:'bkn-06', name:'Keon Ellis',          position:'SG', salary: 9_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'BKN signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'bkn-07', name:'Mikel Brown Jr.',     position:'PG', salary: 8_787_000, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'BKN Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'bkn-08', name:'Egor Demin',          position:'PG', salary: 7_233_720, contractType:'Guaranteed' },
                 { id:'bkn-09', name:'Noah Clowney',        position:'PF', salary: 5_414_034, contractType:'Guaranteed' },
-                { id:'bkn-10', name:'Josh Minott',         position:'SF', salary: 4_500_000, contractType:'Guaranteed' },
+                { id:'bkn-10', name:'Josh Minott',         position:'SF', salary: 4_500_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'BKN signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'bkn-11', name:'Nolan Traore',        position:'PG', salary: 4_002_000, contractType:'Guaranteed' },
                 { id:'bkn-12', name:'Drake Powell',        position:'SF', salary: 3_540_600, contractType:'Guaranteed' },
                 { id:'bkn-13', name:'Ben Saraf',           position:'PG', salary: 3_028_560, contractType:'Guaranteed' },
-                { id:'bkn-14', name:'Joshua Jefferson',    position:'PF', salary: 2_969_520, contractType:'Guaranteed' },
+                { id:'bkn-14', name:'Joshua Jefferson',    position:'PF', salary: 2_969_520, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'BKN Rookie Scale 2026-07-10 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'bkn-15', name:'Danny Wolf',          position:'PF', salary: 2_941_440, contractType:'Guaranteed' },
             ],
             picks: [
@@ -2867,22 +2889,22 @@
         'CHA': {
             teamSalary: 175_306_598,
             players: [
-                { id:'cha-01', name:'Coby White',        position:'PG', salary:26_811_593, contractType:'Guaranteed' },
-                { id:'cha-02', name:'Naz Reid',          position:'PF', salary:23_275_862, contractType:'Guaranteed' },
-                { id:'cha-03', name:'Grayson Allen',     position:'SG', salary:18_125_000, contractType:'Guaranteed' },
+                { id:'cha-01', name:'Coby White',        position:'PG', salary:26_811_593, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'CHA re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'cha-02', name:'Naz Reid',          position:'PF', salary:23_275_862, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-08', restrictionNote:'Traded MIN→CHA on 2026-07-10 — 60-day re-trade hold until 2026-09-08' },
+                { id:'cha-03', name:'Grayson Allen',     position:'SG', salary:18_125_000, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-11', restrictionNote:'Traded PHX→CHA on 2026-07-13 — 60-day re-trade hold until 2026-09-11' },
                 { id:'cha-04', name:'Brandon Miller',    position:'SF', salary:15_104_626, contractType:'Guaranteed' },
                 { id:'cha-05', name:'Grant Williams',    position:'PF', salary:14_265_750, contractType:'Guaranteed' },
-                { id:'cha-06', name:'Dorian Finney-Smith', position:'SF', salary:14_196_974, contractType:'Guaranteed' },
+                { id:'cha-06', name:'Dorian Finney-Smith', position:'SF', salary:14_196_974, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded HOU→CHA on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'cha-07', name:"Royce O'Neale",     position:'SF', salary:10_875_000, contractType:'Guaranteed' },
                 { id:'cha-08', name:'Kon Kneuppel',      position:'SG', salary:10_516_560, contractType:'Guaranteed' },
                 { id:'cha-09', name:'Tidjane Salaun',    position:'PF', salary: 8_237_880, contractType:'Guaranteed' },
                 { id:'cha-10', name:'Tre Mann',          position:'SG', salary: 8_000_000, contractType:'Guaranteed' },
-                { id:'cha-11', name:'Hannes Steinbach',  position:'PF', salary: 5_227_200, contractType:'Rookie Scale' },
-                { id:'cha-12', name:'Christian Anderson',position:'PG', salary: 4_257_480, contractType:'Guaranteed' },
+                { id:'cha-11', name:'Hannes Steinbach',  position:'PF', salary: 5_227_200, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHA Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'cha-12', name:'Christian Anderson',position:'PG', salary: 4_257_480, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHA Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'cha-13', name:'Pat Connaughton',   position:'SG', salary: 3_815_861, contractType:'Team Option' },
                 { id:'cha-14', name:'Liam McNeeley',     position:'SF', salary: 2_902_080, contractType:'Guaranteed' },
                 { id:'cha-15', name:'Moussa Diabate',    position:'PF', salary: 2_461_462, contractType:'Non-Guaranteed' },
-                { id:'cha-16', name:'Mouhamadou Gueye',  position:'PF', salary: 2_411_090, contractType:'Guaranteed' },
+                { id:'cha-16', name:'Mouhamadou Gueye',  position:'PF', salary: 2_411_090, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-08', restrictionNote:'Traded CHI→CHA on 2026-07-10 — 60-day re-trade hold until 2026-09-08' },
                 { id:'cha-17', name:'Sion James',        position:'PF', salary: 2_411_090, contractType:'Guaranteed' },
                 { id:'cha-18', name:'Ryan Kalkbrenner',  position:'C',  salary: 2_411_090, contractType:'Guaranteed' },
             ],
@@ -2927,18 +2949,18 @@
             teamSalary: 163_000_867,
             players: [
                 { id:'chi-01', name:'Josh Giddey',         position:'PG', salary:25_000_000, contractType:'Guaranteed' },
-                { id:'chi-02', name:'Nicolas Claxton',     position:'C',  salary:23_320_738, contractType:'Guaranteed' },
-                { id:'chi-03', name:'Norman Powell',       position:'SG', salary:21_500_000, contractType:'Guaranteed' },
+                { id:'chi-02', name:'Nicolas Claxton',     position:'C',  salary:23_320_738, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-08', restrictionNote:'Traded BKN→CHI on 2026-07-10 — 60-day re-trade hold until 2026-09-08' },
+                { id:'chi-03', name:'Norman Powell',       position:'SG', salary:21_500_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'CHI signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'chi-04', name:'Patrick Williams',    position:'PF', salary:18_000_000, contractType:'Guaranteed' },
                 { id:'chi-05', name:'Isaac Okoro',         position:'SG', salary:11_814_814, contractType:'Guaranteed' },
-                { id:'chi-06', name:'Caleb Wilson',        position:'PF', salary:10_683_720, contractType:'Rookie Scale' },
+                { id:'chi-06', name:'Caleb Wilson',        position:'PF', salary:10_683_720, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'chi-07', name:'Jalen Smith',         position:'PF', salary: 9_428_571, contractType:'Guaranteed' },
                 { id:'chi-08', name:'Zach Collins',        position:'C',  salary: 8_500_000, contractType:'Guaranteed' },
                 { id:'chi-09', name:'Tre Jones',           position:'PG', salary: 8_000_000, contractType:'Guaranteed' },
                 { id:'chi-10', name:'Rob Dillingham',      position:'PG', salary: 6_889_320, contractType:'Guaranteed' },
                 { id:'chi-11', name:'Matas Buzelis',       position:'PF', salary: 5_715_360, contractType:'Guaranteed' },
                 { id:'chi-12', name:'Noa Essengue',        position:'PF', salary: 5_701_200, contractType:'Guaranteed' },
-                { id:'chi-13', name:'Dailyn Swain',        position:'SF', salary: 4_965_480, contractType:'Rookie Scale' },
+                { id:'chi-13', name:'Dailyn Swain',        position:'SF', salary: 4_965_480, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'chi-14', name:'Leonard Miller',      position:'SF', salary: 2_406_205, contractType:'Team Option' },
             ],
             picks: [
@@ -2975,11 +2997,11 @@
                 { id:'cle-06', name:'Sam Merrill',         position:'SG', salary: 9_160_715, contractType:'Guaranteed' },
                 { id:'cle-07', name:'Jaylon Tyson',        position:'SF', salary: 3_658_560, contractType:'Guaranteed' },
                 { id:'cle-08', name:'Nae\'Qwan Tomlin',   position:'PF', salary: 2_411_090, contractType:'Guaranteed' },
-                { id:'cle-09', name:'Thomas Bryant',       position:'C',  salary: 2_449_421, contractType:'Guaranteed' },
+                { id:'cle-09', name:'Thomas Bryant',       position:'C',  salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'CLE re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'cle-10', name:'Mario Hezonja',       position:'SF', salary: 2_449_421, contractType:'Guaranteed' },
                 { id:'cle-11', name:'Craig Porter Jr.',    position:'PG', salary: 2_406_205, contractType:'Team Option' },
                 { id:'cle-12', name:'Tyrese Proctor',      position:'PG', salary: 2_150_917, contractType:'Guaranteed' },
-                { id:'cle-13', name:'Meleek Thomas',       position:'SG', salary: 1_357_763, contractType:'Rookie Scale' },
+                { id:'cle-13', name:'Meleek Thomas',       position:'SG', salary: 1_357_763, contractType:'Rookie Scale' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'CLE signed 2026-07-01 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'cle-pk01', name:'2028 Lesser of Own/ATL 1st (No)', round:1, protections:'Lesser',      owner:'CLE' },
@@ -3003,18 +3025,18 @@
                 { id:'dal-02', name:'P.J. Washington',     position:'PF', salary:19_813_044, contractType:'Guaranteed' },
                 { id:'dal-03', name:'Klay Thompson',       position:'SG', salary:17_460_317, contractType:'Guaranteed' },
                 { id:'dal-04', name:'Daniel Gafford',      position:'C',  salary:17_263_584, contractType:'Guaranteed' },
-                { id:'dal-05', name:'Santi Aldama',        position:'PF', salary:17_007_043, contractType:'Guaranteed' },
+                { id:'dal-05', name:'Santi Aldama',        position:'PF', salary:17_007_043, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded MEM→DAL on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
                 { id:'dal-06', name:'Cooper Flagg',        position:'SF', salary:14_517_480, contractType:'Rookie Scale' },
-                { id:'dal-07', name:'Zaccharie Risacher',  position:'SF', salary:13_826_040, contractType:'Guaranteed' },
+                { id:'dal-07', name:'Zaccharie Risacher',  position:'SF', salary:13_826_040, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-17', restrictionNote:'Traded ATL→DAL on 2026-07-19 — 60-day re-trade hold until 2026-09-17' },
                 { id:'dal-08', name:'Caleb Martin',        position:'SF', salary:10_001_494, contractType:'Guaranteed' },
                 { id:'dal-09', name:'Naji Marshall',       position:'SF', salary: 9_428_571, contractType:'Guaranteed' },
                 { id:'dal-10', name:'Max Christie',        position:'SG', salary: 8_285_714, contractType:'Guaranteed' },
                 { id:'dal-11', name:'Dereck Lively II',    position:'C',  salary: 7_239_131, contractType:'Guaranteed' },
-                { id:'dal-12', name:'Morez Johnson Jr.',   position:'PF', salary: 6_754_800, contractType:'Rookie Scale' },
-                { id:'dal-13', name:'Marcus Sasser',       position:'PG', salary: 5_198_983, contractType:'Guaranteed' },
-                { id:'dal-14', name:'Sergio De Larrea',    position:'PG', salary: 3_182_280, contractType:'Rookie Scale' },
-                { id:'dal-15', name:'Tarik Biberovic',     position:'SG', salary: 3_000_000, contractType:'Guaranteed' },
-                { id:'dal-16', name:'Moussa Cisse',        position:'C',  salary: 2_185_116, contractType:'Guaranteed' },
+                { id:'dal-12', name:'Morez Johnson Jr.',   position:'PF', salary: 6_754_800, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'DAL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'dal-13', name:'Marcus Sasser',       position:'PG', salary: 5_198_983, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded DET→DAL on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
+                { id:'dal-14', name:'Sergio De Larrea',    position:'PG', salary: 3_182_280, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'DAL Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'dal-15', name:'Tarik Biberovic',     position:'SG', salary: 3_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DAL signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'dal-16', name:'Moussa Cisse',        position:'C',  salary: 2_185_116, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DAL signed 2026-07-22 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'dal-pk01', name:'2028 Lesser of Own/OKC 1st (No)', round:1, protections:'Lesser',              owner:'DAL' },
@@ -3045,10 +3067,10 @@
                 { id:'den-07', name:'Spencer Jones',         position:'SF', salary: 6_000_000, contractType:'Guaranteed' },
                 { id:'den-08', name:'Julian Strawther',      position:'SG', salary: 4_826_931, contractType:'Guaranteed' },
                 { id:'den-09', name:'DaRon Holmes',          position:'PF', salary: 3_372_120, contractType:'Guaranteed' },
-                { id:'den-10', name:'Marvin Bagley',         position:'PF', salary: 2_449_421, contractType:'Guaranteed' },
-                { id:'den-11', name:'Tyus Jones',            position:'PG', salary: 2_449_421, contractType:'Guaranteed' },
-                { id:'den-12', name:'Trevon Brazile',        position:'PF', salary: 1_357_763, contractType:'Guaranteed' },
-                { id:'den-13', name:'Alpha Diallo',          position:'SF', salary: 1_357_763, contractType:'Guaranteed' },
+                { id:'den-10', name:'Marvin Bagley',         position:'PF', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DEN signed 2026-07-15 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'den-11', name:'Tyus Jones',            position:'PG', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DEN re-signed 2026-07-14 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'den-12', name:'Trevon Brazile',        position:'PF', salary: 1_357_763, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DEN signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'den-13', name:'Alpha Diallo',          position:'SF', salary: 1_357_763, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DEN signed 2026-07-13 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'den-pk01', name:'2028 Own 1st (No trade)',  round:1, protections:'Cannot Trade', owner:'DEN' },
@@ -3073,18 +3095,18 @@
             teamSalary: 154_337_535,
             players: [
                 { id:'det-01', name:'Cade Cunningham',   position:'PG', salary:50_105_628, contractType:'Guaranteed' },
-                { id:'det-02', name:'John Collins',      position:'PF', salary:17_000_000, contractType:'Guaranteed' },
+                { id:'det-02', name:'John Collins',      position:'PF', salary:17_000_000, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded LAC→DET on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
                 { id:'det-03', name:'Duncan Robinson',   position:'SG', salary:15_992_957, contractType:'Guaranteed' },
-                { id:'det-04', name:'Isaiah Joe',        position:'SG', salary:11_323_006, contractType:'Guaranteed' },
+                { id:'det-04', name:'Isaiah Joe',        position:'SG', salary:11_323_006, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded OKC→DET on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'det-05', name:'Ausar Thompson',    position:'SF', salary:11_117_925, contractType:'Guaranteed' },
-                { id:'det-06', name:'Kevin Huerter',     position:'SG', salary: 9_507_042, contractType:'Guaranteed' },
+                { id:'det-06', name:'Kevin Huerter',     position:'SG', salary: 9_507_042, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DET re-signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'det-07', name:'Ron Holland',       position:'SF', salary: 9_069_600, contractType:'Guaranteed' },
                 { id:'det-08', name:'Paul Reed',         position:'PF', salary: 5_602_689, contractType:'Guaranteed' },
-                { id:'det-09', name:'Ebuka Okorie',      position:'SG', salary: 4_481_280, contractType:'Guaranteed' },
+                { id:'det-09', name:'Ebuka Okorie',      position:'SG', salary: 4_481_280, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'DET Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'det-10', name:'Daniss Jenkins',    position:'PG', salary: 4_000_000, contractType:'Guaranteed' },
-                { id:'det-11', name:'Javonte Green',     position:'SF', salary: 3_943_679, contractType:'Guaranteed' },
-                { id:'det-12', name:'Gary Harris',       position:'SG', salary: 3_815_861, contractType:'Guaranteed' },
-                { id:'det-13', name:'Taurean Prince',    position:'SF', salary: 3_815_861, contractType:'Guaranteed' },
+                { id:'det-11', name:'Javonte Green',     position:'SF', salary: 3_943_679, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DET re-signed 2026-07-08 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'det-12', name:'Gary Harris',       position:'SG', salary: 3_815_861, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded MIL→DET on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
+                { id:'det-13', name:'Taurean Prince',    position:'SF', salary: 3_815_861, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded MIL→DET on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
                 { id:'det-14', name:'Tolu Smith III',    position:'PF', salary: 2_411_090, contractType:'Guaranteed' },
                 { id:'det-15', name:'Chaz Lanier',       position:'SG', salary: 2_150_917, contractType:'Guaranteed' },
             ],
@@ -3121,12 +3143,12 @@
                 { id:'gsw-02', name:'Jimmy Butler',          position:'SF', salary:56_832_773, contractType:'Guaranteed' },
                 { id:'gsw-03', name:'Kristaps Porziņģis',    position:'C',  salary:20_000_000, contractType:'Guaranteed' },
                 { id:'gsw-04', name:'Moses Moody',           position:'SG', salary:12_500_000, contractType:'Guaranteed' },
-                { id:'gsw-05', name:'Al Horford',            position:'C',  salary: 6_822_000, contractType:'Guaranteed' },
-                { id:'gsw-06', name:'Yaxel Lendeborg',       position:'PF', salary: 6_096_240, contractType:'Guaranteed' },
+                { id:'gsw-05', name:'Al Horford',            position:'C',  salary: 6_822_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'GSW re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'gsw-06', name:'Yaxel Lendeborg',       position:'PF', salary: 6_096_240, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'GSW Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'gsw-07', name:'Brandin Podziemski',    position:'SG', salary: 5_679_459, contractType:'Guaranteed' },
                 { id:'gsw-08', name:'De\'Anthony Melton',    position:'PG', salary: 5_477_000, contractType:'Guaranteed' },
                 { id:'gsw-09', name:'Gui Santos',            position:'SF', salary: 4_629_630, contractType:'Guaranteed' },
-                { id:'gsw-10', name:'Charles Bassey',        position:'C',  salary: 2_449_421, contractType:'Guaranteed' },
+                { id:'gsw-10', name:'Charles Bassey',        position:'C',  salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'GSW re-signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'gsw-11', name:'Will Richard',          position:'SG', salary: 2_150_917, contractType:'Guaranteed' },
             ],
             picks: [
@@ -3150,14 +3172,14 @@
             teamSalary: 170_738_244,
             players: [
                 { id:'mia-01', name:'Bam Adebayo',        position:'C',  salary:49_500_000, contractType:'Estimated' },
-                { id:'mia-02', name:'Tyler Herro',         position:'SG', salary:33_000_000, contractType:'Player Option' },
+                { id:'mia-02', name:'Tyler Herro',         position:'SG', salary:33_000_000, contractType:'Player Option' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded MIA→MIL on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'mia-03', name:'Andrew Wiggins',      position:'SF', salary:30_169_644, contractType:'Player Option' },
                 { id:'mia-04', name:'Nikola Jovic',        position:'PF', salary:16_200_000, contractType:'Guaranteed' },
                 { id:'mia-05', name:'Davion Mitchell',     position:'PG', salary:12_400_000, contractType:'Guaranteed' },
-                { id:'mia-06', name:'Jaime Jaquez Jr.',    position:'SF', salary: 5_939_141, contractType:'Guaranteed' },
+                { id:'mia-06', name:'Jaime Jaquez Jr.',    position:'SF', salary: 5_939_141, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded MIA→MIL on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'mia-07', name:'2026 Pick #13',       position:'—',  salary: 5_503_320, contractType:'Rookie Scale Est.' },
                 { id:'mia-08', name:"Kel'el Ware",         position:'C',  salary: 4_654_920, contractType:'Guaranteed' },
-                { id:'mia-09', name:'Kasparas Jakucionis', position:'PG', salary: 3_841_680, contractType:'Guaranteed' },
+                { id:'mia-09', name:'Kasparas Jakucionis', position:'PG', salary: 3_841_680, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded MIA→MIL on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'mia-10', name:'Dru Smith',           position:'PG', salary: 2_584_539, contractType:'Non-Guaranteed' },
                 { id:'mia-11', name:'Jahmir Young',        position:'SG', salary: 2_497_812, contractType:'Team Option' },
                 { id:'mia-12', name:'Pelle Larsson',       position:'SG', salary: 2_296_271, contractType:'Team Option' },
@@ -3185,17 +3207,17 @@
         'MIL': {
             teamSalary: 188_183_677,
             players: [
-                { id:'mil-01', name:'Giannis Antetokounmpo', position:'PF', salary:58_456_490, contractType:'Guaranteed' },
+                { id:'mil-01', name:'Giannis Antetokounmpo', position:'PF', salary:58_456_490, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded MIL→MIA on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'mil-02', name:'Myles Turner',           position:'C',  salary:26_584_164, contractType:'Guaranteed' },
                 { id:'mil-03', name:'Kyle Kuzma',             position:'PF', salary:20_365_150, contractType:'Guaranteed' },
-                { id:'mil-04', name:'Bobby Portis',           position:'PF', salary:14_521_414, contractType:'Guaranteed' },
+                { id:'mil-04', name:'Bobby Portis',           position:'PF', salary:14_521_414, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded MIL→MIA on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'mil-05', name:'A.J. Green',             position:'SG', salary:10_044_644, contractType:'Guaranteed' },
                 { id:'mil-06', name:'2026 Pick #10',          position:'—',  salary: 6_418_800, contractType:'Rookie Scale Est.' },
                 { id:'mil-07', name:'Kevin Porter Jr.',       position:'SG', salary: 5_390_700, contractType:'Player Option' },
                 { id:'mil-08', name:'Ryan Rollins',           position:'SG', salary: 4_000_000, contractType:'Guaranteed' },
-                { id:'mil-09', name:'Gary Trent Jr.',         position:'SG', salary: 3_881_960, contractType:'Player Option' },
-                { id:'mil-10', name:'Gary Harris',            position:'SG', salary: 3_815_861, contractType:'Player Option' },
-                { id:'mil-11', name:'Taurean Prince',         position:'SF', salary: 3_815_861, contractType:'Player Option' },
+                { id:'mil-09', name:'Gary Trent Jr.',         position:'SG', salary: 3_881_960, contractType:'Player Option' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'MIL re-signed 2026-07-15 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'mil-10', name:'Gary Harris',            position:'SG', salary: 3_815_861, contractType:'Player Option' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded MIL→DET on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
+                { id:'mil-11', name:'Taurean Prince',         position:'SF', salary: 3_815_861, contractType:'Player Option' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded MIL→DET on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
                 { id:'mil-12', name:'Jericho Sims',           position:'C',  salary: 2_801_346, contractType:'Player Option' },
                 { id:'mil-13', name:'Pete Nance',             position:'PF', salary: 2_497_812, contractType:'Non-Guaranteed' },
                 { id:'mil-14', name:'Andre Jackson Jr.',      position:'SG', salary: 2_406_205, contractType:'Team Option' },
@@ -3221,18 +3243,18 @@
             teamSalary: 215954846,
             players: [
                 { id:'min-01', name:'Anthony Edwards', position:'SG', salary:48924624, contractType:'Guaranteed' },
-                { id:'min-02', name:'LaMelo Ball', position:'PG', salary:41250000, contractType:'Guaranteed' },
+                { id:'min-02', name:'LaMelo Ball', position:'PG', salary:41250000, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-08', restrictionNote:'Traded CHA→MIN on 2026-07-10 — 60-day re-trade hold until 2026-09-08' },
                 { id:'min-03', name:'Rudy Gobert', position:'C', salary:36500000, contractType:'Guaranteed' },
                 { id:'min-04', name:'Jaden McDaniels', position:'SF', salary:26200000, contractType:'Guaranteed' },
-                { id:'min-05', name:'Ayo Dosunmu', position:'SG', salary:19310345, contractType:'Guaranteed' },
-                { id:'min-06', name:'Josh Green', position:'SF', salary:14679012, contractType:'Guaranteed' },
+                { id:'min-05', name:'Ayo Dosunmu', position:'SG', salary:19310345, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'MIN re-signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'min-06', name:'Josh Green', position:'SF', salary:14679012, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-08', restrictionNote:'Traded CHA→MIN on 2026-07-10 — 60-day re-trade hold until 2026-09-08' },
                 { id:'min-07', name:'Donte DiVincenzo', position:'SG', salary:12535000, contractType:'Guaranteed' },
                 { id:'min-08', name:'Joan Beringer', position:'C', salary:4411200, contractType:'Guaranteed' },
-                { id:'min-09', name:'Jaylen Clark', position:'SG', salary:3086420, contractType:'Guaranteed' },
+                { id:'min-09', name:'Jaylen Clark', position:'SG', salary:3086420, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'MIN re-signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'min-10', name:'Terrence Shannon Jr.', position:'SG', salary:2801640, contractType:'Guaranteed' },
-                { id:'min-11', name:'Bones Hyland', position:'PG', salary:2449421, contractType:'Guaranteed' },
-                { id:'min-12', name:'Trey Lyles', position:'PF', salary:2449421, contractType:'Guaranteed' },
-                { id:'min-13', name:'Isaiah Evans', position:'SG', salary:1357763, contractType:'Guaranteed' },
+                { id:'min-11', name:'Bones Hyland', position:'PG', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'MIN re-signed 2026-07-03 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'min-12', name:'Trey Lyles', position:'PF', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'MIN signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'min-13', name:'Isaiah Evans', position:'SG', salary:1357763, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'MIN signed 2026-07-11 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'min-pk01', name:'2028 Lesser of Own/CHA 1st', round:1, protections:'Cannot Trade', owner:'MIN' },
@@ -3258,7 +3280,7 @@
                 { id:'nop-07', name:'Jordan Hawkins', position:'SG', salary:7021895, contractType:'Guaranteed' },
                 { id:'nop-08', name:'Saddiq Bey', position:'SF', salary:6557080, contractType:'Guaranteed' },
                 { id:'nop-09', name:'Derik Queen', position:'C', salary:5416080, contractType:'Guaranteed' },
-                { id:'nop-10', name:'DeAndre Jordan', position:'C', salary:3876529, contractType:'Guaranteed' },
+                { id:'nop-10', name:'DeAndre Jordan', position:'C', salary:3876529, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'NOP re-signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'nop-11', name:'Yves Missi', position:'C', salary:3512760, contractType:'Guaranteed' },
                 { id:'nop-12', name:'Bryce McGowens', position:'SF', salary:2584539, contractType:'Guaranteed' },
                 { id:'nop-13', name:'Karlo Matkovic', position:'PF', salary:2296271, contractType:'Guaranteed' },
@@ -3292,13 +3314,13 @@
                 { id:'nyk-03', name:'Jalen Brunson', position:'PG', salary:37739521, contractType:'Guaranteed' },
                 { id:'nyk-04', name:'Mikal Bridges', position:'SF', salary:33482145, contractType:'Guaranteed' },
                 { id:'nyk-05', name:'Josh Hart', position:'SF', salary:20923760, contractType:'Guaranteed' },
-                { id:'nyk-06', name:'Landry Shamet', position:'SG', salary:5490967, contractType:'Guaranteed' },
-                { id:'nyk-07', name:'Jose Alvarado', position:'PG', salary:4439656, contractType:'Guaranteed' },
+                { id:'nyk-06', name:'Landry Shamet', position:'SG', salary:5490967, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'NYK re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'nyk-07', name:'Jose Alvarado', position:'PG', salary:4439656, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'NYK re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'nyk-08', name:'Miles McBride', position:'PG', salary:3956523, contractType:'Guaranteed' },
                 { id:'nyk-09', name:'Pacôme Dadiet', position:'SF', salary:2983680, contractType:'Guaranteed' },
-                { id:'nyk-10', name:'Mohamed Diawara', position:'SF', salary:2622139, contractType:'Guaranteed' },
-                { id:'nyk-11', name:'Jordan Clarkson', position:'SG', salary:2449421, contractType:'Guaranteed' },
-                { id:'nyk-12', name:'Andre Drummond', position:'C', salary:2449421, contractType:'Guaranteed' },
+                { id:'nyk-10', name:'Mohamed Diawara', position:'SF', salary:2622139, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'NYK re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'nyk-11', name:'Jordan Clarkson', position:'SG', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'NYK re-signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'nyk-12', name:'Andre Drummond', position:'C', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'NYK signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'nyk-13', name:'Tyler Kolek', position:'PG', salary:2296271, contractType:'Guaranteed' },
             ],
             picks: [
@@ -3331,14 +3353,14 @@
                 { id:'sac-03', name:'De\'Andre Hunter', position:'SF', salary:24910714, contractType:'Guaranteed' },
                 { id:'sac-04', name:'Keegan Murray', position:'PF', salary:24137936, contractType:'Guaranteed' },
                 { id:'sac-05', name:'Malik Monk', position:'SG', salary:20190035, contractType:'Guaranteed' },
-                { id:'sac-06', name:'Darius Acuff Jr.', position:'PG', salary:8021520, contractType:'Guaranteed' },
-                { id:'sac-07', name:'Precious Achiuwa', position:'PF', salary:5477000, contractType:'Guaranteed' },
+                { id:'sac-06', name:'Darius Acuff Jr.', position:'PG', salary:8021520, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAC Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'sac-07', name:'Precious Achiuwa', position:'PF', salary:5477000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAC re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'sac-08', name:'Nique Clifford', position:'SG', salary:3263400, contractType:'Guaranteed' },
-                { id:'sac-09', name:'Alex Karaban', position:'PF', salary:2948280, contractType:'Guaranteed' },
-                { id:'sac-10', name:'Daeqwon Plowden', position:'SG', salary:2449421, contractType:'Guaranteed' },
+                { id:'sac-09', name:'Alex Karaban', position:'PF', salary:2948280, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAC Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'sac-10', name:'Daeqwon Plowden', position:'SG', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAC re-signed 2026-07-02 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'sac-11', name:'Dylan Cardwell', position:'C', salary:2150917, contractType:'Guaranteed' },
                 { id:'sac-12', name:'Maxime Raynaud', position:'C', salary:2150917, contractType:'Guaranteed' },
-                { id:'sac-13', name:'Emanuel Sharp', position:'SG', salary:1357763, contractType:'Guaranteed' },
+                { id:'sac-13', name:'Emanuel Sharp', position:'SG', salary:1357763, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAC signed 2026-07-01 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'sac-pk01', name:'2027 Own 1st', round:1, protections:'Unprotected', owner:'SAC' },
@@ -3369,15 +3391,15 @@
                 { id:'sas-03', name:'Keldon Johnson', position:'SF', salary:18000000, contractType:'Guaranteed' },
                 { id:'sas-04', name:'Victor Wembanyama', position:'C', salary:16868246, contractType:'Guaranteed' },
                 { id:'sas-05', name:'Julian Champagnie', position:'SF', salary:15350000, contractType:'Guaranteed' },
-                { id:'sas-06', name:'Tobias Harris', position:'PF', salary:15044000, contractType:'Guaranteed' },
+                { id:'sas-06', name:'Tobias Harris', position:'PF', salary:15044000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAS signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'sas-07', name:'Dylan Harper', position:'PG', salary:12989040, contractType:'Guaranteed' },
                 { id:'sas-08', name:'Luke Kornet', position:'C', salary:10450000, contractType:'Guaranteed' },
                 { id:'sas-09', name:'Stephon Castle', position:'SG', salary:10015920, contractType:'Guaranteed' },
-                { id:'sas-10', name:'Harrison Barnes', position:'SF', salary:8000000, contractType:'Guaranteed' },
+                { id:'sas-10', name:'Harrison Barnes', position:'SF', salary:8000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAS re-signed 2026-07-08 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'sas-11', name:'Carter Bryant', position:'SF', salary:5145360, contractType:'Guaranteed' },
-                { id:'sas-12', name:'Jayden Quaintance', position:'PF', salary:3902760, contractType:'Guaranteed' },
-                { id:'sas-13', name:'Tarris Reed', position:'C', salary:3076920, contractType:'Guaranteed' },
-                { id:'sas-14', name:'Jordan McLaughlin', position:'PG', salary:2449421, contractType:'Guaranteed' },
+                { id:'sas-12', name:'Jayden Quaintance', position:'PF', salary:3902760, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAS Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'sas-13', name:'Tarris Reed', position:'C', salary:3076920, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAS Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'sas-14', name:'Jordan McLaughlin', position:'PG', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAS re-signed 2026-07-13 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'sas-pk01', name:'2027 ATL 1st (Unprotected)', round:1, protections:'Unprotected', owner:'SAS' },
@@ -3415,13 +3437,13 @@
                 { id:'tor-04', name:'R.J. Barrett', position:'SG', salary:29616071, contractType:'Guaranteed' },
                 { id:'tor-05', name:'Jakob Poeltl', position:'C', salary:19500000, contractType:'Guaranteed' },
                 { id:'tor-06', name:'Collin Murray-Boyles', position:'PF', salary:6649560, contractType:'Guaranteed' },
-                { id:'tor-07', name:'Allen Graves', position:'PF', salary:4065720, contractType:'Guaranteed' },
+                { id:'tor-07', name:'Allen Graves', position:'PF', salary:4065720, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'TOR Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'tor-08', name:'Ja\'Kobe Walter', position:'SG', salary:3811800, contractType:'Guaranteed' },
-                { id:'tor-09', name:'Kyle Anderson', position:'PF', salary:2449421, contractType:'Guaranteed' },
+                { id:'tor-09', name:'Kyle Anderson', position:'PF', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'TOR signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'tor-10', name:'Trayce Jackson-Davis', position:'C', salary:2406205, contractType:'Guaranteed' },
                 { id:'tor-11', name:'Jamison Battle', position:'SF', salary:2296271, contractType:'Guaranteed' },
                 { id:'tor-12', name:'Jamal Shead', position:'PG', salary:2296271, contractType:'Guaranteed' },
-                { id:'tor-13', name:'Alijah Martin', position:'SG', salary:2185117, contractType:'Guaranteed' },
+                { id:'tor-13', name:'Alijah Martin', position:'SG', salary:2185117, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'TOR re-signed 2026-07-03 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'tor-pk01', name:'2027 Own 1st', round:1, protections:'Unprotected', owner:'TOR' },
@@ -3448,17 +3470,17 @@
             players: [
                 { id:'uta-01', name:'Jaren Jackson Jr.', position:'PF', salary:49000000, contractType:'Guaranteed' },
                 { id:'uta-02', name:'Lauri Markkanen', position:'PF', salary:46113154, contractType:'Guaranteed' },
-                { id:'uta-03', name:'Darryn Peterson', position:'SG', salary:13195320, contractType:'Guaranteed' },
+                { id:'uta-03', name:'Darryn Peterson', position:'SG', salary:13195320, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'UTA Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'uta-04', name:'Jusuf Nurkić', position:'C', salary:11458333, contractType:'Guaranteed' },
                 { id:'uta-05', name:'Ace Bailey', position:'SF', salary:9523080, contractType:'Guaranteed' },
                 { id:'uta-06', name:'Keyonte George', position:'PG', salary:6563925, contractType:'Guaranteed' },
                 { id:'uta-07', name:'John Konchar', position:'SG', salary:6165000, contractType:'Guaranteed' },
                 { id:'uta-08', name:'Cody Williams', position:'SF', salary:6015600, contractType:'Guaranteed' },
-                { id:'uta-09', name:'Jaxson Hayes', position:'C', salary:6000000, contractType:'Guaranteed' },
-                { id:'uta-10', name:'Josh Okogie', position:'SF', salary:6000000, contractType:'Guaranteed' },
+                { id:'uta-09', name:'Jaxson Hayes', position:'C', salary:6000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'UTA signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'uta-10', name:'Josh Okogie', position:'SF', salary:6000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'UTA signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'uta-11', name:'Brice Sensabaugh', position:'SF', salary:4862237, contractType:'Guaranteed' },
                 { id:'uta-12', name:'Svi Mykhailiuk', position:'SG', salary:3850000, contractType:'Guaranteed' },
-                { id:'uta-13', name:'Mo Bamba', position:'C', salary:3506659, contractType:'Guaranteed' },
+                { id:'uta-13', name:'Mo Bamba', position:'C', salary:3506659, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'UTA signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'uta-14', name:'Kyle Filipowski', position:'C', salary:3000000, contractType:'Guaranteed' },
                 { id:'uta-15', name:'Isaiah Collier', position:'PG', salary:2763960, contractType:'Guaranteed' },
             ],
@@ -3498,17 +3520,17 @@
                 { id:'hou-02', name:'Alperen Şengün',        position:'C',  salary:35_642_202, contractType:'Guaranteed' },
                 { id:'hou-03', name:'Fred VanVleet',         position:'PG', salary:25_000_000, contractType:'Guaranteed' },
                 { id:'hou-04', name:'Jabari Smith Jr.',      position:'PF', salary:23_643_411, contractType:'Guaranteed' },
-                { id:'hou-05', name:'Tari Eason',            position:'PF', salary:14_053_356, contractType:'Guaranteed' },
+                { id:'hou-05', name:'Tari Eason',            position:'PF', salary:14_053_356, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'HOU re-signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'hou-06', name:'Steven Adams',          position:'C',  salary:13_000_000, contractType:'Guaranteed' },
                 { id:'hou-07', name:'Amen Thompson',         position:'SF', salary:12_258_609, contractType:'Guaranteed' },
                 { id:'hou-08', name:'Reed Sheppard',         position:'SG', salary:11_108_880, contractType:'Guaranteed' },
                 { id:'hou-09', name:'Clint Capela',          position:'C',  salary: 7_035_000, contractType:'Guaranteed' },
-                { id:'hou-10', name:'Marcus Smart',          position:'PG', salary: 6_064_000, contractType:'Guaranteed' },
+                { id:'hou-10', name:'Marcus Smart',          position:'PG', salary: 6_064_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'HOU signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'hou-11', name:'JD Davison',            position:'PG', salary: 2_584_539, contractType:'Guaranteed' },
                 { id:'hou-12', name:'Bogdan Bogdanović',     position:'SG', salary: 2_449_421, contractType:'Guaranteed' },
-                { id:'hou-13', name:'Isaiah Crawford',       position:'SF', salary: 2_449_421, contractType:'Guaranteed' },
+                { id:'hou-13', name:'Isaiah Crawford',       position:'SF', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'HOU re-signed 2026-07-22 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'hou-14', name:'Jae\'Sean Tate',        position:'SF', salary: 2_449_421, contractType:'Guaranteed' },
-                { id:'hou-15', name:'Bruce Thornton',        position:'PG', salary: 1_357_763, contractType:'Guaranteed' },
+                { id:'hou-15', name:'Bruce Thornton',        position:'PG', salary: 1_357_763, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'HOU signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'hou-pk01', name:'2027 Favorable of Own/BKN 1st', round:1, protections:'Favorable',   owner:'HOU' },
@@ -3539,11 +3561,11 @@
                 { id:'ind-06', name:'T.J. McConnell',        position:'PG', salary:11_000_000, contractType:'Guaranteed' },
                 { id:'ind-07', name:'Aaron Nesmith',         position:'SF', salary:11_000_000, contractType:'Guaranteed' },
                 { id:'ind-08', name:'Jarace Walker',         position:'PF', salary: 8_478_541, contractType:'Guaranteed' },
-                { id:'ind-09', name:'Kelly Oubre Jr.',       position:'SF', salary: 8_050_000, contractType:'Guaranteed' },
+                { id:'ind-09', name:'Kelly Oubre Jr.',       position:'SF', salary: 8_050_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'IND signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'ind-10', name:'Ben Sheppard',          position:'SG', salary: 5_031_668, contractType:'Guaranteed' },
                 { id:'ind-11', name:'Jay Huff',              position:'C',  salary: 2_667_944, contractType:'Guaranteed' },
                 { id:'ind-12', name:'Quenton Jackson',       position:'SG', salary: 2_584_539, contractType:'Guaranteed' },
-                { id:'ind-13', name:'Larry Nance Jr.',       position:'PF', salary: 2_449_421, contractType:'Guaranteed' },
+                { id:'ind-13', name:'Larry Nance Jr.',       position:'PF', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'IND signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'ind-14', name:'Johnny Furphy',         position:'SF', salary: 2_296_271, contractType:'Guaranteed' },
             ],
             picks: [
@@ -3569,18 +3591,18 @@
             players: [
                 { id:'lac-01', name:'Darius Garland',        position:'PG', salary:42_166_510, contractType:'Guaranteed' },
                 { id:'lac-02', name:'Brandon Ingram',        position:'SF', salary:40_000_000, contractType:'Guaranteed' },
-                { id:'lac-03', name:'Rui Hachimura',         position:'PF', salary:14_000_000, contractType:'Guaranteed' },
+                { id:'lac-03', name:'Rui Hachimura',         position:'PF', salary:14_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAC signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'lac-04', name:'Derrick Jones Jr.',     position:'SF', salary:10_476_190, contractType:'Guaranteed' },
-                { id:'lac-05', name:'Keaton Wagler',         position:'G',  salary: 9_674_760, contractType:'Guaranteed' },
+                { id:'lac-05', name:'Keaton Wagler',         position:'G',  salary: 9_674_760, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'LAC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'lac-06', name:'Brook Lopez',           position:'C',  salary: 9_187_500, contractType:'Guaranteed' },
                 { id:'lac-07', name:'Gradey Dick',           position:'SG', salary: 7_131_510, contractType:'Guaranteed' },
                 { id:'lac-08', name:'Isaiah Jackson',        position:'C',  salary: 7_000_000, contractType:'Guaranteed' },
                 { id:'lac-09', name:'Kris Dunn',             position:'PG', salary: 5_684_800, contractType:'Guaranteed' },
-                { id:'lac-10', name:'Jordan Miller',         position:'SF', salary: 5_300_000, contractType:'Guaranteed' },
+                { id:'lac-10', name:'Jordan Miller',         position:'SF', salary: 5_300_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAC re-signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'lac-11', name:'Yanic Konan Niederhäuser', position:'C', salary: 2_880_960, contractType:'Guaranteed' },
-                { id:'lac-12', name:'Kobe Sanders',          position:'SG', salary: 2_622_139, contractType:'Guaranteed' },
+                { id:'lac-12', name:'Kobe Sanders',          position:'SG', salary: 2_622_139, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAC re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'lac-13', name:'Cam Christie',          position:'SG', salary: 2_296_271, contractType:'Guaranteed' },
-                { id:'lac-14', name:'Baba Miller',           position:'PF', salary: 1_705_630, contractType:'Guaranteed' },
+                { id:'lac-14', name:'Baba Miller',           position:'PF', salary: 1_705_630, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAC signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
             ],
             picks: [
                 { id:'lac-pk01', name:'2027 2nd-Favorable of Own/TOR/OKC 1st',round:1, protections:'Favorable (No)', owner:'LAC' },
@@ -3613,19 +3635,19 @@
             teamSalary: 200_897_322,
             players: [
                 { id:'lal-01', name:'Luka Dončić',           position:'PG', salary:49_488_300, contractType:'Guaranteed' },
-                { id:'lal-02', name:'Austin Reaves',         position:'SG', salary:41_240_250, contractType:'Guaranteed' },
-                { id:'lal-03', name:'Walker Kessler',        position:'C',  salary:30_108_821, contractType:'Guaranteed' },
-                { id:'lal-04', name:'Quentin Grimes',        position:'SG', salary:13_953_489, contractType:'Guaranteed' },
-                { id:'lal-05', name:'Sandro Mamukelashvili', position:'PF', salary:13_000_000, contractType:'Guaranteed' },
+                { id:'lal-02', name:'Austin Reaves',         position:'SG', salary:41_240_250, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL re-signed 2026-07-12 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'lal-03', name:'Walker Kessler',        position:'C',  salary:30_108_821, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded UTA→LAL on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
+                { id:'lal-04', name:'Quentin Grimes',        position:'SG', salary:13_953_489, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'lal-05', name:'Sandro Mamukelashvili', position:'PF', salary:13_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'lal-06', name:'Jarred Vanderbilt',     position:'PF', salary:12_428_571, contractType:'Guaranteed' },
-                { id:'lal-07', name:'Collin Sexton',         position:'PG', salary: 9_366_000, contractType:'Guaranteed' },
-                { id:'lal-08', name:'Jaden Hardy',           position:'SG', salary: 6_000_000, contractType:'Guaranteed' },
+                { id:'lal-07', name:'Collin Sexton',         position:'PG', salary: 9_366_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-11 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'lal-08', name:'Jaden Hardy',           position:'SG', salary: 6_000_000, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-05', restrictionNote:'Traded WAS→LAL on 2026-07-07 — 60-day re-trade hold until 2026-09-05' },
                 { id:'lal-09', name:'Jake LaRavia',          position:'SF', salary: 6_000_000, contractType:'Guaranteed' },
                 { id:'lal-10', name:'Dalton Knecht',         position:'SG', salary: 4_201_080, contractType:'Guaranteed' },
-                { id:'lal-11', name:'Cameron Carr',          position:'SG', salary: 3_315_360, contractType:'Guaranteed' },
-                { id:'lal-12', name:'Kevon Looney',          position:'C',  salary: 2_449_421, contractType:'Guaranteed' },
-                { id:'lal-13', name:'Matisse Thybulle',      position:'SG', salary: 2_449_421, contractType:'Guaranteed' },
-                { id:'lal-14', name:'Ziaire Williams',       position:'SF', salary: 2_449_421, contractType:'Guaranteed' },
+                { id:'lal-11', name:'Cameron Carr',          position:'SG', salary: 3_315_360, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'LAL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
+                { id:'lal-12', name:'Kevon Looney',          position:'C',  salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-12 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'lal-13', name:'Matisse Thybulle',      position:'SG', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-27 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'lal-14', name:'Ziaire Williams',       position:'SF', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-19 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'lal-15', name:'Bronny James',          position:'PG', salary: 2_296_271, contractType:'Guaranteed' },
                 { id:'lal-16', name:'Adou Thiero',           position:'SF', salary: 2_150_917, contractType:'Guaranteed' },
             ],
@@ -3642,10 +3664,10 @@
         'MEM': {
             teamSalary: 175_000_000,
             players: [
-                { id:'mem-01', name:'Ja Morant',             position:'PG', salary:46_000_000, contractType:'Guaranteed' },
+                { id:'mem-01', name:'Ja Morant',             position:'PG', salary:46_000_000, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-08-28', restrictionNote:'Traded MEM→POR on 2026-06-29 — 60-day re-trade hold until 2026-08-28' },
                 { id:'mem-02', name:'Desmond Bane',          position:'SG', salary:27_000_000, contractType:'Guaranteed' },
                 { id:'mem-03', name:'Jaren Jackson Jr.',     position:'C',  salary:49_000_000, contractType:'Guaranteed' },
-                { id:'mem-04', name:'Marcus Smart',          position:'PG', salary:21_000_000, contractType:'Guaranteed' },
+                { id:'mem-04', name:'Marcus Smart',          position:'PG', salary:21_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'HOU signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'mem-05', name:'Zach Edey',             position:'C',  salary: 9_000_000, contractType:'Guaranteed' },
                 { id:'mem-06', name:'GG Jackson II',         position:'PF', salary: 7_000_000, contractType:'Guaranteed' },
                 { id:'mem-07', name:'Jake LaRavia',          position:'SF', salary: 6_000_000, contractType:'Guaranteed' },
@@ -3676,15 +3698,15 @@
                 { id:'okc-01', name:'Chet Holmgren', position:'C', salary:41240250, contractType:'Guaranteed' },
                 { id:'okc-02', name:'Jalen Williams', position:'SF', salary:41240250, contractType:'Guaranteed' },
                 { id:'okc-03', name:'Shai Gilgeous-Alexander', position:'PG', salary:40806150, contractType:'Guaranteed' },
-                { id:'okc-04', name:'Isaiah Hartenstein', position:'C', salary:23148148, contractType:'Guaranteed' },
+                { id:'okc-04', name:'Isaiah Hartenstein', position:'C', salary:23148148, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'OKC re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'okc-05', name:'Alex Caruso', position:'SG', salary:19550160, contractType:'Guaranteed' },
                 { id:'okc-06', name:'Jaylin Williams', position:'PF', salary:7774648, contractType:'Guaranteed' },
                 { id:'okc-07', name:'Cason Wallace', position:'PG', salary:7420806, contractType:'Guaranteed' },
-                { id:'okc-08', name:'Aday Mara', position:'C', salary:5791680, contractType:'Guaranteed' },
+                { id:'okc-08', name:'Aday Mara', position:'C', salary:5791680, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'OKC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'okc-09', name:'Nikola Topić', position:'PG', salary:5429760, contractType:'Guaranteed' },
-                { id:'okc-10', name:'Kenrich Williams', position:'SF', salary:5000000, contractType:'Guaranteed' },
+                { id:'okc-10', name:'Kenrich Williams', position:'SF', salary:5000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'OKC re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'okc-11', name:'Thomas Sorber', position:'C', salary:4887720, contractType:'Guaranteed' },
-                { id:'okc-12', name:'Bennett Stirtz', position:'SG', salary:4717320, contractType:'Guaranteed' },
+                { id:'okc-12', name:'Bennett Stirtz', position:'SG', salary:4717320, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'OKC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'okc-13', name:'Jared McCain', position:'SG', salary:4422600, contractType:'Guaranteed' },
                 { id:'okc-14', name:'Ajay Mitchell', position:'SG', salary:2850000, contractType:'Guaranteed' },
             ],
@@ -3739,8 +3761,8 @@
                 { id:'orl-08', name:'Tristan da Silva', position:'SF', salary:3991200, contractType:'Guaranteed' },
                 { id:'orl-09', name:'Jase Richardson', position:'PG', salary:3132360, contractType:'Guaranteed' },
                 { id:'orl-10', name:'Jamal Cain', position:'SF', salary:2584539, contractType:'Guaranteed' },
-                { id:'orl-11', name:'Jevon Carter', position:'PG', salary:2449421, contractType:'Guaranteed' },
-                { id:'orl-12', name:'Jonathan Isaac', position:'PF', salary:2449421, contractType:'Guaranteed' },
+                { id:'orl-11', name:'Jevon Carter', position:'PG', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'ORL re-signed 2026-07-01 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'orl-12', name:'Jonathan Isaac', position:'PF', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'ORL signed 2026-07-01 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'orl-13', name:'Nikola Vučević', position:'C', salary:2449421, contractType:'Guaranteed' },
                 { id:'orl-14', name:'Noah Penda', position:'SF', salary:2150917, contractType:'Guaranteed' },
             ],
@@ -3767,15 +3789,15 @@
             teamSalary: 209337389,
             players: [
                 { id:'phi-01', name:'Joel Embiid', position:'C', salary:57985752, contractType:'Guaranteed' },
-                { id:'phi-02', name:'Jaylen Brown', position:'SF', salary:57736350, contractType:'Guaranteed' },
+                { id:'phi-02', name:'Jaylen Brown', position:'SF', salary:57736350, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:'Traded BOS→PHI on 2026-07-06 — 60-day re-trade hold until 2026-09-04' },
                 { id:'phi-03', name:'Tyrese Maxey', position:'PG', salary:40770520, contractType:'Guaranteed' },
                 { id:'phi-04', name:'VJ Edgecombe', position:'SG', salary:11663880, contractType:'Guaranteed' },
-                { id:'phi-05', name:'Dean Wade', position:'PF', salary:9000000, contractType:'Guaranteed' },
-                { id:'phi-06', name:'Anfernee Simons', position:'SG', salary:6000000, contractType:'Guaranteed' },
-                { id:'phi-07', name:'LeBron James', position:'SF', salary:3876529, contractType:'Guaranteed' },
-                { id:'phi-08', name:'Labaron Philon Jr.', position:'PG', salary:3597120, contractType:'Guaranteed' },
+                { id:'phi-05', name:'Dean Wade', position:'PF', salary:9000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'phi-06', name:'Anfernee Simons', position:'SG', salary:6000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'phi-07', name:'LeBron James', position:'SF', salary:3876529, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-26 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'phi-08', name:'Labaron Philon Jr.', position:'PG', salary:3597120, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'PHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'phi-09', name:'Dominick Barlow', position:'PF', salary:3415000, contractType:'Guaranteed' },
-                { id:'phi-10', name:'Ariel Hukporti', position:'C', salary:3400000, contractType:'Guaranteed' },
+                { id:'phi-10', name:'Ariel Hukporti', position:'C', salary:3400000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'phi-11', name:'Jabari Walker', position:'PF', salary:2584539, contractType:'Guaranteed' },
                 { id:'phi-12', name:'Kentavious Caldwell-Pope', position:'SG', salary:2449421, contractType:'Guaranteed' },
                 { id:'phi-13', name:'Justin Edwards', position:'SF', salary:2411090, contractType:'Guaranteed' },
@@ -3810,15 +3832,15 @@
             players: [
                 { id:'phx-01', name:'Devin Booker', position:'SG', salary:57078728, contractType:'Guaranteed' },
                 { id:'phx-02', name:'Jalen Green', position:'SG', salary:36251166, contractType:'Guaranteed' },
-                { id:'phx-03', name:'Miles Bridges', position:'SF', salary:22826087, contractType:'Guaranteed' },
+                { id:'phx-03', name:'Miles Bridges', position:'SF', salary:22826087, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-11', restrictionNote:'Traded CHA→PHX on 2026-07-13 — 60-day re-trade hold until 2026-09-11' },
                 { id:'phx-04', name:'Dillon Brooks', position:'SF', salary:20992727, contractType:'Guaranteed' },
-                { id:'phx-05', name:'Mark Williams', position:'C', salary:11728395, contractType:'Guaranteed' },
-                { id:'phx-06', name:'Collin Gillespie', position:'PG', salary:10714286, contractType:'Guaranteed' },
+                { id:'phx-05', name:'Mark Williams', position:'C', salary:11728395, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHX re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'phx-06', name:'Collin Gillespie', position:'PG', salary:10714286, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHX re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'phx-07', name:'Khaman Maluach', position:'C', salary:6316680, contractType:'Guaranteed' },
-                { id:'phx-08', name:'Luke Kennard', position:'SG', salary:6064000, contractType:'Guaranteed' },
-                { id:'phx-09', name:'Jordan Goodwin', position:'PG', salary:5864198, contractType:'Guaranteed' },
+                { id:'phx-08', name:'Luke Kennard', position:'SG', salary:6064000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHX signed 2026-07-14 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'phx-09', name:'Jordan Goodwin', position:'PG', salary:5864198, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHX re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'phx-10', name:'Haywood Highsmith', position:'SF', salary:3018158, contractType:'Guaranteed' },
-                { id:'phx-11', name:'Koa Peat', position:'PF', salary:2926800, contractType:'Guaranteed' },
+                { id:'phx-11', name:'Koa Peat', position:'PF', salary:2926800, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'PHX Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'phx-12', name:'Ryan Dunn', position:'SF', salary:2784240, contractType:'Guaranteed' },
                 { id:'phx-13', name:'Jamaree Bouyea', position:'PG', salary:2584539, contractType:'Guaranteed' },
                 { id:'phx-14', name:'Oso Ighodaro', position:'C', salary:2296271, contractType:'Guaranteed' },
@@ -3841,7 +3863,7 @@
         'POR': {
             teamSalary: 192093473,
             players: [
-                { id:'por-01', name:'Ja Morant', position:'PG', salary:42166510, contractType:'Guaranteed' },
+                { id:'por-01', name:'Ja Morant', position:'PG', salary:42166510, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-08-28', restrictionNote:'Traded MEM→POR on 2026-06-29 — 60-day re-trade hold until 2026-08-28' },
                 { id:'por-02', name:'Jrue Holiday', position:'PG', salary:34800000, contractType:'Guaranteed' },
                 { id:'por-03', name:'Shaedon Sharpe', position:'SG', salary:20089287, contractType:'Guaranteed' },
                 { id:'por-04', name:'Toumani Camara', position:'SF', salary:18080358, contractType:'Guaranteed' },
@@ -3851,7 +3873,7 @@
                 { id:'por-08', name:'Deni Avdija', position:'SF', salary:13125000, contractType:'Guaranteed' },
                 { id:'por-09', name:'Donovan Clingan', position:'C', salary:7519920, contractType:'Guaranteed' },
                 { id:'por-10', name:'Yang Hansen', position:'C', salary:4643520, contractType:'Guaranteed' },
-                { id:'por-11', name:'Micah Potter', position:'C', salary:2801346, contractType:'Guaranteed' },
+                { id:'por-11', name:'Micah Potter', position:'C', salary:2801346, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'POR claimed/signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
                 { id:'por-12', name:'Vít Krejčí', position:'SG', salary:2667944, contractType:'Guaranteed' },
                 { id:'por-13', name:'Sidy Cissoko', position:'SF', salary:2497812, contractType:'Guaranteed' },
                 { id:'por-14', name:'Branden Carlsen', position:'C', salary:2449421, contractType:'Guaranteed' },
@@ -3884,13 +3906,13 @@
             teamSalary: 189471414,
             players: [
                 { id:'was-01', name:'Anthony Davis', position:'C', salary:58456566, contractType:'Guaranteed' },
-                { id:'was-02', name:'Trae Young', position:'PG', salary:49488300, contractType:'Guaranteed' },
-                { id:'was-03', name:'AJ Dybantsa', position:'SF', salary:14748000, contractType:'Guaranteed' },
+                { id:'was-02', name:'Trae Young', position:'PG', salary:49488300, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'WAS re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' },
+                { id:'was-03', name:'AJ Dybantsa', position:'SF', salary:14748000, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'WAS Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 },
                 { id:'was-04', name:'Alex Sarr', position:'C', salary:12370680, contractType:'Guaranteed' },
                 { id:'was-05', name:'Bilal Coulibaly', position:'SF', salary:9240012, contractType:'Guaranteed' },
                 { id:'was-06', name:'Tre Johnson', position:'SG', salary:8649600, contractType:'Guaranteed' },
-                { id:'was-07', name:'Deandre Ayton', position:'C', salary:8104000, contractType:'Guaranteed' },
-                { id:'was-08', name:'Khris Middleton', position:'SF', salary:5591122, contractType:'Guaranteed' },
+                { id:'was-07', name:'Deandre Ayton', position:'C', salary:8104000, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-05', restrictionNote:'Traded LAL→WAS on 2026-07-07 — 60-day re-trade hold until 2026-09-05' },
+                { id:'was-08', name:'Khris Middleton', position:'SF', salary:5591122, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:'Traded DAL→WAS on 2026-07-08 — 60-day re-trade hold until 2026-09-06' },
                 { id:'was-09', name:'Cam Whitmore', position:'SF', salary:5458310, contractType:'Guaranteed' },
                 { id:'was-10', name:'Bub Carrington', position:'PG', salary:4900560, contractType:'Guaranteed' },
                 { id:'was-11', name:'Will Riley', position:'SG', salary:3688320, contractType:'Guaranteed' },
@@ -5145,7 +5167,7 @@
             if (liveTeam) liveTeam.hardCappedAt = 'firstApron';
         });
 
-        // ── Minimum player count check (Art. II — 8 active-roster minimum) ────
+        // ── Roster size checks (Art. II — 8 minimum, 15 standard maximum) ────
         tradeSummary.forEach(t => {
             if (!t.abbr || !t.data) return;
             const name = t.teamInfo ? t.teamInfo.name : t.abbr;
@@ -5153,6 +5175,55 @@
             if (postCount < 8) {
                 violations.push({ type: 'error', msg: `${name}: This trade would leave the team with only ${postCount} players on its roster — teams must carry at least 8 active players.` });
             }
+            if (postCount > 15) {
+                violations.push({ type: 'error', msg: `${name}: This trade would leave the team with ${postCount} standard roster players — the regular-season limit is 15 (two-way slots are separate and are not modeled here).` });
+            }
+        });
+
+        // ── Limited NTC destination checks + non-guaranteed notes ──────────
+        tradeSummary.forEach(t => {
+            if (!t.abbr || !t.data) return;
+            const name = t.teamInfo ? t.teamInfo.name : t.abbr;
+            t.selectedPlayers.forEach(pid => {
+                const p = t.data.players.find(pp => pp.id === pid);
+                if (!p) return;
+                // Limited NTC: if playerDestinations assigns a blocked team, error
+                if (p.ntc === 'limited' && Array.isArray(p.ntcTeams) && p.ntcTeams.length) {
+                    const destId = (t.playerDestinations || {})[pid];
+                    let destAbbr = null;
+                    if (destId != null) {
+                        const destTeam = teams.find(x => x.id === destId);
+                        destAbbr = destTeam && destTeam.abbr;
+                    } else {
+                        // 2-team trade: the other team is the destination
+                        const others = teams.filter(x => x.id !== t.id && x.abbr);
+                        if (others.length === 1) destAbbr = others[0].abbr;
+                    }
+                    if (destAbbr && p.ntcTeams.map(a => String(a).toUpperCase()).includes(String(destAbbr).toUpperCase())) {
+                        violations.push({ type: 'error', msg: `${name}: ${p.name} has a limited no-trade clause that blocks a trade to ${destAbbr}. Player must waive the clause for that destination.` });
+                    }
+                }
+                // Non-guaranteed: still tradeable, but note partial guarantee / timing risk
+                if ((p.contractType || '') === 'Non-Guaranteed') {
+                    warnings.push({ type: 'warning', msg: `${name}: ${p.name} is on a Non-Guaranteed contract — listed salary is used for matching; partial guarantees and waiver timing are not modeled.` });
+                }
+            });
+        });
+
+        // ── Incoming via TPE must fit residual room (already absorbed) ─────
+        // Also flag selecting MLE/BAE-type IDs if any slipped through
+        tradeSummary.forEach(t => {
+            if (!t.abbr || !t.data) return;
+            const name = t.teamInfo ? t.teamInfo.name : t.abbr;
+            const data = t.data;
+            (t.selectedTPEs || []).forEach(id => {
+                const tpe = (data.tpes || []).find(x => x.id === id);
+                if (!tpe) return;
+                const isExc = (tpe.type === 'exception') || /mid-level|bi-annual|room mid|taxpayer mid|non-taxpayer/i.test(tpe.source || '');
+                if (isExc) {
+                    violations.push({ type: 'error', msg: `${name}: ${tpe.source || 'Exception'} (${fmtM(tpe.amount)}) is an FA exception, not a Traded Player Exception — it cannot absorb trade salary.` });
+                }
+            });
         });
 
         // Compile all messages
@@ -6638,12 +6709,15 @@
     // ─── HELPERS ─────────────────────────────────────────────────────────────
     function isPickIneligible(pk) {
         if (!pk) return false;
-        const prot = (pk.protections || '').toLowerCase();
+        const prot = (pk.protections || '').toLowerCase().trim();
         const name = (pk.name || '').toLowerCase();
+        // Explicit cannot-trade / frozen / Stepien-encumbered flags
         if (prot === 'frozen' || prot.includes('cannot trade') || prot.includes('frozen')) return true;
-        if (prot.includes('encumbered') && prot.includes('no')) return true;
-        if (/\(no\)/i.test(pk.name || '')) return true;
+        if (prot.includes('encumbered')) return true; // encumbered 2nds (to another team) are not freely tradeable
+        if (/\(no\)/i.test(pk.name || '') || /\(no trade\)/i.test(pk.name || '')) return true;
         if (name.includes('frozen') || name.includes('no trade') || name.includes('(no)')) return true;
+        // e.g. protections: "Least Favorable (No)" — the (No) means not tradeable right now
+        if (/\(no\)/i.test(pk.protections || '')) return true;
         return false;
     }
     function formatPickName(pk) {
