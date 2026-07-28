@@ -2608,19 +2608,20 @@
         return null;
     }
 
+    function isTrueTPE(t) {
+        if (!t) return false;
+        return !((t.type === 'exception') || /mid-level|bi-annual|room mid|taxpayer mid|non-taxpayer/i.test(t.source || ''));
+    }
+    // Auto-apply available TPEs (no manual selection required). Explicitly selected ones are preferred first.
     function getSelectedTPERoom(team) {
-        // Only true Traded Player Exceptions absorb incoming trade salary.
-        // Mid-Level / Bi-Annual / Room exceptions are for free-agent signings, not trades.
         if (!team || !team.abbr || !TEAM_DATA[team.abbr]) return { room: 0, tpes: [], exceptions: [] };
         const data = TEAM_DATA[team.abbr];
-        const selected = (team.selectedTPEs || []).map(id => (data.tpes || []).find(t => t.id === id)).filter(Boolean);
-        const tpes = selected.filter(t => {
-            const isExc = (t.type === 'exception') || /mid-level|bi-annual|room mid|taxpayer mid|non-taxpayer/i.test(t.source || '');
-            return !isExc;
-        });
-        const exceptions = selected.filter(t => !tpes.includes(t));
+        const all = (data.tpes || []).filter(isTrueTPE);
+        const preferred = (team.selectedTPEs || []).map(id => all.find(x => x.id === id)).filter(Boolean);
+        const rest = all.filter(t => !preferred.includes(t)).sort((a, b) => (b.amount || 0) - (a.amount || 0));
+        const tpes = preferred.concat(rest);
         const room = tpes.reduce((s, t) => s + (t.amount || 0), 0);
-        return { room, tpes, exceptions };
+        return { room, tpes, exceptions: [] };
     }
 
     // ─── ESPN TEAM LOGO MAPPING ─────────────────────────────────────────────
@@ -3970,7 +3971,7 @@
     function addTeam() {
         if (teams.length >= 5) return;
         const id = nextId++;
-        teams.push({ id, abbr: null, selectedPlayers: [], selectedPicks: [], selectedTPEs: [], faSignings: [], activeTab: 'roster', playerDestinations: {}, cashOut: 0, hardCappedAt: null });
+        teams.push({ id, abbr: null, selectedPlayers: [], selectedPicks: [], selectedTPEs: [], faSignings: [], waivedPlayers: [], activeTab: 'roster', playerDestinations: {}, pickMods: {}, cashOut: 0, hardCappedAt: null });
         renderAll();
     }
 
@@ -3996,9 +3997,11 @@
         t.selectedPicks = [];
         t.selectedTPEs = [];
         t.faSignings = [];
+        t.waivedPlayers = [];
         t.playerDestinations = {};
+        t.pickMods = {};
         t.cashOut = 0;
-        t.hardCappedAt = null; // swapping the franchise in this slot clears any carried-over hard cap
+        t.hardCappedAt = null;
         renderAll();
     }
 
@@ -4037,6 +4040,7 @@
     }
 
     function toggleTPE(teamId, tpeId) {
+        // Optional preference only — TPEs auto-apply on Analyze regardless
         const t = teams.find(t => t.id === teamId);
         if (!t) return;
         const idx = t.selectedTPEs.indexOf(tpeId);
@@ -4044,6 +4048,42 @@
         else t.selectedTPEs.push(tpeId);
         updateStats();
         renderAll();
+    }
+
+    function waivePlayer(teamId, playerId) {
+        const t = teams.find(x => x.id === teamId);
+        if (!t) return;
+        if (!t.waivedPlayers) t.waivedPlayers = [];
+        if (!t.waivedPlayers.includes(playerId)) t.waivedPlayers.push(playerId);
+        // Deselect from trade if selected
+        const si = t.selectedPlayers.indexOf(playerId);
+        if (si >= 0) t.selectedPlayers.splice(si, 1);
+        if (t.playerDestinations) delete t.playerDestinations[playerId];
+        renderAll();
+        updateStats();
+    }
+    function unwaivePlayer(teamId, playerId) {
+        const t = teams.find(x => x.id === teamId);
+        if (!t || !t.waivedPlayers) return;
+        t.waivedPlayers = t.waivedPlayers.filter(id => id !== playerId);
+        renderAll();
+        updateStats();
+    }
+    function setPickProtection(teamId, pickId, value) {
+        const t = teams.find(x => x.id === teamId);
+        if (!t) return;
+        if (!t.pickMods) t.pickMods = {};
+        if (!t.pickMods[pickId]) t.pickMods[pickId] = {};
+        t.pickMods[pickId].protection = value;
+        renderTeamCard(teamId);
+    }
+    function togglePickSwap(teamId, pickId) {
+        const t = teams.find(x => x.id === teamId);
+        if (!t) return;
+        if (!t.pickMods) t.pickMods = {};
+        if (!t.pickMods[pickId]) t.pickMods[pickId] = {};
+        t.pickMods[pickId].swap = !t.pickMods[pickId].swap;
+        renderTeamCard(teamId);
     }
 
     // ─── FA SIGNING FUNCTIONS ─────────────────────────────────────────────────
@@ -4332,70 +4372,12 @@
                 rosterContent += `</div>`;
             }
 
-            const outgoingPlayers = data.players.filter(p => t.selectedPlayers.includes(p.id));
-            const outgoingPicks = (data.picks || []).filter(pk => t.selectedPicks.includes(pk.id));
-            if (outgoingPlayers.length || outgoingPicks.length) {
-                rosterContent += `<div class="roster-section-label" style="color:#dc2626;">OUTGOING${isMultiTeamTrade ? ' — pick destination' : ''}</div>`;
-                rosterContent += `<div class="player-list" style="padding-top:0;">`;
-                outgoingPlayers.forEach(p => {
-                    const destVal = (t.playerDestinations || {})[p.id];
-                    let destLabel = '';
-                    if (isTwoTeamTrade && otherTeamsForDest.length === 1) {
-                        destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.2);">→ ${otherTeamsForDest[0].abbr}</span>`;
-                    } else if (isMultiTeamTrade) {
-                        destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;gap:4px;margin-top:5px;width:100%;">
-                            <div style="font-family:'Lexend',sans-serif;font-size:.52rem;font-weight:800;letter-spacing:.08em;color:#b91c1c;">SEND TO</div>
-                            <div style="display:flex;flex-wrap:wrap;gap:5px;">
-                            ${otherTeamsForDest.map(ot => {
-                                const on = destVal == ot.id;
-                                const col = (NBA_TEAMS[ot.abbr] && NBA_TEAMS[ot.abbr].color) || '#0066cc';
-                                return `<button type="button" onclick="setPlayerDestination(${t.id},'${p.id}',${ot.id})"
-                                    style="font-family:'Lexend',sans-serif;font-size:.68rem;font-weight:800;padding:7px 12px;border-radius:8px;cursor:pointer;min-width:56px;
-                                    border:2px solid ${on ? col : '#cbd5e1'};background:${on ? col : '#fff'};color:${on ? '#fff' : '#334155'};
-                                    box-shadow:${on ? '0 2px 6px rgba(0,0,0,.15)' : 'none'};">${ot.abbr}</button>`;
-                            }).join('')}
-                            </div>
-                        </div>`;
-                    }
-                    rosterContent += `<div class="player-item selected" style="background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.25);" onclick="togglePlayer(${t.id},'${p.id}')">
-                        ${playerHeadshotHtml(p.name, t.abbr)}
-                        <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-                        <div class="player-info">
-                            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
-                                <div class="player-name">${p.name}</div>
-                                ${destLabel}
-                            </div>
-                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">${p.contractType || ''}${p.futureOption ? '→' + (p.futureOption==='Player Option'?'PO':'TO') : ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</div>
-                        </div>
-                        <div class="player-salary">${fmtM(p.salary)}</div>
-                    </div>`;
-                });
-                outgoingPicks.forEach(pk => {
-                    const label = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
-                    let destLabel = '';
-                    if (isTwoTeamTrade && otherTeamsForDest.length === 1) {
-                        destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.2);">→ ${otherTeamsForDest[0].abbr}</span>`;
-                    }
-                    rosterContent += `<div class="player-item selected" style="background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.25);" onclick="togglePick(${t.id},'${pk.id}')">
-                        <div class="player-headshot fallback" style="background:#dc2626;font-size:.55rem;">PICK</div>
-                        <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-                        <div class="player-info">
-                            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
-                                <div class="player-name">${label}</div>
-                                ${destLabel}
-                            </div>
-                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">Draft pick${pk.protections ? ' · ' + pk.protections : ''}</div>
-                        </div>
-                        <div class="player-salary">—</div>
-                    </div>`;
-                });
-                rosterContent += `</div>`;
-            }
-
-            rosterContent += `<div style="padding:.5rem .65rem .25rem;font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#64748b;">ROSTER</div>`;
+            const waivedSet = new Set(t.waivedPlayers || []);
+            rosterContent += `<div class="roster-section-label" style="color:#64748b;">ROSTER</div>`;
             rosterContent += `<div class="player-list" style="padding-top:0;">`;
             data.players.forEach(p => {
-                if (t.selectedPlayers.includes(p.id)) return; // shown in OUTGOING
+                if (waivedSet.has(p.id)) return;
+                const isSel = t.selectedPlayers.includes(p.id);
                 const hold = getPlayerTradeHold(p);
                 const holdHard = hold && hold.hard;
                 const contractBadgeColor = p.contractType === 'Guaranteed' ? '#16a34a' :
@@ -4408,21 +4390,55 @@
                     ${holdHard
                         ? 'background:rgba(220,38,38,.12);color:#b91c1c;border:1px solid rgba(220,38,38,.25);'
                         : 'background:rgba(234,88,12,.12);color:#c2410c;border:1px solid rgba(234,88,12,.25);'}">${hold.label}</span>` : '';
-                const itemStyle = holdHard ? 'opacity:.72;' : '';
-                rosterContent += `<div class="player-item" style="${itemStyle}" onclick="togglePlayer(${t.id},'${p.id}')">
+                let destLabel = '';
+                if (isSel && isMultiTeamTrade) {
+                    const destVal = (t.playerDestinations || {})[p.id];
+                    destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                        ${otherTeamsForDest.map(ot => {
+                            const on = destVal == ot.id;
+                            const col = (NBA_TEAMS[ot.abbr] && NBA_TEAMS[ot.abbr].color) || '#0066cc';
+                            return `<button type="button" onclick="setPlayerDestination(${t.id},'${p.id}',${ot.id})"
+                                style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;padding:5px 10px;border-radius:7px;cursor:pointer;
+                                border:2px solid ${on ? col : '#cbd5e1'};background:${on ? col : '#fff'};color:${on ? '#fff' : '#334155'};">${ot.abbr}</button>`;
+                        }).join('')}
+                    </div>`;
+                } else if (isSel && isTwoTeamTrade && otherTeamsForDest.length === 1) {
+                    destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;color:#b91c1c;margin-left:4px;">→ ${otherTeamsForDest[0].abbr}</span>`;
+                }
+                const itemStyle = (holdHard ? 'opacity:.72;' : '') + (isSel ? 'background:rgba(0,107,182,.08);border-color:rgba(0,107,182,.3);' : '');
+                rosterContent += `<div class="player-item ${isSel ? 'selected' : ''}" style="${itemStyle}" onclick="togglePlayer(${t.id},'${p.id}')">
                     ${playerHeadshotHtml(p.name, t.abbr)}
                     <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-                    <div class="player-info">
+                    <div class="player-info" style="flex:1;min-width:0;">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
                             <div class="player-name">${p.name}</div>
                             ${p.position && p.position !== '—' ? `<span style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.08em;background:#f1f5f9;color:#64748b;border-radius:3px;padding:1px 4px;">${p.position}</span>` : ''}
                             ${holdBadge}
+                            ${destLabel}
                         </div>
                         <div style="display:flex;align-items:center;gap:.35rem;margin-top:2px;flex-wrap:wrap;">
                             <span style="font-family:'Lexend',sans-serif;font-size:.6rem;font-weight:600;color:${contractBadgeColor};background:${contractBadgeColor}18;border-radius:3px;padding:1px 5px;">${p.contractType || ''}${p.futureOption ? '→' + (p.futureOption==='Player Option'?'PO':'TO') : ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</span>
                         </div>
                     </div>
-                    <div class="player-salary">${fmtM(p.salary)}</div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <div class="player-salary">${fmtM(p.salary)}</div>
+                        <button type="button" onclick="event.stopPropagation();waivePlayer(${t.id},'${p.id}')" title="Waive player"
+                            style="font-family:'Lexend',sans-serif;font-size:.5rem;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;">WAIVE</button>
+                    </div>
+                </div>`;
+            });
+            // Show waived players (can un-waive)
+            (t.waivedPlayers || []).forEach(pid => {
+                const p = data.players.find(pp => pp.id === pid);
+                if (!p) return;
+                rosterContent += `<div class="player-item" style="opacity:.55;background:#f8fafc;">
+                    ${playerHeadshotHtml(p.name, t.abbr)}
+                    <div class="player-info" style="flex:1;">
+                        <div class="player-name" style="text-decoration:line-through;color:#94a3b8;">${p.name}</div>
+                        <div style="font-size:.55rem;color:#94a3b8;font-family:Lexend,sans-serif;">Waived · ${fmtM(p.salary)} dead cap this year</div>
+                    </div>
+                    <button type="button" onclick="unwaivePlayer(${t.id},'${p.id}')"
+                        style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;padding:4px 8px;border-radius:5px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">UNDO</button>
                 </div>`;
             });
             rosterContent += `</div>`;
@@ -4444,21 +4460,42 @@
                     t.selectedPicks = t.selectedPicks.filter(id => id !== pk.id);
                 }
                 const sel = (!ineligible && t.selectedPicks.includes(pk.id)) ? 'selected' : '';
-                const displayName = formatPickName(pk);
+                const mod = (t.pickMods && t.pickMods[pk.id]) || {};
+                const prot = mod.protection != null ? mod.protection : (pk.protections || 'Unprotected');
+                const isSwap = !!mod.swap;
+                const displayName = formatPickName(pk) + (isSwap ? ' (Swap)' : '');
                 const detailBits = [];
-                if (pk.protections && !ineligible) detailBits.push(pk.protections);
-                else if (!ineligible) detailBits.push('Unprotected');
+                if (!ineligible) detailBits.push(prot);
                 detailBits.push('Owned by ' + (pk.owner || t.abbr));
                 const itemCls = (sel ? 'selected ' : '') + (ineligible ? 'ineligible disabled' : '');
                 const clickAttr = ineligible ? '' : `onclick="togglePick(${t.id},'${pk.id}')"`;
+                const protOpts = ['Unprotected','Top-1 Protected','Top-3 Protected','Top-5 Protected','Top-8 Protected','Top-10 Protected','Top-14 Protected','Lottery Protected','Conveys as 2nd if not met'];
+                let modUi = '';
+                if (sel && !ineligible) {
+                    modUi = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center;">
+                        <label style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:700;color:#64748b;display:flex;align-items:center;gap:4px;">
+                            Protection
+                            <select onchange="setPickProtection(${t.id},'${pk.id}',this.value)"
+                                style="font-family:Lexend,sans-serif;font-size:.6rem;font-weight:700;padding:3px 6px;border-radius:5px;border:1px solid #cbd5e1;background:#fff;">
+                                ${protOpts.map(o => `<option value="${o}" ${prot === o ? 'selected' : ''}>${o}</option>`).join('')}
+                            </select>
+                        </label>
+                        <button type="button" onclick="togglePickSwap(${t.id},'${pk.id}')"
+                            style="font-family:Lexend,sans-serif;font-size:.58rem;font-weight:800;padding:4px 9px;border-radius:6px;cursor:pointer;
+                            border:1.5px solid ${isSwap ? '#0066cc' : '#cbd5e1'};background:${isSwap ? '#0066cc' : '#fff'};color:${isSwap ? '#fff' : '#475569'};">
+                            ${isSwap ? 'Swap ON' : 'Offer as Swap'}
+                        </button>
+                    </div>`;
+                }
                 return `<div class="pick-item ${itemCls}" ${clickAttr} ${ineligible ? 'title="Ineligible to be traded"' : ''}>
                     ${ineligible
                         ? `<div class="pick-lock" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>`
                         : `<div class="pick-checkbox"><svg style="display:${sel?'block':'none'}" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`
                     }
-                    <div class="pick-info">
+                    <div class="pick-info" style="flex:1;">
                         <div class="pick-name">${displayName}${ineligible ? '<span class="pick-ineligible-tag">Ineligible to be traded</span>' : ''}</div>
                         <div class="pick-detail">${detailBits.join(' · ')}</div>
+                        ${modUi}
                     </div>
                 </div>`;
             };
@@ -4495,7 +4532,7 @@
             tpeContent = `<div class="tpe-list">`;
             if (trueTPEs.length) {
                 tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#64748b;padding:.35rem .7rem .2rem;">TRADED PLAYER EXCEPTIONS</div>`;
-                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;color:#94a3b8;padding:0 .7rem .45rem;line-height:1.35;">Select a TPE to absorb incoming salary without matching outgoing salary (up to the TPE amount).</div>`;
+                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;color:#94a3b8;padding:0 .7rem .45rem;line-height:1.35;">TPEs apply automatically on Analyze when needed. Optional: pin a preferred TPE (click) — otherwise the largest available room is used first.</div>`;
                 trueTPEs.forEach(tpe => {
                     const sel = t.selectedTPEs.includes(tpe.id) ? 'selected' : '';
                     tpeContent += `<div class="tpe-item ${sel}" onclick="toggleTPE(${t.id},'${tpe.id}')">
@@ -4706,7 +4743,7 @@
                     ${yearCellsHtml(p, leaving, '')}
                 </tr>`;
             });
-            sheetContent = `<div style="padding:.5rem .55rem .75rem;overflow:auto;max-height:420px;">
+            sheetContent = `<div style="padding:.5rem .55rem .75rem;overflow:visible;">
                 <table style="width:100%;border-collapse:collapse;font-family:Lexend,sans-serif;">
                     <thead><tr style="border-bottom:2px solid #e2e8f0;position:sticky;top:0;background:#fff;">
                         <th style="text-align:left;padding:4px;font-size:.55rem;font-weight:800;letter-spacing:.06em;color:#94a3b8;">PLAYER</th>
@@ -5049,11 +5086,28 @@
                 // Should not be selectable anymore, but guard if stale selection exists
                 t.selectedTPEs = (t.selectedTPEs || []).filter(id => tpeInfo.tpes.some(x => x.id === id));
             }
+            t.tpesConsumed = [];
             if (tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
-                const absorbed = Math.min(tpeInfo.room, t.matchableReceivingSalary);
-                t.tpeUsed = absorbed;
-                t.matchableReceivingSalary -= absorbed;
-                t.usedTPE = true;
+                let remaining = t.matchableReceivingSalary;
+                for (const tpe of tpeInfo.tpes) {
+                    if (remaining <= 0) break;
+                    const use = Math.min(tpe.amount || 0, remaining);
+                    if (use > 0) {
+                        t.tpesConsumed.push({ id: tpe.id, source: tpe.source, amount: use, full: tpe.amount, expires: tpe.expires });
+                        remaining -= use;
+                        t.tpeUsed += use;
+                    }
+                }
+                t.matchableReceivingSalary = remaining;
+                t.usedTPE = t.tpeUsed > 0;
+            }
+            // TPE creation: over-cap team sends more salary than it takes back → residual becomes a new TPE
+            t.createdTPE = 0;
+            if (t.sendingSalary > 0) {
+                const netOut = t.sendingSalary - t.receivingSalary;
+                if (netOut > 0 && (t.currentSalary || 0) > CBA.salaryCap) {
+                    t.createdTPE = netOut;
+                }
             }
         });
         if (isMultiTeamTrade) {
@@ -5124,11 +5178,13 @@
                 }
             }
 
-            // ── TPE usage notes ───────────────────────────────────────────
-            if (t.tpeUsed > 0) {
-                infos.push({ type: 'info', msg: `${name}: Using $${fmtFull(t.tpeUsed)} of Traded Player Exception room to absorb incoming salary (TPE room selected: $${fmtFull(t.tpeRoom)}). Remaining salary requiring a match: $${fmtFull(t.matchableReceivingSalary)}.` });
-            } else if (t.tpeRoom > 0 && t.receivingSalary === 0) {
-                warnings.push({ type: 'warning', msg: `${name}: A TPE is selected but this team is not receiving any players — TPE room is only applied to incoming trade salary.` });
+            // ── TPE usage notes (auto-applied) ────────────────────────────
+            if (t.tpeUsed > 0 && t.tpesConsumed && t.tpesConsumed.length) {
+                const parts = t.tpesConsumed.map(x => `${fmtM(x.amount)} from ${x.source || 'TPE'}${x.expires ? ' (exp ' + x.expires + ')' : ''}`);
+                infos.push({ type: 'info', msg: `${name}: Auto-used ${fmtM(t.tpeUsed)} of existing TPE room to absorb incoming salary — ${parts.join('; ')}. Remaining to match: ${fmtM(t.matchableReceivingSalary)}.` });
+            }
+            if (t.createdTPE > 0) {
+                infos.push({ type: 'info', msg: `${name}: Will create a ${fmtM(t.createdTPE)} Traded Player Exception from this deal (usable for one year from the trade date).` });
             }
 
             // ── Salary matching rules (Art. VII Sec. 6(j)) ────────────────
