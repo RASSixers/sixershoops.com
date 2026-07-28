@@ -2153,6 +2153,10 @@
         matchBand2:  29_000_000,
         matchFlatAdd: 7_500_000,
         matchBuffer:    250_000,
+        // Minimum Player Salary Exception ceiling (the "2-years-of-service" veteran minimum figure,
+        // not the acquiring team's own minimum) — incoming players at/under this do not count
+        // against a team's salary-matching requirement, regardless of apron status.
+        minExceptionCap: 3_700_000,
     };
 
     // ─── SALARY MATCHING HELPERS (Art. VII §6(j)) ───────────────────────────
@@ -3235,7 +3239,7 @@
     function addTeam() {
         if (teams.length >= 5) return;
         const id = nextId++;
-        teams.push({ id, abbr: null, selectedPlayers: [], selectedPicks: [], selectedTPEs: [], faSignings: [], activeTab: 'roster', playerDestinations: {} });
+        teams.push({ id, abbr: null, selectedPlayers: [], selectedPicks: [], selectedTPEs: [], faSignings: [], activeTab: 'roster', playerDestinations: {}, cashOut: 0 });
         renderAll();
     }
 
@@ -3262,6 +3266,7 @@
         t.selectedTPEs = [];
         t.faSignings = [];
         t.playerDestinations = {};
+        t.cashOut = 0;
         renderAll();
     }
 
@@ -3810,6 +3815,11 @@
             <div><div class="footer-label">Team Salary</div><div class="footer-value">${teamSal}</div></div>
             <div class="footer-sending">${sendingStr}</div>
         </div>
+        ${t.abbr ? `<div class="cash-row">
+            <span class="cash-row-label">Cash included in trade</span>
+            <input class="cash-input" type="number" min="0" step="50000" value="${t.cashOut || 0}"
+                onclick="event.stopPropagation()" onchange="setCashOut(${t.id}, this.value)" placeholder="$0" />
+        </div>` : ''}
         <div class="tools-row">
             <button class="tool-btn primary" onclick="findFiller(${t.id})" title="Find players from the other team that match your outgoing salary"${(!t.abbr || sendingSalary === 0) ? ' disabled' : ''}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="11" y1="8" x2="11" y2="14"/></svg>
@@ -3850,9 +3860,12 @@
 
     // ─── CBA TRADE ANALYSIS ──────────────────────────────────────────────────
     // ─── TRADE FLOW ROUTING (2-team pooled vs 3+ team per-destination) ──────
+    // Also splits incoming salary into "matchable" vs "Minimum Salary Exception" (players at/under
+    // CBA.minExceptionCap can be acquired outright and don't count against the matching requirement),
+    // and tracks incoming player counts for roster-size checks.
     function computeTradeFlows() {
         const flows = {};
-        teams.forEach(t => { flows[t.id] = { sendingSalary: 0, receivingSalary: 0, unassignedSalary: 0 }; });
+        teams.forEach(t => { flows[t.id] = { sendingSalary: 0, receivingSalary: 0, matchableReceivingSalary: 0, minExceptionSalary: 0, unassignedSalary: 0, incomingCount: 0 }; });
 
         const teamsWithPlayers = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && t.selectedPlayers.length > 0);
         const multiTeam = teamsWithPlayers.length > 2;
@@ -3864,10 +3877,14 @@
                 const p = data.players.find(pp => pp.id === pid);
                 if (!p) return;
                 flows[t.id].sendingSalary += p.salary;
+                const viaMinException = p.salary <= CBA.minExceptionCap;
                 if (multiTeam) {
                     const dest = (t.playerDestinations || {})[pid];
                     if (dest != null && flows[dest]) {
                         flows[dest].receivingSalary += p.salary;
+                        flows[dest].incomingCount += 1;
+                        if (viaMinException) flows[dest].minExceptionSalary += p.salary;
+                        else flows[dest].matchableReceivingSalary += p.salary;
                     } else {
                         flows[t.id].unassignedSalary += p.salary;
                     }
@@ -3877,8 +3894,23 @@
 
         if (!multiTeam) {
             // Exact for 2-team trades: everything one side sends, the other side receives.
-            const total = Object.values(flows).reduce((s, f) => s + f.sendingSalary, 0);
-            teams.forEach(t => { flows[t.id].receivingSalary = total - flows[t.id].sendingSalary; });
+            teams.forEach(t => {
+                const data = t.abbr && TEAM_DATA[t.abbr] ? TEAM_DATA[t.abbr] : null;
+                if (!data) return;
+                teams.forEach(other => {
+                    if (other.id === t.id) return;
+                    const odata = other.abbr && TEAM_DATA[other.abbr] ? TEAM_DATA[other.abbr] : null;
+                    if (!odata) return;
+                    other.selectedPlayers.forEach(pid => {
+                        const p = odata.players.find(pp => pp.id === pid);
+                        if (!p) return;
+                        flows[t.id].receivingSalary += p.salary;
+                        flows[t.id].incomingCount += 1;
+                        if (p.salary <= CBA.minExceptionCap) flows[t.id].minExceptionSalary += p.salary;
+                        else flows[t.id].matchableReceivingSalary += p.salary;
+                    });
+                });
+            });
         }
 
         return { flows, multiTeam };
@@ -3890,6 +3922,12 @@
         if (!t.playerDestinations) t.playerDestinations = {};
         t.playerDestinations[playerId] = destTeamId ? Number(destTeamId) : null;
         updateStats();
+    }
+
+    function setCashOut(teamId, val) {
+        const t = teams.find(x => x.id === teamId);
+        if (!t) return;
+        t.cashOut = Math.max(0, Number(val) || 0);
     }
 
     function analyzeTrade() {
@@ -3932,16 +3970,24 @@
         // salary may go to Team C, not Team B), so we route by explicit per-player destination instead.
         const { flows: tradeFlows, multiTeam: isMultiTeamTrade } = computeTradeFlows();
         tradeSummary.forEach(t => {
-            const f = tradeFlows[t.id] || { receivingSalary: 0, unassignedSalary: 0 };
+            const f = tradeFlows[t.id] || { receivingSalary: 0, matchableReceivingSalary: 0, minExceptionSalary: 0, unassignedSalary: 0, incomingCount: 0 };
             t.receivingSalary = f.receivingSalary;
+            t.matchableReceivingSalary = f.matchableReceivingSalary;
+            t.minExceptionSalary = f.minExceptionSalary;
             t.unassignedSalary = f.unassignedSalary || 0;
+            t.incomingCount = f.incomingCount || 0;
         });
         if (isMultiTeamTrade) {
-            const anyUnassigned = tradeSummary.some(t => t.unassignedSalary > 0);
-            if (anyUnassigned) {
-                warnings.push({ type: 'warning', msg: `This is a 3+ team trade — use the "Send to" dropdown next to each selected player to assign which team receives them. Unassigned players are excluded from the matching totals below, which can change the result.` });
-            }
+            tradeSummary.forEach(t => {
+                if (t.unassignedSalary > 0) {
+                    violations.push({ type: 'error', msg: `${t.teamInfo ? t.teamInfo.name : (t.abbr || 'A team')}: This is a 3+ team trade — use the "Send to" dropdown next to each selected player to assign a destination before this trade can be analyzed. $${fmtFull(t.unassignedSalary)} in outgoing salary is currently unassigned.` });
+                }
+            });
         }
+
+        // Modeling limitations disclosure — shown once so numbers aren't taken as more precise
+        // than the underlying data actually supports.
+        infos.push({ type: 'info', msg: `Modeling notes: uses full listed salary for Non-Guaranteed contracts (not a partial-guarantee amount, which isn't in this dataset), does not model trade kickers/likely-to-be-earned bonuses or Sign-and-Trade Base Year Compensation, and uses standard Team Salary rather than the CBA's Apron-specific Team Salary definition (which adjusts for incentives and cap holds). Figures near an apron line should be independently verified.` });
 
         // ── CBA RULE CHECKS ────────────────────────────────────────────────
         tradeSummary.forEach(t => {
@@ -3952,17 +3998,26 @@
             const isAboveCap = currentSalary > CBA.salaryCap;
             const isAboveFirstApron = postSalary > CBA.firstApron || currentSalary > CBA.firstApron;
             const isAboveSecondApron = postSalary > CBA.secondApron || currentSalary > CBA.secondApron;
+            t.postSalary = postSalary;
+            t.isAboveFirstApron = isAboveFirstApron;
+            t.isAboveSecondApron = isAboveSecondApron;
+            t.usedExpandedMatching = !isAboveFirstApron && t.matchableReceivingSalary > t.sendingSalary + CBA.matchBuffer;
 
             // ── Salary matching rules (Art. VII Sec. 6(j)) ────────────────
             // isAboveFirstApron here reflects "will this team be an Apron team" (current OR post-trade),
-            // which is the correct test for which matching regime applies.
-            if (isAboveCap && t.sendingSalary > 0 && t.receivingSalary > 0) {
+            // which is the correct test for which matching regime applies. Incoming players acquired
+            // under the Minimum Player Salary Exception (t.minExceptionSalary) are excluded from the
+            // amount that must be matched.
+            if (t.minExceptionSalary > 0) {
+                infos.push({ type: 'info', msg: `${name}: $${fmtFull(t.minExceptionSalary)} of incoming salary qualifies for the Minimum Player Salary Exception and is excluded from the salary-matching requirement below.` });
+            }
+            if (isAboveCap && t.sendingSalary > 0 && t.matchableReceivingSalary > 0) {
                 const outgoing = t.sendingSalary;
                 const apronMax = isAboveFirstApron ? apronMatchMax(outgoing) : standardMatchMax(outgoing);
 
-                if (t.receivingSalary > apronMax) {
-                    violations.push({ type: 'error', msg: `${name}: Incoming salary ($${fmtFull(t.receivingSalary)}) exceeds the max allowed ($${fmtFull(apronMax)}) under CBA salary matching rules${isAboveFirstApron ? ' (Apron teams are limited to a 100% match, with no $250k buffer)' : ''}.` });
-                } else if (!isAboveFirstApron && t.receivingSalary > outgoing + CBA.matchBuffer) {
+                if (t.matchableReceivingSalary > apronMax) {
+                    violations.push({ type: 'error', msg: `${name}: Incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) exceeds the max allowed ($${fmtFull(apronMax)}) under CBA salary matching rules${isAboveFirstApron ? ' (Apron teams are limited to a 100% match, with no $250k buffer)' : ''}.` });
+                } else if (!isAboveFirstApron && t.matchableReceivingSalary > outgoing + CBA.matchBuffer) {
                     infos.push({ type: 'info', msg: `${name}: Using expanded salary-matching rules (up to ${fmtPct(apronMax/outgoing)}% of outgoing salary at this level).` });
                 }
             }
@@ -3978,18 +4033,27 @@
                         .filter(Boolean)
                         .map(p => p.salary);
                     const maxSingleOutgoing = outgoingSalaries.length ? Math.max(...outgoingSalaries) : 0;
-                    if (t.receivingSalary > maxSingleOutgoing) {
-                        violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot aggregate multiple outgoing salaries to match a larger incoming salary. Largest single outgoing salary is $${fmtFull(maxSingleOutgoing)}, but the team would take back $${fmtFull(t.receivingSalary)}.` });
+                    if (t.matchableReceivingSalary > maxSingleOutgoing) {
+                        violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot aggregate multiple outgoing salaries to match a larger incoming salary. Largest single outgoing salary is $${fmtFull(maxSingleOutgoing)}, but the team would take back $${fmtFull(t.matchableReceivingSalary)} requiring a match.` });
                     } else {
-                        infos.push({ type: 'info', msg: `${name}: Sending multiple players is fine here since the incoming salary ($${fmtFull(t.receivingSalary)}) fits under the largest single outgoing salary ($${fmtFull(maxSingleOutgoing)}) — no aggregation is required.` });
+                        infos.push({ type: 'info', msg: `${name}: Sending multiple players is fine here since the incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) fits under the largest single outgoing salary ($${fmtFull(maxSingleOutgoing)}) — no aggregation is required.` });
                     }
                 }
                 // Cannot use TPE from prior trade
                 if (t.selectedTPEs.length > 0) {
                     violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot use prior Traded Player Exceptions.` });
                 }
-                // Check for cash being sent
-                warnings.push({ type: 'warning', msg: `${name} is above the Second Apron — cannot send or receive cash in this trade.` });
+                // Cash: Second Apron teams cannot send or receive cash at all in a trade.
+                if ((t.cashOut || 0) > 0) {
+                    violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot send or receive cash in a trade — remove the $${fmtFull(t.cashOut)} cash included here.` });
+                } else {
+                    warnings.push({ type: 'warning', msg: `${name} is above the Second Apron — cannot send or receive cash in this trade.` });
+                }
+            }
+
+            // ── Cash trade limit (Art. VII Sec. 3(c)) — $6.0M per season ─────
+            if ((t.cashOut || 0) > CBA.cashLimit) {
+                violations.push({ type: 'error', msg: `${name}: Cash included ($${fmtFull(t.cashOut)}) exceeds the ${fmtM(CBA.cashLimit)} cash-in-trades limit for the season (this checks only the cash entered here, not cash sent in other trades this season).` });
             }
 
             // ── First Apron restrictions ───────────────────────────────────
@@ -4131,6 +4195,7 @@
                         infos.push({ type: 'info', msg: `${name}: Signing ${s.name} using Taxpayer MLE (${fmtM(annualSalary)}/yr). Team will be hard-capped at the First Apron once TMLE is used.` });
                     } else if (!isAboveFirstApron && annualSalary <= CBA.nonTaxpayerMLE && annualSalary > CBA.taxpayerMLE) {
                         infos.push({ type: 'info', msg: `${name}: Signing ${s.name} using Non-Taxpayer MLE (${fmtM(annualSalary)}/yr). Team will be hard-capped at the First Apron.` });
+                        t.usedNonTaxpayerMLE = true;
                     }
                     // Bi-Annual exception check (≤ $5M, only usable below tax line)
                     if (annualSalary <= CBA.biAnnual && currentSalary < CBA.luxuryTax) {
@@ -4164,6 +4229,7 @@
                     violations.push({ type: 'error', msg: `${name}: Cannot acquire ${s.name} via Sign-and-Trade — First Apron (and above) teams are prohibited from making S&T acquisitions (CBA Art. VII Sec. 5(c)).` });
                     return;
                 }
+                t.usedSignAndTrade = true;
 
                 // S&T cap: max 3 yrs for the receiving team if it would put them in tax
                 const projPost = currentSalary + annualSalary + t.receivingSalary - t.sendingSalary;
@@ -4195,8 +4261,39 @@
 
         });  // end tradeSummary.forEach FA/S&T
 
-        // ── Minimum player count check ─────────────────────────────────────
-        // Each team must end with at least 8 players on active roster (not enforced without full roster data)
+        // ── Hard-cap consistency (combines trade + FA/S&T moves in this analysis) ──
+        // Once a team uses the Expanded Trade Exception (>100% match), Non-Taxpayer MLE, Bi-Annual
+        // Exception, or acquires via Sign-and-Trade, it is hard-capped at the First Apron for the
+        // rest of the season. This only checks the moves entered in THIS analysis together — it
+        // can't see other transactions made earlier in the season.
+        tradeSummary.forEach(t => {
+            if (!t.abbr || !t.data) return;
+            const name = t.teamInfo ? t.teamInfo.name : t.abbr;
+            const triggers = [];
+            if (t.usedExpandedMatching) triggers.push('using the Expanded Trade Exception (matching more than 100% of outgoing salary)');
+            if (t.usedNonTaxpayerMLE) triggers.push('using the Non-Taxpayer MLE');
+            if (t.usedSignAndTrade) triggers.push('acquiring a player via Sign-and-Trade');
+            if (triggers.length === 0) return;
+
+            const faTotal = (t.faSignings || []).reduce((s, f) => s + f.salary, 0);
+            const finalProjected = (t.postSalary || 0) + faTotal;
+            const triggerStr = triggers.join(' and ');
+            if (finalProjected > CBA.firstApron) {
+                violations.push({ type: 'error', msg: `${name}: ${triggerStr} hard-caps this team at the First Apron (${fmtM(CBA.firstApron)}) for the rest of the season, but the combined post-trade/post-signing payroll ($${fmtFull(finalProjected)}) already exceeds it.` });
+            } else {
+                infos.push({ type: 'info', msg: `${name}: ${triggerStr} hard-caps this team at the First Apron (${fmtM(CBA.firstApron)}) for the rest of the season — total salary cannot exceed that line in any later move.` });
+            }
+        });
+
+        // ── Minimum player count check (Art. II — 8 active-roster minimum) ────
+        tradeSummary.forEach(t => {
+            if (!t.abbr || !t.data) return;
+            const name = t.teamInfo ? t.teamInfo.name : t.abbr;
+            const postCount = t.data.players.length - t.selectedPlayers.length + (t.incomingCount || 0);
+            if (postCount < 8) {
+                violations.push({ type: 'error', msg: `${name}: This trade would leave the team with only ${postCount} players on its roster — teams must carry at least 8 active players.` });
+            }
+        });
 
         // Compile all messages
         const allMessages = [...violations, ...warnings, ...infos];
@@ -4369,8 +4466,9 @@
         // Routed the same way as analyzeTrade: pooled sum for 2-team trades, per-destination for 3+.
         const { flows } = computeTradeFlows();
         const receivingSalary = flows[teamId] ? flows[teamId].receivingSalary : 0;
+        const matchableReceivingSalary = flows[teamId] ? flows[teamId].matchableReceivingSalary : 0;
         const post = sal - sendingSalary + receivingSalary;
-        const html = buildConsequenceHtml(t, teamInfo, sal, post, sendingSalary, receivingSalary, /*standalone*/true);
+        const html = buildConsequenceHtml(t, teamInfo, sal, post, sendingSalary, matchableReceivingSalary, /*standalone*/true);
         openFiller(`Why this trade is restricted`,
             `${teamInfo?.name || t.abbr} — plain-English CBA breakdown`, 0, 0,
             html);
@@ -4849,7 +4947,7 @@
         if (activeTeams.length > 0) {
             const conseqHtml = activeTeams.map(t => {
                 const post = t.currentSalary - t.sendingSalary + (t.receivingSalary || 0);
-                return buildConsequenceHtml(t, t.teamInfo, t.currentSalary, post, t.sendingSalary, t.receivingSalary || 0, false);
+                return buildConsequenceHtml(t, t.teamInfo, t.currentSalary, post, t.sendingSalary, t.matchableReceivingSalary || 0, false);
             }).join('');
             restrictionsEl.innerHTML += `
                 <div class="consequences-section">
