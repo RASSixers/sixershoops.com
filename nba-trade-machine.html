@@ -4257,9 +4257,82 @@
         } else if (!data || !data.players || data.players.length === 0) {
             rosterContent = `<div class="empty-state"><div class="empty-state-text">No roster data loaded yet.<br>Import team data to populate.</div></div>`;
         } else {
-            rosterContent = `<div class="player-list">`;
+            // Incoming players from other teams (visual "moving to this team")
+            const incomingRows = [];
+            teams.forEach(other => {
+                if (other.id === t.id || !other.abbr || !TEAM_DATA[other.abbr]) return;
+                const odata = TEAM_DATA[other.abbr];
+                other.selectedPlayers.forEach(pid => {
+                    const destId = (other.playerDestinations || {})[pid];
+                    // 2-team: auto goes to the other team. 3+: only if dest assigned to us
+                    let comesHere = false;
+                    if (teamsWithPlayersNow.length === 2) comesHere = true;
+                    else if (destId != null && Number(destId) === t.id) comesHere = true;
+                    if (!comesHere) return;
+                    const p = odata.players.find(pp => pp.id === pid);
+                    if (p) incomingRows.push({ p, fromAbbr: other.abbr, fromId: other.id });
+                });
+            });
+
+            rosterContent = '';
+            if (incomingRows.length) {
+                rosterContent += `<div style="padding:.5rem .65rem .25rem;font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#059669;">INCOMING</div>`;
+                rosterContent += `<div class="player-list" style="padding-top:0;">`;
+                incomingRows.forEach(({ p, fromAbbr }) => {
+                    rosterContent += `<div class="player-item" style="background:rgba(5,150,105,.06);border-color:rgba(5,150,105,.2);cursor:default;">
+                        ${playerHeadshotHtml(p.name, fromAbbr)}
+                        <div class="player-checkbox" style="background:#059669;border-color:#059669;"><svg class="player-checkbox-check" style="display:block;color:#fff;" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div class="player-info">
+                            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+                                <div class="player-name">${p.name}</div>
+                                <span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(5,150,105,.12);color:#047857;border:1px solid rgba(5,150,105,.25);">from ${fromAbbr}</span>
+                            </div>
+                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">${p.contractType || ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</div>
+                        </div>
+                        <div class="player-salary" style="color:#059669;">${fmtM(p.salary)}</div>
+                    </div>`;
+                });
+                rosterContent += `</div>`;
+            }
+
+            const outgoing = data.players.filter(p => t.selectedPlayers.includes(p.id));
+            if (outgoing.length) {
+                rosterContent += `<div style="padding:.5rem .65rem .25rem;font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#dc2626;">OUTGOING${isMultiTeamTrade ? ' — pick destination' : ''}</div>`;
+                rosterContent += `<div class="player-list" style="padding-top:0;">`;
+                outgoing.forEach(p => {
+                    const destVal = (t.playerDestinations || {})[p.id];
+                    let destLabel = '';
+                    if (teamsWithPlayersNow.length === 2 && otherTeamsForDest.length === 1) {
+                        destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.2);">→ ${otherTeamsForDest[0].abbr}</span>`;
+                    } else if (isMultiTeamTrade) {
+                        destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">
+                            ${otherTeamsForDest.map(ot => {
+                                const on = destVal == ot.id;
+                                return `<button type="button" onclick="setPlayerDestination(${t.id},'${p.id}',${ot.id})"
+                                    style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;padding:2px 7px;border-radius:999px;cursor:pointer;border:1px solid ${on ? '#0066cc' : '#cbd5e1'};background:${on ? '#0066cc' : '#fff'};color:${on ? '#fff' : '#475569'};">→ ${ot.abbr}</button>`;
+                            }).join('')}
+                        </div>`;
+                    }
+                    rosterContent += `<div class="player-item selected" style="background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.25);" onclick="togglePlayer(${t.id},'${p.id}')">
+                        ${playerHeadshotHtml(p.name, t.abbr)}
+                        <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div class="player-info">
+                            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+                                <div class="player-name">${p.name}</div>
+                                ${destLabel}
+                            </div>
+                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">${p.contractType || ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</div>
+                        </div>
+                        <div class="player-salary">${fmtM(p.salary)}</div>
+                    </div>`;
+                });
+                rosterContent += `</div>`;
+            }
+
+            rosterContent += `<div style="padding:.5rem .65rem .25rem;font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#64748b;">ROSTER</div>`;
+            rosterContent += `<div class="player-list" style="padding-top:0;">`;
             data.players.forEach(p => {
-                const sel = t.selectedPlayers.includes(p.id) ? 'selected' : '';
+                if (t.selectedPlayers.includes(p.id)) return; // shown in OUTGOING
                 const hold = getPlayerTradeHold(p);
                 const holdHard = hold && hold.hard;
                 const contractBadgeColor = p.contractType === 'Guaranteed' ? '#16a34a' :
@@ -4267,20 +4340,13 @@
                     p.contractType === 'Team Option' ? '#2563eb' :
                     p.contractType === 'Player Option' ? '#7c3aed' :
                     p.contractType === 'Estimated' ? '#ea580c' : '#6b7280';
-                const destVal = (t.playerDestinations || {})[p.id];
-                const destPicker = (sel && isMultiTeamTrade) ? `
-                    <select onclick="event.stopPropagation()" onchange="setPlayerDestination(${t.id}, '${p.id}', this.value)"
-                        style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:700;border-radius:4px;padding:2px 3px;border:1px solid #cbd5e1;background:${destVal ? '#ecfdf5' : '#fef3c7'};color:#334155;max-width:70px;">
-                        <option value="" ${!destVal ? 'selected' : ''}>Send to…</option>
-                        ${otherTeamsForDest.map(ot => `<option value="${ot.id}" ${destVal == ot.id ? 'selected' : ''}>${ot.abbr}</option>`).join('')}
-                    </select>` : '';
                 const holdBadge = hold ? `<span title="${(hold.note || hold.label)}${hold.until ? ' · until ' + hold.until : ''}"
                     style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;white-space:nowrap;
                     ${holdHard
                         ? 'background:rgba(220,38,38,.12);color:#b91c1c;border:1px solid rgba(220,38,38,.25);'
                         : 'background:rgba(234,88,12,.12);color:#c2410c;border:1px solid rgba(234,88,12,.25);'}">${hold.label}</span>` : '';
                 const itemStyle = holdHard ? 'opacity:.72;' : '';
-                rosterContent += `<div class="player-item ${sel}" style="${itemStyle}" onclick="togglePlayer(${t.id},'${p.id}')">
+                rosterContent += `<div class="player-item" style="${itemStyle}" onclick="togglePlayer(${t.id},'${p.id}')">
                     ${playerHeadshotHtml(p.name, t.abbr)}
                     <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
                     <div class="player-info">
@@ -4291,7 +4357,6 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:.35rem;margin-top:2px;flex-wrap:wrap;">
                             <span style="font-family:'Lexend',sans-serif;font-size:.6rem;font-weight:600;color:${contractBadgeColor};background:${contractBadgeColor}18;border-radius:3px;padding:1px 5px;">${p.contractType || ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</span>
-                            ${destPicker}
                         </div>
                     </div>
                     <div class="player-salary">${fmtM(p.salary)}</div>
@@ -4630,6 +4695,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
                 Cap Outlook
             </button>
+            <button class="tool-btn" onclick="showSalarySheet(${t.id})" title="Full salary sheet with future years"${!t.abbr ? ' disabled' : ''}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                Salary Sheet
+            </button>
         </div>`;
     }
 
@@ -4718,6 +4787,7 @@
         if (!t) return;
         if (!t.playerDestinations) t.playerDestinations = {};
         t.playerDestinations[playerId] = destTeamId ? Number(destTeamId) : null;
+        renderAll();
         updateStats();
     }
 
@@ -5565,6 +5635,119 @@
 
         openFiller('3-Year Cap Outlook',
             `${teamInfo?.name || t.abbr} — projected payroll vs. CBA thresholds`, 0, 0, html);
+    }
+
+    function showSalarySheet(teamId) {
+        const t = teams.find(x => x.id === teamId);
+        if (!t || !t.abbr) return;
+        const data = TEAM_DATA[t.abbr];
+        if (!data || !data.players) return;
+        const teamInfo = NBA_TEAMS[t.abbr];
+        const departing = new Set(t.selectedPlayers);
+
+        // Build player rows with projected years
+        // Y1 = current salary; subsequent years: if contractYears covers it, approx +5% per year for Guaranteed, else —
+        const years = ['2026-27', '2027-28', '2028-29', '2029-30'];
+        const rows = data.players.map(p => {
+            const yrs = p.contractYears || 1;
+            const leaving = departing.has(p.id);
+            const cells = years.map((_, i) => {
+                if (leaving) return null; // leaving in trade — not on future sheet for this team
+                if (i >= yrs) return null;
+                // Approximate raises: 5% for year 2, 10% for year 3, 15% for year 4 relative to Y1
+                const mult = i === 0 ? 1 : (1 + 0.05 * i);
+                return Math.round(p.salary * mult);
+            });
+            return { p, leaving, cells };
+        });
+
+        // Incoming from trade
+        const { flows } = computeTradeFlows();
+        const incomingSal = flows[teamId] ? flows[teamId].receivingSalary : 0;
+
+        // Totals for staying roster
+        const totals = [0, 0, 0, 0];
+        rows.forEach(r => {
+            if (r.leaving) return;
+            r.cells.forEach((v, i) => { if (v) totals[i] += v; });
+        });
+        // Add incoming approx to Y1 (and roll if unknown)
+        totals[0] += incomingSal;
+        totals[1] += Math.round(incomingSal * 1.05);
+        totals[2] += Math.round(incomingSal * 1.10);
+
+        const fmtCell = (v) => v == null ? '<span style="color:#cbd5e1;">—</span>' : fmtM(v);
+
+        let table = `<div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-family:Lexend,sans-serif;font-size:.75rem;">
+            <thead>
+                <tr style="border-bottom:2px solid #e2e8f0;">
+                    <th style="text-align:left;padding:.5rem .4rem;font-weight:800;color:#64748b;letter-spacing:.06em;font-size:.62rem;">PLAYER</th>
+                    <th style="text-align:left;padding:.5rem .4rem;font-weight:800;color:#64748b;letter-spacing:.06em;font-size:.62rem;">TYPE</th>
+                    ${years.map(y => `<th style="text-align:right;padding:.5rem .4rem;font-weight:800;color:#64748b;letter-spacing:.06em;font-size:.62rem;">${y}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>`;
+
+        rows.forEach(({ p, leaving, cells }) => {
+            const bg = leaving ? 'background:rgba(220,38,38,.04);' : '';
+            const nameStyle = leaving ? 'text-decoration:line-through;color:#94a3b8;' : 'color:#0f172a;font-weight:600;';
+            table += `<tr style="border-bottom:1px solid #f1f5f9;${bg}">
+                <td style="padding:.45rem .4rem;${nameStyle}">${p.name}${leaving ? ' <span style="font-size:.55rem;font-weight:800;color:#dc2626;letter-spacing:.04em;">OUT</span>' : ''}</td>
+                <td style="padding:.45rem .4rem;color:#64748b;font-size:.65rem;">${p.contractType || '—'}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</td>
+                ${cells.map(c => `<td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:#0f172a;">${fmtCell(c)}</td>`).join('')}
+            </tr>`;
+        });
+
+        if (incomingSal > 0) {
+            table += `<tr style="border-bottom:1px solid #f1f5f9;background:rgba(5,150,105,.05);">
+                <td style="padding:.45rem .4rem;font-weight:600;color:#047857;">Incoming (trade)</td>
+                <td style="padding:.45rem .4rem;color:#64748b;font-size:.65rem;">—</td>
+                <td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:#059669;">${fmtM(incomingSal)}</td>
+                <td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:#059669;">${fmtM(Math.round(incomingSal * 1.05))}</td>
+                <td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:#059669;">${fmtM(Math.round(incomingSal * 1.10))}</td>
+                <td style="padding:.45rem .4rem;text-align:right;color:#cbd5e1;">—</td>
+            </tr>`;
+        }
+
+        table += `<tr style="border-top:2px solid #e2e8f0;background:#f8fafc;">
+                <td style="padding:.55rem .4rem;font-weight:800;color:#0f172a;" colspan="2">TEAM TOTAL</td>
+                ${totals.map(v => `<td style="padding:.55rem .4rem;text-align:right;font-weight:800;color:#0f172a;">${fmtM(v)}</td>`).join('')}
+            </tr>`;
+        table += `</tbody></table></div>`;
+
+        // Cap lines under table
+        const caps = [
+            { label: 'Salary Cap', v: CBA.salaryCap },
+            { label: 'Luxury Tax', v: CBA.luxuryTax },
+            { label: '1st Apron', v: CBA.firstApron },
+            { label: '2nd Apron', v: CBA.secondApron },
+        ];
+        const capRow = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-top:1rem;">
+            ${caps.map(c => {
+                const over = totals[0] > c.v;
+                return `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.55rem .65rem;">
+                    <div style="font-family:Lexend,sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.08em;color:#94a3b8;">${c.label}</div>
+                    <div style="font-family:Lexend,sans-serif;font-size:.85rem;font-weight:800;color:${over ? '#dc2626' : '#0f172a'};margin-top:2px;">${fmtM(c.v)}</div>
+                    <div style="font-family:Lexend,sans-serif;font-size:.58rem;font-weight:600;color:${over ? '#dc2626' : '#059669'};">${over ? '+' + fmtM(totals[0] - c.v) + ' over' : fmtM(c.v - totals[0]) + ' under'}</div>
+                </div>`;
+            }).join('')}
+        </div>`;
+
+        const html = `<div>
+            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;">
+                <span style="width:10px;height:10px;border-radius:50%;background:${teamInfo?.color||'#4a4a5a'};"></span>
+                <span style="font-family:Lexend,sans-serif;font-weight:800;font-size:.95rem;color:#0f172a;">${teamInfo?.name || t.abbr} Salary Sheet</span>
+            </div>
+            ${table}
+            ${capRow}
+            <div style="margin-top:.85rem;font-family:Lexend,sans-serif;font-size:.65rem;color:#94a3b8;line-height:1.45;">
+                Future years estimated from contractYears (when known) with ~5% annual raises. Non-guaranteed / team-option seasons may not fully guarantee. Incoming trade salary is rolled at 5%/10% when individual contract years are unknown. Source: Basketball-Reference / roster import.
+            </div>
+        </div>`;
+
+        openFiller('Salary Sheet',
+            `${teamInfo?.name || t.abbr} — current & projected payroll`, 0, 0, html);
     }
 
     function buildOutlookSvg(projection) {
