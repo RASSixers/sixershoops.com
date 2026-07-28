@@ -455,7 +455,7 @@
         }
 
         /* Player List */
-        .player-list { padding: .75rem; max-height: 340px; overflow-y: auto; }
+        .player-list { padding: .75rem; max-height: none; overflow-y: visible; }
         .player-list::-webkit-scrollbar { width: 4px; }
         .player-list::-webkit-scrollbar-track { background: transparent; }
         .player-list::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
@@ -702,6 +702,28 @@
             padding: .3rem .6rem; width: 110px; background: white;
         }
         .cash-input:focus { outline: none; border-color: var(--sixers-blue); }
+        .cash-chips {
+            display: flex; flex-wrap: wrap; gap: .4rem; align-items: center;
+        }
+        .cash-chip {
+            font-family: 'Lexend', sans-serif; font-size: .75rem; font-weight: 700;
+            letter-spacing: .02em;
+            padding: .35rem .7rem; border-radius: 999px; cursor: pointer;
+            border: 1px solid #e2e8f0; background: #fff; color: #475569;
+            transition: all .15s ease;
+        }
+        .cash-chip:hover { border-color: #0066cc; color: #0066cc; background: #f0f7ff; }
+        .cash-chip.active {
+            background: #0066cc; color: #fff; border-color: #0066cc;
+            box-shadow: 0 2px 8px rgba(0,102,204,.25);
+        }
+        .cash-chip-clear {
+            color: #94a3b8; border-style: dashed;
+        }
+        .cash-display {
+            font-family: 'Lexend', sans-serif; font-size: .9rem; font-weight: 800;
+            color: #0066cc; min-width: 3.5rem; text-align: right;
+        }
 
         /* restrictions */
         .restrictions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .6rem; margin-top: .75rem; }
@@ -988,7 +1010,205 @@
            layout: stark off-black canvas, hairline rules, oversized
            team-color rails, big tabular numerals.
            ============================================================ */
-        .swap-hero {
+        
+        /* SixersHoops analyze graphic */
+        .sh-hero {
+            background: #fff;
+            border: 1px solid #e8ebf2;
+            border-radius: 16px;
+            padding: 1.35rem 1.25rem 1rem;
+            margin-bottom: 1.25rem;
+            text-align: center;
+        }
+        .sh-brand {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 800;
+            font-size: 1.55rem;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+        .sh-sub {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 700;
+            font-size: .72rem;
+            color: #0066cc;
+            letter-spacing: .06em;
+            margin-top: .35rem;
+            display: inline-block;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 2px;
+        }
+        .sh-status-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .45rem;
+            margin: .85rem 0 1.1rem;
+        }
+        .sh-status-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sh-status-icon.ok {
+            color: #059669;
+            background: rgba(5, 150, 105, .1);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, .15);
+        }
+        .sh-status-icon.bad {
+            color: #dc2626;
+            background: rgba(220, 38, 38, .1);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, .15);
+        }
+        .sh-status-icon svg {
+            width: 36px;
+            height: 36px;
+            display: block;
+        }
+        .sh-status {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 700;
+            font-size: .72rem;
+            letter-spacing: .12em;
+        }
+        .sh-status.ok { color: #059669; }
+        .sh-status.bad { color: #dc2626; }
+        .sh-grid {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 0;
+            text-align: left;
+            flex-wrap: wrap;
+        }
+        .sh-col {
+            flex: 1 1 160px;
+            max-width: 280px;
+            min-width: 150px;
+            background: #f7f8fb;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eef1f6;
+        }
+        .sh-col-bar { height: 4px; width: 100%; }
+        .sh-col-head {
+            padding: .75rem .85rem .55rem;
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+        }
+        .sh-logo {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex-shrink: 0;
+            border-radius: 6px;
+        }
+        .sh-col-head-text {
+            min-width: 0;
+            flex: 1;
+        }
+        .sh-team {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 800;
+            font-size: .9rem;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sh-abbr {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 600;
+            font-size: .65rem;
+            color: #94a3b8;
+            letter-spacing: .06em;
+            margin-top: 2px;
+        }
+        .sh-col-body {
+            padding: .35rem .5rem .6rem;
+            flex: 1;
+        }
+        .sh-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: .5rem;
+            padding: .35rem .4rem;
+            border-radius: 6px;
+        }
+        .sh-row:nth-child(even) { background: rgba(255,255,255,.7); }
+        .sh-name {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 600;
+            font-size: .8rem;
+            color: #0f172a;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sh-row.pick .sh-name { font-weight: 500; color: #475569; font-size: .75rem; }
+        .sh-sal {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 700;
+            font-size: .75rem;
+            color: #0066cc;
+            flex-shrink: 0;
+        }
+        .sh-col-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .55rem .85rem;
+            border-top: 1px solid #e8ebf2;
+            background: #fff;
+            font-family: 'Lexend', sans-serif;
+            font-size: .65rem;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: .04em;
+        }
+        .sh-col-foot strong {
+            font-size: .85rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0;
+        }
+        .sh-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 .35rem;
+            flex-shrink: 0;
+        }
+        .sh-empty, .sh-empty-col {
+            font-family: 'Lexend', sans-serif;
+            font-size: .85rem;
+            color: #94a3b8;
+            padding: 1.25rem .5rem;
+            text-align: center;
+        }
+        .sh-footer {
+            margin-top: .9rem;
+            font-family: 'Lexend', sans-serif;
+            font-size: .72rem;
+            font-weight: 500;
+            color: #0066cc;
+        }
+        @media (max-width: 640px) {
+            .sh-arrow { transform: rotate(90deg); padding: .35rem 0; width: 100%; }
+            .sh-grid { flex-direction: column; align-items: center; }
+            .sh-col { max-width: 100%; width: 100%; }
+        }
+
+.swap-hero {
             position: relative;
             margin: 0 0 1.4rem;
             padding: 0;
@@ -2213,9 +2433,9 @@
     // ─── CBA CONSTANTS 2026-27 ──────────────────────────────────────────────
     const CBA = {
         salaryCap:    165_000_000,
-        luxuryTax:    201_000_000,
-        firstApron:   209_000_000,
-        secondApron:  222_000_000,
+        luxuryTax:    200_428_000,
+        firstApron:   209_015_000,
+        secondApron:  221_686_000,
         cashLimit:      6_000_000,
         minSalary:      1_200_000,
         biAnnual:       5_000_000,
@@ -4156,9 +4376,16 @@
             <div class="footer-sending">${sendingStr}</div>
         </div>
         ${t.abbr ? `<div class="cash-row">
-            <span class="cash-row-label">Cash included in trade</span>
-            <input class="cash-input" type="number" min="0" step="50000" value="${t.cashOut || 0}"
-                onclick="event.stopPropagation()" onchange="setCashOut(${t.id}, this.value)" placeholder="$0" />
+            <span class="cash-row-label">Cash <span style="color:#94a3b8;font-weight:500">(max 6M)</span></span>
+            <div class="cash-chips">
+                ${[100000,250000,500000,1000000,1400000,2000000,3000000,4500000,6000000].map(v => {
+                    const label = v >= 1e6 ? ((v/1e6)%1===0 ? (v/1e6)+'M' : (v/1e6).toFixed(1)+'M') : (v/1e3)+'K';
+                    const active = (t.cashOut||0) === v ? 'active' : '';
+                    return '<button type="button" class="cash-chip '+active+'" onclick="event.stopPropagation();setCashOut('+t.id+','+v+')">'+label+'</button>';
+                }).join('')}
+                <button type="button" class="cash-chip cash-chip-clear" onclick="event.stopPropagation();setCashOut(${t.id},0)">None</button>
+                <span class="cash-display" id="cash-display-${t.id}">${fmtCash(t.cashOut||0)}</span>
+            </div>
         </div>` : ''}
         <div class="tools-row">
             <button class="tool-btn primary" onclick="findFiller(${t.id})" title="Find players from the other team that match your outgoing salary"${(!t.abbr || sendingSalary === 0) ? ' disabled' : ''}>
@@ -4264,11 +4491,24 @@
         updateStats();
     }
 
+    function fmtCash(v) {
+        v = Number(v) || 0;
+        if (v <= 0) return '—';
+        if (v >= 1e6) {
+            const m = v / 1e6;
+            return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M';
+        }
+        if (v >= 1e3) return Math.round(v / 1e3) + 'K';
+        return String(v);
+    }
+
     function setCashOut(teamId, val) {
         const t = teams.find(x => x.id === teamId);
         if (!t) return;
-        t.cashOut = Math.max(0, Number(val) || 0);
+        t.cashOut = Math.min(CBA.cashLimit, Math.max(0, Number(val) || 0));
+        renderAll();
     }
+
 
     function analyzeTrade() {
         const panel = document.getElementById('resultPanel');
@@ -5117,116 +5357,103 @@
     function buildSwapHero(isValid, tradeSummary) {
         if (!Array.isArray(tradeSummary)) return '';
         const active = tradeSummary.filter(t =>
-            t.abbr && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.faSignings||[]).length > 0)
+            t.abbr && (
+                t.selectedPlayers.length > 0 ||
+                t.selectedPicks.length > 0 ||
+                (t.faSignings||[]).length > 0 ||
+                (t.cashOut || 0) > 0
+            )
         );
-        const stamp = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        const statusIcon = isValid
+            ? `<div class="sh-status-icon ok" aria-hidden="true">
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2.5"/>
+                    <path d="M10.5 18.5l5 5 10-11" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+               </div>`
+            : `<div class="sh-status-icon bad" aria-hidden="true">
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2.5"/>
+                    <path d="M12 12l12 12M24 12L12 24" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+                </svg>
+               </div>`;
+        const statusHtml = `<div class="sh-status-wrap">
+            ${statusIcon}
+            <div class="sh-status ${isValid?'ok':'bad'}">${isValid ? 'Trade Success' : 'Trade Failed'}</div>
+        </div>`;
 
         if (active.length === 0) {
-            return `<div class="swap-hero">
-                <div class="swap-hero-status ${isValid?'valid':'invalid'}">
-                    <span class="swap-hero-status-icon">${isValid?'':'X'}</span>
-                    <span class="swap-hero-status-text">${isValid ? 'Trade Cleared' : 'Trade Rejected'}</span>
-                    <span class="swap-hero-status-meta">Transaction Wire · ${stamp}</span>
-                </div>
-                <div style="padding:1.6rem 1.25rem;"><div class="swap-empty" style="text-align:center;">No assets selected — pick players or picks to generate a transaction.</div></div>
+            return `<div class="sh-hero">
+                <div class="sh-brand">SixersHoops</div>
+                <div class="sh-sub">2026–27 · TRADE SUMMARY</div>
+                ${statusHtml}
+                <div class="sh-empty">Select players or picks to preview the trade.</div>
             </div>`;
         }
 
-        function assetRow(tag, name, meta, value, kind) {
-            return `<div class="swap-asset ${kind}">
-                <div class="swap-asset-tag">${tag}</div>
-                <div class="swap-asset-body">
-                    <div class="swap-asset-name">${name}</div>
-                    <div class="swap-asset-meta">${meta}</div>
-                </div>
-                <div class="swap-asset-value${value === '—' ? ' muted' : ''}">${value}</div>
-            </div>`;
-        }
+        const cols = active.map((t, i) => {
+            const color = (t.teamInfo && t.teamInfo.color) || '#0066cc';
+            const name = (t.teamInfo && t.teamInfo.name) || t.abbr;
+            // What this team is SENDING
+            const sendPlayers = (t.selectedPlayers || []).map(pid => {
+                const p = (t.data && t.data.players || []).find(pp => pp.id === pid);
+                return p ? `<div class="sh-row"><span class="sh-name">${p.name}</span><span class="sh-sal">${fmtM(p.salary)}</span></div>` : '';
+            }).join('');
+            const sendPicks = (t.selectedPicks || []).map(pkid => {
+                const pk = (t.data && t.data.picks || []).find(pp => pp.id === pkid);
+                if (!pk) return '';
+                const label = (typeof formatPickName === 'function') ? formatPickName(pk) : pk.name;
+                return `<div class="sh-row pick"><span class="sh-name">${label}</span><span class="sh-sal"></span></div>`;
+            }).join('');
+            const cash = t.cashOut || 0;
+            const cashRow = cash > 0
+                ? `<div class="sh-row cash"><span class="sh-name">Cash</span><span class="sh-sal">${fmtCash(cash)}</span></div>`
+                : '';
+            const outTotal = (t.selectedPlayers || []).reduce((s, pid) => {
+                const p = (t.data && t.data.players || []).find(pp => pp.id === pid);
+                return s + (p ? p.salary : 0);
+            }, 0) + cash;
 
-        let totalAssets = 0;
-        let totalSalaryMoving = 0;
+            const body = sendPlayers + sendPicks + cashRow || `<div class="sh-empty-col">No assets out</div>`;
 
-        const teamCols = active.map((t, idx) => {
-            const color = (t.teamInfo && t.teamInfo.color) || '#4a4a5a';
-            const rows = [];
+            const arrow = i < active.length - 1
+                ? `<div class="sh-arrow" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 14h20" stroke="#0066cc" stroke-width="2.2" stroke-linecap="round"/>
+                        <path d="M18 8l6 6-6 6" stroke="#0066cc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 8l-6 6 6 6" stroke="#0066cc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                   </div>`
+                : '';
 
-            active.forEach(other => {
-                if (other.id === t.id) return;
-                (other.selectedPlayers || []).forEach(pid => {
-                    const p = (other.data && other.data.players || []).find(pp => pp.id === pid);
-                    if (p) {
-                        rows.push(assetRow('PLR', p.name,
-                            `${p.position} · <span class="swap-from">FROM ${other.abbr}</span>`,
-                            fmtM(p.salary), 'player'));
-                        totalAssets++; totalSalaryMoving += p.salary;
-                    }
-                });
-                (other.selectedPicks || []).forEach(pkid => {
-                    const pk = (other.data && other.data.picks || []).find(pp => pp.id === pkid);
-                    if (pk) {
-                        rows.push(assetRow('PCK', pk.name,
-                            `${pk.protections || 'Draft Pick'} · <span class="swap-from">FROM ${other.abbr}</span>`,
-                            '—', 'pick'));
-                        totalAssets++;
-                    }
-                });
-            });
-
-            (t.faSignings || []).forEach(s => {
-                const tag = s.type === 'sat' ? 'S&T' : 'FA';
-                rows.push(assetRow(tag, s.name,
-                    `${s.position || 'Free Agent'} · <span class="swap-from">${s.years || ''}YR · ${s.type === 'sat' ? 'Sign & Trade' : 'Direct'}</span>`,
-                    `${fmtM(s.salary)}/Y`, 'fa'));
-                totalAssets++; totalSalaryMoving += s.salary;
-            });
-
-            const logoFallback = `this.outerHTML='<span class=\\'swap-team-logo\\' style=\\'background:${color};border-radius:2px;display:inline-flex;align-items:center;justify-content:center;font-family:Lexend,sans-serif;font-weight:900;color:#fff;font-size:.62rem;\\'>${t.abbr}</span>'`;
-
-            const num = String(idx + 1).padStart(2, '0');
-            return `<div class="swap-team" style="--team-color:${color};">
-                <div class="swap-team-rail"></div>
-                <div class="swap-team-header">
-                    <div class="swap-team-index">${num}</div>
-                    <div class="swap-team-headline">
-                        <div class="swap-team-receives-label">Receives</div>
-                        <div class="swap-team-namebar">
-                            <img class="swap-team-logo" src="${teamLogoUrl(t.abbr)}" alt="${t.abbr}" onerror="${logoFallback}">
-                            <div class="swap-team-name">${(t.teamInfo && t.teamInfo.name) || t.abbr}</div>
-                        </div>
+            return `<div class="sh-col">
+                <div class="sh-col-bar" style="background:${color}"></div>
+                <div class="sh-col-head">
+                    <img class="sh-logo" src="${teamLogoUrl(t.abbr)}" alt="${t.abbr}"
+                         onerror="this.style.display='none'">
+                    <div class="sh-col-head-text">
+                        <div class="sh-team">${name}</div>
+                        <div class="sh-abbr">${t.abbr}</div>
                     </div>
                 </div>
-                ${rows.length ? `<div class="swap-asset-list">${rows.join('')}</div>` : '<div class="swap-empty">Nothing incoming.</div>'}
-            </div>`;
-        });
+                <div class="sh-col-body">${body}</div>
+                <div class="sh-col-foot">
+                    <span>TOTAL OUT</span>
+                    <strong>${fmtM(outTotal)}</strong>
+                </div>
+            </div>${arrow}`;
+        }).join('');
 
-        const colTemplate = `repeat(${active.length}, 1fr)`;
-        const grid = `<div class="swap-grid" style="grid-template-columns:${colTemplate};">${teamCols.join('')}</div>`;
-
-        const totals = `<div class="swap-totals">
-            <div class="swap-total">
-                <div class="swap-total-label">Teams</div>
-                <div class="swap-total-value">${String(active.length).padStart(2,'0')}</div>
-            </div>
-            <div class="swap-total">
-                <div class="swap-total-label">Assets Moving</div>
-                <div class="swap-total-value">${String(totalAssets).padStart(2,'0')}</div>
-            </div>
-            <div class="swap-total">
-                <div class="swap-total-label">Salary In Motion</div>
-                <div class="swap-total-value">${fmtM(totalSalaryMoving)}</div>
-            </div>
-        </div>`;
-
-        return `<div class="swap-hero">
-            <div class="swap-hero-status ${isValid?'valid':'invalid'}">
-                <span class="swap-hero-status-icon">${isValid?'':'X'}</span>
-                <span class="swap-hero-status-text">${isValid ? 'Trade Cleared' : 'Trade Rejected'}</span>
-                <span class="swap-hero-status-meta">Transaction Wire · ${stamp}</span>
-            </div>
-            ${grid}
-            ${totals}
+        return `<div class="sh-hero">
+            <div class="sh-brand">SixersHoops</div>
+            <div class="sh-sub">2026–27 · TRADE SUMMARY</div>
+            ${statusHtml}
+            <div class="sh-grid">${cols}</div>
+            <div class="sh-footer">sixershoops.com/nba-trade-machine</div>
         </div>`;
     }
+
 
     function buildBreakdown(breakdownEl, restrictionsEl, tradeSummary) {
         if (!Array.isArray(tradeSummary)) return;
@@ -5441,130 +5668,82 @@
     // pill status badges, zebra-striped rows. Replaces the old dark
     // "transaction wire" look.
     function drawTradeCard(customTitle) {
-        const W = 1280, H = 800;
+        const W = 1280, H = 720;
         const canvas = document.createElement('canvas');
         canvas.width = W; canvas.height = H;
         const ctx = canvas.getContext('2d');
 
         const isValid = document.getElementById('modalBadge').classList.contains('valid');
         const tradeTitle = customTitle || document.getElementById('modalTitle').textContent;
-        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
+        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (
+            t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.cashOut || 0) > 0
+        ));
 
         const font = (weight, size) => weight + ' ' + size + 'px "Lexend", "Helvetica Neue", Helvetica, Arial, sans-serif';
-
-        // ── SixersHoops site palette ─────────────────────────────────────
-        const BG = '#ffffff';
-        const CARD = '#f7f8fb';
-        const CARD_BORDER = '#e8ebf2';
-        const INK = '#0f172a';
-        const INK_SOFT = '#334155';
-        const MUTED = '#94a3b8';
-        const LABEL = '#64748b';
-        const BLUE = '#0066cc';
-        const BLUE_SOFT = '#e8f1fb';
-        const GREEN = '#059669';
-        const RED = '#dc2626';
-        const ROW_ALT = '#f8fafc';
-        const LINE = '#e2e8f0';
-
-        // helpers
-        function roundRectPath(x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-        }
-        function money(v) {
+        const money = (v) => {
             if (Math.abs(v) >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
             if (Math.abs(v) >= 1e3) return '$' + Math.round(v / 1e3) + 'K';
             return '$' + v;
-        }
+        };
 
-        // Background
+        // SixersHoops palette (white graphic)
+        const BG = '#ffffff';
+        const INK = '#0f172a';
+        const MUTED = '#94a3b8';
+        const LABEL = '#64748b';
+        const BLUE = '#0066cc';
+        const GREEN = '#059669';
+        const RED = '#dc2626';
+        const LINE = '#e2e8f0';
+        const CARD = '#f7f8fb';
+
         ctx.fillStyle = BG;
         ctx.fillRect(0, 0, W, H);
 
-        const padX = 56;
-
-        // ── Brand header (matches salary / draft graphics) ───────────────
-        ctx.font = font('800', 36);
+        // ── Header: SixersHoops ───────────────────────────────────────────
+        ctx.font = font('800', 34);
         ctx.fillStyle = INK;
         ctx.textAlign = 'center';
-        ctx.fillText('SixersHoops', W / 2, 56);
+        ctx.fillText('SixersHoops', W / 2, 48);
 
-        ctx.font = font('700', 13);
+        ctx.font = font('700', 12);
         ctx.fillStyle = BLUE;
-        ctx.fillText('2026–27  ·  TRADE SUMMARY', W / 2, 84);
-
-        // blue underline under subtitle
+        ctx.fillText('2026–27  ·  TRADE SUMMARY', W / 2, 74);
         const subW = ctx.measureText('2026–27  ·  TRADE SUMMARY').width;
         ctx.fillStyle = BLUE;
-        ctx.fillRect(W / 2 - subW / 2, 92, subW, 2);
+        ctx.fillRect(W / 2 - subW / 2, 82, subW, 2);
 
-        // ── Trade title ──────────────────────────────────────────────────
-        let title = tradeTitle || 'Trade Summary';
-        ctx.font = font('800', 22);
-        ctx.fillStyle = INK;
-        const maxTW = W - padX * 2;
-        while (ctx.measureText(title).width > maxTW && title.length > 5) title = title.slice(0, -1);
-        if (title.length < (tradeTitle || '').length) title += '…';
-        ctx.fillText(title, W / 2, 130);
+        // Status
+        const statusText = isValid ? 'CBA VALID' : 'CBA VIOLATION';
+        const statusCol = isValid ? GREEN : RED;
+        ctx.font = font('700', 11);
+        ctx.fillStyle = statusCol;
+        ctx.fillText(statusText, W / 2, 104);
 
-        // ── Status + meta chips row ──────────────────────────────────────
-        const totalSalary = activeTeams.reduce((sum, t) => {
-            const d = TEAM_DATA[t.abbr];
-            return sum + t.selectedPlayers.reduce((s, pid) => {
-                const p = d.players.find(pl => pl.id === pid);
-                return s + (p ? p.salary : 0);
-            }, 0);
-        }, 0);
-
-        const chipY = 152;
-        const chips = [
-            { label: 'TEAMS', value: String(activeTeams.length), color: BLUE },
-            { label: 'SALARY MOVING', value: money(totalSalary), color: BLUE },
-            { label: 'STATUS', value: isValid ? 'CBA VALID' : 'CBA VIOLATION', color: isValid ? GREEN : RED },
-        ];
-        const chipGap = 16;
-        const chipW = (W - padX * 2 - chipGap * (chips.length - 1)) / chips.length;
-        const chipH = 64;
-
-        chips.forEach((c, i) => {
-            const x = padX + i * (chipW + chipGap);
-            // soft card
-            ctx.fillStyle = CARD;
-            roundRectPath(x, chipY, chipW, chipH, 12);
-            ctx.fill();
-            // left accent bar
-            ctx.fillStyle = c.color;
-            ctx.fillRect(x, chipY + 12, 3, chipH - 24);
-
-            ctx.font = font('600', 10);
+        // Optional title
+        if (tradeTitle && tradeTitle !== 'Trade Summary') {
+            let t = tradeTitle;
+            ctx.font = font('600', 14);
             ctx.fillStyle = LABEL;
-            ctx.textAlign = 'left';
-            ctx.fillText(c.label, x + 18, chipY + 24);
+            while (ctx.measureText(t).width > W - 100 && t.length > 5) t = t.slice(0, -1);
+            if (t.length < tradeTitle.length) t += '…';
+            ctx.fillText(t, W / 2, 126);
+        }
 
-            ctx.font = font('800', 20);
-            ctx.fillStyle = c.color;
-            ctx.fillText(c.value, x + 18, chipY + 48);
-        });
-
-        // ── Team columns ─────────────────────────────────────────────────
-        const n = Math.min(activeTeams.length || 1, 4);
-        const colTop = chipY + chipH + 28;
-        const footerReserve = 56;
-        const colH = H - colTop - footerReserve;
-        const gap = 18;
-        const colW = (W - padX * 2 - gap * Math.max(n - 1, 0)) / n;
+        // ── Side-by-side teams with arrows ───────────────────────────────
+        const n = Math.min(Math.max(activeTeams.length, 1), 4);
+        const padX = 48;
+        const areaTop = 148;
+        const areaBot = H - 52;
+        const areaH = areaBot - areaTop;
+        const arrowW = 56;
+        const totalArrowSpace = n > 1 ? arrowW * (n - 1) : 0;
+        const colW = (W - padX * 2 - totalArrowSpace) / n;
 
         if (!activeTeams.length) {
             ctx.font = font('500', 16);
             ctx.fillStyle = MUTED;
-            ctx.textAlign = 'center';
-            ctx.fillText('No teams selected', W / 2, colTop + 80);
+            ctx.fillText('No assets selected', W / 2, H / 2);
         }
 
         for (let i = 0; i < activeTeams.length && i < 4; i++) {
@@ -5572,143 +5751,178 @@
             const d = TEAM_DATA[t.abbr];
             const meta = NBA_TEAMS[t.abbr] || {};
             const teamColor = meta.color || BLUE;
-            const x = padX + i * (colW + gap);
+            const x = padX + i * (colW + arrowW);
 
-            // Card background
+            // Card
             ctx.fillStyle = CARD;
-            roundRectPath(x, colTop, colW, colH, 14);
+            ctx.beginPath();
+            const r = 12;
+            ctx.moveTo(x + r, areaTop);
+            ctx.arcTo(x + colW, areaTop, x + colW, areaTop + areaH, r);
+            ctx.arcTo(x + colW, areaTop + areaH, x, areaTop + areaH, r);
+            ctx.arcTo(x, areaTop + areaH, x, areaTop, r);
+            ctx.arcTo(x, areaTop, x + colW, areaTop, r);
+            ctx.closePath();
             ctx.fill();
 
-            // White inner panel for list
-            const innerPad = 12;
-            const headerH = 56;
-            ctx.fillStyle = BG;
-            roundRectPath(x + innerPad, colTop + headerH, colW - innerPad * 2, colH - headerH - innerPad, 10);
-            ctx.fill();
-
-            // Team color accent on left of header area
+            // Color bar top
             ctx.fillStyle = teamColor;
-            ctx.fillRect(x, colTop + 16, 3, 28);
+            ctx.fillRect(x, areaTop, colW, 4);
 
             // Team name
             ctx.font = font('800', 15);
             ctx.fillStyle = INK;
             ctx.textAlign = 'left';
             let name = meta.name || t.abbr;
-            while (ctx.measureText(name).width > colW - 40 && name.length > 3) name = name.slice(0, -1);
-            if (name.length < (meta.name || t.abbr).length) name += '…';
-            ctx.fillText(name, x + 16, colTop + 34);
+            while (ctx.measureText(name).width > colW - 28 && name.length > 3) name = name.slice(0, -1);
+            if (name.length < (meta.name || '').length) name += '…';
+            ctx.fillText(name, x + 16, areaTop + 28);
 
-            // Abbr
             ctx.font = font('600', 11);
             ctx.fillStyle = LABEL;
-            ctx.fillText(t.abbr, x + 16, colTop + 50);
+            ctx.fillText(t.abbr, x + 16, areaTop + 46);
 
-            // Assets
+            // Divider
+            ctx.fillStyle = LINE;
+            ctx.fillRect(x + 16, areaTop + 58, colW - 32, 1);
+
+            // Assets list
             const players = t.selectedPlayers.map(id => d.players.find(p => p.id === id)).filter(Boolean);
             const picks = t.selectedPicks.map(id => d.picks.find(p => p.id === id)).filter(Boolean);
-            const outSalary = players.reduce((s, p) => s + p.salary, 0);
-            const totalItems = players.length + picks.length;
+            const cash = t.cashOut || 0;
+            const outSalary = players.reduce((s, p) => s + p.salary, 0) + cash;
+            const totalItems = players.length + picks.length + (cash > 0 ? 1 : 0);
 
-            const rowH = 28;
-            const listTop = colTop + headerH + 10;
-            const listBot = colTop + colH - 46;
-            const maxRows = Math.max(1, Math.floor((listBot - listTop) / rowH));
+            const rowH = 26;
+            let y = areaTop + 72;
+            const listBot = areaTop + areaH - 44;
+            const maxRows = Math.max(1, Math.floor((listBot - y) / rowH));
             let row = 0;
-            let y = listTop;
 
-            const drawMore = (remaining) => {
-                ctx.font = font('500', 12);
-                ctx.fillStyle = MUTED;
-                ctx.textAlign = 'left';
-                ctx.fillText('+' + remaining + ' more', x + 24, y + 18);
+            const trunc = (text, maxW, f) => {
+                ctx.font = f;
+                let s = text;
+                while (ctx.measureText(s).width > maxW && s.length > 4) s = s.slice(0, -1);
+                if (s.length < text.length) s += '…';
+                return s;
             };
 
             players.forEach((p) => {
                 if (row >= maxRows) return;
                 if (row === maxRows - 1 && totalItems > maxRows) {
-                    drawMore(totalItems - row);
+                    ctx.font = font('500', 12);
+                    ctx.fillStyle = MUTED;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('+' + (totalItems - row) + ' more', x + 16, y + 16);
                     row++; return;
                 }
-                // alt row
-                if (row % 2 === 1) {
-                    ctx.fillStyle = ROW_ALT;
-                    ctx.fillRect(x + innerPad + 4, y, colW - innerPad * 2 - 8, rowH);
-                }
-                ctx.font = font('600', 13);
-                ctx.fillStyle = INK;
-                ctx.textAlign = 'left';
                 const sal = money(p.salary);
                 ctx.font = font('700', 12);
                 const salW = ctx.measureText(sal).width;
+                const nm = trunc(p.name, colW - 40 - salW, font('600', 13));
                 ctx.font = font('600', 13);
-                let nm = p.name;
-                while (ctx.measureText(nm).width > colW - 56 - salW && nm.length > 4) nm = nm.slice(0, -1);
-                if (nm.length < p.name.length) nm += '…';
-                ctx.fillText(nm, x + 24, y + 18);
-
+                ctx.fillStyle = INK;
+                ctx.textAlign = 'left';
+                ctx.fillText(nm, x + 16, y + 16);
                 ctx.font = font('700', 12);
                 ctx.fillStyle = BLUE;
                 ctx.textAlign = 'right';
-                ctx.fillText(sal, x + colW - 24, y + 18);
-
+                ctx.fillText(sal, x + colW - 16, y + 16);
                 y += rowH; row++;
             });
 
             picks.forEach((pk) => {
                 if (row >= maxRows) return;
                 if (row === maxRows - 1 && totalItems > maxRows) {
-                    drawMore(totalItems - row);
+                    ctx.font = font('500', 12);
+                    ctx.fillStyle = MUTED;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('+' + (totalItems - row) + ' more', x + 16, y + 16);
                     row++; return;
                 }
-                if (row % 2 === 1) {
-                    ctx.fillStyle = ROW_ALT;
-                    ctx.fillRect(x + innerPad + 4, y, colW - innerPad * 2 - 8, rowH);
-                }
                 let pkName = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
+                pkName = trunc(pkName, colW - 32, font('500', 12));
                 ctx.font = font('500', 12);
-                ctx.fillStyle = INK_SOFT;
+                ctx.fillStyle = LABEL;
                 ctx.textAlign = 'left';
-                while (ctx.measureText(pkName).width > colW - 48 && pkName.length > 4) pkName = pkName.slice(0, -1);
-                if (pkName.length < (pk.name || '').length) pkName += '…';
-                ctx.fillText(pkName, x + 24, y + 18);
+                ctx.fillText(pkName, x + 16, y + 16);
                 y += rowH; row++;
             });
+
+            if (cash > 0 && row < maxRows) {
+                ctx.font = font('600', 13);
+                ctx.fillStyle = INK;
+                ctx.textAlign = 'left';
+                ctx.fillText('Cash', x + 16, y + 16);
+                ctx.font = font('700', 12);
+                ctx.fillStyle = BLUE;
+                ctx.textAlign = 'right';
+                ctx.fillText(money(cash), x + colW - 16, y + 16);
+                y += rowH; row++;
+            }
 
             if (totalItems === 0) {
                 ctx.font = font('500', 13);
                 ctx.fillStyle = MUTED;
                 ctx.textAlign = 'center';
-                ctx.fillText('No assets selected', x + colW / 2, colTop + colH / 2);
+                ctx.fillText('No assets', x + colW / 2, areaTop + areaH / 2);
             }
 
-            // Salary out footer inside card
+            // Salary out
             ctx.font = font('600', 10);
-            ctx.fillStyle = LABEL;
+            ctx.fillStyle = MUTED;
             ctx.textAlign = 'left';
-            ctx.fillText('SALARY OUT', x + 16, colTop + colH - 18);
+            ctx.fillText('TOTAL OUT', x + 16, areaTop + areaH - 16);
             ctx.font = font('800', 14);
             ctx.fillStyle = INK;
             ctx.textAlign = 'right';
-            ctx.fillText(money(outSalary), x + colW - 16, colTop + colH - 16);
+            ctx.fillText(money(outSalary), x + colW - 16, areaTop + areaH - 14);
+
+            // Arrow between columns
+            if (i < activeTeams.length - 1 && i < 3) {
+                const ax = x + colW + arrowW / 2;
+                const ay = areaTop + areaH / 2;
+                ctx.strokeStyle = BLUE;
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                // horizontal line
+                ctx.beginPath();
+                ctx.moveTo(ax - 16, ay);
+                ctx.lineTo(ax + 16, ay);
+                ctx.stroke();
+                // right arrow head
+                ctx.beginPath();
+                ctx.moveTo(ax + 16, ay);
+                ctx.lineTo(ax + 8, ay - 6);
+                ctx.lineTo(ax + 8, ay + 6);
+                ctx.closePath();
+                ctx.fillStyle = BLUE;
+                ctx.fill();
+                // left arrow head
+                ctx.beginPath();
+                ctx.moveTo(ax - 16, ay);
+                ctx.lineTo(ax - 8, ay - 6);
+                ctx.lineTo(ax - 8, ay + 6);
+                ctx.closePath();
+                ctx.fill();
+            }
         }
 
-        // ── Footer ───────────────────────────────────────────────────────
-        const fy = H - 40;
+        // Footer
         ctx.fillStyle = LINE;
-        ctx.fillRect(padX, fy, W - padX * 2, 1);
-
-        // small blue center accent like draft capital graphic
+        ctx.fillRect(48, H - 40, W - 96, 1);
         ctx.fillStyle = BLUE;
-        ctx.fillRect(W / 2 - 16, fy + 12, 32, 2);
-
+        ctx.fillRect(W / 2 - 16, H - 28, 32, 2);
         ctx.font = font('500', 12);
         ctx.fillStyle = BLUE;
         ctx.textAlign = 'center';
-        ctx.fillText('sixershoops.com/trade', W / 2, fy + 32);
+        ctx.fillText('sixershoops.com/nba-trade-machine', W / 2, H - 12);
 
         return canvas;
     }
+
+    // Helper: rounded rectangle path
 
     // Helper: rounded rectangle path
 
