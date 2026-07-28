@@ -1080,29 +1080,33 @@
         .sh-status.bad { color: #dc2626; }
         .sh-grid {
             display: flex;
-            align-items: stretch;
+            align-items: center; /* compact: don't stretch cards to equal height */
             justify-content: center;
             gap: 0;
             text-align: left;
             flex-wrap: wrap;
         }
         .sh-col {
-            flex: 1 1 160px;
+            flex: 0 1 260px;
+            width: 260px;
             max-width: 280px;
-            min-width: 150px;
+            min-width: 200px;
             background: #f7f8fb;
             border-radius: 12px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             border: 1px solid #eef1f6;
+            /* hug content — no tall empty middle */
+            align-self: center;
         }
-        .sh-col-bar { height: 4px; width: 100%; }
+        .sh-col-bar { height: 4px; width: 100%; flex-shrink: 0; }
         .sh-col-head {
             padding: .75rem .85rem .55rem;
             display: flex;
             align-items: center;
             gap: .65rem;
+            flex-shrink: 0;
         }
         .sh-logo {
             width: 36px;
@@ -1110,6 +1114,7 @@
             object-fit: contain;
             flex-shrink: 0;
             border-radius: 6px;
+            display: block;
         }
         .sh-col-head-text {
             min-width: 0;
@@ -1134,7 +1139,7 @@
         }
         .sh-col-body {
             padding: .35rem .5rem .6rem;
-            flex: 1;
+            flex: 0 0 auto; /* do not grow — keeps TOTAL OUT tight under assets */
         }
         .sh-row {
             display: flex;
@@ -5635,85 +5640,101 @@
         if (!hero) throw new Error('Graphic not found — run Analyze Trade first.');
 
         const scale = 2;
+        const colCount = Math.max(1, hero.querySelectorAll('.sh-col').length);
+        // Compact share width: ~260px per card + arrows + padding (matches target screenshot proportions)
+        const targetW = Math.min(720, Math.max(360, colCount * 280 + (colCount - 1) * 48 + 48));
 
-        // 1) Clone first, strip UI chrome so we only capture the clean graphic
+        // Clone and strip chrome — only the clean graphic goes to the clipboard
         const clone = hero.cloneNode(true);
         clone.querySelectorAll('.sh-copy-actions').forEach(el => el.remove());
-        const footerRow = clone.querySelector('.sh-footer-row');
-        if (footerRow) {
-            footerRow.style.justifyContent = 'center';
-            footerRow.style.display = 'flex';
-            footerRow.style.width = '100%';
-        }
 
-        // Replace every <img> with a local data-URL placeholder (no network, no CORS)
+        // Safe team-color logo badges (no external URLs → no CORS taint)
         clone.querySelectorAll('img').forEach(img => {
             const abbr = (img.getAttribute('data-abbr') || img.getAttribute('alt') || '?').trim();
-            const size = Math.max(img.width || 36, img.height || 36, 36);
-            img.setAttribute('src', makeLogoPlaceholder(abbr, size));
+            img.setAttribute('src', makeLogoPlaceholder(abbr, 72)); // 2x for retina
             img.removeAttribute('srcset');
             img.removeAttribute('crossorigin');
             img.removeAttribute('onerror');
+            // Undo any display:none from live onerror handlers
+            img.style.display = 'block';
+            img.style.visibility = 'visible';
+            img.style.width = '36px';
+            img.style.height = '36px';
+            img.style.objectFit = 'contain';
+            img.style.flexShrink = '0';
+            img.style.borderRadius = '6px';
         });
 
-        // Remove external urls from inline styles / backgrounds
+        // Strip external backgrounds
         clone.querySelectorAll('*').forEach(el => {
             if (el.style && el.style.backgroundImage && /url\(/i.test(el.style.backgroundImage) && !/data:/i.test(el.style.backgroundImage)) {
                 el.style.backgroundImage = 'none';
             }
         });
 
-        // Inline computed styles from the live hero (layout fidelity), matching by tag path index
-        // Skip .sh-copy-actions nodes that no longer exist on the clone
-        const srcNodes = [hero].concat(Array.from(hero.querySelectorAll('*')).filter(n => !n.closest('.sh-copy-actions')));
-        const dstNodes = [clone].concat(Array.from(clone.querySelectorAll('*')));
-        for (let i = 0; i < Math.min(srcNodes.length, dstNodes.length); i++) {
-            const cs = window.getComputedStyle(srcNodes[i]);
-            let cssText = '';
-            for (let j = 0; j < cs.length; j++) {
-                const prop = cs[j];
-                let val = cs.getPropertyValue(prop);
-                if (prop === 'background-image' && val && val !== 'none' && val.indexOf('url(') !== -1 && val.indexOf('data:') === -1) {
-                    val = 'none';
-                }
-                cssText += prop + ':' + val + ';';
-            }
-            dstNodes[i].style.cssText = cssText;
+        // Force compact card layout on the clone (overrides any stretched live styles)
+        clone.style.cssText = [
+            'box-sizing:border-box',
+            'width:' + targetW + 'px',
+            'max-width:' + targetW + 'px',
+            'margin:0',
+            'padding:1.35rem 1.25rem 1rem',
+            'background:#ffffff',
+            'border:1px solid #e8ebf2',
+            'border-radius:16px',
+            'text-align:center',
+            'font-family:Lexend,Helvetica,Arial,sans-serif'
+        ].join(';');
+
+        const grid = clone.querySelector('.sh-grid');
+        if (grid) {
+            grid.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap;text-align:left;';
         }
-        // Re-apply safe logo placeholders after style copy (styles may not affect src)
-        clone.querySelectorAll('img').forEach(img => {
-            const abbr = (img.getAttribute('data-abbr') || img.getAttribute('alt') || '?').trim();
-            img.src = makeLogoPlaceholder(abbr, 36);
+        clone.querySelectorAll('.sh-col').forEach(col => {
+            col.style.cssText = [
+                'flex:0 0 240px',
+                'width:240px',
+                'max-width:240px',
+                'min-width:200px',
+                'background:#f7f8fb',
+                'border-radius:12px',
+                'overflow:hidden',
+                'display:flex',
+                'flex-direction:column',
+                'border:1px solid #eef1f6',
+                'align-self:center'
+            ].join(';');
         });
-        clone.querySelectorAll('.sh-copy-actions').forEach(el => el.remove());
-        // Center footer after style copy (computed style may have re-applied space-between)
-        const footerRow2 = clone.querySelector('.sh-footer-row');
-        if (footerRow2) {
-            footerRow2.style.justifyContent = 'center';
-            footerRow2.style.display = 'flex';
-            footerRow2.style.width = '100%';
+        clone.querySelectorAll('.sh-col-body').forEach(b => {
+            b.style.flex = '0 0 auto';
+            b.style.padding = '.35rem .5rem .6rem';
+        });
+        clone.querySelectorAll('.sh-col-foot').forEach(f => {
+            f.style.flexShrink = '0';
+        });
+        clone.querySelectorAll('.sh-arrow').forEach(a => {
+            a.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:0 .5rem;flex-shrink:0;';
+        });
+
+        const footerRow = clone.querySelector('.sh-footer-row');
+        if (footerRow) {
+            footerRow.style.cssText = 'margin-top:.9rem;display:flex;align-items:center;justify-content:center;width:100%;';
         }
 
-        // 2) Mount cleaned clone off-screen, THEN measure — no extra button-row height
+        // Mount off-screen and measure the compact node
         const wrap = document.createElement('div');
         wrap.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none;background:#fff;';
-        const liveW = Math.max(1, Math.ceil(hero.getBoundingClientRect().width));
-        clone.style.width = liveW + 'px';
-        clone.style.boxSizing = 'border-box';
-        clone.style.background = '#ffffff';
-        clone.style.margin = '0';
-        // Keep border-radius / border of the on-screen card
         wrap.appendChild(clone);
         document.body.appendChild(wrap);
 
-        // Force layout so getBoundingClientRect is accurate on the cleaned node
-        const width = Math.max(1, Math.ceil(clone.getBoundingClientRect().width) || liveW);
+        // Force reflow
+        void clone.offsetHeight;
+        const width = Math.max(1, Math.ceil(clone.getBoundingClientRect().width) || targetW);
         const height = Math.max(1, Math.ceil(clone.getBoundingClientRect().height));
         clone.style.width = width + 'px';
 
         try {
             const xhtml = new XMLSerializer().serializeToString(clone);
-            // Guard: no http(s) image references left
             if (/<img[^>]+src=["']https?:/i.test(xhtml)) {
                 throw new Error('External images remain in snapshot');
             }
@@ -5752,7 +5773,6 @@
                 img.src = url;
             });
 
-            // Final safety: if still tainted, fall back to pure canvas redraw (no external assets)
             try {
                 canvas.toDataURL('image/png');
                 return canvas;
@@ -5761,7 +5781,6 @@
                 const title = (nameEl && nameEl.value.trim()) ||
                     ((document.getElementById('modalTitle') || {}).textContent) ||
                     'Trade Summary';
-                // drawTradeCard uses no external images in the safe path when logos fail
                 return drawTradeCard(title);
             }
         } finally {
