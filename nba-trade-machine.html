@@ -2527,12 +2527,12 @@
     //     (Bird re-sign >120% of prior salary → later of 3 months or January 15)
     //   • Recently traded     → can be re-traded immediately, but salary cannot be AGGREGATED
     //     with other outgoing players for 60 days (aggregation restriction)
-    //   • Rookie Scale (Y1)   → cannot be traded until Dec 15 of the first season of the contract
+    //   • Rookie Scale (Y1)   → can be traded 30 days after signing the rookie contract
     //   • Explicit no-trade   → blocked until restrictionUntil (or indefinitely if no date)
     const TRADE_HOLD_LABELS = {
         'recently-signed': 'Recently Signed',
         'recently-traded':  'Agg. Restriction',
-        'rookie-scale':     'Rookie Scale Hold',
+        'rookie-scale':     'Rookie Hold (30d)',
         'no-trade':         'No-Trade Hold',
     };
 
@@ -2561,18 +2561,15 @@
                 hard,
             };
         }
-        // Soft rule: first-year Rookie Scale contracts are held until Dec 15 unless
-        // the dataset explicitly clears them (restriction: 'none').
+        // First-year Rookie Scale: tradeable 30 days after signing.
         const ct = (p.contractType || '');
         if ((ct === 'Rookie Scale' || ct === 'Rookie Scale Est.') && p.restriction !== 'none') {
-            // Only treat as a hold when the dataset marks year-1 OR leaves restriction unset
-            // with a rookieYear flag. Without year data, surface as a warning only.
             if (p.rookieYear === 1 || p.restriction === 'rookie-scale') {
                 return {
                     key: 'rookie-scale',
-                    label: 'Rookie Scale Hold',
+                    label: 'Rookie Hold (30d)',
                     until: p.restrictionUntil || null,
-                    note: p.restrictionNote || 'First-year Rookie Scale contracts cannot be traded until Dec 15 of Year 1 (CBA Art. VII).',
+                    note: p.restrictionNote || 'First-year Rookie Scale contracts can be traded 30 days after signing.',
                     hard: true,
                 };
             }
@@ -2580,7 +2577,7 @@
                 key: 'rookie-scale-soft',
                 label: 'Rookie Scale',
                 until: null,
-                note: 'Verify Dec 15 eligibility for first-year Rookie Scale contracts.',
+                note: 'Verify 30-day post-signing eligibility for first-year Rookie Scale contracts.',
                 hard: false,
             };
         }
@@ -2764,10 +2761,10 @@
                 { id:'atl-08', name:'Corey Kispert',             position:'SF', salary:13_975_000, contractType:'Guaranteed' , contractYears:3 },
                 { id:'atl-09', name:'Buddy Hield',               position:'SG', salary: 9_658_536, contractType:'Non-Guaranteed' , contractYears:2 },
                 { id:'atl-10', name:'Aaron Wiggins',             position:'SG', salary: 8_831_776, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-04', restrictionNote:"'Traded OKC→ATL on 2026-07-06 — 60-day aggregation restriction until 2026-09-04 (can be re-traded alone; cannot combine salary with other outgoing players)'" , contractYears:3 },
-                { id:'atl-11', name:'Kingston Flemings',         position:'PG', salary: 7_348_680, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'ATL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'atl-11', name:'Kingston Flemings',         position:'PG', salary: 7_348_680, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-08-01', restrictionNote:'ATL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until 2026-08-01 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'atl-12', name:'Devin Carter',              position:'PG', salary: 5_158_080, contractType:'Team Option' , restriction:'recently-traded', restrictionUntil:'2026-08-29', restrictionNote:"'Traded SAC→ATL on 2026-06-30 — 60-day aggregation restriction until 2026-08-29 (can be re-traded alone; cannot combine salary with other outgoing players)'" , contractYears:1 },
                 { id:'atl-13', name:'Asa Newell',                position:'PF', salary: 3_399_880, contractType:'Guaranteed' },
-                { id:'atl-14', name:'Zuby Ejiofor',              position:'PF', salary: 3_453_360, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'ATL Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'atl-14', name:'Zuby Ejiofor',              position:'PF', salary: 3_453_360, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-07-31', restrictionNote:'ATL Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until 2026-07-31 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'atl-15', name:'Mouhamed Gueye',            position:'PF', salary: 2_406_205, contractType:'Team Option' },
                 { id:'atl-16', name:'Ryan Nembhard',             position:'PG', salary: 2_150_917, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-17', restrictionNote:"'Traded DAL→ATL on 2026-07-19 — 60-day aggregation restriction until 2026-09-17 (can be re-traded alone; cannot combine salary with other outgoing players)'" , contractYears:1 },
                 { id:'atl-17', name:'Henri Veesaar',             position:'C',  salary: 1_357_763, contractType:'Rookie Scale' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'ATL signed 2026-07-01 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
@@ -2848,14 +2845,14 @@
                 { id:'bkn-04', name:"Day'Ron Sharpe",      position:'C',  salary:10_000_000, contractType:'Guaranteed' },
                 { id:'bkn-05', name:'Moe Wagner',          position:'C',  salary: 9_366_000, contractType:'Guaranteed' },
                 { id:'bkn-06', name:'Keon Ellis',          position:'SG', salary: 9_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'BKN signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 },
-                { id:'bkn-07', name:'Mikel Brown Jr.',     position:'PG', salary: 8_787_000, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'BKN Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'bkn-07', name:'Mikel Brown Jr.',     position:'PG', salary: 8_787_000, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-08-01', restrictionNote:'BKN Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until 2026-08-01 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'bkn-08', name:'Egor Demin',          position:'PG', salary: 7_233_720, contractType:'Team Option' },
                 { id:'bkn-09', name:'Noah Clowney',        position:'PF', salary: 5_414_034, contractType:'Guaranteed' },
                 { id:'bkn-10', name:'Josh Minott',         position:'SF', salary: 4_500_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'BKN signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 },
                 { id:'bkn-11', name:'Nolan Traore',        position:'PG', salary: 4_002_000, contractType:'Guaranteed' },
                 { id:'bkn-12', name:'Drake Powell',        position:'SF', salary: 3_540_600, contractType:'Guaranteed' },
                 { id:'bkn-13', name:'Ben Saraf',           position:'PG', salary: 3_028_560, contractType:'Guaranteed' },
-                { id:'bkn-14', name:'Joshua Jefferson',    position:'PF', salary: 2_969_520, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'BKN Rookie Scale 2026-07-10 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'bkn-14', name:'Joshua Jefferson',    position:'PF', salary: 2_969_520, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-09', restrictionNote:'BKN Rookie Scale 2026-07-10 — Year-1 Rookie Scale hold until 2026-08-09 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'bkn-15', name:'Danny Wolf',          position:'PF', salary: 2_941_440, contractType:'Guaranteed' },
             ],
             picks: [
@@ -2910,8 +2907,8 @@
                 { id:'cha-08', name:'Kon Kneuppel',      position:'SG', salary:10_516_560, contractType:'Guaranteed' },
                 { id:'cha-09', name:'Tidjane Salaun',    position:'PF', salary: 8_237_880, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'cha-10', name:'Tre Mann',          position:'SG', salary: 8_000_000, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
-                { id:'cha-11', name:'Hannes Steinbach',  position:'PF', salary: 5_227_200, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHA Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
-                { id:'cha-12', name:'Christian Anderson',position:'PG', salary: 4_257_480, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHA Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'cha-11', name:'Hannes Steinbach',  position:'PF', salary: 5_227_200, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-08-05', restrictionNote:'CHA Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until 2026-08-05 (30 days after signing)', rookieYear:1 , contractYears:4 },
+                { id:'cha-12', name:'Christian Anderson',position:'PG', salary: 4_257_480, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-05', restrictionNote:'CHA Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until 2026-08-05 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'cha-13', name:'Pat Connaughton',   position:'SG', salary: 3_815_861, contractType:'Team Option' },
                 { id:'cha-14', name:'Liam McNeeley',     position:'SF', salary: 2_902_080, contractType:'Guaranteed' },
                 { id:'cha-15', name:'Moussa Diabate',    position:'PF', salary: 2_461_462, contractType:'Non-Guaranteed' },
@@ -2964,14 +2961,14 @@
                 { id:'chi-03', name:'Norman Powell',       position:'SG', salary:21_500_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'CHI signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 , futureOption:'Team Option' },
                 { id:'chi-04', name:'Patrick Williams',    position:'PF', salary:18_000_000, contractType:'Guaranteed' , contractYears:3 },
                 { id:'chi-05', name:'Isaac Okoro',         position:'SG', salary:11_814_814, contractType:'Guaranteed' , contractYears:1 },
-                { id:'chi-06', name:'Caleb Wilson',        position:'PF', salary:10_683_720, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'chi-06', name:'Caleb Wilson',        position:'PF', salary:10_683_720, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'CHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'chi-07', name:'Jalen Smith',         position:'PF', salary: 9_428_571, contractType:'Guaranteed' , contractYears:1 },
                 { id:'chi-08', name:'Zach Collins',        position:'C',  salary: 8_500_000, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'chi-09', name:'Tre Jones',           position:'PG', salary: 8_000_000, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'chi-10', name:'Rob Dillingham',      position:'PG', salary: 6_889_320, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'chi-11', name:'Matas Buzelis',       position:'PF', salary: 5_715_360, contractType:'Team Option' },
                 { id:'chi-12', name:'Noa Essengue',        position:'PF', salary: 5_701_200, contractType:'Guaranteed' },
-                { id:'chi-13', name:'Dailyn Swain',        position:'SF', salary: 4_965_480, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'CHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'chi-13', name:'Dailyn Swain',        position:'SF', salary: 4_965_480, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'CHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'chi-14', name:'Leonard Miller',      position:'SF', salary: 2_406_205, contractType:'Team Option' },
             ],
             picks: [
@@ -3043,9 +3040,9 @@
                 { id:'dal-09', name:'Naji Marshall',       position:'SF', salary: 9_428_571, contractType:'Guaranteed' , contractYears:1 },
                 { id:'dal-10', name:'Max Christie',        position:'SG', salary: 8_285_714, contractType:'Guaranteed' , contractYears:2 , futureOption:'Player Option' },
                 { id:'dal-11', name:'Dereck Lively II',    position:'C',  salary: 7_239_131, contractType:'Guaranteed' , contractYears:1 },
-                { id:'dal-12', name:'Morez Johnson Jr.',   position:'PF', salary: 6_754_800, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'DAL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'dal-12', name:'Morez Johnson Jr.',   position:'PF', salary: 6_754_800, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-08-01', restrictionNote:'DAL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until 2026-08-01 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'dal-13', name:'Marcus Sasser',       position:'PG', salary: 5_198_983, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:"'Traded DET→DAL on 2026-07-08 — 60-day aggregation restriction until 2026-09-06 (can be re-traded alone; cannot combine salary with other outgoing players)'" , contractYears:1 },
-                { id:'dal-14', name:'Sergio De Larrea',    position:'PG', salary: 3_182_280, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'DAL Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'dal-14', name:'Sergio De Larrea',    position:'PG', salary: 3_182_280, contractType:'Rookie Scale' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'DAL Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'dal-15', name:'Tarik Biberovic',     position:'SG', salary: 3_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DAL signed 2026-07-10 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'dal-16', name:'Moussa Cisse',        position:'C',  salary: 2_185_116, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DAL signed 2026-07-22 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
             ],
@@ -3113,7 +3110,7 @@
                 { id:'det-06', name:'Kevin Huerter',     position:'SG', salary: 9_507_042, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DET re-signed 2026-07-09 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:3 },
                 { id:'det-07', name:'Ron Holland',       position:'SF', salary: 9_069_600, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'det-08', name:'Paul Reed',         position:'PF', salary: 5_602_689, contractType:'Guaranteed' },
-                { id:'det-09', name:'Ebuka Okorie',      position:'SG', salary: 4_481_280, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'DET Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'det-09', name:'Ebuka Okorie',      position:'SG', salary: 4_481_280, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-05', restrictionNote:'DET Rookie Scale 2026-07-06 — Year-1 Rookie Scale hold until 2026-08-05 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'det-10', name:'Daniss Jenkins',    position:'PG', salary: 4_000_000, contractType:'Guaranteed' },
                 { id:'det-11', name:'Javonte Green',     position:'SF', salary: 3_943_679, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'DET re-signed 2026-07-08 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'det-12', name:'Gary Harris',       position:'SG', salary: 3_815_861, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-06', restrictionNote:"'Traded MIL→DET on 2026-07-08 — 60-day aggregation restriction until 2026-09-06 (can be re-traded alone; cannot combine salary with other outgoing players)'" , contractYears:1 },
@@ -3155,7 +3152,7 @@
                 { id:'gsw-03', name:'Kristaps Porziņģis',    position:'C',  salary:20_000_000, contractType:'Guaranteed' , contractYears:2 , futureOption:'Player Option' },
                 { id:'gsw-04', name:'Moses Moody',           position:'SG', salary:12_500_000, contractType:'Guaranteed' , contractYears:2 },
                 { id:'gsw-05', name:'Al Horford',            position:'C',  salary: 6_822_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'GSW re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 , futureOption:'Player Option' },
-                { id:'gsw-06', name:'Yaxel Lendeborg',       position:'PF', salary: 6_096_240, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'GSW Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'gsw-06', name:'Yaxel Lendeborg',       position:'PF', salary: 6_096_240, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-07-31', restrictionNote:'GSW Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until 2026-07-31 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'gsw-07', name:'Brandin Podziemski',    position:'SG', salary: 5_679_459, contractType:'Guaranteed' },
                 { id:'gsw-08', name:'De\'Anthony Melton',    position:'PG', salary: 5_477_000, contractType:'Guaranteed' },
                 { id:'gsw-09', name:'Gui Santos',            position:'SF', salary: 4_629_630, contractType:'Guaranteed' },
@@ -3364,10 +3361,10 @@
                 { id:'sac-03', name:'De\'Andre Hunter', position:'SF', salary:24910714, contractType:'Guaranteed' },
                 { id:'sac-04', name:'Keegan Murray', position:'PF', salary:24137936, contractType:'Guaranteed' , contractYears:5 },
                 { id:'sac-05', name:'Malik Monk', position:'SG', salary:20190035, contractType:'Guaranteed' , contractYears:2 , futureOption:'Player Option' },
-                { id:'sac-06', name:'Darius Acuff Jr.', position:'PG', salary:8021520, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAC Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'sac-06', name:'Darius Acuff Jr.', position:'PG', salary:8021520, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-07-31', restrictionNote:'SAC Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until 2026-07-31 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'sac-07', name:'Precious Achiuwa', position:'PF', salary:5477000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAC re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'sac-08', name:'Nique Clifford', position:'SG', salary:3263400, contractType:'Guaranteed' },
-                { id:'sac-09', name:'Alex Karaban', position:'PF', salary:2948280, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAC Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'sac-09', name:'Alex Karaban', position:'PF', salary:2948280, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-07-31', restrictionNote:'SAC Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until 2026-07-31 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'sac-10', name:'Daeqwon Plowden', position:'SG', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAC re-signed 2026-07-02 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'sac-11', name:'Dylan Cardwell', position:'C', salary:2150917, contractType:'Guaranteed' },
                 { id:'sac-12', name:'Maxime Raynaud', position:'C', salary:2150917, contractType:'Guaranteed' },
@@ -3408,8 +3405,8 @@
                 { id:'sas-09', name:'Stephon Castle', position:'SG', salary:10015920, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'sas-10', name:'Harrison Barnes', position:'SF', salary:8000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAS re-signed 2026-07-08 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'sas-11', name:'Carter Bryant', position:'SF', salary:5145360, contractType:'Guaranteed' },
-                { id:'sas-12', name:'Jayden Quaintance', position:'PF', salary:3902760, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAS Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
-                { id:'sas-13', name:'Tarris Reed', position:'C', salary:3076920, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'SAS Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'sas-12', name:'Jayden Quaintance', position:'PF', salary:3902760, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'SAS Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
+                { id:'sas-13', name:'Tarris Reed', position:'C', salary:3076920, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'SAS Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'sas-14', name:'Jordan McLaughlin', position:'PG', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'SAS re-signed 2026-07-13 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
             ],
             picks: [
@@ -3448,7 +3445,7 @@
                 { id:'tor-04', name:'R.J. Barrett', position:'SG', salary:29616071, contractType:'Guaranteed' , contractYears:1 },
                 { id:'tor-05', name:'Jakob Poeltl', position:'C', salary:19500000, contractType:'Guaranteed' , contractYears:4 },
                 { id:'tor-06', name:'Collin Murray-Boyles', position:'PF', salary:6649560, contractType:'Guaranteed' , contractYears:3 , futureOption:'Team Option' },
-                { id:'tor-07', name:'Allen Graves', position:'PF', salary:4065720, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'TOR Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'tor-07', name:'Allen Graves', position:'PF', salary:4065720, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-01', restrictionNote:'TOR Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until 2026-08-01 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'tor-08', name:'Ja\'Kobe Walter', position:'SG', salary:3811800, contractType:'Guaranteed' },
                 { id:'tor-09', name:'Kyle Anderson', position:'PF', salary:2449421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'TOR signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'tor-10', name:'Trayce Jackson-Davis', position:'C', salary:2406205, contractType:'Guaranteed' },
@@ -3481,7 +3478,7 @@
             players: [
                 { id:'uta-01', name:'Jaren Jackson Jr.', position:'PF', salary:49000000, contractType:'Guaranteed' , contractYears:4 },
                 { id:'uta-02', name:'Lauri Markkanen', position:'PF', salary:46113154, contractType:'Guaranteed' , contractYears:3 },
-                { id:'uta-03', name:'Darryn Peterson', position:'SG', salary:13195320, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'UTA Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'uta-03', name:'Darryn Peterson', position:'SG', salary:13195320, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-07-31', restrictionNote:'UTA Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until 2026-07-31 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'uta-04', name:'Jusuf Nurkić', position:'C', salary:11458333, contractType:'Guaranteed' , contractYears:2 },
                 { id:'uta-05', name:'Ace Bailey', position:'SF', salary:9523080, contractType:'Guaranteed' , contractYears:3 , futureOption:'Team Option' },
                 { id:'uta-06', name:'Keyonte George', position:'PG', salary:6563925, contractType:'Guaranteed' , contractYears:1 },
@@ -3604,7 +3601,7 @@
                 { id:'lac-02', name:'Brandon Ingram',        position:'SF', salary:40_000_000, contractType:'Guaranteed' , contractYears:2 , futureOption:'Player Option' },
                 { id:'lac-03', name:'Rui Hachimura',         position:'PF', salary:14_000_000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAC signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 , futureOption:'Team Option' },
                 { id:'lac-04', name:'Derrick Jones Jr.',     position:'SF', salary:10_476_190, contractType:'Guaranteed' , contractYears:1 },
-                { id:'lac-05', name:'Keaton Wagler',         position:'G',  salary: 9_674_760, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'LAC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'lac-05', name:'Keaton Wagler',         position:'G',  salary: 9_674_760, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'LAC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'lac-06', name:'Brook Lopez',           position:'C',  salary: 9_187_500, contractType:'Guaranteed' , contractYears:1 },
                 { id:'lac-07', name:'Gradey Dick',           position:'SG', salary: 7_131_510, contractType:'Guaranteed' , contractYears:1 },
                 { id:'lac-08', name:'Isaiah Jackson',        position:'C',  salary: 7_000_000, contractType:'Guaranteed' , contractYears:2 },
@@ -3655,7 +3652,7 @@
                 { id:'lal-08', name:'Jaden Hardy',           position:'SG', salary: 6_000_000, contractType:'Guaranteed' , restriction:'recently-traded', restrictionUntil:'2026-09-05', restrictionNote:"'Traded WAS→LAL on 2026-07-07 — 60-day aggregation restriction until 2026-09-05 (can be re-traded alone; cannot combine salary with other outgoing players)'" , contractYears:1 },
                 { id:'lal-09', name:'Jake LaRavia',          position:'SF', salary: 6_000_000, contractType:'Guaranteed' },
                 { id:'lal-10', name:'Dalton Knecht',         position:'SG', salary: 4_201_080, contractType:'Team Option' },
-                { id:'lal-11', name:'Cameron Carr',          position:'SG', salary: 3_315_360, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'LAL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'lal-11', name:'Cameron Carr',          position:'SG', salary: 3_315_360, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-01', restrictionNote:'LAL Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until 2026-08-01 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'lal-12', name:'Kevon Looney',          position:'C',  salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-12 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'lal-13', name:'Matisse Thybulle',      position:'SG', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-27 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'lal-14', name:'Ziaire Williams',       position:'SF', salary: 2_449_421, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'LAL signed 2026-07-19 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 },
@@ -3713,11 +3710,11 @@
                 { id:'okc-05', name:'Alex Caruso', position:'SG', salary:19550160, contractType:'Guaranteed' , contractYears:3 },
                 { id:'okc-06', name:'Jaylin Williams', position:'PF', salary:7774648, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'okc-07', name:'Cason Wallace', position:'PG', salary:7420806, contractType:'Guaranteed' , contractYears:1 },
-                { id:'okc-08', name:'Aday Mara', position:'C', salary:5791680, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'OKC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'okc-08', name:'Aday Mara', position:'C', salary:5791680, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'OKC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'okc-09', name:'Nikola Topić', position:'PG', salary:5429760, contractType:'Guaranteed' },
                 { id:'okc-10', name:'Kenrich Williams', position:'SF', salary:5000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'OKC re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'okc-11', name:'Thomas Sorber', position:'C', salary:4887720, contractType:'Guaranteed' },
-                { id:'okc-12', name:'Bennett Stirtz', position:'SG', salary:4717320, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'OKC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'okc-12', name:'Bennett Stirtz', position:'SG', salary:4717320, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'OKC Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'okc-13', name:'Jared McCain', position:'SG', salary:4422600, contractType:'Team Option' },
                 { id:'okc-14', name:'Ajay Mitchell', position:'SG', salary:2850000, contractType:'Guaranteed' },
             ],
@@ -3806,7 +3803,7 @@
                 { id:'phi-05', name:'Dean Wade', position:'PF', salary:9000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:4 },
                 { id:'phi-06', name:'Anfernee Simons', position:'SG', salary:6000000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 , futureOption:'Player Option' },
                 { id:'phi-07', name:'LeBron James', position:'SF', salary:3876529, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-26 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 , futureOption:'Player Option' },
-                { id:'phi-08', name:'Labaron Philon Jr.', position:'PG', salary:3597120, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'PHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'phi-08', name:'Labaron Philon Jr.', position:'PG', salary:3597120, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-02', restrictionNote:'PHI Rookie Scale 2026-07-03 — Year-1 Rookie Scale hold until 2026-08-02 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'phi-09', name:'Dominick Barlow', position:'PF', salary:3415000, contractType:'Guaranteed' },
                 { id:'phi-10', name:'Ariel Hukporti', position:'C', salary:3400000, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHI signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:2 },
                 { id:'phi-11', name:'Jabari Walker', position:'PF', salary:2584539, contractType:'Guaranteed' },
@@ -3851,7 +3848,7 @@
                 { id:'phx-08', name:'Luke Kennard', position:'SG', salary:6064000, contractType:'Player Option' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHX signed 2026-07-14 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'phx-09', name:'Jordan Goodwin', position:'PG', salary:5864198, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'PHX re-signed 2026-07-07 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:1 },
                 { id:'phx-10', name:'Haywood Highsmith', position:'SF', salary:3018158, contractType:'Guaranteed' },
-                { id:'phx-11', name:'Koa Peat', position:'PF', salary:2926800, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'PHX Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'phx-11', name:'Koa Peat', position:'PF', salary:2926800, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-07-31', restrictionNote:'PHX Rookie Scale 2026-07-01 — Year-1 Rookie Scale hold until 2026-07-31 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'phx-12', name:'Ryan Dunn', position:'SF', salary:2784240, contractType:'Guaranteed' },
                 { id:'phx-13', name:'Jamaree Bouyea', position:'PG', salary:2584539, contractType:'Guaranteed' },
                 { id:'phx-14', name:'Oso Ighodaro', position:'C', salary:2296271, contractType:'Guaranteed' },
@@ -3918,7 +3915,7 @@
             players: [
                 { id:'was-01', name:'Anthony Davis', position:'C', salary:58456566, contractType:'Guaranteed' , contractYears:2 , futureOption:'Player Option' },
                 { id:'was-02', name:'Trae Young', position:'PG', salary:49488300, contractType:'Guaranteed' , restriction:'recently-signed', restrictionUntil:'2026-12-15', restrictionNote:'WAS re-signed 2026-07-06 — cannot trade until 2026-12-15 (3 mo / Dec 15)' , contractYears:4 },
-                { id:'was-03', name:'AJ Dybantsa', position:'SF', salary:14748000, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-12-15', restrictionNote:'WAS Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until Dec 15', rookieYear:1 , contractYears:4 },
+                { id:'was-03', name:'AJ Dybantsa', position:'SF', salary:14748000, contractType:'Guaranteed' , restriction:'rookie-scale', restrictionUntil:'2026-08-01', restrictionNote:'WAS Rookie Scale 2026-07-02 — Year-1 Rookie Scale hold until 2026-08-01 (30 days after signing)', rookieYear:1 , contractYears:4 },
                 { id:'was-04', name:'Alex Sarr', position:'C', salary:12370680, contractType:'Guaranteed' , contractYears:2 , futureOption:'Team Option' },
                 { id:'was-05', name:'Bilal Coulibaly', position:'SF', salary:9240012, contractType:'Guaranteed' , contractYears:1 },
                 { id:'was-06', name:'Tre Johnson', position:'SG', salary:8649600, contractType:'Guaranteed' , contractYears:3 , futureOption:'Team Option' },
@@ -4077,12 +4074,13 @@
         t.pickMods[pickId].protection = value;
         renderTeamCard(teamId);
     }
-    function togglePickSwap(teamId, pickId) {
+    function setPickSwap(teamId, pickId, value) {
+        // value: '' | 'best' | 'worst'
         const t = teams.find(x => x.id === teamId);
         if (!t) return;
         if (!t.pickMods) t.pickMods = {};
         if (!t.pickMods[pickId]) t.pickMods[pickId] = {};
-        t.pickMods[pickId].swap = !t.pickMods[pickId].swap;
+        t.pickMods[pickId].swap = value || '';
         renderTeamCard(teamId);
     }
 
@@ -4462,8 +4460,9 @@
                 const sel = (!ineligible && t.selectedPicks.includes(pk.id)) ? 'selected' : '';
                 const mod = (t.pickMods && t.pickMods[pk.id]) || {};
                 const prot = mod.protection != null ? mod.protection : (pk.protections || 'Unprotected');
-                const isSwap = !!mod.swap;
-                const displayName = formatPickName(pk) + (isSwap ? ' (Swap)' : '');
+                const swapMode = mod.swap || ''; // '' | 'best' | 'worst'
+                const swapLabel = swapMode === 'best' ? 'Swap Best' : swapMode === 'worst' ? 'Swap Worst' : '';
+                const displayName = formatPickName(pk) + (swapLabel ? ' · ' + swapLabel : '');
                 const detailBits = [];
                 if (!ineligible) detailBits.push(prot);
                 detailBits.push('Owned by ' + (pk.owner || t.abbr));
@@ -4472,19 +4471,25 @@
                 const protOpts = ['Unprotected','Top-1 Protected','Top-3 Protected','Top-5 Protected','Top-8 Protected','Top-10 Protected','Top-14 Protected','Lottery Protected','Conveys as 2nd if not met'];
                 let modUi = '';
                 if (sel && !ineligible) {
-                    modUi = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center;">
-                        <label style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:700;color:#64748b;display:flex;align-items:center;gap:4px;">
-                            Protection
+                    modUi = `<div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <span style="font-family:Lexend,sans-serif;font-size:.52rem;font-weight:800;letter-spacing:.08em;color:#94a3b8;">PROTECTION</span>
                             <select onchange="setPickProtection(${t.id},'${pk.id}',this.value)"
-                                style="font-family:Lexend,sans-serif;font-size:.6rem;font-weight:700;padding:3px 6px;border-radius:5px;border:1px solid #cbd5e1;background:#fff;">
+                                style="font-family:Lexend,sans-serif;font-size:.72rem;font-weight:700;padding:8px 12px;border-radius:8px;border:1.5px solid #cbd5e1;background:#fff;color:#0f172a;width:100%;cursor:pointer;appearance:auto;">
                                 ${protOpts.map(o => `<option value="${o}" ${prot === o ? 'selected' : ''}>${o}</option>`).join('')}
                             </select>
-                        </label>
-                        <button type="button" onclick="togglePickSwap(${t.id},'${pk.id}')"
-                            style="font-family:Lexend,sans-serif;font-size:.58rem;font-weight:800;padding:4px 9px;border-radius:6px;cursor:pointer;
-                            border:1.5px solid ${isSwap ? '#0066cc' : '#cbd5e1'};background:${isSwap ? '#0066cc' : '#fff'};color:${isSwap ? '#fff' : '#475569'};">
-                            ${isSwap ? 'Swap ON' : 'Offer as Swap'}
-                        </button>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <span style="font-family:Lexend,sans-serif;font-size:.52rem;font-weight:800;letter-spacing:.08em;color:#94a3b8;">SWAP</span>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                ${[['','No Swap'],['best','Swap Best'],['worst','Swap Worst']].map(([val, lab]) => {
+                                    const on = swapMode === val;
+                                    return `<button type="button" onclick="setPickSwap(${t.id},'${pk.id}','${val}')"
+                                        style="font-family:Lexend,sans-serif;font-size:.65rem;font-weight:800;padding:7px 12px;border-radius:8px;cursor:pointer;flex:1;min-width:80px;
+                                        border:2px solid ${on ? '#0066cc' : '#e2e8f0'};background:${on ? '#0066cc' : '#fff'};color:${on ? '#fff' : '#475569'};">${lab}</button>`;
+                                }).join('')}
+                            </div>
+                        </div>
                     </div>`;
                 }
                 return `<div class="pick-item ${itemCls}" ${clickAttr} ${ineligible ? 'title="Ineligible to be traded"' : ''}>
@@ -5131,7 +5136,13 @@
                 const untilStr = hold.until ? ` until ${hold.until}` : '';
                 const detail = hold.note ? ` ${hold.note}` : '';
                 if (hold.hard) {
-                    violations.push({ type: 'error', msg: `${name}: ${p.name} cannot be traded — ${hold.label}${untilStr}.${detail}` });
+                    violations.push({
+                        type: 'error',
+                        msg: `${name}: ${p.name} cannot be traded — ${hold.label}${untilStr}.${detail}`,
+                        timedHold: !!hold.until,
+                        until: hold.until || null,
+                        playerName: p.name,
+                    });
                 } else if (hold.key === 'recently-traded') {
                     aggRestricted.push(p);
                     infos.push({ type: 'info', msg: `${name}: ${p.name} has a 60-day aggregation restriction${untilStr} — can be traded alone, but cannot combine his salary with other outgoing players.` });
@@ -5547,19 +5558,43 @@
             });
         });
 
-        // Compile all messages
+        // Compile all messages — timed holds (would be legal after a date) get special treatment
+        const timedHolds = violations.filter(v => v.timedHold && v.until);
+        const otherErrors = violations.filter(v => !(v.timedHold && v.until));
+        const allTimedOnly = violations.length > 0 && otherErrors.length === 0 && timedHolds.length > 0;
+        let earliestUntil = null;
+        if (allTimedOnly) {
+            timedHolds.forEach(v => {
+                if (!earliestUntil || v.until > earliestUntil) earliestUntil = v.until; // latest date that must pass
+            });
+            // use the latest restriction end among all timed holds
+            earliestUntil = timedHolds.reduce((max, v) => (!max || v.until > max ? v.until : max), null);
+        }
+
         const allMessages = [...violations, ...warnings, ...infos];
+        if (allTimedOnly && earliestUntil) {
+            allMessages.unshift({
+                type: 'info',
+                msg: `This structure is CBA-legal once holds expire. Trade fails until ${earliestUntil}, then successful.`,
+            });
+        }
         const hasErrors = violations.length > 0;
         const hasWarnings = warnings.length > 0;
-
         const isValid = !hasErrors;
         const teamAbbrList = tradeSummary.filter(t => t.abbr).map(t => t.abbr).join(' / ');
-        const title = teamAbbrList ? teamAbbrList : (isValid ? 'Trade Appears Valid' : 'Trade Has Violations');
-        const sub = isValid
-            ? `${hasWarnings ? 'Review warnings before finalizing.' : 'No CBA violations detected — trade can proceed.'}`
-            : `${violations.length} violation${violations.length > 1 ? 's' : ''} found — trade cannot proceed as structured.`;
+        let title, sub;
+        if (isValid) {
+            title = teamAbbrList || 'Trade Appears Valid';
+            sub = hasWarnings ? 'Review warnings before finalizing.' : 'No CBA violations detected — trade can proceed.';
+        } else if (allTimedOnly && earliestUntil) {
+            title = `Trade fails until ${earliestUntil}`;
+            sub = `Structure is otherwise legal — becomes successful after ${earliestUntil}.`;
+        } else {
+            title = teamAbbrList || 'Trade Has Violations';
+            sub = `${violations.length} violation${violations.length > 1 ? 's' : ''} found — trade cannot proceed as structured.`;
+        }
 
-        showResult(isValid, title, sub, allMessages, tradeSummary);
+        showResult(isValid, title, sub, allMessages, tradeSummary, allTimedOnly ? earliestUntil : null);
     }
 
 
@@ -6123,7 +6158,7 @@
         }
     });
 
-    function showResult(isValid, title, sub, messages, tradeSummary) {
+    function showResult(isValid, title, sub, messages, tradeSummary, pendingUntil) {
         // ── Populate modal ───────────────────────────────────────────────
         const modal      = document.getElementById('tradeModal');
         const header     = document.getElementById('modalHeader');
@@ -6134,9 +6169,15 @@
         const breakdown  = document.getElementById('modalBreakdown');
         const restrictions = document.getElementById('modalRestrictions');
 
-        header.className = 'modal-header ' + (isValid ? 'valid' : 'invalid');
-        badge.className  = 'modal-badge '  + (isValid ? 'valid' : 'invalid');
-        badge.textContent = isValid ? 'Valid' : 'Invalid';
+        if (pendingUntil) {
+            header.className = 'modal-header invalid';
+            badge.className  = 'modal-badge invalid';
+            badge.textContent = 'Until ' + pendingUntil;
+        } else {
+            header.className = 'modal-header ' + (isValid ? 'valid' : 'invalid');
+            badge.className  = 'modal-badge '  + (isValid ? 'valid' : 'invalid');
+            badge.textContent = isValid ? 'Valid' : 'Invalid';
+        }
         titleEl.textContent = title;
         subEl.textContent   = sub;
 
@@ -6191,6 +6232,7 @@
                 t.selectedPlayers.length > 0 ||
                 t.selectedPicks.length > 0 ||
                 (t.faSignings||[]).length > 0 ||
+                (t.waivedPlayers||[]).length > 0 ||
                 (t.cashOut || 0) > 0
             )
         );
@@ -6258,18 +6300,19 @@
                         pickHere = others.length === 1 && others[0].id === t.id;
                     }
                     if (!pickHere) return;
-                    const label = (typeof formatPickName === 'function') ? formatPickName(pk) : pk.name;
+                    const label = (typeof formatPickName === 'function') ? formatPickName(pk, other) : pk.name;
                     inPicks += `<div class="sh-row pick"><span class="sh-name">${label}</span><span class="sh-sal"></span></div>`;
                 });
-                if (isTwoTeam && (other.cashOut || 0) > 0) {
-                    inCash += other.cashOut;
-                    inTotal += other.cashOut;
-                }
             });
-            const cashRow = inCash > 0
-                ? `<div class="sh-row cash"><span class="sh-name">Cash</span><span class="sh-sal">${fmtCash(inCash)}</span></div>`
-                : '';
-            const body = (inPlayers + inPicks + cashRow) || `<div class="sh-empty-col">No assets in</div>`;
+            // Waivers as part of this team's side of the deal
+            let waiveRows = '';
+            (t.waivedPlayers || []).forEach(pid => {
+                const data = t.data || (t.abbr && TEAM_DATA[t.abbr]);
+                const p = data && (data.players || []).find(pp => pp.id === pid);
+                if (!p) return;
+                waiveRows += `<div class="sh-row" style="opacity:.85;"><span class="sh-name">Waive: ${p.name}</span><span class="sh-sal">${fmtM(p.salary)}</span></div>`;
+            });
+            const body = (inPlayers + inPicks + waiveRows) || `<div class="sh-empty-col">No assets in</div>`;
 
             const arrow = i < active.length - 1
                 ? `<div class="sh-arrow" aria-hidden="true">
@@ -6711,7 +6754,7 @@
 
     async function drawTradeCardAsync(customTitle) {
         const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (
-            t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.cashOut || 0) > 0
+            t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.waivedPlayers||[]).length > 0 || (t.cashOut || 0) > 0
         ));
         const logos = await loadLogosForTeams(activeTeams.map(t => t.abbr));
         return _drawTradeCardSync(customTitle || '', logos);
@@ -6737,7 +6780,7 @@
         // Height is content-driven — no tall empty boxes.
         const isValid = document.getElementById('modalBadge') && document.getElementById('modalBadge').classList.contains('valid');
         const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (
-            t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.cashOut || 0) > 0
+            t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.waivedPlayers||[]).length > 0 || (t.cashOut || 0) > 0
         ));
 
         const font = (weight, size) => weight + ' ' + size + 'px "Lexend", "Helvetica Neue", Helvetica, Arial, sans-serif';
@@ -6779,13 +6822,16 @@
                         pickHere = others.length === 1 && others[0].id === t.id;
                     }
                     if (!pickHere) return;
-                    const nm = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
+                    const nm = (typeof formatPickName === 'function') ? formatPickName(pk, other) : (pk.name || 'Pick');
                     items.push({ kind: 'pick', name: nm, sal: '' });
                 });
-                if (isTwoTeam && (other.cashOut || 0) > 0) {
-                    items.push({ kind: 'cash', name: 'Cash', sal: money(other.cashOut) });
-                    inSalary += other.cashOut;
-                }
+            });
+            // Team's own waivers as part of the transaction graphic
+            (t.waivedPlayers || []).forEach(id => {
+                const d = TEAM_DATA[t.abbr];
+                const p = d && (d.players || []).find(pp => pp.id === id);
+                if (!p) return;
+                items.push({ kind: 'waive', name: 'Waive: ' + p.name, sal: money(p.salary) });
             });
             return {
                 abbr: t.abbr,
@@ -7263,13 +7309,20 @@
         if (/\(no\)/i.test(pk.protections || '')) return true;
         return false;
     }
-    function formatPickName(pk) {
+    function formatPickName(pk, team) {
         if (!pk || !pk.name) return '';
-        return pk.name
+        let base = pk.name
             .replace(/\s*\(Frozen,?\s*No\)/gi, '')
             .replace(/\s*\(No\)/gi, '')
             .replace(/\s*\(No trade\)/gi, '')
             .trim();
+        const mod = team && team.pickMods ? team.pickMods[pk.id] : null;
+        if (mod) {
+            if (mod.protection && mod.protection !== 'Unprotected') base += ' (' + mod.protection + ')';
+            if (mod.swap === 'best') base += ' · Swap Best';
+            if (mod.swap === 'worst') base += ' · Swap Worst';
+        }
+        return base;
     }
 
     function fmtM(val) {
