@@ -2523,6 +2523,66 @@
         return `https://a.espncdn.com/i/teamlogos/nba/500/${code}.png`;
     }
 
+    // Official NBA team IDs — used for CDN logo URLs
+    const NBA_TEAM_IDS = {
+        ATL:1610612737, BOS:1610612738, BKN:1610612751, CHA:1610612766, CHI:1610612741,
+        CLE:1610612739, DAL:1610612742, DEN:1610612743, DET:1610612765, GSW:1610612744,
+        HOU:1610612745, IND:1610612754, LAC:1610612746, LAL:1610612747, MEM:1610612763,
+        MIA:1610612748, MIL:1610612749, MIN:1610612750, NOP:1610612740, NYK:1610612752,
+        OKC:1610612760, ORL:1610612753, PHI:1610612755, PHX:1610612756, POR:1610612757,
+        SAC:1610612758, SAS:1610612759, TOR:1610612761, UTA:1610612762, WAS:1610612764
+    };
+
+    // Cache loaded logo images so repeated copies are instant
+    const _logoCache = {};
+
+    function loadTeamLogoImage(abbr) {
+        if (_logoCache[abbr]) return Promise.resolve(_logoCache[abbr]);
+        const sources = [];
+        const tid = NBA_TEAM_IDS[abbr];
+        if (tid) {
+            sources.push('https://cdn.nba.com/logos/nba/' + tid + '/global/L/logo.png');
+            sources.push('https://cdn.nba.com/logos/nba/' + tid + '/primary/L/logo.svg');
+        }
+        sources.push(teamLogoUrl(abbr));
+
+        return new Promise((resolve) => {
+            let i = 0;
+            const tryNext = () => {
+                if (i >= sources.length) { resolve(null); return; }
+                const src = sources[i++];
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    // Verify we can sample pixels (not CORS-tainted)
+                    try {
+                        const c = document.createElement('canvas');
+                        c.width = 2; c.height = 2;
+                        const cx = c.getContext('2d');
+                        cx.drawImage(img, 0, 0, 2, 2);
+                        c.toDataURL();
+                        _logoCache[abbr] = img;
+                        resolve(img);
+                    } catch (e) {
+                        tryNext();
+                    }
+                };
+                img.onerror = () => tryNext();
+                img.src = src;
+            };
+            tryNext();
+        });
+    }
+
+    async function loadLogosForTeams(abbrs) {
+        const logos = {};
+        await Promise.all(abbrs.map(async (a) => {
+            const img = await loadTeamLogoImage(a);
+            if (img) logos[a] = img;
+        }));
+        return logos;
+    }
+
     // ─── ALL 30 NBA TEAMS ───────────────────────────────────────────────────
     const NBA_TEAMS = {
         'ATL': { name: 'Atlanta Hawks',          color: '#E03A3E', conference: 'East' },
@@ -5794,8 +5854,7 @@
         const prev = btn ? btn.textContent : 'Copy Graphic';
         try {
             if (btn) btn.textContent = 'Copying…';
-            // Always use pure canvas draw — matches the compact share screenshot exactly
-            const canvas = drawTradeCard('');
+            const canvas = await drawTradeCardAsync('');
             _lastTradeCanvas = canvas;
             const blob = await new Promise((resolve, reject) =>
                 canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
@@ -5818,7 +5877,7 @@
         const prev = btn ? btn.textContent : 'Download PNG';
         try {
             if (btn) btn.textContent = 'Saving…';
-            const canvas = drawTradeCard('');
+            const canvas = await drawTradeCardAsync('');
             _lastTradeCanvas = canvas;
             const url = canvas.toDataURL('image/png');
             const a = document.createElement('a');
@@ -5877,23 +5936,41 @@
         document.body.appendChild(overlay);
         const input = document.getElementById('tradeNameInput');
         setTimeout(() => { input.focus(); input.select(); }, 50);
-        document.getElementById('confirmTradeNameBtn').onclick = () => {
+        document.getElementById('confirmTradeNameBtn').onclick = async () => {
             const finalTitle = (input.value || '').trim() || defaultTitle;
             overlay.remove();
-            const canvas = drawTradeCard(finalTitle);
+            const canvas = await drawTradeCardAsync(finalTitle);
             _lastTradeCanvas = canvas;
             showSharePreview(canvas, finalTitle);
         };
     }
 
-
-    
     function drawTradeCard(customTitle) {
+        // Sync fallback (no logos) — prefer drawTradeCardAsync
         return _drawTradeCardSync(customTitle || '', {});
     }
 
+    async function drawTradeCardAsync(customTitle) {
+        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (
+            t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.cashOut || 0) > 0
+        ));
+        const logos = await loadLogosForTeams(activeTeams.map(t => t.abbr));
+        return _drawTradeCardSync(customTitle || '', logos);
+    }
+
     async function drawTradeCardWithLogos(customTitle) {
-        return _drawTradeCardSync(customTitle || '', {});
+        return drawTradeCardAsync(customTitle);
+    }
+
+    function _roundRectPath(ctx, x, y, w, h, r) {
+        const rr = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
     }
 
     function _drawTradeCardSync(customTitle, logos) {
@@ -5963,21 +6040,15 @@
         canvas.height = H;
         const ctx = canvas.getContext('2d');
 
-        // Background
-        ctx.fillStyle = BG;
-        ctx.fillRect(0, 0, W, H);
-
-        // Outer soft border (matches screenshot card frame)
-        ctx.strokeStyle = '#e8ebf2';
-        ctx.lineWidth = 1;
+        // Transparent outside, white rounded outer card (matches sample)
+        ctx.clearRect(0, 0, W, H);
         const outerR = 16;
-        ctx.beginPath();
-        ctx.moveTo(outerR, 0.5);
-        ctx.arcTo(W - 0.5, 0.5, W - 0.5, outerR, outerR);
-        ctx.arcTo(W - 0.5, H - 0.5, W - outerR, H - 0.5, outerR);
-        ctx.arcTo(0.5, H - 0.5, 0.5, H - outerR, outerR);
-        ctx.arcTo(0.5, 0.5, outerR, 0.5, outerR);
-        ctx.closePath();
+        ctx.fillStyle = BG;
+        _roundRectPath(ctx, 0, 0, W, H, outerR);
+        ctx.fill();
+        ctx.strokeStyle = '#e8ebf2';
+        ctx.lineWidth = 1.5;
+        _roundRectPath(ctx, 0.75, 0.75, W - 1.5, H - 1.5, outerR);
         ctx.stroke();
 
         // Brand
@@ -6057,31 +6128,27 @@
         for (let i = 0; i < teamPayload.length; i++) {
             const t = teamPayload[i];
             const x = padX + i * (colW + arrowW);
+            const r = 12;
+
+            // Card with fully rounded corners (clip so color bar follows the curve)
+            ctx.save();
+            _roundRectPath(ctx, x, areaTop, colW, cardH, r);
+            ctx.clip();
 
             // Card background
-            const r = 12;
             ctx.fillStyle = CARD;
-            ctx.beginPath();
-            ctx.moveTo(x + r, areaTop);
-            ctx.arcTo(x + colW, areaTop, x + colW, areaTop + cardH, r);
-            ctx.arcTo(x + colW, areaTop + cardH, x, areaTop + cardH, r);
-            ctx.arcTo(x, areaTop + cardH, x, areaTop, r);
-            ctx.arcTo(x, areaTop, x + colW, areaTop, r);
-            ctx.closePath();
-            ctx.fill();
-            // subtle border
-            ctx.strokeStyle = LINE;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            ctx.fillRect(x, areaTop, colW, cardH);
 
-            // Color bar
+            // Color bar (clipped to rounded top)
             ctx.fillStyle = t.color;
             ctx.fillRect(x, areaTop, colW, 4);
 
-            // Logo badge (team color circle + abbr) — always available, no CORS
-            const lx = x + 14, ly = areaTop + 14, ls = 32;
+            // Logo — real team logo when available, else color badge
+            const lx = x + 14, ly = areaTop + 14, ls = 34;
             if (t.logo) {
-                try { ctx.drawImage(t.logo, lx, ly, ls, ls); } catch (e) {
+                try {
+                    ctx.drawImage(t.logo, lx, ly, ls, ls);
+                } catch (e) {
                     ctx.fillStyle = t.color;
                     ctx.beginPath(); ctx.arc(lx + ls / 2, ly + ls / 2, ls / 2, 0, Math.PI * 2); ctx.fill();
                     ctx.fillStyle = '#fff';
@@ -6100,14 +6167,14 @@
                 ctx.textBaseline = 'alphabetic';
             }
 
-            const textX = x + 54;
+            const textX = x + 56;
             ctx.font = font('800', 14);
             ctx.fillStyle = INK;
             ctx.textAlign = 'left';
-            ctx.fillText(trunc(t.name, colW - 70, font('800', 14)), textX, areaTop + 28);
+            ctx.fillText(trunc(t.name, colW - 72, font('800', 14)), textX, areaTop + 30);
             ctx.font = font('600', 11);
             ctx.fillStyle = MUTED;
-            ctx.fillText(t.abbr, textX, areaTop + 46);
+            ctx.fillText(t.abbr, textX, areaTop + 48);
 
             // Divider under header
             ctx.fillStyle = LINE;
@@ -6145,10 +6212,10 @@
                 ctx.fillText('No assets', x + colW / 2, areaTop + headH + bodyPad + 16);
             }
 
-            // Footer TOTAL OUT
+            // Footer TOTAL OUT (white strip inside rounded card)
             const footY = areaTop + cardH - footH;
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(x + 1, footY, colW - 2, footH - 1);
+            ctx.fillRect(x, footY, colW, footH);
             ctx.fillStyle = LINE;
             ctx.fillRect(x + 12, footY, colW - 24, 1);
 
@@ -6160,6 +6227,14 @@
             ctx.fillStyle = INK;
             ctx.textAlign = 'right';
             ctx.fillText(money(t.outSalary), x + colW - 14, footY + 26);
+
+            ctx.restore();
+
+            // Card border (outside clip so stroke is clean)
+            ctx.strokeStyle = LINE;
+            ctx.lineWidth = 1;
+            _roundRectPath(ctx, x + 0.5, areaTop + 0.5, colW - 1, cardH - 1, r);
+            ctx.stroke();
 
             // Bidirectional arrow between cards
             if (i < teamPayload.length - 1) {
@@ -6173,7 +6248,6 @@
                 ctx.moveTo(ax - 14, ay);
                 ctx.lineTo(ax + 14, ay);
                 ctx.stroke();
-                // right head
                 ctx.beginPath();
                 ctx.moveTo(ax + 14, ay);
                 ctx.lineTo(ax + 7, ay - 5);
@@ -6181,7 +6255,6 @@
                 ctx.closePath();
                 ctx.fillStyle = BLUE;
                 ctx.fill();
-                // left head
                 ctx.beginPath();
                 ctx.moveTo(ax - 14, ay);
                 ctx.lineTo(ax - 7, ay - 5);
