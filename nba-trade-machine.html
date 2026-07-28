@@ -280,10 +280,11 @@
             text-overflow: ellipsis;
         }
         .team-header-name.placeholder {
-            color: #94a3b8;
-            font-weight: 600;
-            font-size: .9rem;
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 1.2rem;
             font-style: normal;
+            letter-spacing: .01em;
         }
 
         .team-header-chevron {
@@ -1508,11 +1509,11 @@
         }
         .team-header-name { font-size: 1.15rem; letter-spacing: .04em; color: var(--ink); }
         .team-header-name.placeholder {
-            color: var(--mid);
+            color: #0f172a;
             font-style: normal;
-            font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: .08em;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: .01em;
         }
         .team-header-chevron {
             background: #fff;
@@ -2032,40 +2033,28 @@
             .board-toolbar-actions { width: 100%; justify-content: flex-end; }
         }
 
-        /* ── Empty-team CTA pill (replaces the blue "Select a team" text) ── */
+        /* Empty-team Choose Team label */
         .team-header-name.placeholder {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: .45rem !important;
-            color: var(--mid) !important;
+            display: block !important;
+            color: #0f172a !important;
             font-family: 'Lexend', sans-serif !important;
             font-style: normal !important;
             font-weight: 800 !important;
-            font-size: .82rem !important;
-            letter-spacing: .16em !important;
-            background: #fff;
-            border: 1px dashed var(--border-light);
-            border-radius: 999px;
-            padding: .35rem .85rem;
+            font-size: 1.25rem !important;
+            letter-spacing: .01em !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
             opacity: 1 !important;
-            transition: all .18s ease;
+            transition: color .15s ease;
         }
         .team-card-header:hover .team-header-name.placeholder {
-            background: rgba(237,23,76,.06);
-            border-color: rgba(237,23,76,.4);
-            color: var(--sixers-red) !important;
-            border-style: solid;
+            color: #0066cc !important;
         }
         .team-header-name.placeholder::before {
-            content: "+";
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 16px; height: 16px;
-            border-radius: 50%;
-            background: var(--sixers-red);
-            color: #fff;
-            font-weight: 900;
-            font-size: .85rem;
-            line-height: 1;
+            content: none !important;
+            display: none !important;
         }
 
         /* ── Modernized Free Agent panel ── */
@@ -2396,6 +2385,10 @@
             </div>
             <div class="modal-footer">
                 <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;width:100%;">
+                    <input id="modalTradeName" type="text" placeholder="Name this trade (optional)"
+                           style="flex:1;min-width:160px;font-family:Lexend,sans-serif;font-size:.85rem;font-weight:600;
+                                  padding:.55rem .85rem;border:1px solid #e2e8f0;border-radius:999px;color:#0f172a;outline:none;"
+                           onfocus="this.style.borderColor='#0066cc'" onblur="this.style.borderColor='#e2e8f0'">
                     <button class="btn-share" id="shareBtn" onclick="shareGraphic()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                         Share Graphic
@@ -4338,7 +4331,7 @@
             <div class="team-color-bar" style="background:${color};"></div>
             <div class="team-header-inner">
                 <div class="team-header-text">
-                    <div class="team-header-label">${teamInfo ? t.abbr + ' · tap to change' : 'Team'}</div>
+                    ${teamInfo ? `<div class="team-header-label">${t.abbr} · tap to change</div>` : ''}
                     <div class="team-header-name ${teamInfo ? '' : 'placeholder'}">${displayName || 'Choose Team'}</div>
                 </div>
                 <div class="team-header-chevron">
@@ -5574,99 +5567,57 @@
     let _lastTradeCanvas = null; // store last generated canvas for copy/download
 
     function shareGraphic() {
-        const isValid = document.getElementById('modalBadge').classList.contains('valid');
-        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0));
-        const teamAbbrs = activeTeams.map(t => t.abbr).join(' ↔ ');
-        const defaultTitle = teamAbbrs || document.getElementById('modalTitle').textContent;
-        const customTitle = prompt('Name this trade graphic:', defaultTitle);
-        if (customTitle === null) return; // cancelled
-        const finalTitle = customTitle.trim() || defaultTitle;
-        const canvas = drawTradeCard(finalTitle);
-        _lastTradeCanvas = canvas;
-        showSharePreview(canvas, finalTitle);
-    }
+        const activeTeams = teams.filter(t => t.abbr && TEAM_DATA[t.abbr] && (
+            t.selectedPlayers.length > 0 || t.selectedPicks.length > 0 || (t.cashOut||0) > 0
+        ));
+        const teamAbbrs = activeTeams.map(t => t.abbr).join(' / ');
+        const named = (document.getElementById('modalTradeName') || {}).value || '';
+        const defaultTitle = (named && named.trim()) || teamAbbrs || (document.getElementById('modalTitle') || {}).textContent || 'Trade';
 
-    // ── Post trade graphic to the Community Wall ──────────────────────────
-    async function postToCommunity() {
-        const user = window.auth ? window.auth.currentUser : null;
-        if (!user) {
-            alert('Sign in to post to the community wall.');
-            return;
-        }
-        if (!window.db || !window.firebase) {
-            alert('Community database not available on this page.');
-            return;
-        }
-
-        const activeTeams = teams.filter(t =>
-            t.abbr && TEAM_DATA[t.abbr] &&
-            (t.selectedPlayers.length > 0 || t.selectedPicks.length > 0)
-        );
-        if (activeTeams.length < 2) {
-            alert('Select players or picks for at least 2 teams first.');
-            return;
-        }
-
-        // Prompt for a custom title
-        const isValid    = document.getElementById('modalBadge').classList.contains('valid');
-        const teamAbbrs  = activeTeams.map(t => t.abbr).join(' ↔ ');
-        const defaultTitle = `Trade: ${teamAbbrs} — ${isValid ? 'CBA Valid' : 'CBA Invalid'}`;
-        const customTitle = prompt('Give this post a title (or press OK to use the default):', defaultTitle);
-        if (customTitle === null) return; // user cancelled
-        const finalTitle = customTitle.trim() || defaultTitle;
-
-        const btn = document.getElementById('postToCommunityBtn');
-        btn.disabled = true;
-        btn.textContent = 'Posting…';
-
-        const imageUrl   = drawTradeCard(finalTitle).toDataURL('image/png');
-
-        const post = {
-            title:      finalTitle,
-            content:    '',
-            tag:        'Discussion',
-            tagClass:   'bg-blue-100 text-blue-700 border border-blue-200',
-            authorId:   user.uid,
-            author:     user.displayName || (user.email ? user.email.split('@')[0] : 'Fan'),
-            authorPhoto: user.photoURL || '',
-            votes:      0,
-            voters:     {},
-            comments:   [],
-            imageUrl:   imageUrl,
-            isPinned:   false,
-            createdAt:  window.firebase.firestore.FieldValue.serverTimestamp(),
+        // Name dialog
+        let overlay = document.getElementById('nameTradeModal');
+        if (overlay) overlay.remove();
+        overlay = document.createElement('div');
+        overlay.id = 'nameTradeModal';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(15,23,42,.5);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:1rem';
+        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+          <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.2);overflow:hidden;font-family:Lexend,sans-serif;">
+            <div style="padding:1.15rem 1.25rem;border-bottom:1px solid #e8ebf2;">
+              <div style="font-weight:800;font-size:1.05rem;color:#0f172a;">Name this trade</div>
+              <div style="font-size:.75rem;color:#94a3b8;margin-top:4px;">Shown on the share graphic</div>
+            </div>
+            <div style="padding:1.15rem 1.25rem;">
+              <input id="tradeNameInput" type="text" maxlength="80" value="${defaultTitle.replace(/"/g, '&quot;')}"
+                style="width:100%;box-sizing:border-box;font-family:Lexend,sans-serif;font-size:.95rem;font-weight:600;
+                       padding:.7rem .9rem;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;outline:none;"
+                onfocus="this.style.borderColor='#0066cc'" onblur="this.style.borderColor='#e2e8f0'"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('confirmTradeNameBtn').click();}">
+            </div>
+            <div style="padding:0 1.25rem 1.15rem;display:flex;gap:.6rem;justify-content:flex-end;">
+              <button type="button" onclick="document.getElementById('nameTradeModal').remove()"
+                style="font-family:Lexend,sans-serif;font-weight:600;font-size:.85rem;padding:.55rem 1rem;border-radius:999px;
+                       border:1px solid #e2e8f0;background:#fff;color:#475569;cursor:pointer;">Cancel</button>
+              <button type="button" id="confirmTradeNameBtn"
+                style="font-family:Lexend,sans-serif;font-weight:700;font-size:.85rem;padding:.55rem 1.15rem;border-radius:999px;
+                       border:none;background:#0066cc;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,102,204,.25);">
+                Create Graphic
+              </button>
+            </div>
+          </div>`;
+        document.body.appendChild(overlay);
+        const input = document.getElementById('tradeNameInput');
+        setTimeout(() => { input.focus(); input.select(); }, 50);
+        document.getElementById('confirmTradeNameBtn').onclick = () => {
+            const finalTitle = (input.value || '').trim() || defaultTitle;
+            overlay.remove();
+            const canvas = drawTradeCard(finalTitle);
+            _lastTradeCanvas = canvas;
+            showSharePreview(canvas, finalTitle);
         };
-
-        try {
-            const ref = await window.db.collection('community_posts').add(post);
-            btn.textContent = 'Posted ';
-            btn.style.background = '#16a34a';
-
-            setTimeout(() => {
-                closeModal();
-                // ← update 'index.html' to your community page path if different
-                if (confirm('Trade posted! Go to the community wall?')) {
-                    window.location.href = 'index.html?post=' + ref.id;
-                } else {
-                    btn.textContent = 'Post to Community';
-                    btn.style.background = '';
-                    btn.disabled = false;
-                }
-            }, 700);
-        } catch (err) {
-            console.error('Post failed:', err);
-            alert('Could not post: ' + err.message);
-            btn.textContent = 'Post to Community';
-            btn.style.background = '';
-            btn.disabled = false;
-        }
     }
 
-    // ── Draw the trade card onto a 1200×760 canvas ────────────────────────
-    // Redesigned to match the SixersHoops "Salary Cap Breakdown" house style:
-    // clean white background, hairline grey rules, blue/pink brand accents,
-    // pill status badges, zebra-striped rows. Replaces the old dark
-    // "transaction wire" look.
+
     function drawTradeCard(customTitle) {
         const W = 1280, H = 720;
         const canvas = document.createElement('canvas');
@@ -6052,18 +6003,36 @@
 
     async function copyImageToClipboard(dataUrl) {
         const btn = document.getElementById('copyImgBtn');
+        const setLabel = (t) => {
+            if (!btn) return;
+            const prev = btn.getAttribute('data-label') || 'Copy Image';
+            btn.setAttribute('data-label', prev);
+            btn.innerHTML = t;
+        };
         try {
             const res  = await fetch(dataUrl);
             const blob = await res.blob();
             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-            if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy Image'; }, 2000); }
+            setLabel('Copied!');
+            setTimeout(() => {
+                if (!btn) return;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Image`;
+            }, 2000);
         } catch(e) {
-            // Fallback: open in new tab so user can right-click copy
-            const win = window.open();
-            if (win) { win.document.write(`<img src="${dataUrl}" style="max-width:100%">`); win.document.title = 'Right-click to Copy Image'; }
-            else if (btn) { btn.textContent = 'Open Tab (Right-click Copy)'; setTimeout(() => { btn.textContent = 'Copy Image'; }, 3000); }
+            try {
+                // Fallback: copy via canvas blob from last canvas
+                if (_lastTradeCanvas && _lastTradeCanvas.toBlob) {
+                    const blob = await new Promise(r => _lastTradeCanvas.toBlob(r, 'image/png'));
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    setLabel('Copied!');
+                    setTimeout(() => { if (btn) btn.textContent = 'Copy Image'; }, 2000);
+                    return;
+                }
+            } catch(e2) {}
+            alert('Could not copy automatically. Right-click the image and choose Copy Image, or use Download PNG.');
         }
     }
+
 
     function copyDataURL(url) {
         navigator.clipboard.writeText(url).then(() => {
