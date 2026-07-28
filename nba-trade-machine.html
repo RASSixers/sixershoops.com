@@ -2380,7 +2380,6 @@
                         Add Team
                     </button>
                     <button class="board-btn board-btn-analyze" onclick="analyzeTrade()" title="Run CBA analysis on this trade">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                         Analyze Trade
                     </button>
                 </div>
@@ -4344,12 +4343,18 @@
                     if (isTwoTeamTrade && otherTeamsForDest.length === 1) {
                         destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.2);">→ ${otherTeamsForDest[0].abbr}</span>`;
                     } else if (isMultiTeamTrade) {
-                        destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">
+                        destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;gap:4px;margin-top:5px;width:100%;">
+                            <div style="font-family:'Lexend',sans-serif;font-size:.52rem;font-weight:800;letter-spacing:.08em;color:#b91c1c;">SEND TO</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:5px;">
                             ${otherTeamsForDest.map(ot => {
                                 const on = destVal == ot.id;
+                                const col = (NBA_TEAMS[ot.abbr] && NBA_TEAMS[ot.abbr].color) || '#0066cc';
                                 return `<button type="button" onclick="setPlayerDestination(${t.id},'${p.id}',${ot.id})"
-                                    style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;padding:2px 7px;border-radius:999px;cursor:pointer;border:1px solid ${on ? '#0066cc' : '#cbd5e1'};background:${on ? '#0066cc' : '#fff'};color:${on ? '#fff' : '#475569'};">→ ${ot.abbr}</button>`;
+                                    style="font-family:'Lexend',sans-serif;font-size:.68rem;font-weight:800;padding:7px 12px;border-radius:8px;cursor:pointer;min-width:56px;
+                                    border:2px solid ${on ? col : '#cbd5e1'};background:${on ? col : '#fff'};color:${on ? '#fff' : '#334155'};
+                                    box-shadow:${on ? '0 2px 6px rgba(0,0,0,.15)' : 'none'};">${ot.abbr}</button>`;
                             }).join('')}
+                            </div>
                         </div>`;
                     }
                     rosterContent += `<div class="player-item selected" style="background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.25);" onclick="togglePlayer(${t.id},'${p.id}')">
@@ -4629,7 +4634,7 @@
         }
         panels += `<div class="team-tab-panel ${faActive}">${faContent}</div>`;
 
-        // SALARY SHEET panel (inline, next to FA/S&T)
+        // SALARY SHEET panel — live post-trade (outgoing removed, incoming added)
         const sheetActive = t.activeTab === 'sheet' ? 'active' : '';
         let sheetContent = '';
         if (!t.abbr || !data || !data.players) {
@@ -4639,6 +4644,7 @@
             const years = ['26-27', '27-28', '28-29', '29-30'];
             const totals = [0, 0, 0, 0];
             let rowsHtml = '';
+            // Staying + outgoing (marked OUT)
             data.players.forEach(p => {
                 const yrs = p.contractYears || 1;
                 const leaving = departing.has(p.id);
@@ -4654,6 +4660,31 @@
                     ${cells.map(c => `<td style="padding:5px 3px;text-align:right;font-weight:700;font-size:.65rem;">${c == null ? '<span style="color:#cbd5e1;">—</span>' : fmtM(c)}</td>`).join('')}
                 </tr>`;
             });
+            // Incoming players from other teams
+            teams.forEach(other => {
+                if (other.id === t.id || !other.abbr || !TEAM_DATA[other.abbr]) return;
+                const odata = TEAM_DATA[other.abbr];
+                (other.selectedPlayers || []).forEach(pid => {
+                    const destId = (other.playerDestinations || {})[pid];
+                    let comesHere = false;
+                    if (isTwoTeamTrade) comesHere = true;
+                    else if (destId != null && Number(destId) === t.id) comesHere = true;
+                    if (!comesHere) return;
+                    const p = odata.players.find(pp => pp.id === pid);
+                    if (!p) return;
+                    const yrs = p.contractYears || 1;
+                    const cells = years.map((_, i) => {
+                        if (i >= yrs) return null;
+                        return Math.round(p.salary * (i === 0 ? 1 : (1 + 0.05 * i)));
+                    });
+                    cells.forEach((v, i) => { if (v) totals[i] += v; });
+                    rowsHtml += `<tr style="border-bottom:1px solid #f1f5f9;background:rgba(5,150,105,.05);">
+                        <td style="padding:5px 4px;font-weight:600;font-size:.68rem;color:#047857;">${p.name} <span style="color:#059669;font-size:.5rem;font-weight:800;">IN · ${other.abbr}</span></td>
+                        <td style="padding:5px 4px;font-size:.58rem;color:#64748b;white-space:nowrap;">${(p.contractType || '—').replace('Guaranteed','Gtd').replace('Non-Guaranteed','NG').replace('Team Option','TO').replace('Player Option','PO').replace('Rookie Scale','RS')}${p.contractYears ? ' ·' + p.contractYears + 'y' : ''}</td>
+                        ${cells.map(c => `<td style="padding:5px 3px;text-align:right;font-weight:700;font-size:.65rem;color:#059669;">${c == null ? '<span style="color:#cbd5e1;">—</span>' : fmtM(c)}</td>`).join('')}
+                    </tr>`;
+                });
+            });
             sheetContent = `<div style="padding:.5rem .55rem .75rem;overflow:auto;max-height:420px;">
                 <table style="width:100%;border-collapse:collapse;font-family:Lexend,sans-serif;">
                     <thead><tr style="border-bottom:2px solid #e2e8f0;position:sticky;top:0;background:#fff;">
@@ -4663,12 +4694,12 @@
                     </tr></thead>
                     <tbody>${rowsHtml}
                     <tr style="border-top:2px solid #e2e8f0;background:#f8fafc;">
-                        <td colspan="2" style="padding:6px 4px;font-weight:800;font-size:.68rem;">TOTAL</td>
+                        <td colspan="2" style="padding:6px 4px;font-weight:800;font-size:.68rem;">POST-TRADE TOTAL</td>
                         ${totals.map(v => `<td style="padding:6px 3px;text-align:right;font-weight:800;font-size:.68rem;">${fmtM(v)}</td>`).join('')}
                     </tr>
                     </tbody>
                 </table>
-                <div style="margin-top:.5rem;font-size:.55rem;color:#94a3b8;line-height:1.4;">Future years use contractYears when known (~5%/yr raise). Cap ${fmtM(CBA.salaryCap)} · Tax ${fmtM(CBA.luxuryTax)} · 1st ${fmtM(CBA.firstApron)} · 2nd ${fmtM(CBA.secondApron)}</div>
+                <div style="margin-top:.5rem;font-size:.55rem;color:#94a3b8;line-height:1.4;">Live post-trade sheet (updates as you select players). Future years ~5%/yr when contractYears known. Cap ${fmtM(CBA.salaryCap)} · Tax ${fmtM(CBA.luxuryTax)} · 1st ${fmtM(CBA.firstApron)} · 2nd ${fmtM(CBA.secondApron)}</div>
             </div>`;
         }
         panels += `<div class="team-tab-panel ${sheetActive}">${sheetContent}</div>`;
@@ -4718,9 +4749,11 @@
             function distChip(label, threshold, color) {
                 const dist = threshold - sal;
                 const over = dist < 0;
+                // Over → show amount as negative (e.g. -$3.2M); under → positive room
+                const amountStr = over ? ('-' + fmtM(-dist)) : fmtM(dist);
                 return `<div style="flex:1;min-width:0;background:#fff;border:1px solid #e8ebf2;border-radius:6px;padding:.35rem .4rem;">
                     <div style="font-family:'Lexend',sans-serif;font-size:.5rem;font-weight:800;letter-spacing:.06em;color:#94a3b8;">${label}</div>
-                    <div style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;color:${over ? color : '#0f172a'};margin-top:1px;">${over ? '+' + fmtM(-dist) : fmtM(dist)}</div>
+                    <div style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;color:${over ? color : '#0f172a'};margin-top:1px;">${amountStr}</div>
                     <div style="font-family:'Lexend',sans-serif;font-size:.48rem;font-weight:600;color:${over ? color : '#94a3b8'};">${over ? 'over' : 'under'}</div>
                 </div>`;
             }
