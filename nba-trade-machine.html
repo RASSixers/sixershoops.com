@@ -423,9 +423,9 @@
             background: #f8f9fc; overflow-x: auto;
         }
         .team-tab {
-            font-family: 'Lexend', sans-serif; font-size: .7rem; font-weight: 800;
-            letter-spacing: .12em; color: var(--mid);
-            padding: .65rem 1rem; border: none; background: none; cursor: pointer;
+            font-family: 'Lexend', sans-serif; font-size: .62rem; font-weight: 800;
+            letter-spacing: .08em; color: var(--mid);
+            padding: .55rem .7rem; border: none; background: none; cursor: pointer;
             border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap;
             position: relative; top: 1px;
         }
@@ -456,7 +456,14 @@
         }
 
         /* Player List */
-        .player-list { padding: .75rem; max-height: none; overflow-y: visible; }
+        .player-list { padding: .4rem .55rem .55rem; max-height: none; overflow-y: visible; }
+        .roster-section-label {
+            padding: .45rem .65rem .15rem;
+            font-family: 'Lexend', sans-serif;
+            font-size: .58rem;
+            font-weight: 800;
+            letter-spacing: .1em;
+        }
         .player-list::-webkit-scrollbar { width: 4px; }
         .player-list::-webkit-scrollbar-track { background: transparent; }
         .player-list::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
@@ -1581,8 +1588,8 @@
         }
         .team-tab {
             border-radius: 7px;
-            padding: .55rem .9rem;
-            font-size: .68rem;
+            padding: .45rem .65rem;
+            font-size: .6rem;
             top: 0;
             border-bottom: none !important;
             color: #6b7790;
@@ -4236,9 +4243,9 @@
         let tabBar = `<div class="team-tabs">`;
         const faCount = (t.faSignings || []).length;
 
-        const tabs = ['roster','picks','tpe','fa'];
-        const tabLabels = { roster: 'Roster', picks: 'Picks', tpe: 'TPEs / Exceptions', fa: 'FA / S&T' };
-        const tabCounts = { roster: rosterCount, picks: picksCount, tpe: tpeCount, fa: faCount };
+        const tabs = ['roster','picks','tpe','fa','sheet'];
+        const tabLabels = { roster: 'Roster', picks: 'Picks', tpe: 'TPEs / Exceptions', fa: 'FA / S&T', sheet: 'Salary Sheet' };
+        const tabCounts = { roster: rosterCount, picks: picksCount, tpe: tpeCount, fa: faCount, sheet: 0 };
         tabs.forEach(tab => {
             const active = t.activeTab === tab ? 'active' : '';
             const cnt = tabCounts[tab];
@@ -4570,6 +4577,51 @@
             </div>`;
         }
         panels += `<div class="team-tab-panel ${faActive}">${faContent}</div>`;
+
+        // SALARY SHEET panel (inline, next to FA/S&T)
+        const sheetActive = t.activeTab === 'sheet' ? 'active' : '';
+        let sheetContent = '';
+        if (!t.abbr || !data || !data.players) {
+            sheetContent = `<div class="empty-state"><div class="empty-state-text">Select a team to view the salary sheet</div></div>`;
+        } else {
+            const departing = new Set(t.selectedPlayers);
+            const years = ['26-27', '27-28', '28-29', '29-30'];
+            const totals = [0, 0, 0, 0];
+            let rowsHtml = '';
+            data.players.forEach(p => {
+                const yrs = p.contractYears || 1;
+                const leaving = departing.has(p.id);
+                const cells = years.map((_, i) => {
+                    if (leaving || i >= yrs) return null;
+                    return Math.round(p.salary * (i === 0 ? 1 : (1 + 0.05 * i)));
+                });
+                if (!leaving) cells.forEach((v, i) => { if (v) totals[i] += v; });
+                const nameStyle = leaving ? 'text-decoration:line-through;color:#94a3b8;' : '';
+                rowsHtml += `<tr style="border-bottom:1px solid #f1f5f9;${leaving ? 'background:rgba(220,38,38,.03);' : ''}">
+                    <td style="padding:5px 4px;font-weight:600;font-size:.68rem;${nameStyle}">${p.name}${leaving ? ' <span style="color:#dc2626;font-size:.5rem;font-weight:800;">OUT</span>' : ''}</td>
+                    <td style="padding:5px 4px;font-size:.58rem;color:#64748b;white-space:nowrap;">${(p.contractType || '—').replace('Guaranteed','Gtd').replace('Non-Guaranteed','NG').replace('Team Option','TO').replace('Player Option','PO').replace('Rookie Scale','RS')}${p.contractYears ? ' ·' + p.contractYears + 'y' : ''}</td>
+                    ${cells.map(c => `<td style="padding:5px 3px;text-align:right;font-weight:700;font-size:.65rem;">${c == null ? '<span style="color:#cbd5e1;">—</span>' : fmtM(c)}</td>`).join('')}
+                </tr>`;
+            });
+            sheetContent = `<div style="padding:.5rem .55rem .75rem;overflow:auto;max-height:420px;">
+                <table style="width:100%;border-collapse:collapse;font-family:Lexend,sans-serif;">
+                    <thead><tr style="border-bottom:2px solid #e2e8f0;position:sticky;top:0;background:#fff;">
+                        <th style="text-align:left;padding:4px;font-size:.55rem;font-weight:800;letter-spacing:.06em;color:#94a3b8;">PLAYER</th>
+                        <th style="text-align:left;padding:4px;font-size:.55rem;font-weight:800;letter-spacing:.06em;color:#94a3b8;">TYPE</th>
+                        ${years.map(y => `<th style="text-align:right;padding:4px 3px;font-size:.55rem;font-weight:800;letter-spacing:.04em;color:#94a3b8;">${y}</th>`).join('')}
+                    </tr></thead>
+                    <tbody>${rowsHtml}
+                    <tr style="border-top:2px solid #e2e8f0;background:#f8fafc;">
+                        <td colspan="2" style="padding:6px 4px;font-weight:800;font-size:.68rem;">TOTAL</td>
+                        ${totals.map(v => `<td style="padding:6px 3px;text-align:right;font-weight:800;font-size:.68rem;">${fmtM(v)}</td>`).join('')}
+                    </tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:.5rem;font-size:.55rem;color:#94a3b8;line-height:1.4;">Future years use contractYears when known (~5%/yr raise). Cap ${fmtM(CBA.salaryCap)} · Tax ${fmtM(CBA.luxuryTax)} · 1st ${fmtM(CBA.firstApron)} · 2nd ${fmtM(CBA.secondApron)}</div>
+            </div>`;
+        }
+        panels += `<div class="team-tab-panel ${sheetActive}">${sheetContent}</div>`;
+
         const teamSal = data ? fmtM(data.teamSalary || 0) : '—';
         const sendingStr = sendingSalary > 0 ? `Sending: ${fmtM(sendingSalary)}` : 'Select players to trade';
 
@@ -4694,10 +4746,6 @@
             <button class="tool-btn" onclick="showCapOutlook(${t.id})" title="3-year payroll projection vs cap thresholds"${!t.abbr ? ' disabled' : ''}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
                 Cap Outlook
-            </button>
-            <button class="tool-btn" onclick="showSalarySheet(${t.id})" title="Full salary sheet with future years"${!t.abbr ? ' disabled' : ''}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
-                Salary Sheet
             </button>
         </div>`;
     }
@@ -5922,30 +5970,54 @@
             </div>`;
         }
 
+        // Each column shows what that team is RECEIVING (standard trade-graphic convention)
+        const teamsInGraphic = active;
+        const isTwoTeam = teamsInGraphic.length === 2;
+
         const cols = active.map((t, i) => {
             const color = (t.teamInfo && t.teamInfo.color) || '#0066cc';
             const name = (t.teamInfo && t.teamInfo.name) || t.abbr;
-            // What this team is SENDING
-            const sendPlayers = (t.selectedPlayers || []).map(pid => {
-                const p = (t.data && t.data.players || []).find(pp => pp.id === pid);
-                return p ? `<div class="sh-row"><span class="sh-name">${p.name}</span><span class="sh-sal">${fmtM(p.salary)}</span></div>` : '';
-            }).join('');
-            const sendPicks = (t.selectedPicks || []).map(pkid => {
-                const pk = (t.data && t.data.picks || []).find(pp => pp.id === pkid);
-                if (!pk) return '';
-                const label = (typeof formatPickName === 'function') ? formatPickName(pk) : pk.name;
-                return `<div class="sh-row pick"><span class="sh-name">${label}</span><span class="sh-sal"></span></div>`;
-            }).join('');
-            const cash = t.cashOut || 0;
-            const cashRow = cash > 0
-                ? `<div class="sh-row cash"><span class="sh-name">Cash</span><span class="sh-sal">${fmtCash(cash)}</span></div>`
-                : '';
-            const outTotal = (t.selectedPlayers || []).reduce((s, pid) => {
-                const p = (t.data && t.data.players || []).find(pp => pp.id === pid);
-                return s + (p ? p.salary : 0);
-            }, 0) + cash;
 
-            const body = sendPlayers + sendPicks + cashRow || `<div class="sh-empty-col">No assets out</div>`;
+            // Collect assets coming TO this team from others
+            let inPlayers = '';
+            let inPicks = '';
+            let inCash = 0;
+            let inTotal = 0;
+            teamsInGraphic.forEach(other => {
+                if (other.id === t.id) return;
+                const odata = other.data || (other.abbr && TEAM_DATA[other.abbr]) || { players: [], picks: [] };
+                (other.selectedPlayers || []).forEach(pid => {
+                    const dest = (other.playerDestinations || {})[pid];
+                    const goesHere = isTwoTeam || (dest != null && Number(dest) === t.id);
+                    if (!goesHere) return;
+                    const p = (odata.players || []).find(pp => pp.id === pid);
+                    if (!p) return;
+                    inPlayers += `<div class="sh-row"><span class="sh-name">${p.name}</span><span class="sh-sal">${fmtM(p.salary)}</span></div>`;
+                    inTotal += p.salary;
+                });
+                (other.selectedPicks || []).forEach(pkid => {
+                    // Picks: 2-team → all go to the other side; 3+ → if only one other receiver of players, route there, else show on non-sender
+                    const pk = (odata.picks || []).find(pp => pp.id === pkid);
+                    if (!pk) return;
+                    let pickHere = isTwoTeam;
+                    if (!isTwoTeam) {
+                        // Prefer destination of the first selected player from that team if set; else assign to any non-sender not this team... default: every other team sees it is ambiguous — show on all non-senders only if single counterparty
+                        const others = teamsInGraphic.filter(x => x.id !== other.id);
+                        pickHere = others.length === 1 && others[0].id === t.id;
+                    }
+                    if (!pickHere) return;
+                    const label = (typeof formatPickName === 'function') ? formatPickName(pk) : pk.name;
+                    inPicks += `<div class="sh-row pick"><span class="sh-name">${label}</span><span class="sh-sal"></span></div>`;
+                });
+                if (isTwoTeam && (other.cashOut || 0) > 0) {
+                    inCash += other.cashOut;
+                    inTotal += other.cashOut;
+                }
+            });
+            const cashRow = inCash > 0
+                ? `<div class="sh-row cash"><span class="sh-name">Cash</span><span class="sh-sal">${fmtCash(inCash)}</span></div>`
+                : '';
+            const body = (inPlayers + inPicks + cashRow) || `<div class="sh-empty-col">No assets in</div>`;
 
             const arrow = i < active.length - 1
                 ? `<div class="sh-arrow" aria-hidden="true">
@@ -5969,8 +6041,8 @@
                 </div>
                 <div class="sh-col-body">${body}</div>
                 <div class="sh-col-foot">
-                    <span>TOTAL OUT</span>
-                    <strong>${fmtM(outTotal)}</strong>
+                    <span>TOTAL IN</span>
+                    <strong>${fmtM(inTotal)}</strong>
                 </div>
             </div>${arrow}`;
         }).join('');
@@ -6426,27 +6498,49 @@
         const BG = '#ffffff', INK = '#0f172a', MUTED = '#94a3b8', LABEL = '#64748b';
         const BLUE = '#0066cc', GREEN = '#059669', RED = '#dc2626', LINE = '#e8ebf2', CARD = '#f7f8fb';
 
-        // Build per-team asset lists first so we can size the canvas tightly
-        const teamPayload = activeTeams.slice(0, 4).map(t => {
-            const d = TEAM_DATA[t.abbr];
+        // Build per-team RECEIVING asset lists (what appears under each logo)
+        const sliceTeams = activeTeams.slice(0, 4);
+        const isTwoTeam = sliceTeams.length === 2;
+        const teamPayload = sliceTeams.map(t => {
             const meta = NBA_TEAMS[t.abbr] || {};
-            const players = t.selectedPlayers.map(id => d.players.find(p => p.id === id)).filter(Boolean);
-            const picks = t.selectedPicks.map(id => d.picks.find(p => p.id === id)).filter(Boolean);
-            const cash = t.cashOut || 0;
-            const outSalary = players.reduce((s, p) => s + p.salary, 0) + cash;
             const items = [];
-            players.forEach(p => items.push({ kind: 'player', name: p.name, sal: money(p.salary) }));
-            picks.forEach(pk => {
-                const nm = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
-                items.push({ kind: 'pick', name: nm, sal: '' });
+            let inSalary = 0;
+            sliceTeams.forEach(other => {
+                if (other.id === t.id) return;
+                const d = TEAM_DATA[other.abbr];
+                if (!d) return;
+                (other.selectedPlayers || []).forEach(id => {
+                    const dest = (other.playerDestinations || {})[id];
+                    const goesHere = isTwoTeam || (dest != null && Number(dest) === t.id);
+                    if (!goesHere) return;
+                    const p = d.players.find(pp => pp.id === id);
+                    if (!p) return;
+                    items.push({ kind: 'player', name: p.name, sal: money(p.salary) });
+                    inSalary += p.salary;
+                });
+                (other.selectedPicks || []).forEach(id => {
+                    const pk = (d.picks || []).find(pp => pp.id === id);
+                    if (!pk) return;
+                    let pickHere = isTwoTeam;
+                    if (!isTwoTeam) {
+                        const others = sliceTeams.filter(x => x.id !== other.id);
+                        pickHere = others.length === 1 && others[0].id === t.id;
+                    }
+                    if (!pickHere) return;
+                    const nm = (typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick');
+                    items.push({ kind: 'pick', name: nm, sal: '' });
+                });
+                if (isTwoTeam && (other.cashOut || 0) > 0) {
+                    items.push({ kind: 'cash', name: 'Cash', sal: money(other.cashOut) });
+                    inSalary += other.cashOut;
+                }
             });
-            if (cash > 0) items.push({ kind: 'cash', name: 'Cash', sal: money(cash) });
             return {
                 abbr: t.abbr,
                 name: meta.name || t.abbr,
                 color: meta.color || BLUE,
                 items,
-                outSalary,
+                outSalary: inSalary, // footer value = TOTAL IN
                 logo: logos[t.abbr] || null
             };
         });
@@ -6657,7 +6751,7 @@
             ctx.font = font('600', 10);
             ctx.fillStyle = MUTED;
             ctx.textAlign = 'left';
-            ctx.fillText('TOTAL OUT', x + 14, footY + 26);
+            ctx.fillText('TOTAL IN', x + 14, footY + 26);
             ctx.font = font('800', 14);
             ctx.fillStyle = INK;
             ctx.textAlign = 'right';
