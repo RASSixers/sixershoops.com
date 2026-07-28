@@ -4427,7 +4427,7 @@
         const teamAbbrList = tradeSummary.filter(t => t.abbr).map(t => t.abbr).join(' ↔ ');
         const title = teamAbbrList ? teamAbbrList : (isValid ? 'Trade Appears Valid' : 'Trade Has Violations');
         const sub = isValid
-            ? `${hasWarnings ? '⚠ Review warnings before finalizing.' : '✓ No CBA violations detected — trade can proceed.'}`
+            ? `${hasWarnings ? 'Review warnings before finalizing.' : 'No CBA violations detected — trade can proceed.'}`
             : `${violations.length} violation${violations.length > 1 ? 's' : ''} found — trade cannot proceed as structured.`;
 
         showResult(isValid, title, sub, allMessages, tradeSummary);
@@ -4666,7 +4666,7 @@
             <div class="consequence-list">
                 ${items.map(it => {
                     const cls = it.kind === 'block' ? '' : it.kind === 'warn' ? 'warn' : 'ok';
-                    const icon = it.kind === 'block' ? '✕' : it.kind === 'warn' ? '!' : '✓';
+                    const icon = it.kind === 'block' ? 'X' : it.kind === 'warn' ? '!' : 'OK';
                     return `<div class="consequence-item ${cls}"><span class="consequence-item-icon">${icon}</span><span>${it.txt}</span></div>`;
                 }).join('')}
             </div>
@@ -4889,7 +4889,7 @@
         if (active.length === 0) {
             return `<div class="swap-hero">
                 <div class="swap-hero-status ${isValid?'valid':'invalid'}">
-                    <span class="swap-hero-status-icon">${isValid?'✓':'✕'}</span>
+                    <span class="swap-hero-status-icon">${isValid?'OK':'X'}</span>
                     <span class="swap-hero-status-text">${isValid ? 'Trade Cleared' : 'Trade Rejected'}</span>
                     <span class="swap-hero-status-meta">Transaction Wire · ${stamp}</span>
                 </div>
@@ -4984,7 +4984,7 @@
 
         return `<div class="swap-hero">
             <div class="swap-hero-status ${isValid?'valid':'invalid'}">
-                <span class="swap-hero-status-icon">${isValid?'✓':'✕'}</span>
+                <span class="swap-hero-status-icon">${isValid?'OK':'X'}</span>
                 <span class="swap-hero-status-text">${isValid ? 'Trade Cleared' : 'Trade Rejected'}</span>
                 <span class="swap-hero-status-meta">Transaction Wire · ${stamp}</span>
             </div>
@@ -5148,7 +5148,7 @@
         // Prompt for a custom title
         const isValid    = document.getElementById('modalBadge').classList.contains('valid');
         const teamAbbrs  = activeTeams.map(t => t.abbr).join(' ↔ ');
-        const defaultTitle = `Trade: ${teamAbbrs} — ${isValid ? 'CBA Valid ✅' : 'CBA Invalid ❌'}`;
+        const defaultTitle = `Trade: ${teamAbbrs} — ${isValid ? 'CBA Valid' : 'CBA Invalid'}`;
         const customTitle = prompt('Give this post a title (or press OK to use the default):', defaultTitle);
         if (customTitle === null) return; // user cancelled
         const finalTitle = customTitle.trim() || defaultTitle;
@@ -5177,7 +5177,7 @@
 
         try {
             const ref = await window.db.collection('community_posts').add(post);
-            btn.textContent = 'Posted ✓';
+            btn.textContent = 'Posted';
             btn.style.background = '#16a34a';
 
             setTimeout(() => {
@@ -5217,64 +5217,66 @@
 
         const F = (w, sz, fam) => `${w} ${sz}px ${fam || '"Lexend", "Helvetica Neue", Helvetica, Arial, sans-serif'}`;
 
-        // ── Palette — SixersHoops light house style ────────────────────────
-        const BG        = '#ffffff';
-        const PANEL_BG  = '#f6f6f6';
-        const STRIPE    = '#fafbfd';
-        const RULE      = '#e2e6ef';
-        const RULE_SOFT = '#eef1f6';
-        const TEXT_PRI  = '#12141c';
-        const TEXT_SEC  = '#6b7280';
-        const TEXT_DIM  = '#9ca3af';
+        // ── Palette ──────────────────────────────────────────────────────
+        const BG        = '#0b0c10';
+        const SURFACE   = '#12141c';
+        const PANEL     = '#161822';
+        const RULE      = 'rgba(255,255,255,0.08)';
+        const RULE_SOFT = 'rgba(255,255,255,0.05)';
+        const TEXT_PRI  = '#f4f4f5';
+        const TEXT_SEC  = 'rgba(255,255,255,0.55)';
+        const TEXT_DIM  = 'rgba(255,255,255,0.35)';
         const ACCENT    = '#006BB6';
         const RED       = '#ED174C';
-        const GREEN     = '#10893e';
+        const GREEN     = '#22c55e';
 
-        // ── Solid white background ───────────────────────────────────────
+        // ── Background ───────────────────────────────────────────────────
         ctx.fillStyle = BG;
         ctx.fillRect(0, 0, W, H);
 
-        const PAD = 44;
+        const PAD = 40;
 
-        // ── Header ────────────────────────────────────────────────────────
-        ctx.font = F(900, 30);
+        // ── Top accent rule ──────────────────────────────────────────────
+        ctx.fillStyle = ACCENT;
+        ctx.fillRect(0, 0, W, 3);
+
+        // ── Header row ───────────────────────────────────────────────────
+        ctx.font = F(900, 22);
         ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
-        ctx.fillText('SixersHoops', PAD, 52);
+        ctx.fillText('SIXERSHOOPS', PAD, 42);
 
-        const wordmarkW = ctx.measureText('SixersHoops').width;
+        ctx.font = F(700, 11);
+        ctx.fillStyle = TEXT_DIM;
+        ctx.fillText('TRADE MACHINE  ·  2026–27', PAD, 62);
 
-        ctx.font = F(800, 13);
-        ctx.fillStyle = ACCENT;
-        ctx.fillText('2026–27', PAD, 76);
-        const seasonW = ctx.measureText('2026–27').width;
-
-        ctx.font = F(700, 13);
-        ctx.fillStyle = TEXT_SEC;
-        ctx.fillText('  TRADE MACHINE', PAD + seasonW, 76);
-
-        // Status pill — top right
+        // Status pill (text only, no symbols)
         const statusColor = isValid ? GREEN : RED;
-        const statusLabel = isValid ? 'CBA VALID' : 'CBA VIOLATION';
+        const statusLabel = isValid ? 'CBA VALID' : 'CBA INVALID';
         ctx.font = F(800, 11);
-        const badgeW = ctx.measureText(statusLabel).width + 30;
-        const badgeH = 28;
+        const badgePadX = 14;
+        const badgeW = ctx.measureText(statusLabel).width + badgePadX * 2;
+        const badgeH = 26;
         const badgeX = W - PAD - badgeW;
-        const badgeY = 24;
-        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 14);
-        ctx.fillStyle = statusColor;
+        const badgeY = 28;
+        // pill background
+        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 4);
+        ctx.fillStyle = isValid ? 'rgba(34,197,94,0.14)' : 'rgba(237,23,76,0.14)';
         ctx.fill();
-        ctx.fillStyle = '#ffffff';
+        // left accent bar on pill
+        ctx.fillStyle = statusColor;
+        ctx.fillRect(badgeX, badgeY, 3, badgeH);
+        ctx.fillStyle = statusColor;
         ctx.textAlign = 'left';
-        ctx.fillText(statusLabel, badgeX + 15, badgeY + badgeH / 2 + 4);
+        ctx.fillText(statusLabel, badgeX + badgePadX + 2, badgeY + badgeH / 2 + 4);
 
-        // Header rule
+        // Header divider
         ctx.fillStyle = RULE;
-        ctx.fillRect(0, 96, W, 1);
+        ctx.fillRect(PAD, 80, W - PAD * 2, 1);
 
         // ── Trade title ──────────────────────────────────────────────────
         let displayTitle = tradeTitle;
-        ctx.font = F(900, 30);
+        ctx.font = F(900, 28);
         const maxTitleW = W - PAD * 2;
         while (ctx.measureText(displayTitle).width > maxTitleW && displayTitle.length > 4) {
             displayTitle = displayTitle.slice(0, -1);
@@ -5282,9 +5284,9 @@
         if (displayTitle.length < tradeTitle.length) displayTitle += '…';
         ctx.fillStyle = TEXT_PRI;
         ctx.textAlign = 'left';
-        ctx.fillText(displayTitle, PAD, 136);
+        ctx.fillText(displayTitle, PAD, 118);
 
-        // ── Stat strip (teams / salary moving / status) ────────────────────
+        // ── Metric strip ─────────────────────────────────────────────────
         const totalSalaryMoving = activeTeams.reduce((sum, t) => {
             const d = TEAM_DATA[t.abbr];
             return sum + t.selectedPlayers.reduce((s, pid) => {
@@ -5292,49 +5294,49 @@
                 return s + (p ? p.salary : 0);
             }, 0);
         }, 0);
+        const totalAssets = activeTeams.reduce((sum, t) =>
+            sum + t.selectedPlayers.length + t.selectedPicks.length, 0);
 
-        const STAT_TOP = 160;
-        const STAT_H   = 62;
-        const stats = [
-            { label: 'TEAMS INVOLVED', value: String(activeTeams.length), color: ACCENT },
-            { label: 'SALARY MOVING',  value: '$' + (totalSalaryMoving / 1e6).toFixed(1) + 'M', color: ACCENT },
-            { label: 'STATUS',         value: isValid ? 'Compliant' : 'Violation', color: isValid ? GREEN : RED },
+        const MET_TOP = 140;
+        const MET_H = 56;
+        const metrics = [
+            { label: 'TEAMS', value: String(activeTeams.length) },
+            { label: 'ASSETS MOVING', value: String(totalAssets) },
+            { label: 'SALARY IN MOTION', value: '$' + (totalSalaryMoving / 1e6).toFixed(1) + 'M' },
+            { label: 'STATUS', value: isValid ? 'Compliant' : 'Violation', color: statusColor },
         ];
-        const STAT_GAP = 16;
-        const STAT_W = (W - PAD * 2 - STAT_GAP * (stats.length - 1)) / stats.length;
-        stats.forEach((s, i) => {
-            const sx = PAD + i * (STAT_W + STAT_GAP);
-            ctx.fillStyle = PANEL_BG;
-            ctx.fillRect(sx, STAT_TOP, STAT_W, STAT_H);
-            ctx.fillStyle = s.color;
-            ctx.fillRect(sx, STAT_TOP, 4, STAT_H);
+        const MET_GAP = 12;
+        const MET_W = (W - PAD * 2 - MET_GAP * (metrics.length - 1)) / metrics.length;
+        metrics.forEach((m, i) => {
+            const mx = PAD + i * (MET_W + MET_GAP);
+            ctx.fillStyle = SURFACE;
+            ctx.fillRect(mx, MET_TOP, MET_W, MET_H);
+            // top hairline accent
+            ctx.fillStyle = m.color || ACCENT;
+            ctx.fillRect(mx, MET_TOP, MET_W, 2);
 
-            ctx.font = F(700, 10.5);
+            ctx.font = F(700, 9);
             ctx.fillStyle = TEXT_DIM;
             ctx.textAlign = 'left';
-            ctx.letterSpacing = '0.08em';
-            ctx.fillText(s.label, sx + 20, STAT_TOP + 24);
-            ctx.letterSpacing = '0';
+            ctx.fillText(m.label, mx + 14, MET_TOP + 20);
 
-            ctx.font = F(800, 20);
-            ctx.fillStyle = TEXT_PRI;
-            ctx.fillText(s.value, sx + 20, STAT_TOP + 48);
+            ctx.font = F(900, 18);
+            ctx.fillStyle = m.color || TEXT_PRI;
+            ctx.fillText(m.value, mx + 14, MET_TOP + 44);
         });
 
         // ── Section label ────────────────────────────────────────────────
-        const SECTION_LABEL_Y = STAT_TOP + STAT_H + 34;
-        ctx.font = F(700, 11);
+        const SEC_Y = MET_TOP + MET_H + 28;
+        ctx.font = F(800, 10);
         ctx.fillStyle = TEXT_DIM;
         ctx.textAlign = 'left';
-        ctx.letterSpacing = '0.08em';
-        ctx.fillText('WHO SENDS WHAT', PAD, SECTION_LABEL_Y);
-        ctx.letterSpacing = '0';
+        ctx.fillText('WHO SENDS WHAT', PAD, SEC_Y);
         ctx.fillStyle = RULE_SOFT;
-        ctx.fillRect(PAD, SECTION_LABEL_Y + 10, W - PAD * 2, 1);
+        ctx.fillRect(PAD, SEC_Y + 8, W - PAD * 2, 1);
 
-        // ── TEAM PANELS ──────────────────────────────────────────────────
-        const CARD_TOP = SECTION_LABEL_Y + 26;
-        const CARD_BOT = H - 64;
+        // ── Team columns ─────────────────────────────────────────────────
+        const CARD_TOP = SEC_Y + 22;
+        const CARD_BOT = H - 52;
         const CARD_H   = CARD_BOT - CARD_TOP;
         const maxCards = Math.min(activeTeams.length, 5);
         const GAP      = maxCards >= 4 ? 10 : 14;
@@ -5351,66 +5353,64 @@
             const sendSal = selectedPlayers.reduce((s, p) => s + (p.salary || 0), 0);
             const totalItems = selectedPlayers.length + selectedPicks.length;
 
-            // Panel background + border
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 6);
-            ctx.fillStyle = PANEL_BG;
-            ctx.fill();
-            roundRect(ctx, cx, CARD_TOP, CARD_W, CARD_H, 6);
-            ctx.strokeStyle = RULE;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            // Panel fill
+            ctx.fillStyle = PANEL;
+            ctx.fillRect(cx, CARD_TOP, CARD_W, CARD_H);
 
-            // Team color top bar
-            roundRect(ctx, cx, CARD_TOP, CARD_W, 4, [6, 6, 0, 0]);
+            // Team color rail (top)
             ctx.fillStyle = teamColor;
-            ctx.fill();
+            ctx.fillRect(cx, CARD_TOP, CARD_W, 3);
 
-            // Header block (white)
-            const HEAD_H = 54;
-            ctx.fillStyle = BG;
-            ctx.fillRect(cx + 1, CARD_TOP + 4, CARD_W - 2, HEAD_H - 4);
+            // Header
+            const HEAD_H = 52;
+            ctx.fillStyle = SURFACE;
+            ctx.fillRect(cx, CARD_TOP + 3, CARD_W, HEAD_H - 3);
             ctx.fillStyle = RULE;
             ctx.fillRect(cx, CARD_TOP + HEAD_H, CARD_W, 1);
 
             const isSmall = maxCards >= 4;
-            ctx.font = F(900, isSmall ? 20 : 24);
+
+            // Team abbr
+            ctx.font = F(900, isSmall ? 18 : 22);
             ctx.fillStyle = TEXT_PRI;
             ctx.textAlign = 'left';
-            ctx.fillText(t.abbr, cx + 14, CARD_TOP + (isSmall ? 30 : 34));
+            ctx.fillText(t.abbr, cx + 14, CARD_TOP + (isSmall ? 28 : 30));
 
-            ctx.font = F(600, isSmall ? 8 : 9);
+            // SENDS label
+            ctx.font = F(700, 8);
             ctx.fillStyle = TEXT_DIM;
-            ctx.letterSpacing = '0.08em';
-            ctx.fillText('SENDS', cx + 14, CARD_TOP + (isSmall ? 44 : 47));
-            ctx.letterSpacing = '0';
+            ctx.fillText('SENDS', cx + 14, CARD_TOP + (isSmall ? 42 : 44));
 
-            // Salary chip — top right of header
+            // Salary chip
             if (sendSal > 0) {
                 const chipTxt = '$' + (sendSal / 1e6).toFixed(1) + 'M';
                 ctx.font = F(800, isSmall ? 9 : 10);
-                const cw = ctx.measureText(chipTxt).width + 16;
-                const chY = CARD_TOP + 14, chH = 22;
+                const cw = ctx.measureText(chipTxt).width + 14;
+                const chY = CARD_TOP + 14;
+                const chH = 22;
                 const chX = cx + CARD_W - cw - 10;
-                roundRect(ctx, chX, chY, cw, chH, 11);
-                ctx.fillStyle = ACCENT + '18';
+                roundRect(ctx, chX, chY, cw, chH, 3);
+                ctx.fillStyle = 'rgba(0,107,182,0.2)';
                 ctx.fill();
                 ctx.fillStyle = ACCENT;
                 ctx.textAlign = 'left';
-                ctx.fillText(chipTxt, chX + 8, chY + chH / 2 + 3.5);
+                ctx.fillText(chipTxt, chX + 7, chY + chH / 2 + 3.5);
             }
 
-            // Player / pick rows — zebra striped like the roster table
+            // Rows
             let cursor = CARD_TOP + HEAD_H + 1;
-            const LINE_H = isSmall ? 27 : 33;
+            const LINE_H = isSmall ? 28 : 34;
             const innerW = CARD_W - 28;
-            const MAX_ITEMS = Math.floor((CARD_H - HEAD_H - 6) / LINE_H);
+            const MAX_ITEMS = Math.floor((CARD_H - HEAD_H - 8) / LINE_H);
             const showCount = Math.min(totalItems, MAX_ITEMS);
             let shown = 0;
             let rowIdx = 0;
 
             const drawRowBg = (rowCursor) => {
-                ctx.fillStyle = (rowIdx % 2 === 0) ? STRIPE : BG;
-                ctx.fillRect(cx + 1, rowCursor, CARD_W - 2, LINE_H);
+                if (rowIdx % 2 === 0) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+                    ctx.fillRect(cx, rowCursor, CARD_W, LINE_H);
+                }
                 rowIdx++;
             };
 
@@ -5421,25 +5421,25 @@
                     ctx.font = F(600, isSmall ? 9 : 10);
                     ctx.fillStyle = TEXT_DIM;
                     ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + LINE_H / 2 + 3.5);
+                    ctx.fillText('+' + (totalItems - shown) + ' more', cx + 14, cursor + LINE_H / 2 + 3.5);
                     shown++; return;
                 }
                 drawRowBg(cursor);
-                // Name
+                // name
                 ctx.font = F(700, isSmall ? 11 : 13);
                 ctx.fillStyle = TEXT_PRI;
                 ctx.textAlign = 'left';
                 let pName = p.name;
-                while (ctx.measureText(pName).width > innerW - 60 && pName.length > 4) pName = pName.slice(0, -1);
+                while (ctx.measureText(pName).width > innerW - 58 && pName.length > 4) pName = pName.slice(0, -1);
                 if (pName.length < p.name.length) pName += '…';
                 ctx.fillText(pName, cx + 14, cursor + LINE_H / 2 + (isSmall ? 2 : 3));
-                // Position
+                // position under name on larger cards
                 if (p.position && p.position !== '—' && !isSmall) {
-                    ctx.font = F(600, 8.5);
+                    ctx.font = F(600, 8);
                     ctx.fillStyle = TEXT_DIM;
                     ctx.fillText(p.position, cx + 14, cursor + LINE_H / 2 + 14);
                 }
-                // Salary
+                // salary
                 if (p.salary) {
                     ctx.font = F(700, isSmall ? 9 : 10.5);
                     ctx.fillStyle = ACCENT;
@@ -5453,22 +5453,27 @@
                 if (shown >= showCount) return;
                 if (shown === showCount - 1 && totalItems > showCount) {
                     drawRowBg(cursor);
-                    ctx.font = F(600, isSmall ? 9 : 10); ctx.fillStyle = TEXT_DIM; ctx.textAlign = 'left';
-                    ctx.fillText(`+${totalItems - shown} more`, cx + 14, cursor + LINE_H / 2 + 3.5);
+                    ctx.font = F(600, isSmall ? 9 : 10);
+                    ctx.fillStyle = TEXT_DIM;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('+' + (totalItems - shown) + ' more', cx + 14, cursor + LINE_H / 2 + 3.5);
                     shown++; return;
                 }
                 drawRowBg(cursor);
-                ctx.font = F(600, isSmall ? 10 : 11.5);
-                ctx.fillStyle = TEXT_SEC;
+                // pick tag
+                ctx.font = F(800, 7);
+                ctx.fillStyle = '#fbbf24';
                 ctx.textAlign = 'left';
+                ctx.fillText('PICK', cx + 14, cursor + LINE_H / 2 - 4);
+                ctx.font = F(600, isSmall ? 10 : 11);
+                ctx.fillStyle = TEXT_SEC;
                 let pkName = pk.name;
                 while (ctx.measureText(pkName).width > innerW && pkName.length > 4) pkName = pkName.slice(0, -1);
                 if (pkName.length < pk.name.length) pkName += '…';
-                ctx.fillText(pkName, cx + 14, cursor + LINE_H / 2 + 3.5);
+                ctx.fillText(pkName, cx + 14, cursor + LINE_H / 2 + 10);
                 cursor += LINE_H; shown++;
             });
 
-            // Empty state
             if (totalItems === 0) {
                 ctx.font = F(500, 11);
                 ctx.fillStyle = TEXT_DIM;
@@ -5476,14 +5481,15 @@
                 ctx.fillText('No assets selected', cx + CARD_W / 2, CARD_TOP + CARD_H / 2);
             }
 
-            // ── Arrow connector (between panels) ──────────────────────────
+            // Divider between columns (not arrows / no emoji)
             if (i < maxCards - 1) {
                 const axX = cx + CARD_W + GAP / 2;
-                const axY = CARD_TOP + CARD_H / 2;
-                ctx.fillStyle = TEXT_DIM;
-                ctx.font = F(400, 14);
-                ctx.textAlign = 'center';
-                ctx.fillText('⇄', axX, axY + 5);
+                ctx.strokeStyle = RULE;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(axX, CARD_TOP + 16);
+                ctx.lineTo(axX, CARD_TOP + CARD_H - 16);
+                ctx.stroke();
             }
         });
 
@@ -5497,7 +5503,7 @@
         ctx.textAlign = 'left';
         ctx.fillText('sixershoops.com/trade', PAD, footY + 26);
 
-        const statusStr = isValid ? '✓ CBA Compliant' : '✗ CBA Violation';
+        const statusStr = isValid ? 'CBA COMPLIANT' : 'CBA VIOLATION';
         ctx.fillStyle = isValid ? GREEN : RED;
         ctx.font = F(800, 11);
         ctx.textAlign = 'right';
