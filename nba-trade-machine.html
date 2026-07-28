@@ -5615,12 +5615,15 @@
         const c = document.createElement('canvas');
         c.width = size; c.height = size;
         const ctx = c.getContext('2d');
-        ctx.fillStyle = '#e8eef6';
+        const meta = (typeof NBA_TEAMS !== 'undefined' && NBA_TEAMS[abbr]) ? NBA_TEAMS[abbr] : null;
+        const bg = (meta && meta.color) || '#0066cc';
+        // Team-color circle with white abbr — clean, no external assets
+        ctx.fillStyle = bg;
         ctx.beginPath();
         ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#0066cc';
-        ctx.font = 'bold ' + Math.round(size * 0.32) + 'px Lexend, Helvetica, Arial, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold ' + Math.round(size * 0.34) + 'px Lexend, Helvetica, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((abbr || '?').slice(0, 3), size / 2, size / 2 + 1);
@@ -5631,17 +5634,16 @@
         const hero = document.querySelector('#modalSwapHero .sh-hero') || document.querySelector('.sh-hero');
         if (!hero) throw new Error('Graphic not found — run Analyze Trade first.');
 
-        const width = Math.max(1, Math.ceil(hero.getBoundingClientRect().width));
-        const height = Math.max(1, Math.ceil(hero.getBoundingClientRect().height));
         const scale = 2;
 
-        // Deep clone and strip anything that can taint a canvas
+        // 1) Clone first, strip UI chrome so we only capture the clean graphic
         const clone = hero.cloneNode(true);
         clone.querySelectorAll('.sh-copy-actions').forEach(el => el.remove());
         const footerRow = clone.querySelector('.sh-footer-row');
         if (footerRow) {
             footerRow.style.justifyContent = 'center';
             footerRow.style.display = 'flex';
+            footerRow.style.width = '100%';
         }
 
         // Replace every <img> with a local data-URL placeholder (no network, no CORS)
@@ -5661,8 +5663,9 @@
             }
         });
 
-        // Inline computed styles from the live hero (layout fidelity)
-        const srcNodes = [hero].concat(Array.from(hero.querySelectorAll('*')));
+        // Inline computed styles from the live hero (layout fidelity), matching by tag path index
+        // Skip .sh-copy-actions nodes that no longer exist on the clone
+        const srcNodes = [hero].concat(Array.from(hero.querySelectorAll('*')).filter(n => !n.closest('.sh-copy-actions')));
         const dstNodes = [clone].concat(Array.from(clone.querySelectorAll('*')));
         for (let i = 0; i < Math.min(srcNodes.length, dstNodes.length); i++) {
             const cs = window.getComputedStyle(srcNodes[i]);
@@ -5683,14 +5686,30 @@
             img.src = makeLogoPlaceholder(abbr, 36);
         });
         clone.querySelectorAll('.sh-copy-actions').forEach(el => el.remove());
+        // Center footer after style copy (computed style may have re-applied space-between)
+        const footerRow2 = clone.querySelector('.sh-footer-row');
+        if (footerRow2) {
+            footerRow2.style.justifyContent = 'center';
+            footerRow2.style.display = 'flex';
+            footerRow2.style.width = '100%';
+        }
 
+        // 2) Mount cleaned clone off-screen, THEN measure — no extra button-row height
         const wrap = document.createElement('div');
         wrap.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none;background:#fff;';
-        clone.style.width = width + 'px';
+        const liveW = Math.max(1, Math.ceil(hero.getBoundingClientRect().width));
+        clone.style.width = liveW + 'px';
         clone.style.boxSizing = 'border-box';
         clone.style.background = '#ffffff';
+        clone.style.margin = '0';
+        // Keep border-radius / border of the on-screen card
         wrap.appendChild(clone);
         document.body.appendChild(wrap);
+
+        // Force layout so getBoundingClientRect is accurate on the cleaned node
+        const width = Math.max(1, Math.ceil(clone.getBoundingClientRect().width) || liveW);
+        const height = Math.max(1, Math.ceil(clone.getBoundingClientRect().height));
+        clone.style.width = width + 'px';
 
         try {
             const xhtml = new XMLSerializer().serializeToString(clone);
@@ -5702,7 +5721,7 @@
             const svg =
                 '<svg xmlns="http://www.w3.org/2000/svg" width="' + (width * scale) + '" height="' + (height * scale) + '">' +
                 '<foreignObject width="100%" height="100%" transform="scale(' + scale + ')">' +
-                '<div xmlns="http://www.w3.org/1999/xhtml" style="background:#ffffff;width:' + width + 'px;">' +
+                '<div xmlns="http://www.w3.org/1999/xhtml" style="background:#ffffff;width:' + width + 'px;margin:0;padding:0;">' +
                 xhtml +
                 '</div></foreignObject></svg>';
 
