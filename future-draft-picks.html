@@ -408,9 +408,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── PICKS DATA ─────────────────────────────────────────────────────
   // Verified against: 7 firsts (2027–2033), 13 seconds (2027–2033)
+  // Traded picks are kept in data for reference but filtered out of display.
+  // All 1st-round picks except 2033 are ineligible to be traded.
   const PICKS = [
     // ── 2027 FIRSTS ──
-    { year: 2027, round: '1st', type: 'own', tradable: true,  from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    { year: 2027, round: '1st', type: 'own', tradable: false, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
     // ── 2027 SECONDS ──
     { year: 2027, round: '2nd', type: 'own', tradable: true,  from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
     { year: 2027, round: '2nd', type: 'incoming', tradable: true, from: 'Most favorable of OKC/HOU/IND/MIA', protection: 'Unprotected', notes: '' },
@@ -423,11 +425,11 @@ document.addEventListener('DOMContentLoaded', function () {
     { year: 2028, round: '2nd', type: 'conditional', tradable: true, from: 'Via Detroit', protection: '31-55 Protected', notes: 'Conveys only as picks 56-60. Highly unlikely to convey — functionally a fake asset.' },
     { year: 2028, round: '2nd', type: 'traded', tradable: false, from: 'Most favorable of GSW/OKC/MIL', protection: 'Unprotected', notes: "Sent to the Boston Celtics. Boston will receive the most favorable of the Warriors', Thunder's, or Bucks' 2028 second-round picks." },
     // ── 2029 FIRSTS ──
-    { year: 2029, round: '1st', type: 'swap', tradable: true, from: 'Swap Best w/ LAC (Top-3 Prot.)', protection: 'Top-3 Protected', notes: 'Sixers hold the right to swap their 2029 1st with the Clippers. Top-3 Protected — if Clippers land Top 3, Sixers keep their own pick.' },
+    { year: 2029, round: '1st', type: 'swap', tradable: false, from: 'Swap Best w/ LAC (Top-3 Prot.)', protection: 'Top-3 Protected', notes: 'Sixers hold the right to swap their 2029 1st with the Clippers. Top-3 Protected — if Clippers land Top 3, Sixers keep their own pick.' },
     // ── 2029 SECONDS ──
     { year: 2029, round: '2nd', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
     // ── 2030 FIRSTS ──
-    { year: 2030, round: '1st', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    { year: 2030, round: '1st', type: 'own', tradable: false, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
     // ── 2030 SECONDS ──
     { year: 2030, round: '2nd', type: 'traded', tradable: false, from: 'Most favorable of WAS/POR/PHO', protection: 'Unprotected', notes: "Sent to the Boston Celtics. Boston will receive the most favorable of the Wizards', Trail Blazers', or Suns' 2030 second-round picks." },
     // ── 2031 FIRSTS ──
@@ -435,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── 2031 SECONDS ──
     { year: 2031, round: '2nd', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
     // ── 2032 FIRSTS ──
-    { year: 2032, round: '1st', type: 'own', tradable: true, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
+    { year: 2032, round: '1st', type: 'own', tradable: false, from: "Philadelphia's own", protection: 'Unprotected', notes: '' },
     // ── 2032 SECONDS ──
     { year: 2032, round: '2nd', type: 'swap', tradable: true, from: 'Lesser of Own/MEM', protection: 'Unprotected', notes: 'Sixers receive the worse of their own 2032 2nd and the Memphis 2032 2nd.' },
     // ── 2033 FIRSTS ──
@@ -455,7 +457,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function render() {
-    let rows = PICKS.filter(p => {
+    // Never show traded picks
+    let rows = PICKS.filter(p => p.type !== 'traded').filter(p => {
       switch (state.filterType) {
         case 'all': return true;
         case 'own': return true; // show all (owned = all controlled)
@@ -484,8 +487,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // trade eligibility badge
       let tradeBadge = '';
-      if (!p.tradable && p.type !== 'traded') {
-        tradeBadge = `<span class="badge encumbered" style="margin-left:.4rem;">Not Tradable</span>`;
+      if (!p.tradable) {
+        tradeBadge = `<span class="badge encumbered" style="margin-left:.4rem;">Ineligible to be traded</span>`;
       } else if (p.type === 'conditional' && p.protection !== 'Boston Swap Rights') {
         tradeBadge = `<span class="badge fake" style="margin-left:.4rem;">Fake</span>`;
       }
@@ -595,19 +598,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (dateEl) dateEl.textContent = 'Updated ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-      const firsts  = PICKS.filter(p => p.round === '1st').sort((a,b) => a.year - b.year);
-      const seconds = PICKS.filter(p => p.round === '2nd').sort((a,b) => a.year - b.year);
+      // Exclude traded picks from social export
+      const firsts  = PICKS.filter(p => p.round === '1st' && p.type !== 'traded').sort((a,b) => a.year - b.year);
+      const seconds = PICKS.filter(p => p.round === '2nd' && p.type !== 'traded').sort((a,b) => a.year - b.year);
 
       const firstRowHtml = (p) => `<tr>
         <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; font-weight:700; color:#006BB6; font-variant-numeric:tabular-nums; font-size:12px;">${p.year}</td>
         <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; color:#0d0f1a; font-size:11px;">${p.from}</td>
-        <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; color:#64748b; font-size:10px;">${p.type === 'traded' ? 'Traded' : (/unprotected/i.test(p.protection) ? '—' : p.protection)}</td>
+        <td style="padding:5px 4px; border-bottom:1px solid #e4e8f0; color:#64748b; font-size:10px;">${!p.tradable ? 'Ineligible' : (/unprotected/i.test(p.protection) ? '—' : p.protection)}</td>
       </tr>`;
 
       const secondRowHtml = (p) => {
         let note = '';
-        if (p.type === 'traded') note = 'Traded';
-        else if (!p.tradable) note = 'Encumbered';
+        if (!p.tradable) note = 'Encumbered';
         else if (p.type === 'conditional') note = 'Fake';
         else if (p.type === 'swap') note = 'Swap worst';
         return `<tr>
