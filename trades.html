@@ -123,6 +123,7 @@
       </div>
       <div class="follow-list" id="followList"><div style="color:var(--mid);font-size:.85rem;padding:.5rem">Sign in to build your feed.</div></div>
     </div>
+    <div id="postDetail" style="display:none;margin-bottom:1.5rem"></div>
     <div id="feed">
       <div class="skel"></div><div class="skel"></div><div class="skel"></div>
     </div>
@@ -242,6 +243,50 @@
     });
   }
 
+
+  function openPostFromQuery(){
+    const id = new URLSearchParams(location.search).get('post') || new URLSearchParams(location.search).get('id');
+    if(!id) return;
+    loadPostDetail(id);
+  }
+
+
+  async function loadPostDetail(id){
+    const box = document.getElementById('postDetail');
+    if(!box || !window.db || !id) return;
+    box.style.display = 'block';
+    box.innerHTML = '<p class="empty">Loading post...</p>';
+    try{
+      const doc = await window.db.collection(COLLECTION).doc(id).get();
+      if(!doc.exists){
+        box.innerHTML = '<div class="empty"><strong>Post not found in database.</strong><br/>It may have failed to save (check Firestore rules) or the id is wrong.<br/><a href="/trades.html">Back to feed</a></div>';
+        return;
+      }
+      const t = doc.data(); t.id = doc.id;
+      const sides = t.sides || [];
+      let sidesHtml = '';
+      if(sides.length){
+        sidesHtml = '<div style="display:flex;flex-wrap:wrap;gap:.75rem;margin:1rem 0">'+sides.map(function(s){
+          const recv = (s.receiving||[]).map(function(a){return esc(a.name||a);}).join(', ') || '—';
+          return '<div style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:10px;padding:.75rem"><strong>'+esc(s.name||s.abbr)+'</strong><div style="font-size:.8rem;color:var(--mid);margin-top:.35rem">Receives: '+recv+'</div></div>';
+        }).join('')+'</div>';
+      }
+      box.innerHTML =
+        '<div class="card" style="border-color:#006BB6">' +
+        '<div style="font-size:.75rem;margin-bottom:.5rem"><a href="/trades.html" style="color:var(--sixers-blue);font-weight:700">← All trades</a></div>' +
+        '<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>' +
+        '<div class="cmeta">'+esc(t.author||'u/fan')+' · '+(t.isValid===true?'Appears legal':(t.isValid===false?'Invalid / restricted':''))+'</div>' +
+        (t.notes ? '<p class="cexcerpt" style="-webkit-line-clamp:unset">'+esc(t.notes)+'</p>' : '') +
+        sidesHtml +
+        '<div style="margin-top:.75rem;font-size:.85rem;font-weight:700">'+(t.votes||0)+' votes · '+(t.comments||[]).length+' comments</div>' +
+        (t.machineHash ? '<p style="margin-top:.75rem"><a class="btn btn-primary" style="text-decoration:none" href="/nba-trade-machine.html#trade='+encodeURIComponent(t.machineHash)+'">Open in Trade Machine</a></p>' : '') +
+        '</div>';
+    }catch(e){
+      console.error(e);
+      box.innerHTML = '<div class="empty">Could not load post: '+esc(e.message||e)+'<br/><a href="/trades.html">Back to feed</a></div>';
+    }
+  }
+
   function triggerLogin(){const b=document.getElementById('navSignInBtn');if(b)b.click();else alert('Please sign in.');}
 
   function sortList(list){
@@ -286,8 +331,8 @@
         '</div>'+
         '<div class="cbody">'+
           '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span></div>'+
-          '<a href="/trade/'+encodeURIComponent(t.id)+'/'+encodeURIComponent(String(t.title||'trade').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'trade')+'"><h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2></a>'+
-          '<div class="cmeta">'+esc(t.author||'u/fan')+' · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
+          '<a href="/trades.html?post='+encodeURIComponent(t.id)+'"><h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2></a>'+
+          '<div class="cmeta"><a href="/user/'+encodeURIComponent(String(t.author||'fan').replace(/^u\//,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-'))+(t.authorId?('?uid='+encodeURIComponent(t.authorId)):'')+'">'+esc(t.author||'u/fan')+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
           (t.notes||t.summary?'<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>':'')+
           (chips?'<div class="chips">'+chips+'</div>':'')+
         '</div></article>';
