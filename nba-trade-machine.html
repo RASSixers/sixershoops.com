@@ -4302,7 +4302,11 @@
                 var gets = (s.receiving || []).map(function (a) { return a.name; }).slice(0, 3).join(', ');
                 return s.abbr + (gets ? ' gets ' + gets : ' (no players in)');
             });
-            var summary = notes || summaryParts.join(' · ');
+            var badge = document.getElementById('modalBadge');
+            var isValidFlag = badge ? badge.classList.contains('valid') : null;
+            var statusLine = isValidFlag === true ? 'Trade status: Appears legal under current CBA checks.'
+                : (isValidFlag === false ? 'Trade status: Invalid / restricted under current CBA checks.' : 'Trade status: Not fully validated.');
+            var summary = (notes ? (notes + '\n\n' + statusLine) : (summaryParts.join(' · ') + '\n\n' + statusLine));
 
             var machineHash = '';
             try {
@@ -4311,13 +4315,13 @@
                 try { machineHash = btoa(JSON.stringify(serializeTradeState())); } catch (e2) { machineHash = ''; }
             }
 
-            var badge = document.getElementById('modalBadge');
-            var isValid = badge ? badge.classList.contains('valid') : null;
+            var isValid = isValidFlag;
             var authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'fan');
             var voters = {};
             voters[user.uid] = 'up';
 
             var doc = sanitizeForFirestore({
+                postType: 'trade',
                 title: String(title).slice(0, 120),
                 summary: String(summary).slice(0, 400),
                 notes: String(notes).slice(0, 2000),
