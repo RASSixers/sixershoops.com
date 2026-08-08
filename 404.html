@@ -3,45 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Redirecting…</title>
+  <title>Sixers Hoops</title>
   <script>
 (function () {
   var path = location.pathname.replace(/\/+$/, '') || '/';
   var search = location.search || '';
   var hash = location.hash || '';
 
-  // /user/{name} or /user/{name}/{inbox|notifications|settings}
-  var user = path.match(/^\/user\/([^\/]+)(?:\/(inbox|notifications|settings))?$/i);
-  if (user) {
-    var slug = decodeURIComponent(user[1]);
-    var sub = user[2] ? '#' + user[2].toLowerCase() : '';
-    location.replace('/user.html?u=' + encodeURIComponent(slug) + sub);
+  // Pretty profile URLs on GitHub Pages:
+  // /user/{name} and /user/{name}/inbox|notifications|settings
+  if (/^\/user\/[^/]+/i.test(path)) {
+    try { sessionStorage.setItem('spa_user_path', path + search + hash); } catch (e) {}
+    location.replace('/user.html');
     return;
   }
 
-  // /trade/{id}/... or /trade/{id}
-  var trade = path.match(/^\/trade\/([^\/]+)/i);
+  // /trade/{id}/optional-slug
+  var trade = path.match(/^\/trade\/([^/]+)/i);
   if (trade) {
     location.replace('/trade.html?id=' + encodeURIComponent(decodeURIComponent(trade[1])));
     return;
   }
 
-  // /article/{slug} — keep existing article page if present
+  // /article/{slug}
   var article = path.match(/^\/article\/(.+)$/i);
   if (article) {
     location.replace('/article.html?slug=' + encodeURIComponent(decodeURIComponent(article[1])) + hash);
     return;
   }
 
-  // Default: home
-  location.replace('/' + search + hash);
+  location.replace('/' + (search || '') + (hash || ''));
 })();
   </script>
-  <noscript>
-    <p><a href="/">Go home</a></p>
-  </noscript>
 </head>
 <body>
-  <p style="font-family:system-ui;padding:2rem;text-align:center">Redirecting…</p>
+  <p style="font-family:Lexend,system-ui,sans-serif;text-align:center;padding:3rem;color:#64748b">Loading…</p>
 </body>
 </html>
