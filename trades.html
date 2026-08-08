@@ -323,7 +323,7 @@
       const pill=ty==='poll'?'poll':(ty==='discussion'?'discussion':'trade');
       const label=ty==='poll'?'POLL':(ty==='discussion'?'DISCUSSION':'TRADE');
       const chips=(t.teamAbbrs||[]).map(function(a){return '<span class="chip">'+esc(a)+'</span>';}).join('');
-      return '<article class="card" data-id="'+esc(t.id)+'">'+
+      return '<article class="card" data-id="'+esc(t.id)+'" style="cursor:pointer" role="link" tabindex="0">'+
         '<div class="vcol">'+
           '<button type="button" class="vbtn vote-up'+(uv==='up'?' up':'')+'" data-id="'+esc(t.id)+'" aria-label="Upvote"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>'+
           '<span class="vcnt">'+(t.votes||0)+'</span>'+
@@ -331,15 +331,28 @@
         '</div>'+
         '<div class="cbody">'+
           '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span></div>'+
-          '<a href="/trades.html?post='+encodeURIComponent(t.id)+'"><h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2></a>'+
-          '<div class="cmeta"><a href="/user/'+encodeURIComponent(String(t.author||'fan').replace(/^u\//,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-'))+'">'+esc(t.author||'u/fan')+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
+          '<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>'+
+          '<div class="cmeta"><a class="author-link" href="/user/'+encodeURIComponent(String(t.author||'fan').replace(/^u\//,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-'))+'">'+esc(t.author||'u/fan')+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
           (t.notes||t.summary?'<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>':'')+
           (chips?'<div class="chips">'+chips+'</div>':'')+
         '</div></article>';
     }).join('');
 
-    feed.querySelectorAll('.vote-up').forEach(function(b){b.onclick=function(e){e.preventDefault();vote(b.getAttribute('data-id'),'up');};});
-    feed.querySelectorAll('.vote-dn').forEach(function(b){b.onclick=function(e){e.preventDefault();vote(b.getAttribute('data-id'),'down');};});
+    feed.querySelectorAll('.vote-up').forEach(function(b){b.onclick=function(e){e.preventDefault();e.stopPropagation();vote(b.getAttribute('data-id'),'up');};});
+    feed.querySelectorAll('.vote-dn').forEach(function(b){b.onclick=function(e){e.preventDefault();e.stopPropagation();vote(b.getAttribute('data-id'),'down');};});
+    feed.querySelectorAll('a.author-link').forEach(function(a){a.onclick=function(e){e.stopPropagation();};});
+    feed.querySelectorAll('article.card').forEach(function(card){
+      var id = card.getAttribute('data-id');
+      if(!id) return;
+      var go = function(){ window.location.href = '/trades.html?post=' + encodeURIComponent(id); };
+      card.onclick = function(e){
+        if(e.target.closest('button, a, .vcol')) return;
+        go();
+      };
+      card.onkeydown = function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); }
+      };
+    });
   }
 
   async function vote(id,dir){
@@ -466,6 +479,8 @@
   };
 
   waitForDb(function(){
+    // Open detail view when ?post= or ?id= is present (from trade machine / card click)
+    openPostFromQuery();
     unsub=window.db.collection(COLLECTION).orderBy('createdAt','desc').limit(80).onSnapshot(function(snap){
       items=snap.docs.map(function(d){const x=d.data();x.id=d.id;return x;});
       render();
