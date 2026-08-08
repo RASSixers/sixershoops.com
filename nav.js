@@ -146,10 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <li class="nav-item">
                 <a href="/pickem" class="nav-link">Pick'em</a>
             </li>
-            <li class="nav-item">
-                <a href="/trades.html" class="nav-link" data-nav="community">Community</a>
-            </li>
-            <li class="nav-item dropdown">
+<li class="nav-item dropdown">
                 <button class="dropdown-toggle">Team Hub</button>
                 <div class="dropdown-menu">
                     <a href="https://sixershoops.com/roster" class="dropdown-item">Roster</a>
@@ -225,10 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="mobile-nav-item">
             <a href="/pickem" class="mobile-nav-link">Pick'em</a>
         </div>
-        <div class="mobile-nav-item">
-            <a href="/trades.html" class="mobile-nav-link" data-nav="community">Community</a>
-        </div>
-        <div class="mobile-nav-item">
+<div class="mobile-nav-item">
             <a href="https://sixershoops.com/roster" class="mobile-nav-link">Roster</a>
         </div>
         <div class="mobile-nav-item">
@@ -427,7 +421,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <ul class="footer-links">
                     <li><a href="/">Home</a></li>
                     <li><a href="/pickem">Pick'em</a></li>
-                    <li><a href="/trades.html">Community</a></li>
                     <li><a href="https://sixershoops.com/standings">NBA Standings</a></li>
                     <li><a href="https://sixershoops.com/schedule">Schedule</a></li>
                     <li><a href="https://sixershoops.com/contact">Contact</a></li>
