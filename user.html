@@ -1323,13 +1323,23 @@
                     </div>`;
                 }).join('');
 
+                // Mark all as read when notifications tab is opened
+                const unreadIds = notifs.filter(n => !n.read).map(n => n.id);
+                if (unreadIds.length && db) {
+                  Promise.all(unreadIds.map(id => db.collection('notifications').doc(id).update({ read: true }).catch(() => {})))
+                    .then(() => {
+                      if (window.updateNotifBadge) window.updateNotifBadge(0);
+                      setTabPill('#tab-notif-count', 0);
+                      setTabPill('#tab-inbox-count', 0);
+                      listEl.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+                      const countEl = document.getElementById('notif-panel-count');
+                      if (countEl) countEl.classList.add('hidden');
+                    });
+                }
+
                 listEl.querySelectorAll('.notif-item').forEach(el => {
                   el.addEventListener('click', async () => {
-                    const id = el.getAttribute('data-id');
                     const href = el.getAttribute('data-href');
-                    if (id && db) {
-                      try { await db.collection('notifications').doc(id).update({ read: true }); } catch(_) {}
-                    }
                     if (href) location.href = href;
                   });
                 });
@@ -1761,6 +1771,24 @@
                 const feedPosts = await loadByAuthor('community_posts');
                 const legacyPosts = await loadByAuthor('posts');
                 posts = [...tradePosts, ...feedPosts, ...legacyPosts];
+                // Drop ghost/empty posts (deleted content leftovers)
+                posts = posts.filter(p => {
+                    if (!p || !p.postId && !p.id) return false;
+                    const hasTitle = !!(p.title && String(p.title).trim());
+                    const hasBody = !!(p.notes || p.summary || p.body || p.content);
+                    const hasTrade = !!(p.sides && p.sides.length) || !!p.machineHash;
+                    const hasQuote = !!p.quotedPostId;
+                    const hasImage = !!p.image;
+                    return hasTitle || hasBody || hasTrade || hasQuote || hasImage;
+                });
+                // De-dupe by id
+                const seenIds = new Set();
+                posts = posts.filter(p => {
+                    const id = p.postId || p.id;
+                    if (!id || seenIds.has(id)) return false;
+                    seenIds.add(id);
+                    return true;
+                });
                 posts.sort((a,b) => {
                     const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
                     const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
