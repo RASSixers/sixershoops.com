@@ -4065,10 +4065,26 @@
         try {
             const h = (location.hash || '').replace(/^#/, '');
             if (!h.startsWith('trade=')) return false;
-            const raw = decodeURIComponent(h.slice(6));
-            const state = JSON.parse(atob(raw));
-            return applyTradeState(state);
-        } catch (e) { return false; }
+            let raw = h.slice(6);
+            try { raw = decodeURIComponent(raw); } catch (e1) {}
+            // Some links pass base64 that still has URI encoding artifacts
+            try {
+                const state = JSON.parse(atob(raw));
+                return applyTradeState(state);
+            } catch (e2) {
+                // try without atob if already JSON
+                try {
+                    const state = JSON.parse(raw);
+                    return applyTradeState(state);
+                } catch (e3) {
+                    console.warn('Could not load trade from URL hash', e2);
+                    return false;
+                }
+            }
+        } catch (e) {
+            console.warn('loadTradeFromHash', e);
+            return false;
+        }
     }
     function loadTradeFromStorage() {
         try {
@@ -4387,12 +4403,21 @@
     // ─── INIT ────────────────────────────────────────────────────────────────
     function init() {
         const fromHash = loadTradeFromHash();
-        const fromStore = fromHash ? true : loadTradeFromStorage();
-        if (!fromStore) {
+        let restored = fromHash;
+        if (!restored) restored = loadTradeFromStorage();
+        if (!restored || !teams.length) {
+            teams = [];
+            nextId = 0;
             addTeam();
             addTeam();
         } else {
             renderAll();
+            // Re-run analyze if teams look populated so UI matches the linked trade
+            try {
+                if (teams.some(function(t){ return t.abbr && ((t.selectedPlayers||[]).length || (t.selectedPicks||[]).length); })) {
+                    setTimeout(function(){ try { analyzeTrade(); } catch(e) {} }, 50);
+                }
+            } catch (e) {}
         }
     }
 
