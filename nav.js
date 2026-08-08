@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
                         <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
-                        <a class="auth-nav-btn" href="/user-profile.html?uid=${encodeURIComponent(user.uid)}&name=${encodeURIComponent(displayName)}" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Community Profile</a>
+                        <a class="auth-nav-btn" href="/user/${encodeURIComponent(usernameSlug)}?uid=${encodeURIComponent(user.uid)}" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Community Profile</a>
                         <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
                         ${user.email && user.email.toLowerCase() === 'rhatus13@gmail.com' ? `<a class="auth-nav-btn" href="/moderation.html" style="width:100%;text-align:center;text-decoration:none;display:block;background:#001a57;color:#fff;">Moderation</a>` : ''}
@@ -611,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (communityProfileLink) communityProfileLink.onclick = () => {
                 const handle = (user.displayName || (user.email ? user.email.split('@')[0] : 'user'));
                 const slug = handle.toLowerCase().replace(/[^a-z0-9_-]+/g, '-') || 'user';
-                window.location.href = '/user-profile.html?uid=' + encodeURIComponent(user.uid) + '&name=' + encodeURIComponent(handle);
+                window.location.href = '/user/' + encodeURIComponent(slug) + '?uid=' + encodeURIComponent(user.uid);
             };
             if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
             if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
