@@ -277,7 +277,12 @@
         });
         if(btn){btn.textContent='Following';btn.classList.add('following');}
       }
-    }catch(e){console.error(e);alert('Could not update follow.');}
+    }catch(e){
+      console.error(e);
+      var msg=(e&&e.message)?e.message:String(e);
+      if(/permission|insufficient/i.test(msg)) alert('Follow blocked by Firestore rules on the follows collection. Allow signed-in users to create/delete follows.');
+      else alert('Could not update follow: '+msg);
+    }
   }
 
   function waitForDb(cb,n){n=n||0;if(window.db){cb();return;}if(n>80){renderError('Could not connect.');return;}setTimeout(function(){waitForDb(cb,n+1);},250);}
