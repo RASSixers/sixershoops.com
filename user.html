@@ -684,15 +684,20 @@
             return `<div class="feed-card-avatar" style="width:${size}px;height:${size}px;background:${bg};">${inner}</div>`;
         }
 
-        function userBase() { return slug ? `/user/${encodeURIComponent(slug)}` : '/user'; }
-        function tabHref(sub) { return sub ? `${userBase()}/${sub}` : userBase(); }
+        function userBase() {
+            // GitHub Pages: no path rewrites — use real file
+            return slug ? ('/user.html?u=' + encodeURIComponent(slug)) : '/user.html';
+        }
+        function tabHref(sub) {
+            return sub ? (userBase() + '#' + sub) : userBase();
+        }
 
         // Intercept clicks on profile-tab anchors to do client-side nav (no full reload).
         document.addEventListener('click', (e) => {
             const a = e.target.closest('a.profile-tab');
             if (!a) return;
             const href = a.getAttribute('href') || '';
-            if (!href.startsWith('/user/') && href !== '/user') return;
+            if (!(href.startsWith('/user/') || href.startsWith('/user.html'))) return;
             e.preventDefault();
             history.pushState(null, '', href);
             window.dispatchEvent(new Event('popstate'));
@@ -1333,7 +1338,7 @@
                     const u = firebase.auth().currentUser;
                     if (u) {
                         const lower = (u.displayName || localStorage.getItem('usernameLower') || '').toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
-                        if (lower) { location.replace(`/user/${encodeURIComponent(lower)}`); return true; }
+                        if (lower) { location.replace('/user.html?u=' + encodeURIComponent(lower)); return true; }
                     }
                 } catch(_) {}
                 return false;
