@@ -6028,10 +6028,10 @@
             earliestUntil = timedHolds.reduce((max, v) => (!max || v.until > max ? v.until : max), null);
         }
 
-        const allMessages = [...violations, ...warnings, ...infos];
+        const allMessages = [...violations, ...warnings]; // info tips removed from results UI
         if (allTimedOnly && earliestUntil) {
             allMessages.unshift({
-                type: 'info',
+                type: 'warning',
                 msg: `This structure is CBA-legal once holds expire. Trade fails until ${earliestUntil}, then successful.`,
             });
         }
@@ -6638,9 +6638,8 @@
         titleEl.textContent = title;
         subEl.textContent   = sub;
 
-        // Messages (+ release disclaimer at bottom of list)
-        const msgList = messages.slice();
-        msgList.push({ type: 'info', msg: 'Public estimate: not official NBA/NBPA output. Near-apron numbers, non-guaranteed salaries, incentives, and S&T BYC may differ from league books.' });
+        // Messages — errors & warnings only (no info tips)
+        const msgList = messages.slice().filter(function(m){ return m && m.type !== 'info'; });
         violList.innerHTML = msgList.map(m => `
             <div class="violation-item ${m.type}">
                 <span style="font-family:'Lexend',sans-serif;font-weight:800;font-size:.75rem;flex-shrink:0">${
