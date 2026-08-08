@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Trades — Sixers Hoops</title>
+  <meta name="description" content="Browse, vote, and discuss fan-made NBA trades from the SixersHoops Trade Machine." />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/navbar-styles.css" />
+  <style>
+    :root {
+      --navy: #001a57;
+      --sixers-blue: #006BB6;
+      --sixers-red: #ED174C;
+      --cream: #ffffff;
+      --ink: #0d0f1a;
+      --mid: #64748b;
+      --border: #e4e8f0;
+      --bg2: #f8fafc;
+      --vote-up: #ea580c;
+      --vote-down: #2563eb;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Lexend', system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      padding-top: 64px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .page-hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 2rem;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin: 0;
+    }
+    .hero-title span { color: var(--sixers-blue); }
+    .hero-sub {
+      margin: 1rem auto 0;
+      max-width: 420px;
+      font-size: 0.95rem;
+      color: var(--mid);
+      line-height: 1.6;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-family: 'Lexend', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.7rem 1.35rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .btn-primary {
+      background: var(--sixers-blue);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0, 102, 204, 0.25);
+    }
+    .btn-primary:hover { background: #0057b0; transform: translateY(-1px); }
+    .btn-ghost {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+
+    .feed-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1.25rem 4rem;
+    }
+    .feed-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 0.25rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.3rem;
+    }
+    .filter-tab {
+      font-family: 'Lexend', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: transparent;
+      border: none;
+      padding: 0.45rem 0.85rem;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+    .filter-tab.active {
+      background: #fff;
+      color: var(--sixers-blue);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .trade-card {
+      display: flex;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 0.85rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+    }
+    .trade-card:hover {
+      border-color: #d2dbeb;
+      box-shadow: 0 8px 24px -12px rgba(0, 26, 87, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .vote-col {
+      width: 52px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 12px 4px;
+      background: transparent;
+    }
+    .vote-btn {
+      width: 30px; height: 30px;
+      border: none; background: transparent;
+      border-radius: 6px;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .vote-btn:hover { background: var(--bg2); color: var(--ink); }
+    .vote-btn.active-up { color: var(--vote-up) !important; background: rgba(234, 88, 12, 0.1); }
+    .vote-btn.active-down { color: var(--vote-down) !important; background: rgba(37, 99, 235, 0.1); }
+    .vote-count {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--mid);
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .card-body { flex: 1; min-width: 0; padding: 0.9rem 1rem 0.85rem; }
+    .card-meta {
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+      margin-bottom: 0.35rem;
+      font-size: 0.72rem; color: var(--mid);
+    }
+    .card-meta .author { font-weight: 700; color: #334155; }
+    .valid-pill, .invalid-pill {
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .valid-pill { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+    .invalid-pill { background: rgba(220, 38, 38, 0.1); color: #b91c1c; }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin: 0 0 0.4rem;
+      color: var(--ink);
+    }
+    .team-chips {
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+      margin-bottom: 0.5rem;
+    }
+    .team-chip {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em;
+      padding: 3px 9px; border-radius: 6px;
+      background: var(--bg2); border: 1px solid var(--border); color: #475569;
+    }
+    .card-excerpt {
+      font-size: 0.82rem; color: var(--mid); line-height: 1.5;
+      margin: 0 0 0.55rem;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .card-actions {
+      display: flex; gap: 0.25rem; flex-wrap: wrap;
+    }
+    .action-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-family: 'Lexend', sans-serif;
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--mid);
+      background: transparent; border: none;
+      padding: 0.35rem 0.55rem; border-radius: 6px;
+      cursor: pointer;
+    }
+    .action-btn:hover { background: var(--bg2); color: var(--ink); }
+
+    .empty-state {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      color: var(--mid);
+    }
+    .empty-state h2 { color: var(--ink); font-size: 1.2rem; margin: 0 0 0.5rem; }
+    .skel {
+      background: linear-gradient(90deg, #e4e8f0 25%, #f0f3f8 37%, #e4e8f0 63%);
+      background-size: 400% 100%;
+      animation: skel 1.4s ease infinite;
+      border-radius: 12px;
+      height: 110px;
+      margin-bottom: 0.85rem;
+    }
+    @keyframes skel { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+    @media (max-width: 520px) {
+      .page-hero { padding: 2.5rem 1.1rem 1.5rem; }
+      .feed-wrap { padding: 0 0.85rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-hero">
+    <h1 class="hero-title">Community <span>Trades</span></h1>
+    <p class="hero-sub">Fan-built deals from the Trade Machine. Upvote the ones you like, open any trade in the machine, or post your own.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/nba-trade-machine.html">Build a Trade</a>
+      <button type="button" class="btn btn-ghost" id="postTradeBtn">Post a Trade</button>
+    </div>
+  </header>
+
+  <main class="feed-wrap">
+    <div class="feed-toolbar">
+      <div class="filter-tabs" role="tablist">
+        <button type="button" class="filter-tab active" data-filter="hot">Hot</button>
+        <button type="button" class="filter-tab" data-filter="new">New</button>
+        <button type="button" class="filter-tab" data-filter="top">Top</button>
+      </div>
+    </div>
+    <div id="feedRoot">
+      <div class="skel"></div>
+      <div class="skel"></div>
+      <div class="skel"></div>
+    </div>
+  </main>
+
+  <script src="/nav.js"></script>
+  <script>
+(function () {
+  const COLLECTION = 'community_trades';
+  const MOD_EMAIL = 'rhatus13@gmail.com';
+  let trades = [];
+  let currentFilter = 'hot';
+  let unsub = null;
+
+  function waitForDb(cb, tries) {
+    tries = tries || 0;
+    if (window.db) { cb(); return; }
+    if (tries > 80) {
+      document.getElementById('feedRoot').innerHTML =
+        '<div class="empty-state"><h2>Could not connect</h2><p>Refresh and try again.</p></div>';
+      return;
+    }
+    setTimeout(function () { waitForDb(cb, tries + 1); }, 250);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function formatVotes(n) {
+    n = n || 0;
+    if (Math.abs(n) >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return '';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 60) return 'just now';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+    if (sec < 604800) return Math.floor(sec / 86400) + 'd ago';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function isMod() {
+    const u = window.auth && window.auth.currentUser;
+    return u && u.email && u.email.toLowerCase() === MOD_EMAIL.toLowerCase();
+  }
+
+  function triggerLogin() {
+    const btn = document.getElementById('navSignInBtn');
+    if (btn) btn.click();
+    else alert('Please sign in to vote or post.');
+  }
+
+  function sortTrades(list) {
+    const copy = list.slice();
+    if (currentFilter === 'new') {
+      copy.sort(function (a, b) {
+        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+        return tb - ta;
+      });
+    } else if (currentFilter === 'top') {
+      copy.sort(function (a, b) { return (b.votes || 0) - (a.votes || 0); });
+    } else {
+      // hot: votes with light recency boost
+      copy.sort(function (a, b) {
+        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+        const ageA = (Date.now() - ta) / 3600000;
+        const ageB = (Date.now() - tb) / 3600000;
+        const scoreA = (a.votes || 0) / Math.pow(ageA + 2, 1.3);
+        const scoreB = (b.votes || 0) / Math.pow(ageB + 2, 1.3);
+        return scoreB - scoreA;
+      });
+    }
+    return copy;
+  }
+
+  function machineUrl(trade) {
+    if (trade.machineHash) {
+      return '/nba-trade-machine.html#trade=' + encodeURIComponent(trade.machineHash);
+    }
+    return '/nba-trade-machine.html';
+  }
+
+  function detailUrl(trade) {
+    return '/trade.html?id=' + encodeURIComponent(trade.id);
+  }
+
+  function renderFeed() {
+    const root = document.getElementById('feedRoot');
+    const sorted = sortTrades(trades);
+    if (!sorted.length) {
+      root.innerHTML =
+        '<div class="empty-state">' +
+        '<h2>No trades yet</h2>' +
+        '<p>Be the first — build a deal in the Trade Machine and post it here.</p>' +
+        '<p style="margin-top:1.25rem;"><a class="btn btn-primary" href="/nba-trade-machine.html">Open Trade Machine</a></p>' +
+        '</div>';
+      return;
+    }
+
+    const user = window.auth && window.auth.currentUser;
+    root.innerHTML = sorted.map(function (t) {
+      const userVote = user && t.voters ? t.voters[user.uid] : null;
+      const teams = (t.teamAbbrs || []).map(function (a) {
+        return '<span class="team-chip">' + escapeHtml(a) + '</span>';
+      }).join('');
+      const pill = t.isValid
+        ? '<span class="valid-pill">Appears legal</span>'
+        : (t.isValid === false ? '<span class="invalid-pill">Invalid / restricted</span>' : '');
+      return (
+        '<article class="trade-card" data-id="' + escapeHtml(t.id) + '">' +
+          '<div class="vote-col">' +
+            '<button type="button" class="vote-btn vote-up' + (userVote === 'up' ? ' active-up' : '') + '" aria-label="Upvote">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>' +
+            '</button>' +
+            '<span class="vote-count">' + formatVotes(t.votes || 0) + '</span>' +
+            '<button type="button" class="vote-btn vote-down' + (userVote === 'down' ? ' active-down' : '') + '" aria-label="Downvote">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<div class="card-body">' +
+            '<div class="card-meta">' +
+              '<span class="author">' + escapeHtml(t.author || 'u/fan') + '</span>' +
+              '<span>·</span>' +
+              '<span>' + escapeHtml(timeAgo(t.createdAt)) + '</span>' +
+              (pill ? '<span>·</span>' + pill : '') +
+            '</div>' +
+            '<h2 class="card-title">' + escapeHtml(t.title || 'Untitled trade') + '</h2>' +
+            (teams ? '<div class="team-chips">' + teams + '</div>' : '') +
+            (t.summary ? '<p class="card-excerpt">' + escapeHtml(t.summary) + '</p>' : '') +
+            '<div class="card-actions">' +
+              '<button type="button" class="action-btn open-detail">View</button>' +
+              '<a class="action-btn" href="' + escapeHtml(machineUrl(t)) + '" onclick="event.stopPropagation()">Open in Machine</a>' +
+            '</div>' +
+          '</div>' +
+        '</article>'
+      );
+    }).join('');
+
+    root.querySelectorAll('.trade-card').forEach(function (card) {
+      const id = card.dataset.id;
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('.vote-up')) {
+          e.stopPropagation();
+          handleVote(id, 'up');
+          return;
+        }
+        if (e.target.closest('.vote-down')) {
+          e.stopPropagation();
+          handleVote(id, 'down');
+          return;
+        }
+        if (e.target.closest('a')) return;
+        window.location.href = detailUrl({ id: id });
+      });
+    });
+  }
+
+  async function handleVote(id, direction) {
+    const user = window.auth && window.auth.currentUser;
+    if (!user) { triggerLogin(); return; }
+    const t = trades.find(function (x) { return x.id === id; });
+    if (!t || !window.db) return;
+
+    const voters = Object.assign({}, t.voters || {});
+    let votes = t.votes || 0;
+    const current = voters[user.uid];
+
+    if (current === direction) {
+      votes += direction === 'up' ? -1 : 1;
+      delete voters[user.uid];
+    } else {
+      if (current === 'up') votes -= 1;
+      if (current === 'down') votes += 1;
+      votes += direction === 'up' ? 1 : -1;
+      voters[user.uid] = direction;
+    }
+
+    try {
+      await window.db.collection(COLLECTION).doc(id).update({ votes: votes, voters: voters });
+    } catch (err) {
+      console.error(err);
+      alert('Could not save vote. Try again.');
+    }
+  }
+
+  function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-tab').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.filter === f);
+    });
+    renderFeed();
+  }
+
+  document.querySelectorAll('.filter-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () { setFilter(btn.dataset.filter); });
+  });
+
+  document.getElementById('postTradeBtn').addEventListener('click', function () {
+    // Create post flow: send users to the machine; posting happens after Analyze
+    window.location.href = '/nba-trade-machine.html?post=1';
+  });
+
+  function subscribe() {
+    if (!window.db) return;
+    if (unsub) unsub();
+    unsub = window.db.collection(COLLECTION)
+      .orderBy('createdAt', 'desc')
+      .limit(80)
+      .onSnapshot(function (snap) {
+        trades = snap.docs.map(function (doc) {
+          const d = doc.data();
+          d.id = doc.id;
+          return d;
+        });
+        renderFeed();
+      }, function (err) {
+        console.error(err);
+        document.getElementById('feedRoot').innerHTML =
+          '<div class="empty-state"><h2>Could not load trades</h2><p>' + escapeHtml(err.message) + '</p></div>';
+      });
+  }
+
+  waitForDb(subscribe);
+})();
+  </script>
+</body>
+</html>
