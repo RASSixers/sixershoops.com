@@ -571,6 +571,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
+    async function syncUsernameSlug(user) {
+        if (!user || !window.db) return;
+        try {
+            const doc = await window.db.collection('users').doc(user.uid).get();
+            if (doc.exists) {
+                const d = doc.data() || {};
+                const lower = (d.usernameLower || d.username || '').toString().toLowerCase().trim();
+                if (lower) {
+                    localStorage.setItem('usernameLower', lower.replace(/[^a-z0-9_-]+/g, '-'));
+                    // If nav already rendered with wrong slug, update link targets by re-render
+                    if (window.auth && window.auth.currentUser) {
+                        // only re-render if slug changed from what is in DOM profile hrefs
+                    }
+                }
+            }
+        } catch (e) {}
+    }
+
     function renderUserNav(user) {
         const authNav = document.getElementById('authNavContainer');
         const mobileAuth = document.getElementById('mobileAuthContainer');
@@ -581,8 +600,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const photoURL = user.photoURL || localStorage.getItem('photoURL') || '';
             const avatarColor = localStorage.getItem('avatarColor') || '#001a57';
-            const usernameSlug = localStorage.getItem('usernameLower') || (displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
-            const profileUrl = `/user/${encodeURIComponent(usernameSlug)}`;
+            // Always clean path: /user/{name} with no query string
+            let usernameSlug = (localStorage.getItem('usernameLower') || '').trim().toLowerCase();
+            if (!usernameSlug) {
+                usernameSlug = (displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'user';
+            }
+            const profileUrl = '/user/' + encodeURIComponent(usernameSlug);
 
             const avatarInner = photoURL
                 ? `<img src="${photoURL}" alt="${displayName}" class="user-avatar-img">`
@@ -662,18 +685,57 @@ document.addEventListener('DOMContentLoaded', function() {
                     userDropdown.classList.toggle('active');
                 };
             }
-            if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
-            if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
-            if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
+            // Clean URLs only — never append ?uid=
+            // Profile      -> /user/{name}
+            // Inbox        -> /user/{name}/inbox
+            // Notifications-> /user/{name}/notifications
+            // Settings     -> /user/{name}/settings
+            if (myProfileLink) myProfileLink.onclick = function(e) {
+                e.preventDefault();
+                window.location.href = profileUrl;
+            };
+            if (inboxLink) inboxLink.onclick = function(e) {
+                e.preventDefault();
+                window.location.href = profileUrl + '/inbox';
+            };
+            if (notifsLink) notifsLink.onclick = function(e) {
+                e.preventDefault();
+                window.location.href = profileUrl + '/notifications';
+            };
             const modLink = document.getElementById('navModerationLink');
-            if (modLink)           modLink.onclick           = () => { window.location.href = '/moderation.html'; };
-            if (smallLogoutBtn)    smallLogoutBtn.onclick    = (e) => { e.stopPropagation(); window.auth.signOut(); };
-            if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = (e) => { e.stopPropagation(); window.auth.signOut(); };
-            // Account Settings now lives on the profile page (/user/<name>/settings)
-            if (editProfileBtn)    editProfileBtn.onclick    = () => { window.location.href = profileUrl + '/settings'; };
-            if (mobileEditBtn)     mobileEditBtn.onclick     = () => { window.location.href = profileUrl + '/settings'; };
+            if (modLink) modLink.onclick = function(e) {
+                e.preventDefault();
+                window.location.href = '/moderation.html';
+            };
+            if (smallLogoutBtn) smallLogoutBtn.onclick = function(e) { e.stopPropagation(); window.auth.signOut(); };
+            if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = function(e) { e.stopPropagation(); window.auth.signOut(); };
+            if (editProfileBtn) editProfileBtn.onclick = function(e) {
+                e.preventDefault();
+                window.location.href = profileUrl + '/settings';
+            };
+            if (mobileEditBtn) mobileEditBtn.onclick = function(e) {
+                e.preventDefault();
+                window.location.href = profileUrl + '/settings';
+            };
             if (mobileLogout)      mobileLogout.onclick      = () => window.auth.signOut();
             listenNotifications(user);
+            syncUsernameSlug(user).then(function(){
+                const newSlug = (localStorage.getItem('usernameLower') || '').trim();
+                if (newSlug) {
+                    const expected = '/user/' + encodeURIComponent(newSlug);
+                    // Re-bind if slug improved after Firestore load
+                    const mp = document.getElementById('navMyProfileLink');
+                    const ib = document.getElementById('navInboxLink');
+                    const nt = document.getElementById('navNotifsLink');
+                    const st = document.getElementById('navSettingsBtn');
+                    if (mp) mp.onclick = function(e){ e.preventDefault(); window.location.href = expected; };
+                    if (ib) ib.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/inbox'; };
+                    if (nt) nt.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/notifications'; };
+                    if (st) st.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/settings'; };
+                    const mst = document.getElementById('mobileProfileBtn');
+                    if (mst) { mst.setAttribute('href', expected + '/settings'); mst.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/settings'; }; }
+                }
+            });
 
         } else {
             if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
