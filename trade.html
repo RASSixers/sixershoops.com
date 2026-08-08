@@ -263,7 +263,38 @@
     .img-preview-wrap .img-prev-item{position:relative;display:inline-block;}
     .img-preview-wrap img{max-width:140px;max-height:140px;border-radius:10px;object-fit:cover;border:1px solid #e2e8f0;display:block;}
     .img-prev-remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(15,23,42,.75);color:#fff;font-size:14px;line-height:22px;cursor:pointer;}
-    </style>
+    
+    .tw-repost-label{
+      display:flex;align-items:center;gap:0.4rem;
+      font-size:0.8rem;font-weight:700;color:#657786;
+      margin:0 0 0.65rem 0.15rem;
+    }
+    .tw-repost-label svg{flex-shrink:0;color:#657786;}
+    .tw-quote-card{
+      display:block;margin-top:0.75rem;border:1px solid #cfd9de;border-radius:16px;
+      padding:0.85rem 1rem;text-decoration:none;color:inherit;background:transparent;
+      transition:background .15s;
+    }
+    .tw-quote-card:hover{background:rgba(0,0,0,0.03);}
+    .tw-quote-head{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;}
+    .tw-quote-avatar{
+      width:20px;height:20px;border-radius:50%;background:#001a57;color:#fff;
+      font-size:0.65rem;font-weight:800;display:flex;align-items:center;justify-content:center;
+      overflow:hidden;flex-shrink:0;
+    }
+    .tw-quote-avatar img{width:100%;height:100%;object-fit:cover;}
+    .tw-quote-name{font-weight:800;font-size:0.88rem;color:var(--ink,#0f172a);}
+    .tw-quote-handle{font-size:0.82rem;color:#657786;font-weight:500;}
+    .tw-quote-title{font-weight:700;font-size:0.95rem;margin:0.25rem 0 0.2rem;line-height:1.3;}
+    .tw-quote-body{font-size:0.9rem;color:#0f172a;line-height:1.4;margin:0;}
+    .tw-quote-media{margin-top:0.55rem;border-radius:12px;overflow:hidden;border:1px solid #cfd9de;}
+    .tw-quote-media img{width:100%;max-height:280px;object-fit:cover;display:block;}
+    .tw-plain-repost-wrap .title-center{display:none;}
+    .tw-embedded-original{
+      border:1px solid #cfd9de;border-radius:16px;padding:1rem 1.1rem;margin-top:0.25rem;
+    }
+
+</style>
 </head>
 <body>
   <main><div class="wrap" id="root"><a href="/trades.html" class="back">&larr; BACK TO COMMUNITY TRADES</a><p class="state">Loading...</p></div></main>
@@ -957,40 +988,53 @@
     let html='<a href="/trades.html" class="back">&larr; BACK TO COMMUNITY TRADES</a>';
     html+='<div class="post-header">';
     html+='<div class="post-header-top">';
-    var isRepostType = (t.postType==='repost'||t.postType==='quote_repost'||t.type==='repost'||t.type==='quote_repost') && t.quotedPostId;
-    if(isRepostType){
+    var isPlainRepost = (t.postType==='repost'||t.type==='repost') && t.quotedPostId && !(t.notes||'').trim();
+    var isQuoteRepost = (t.postType==='quote_repost'||t.type==='quote_repost') && t.quotedPostId;
+    if(isPlainRepost || isQuoteRepost){
       const meUser = window.auth&&window.auth.currentUser;
       const isYou = meUser && t.authorId === meUser.uid;
-      const label = (t.postType==='quote_repost'||t.type==='quote_repost')
-        ? ((isYou?'You':'') + (isYou?'':'') )
-        : '';
-      const who = isYou ? 'You' : esc(author);
-      const verb = (t.postType==='quote_repost'||t.type==='quote_repost') ? 'quote reposted' : 'reposted';
-      const orig = esc((t.quotedAuthor||'someone').replace(/^u\//,''));
-      html+='<div class="repost-banner" style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:600;color:#64748b;margin:0 0 0.65rem 0;padding:0 0.15rem;">';
-      html+='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
-      html+='<span>'+who+' '+verb+' '+orig+'\'s trade</span></div>';
+      const who = isYou ? 'You' : String(author||'').replace(/^u\//,'');
+      const verb = isQuoteRepost ? 'quote reposted' : 'reposted';
+      html+='<div class="tw-repost-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>'+esc(who)+' '+verb+'</span></div>';
     }
     html+='<div class="meta-left"><div class="meta-line"><a class="author-link" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">'+esc(author)+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' <span class="edited">· edited '+esc(timeAgo(t.editedAt))+'</span>':'')+'</div></div>';
-    html+='<div class="title-center"><h1 class="title">'+esc(t.title||'Untitled')+'</h1></div>';
-    if(t.image){html+='<div class="post-images" style="margin:0.75rem 0;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;border-radius:12px;"></div>';}
-    // Plain repost: show banner and focus on original (link to original)
-    if((t.postType==='repost'||t.type==='repost') && t.quotedPostId && !t.notes){
-      /* title already set; banner added above in header */
+    // Title: skip for plain reposts (original shown below); show for quotes & normal posts
+    if(!isPlainRepost){
+      html+='<div class="title-center"><h1 class="title">'+esc(t.title||'Untitled')+'</h1></div>';
     }
-    if(t.quotedPostId){
-      const qUrl='/trade.html?id='+encodeURIComponent(t.quotedPostId);
-      const isPlainRepost = (t.postType==='repost'||t.type==='repost') && !(t.notes||'').trim();
-      if(isPlainRepost){
-        // Whole card style: primary content is the original
-        html+='<a class="quote-box quote-box-full" href="'+esc(qUrl)+'" style="display:block;color:inherit;text-decoration:none;border:1px solid var(--border);border-radius:12px;padding:1rem;margin:0.75rem 0;">';
-        html+='<div class="q-author" style="font-weight:700;margin-bottom:0.35rem;">'+esc(t.quotedAuthor||'Original')+'</div>';
-        html+='<div style="font-weight:700;font-size:1.05rem;margin-bottom:0.35rem;">'+esc(t.quotedTitle||'View original trade')+'</div>';
-        html+='<div style="font-size:0.82rem;color:var(--mid);">View original post →</div></a>';
-      } else {
-        html+='<div class="quote-box"><div class="q-author">'+esc(t.quotedAuthor||'Original post')+'</div>';
-        html+='<a href="'+esc(qUrl)+'" style="color:inherit;text-decoration:none;font-weight:600;">'+esc(t.quotedTitle||'View original')+'</a>';
-        if(t.notes) html+='</div>'; else html+='</div>';
+    // Build body: Twitter-style for plain repost vs quote vs normal
+    var qUrl = t.quotedPostId ? ('/trade.html?id='+encodeURIComponent(t.quotedPostId)) : '';
+    var qAuthor = String(t.quotedAuthor||'Original').replace(/^u\//,'');
+    var qTitle = t.quotedTitle || 'Original post';
+    var qInitial = (qAuthor||'U').charAt(0).toUpperCase();
+
+    if(isPlainRepost && t.quotedPostId){
+      // Plain repost: show original as the main content card
+      html+='<a class="tw-embedded-original" href="'+esc(qUrl)+'" style="display:block;color:inherit;text-decoration:none;">';
+      html+='<div class="tw-quote-head"><div class="tw-quote-avatar">'+esc(qInitial)+'</div>';
+      html+='<span class="tw-quote-name">'+esc(qAuthor)+'</span></div>';
+      html+='<div class="tw-quote-title">'+esc(qTitle)+'</div>';
+      if(t.quotedSummary||t.quotedNotes) html+='<p class="tw-quote-body">'+esc(t.quotedSummary||t.quotedNotes)+'</p>';
+      html+='<div style="font-size:0.82rem;color:#1d9bf0;margin-top:0.5rem;font-weight:600;">View original →</div>';
+      html+='</a>';
+    } else {
+      // Normal or quote: show title + image for THIS post
+      if(t.image){html+='<div class="post-images" style="margin:0.75rem 0;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;border-radius:12px;"></div>';}
+      // Quote embed under the quote text (title/notes already above or as title)
+      if(isQuoteRepost && t.quotedPostId){
+        html+='<a class="tw-quote-card" href="'+esc(qUrl)+'">';
+        html+='<div class="tw-quote-head"><div class="tw-quote-avatar">'+esc(qInitial)+'</div>';
+        html+='<span class="tw-quote-name">'+esc(qAuthor)+'</span>';
+        html+='<span class="tw-quote-handle">@'+esc(qAuthor.replace(/\\s+/g,''))+'</span></div>';
+        html+='<div class="tw-quote-title">'+esc(qTitle)+'</div>';
+        if(t.quotedSummary||t.quotedNotes) html+='<p class="tw-quote-body">'+esc((t.quotedSummary||t.quotedNotes||'').slice(0,280))+'</p>';
+        html+='</a>';
+      } else if(t.quotedPostId){
+        html+='<a class="tw-quote-card" href="'+esc(qUrl)+'">';
+        html+='<div class="tw-quote-head"><div class="tw-quote-avatar">'+esc(qInitial)+'</div>';
+        html+='<span class="tw-quote-name">'+esc(qAuthor)+'</span></div>';
+        html+='<div class="tw-quote-title">'+esc(qTitle)+'</div>';
+        html+='</a>';
       }
     }
     const me=window.auth&&window.auth.currentUser;
@@ -1056,6 +1100,8 @@
         quotedAuthor: t.author || '',
         quotedAuthorId: t.authorId || '',
         quotedTitle: t.title || '',
+        quotedSummary: (t.notes || t.summary || '').slice(0, 400),
+        quotedNotes: (t.notes || t.summary || '').slice(0, 400),
         votes: 1,
         voters: voters,
         comments: [],
