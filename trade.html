@@ -288,7 +288,7 @@
     .tw-quote-title{font-weight:700;font-size:0.95rem;margin:0.25rem 0 0.2rem;line-height:1.3;}
     .tw-quote-body{font-size:0.9rem;color:#0f172a;line-height:1.4;margin:0;}
     .tw-quote-media{margin-top:0.55rem;border-radius:12px;overflow:hidden;border:1px solid #cfd9de;}
-    .tw-quote-media img{width:100%;max-height:280px;object-fit:cover;display:block;}
+    .tw-quote-media img{width:100%;max-height:none;width:100%;height:auto;object-fit:contain;display:block;}
     .tw-plain-repost-wrap .title-center{display:none;}
     .tw-embedded-original{
       border:1px solid #cfd9de;border-radius:16px;padding:1rem 1.1rem;margin-top:0.25rem;
@@ -297,7 +297,7 @@
 </style>
 </head>
 <body>
-  <main><div class="wrap" id="root"><a href="/trades.html" class="back">&larr; BACK TO COMMUNITY TRADES</a><p class="state">Loading...</p></div></main>
+  <main><div class="wrap" id="root"><p class="state">Loading...</p></div></main>
 
   <div class="overlay" id="editModal"><div class="mbox" onclick="event.stopPropagation()">
     <div class="mhead"><h3>EDIT POST</h3><button type="button" class="dots-btn" id="closeEditX">&times;</button></div>
@@ -405,7 +405,7 @@
     ov.classList.add('open');
   }
 
-  function openQuoteModal(tradeObj){
+  window.openQuoteModal = function openQuoteModal(tradeObj){
     var ov=document.getElementById('quoteModalOverlay');
     if(!ov){
       ov=document.createElement('div');
@@ -422,7 +422,7 @@
     document.getElementById('quoteModalPost').onclick=function(){
       var text=document.getElementById('quoteModalText').value.trim();
       ov.classList.remove('open');
-      createRepost(true, text);
+      window.createRepost(true, text);
     };
     ov.classList.add('open');
     setTimeout(function(){document.getElementById('quoteModalText').focus();},50);
@@ -488,7 +488,7 @@
   function isMod(){const u=window.auth&&window.auth.currentUser;return u&&u.email&&u.email.toLowerCase()===MOD_EMAIL.toLowerCase();}
   function postType(t){return t.postType||t.type||(t.sides?'trade':'discussion');}
   function machineUrl(t){return t.machineHash?'/nba-trade-machine.html#trade='+encodeURIComponent(t.machineHash):'/nba-trade-machine.html';}
-  function renderError(msg){document.getElementById('root').innerHTML='<a href="/trades.html" class="back">&larr; BACK TO COMMUNITY TRADES</a><div class="state"><h2>'+esc(msg)+'</h2></div>';}
+  function renderError(msg){document.getElementById('root').innerHTML='<div class="state"><h2>'+esc(msg)+'</h2></div>';}
   function uid(){return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 
   function getBookmarks(){try{return JSON.parse(localStorage.getItem(BOOK_KEY)||'[]');}catch(e){return[];}}
@@ -976,8 +976,10 @@
     trade=t;document.title=(t.title||'Post')+' - Sixers Hoops';
     const user=window.auth&&window.auth.currentUser;
     const userVote=user&&t.voters?t.voters[user.uid]:null;
-    const canManage=user&&(t.authorId===user.uid||isMod());
     const ty=postType(t);
+    const isTradePost=(ty==='trade')||!!(t.sides&&t.sides.length)||!!t.machineHash;
+    const canManage=user&&(t.authorId===user.uid||isMod())&&!isTradePost;
+    const canDelete=user&&(t.authorId===user.uid||isMod());
     const tagClass=ty==='poll'?'poll':(ty==='discussion'?'discussion':'');
     const tagLabel=ty==='poll'?'POLL':(ty==='discussion'?'DISCUSSION':'TRADE');
     const commentCount=normalizeComments(t.comments).length;
@@ -985,7 +987,7 @@
     const author=t.author||'u/fan';
     const initial=(author.replace(/^u\//,'')||'F').charAt(0).toUpperCase();
 
-    let html='<a href="/trades.html" class="back">&larr; BACK TO COMMUNITY TRADES</a>';
+    let html='';
     html+='<div class="post-header">';
     html+='<div class="post-header-top">';
     var isPlainRepost = (t.postType==='repost'||t.type==='repost') && t.quotedPostId && !(t.notes||'').trim();
@@ -997,11 +999,16 @@
       const verb = isQuoteRepost ? 'quote reposted' : 'reposted';
       html+='<div class="tw-repost-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>'+esc(who)+' '+verb+'</span></div>';
     }
-    html+='<div class="meta-left"><div class="meta-line"><a class="author-link" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">'+esc(author)+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' <span class="edited">· edited '+esc(timeAgo(t.editedAt))+'</span>':'')+'</div></div>';
-    // Title: skip for plain reposts (original shown below); show for quotes & normal posts
+    // Title first, then author · time (Twitter/trade style)
     if(!isPlainRepost){
-      html+='<div class="title-center"><h1 class="title">'+esc(t.title||'Untitled')+'</h1></div>';
+      html+='<div class="title-center" style="text-align:left;margin:0 0 .35rem 0;"><h1 class="title" style="margin:0;font-size:1.35rem;">'+esc(t.title||'Untitled')+'</h1></div>';
     }
+    html+='<div class="meta-left"><div class="meta-line" style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;">';
+    html+='<a class="author-link" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">'+esc(author.startsWith('u/')?author:'u/'+author)+'</a>';
+    html+='<span style="opacity:.45;">·</span>';
+    html+='<span>'+esc(timeAgo(t.createdAt))+'</span>';
+    if(t.editedAt&&!isTradePost) html+='<span class="edited">· edited '+esc(timeAgo(t.editedAt))+'</span>';
+    html+='</div></div>';
     // Build body: Twitter-style for plain repost vs quote vs normal
     var qUrl = t.quotedPostId ? ('/trade.html?id='+encodeURIComponent(t.quotedPostId)) : '';
     var qAuthor = String(t.quotedAuthor||'Original').replace(/^u\//,'');
@@ -1019,7 +1026,7 @@
       html+='</a>';
     } else {
       // Normal or quote: show title + image for THIS post
-      if(t.image){html+='<div class="post-images" style="margin:0.75rem 0;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;border-radius:12px;"></div>';}
+      if(t.image){html+='<div class="post-images" style="margin:0.75rem 0;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;height:auto;border-radius:12px;display:block;"></div>';}
       // Quote embed under the quote text (title/notes already above or as title)
       if(isQuoteRepost && t.quotedPostId){
         html+='<a class="tw-quote-card" href="'+esc(qUrl)+'">';
@@ -1045,7 +1052,7 @@
     html+='<div class="dots-menu" id="postMenu">';
     if(canManage)html+='<button type="button" id="editPostBtn">Edit post</button>';
     html+='<button type="button" id="reportPostBtn">Report</button>';
-    if(canManage)html+='<button type="button" class="danger" id="deleteTradeBtn">Delete</button>';
+    if(canDelete||canManage)html+='<button type="button" class="danger" id="deleteTradeBtn">Delete</button>';
     html+='</div></div></div></div>';
     html+='</div>';
 
@@ -1064,9 +1071,6 @@
     html+='<button type="button" id="menuRepostOnly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> <span id="menuRepostText">Repost</span></button>';
     html+='<button type="button" id="menuQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
     html+='</div></div>';
-    if(ty==='trade'&&t.machineHash){
-      html+='<a class="e-pill" href="'+esc(machineUrl(t))+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg> Open in Machine</a>';
-    }
     html+='<button type="button" class="e-pill" id="btnShare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>';
     html+='</div>';
 
@@ -1078,7 +1082,7 @@
     document.getElementById('btnDown').onclick=function(){handleVote('down');};
     document.getElementById('btnComment').onclick=function(){const el=document.getElementById('comments');if(el)el.scrollIntoView({behavior:'smooth'});const input=document.getElementById('commentInput');if(input)input.focus();};
     document.getElementById('btnBookmark').onclick=function(){const on=toggleBookmark(t.id);this.classList.toggle('booked',on);this.querySelector('svg').setAttribute('fill',on?'currentColor':'none');};
-    async function createRepost(isQuote, quoteText){
+    window.createRepost = async function createRepost(isQuote, quoteText){
       const user=window.auth&&window.auth.currentUser;
       if(!user){triggerLogin();return;}
       if(!window.db||!t)return;
@@ -1189,7 +1193,7 @@ setTimeout(function(){try{hydrateCommentPhotos();}catch(e){} if(location.hash&&l
         if(repostMenu) repostMenu.classList.toggle('open');
       };
     }
-    document.addEventListener('click', function(){ if(repostMenu) repostMenu.classList.remove('open'); });
+    document.addEventListener('click', function(ev){ if(repostMenu && !ev.target.closest('.repost-menu-wrap')) repostMenu.classList.remove('open'); });
     var menuRepost=document.getElementById('menuRepostOnly');
     if(menuRepost) menuRepost.onclick=async function(e){
       e.stopPropagation();
