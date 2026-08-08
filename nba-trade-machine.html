@@ -4345,8 +4345,8 @@
             var ref = await window.db.collection('community_trades').add(doc);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
             closePostTradeModal();
-            var _slug = String(title || 'trade').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'trade';
-            window.location.href = '/trade/' + encodeURIComponent(ref.id) + '/' + encodeURIComponent(_slug);
+            var go = '/trade.html?id=' + encodeURIComponent(ref.id);
+            try { window.location.assign(go); } catch (eNav) { window.location.href = go; }
         } catch (err) {
             console.error('confirmPostTrade error', err);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
