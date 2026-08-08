@@ -975,7 +975,7 @@
 
             const cardsHTML = items.map(item => {
                 if (currentTab === 'comments') {
-                    const postUrl = item.postUrl || (item.postId ? `/post/${item.postId}` : '#');
+                    const postUrl = item.postUrl || (item.postId ? (`/trade.html?id=` + encodeURIComponent(item.postId)) : '#');
                     return `
                     <div class="feed-card is-comment">
                         <div class="post-context">Commented on ${item.postTitle ? `<a href="${esc(postUrl)}">${esc(item.postTitle)}</a>` : 'a post'}</div>
@@ -994,7 +994,7 @@
                         </div>
                     </div>`;
                 }
-                const postUrl = item.url || item.link || (item.postId ? `/post/${item.postId}` : '#');
+                const postUrl = item.url || item.link || (item.postId ? `/trade.html?id=${encodeURIComponent(item.postId)}` : '#');
                 return `
                 <div class="feed-card">
                     <div class="feed-card-header">
@@ -1017,6 +1017,18 @@
                     </div>
                 </div>`;
             }).join('');
+            // Make cards navigate on click
+            setTimeout(function(){
+              document.querySelectorAll('.feed-card').forEach(function(card){
+                var a = card.querySelector('a.view-post');
+                if(!a) return;
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', function(e){
+                  if(e.target.closest('a,button')) return;
+                  location.href = a.getAttribute('href');
+                });
+              });
+            }, 0);
 
             container.innerHTML = sortBar + `<div class="feed-list">${cardsHTML}</div>`;
             attachSort();
@@ -1418,6 +1430,8 @@
 
             if (currentSubPage === 'inbox') {
                 renderInbox(myUid);
+            } else if (currentSubPage === 'bookmarks') {
+                renderBookmarks(myUid);
             } else if (currentSubPage === 'notifications') {
                 renderNotifications(myUid);
             } else if (currentSubPage === 'settings') {
@@ -1476,32 +1490,152 @@
 
         waitForDB(async (db) => {
             let myUid = null;
-            try { myUid = window.auth?.currentUser?.uid || firebase.auth().currentUser?.uid || null; } catch(_) {}
+            try {
+                await new Promise(function(resolve) {
+                    var done = false;
+                    var finish = function(u) {
+                        if (done) return; done = true;
+                        myUid = u && u.uid ? u.uid : null;
+                        resolve();
+                    };
+                    try {
+                        if (window.auth && window.auth.currentUser) return finish(window.auth.currentUser);
+                        if (firebase.auth().currentUser) return finish(firebase.auth().currentUser);
+                        var unsub = firebase.auth().onAuthStateChanged(function(u) {
+                            try { unsub(); } catch(_) {}
+                            finish(u);
+                        });
+                        setTimeout(function(){ finish(firebase.auth().currentUser); }, 2500);
+                    } catch(_) { finish(null); }
+                });
+            } catch(_) {}
 
             try {
                 let ud = null;
-                // Look up by usernameLower
-                const userSnap = await db.collection('users').where('usernameLower','==',slug.toLowerCase()).limit(1).get();
-                if (!userSnap.empty) {
-                    ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
-                } else {
-                    showNotFound(); return;
+                const slugLower = (slug || '').toLowerCase();
+                try {
+                    const userSnap = await db.collection('users').where('usernameLower','==',slugLower).limit(1).get();
+                    if (!userSnap.empty) ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
+                } catch(_) {}
+                if (!ud) {
+                    try {
+                        const userSnap = await db.collection('users').where('username','==',slug).limit(1).get();
+                        if (!userSnap.empty) ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
+                    } catch(_) {}
                 }
+                if (!ud) {
+                    try {
+                        const byId = await db.collection('users').doc(slug).get();
+                        if (byId.exists) ud = { _uid: byId.id, ...byId.data() };
+                    } catch(_) {}
+                }
+                if (!ud) {
+                    try {
+                        const all = await db.collection('users').limit(200).get();
+                        const hit = all.docs.find(d => {
+                            const x = d.data() || {};
+                            const a = String(x.usernameLower || '').toLowerCase();
+                            const b = String(x.username || '').toLowerCase();
+                            return a === slugLower || b === slugLower;
+                        });
+                        if (hit) ud = { _uid: hit.id, ...hit.data() };
+                    } catch(_) {}
+                }
+                if (!ud) { showNotFound(); return; }
 
                 let posts = [], comments = [];
+                // All community content lives in community_trades (comments embedded)
                 try {
-                    const ps = await db.collection('posts').where('authorId','==',ud._uid).orderBy('createdAt','desc').limit(50).get();
-                    posts = ps.docs.map(d => ({ postId: d.id, ...d.data() }));
-                } catch(_) {
-                    try { const ps = await db.collection('posts').where('authorId','==',ud._uid).limit(50).get();
-                        posts = ps.docs.map(d => ({ postId: d.id, ...d.data() })); } catch(__) {}
-                }
+                    let ps;
+                    try {
+                        ps = await db.collection('community_trades').where('authorId','==',ud._uid).orderBy('createdAt','desc').limit(60).get();
+                    } catch(_) {
+                        ps = await db.collection('community_trades').where('authorId','==',ud._uid).limit(60).get();
+                    }
+                    posts = ps.docs.map(d => {
+                        const data = d.data() || {};
+                        return {
+                            postId: d.id,
+                            id: d.id,
+                            title: data.title || 'Untitled',
+                            body: data.notes || data.summary || data.body || '',
+                            notes: data.notes || '',
+                            summary: data.summary || '',
+                            upvotes: data.votes || data.upvotes || 0,
+                            voteCount: data.votes || 0,
+                            createdAt: data.createdAt || null,
+                            postType: data.postType || data.type || 'discussion',
+                            image: data.image || '',
+                            quotedPostId: data.quotedPostId || null,
+                            quotedTitle: data.quotedTitle || '',
+                            quotedAuthor: data.quotedAuthor || ''
+                        };
+                    });
+                    // Extract this user's comments from posts they authored + scan recent trades
+                    posts.forEach(p => {
+                        const raw = (ps.docs.find(d => d.id === p.postId) || {}).data
+                            ? (ps.docs.find(d => d.id === p.postId).data().comments || [])
+                            : [];
+                        // comments pulled below from full scan
+                    });
+                } catch(err) { console.warn('posts load', err); }
+
+                // Comments: scan community_trades for embedded comments by this user
                 try {
-                    const cs = await db.collection('comments').where('authorId','==',ud._uid).orderBy('createdAt','desc').limit(50).get();
-                    comments = cs.docs.map(d => ({ commentId: d.id, ...d.data() }));
-                } catch(_) {
-                    try { const cs = await db.collection('comments').where('authorId','==',ud._uid).limit(50).get();
-                        comments = cs.docs.map(d => ({ commentId: d.id, ...d.data() })); } catch(__) {}
+                    let scan;
+                    try {
+                        scan = await db.collection('community_trades').orderBy('createdAt','desc').limit(120).get();
+                    } catch(_) {
+                        scan = await db.collection('community_trades').limit(120).get();
+                    }
+                    scan.docs.forEach(doc => {
+                        const data = doc.data() || {};
+                        const list = Array.isArray(data.comments) ? data.comments : [];
+                        list.forEach(c => {
+                            if (c && c.authorId === ud._uid) {
+                                comments.push({
+                                    commentId: c.id || (doc.id + '_' + (c.createdAt || '')),
+                                    text: c.text || c.body || '',
+                                    createdAt: c.createdAt || null,
+                                    postId: doc.id,
+                                    postTitle: data.title || 'Post',
+                                    postUrl: '/trade.html?id=' + encodeURIComponent(doc.id)
+                                });
+                            }
+                        });
+                    });
+                    comments.sort((a,b) => {
+                        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                        return tb - ta;
+                    });
+                } catch(err) { console.warn('comments load', err); }
+
+                // Also re-load posts if first query failed empty - include from scan by author
+                if (!posts.length) {
+                    try {
+                        let scan2;
+                        try { scan2 = await db.collection('community_trades').orderBy('createdAt','desc').limit(120).get(); }
+                        catch(_) { scan2 = await db.collection('community_trades').limit(120).get(); }
+                        posts = scan2.docs.filter(d => (d.data()||{}).authorId === ud._uid).map(d => {
+                            const data = d.data() || {};
+                            return {
+                                postId: d.id, id: d.id,
+                                title: data.title || 'Untitled',
+                                body: data.notes || data.summary || '',
+                                notes: data.notes || '',
+                                summary: data.summary || '',
+                                upvotes: data.votes || 0,
+                                voteCount: data.votes || 0,
+                                createdAt: data.createdAt || null,
+                                postType: data.postType || data.type || 'discussion',
+                                image: data.image || '',
+                                quotedPostId: data.quotedPostId || null,
+                                quotedTitle: data.quotedTitle || '',
+                                quotedAuthor: data.quotedAuthor || ''
+                            };
+                        });
+                    } catch(_) {}
                 }
 
                 renderPage(ud, posts, comments, myUid);
