@@ -513,6 +513,71 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
+    // --- Community reply notifications badge ---
+    let _notifUnsub = null;
+    function updateNotifBadge(count) {
+        const n = Math.max(0, Number(count) || 0);
+        const targets = [
+            document.getElementById('navNotifsLink'),
+            document.querySelector('[id="navNotifsLink"]')
+        ].filter(Boolean);
+        targets.forEach(function(el) {
+            let badge = el.querySelector('.nav-notif-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'nav-notif-badge';
+                badge.style.cssText = 'display:none;margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;vertical-align:middle;';
+                el.appendChild(badge);
+            }
+            if (n > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = n > 99 ? '99+' : String(n);
+            } else {
+                badge.style.display = 'none';
+                badge.textContent = '';
+            }
+        });
+        // Also badge near profile button if present
+        const btn = document.getElementById('userProfileBtn');
+        if (btn) {
+            let badge = document.getElementById('navNotifBadgeTop');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.id = 'navNotifBadgeTop';
+                badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;display:none;';
+                btn.style.position = 'relative';
+                btn.appendChild(badge);
+            }
+            if (n > 0) {
+                badge.style.display = 'block';
+                badge.textContent = n > 99 ? '99+' : String(n);
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    }
+    function listenNotifications(user) {
+        if (_notifUnsub) { try { _notifUnsub(); } catch (e) {} _notifUnsub = null; }
+        if (!user || !window.db) { updateNotifBadge(0); return; }
+        try {
+            _notifUnsub = window.db.collection('notifications')
+                .where('recipientId', '==', user.uid)
+                .onSnapshot(function(snap) {
+                    var unread = 0;
+                    snap.forEach(function(doc) {
+                        var d = doc.data() || {};
+                        if (d.read === false || d.read === undefined) unread++;
+                    });
+                    updateNotifBadge(unread);
+                }, function(err) {
+                    console.warn('notifications listen', err);
+                });
+        } catch (e) {
+            console.warn(e);
+        }
+    }
+
     function renderUserNav(user) {
         const authNav = document.getElementById('authNavContainer');
         const mobileAuth = document.getElementById('mobileAuthContainer');
@@ -545,8 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="user-dropdown-divider"></div>
 
-                        <button class="user-dropdown-item" id="navMyProfileLink">My Profile</button>
-                        <button class="user-dropdown-item" id="navCommunityProfileLink">Community Profile</button>
+                        <button class="user-dropdown-item" id="navMyProfileLink">Profile</button>
 
                         <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
@@ -580,8 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
-                        <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
-                        <a class="auth-nav-btn" href="/user/${encodeURIComponent(usernameSlug)}?uid=${encodeURIComponent(user.uid)}" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Community Profile</a>
+                        <a class="auth-nav-btn" href="${profileUrl}?uid=${encodeURIComponent(user.uid)}" style="width:100%;text-align:center;text-decoration:none;display:block;">Profile</a>
                         <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
                         ${user.email && user.email.toLowerCase() === 'rhatus13@gmail.com' ? `<a class="auth-nav-btn" href="/moderation.html" style="width:100%;text-align:center;text-decoration:none;display:block;background:#001a57;color:#fff;">Moderation</a>` : ''}
@@ -606,13 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     userDropdown.classList.toggle('active');
                 };
             }
-            if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
-            const communityProfileLink = document.getElementById('navCommunityProfileLink');
-            if (communityProfileLink) communityProfileLink.onclick = () => {
-                const handle = (user.displayName || (user.email ? user.email.split('@')[0] : 'user'));
-                const slug = handle.toLowerCase().replace(/[^a-z0-9_-]+/g, '-') || 'user';
-                window.location.href = '/user/' + encodeURIComponent(slug) + '?uid=' + encodeURIComponent(user.uid);
-            };
+            if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl + '?uid=' + encodeURIComponent(user.uid); };
             if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
             if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
             const modLink = document.getElementById('navModerationLink');
@@ -623,6 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (editProfileBtn)    editProfileBtn.onclick    = () => { window.location.href = profileUrl + '/settings'; };
             if (mobileEditBtn)     mobileEditBtn.onclick     = () => { window.location.href = profileUrl + '/settings'; };
             if (mobileLogout)      mobileLogout.onclick      = () => window.auth.signOut();
+            listenNotifications(user);
 
         } else {
             if (authNav) authNav.innerHTML = '<button class="auth-nav-btn" id="navSignInBtn">Sign In</button>';
@@ -632,6 +690,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const mobileSignInBtn = document.getElementById('mobileSignInBtn');
             if(signInBtn) signInBtn.onclick = openAuthModal;
             if(mobileSignInBtn) mobileSignInBtn.onclick = openAuthModal;
+            listenNotifications(null);
+            updateNotifBadge(0);
         }
     }
 
