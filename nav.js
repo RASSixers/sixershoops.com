@@ -488,38 +488,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // --- Community reply notifications badge ---
+    // --- Single notification badge on profile avatar only ---
     let _notifUnsub = null;
     function updateNotifBadge(count) {
         const n = Math.max(0, Number(count) || 0);
-        const targets = [
-            document.getElementById('navNotifsLink'),
-            document.querySelector('[id="navNotifsLink"]')
-        ].filter(Boolean);
-        targets.forEach(function(el) {
-            let badge = el.querySelector('.nav-notif-badge');
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'nav-notif-badge';
-                badge.style.cssText = 'display:none;margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;vertical-align:middle;';
-                el.appendChild(badge);
-            }
-            if (n > 0) {
-                badge.style.display = 'inline-block';
-                badge.textContent = n > 99 ? '99+' : String(n);
-            } else {
-                badge.style.display = 'none';
-                badge.textContent = '';
-            }
-        });
-        // Also badge near profile button if present
+        // Only badge next to the profile image (not multiple dropdown pills)
         const btn = document.getElementById('userProfileBtn');
         if (btn) {
             let badge = document.getElementById('navNotifBadgeTop');
             if (!badge) {
                 badge = document.createElement('span');
                 badge.id = 'navNotifBadgeTop';
-                badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;display:none;';
+                badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;display:none;z-index:5;';
                 btn.style.position = 'relative';
                 btn.appendChild(badge);
             }
@@ -528,27 +508,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 badge.textContent = n > 99 ? '99+' : String(n);
             } else {
                 badge.style.display = 'none';
+                badge.textContent = '';
             }
         }
-    }
-    let _inboxUnsub = null;
-    function setDropdownPill(id, n) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (n > 0) {
-            el.classList.remove('hidden');
-            el.textContent = n > 99 ? '99+' : String(n);
-            el.style.cssText = 'display:inline-block;margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;';
-        } else {
-            el.classList.add('hidden');
-            el.textContent = '0';
-            el.style.display = 'none';
-        }
+        // Keep #nav-notif-badge in sync if present in avatar HTML
+        document.querySelectorAll('#nav-notif-badge').forEach(function(b) {
+            if (n > 0) {
+                b.classList.remove('hidden');
+                b.style.display = 'flex';
+                b.textContent = n > 99 ? '99+' : String(n);
+            } else {
+                b.classList.add('hidden');
+                b.style.display = 'none';
+                b.textContent = '';
+            }
+        });
+        // Hide any leftover dropdown pills
+        ['dropdown-notif-count','dropdown-inbox-count'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
+        });
     }
     function listenNotifications(user) {
         if (_notifUnsub) { try { _notifUnsub(); } catch (e) {} _notifUnsub = null; }
-        if (_inboxUnsub) { try { _inboxUnsub(); } catch (e) {} _inboxUnsub = null; }
-        if (!user || !window.db) { updateNotifBadge(0); setDropdownPill('dropdown-notif-count', 0); setDropdownPill('dropdown-inbox-count', 0); return; }
+        if (!user || !window.db) { updateNotifBadge(0); return; }
         try {
             _notifUnsub = window.db.collection('notifications')
                 .where('recipientId', '==', user.uid)
@@ -559,32 +542,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (d.read === false || d.read === undefined) unread++;
                     });
                     updateNotifBadge(unread);
-                    setDropdownPill('dropdown-notif-count', unread);
                 }, function(err) {
                     console.warn('notifications listen', err);
                 });
         } catch (e) {
             console.warn(e);
         }
-        // Separate red number for Inbox (messages)
-        try {
-            _inboxUnsub = window.db.collection('messages')
-                .where('recipientId', '==', user.uid)
-                .onSnapshot(function(snap) {
-                    var unread = 0;
-                    snap.forEach(function(doc) {
-                        var d = doc.data() || {};
-                        if (d.read === false || d.read === undefined) unread++;
-                    });
-                    setDropdownPill('dropdown-inbox-count', unread);
-                }, function(err) {
-                    console.warn('inbox listen', err);
-                });
-        } catch (e) {
-            console.warn(e);
-        }
     }
-
 
     async function syncUsernameSlug(user) {
         if (!user || !window.db) return;
@@ -645,12 +609,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
-                            <span id="dropdown-inbox-count" class="dropdown-notif-pill hidden">0</span>
                         </button>
 
                         <button class="user-dropdown-item" id="navNotifsLink">
                             <span>Notifications</span>
-                            <span id="dropdown-notif-count" class="dropdown-notif-pill hidden">0</span>
                         </button>
 
                         <button class="user-dropdown-item" id="navSettingsBtn">Account Settings</button>
@@ -815,11 +777,33 @@ document.addEventListener('DOMContentLoaded', function() {
         window.auth.onAuthStateChanged(async user => {
             if (user && window.db) {
                 try {
-                    const doc = await window.db.collection('users').doc(user.uid).get();
-                    if (doc.exists && doc.data().usernameLower) {
-                        localStorage.setItem('usernameLower', doc.data().usernameLower);
+                    const ref = window.db.collection('users').doc(user.uid);
+                    const doc = await ref.get();
+                    const display = user.displayName || (user.email ? user.email.split('@')[0] : 'fan');
+                    const usernameLower = (display || 'fan').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'fan';
+                    if (!doc.exists) {
+                        // Create profile doc for accounts that never got one (so /user/slug works for everyone)
+                        await ref.set({
+                            username: display,
+                            usernameLower: usernameLower,
+                            email: user.email || '',
+                            followerCount: 0,
+                            followingCount: 0,
+                            createdAt: new Date().toISOString()
+                        }, { merge: true });
+                        localStorage.setItem('usernameLower', usernameLower);
+                    } else {
+                        const d = doc.data() || {};
+                        let lower = (d.usernameLower || '').toString().trim();
+                        if (!lower) {
+                            lower = (d.username || display).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || usernameLower;
+                            await ref.set({ username: d.username || display, usernameLower: lower }, { merge: true });
+                        }
+                        localStorage.setItem('usernameLower', lower);
+                        if (d.photoURL) localStorage.setItem('photoURL', d.photoURL);
+                        if (d.avatarColor) localStorage.setItem('avatarColor', d.avatarColor);
                     }
-                } catch(_) {}
+                } catch(err) { console.warn('ensure user profile', err); }
             } else if (!user) {
                 localStorage.removeItem('usernameLower');
             }
@@ -1362,12 +1346,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const user = userCredential.user;
             await user.updateProfile({ displayName: username });
             
-            await db.collection('users').doc(user.uid).set({
+            const userDb = window.db || db;
+            if (!userDb) throw new Error('Database not ready. Try again.');
+            const usernameLower = (username || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+            localStorage.setItem('usernameLower', usernameLower);
+            await userDb.collection('users').doc(user.uid).set({
                 username: username,
-                usernameLower: (username || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-'),
+                usernameLower: usernameLower,
                 email: email,
+                followerCount: 0,
+                followingCount: 0,
                 createdAt: new Date().toISOString()
-            });
+            }, { merge: true });
 
             // Refresh user and UI
             await user.reload();
