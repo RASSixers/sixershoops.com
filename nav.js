@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
-                        <a class="auth-nav-btn" href="${profileUrl}?uid=${encodeURIComponent(user.uid)}" style="width:100%;text-align:center;text-decoration:none;display:block;">Profile</a>
+                        <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">Profile</a>
                         <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
                         ${user.email && user.email.toLowerCase() === 'rhatus13@gmail.com' ? `<a class="auth-nav-btn" href="/moderation.html" style="width:100%;text-align:center;text-decoration:none;display:block;background:#001a57;color:#fff;">Moderation</a>` : ''}
@@ -662,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     userDropdown.classList.toggle('active');
                 };
             }
-            if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl + '?uid=' + encodeURIComponent(user.uid); };
+            if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
             if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
             if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
             const modLink = document.getElementById('navModerationLink');
