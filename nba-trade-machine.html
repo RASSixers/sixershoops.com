@@ -4314,6 +4314,11 @@
             } catch (e) {
                 try { machineHash = btoa(JSON.stringify(serializeTradeState())); } catch (e2) { machineHash = ''; }
             }
+            // Firestore docs max 1MB; keep hash under ~400KB of payload headroom
+            if (machineHash && machineHash.length > 350000) {
+                console.warn('machineHash too large, omitting deep-link payload');
+                machineHash = '';
+            }
 
             var isValid = isValidFlag;
             var authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'fan');
@@ -4340,7 +4345,8 @@
             var ref = await window.db.collection('community_trades').add(doc);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
             closePostTradeModal();
-            window.location.href = '/trade.html?id=' + encodeURIComponent(ref.id);
+            var _slug = String(title || 'trade').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'trade';
+            window.location.href = '/trade/' + encodeURIComponent(ref.id) + '/' + encodeURIComponent(_slug);
         } catch (err) {
             console.error('confirmPostTrade error', err);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
