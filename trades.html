@@ -247,7 +247,8 @@
   function openPostFromQuery(){
     const id = new URLSearchParams(location.search).get('post') || new URLSearchParams(location.search).get('id');
     if(!id) return;
-    loadPostDetail(id);
+    // Full detail lives on trade.html — redirect so past + new posts open correctly
+    window.location.replace('/trade.html?id=' + encodeURIComponent(id));
   }
 
 
@@ -344,7 +345,7 @@
     feed.querySelectorAll('article.card').forEach(function(card){
       var id = card.getAttribute('data-id');
       if(!id) return;
-      var go = function(){ window.location.href = '/trades.html?post=' + encodeURIComponent(id); };
+      var go = function(){ window.location.href = '/trade.html?id=' + encodeURIComponent(id); };
       card.onclick = function(e){
         if(e.target.closest('button, a, .vcol')) return;
         go();
@@ -470,7 +471,7 @@
     try{
       const ref=await window.db.collection(COLLECTION).add(doc);
       closeCreate();
-      window.location.href='/trades.html?post='+encodeURIComponent(ref.id);
+      window.location.href='/trade.html?id='+encodeURIComponent(ref.id);
     }catch(e){
       console.error(e);
       err.style.display='block';err.textContent=e.message||'Could not post.';
