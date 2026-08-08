@@ -543,6 +543,9 @@
     </style>
 </head>
 <body>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="/nav.js"></script>
 
     <div id="pageBanner">
@@ -570,10 +573,6 @@
             <div class="skeleton" style="height:220px;border-radius:12px;"></div>
         </div>
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script>
     (function() {
@@ -1275,58 +1274,35 @@
                 });
             }
 
+            // No Firebase Storage — photo is compressed and saved in Firestore as a data URL
             picInput.onchange = async (ev) => {
                 const file = ev.target.files && ev.target.files[0];
                 if (!file) return;
-                if (file.size > 5 * 1024 * 1024) { picMsg.textContent = 'Image must be under 5 MB.'; picMsg.style.color = '#dc2626'; return; }
-
-                // Prefer Firebase Storage; fall back to compressed data URL in Firestore if Storage is blocked
-                let uploaded = false;
-                try {
-                    if (typeof firebase.storage !== 'function') {
-                        picMsg.textContent = 'Loading uploader…'; picMsg.style.color = 'var(--mid)';
-                        await new Promise((res, rej) => {
-                            const s = document.createElement('script');
-                            s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
-                            s.onload = res; s.onerror = rej;
-                            document.head.appendChild(s);
-                        }).catch(() => {});
-                    }
-                    if (!window.storage && typeof firebase.storage === 'function') {
-                        try { window.storage = firebase.storage(); } catch(_) {}
-                    }
-                    if (window.storage) {
-                        picMsg.textContent = 'Uploading…'; picMsg.style.color = 'var(--mid)';
-                        const ref = window.storage.ref().child(`profile-pics/${myUid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
-                        const snap = await ref.put(file);
-                        const url = await snap.ref.getDownloadURL();
-                        photoHidden.value = url;
-                        repaintAvatar();
-                        picMsg.textContent = 'Photo uploaded. Save to keep it.'; picMsg.style.color = '#15803d';
-                        uploaded = true;
-                    }
-                } catch (err) {
-                    console.warn('Storage upload failed, trying local fallback:', err);
+                if (!file.type || !file.type.startsWith('image/')) {
+                    picMsg.textContent = 'Please choose an image file.'; picMsg.style.color = '#dc2626'; return;
                 }
-
-                if (!uploaded) {
-                    try {
-                        picMsg.textContent = 'Compressing photo…'; picMsg.style.color = 'var(--mid)';
-                        // Keep under Firestore practical limits (~800KB)
-                        const dataUrl = await fileToCompressedDataUrl(file, 512, 0.72);
-                        if (dataUrl.length > 900000) {
-                            const smaller = await fileToCompressedDataUrl(file, 320, 0.6);
-                            photoHidden.value = smaller;
-                        } else {
-                            photoHidden.value = dataUrl;
-                        }
-                        repaintAvatar();
-                        picMsg.textContent = 'Photo ready. Save to keep it.'; picMsg.style.color = '#15803d';
-                    } catch (err2) {
-                        console.error(err2);
-                        picMsg.textContent = 'Could not process photo: ' + (err2.message || err2);
-                        picMsg.style.color = '#dc2626';
+                if (file.size > 8 * 1024 * 1024) {
+                    picMsg.textContent = 'Image must be under 8 MB.'; picMsg.style.color = '#dc2626'; return;
+                }
+                try {
+                    picMsg.textContent = 'Processing photo…'; picMsg.style.color = 'var(--mid)';
+                    let dataUrl = await fileToCompressedDataUrl(file, 400, 0.7);
+                    if (dataUrl.length > 700000) {
+                        dataUrl = await fileToCompressedDataUrl(file, 280, 0.55);
                     }
+                    if (dataUrl.length > 900000) {
+                        picMsg.textContent = 'Image is still too large after compression. Try a smaller photo.';
+                        picMsg.style.color = '#dc2626';
+                        return;
+                    }
+                    photoHidden.value = dataUrl;
+                    repaintAvatar();
+                    picMsg.textContent = 'Photo ready. Click Save Changes to keep it.';
+                    picMsg.style.color = '#15803d';
+                } catch (err) {
+                    console.error(err);
+                    picMsg.textContent = 'Could not process photo: ' + (err.message || err);
+                    picMsg.style.color = '#dc2626';
                 }
             };
             picRemove.onclick = () => {
