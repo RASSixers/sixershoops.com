@@ -531,9 +531,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+    let _inboxUnsub = null;
+    function setDropdownPill(id, n) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (n > 0) {
+            el.classList.remove('hidden');
+            el.textContent = n > 99 ? '99+' : String(n);
+            el.style.cssText = 'display:inline-block;margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;';
+        } else {
+            el.classList.add('hidden');
+            el.textContent = '0';
+            el.style.display = 'none';
+        }
+    }
     function listenNotifications(user) {
         if (_notifUnsub) { try { _notifUnsub(); } catch (e) {} _notifUnsub = null; }
-        if (!user || !window.db) { updateNotifBadge(0); return; }
+        if (_inboxUnsub) { try { _inboxUnsub(); } catch (e) {} _inboxUnsub = null; }
+        if (!user || !window.db) { updateNotifBadge(0); setDropdownPill('dropdown-notif-count', 0); setDropdownPill('dropdown-inbox-count', 0); return; }
         try {
             _notifUnsub = window.db.collection('notifications')
                 .where('recipientId', '==', user.uid)
@@ -544,8 +559,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (d.read === false || d.read === undefined) unread++;
                     });
                     updateNotifBadge(unread);
+                    setDropdownPill('dropdown-notif-count', unread);
                 }, function(err) {
                     console.warn('notifications listen', err);
+                });
+        } catch (e) {
+            console.warn(e);
+        }
+        // Separate red number for Inbox (messages)
+        try {
+            _inboxUnsub = window.db.collection('messages')
+                .where('recipientId', '==', user.uid)
+                .onSnapshot(function(snap) {
+                    var unread = 0;
+                    snap.forEach(function(doc) {
+                        var d = doc.data() || {};
+                        if (d.read === false || d.read === undefined) unread++;
+                    });
+                    setDropdownPill('dropdown-inbox-count', unread);
+                }, function(err) {
+                    console.warn('inbox listen', err);
                 });
         } catch (e) {
             console.warn(e);
@@ -612,11 +645,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
-                            <span id="dropdown-notif-count" class="dropdown-notif-pill hidden">0</span>
+                            <span id="dropdown-inbox-count" class="dropdown-notif-pill hidden">0</span>
                         </button>
 
                         <button class="user-dropdown-item" id="navNotifsLink">
                             <span>Notifications</span>
+                            <span id="dropdown-notif-count" class="dropdown-notif-pill hidden">0</span>
                         </button>
 
                         <button class="user-dropdown-item" id="navSettingsBtn">Account Settings</button>
@@ -1253,32 +1287,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving…'; }
 
         try {
-            const user = window.auth.currentUser;
+            const user = window.auth && window.auth.currentUser;
+            if (!user) throw new Error('Please sign in again.');
             const photoURL = (document.getElementById('navProfilePicUrl') || {}).value || '';
-            const profileUpdate = { displayName: name };
-            if (photoURL) profileUpdate.photoURL = photoURL;
-            else profileUpdate.photoURL = null;
-            await user.updateProfile(profileUpdate);
+            // Auth only gets displayName — data-URL photos are stored in Firestore (no Storage / no Auth size limit)
+            try { await user.updateProfile({ displayName: name }); } catch (ae) { console.warn(ae); }
             if (avatarColor) localStorage.setItem('avatarColor', avatarColor);
             if (photoURL) localStorage.setItem('photoURL', photoURL);
             else localStorage.removeItem('photoURL');
 
             const usernameLower = (name || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
             localStorage.setItem('usernameLower', usernameLower);
+            if (!window.db) throw new Error('Database not ready. Refresh the page and try again.');
             await window.db.collection('users').doc(user.uid).set({
                 username: name,
                 usernameLower: usernameLower,
                 avatarColor: avatarColor || '#001a57',
                 photoURL: photoURL || null,
                 updatedAt: new Date().toISOString()
-            }, { merge: true }).catch(err => console.error("Firestore sync error:", err));
+            }, { merge: true });
 
-            await user.reload();
+            try { await user.reload(); } catch (_) {}
             renderUserNav(window.auth.currentUser);
             showNavMessage('Settings saved successfully!', 'success');
             setTimeout(closeAuthModal, 1800);
         } catch (err) {
-            showNavMessage(err.message, 'error');
+            showNavMessage(err.message || String(err), 'error');
         } finally {
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Save Changes'; }
         }
