@@ -1206,18 +1206,23 @@
                     const initial = from.charAt(0).toUpperCase();
                     const u = !msg.read;
                     const isReply = msg.type === 'comment_reply' || msg.type === 'post_reply_thread';
-                    const label = isReply ? 'replied to your comment' : 'commented on your post';
+                    const action = isReply ? 'replied' : 'commented';
+                    const body = (msg.commentText || msg.text || msg.message || '').trim();
+                    // Prefer real comment body; fall back to short action if body is a system label
+                    const showBody = body && !/^(commented on post|replied to|liked|followed)/i.test(body) ? body : '';
                     const href = msg.link || (msg.tradeId ? ('/trade.html?id=' + encodeURIComponent(msg.tradeId) + (msg.commentId ? ('#comment-' + encodeURIComponent(msg.commentId)) : '')) : '');
                     return `
                     <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}" data-href="${esc(href)}">
                         ${u ? '<div class="unread-dot"></div>' : ''}
                         <div class="inbox-item-avatar" style="background:${colorFor(from)}">${initial}</div>
-                        <div class="inbox-item-body">
-                            <div class="inbox-item-from">${esc(from)}</div>
-                            <div class="inbox-item-preview ${u?'unread-preview':''}">${esc(label)}${msg.tradeTitle ? ' · ' + esc(msg.tradeTitle) : ''}</div>
+                        <div class="inbox-item-body" style="min-width:0;flex:1;">
+                            <div class="inbox-item-from">${esc(from)} <span style="font-weight:500;color:var(--mid);">${esc(action)}</span></div>
+                            <div class="inbox-item-preview ${u?'unread-preview':''}" style="white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${esc(showBody || (isReply ? 'Replied to your comment' : 'Commented on your post'))}</div>
                         </div>
-                        <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
-                        ${href ? `<a class="inbox-view-btn" href="${esc(href)}">View comment</a>` : ''}
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">
+                          <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
+                          ${href ? `<a class="inbox-view-btn" href="${esc(href)}">View comment</a>` : ''}
+                        </div>
                     </div>`;
                 }).join('');
 
@@ -1379,16 +1384,6 @@
                         <textarea class="auth-field" id="settingsBio" rows="3" maxlength="200" style="resize:vertical;font-family:inherit;">${esc(ud.bio||'')}</textarea>
                     </div>
 
-                    <div>
-                        <label class="auth-label">Avatar Color</label>
-                        <div id="settingsColorRow" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.25rem;">
-                            ${colorChoices.map(c => `
-                                <button type="button" data-color="${c}" class="settings-color-opt ${c===color?'is-active':''}" style="width:30px;height:30px;border-radius:50%;background:${c};border:2px solid ${c===color?'#0d0f1a':'transparent'};cursor:pointer;padding:0;"></button>
-                            `).join('')}
-                        </div>
-                        <input type="hidden" id="settingsAvatarColor" value="${color}">
-                    </div>
-
                     <div id="settingsMsg" class="nav-message" style="margin:0;"></div>
 
                     <div style="display:flex;gap:0.6rem;">
@@ -1418,15 +1413,6 @@
                     : (document.getElementById('settingsUsername').value || 'U').charAt(0).toUpperCase();
             }
 
-            // Color picker
-            document.querySelectorAll('.settings-color-opt').forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll('.settings-color-opt').forEach(b => b.style.borderColor = 'transparent');
-                    btn.style.borderColor = '#0d0f1a';
-                    colorHidden.value = btn.dataset.color;
-                    repaintAvatar();
-                };
-            });
 
             // Photo upload
             const picInput = document.getElementById('settingsPicInput');
@@ -1510,7 +1496,7 @@
                 }
                 const bio = document.getElementById('settingsBio').value.trim();
                 const photoURL = photoHidden.value || '';
-                const avatarColor = colorHidden.value || '#001a57';
+                const avatarColor = (colorHidden && colorHidden.value) || ud.avatarColor || '#001a57';
                 const usernameLower = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
 
                 const submitBtn = e.target.querySelector('button[type="submit"]');
