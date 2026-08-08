@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MODERATION — Sixers Hoops</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/navbar-styles.css" />
+  <style>
+    :root{--navy:#001a57;--sixers-blue:#006BB6;--sixers-red:#ED174C;--cream:#fff;--ink:#0d0f1a;--mid:#64748b;--border:#e4e8f0;--bg2:#f8fafc}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;font-family:Lexend,system-ui,sans-serif;background:var(--cream);color:var(--ink);padding-top:64px;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:900px;margin:0 auto;padding:2rem 1.25rem 4rem}
+    h1{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:800;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 .35rem}
+    .sub{color:var(--mid);font-size:.9rem;margin:0 0 1.5rem}
+    .tabs{display:flex;gap:.35rem;margin-bottom:1.25rem;flex-wrap:wrap}
+    .tab{border:1px solid var(--border);background:#fff;font-family:Lexend,sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.06em;padding:.5rem .9rem;border-radius:999px;cursor:pointer;color:var(--mid)}
+    .tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .card{border:1px solid var(--border);border-radius:14px;padding:1rem 1.15rem;margin-bottom:.75rem;background:#fff}
+    .card.resolved{opacity:.72}
+    .row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem}
+    .pill{font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--bg2);color:var(--mid);border:1px solid var(--border)}
+    .pill.open{color:#b45309;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3)}
+    .pill.resolved{color:#15803d;background:rgba(22,163,74,.1);border-color:rgba(22,163,74,.25)}
+    .pill.dismissed{color:#64748b;background:#f1f5f9}
+    .meta{font-size:.78rem;color:var(--mid)}
+    .reason{font-size:.95rem;font-weight:600;margin:.4rem 0}
+    .snippet{font-size:.85rem;color:#475569;background:var(--bg2);border-radius:8px;padding:.65rem .8rem;margin:.5rem 0;white-space:pre-wrap}
+    .actions{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.75rem}
+    .btn{font-family:Lexend,sans-serif;font-weight:700;font-size:.78rem;padding:.5rem 1rem;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer}
+    .btn-primary{background:var(--sixers-blue);color:#fff;border-color:var(--sixers-blue)}
+    .btn-danger{color:var(--sixers-red);border-color:rgba(237,23,76,.3)}
+    .btn-ghost:hover{border-color:var(--sixers-blue);color:var(--sixers-blue)}
+    .state{text-align:center;padding:3rem 1rem;color:var(--mid)}
+    .denied{max-width:480px;margin:4rem auto;text-align:center;padding:2rem;border:1px solid var(--border);border-radius:16px}
+    .denied h2{margin:0 0 .5rem;font-size:1.3rem}
+  </style>
+</head>
+<body>
+  <main class="wrap" id="root">
+    <p class="state">Checking access…</p>
+  </main>
+  <script src="/nav.js"></script>
+  <script>
+(function(){
+  const REPORTS='community_reports';
+  const COLLECTION='community_trades';
+  const MOD_EMAIL='rhatus13@gmail.com';
+  let filter='open';
+  let items=[];
+
+  function waitForAuth(cb,n){n=n||0;if(window.auth){cb();return;}if(n>80){document.getElementById('root').innerHTML='<div class="state">Auth not ready.</div>';return;}setTimeout(function(){waitForAuth(cb,n+1);},250);}
+  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function timeAgo(ts){if(!ts)return'';const d=ts.toDate?ts.toDate():new Date(ts);if(isNaN(d.getTime()))return'';const s=Math.floor((Date.now()-d.getTime())/1000);if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+  function isMod(u){return u&&u.email&&u.email.toLowerCase()===MOD_EMAIL.toLowerCase();}
+
+  function renderDenied(){
+    document.getElementById('root').innerHTML='<div class="denied"><h2>Moderators only</h2><p class="meta">This panel is restricted to site staff.</p><p style="margin-top:1.25rem"><a class="btn btn-primary" href="/trades.html">Back to Community</a></p></div>';
+  }
+
+  function render(){
+    const list=items.filter(function(r){return filter==='all'?true:(r.status||'open')===filter;});
+    let html='<h1>MODERATION</h1><p class="sub">Review community reports on posts and comments.</p>';
+    html+='<div class="tabs">'+
+      '<button type="button" class="tab'+(filter==='open'?' active':'')+'" data-f="open">OPEN</button>'+
+      '<button type="button" class="tab'+(filter==='resolved'?' active':'')+'" data-f="resolved">RESOLVED</button>'+
+      '<button type="button" class="tab'+(filter==='dismissed'?' active':'')+'" data-f="dismissed">DISMISSED</button>'+
+      '<button type="button" class="tab'+(filter==='all'?' active':'')+'" data-f="all">ALL</button></div>';
+    if(!list.length)html+='<div class="state">No reports in this view.</div>';
+    else list.forEach(function(r){
+      const st=r.status||'open';
+      html+='<div class="card '+(st!=='open'?'resolved':'')+'">';
+      html+='<div class="row"><span class="pill '+esc(st)+'">'+esc(st)+'</span><span class="pill">'+esc(r.type||'post')+'</span><span class="meta">'+esc(timeAgo(r.createdAt))+'</span></div>';
+      html+='<div class="reason">'+esc(r.reason||'No reason')+'</div>';
+      html+='<div class="meta">Reported by '+esc(r.reporterName||r.reporterId||'user');
+      if(r.commentAuthor)html+=' · Comment by '+esc(r.commentAuthor);
+      html+='</div>';
+      if(r.commentText)html+='<div class="snippet">'+esc(r.commentText)+'</div>';
+      else if(r.tradeTitle)html+='<div class="snippet">Post: '+esc(r.tradeTitle)+'</div>';
+      html+='<div class="actions">';
+      if(r.tradeId)html+='<a class="btn btn-ghost" href="/trade.html?id='+encodeURIComponent(r.tradeId)+'" target="_blank">View post</a>';
+      if(st==='open'){
+        html+='<button type="button" class="btn btn-primary act-resolve" data-id="'+esc(r.id)+'">Mark resolved</button>';
+        html+='<button type="button" class="btn btn-ghost act-dismiss" data-id="'+esc(r.id)+'">Dismiss</button>';
+        if(r.type==='comment'&&r.tradeId!=null&&r.commentIndex!=null)html+='<button type="button" class="btn btn-danger act-del-c" data-id="'+esc(r.id)+'" data-tid="'+esc(r.tradeId)+'" data-ci="'+esc(r.commentIndex)+'">Delete comment</button>';
+        if(r.type==='post'&&r.tradeId)html+='<button type="button" class="btn btn-danger act-del-p" data-id="'+esc(r.id)+'" data-tid="'+esc(r.tradeId)+'">Delete post</button>';
+      }
+      html+='</div></div>';
+    });
+    document.getElementById('root').innerHTML=html;
+    document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){filter=t.getAttribute('data-f');render();};});
+    document.querySelectorAll('.act-resolve').forEach(function(b){b.onclick=function(){setStatus(b.getAttribute('data-id'),'resolved');};});
+    document.querySelectorAll('.act-dismiss').forEach(function(b){b.onclick=function(){setStatus(b.getAttribute('data-id'),'dismissed');};});
+    document.querySelectorAll('.act-del-c').forEach(function(b){b.onclick=function(){deleteComment(b.getAttribute('data-tid'),+b.getAttribute('data-ci'),b.getAttribute('data-id'));};});
+    document.querySelectorAll('.act-del-p').forEach(function(b){b.onclick=function(){deletePost(b.getAttribute('data-tid'),b.getAttribute('data-id'));};});
+  }
+
+  async function setStatus(id,status){
+    try{await window.db.collection(REPORTS).doc(id).update({status:status,resolvedAt:window.firebase.firestore.FieldValue.serverTimestamp()});}
+    catch(e){alert(e.message||'Update failed');}
+  }
+  async function deleteComment(tid,ci,rid){
+    if(!confirm('Delete the reported comment and mark report resolved?'))return;
+    try{
+      const ref=window.db.collection(COLLECTION).doc(tid);
+      const doc=await ref.get();
+      if(doc.exists){
+        const comments=(doc.data().comments||[]).slice();
+        if(ci>=0&&ci<comments.length){comments.splice(ci,1);await ref.update({comments:comments});}
+      }
+      await window.db.collection(REPORTS).doc(rid).update({status:'resolved',resolvedAt:window.firebase.firestore.FieldValue.serverTimestamp(),modAction:'deleted_comment'});
+    }catch(e){alert(e.message||'Failed');}
+  }
+  async function deletePost(tid,rid){
+    if(!confirm('Delete the entire post and mark report resolved?'))return;
+    try{
+      await window.db.collection(COLLECTION).doc(tid).delete();
+      await window.db.collection(REPORTS).doc(rid).update({status:'resolved',resolvedAt:window.firebase.firestore.FieldValue.serverTimestamp(),modAction:'deleted_post'});
+    }catch(e){alert(e.message||'Failed');}
+  }
+
+  waitForAuth(function(){
+    window.auth.onAuthStateChanged(function(user){
+      if(!isMod(user)){renderDenied();return;}
+      if(!window.db){document.getElementById('root').innerHTML='<div class="state">Database not ready.</div>';return;}
+      window.db.collection(REPORTS).orderBy('createdAt','desc').limit(100).onSnapshot(function(snap){
+        items=snap.docs.map(function(d){const x=d.data();x.id=d.id;return x;});
+        render();
+      },function(err){
+        console.error(err);
+        document.getElementById('root').innerHTML='<div class="state">Could not load reports. Check Firestore rules/index.</div>';
+      });
+    });
+  });
+})();
+  </script>
+</body>
+</html>
