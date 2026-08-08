@@ -199,7 +199,33 @@
     .hint{font-size:.75rem;color:#94a3b8;margin:-.4rem 0 1rem}
     .state{text-align:center;padding:4rem 1rem;color:var(--mid)}
     .state h2{font-size:1.25rem;color:var(--ink);margin:0 0 .5rem}
-  </style>
+  
+    .delete-modal-overlay,.quote-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:10000;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+    .delete-modal-overlay.open,.quote-modal-overlay.open{display:flex;}
+    .delete-modal,.quote-modal{background:#fff;border-radius:16px;width:min(420px,100%);box-shadow:0 25px 50px rgba(0,0,0,.25);overflow:hidden;font-family:Lexend,system-ui,sans-serif;}
+    .delete-modal-body{padding:1.5rem 1.35rem 1rem;}
+    .delete-modal-body h3{margin:0 0 .5rem;font-size:1.15rem;font-weight:800;color:#0f172a;}
+    .delete-modal-body p{margin:0;font-size:.9rem;color:#64748b;line-height:1.5;}
+    .delete-modal-actions{display:flex;gap:.6rem;padding:0 1.35rem 1.35rem;justify-content:flex-end;}
+    .btn-cancel-mod{border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:.55rem 1rem;font-weight:600;font-size:.88rem;cursor:pointer;color:#334155;}
+    .btn-danger-mod{border:none;background:#dc2626;color:#fff;border-radius:8px;padding:.55rem 1rem;font-weight:700;font-size:.88rem;cursor:pointer;}
+    .btn-danger-mod:hover{background:#b91c1c;}
+    .quote-modal-body{padding:1.25rem 1.25rem 0.75rem;}
+    .quote-modal-body h3{margin:0 0 0.85rem;font-size:1.1rem;font-weight:800;}
+    .quote-modal textarea{width:100%;min-height:100px;border:1px solid #e2e8f0;border-radius:10px;padding:.75rem;font:inherit;font-size:.92rem;resize:vertical;box-sizing:border-box;}
+    .quote-preview{margin-top:.75rem;border:1px solid #e2e8f0;border-radius:12px;padding:.75rem;background:#f8fafc;}
+    .quote-preview .qp-author{font-size:.78rem;font-weight:700;color:#64748b;margin-bottom:.25rem;}
+    .quote-preview .qp-title{font-weight:700;font-size:.92rem;color:#0f172a;}
+    .quote-modal-actions{display:flex;gap:.6rem;padding:0.85rem 1.25rem 1.25rem;justify-content:flex-end;}
+    .btn-primary-mod{border:none;background:#006BB6;color:#fff;border-radius:8px;padding:.55rem 1.1rem;font-weight:700;font-size:.88rem;cursor:pointer;}
+    .img-attach-row{display:flex;align-items:center;gap:.5rem;margin-top:.5rem;flex-wrap:wrap;}
+    .img-attach-btn{font-size:.78rem;font-weight:600;color:#006BB6;background:rgba(0,107,182,.08);border:1px solid rgba(0,107,182,.2);border-radius:6px;padding:.35rem .65rem;cursor:pointer;}
+    .img-preview-wrap{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem;}
+    .img-preview-wrap img{max-width:120px;max-height:120px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;}
+    .c-text img,.post-images img{max-width:100%;border-radius:10px;margin-top:.5rem;}
+    .post-images{display:grid;gap:.5rem;margin-top:.65rem;}
+    .post-images.grid-2{grid-template-columns:1fr 1fr;}
+    </style>
 </head>
 <body>
   <main><div class="wrap" id="root"><a href="/trades.html" class="back">&larr; BACK TO COMMUNITY TRADES</a><p class="state">Loading...</p></div></main>
@@ -284,6 +310,75 @@
       if(/permission|insufficient/i.test(msg)) alert('Follow blocked by Firestore rules on the follows collection. Allow signed-in users to create/delete follows.');
       else alert('Could not update follow: '+msg);
     }
+  }
+
+
+  function openDeleteModal(opts){
+    var ov=document.getElementById('deleteModalOverlay');
+    if(!ov){
+      ov=document.createElement('div');
+      ov.id='deleteModalOverlay';
+      ov.className='delete-modal-overlay';
+      ov.innerHTML='<div class="delete-modal" onclick="event.stopPropagation()"><div class="delete-modal-body"><h3 id="deleteModalTitle">Delete?</h3><p id="deleteModalMsg">This cannot be undone.</p></div><div class="delete-modal-actions"><button type="button" class="btn-cancel-mod" id="deleteModalCancel">Cancel</button><button type="button" class="btn-danger-mod" id="deleteModalConfirm">Delete</button></div></div>';
+      document.body.appendChild(ov);
+      ov.onclick=function(){ov.classList.remove('open');};
+      document.getElementById('deleteModalCancel').onclick=function(){ov.classList.remove('open');};
+    }
+    document.getElementById('deleteModalTitle').textContent=opts.title||'Delete?';
+    document.getElementById('deleteModalMsg').textContent=opts.message||'This cannot be undone.';
+    var conf=document.getElementById('deleteModalConfirm');
+    conf.onclick=async function(){
+      conf.disabled=true;conf.textContent='Deleting…';
+      try{ if(opts.onConfirm) await opts.onConfirm(); ov.classList.remove('open'); }
+      catch(e){ alert(e.message||'Delete failed'); }
+      finally{ conf.disabled=false;conf.textContent='Delete'; }
+    };
+    ov.classList.add('open');
+  }
+
+  function openQuoteModal(tradeObj){
+    var ov=document.getElementById('quoteModalOverlay');
+    if(!ov){
+      ov=document.createElement('div');
+      ov.id='quoteModalOverlay';
+      ov.className='quote-modal-overlay';
+      ov.innerHTML='<div class="quote-modal" onclick="event.stopPropagation()"><div class="quote-modal-body"><h3>Quote repost</h3><textarea id="quoteModalText" placeholder="Add your thoughts…" maxlength="500"></textarea><div class="quote-preview"><div class="qp-author" id="quoteModalAuthor"></div><div class="qp-title" id="quoteModalTitle"></div></div></div><div class="quote-modal-actions"><button type="button" class="btn-cancel-mod" id="quoteModalCancel">Cancel</button><button type="button" class="btn-primary-mod" id="quoteModalPost">Post</button></div></div>';
+      document.body.appendChild(ov);
+      ov.onclick=function(){ov.classList.remove('open');};
+      document.getElementById('quoteModalCancel').onclick=function(){ov.classList.remove('open');};
+    }
+    document.getElementById('quoteModalAuthor').textContent=tradeObj.author||'Original';
+    document.getElementById('quoteModalTitle').textContent=tradeObj.title||'Trade';
+    document.getElementById('quoteModalText').value='';
+    document.getElementById('quoteModalPost').onclick=function(){
+      var text=document.getElementById('quoteModalText').value.trim();
+      ov.classList.remove('open');
+      createRepost(true, text);
+    };
+    ov.classList.add('open');
+    setTimeout(function(){document.getElementById('quoteModalText').focus();},50);
+  }
+
+  function compressImageFile(file, maxSide, quality){
+    return new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onerror=reject;
+      reader.onload=function(){
+        var img=new Image();
+        img.onerror=reject;
+        img.onload=function(){
+          var w=img.width,h=img.height;
+          var scale=Math.min(1, maxSide/Math.max(w,h));
+          w=Math.round(w*scale);h=Math.round(h*scale);
+          var canvas=document.createElement('canvas');
+          canvas.width=w;canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src=reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   function waitForDb(cb,n){n=n||0;if(window.db){cb();return;}if(n>80){renderError('Could not connect.');return;}setTimeout(function(){waitForDb(cb,n+1);},250);}
@@ -490,6 +585,7 @@
       html+='<div class="reply-to-label">Replying to '+esc(c.replyToAuthor)+'</div>';
     }
     html+='<p class="c-text">'+esc(c.text||'')+'</p>';
+    if(c.image) html+='<div class="post-images"><img src="'+esc(c.image)+'" alt=""></div>';
     html+='<div class="c-actions"><button type="button" class="c-action c-reply-btn" data-cid="'+esc(c.id)+'" data-author="'+esc(c.author||'')+'">Reply</button></div>';
     html+='<div class="reply-slot" id="reply-slot-'+esc(c.id)+'"></div>';
     html+='</div>';
@@ -528,7 +624,7 @@
     const byParent=buildCommentTree(list);
     const user=window.auth&&window.auth.currentUser;
     let html='<div class="comments-section" id="comments"><div class="section-label">COMMENTS</div>';
-    if(user)html+='<div class="comment-form"><textarea id="commentInput" placeholder="What do you think?" rows="3"></textarea><div class="comment-form-actions"><button type="button" class="btn btn-primary" id="submitCommentBtn">Post Comment</button></div></div>';
+    if(user)html+='<div class="comment-form"><textarea id="commentInput" placeholder="What do you think?" rows="3"></textarea><div class="img-attach-row"><label class="img-attach-btn" for="commentImageInput">Add image</label><input type="file" id="commentImageInput" accept="image/*" style="display:none;"><div class="img-preview-wrap" id="commentImagePreview"></div></div><div class="comment-form-actions"><button type="button" class="btn btn-primary" id="submitCommentBtn">Post Comment</button></div></div>';
     else html+='<p class="signin-hint"><button type="button" id="commentSignIn">Sign in</button> to leave a comment.</p>';
     const tree=renderCommentBranch(byParent,'root',0);
     html+=tree||'<div class="comments-empty">No comments yet.</div>';
@@ -626,13 +722,19 @@
     const user=window.auth&&window.auth.currentUser;if(!user||!trade)return;
     let comments=normalizeComments(trade.comments);
     const c=comments.find(function(x){return x.id===cid;});if(!c)return;
-    if(c.authorId!==user.uid&&!isMod())return;if(!confirm('Delete this comment?'))return;
-    // remove comment and its descendants
-    const remove=new Set([cid]);
-    let changed=true;
-    while(changed){changed=false;comments.forEach(function(x){if(x.parentId&&remove.has(x.parentId)&&!remove.has(x.id)){remove.add(x.id);changed=true;}});}
-    comments=comments.filter(function(x){return !remove.has(x.id);});
-    try{await window.db.collection(COLLECTION).doc(trade.id).update({comments:comments});}catch(e){alert('Could not delete.');}
+    if(c.authorId!==user.uid&&!isMod())return;
+    openDeleteModal({
+      title:'Delete comment?',
+      message:'This comment will be permanently removed. This cannot be undone.',
+      onConfirm: async function(){
+        let comments2=normalizeComments(trade.comments);
+        const remove=new Set([cid]);
+        let changed=true;
+        while(changed){changed=false;comments2.forEach(function(x){if(x.parentId&&remove.has(x.parentId)&&!remove.has(x.id)){remove.add(x.id);changed=true;}});}
+        comments2=comments2.filter(function(x){return !remove.has(x.id);});
+        await window.db.collection(COLLECTION).doc(trade.id).update({comments:comments2});
+      }
+    });
   }
   async function submitComment(parentId){
     const user=window.auth&&window.auth.currentUser;if(!user||!trade){triggerLogin();return;}
@@ -656,10 +758,12 @@
       authorId:user.uid,
       authorPhoto: (localStorage.getItem('photoURL')||user.photoURL||'') || '',
       text:text.slice(0,2000),
+      image: (window._pendingCommentImage||'') || '',
       createdAt:new Date().toISOString(),
       votes:0,
       voters:{}
     };
+    window._pendingCommentImage = '';
     comments.push(newComment);
     try{
       await window.db.collection(COLLECTION).doc(trade.id).update({comments:comments});
@@ -680,6 +784,7 @@
             commentId: newComment.id,
             text: parentId ? 'replied to a comment' : 'commented on post',
             message: parentId ? 'replied to a comment' : 'commented on post',
+            commentText: String(text).slice(0, 300),
             read: false,
             createdAt: new Date().toISOString(),
             link: '/trade.html?id=' + encodeURIComponent(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
@@ -697,9 +802,10 @@
             commentId: newComment.id,
             parentCommentId: parentId,
             text: 'replied to your comment',
+            message: 'replied to your comment',
+            commentText: String(text).slice(0, 300),
             read: false,
             createdAt: new Date().toISOString(),
-            message: 'replied to your comment',
             link: '/trade.html?id=' + encodeURIComponent(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
           }));
         }
@@ -723,8 +829,14 @@
   }
   async function deleteTrade(){
     const user=window.auth&&window.auth.currentUser;if(!user||!trade)return;
-    if(trade.authorId!==user.uid&&!isMod())return;if(!confirm('Delete this post permanently?'))return;
-    try{await window.db.collection(COLLECTION).doc(trade.id).delete();location.href='/trades.html';}catch(e){alert(e.message||'Delete failed');}
+    if(trade.authorId!==user.uid&&!isMod())return;openDeleteModal({
+      title:'Delete post?',
+      message:'This post will be permanently deleted. This cannot be undone.',
+      onConfirm: async function(){
+        await window.db.collection(COLLECTION).doc(trade.id).delete();
+        location.href='/trades.html';
+      }
+    });
   }
   async function votePoll(pi){
     const user=window.auth&&window.auth.currentUser;if(!user){triggerLogin();return;}
@@ -807,12 +919,41 @@
     let html='<a href="/trades.html" class="back">&larr; BACK TO COMMUNITY TRADES</a>';
     html+='<div class="post-header">';
     html+='<div class="post-header-top">';
+    var isRepostType = (t.postType==='repost'||t.postType==='quote_repost'||t.type==='repost'||t.type==='quote_repost') && t.quotedPostId;
+    if(isRepostType){
+      const meUser = window.auth&&window.auth.currentUser;
+      const isYou = meUser && t.authorId === meUser.uid;
+      const label = (t.postType==='quote_repost'||t.type==='quote_repost')
+        ? ((isYou?'You':'') + (isYou?'':'') )
+        : '';
+      const who = isYou ? 'You' : esc(author);
+      const verb = (t.postType==='quote_repost'||t.type==='quote_repost') ? 'quote reposted' : 'reposted';
+      const orig = esc((t.quotedAuthor||'someone').replace(/^u\//,''));
+      html+='<div class="repost-banner" style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:600;color:#64748b;margin:0 0 0.65rem 0;padding:0 0.15rem;">';
+      html+='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+      html+='<span>'+who+' '+verb+' '+orig+'\'s trade</span></div>';
+    }
     html+='<div class="meta-left"><div class="meta-line"><a class="author-link" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">'+esc(author)+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' <span class="edited">· edited '+esc(timeAgo(t.editedAt))+'</span>':'')+'</div></div>';
     html+='<div class="title-center"><h1 class="title">'+esc(t.title||'Untitled')+'</h1></div>';
+    if(t.image){html+='<div class="post-images" style="margin:0.75rem 0;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;border-radius:12px;"></div>';}
+    // Plain repost: show banner and focus on original (link to original)
+    if((t.postType==='repost'||t.type==='repost') && t.quotedPostId && !t.notes){
+      /* title already set; banner added above in header */
+    }
     if(t.quotedPostId){
       const qUrl='/trade.html?id='+encodeURIComponent(t.quotedPostId);
-      html+='<div class="quote-box"><div class="q-author">'+esc(t.quotedAuthor||'Original post')+'</div>';
-      html+='<a href="'+esc(qUrl)+'" style="color:inherit;text-decoration:none;font-weight:600;">'+esc(t.quotedTitle||'View original')+'</a></div>';
+      const isPlainRepost = (t.postType==='repost'||t.type==='repost') && !(t.notes||'').trim();
+      if(isPlainRepost){
+        // Whole card style: primary content is the original
+        html+='<a class="quote-box quote-box-full" href="'+esc(qUrl)+'" style="display:block;color:inherit;text-decoration:none;border:1px solid var(--border);border-radius:12px;padding:1rem;margin:0.75rem 0;">';
+        html+='<div class="q-author" style="font-weight:700;margin-bottom:0.35rem;">'+esc(t.quotedAuthor||'Original')+'</div>';
+        html+='<div style="font-weight:700;font-size:1.05rem;margin-bottom:0.35rem;">'+esc(t.quotedTitle||'View original trade')+'</div>';
+        html+='<div style="font-size:0.82rem;color:var(--mid);">View original post →</div></a>';
+      } else {
+        html+='<div class="quote-box"><div class="q-author">'+esc(t.quotedAuthor||'Original post')+'</div>';
+        html+='<a href="'+esc(qUrl)+'" style="color:inherit;text-decoration:none;font-weight:600;">'+esc(t.quotedTitle||'View original')+'</a>';
+        if(t.notes) html+='</div>'; else html+='</div>';
+      }
     }
     const me=window.auth&&window.auth.currentUser;
     const showFollow=me&&t.authorId&&me.uid!==t.authorId;
@@ -836,12 +977,10 @@
       '<button type="button" id="btnDown" class="'+(userVote==='down'?'active-down':'')+'" aria-label="Downvote"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button></div>';
     html+='<button type="button" class="e-pill" id="btnComment"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+commentCount+'</button>';
     html+='<button type="button" class="e-pill'+(booked?' booked':'')+'" id="btnBookmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="'+(booked?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>';
+    html+='<button type="button" class="e-pill" id="btnRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Repost</button>';
+    html+='<button type="button" class="e-pill" id="btnQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
     if(ty==='trade'&&t.machineHash){
-      html+='<a class="e-pill" href="'+esc(machineUrl(t))+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Remix</a>';
-      html+='<button type="button" class="e-pill" id="btnQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
-    } else {
-      html+='<button type="button" class="e-pill" id="btnRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Repost</button>';
-      html+='<button type="button" class="e-pill" id="btnQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
+      html+='<a class="e-pill" href="'+esc(machineUrl(t))+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg> Open in Machine</a>';
     }
     html+='<button type="button" class="e-pill" id="btnShare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>';
     html+='</div>';
@@ -854,15 +993,11 @@
     document.getElementById('btnDown').onclick=function(){handleVote('down');};
     document.getElementById('btnComment').onclick=function(){const el=document.getElementById('comments');if(el)el.scrollIntoView({behavior:'smooth'});const input=document.getElementById('commentInput');if(input)input.focus();};
     document.getElementById('btnBookmark').onclick=function(){const on=toggleBookmark(t.id);this.classList.toggle('booked',on);this.querySelector('svg').setAttribute('fill',on?'currentColor':'none');};
-    async function createRepost(isQuote){
+    async function createRepost(isQuote, quoteText){
       const user=window.auth&&window.auth.currentUser;
       if(!user){triggerLogin();return;}
       if(!window.db||!t)return;
-      let quoteText='';
-      if(isQuote){
-        quoteText=prompt('Add your comment for the quote repost (optional):','')||'';
-        quoteText=String(quoteText).slice(0,500);
-      }
+      quoteText = isQuote ? String(quoteText||'').slice(0,500) : '';
       const authorName=user.displayName||(user.email?user.email.split('@')[0]:'fan');
       const voters={}; voters[user.uid]='up';
       const payload={
@@ -910,11 +1045,27 @@
         alert((err&&err.message)||'Could not repost.');
       }
     }
-    setTimeout(function(){try{hydrateCommentPhotos();}catch(e){} if(location.hash&&location.hash.indexOf('comment-')===1){var el=document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});} }, 50);
+    
+    window._pendingCommentImage = '';
+    var cImg = document.getElementById('commentImageInput');
+    if(cImg){
+      cImg.onchange = async function(ev){
+        var file = ev.target.files && ev.target.files[0];
+        if(!file) return;
+        try{
+          var url = await compressImageFile(file, 900, 0.72);
+          if(url.length > 900000) url = await compressImageFile(file, 640, 0.55);
+          window._pendingCommentImage = url;
+          var prev = document.getElementById('commentImagePreview');
+          if(prev) prev.innerHTML = '<img src="'+url+'" alt="">';
+        }catch(e){ alert('Could not process image'); }
+      };
+    }
+setTimeout(function(){try{hydrateCommentPhotos();}catch(e){} if(location.hash&&location.hash.indexOf('comment-')===1){var el=document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});} }, 50);
     const repost=document.getElementById('btnRepost');
     if(repost)repost.onclick=function(){createRepost(false);};
     const quoteBtn=document.getElementById('btnQuoteRepost');
-    if(quoteBtn)quoteBtn.onclick=function(){createRepost(true);};
+    if(quoteBtn)quoteBtn.onclick=function(){openQuoteModal(t);};
     const shareBtn=document.getElementById('btnShare');
     if(shareBtn)shareBtn.onclick=function(){
       const url=location.origin+'/trade.html?id='+encodeURIComponent(t.id);
