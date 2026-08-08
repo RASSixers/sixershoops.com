@@ -439,16 +439,52 @@
     return html;
   }
 
+  var _photoCache = {};
+  async function hydrateCommentPhotos() {
+    if (!window.db) return;
+    const cards = document.querySelectorAll('.comment-card[data-author-id]');
+    const ids = [];
+    cards.forEach(function(el){ var id=el.getAttribute('data-author-id'); if(id && !_photoCache[id]) ids.push(id); });
+    const unique = Array.from(new Set(ids)).slice(0, 40);
+    await Promise.all(unique.map(async function(id){
+      try {
+        const doc = await window.db.collection('users').doc(id).get();
+        if (doc.exists) {
+          const d = doc.data() || {};
+          _photoCache[id] = { photoURL: d.photoURL || '', color: d.avatarColor || '#001a57', name: d.username || '' };
+        } else {
+          _photoCache[id] = { photoURL: '', color: '#001a57', name: '' };
+        }
+      } catch(_) { _photoCache[id] = { photoURL: '', color: '#001a57', name: '' }; }
+    }));
+    cards.forEach(function(el){
+      const id = el.getAttribute('data-author-id');
+      const av = el.querySelector('.c-avatar');
+      if (!av || !id || !_photoCache[id]) return;
+      const p = _photoCache[id];
+      if (p.photoURL) {
+        av.style.background = '#0b0f1a';
+        av.innerHTML = '<img src="'+esc(p.photoURL)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+      }
+    });
+  }
+
   function renderOneComment(c, depth){
     const user=window.auth&&window.auth.currentUser;
     const uv=user&&c.voters?c.voters[user.uid]:null;
     const isAuthor=user&&c.authorId===user.uid;
     const isReply=depth>0;
-    let html='<div class="comment-card'+(isReply?' reply':'')+'" data-cid="'+esc(c.id)+'">';
+    const authorName = String(c.author||'u/fan').replace(/^u\//,'');
+    const initial = (authorName||'U').charAt(0).toUpperCase();
+    const cached = c.authorId && _photoCache[c.authorId];
+    const photo = (cached && cached.photoURL) || c.authorPhoto || '';
+    const avColor = (cached && cached.color) || '#001a57';
+    let html='<div class="comment-card'+(isReply?' reply':'')+'" data-cid="'+esc(c.id)+'" id="comment-'+esc(c.id)+'"'+(c.authorId?(' data-author-id="'+esc(c.authorId)+'"'):'')+'>';
     html+='<div class="c-vote">'+
       '<button type="button" class="c-vote-btn vote-c-up'+(uv==='up'?' active-up':'')+'" data-cid="'+esc(c.id)+'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>'+
       '<span class="c-vote-count">'+(c.votes||0)+'</span>'+
       '<button type="button" class="c-vote-btn vote-c-down'+(uv==='down'?' active-down':'')+'" data-cid="'+esc(c.id)+'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button></div>';
+    html+='<div class="c-avatar" style="width:32px;height:32px;border-radius:50%;background:'+(photo?'#0b0f1a':avColor)+';flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff;margin-right:8px;">'+(photo?'<img src="'+esc(photo)+'" alt="" style="width:100%;height:100%;object-fit:cover;">':esc(initial))+'</div>';
     html+='<div class="c-body"><div class="c-meta"><span class="c-author">'+esc(c.author||'u/fan')+'</span><span>·</span><span>'+esc(timeAgo(c.createdAt))+'</span></div>';
     if(c.replyToAuthor){
       html+='<div class="reply-to-label">Replying to '+esc(c.replyToAuthor)+'</div>';
@@ -618,6 +654,7 @@
       replyToAuthor:replyToAuthor,
       author:'u/'+(user.displayName||(user.email?user.email.split('@')[0]:'fan')),
       authorId:user.uid,
+      authorPhoto: (localStorage.getItem('photoURL')||user.photoURL||'') || '',
       text:text.slice(0,2000),
       createdAt:new Date().toISOString(),
       votes:0,
@@ -641,11 +678,11 @@
             tradeId: trade.id,
             tradeTitle: trade.title || '',
             commentId: newComment.id,
-            text: text.slice(0, 180),
+            text: parentId ? 'replied to a comment' : 'commented on post',
+            message: parentId ? 'replied to a comment' : 'commented on post',
             read: false,
             createdAt: new Date().toISOString(),
-            message: text.slice(0, 180),
-            link: '/trade.html?id=' + encodeURIComponent(trade.id)
+            link: '/trade.html?id=' + encodeURIComponent(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
           }));
         }
         if (parent && parent.authorId && parent.authorId !== user.uid && parent.authorId !== trade.authorId) {
@@ -659,11 +696,11 @@
             tradeTitle: trade.title || '',
             commentId: newComment.id,
             parentCommentId: parentId,
-            text: text.slice(0, 180),
+            text: 'replied to your comment',
             read: false,
             createdAt: new Date().toISOString(),
-            message: text.slice(0, 180),
-            link: '/trade.html?id=' + encodeURIComponent(trade.id)
+            message: 'replied to your comment',
+            link: '/trade.html?id=' + encodeURIComponent(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
           }));
         }
         await Promise.all(batch);
@@ -772,6 +809,11 @@
     html+='<div class="post-header-top">';
     html+='<div class="meta-left"><div class="meta-line"><a class="author-link" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">'+esc(author)+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' <span class="edited">· edited '+esc(timeAgo(t.editedAt))+'</span>':'')+'</div></div>';
     html+='<div class="title-center"><h1 class="title">'+esc(t.title||'Untitled')+'</h1></div>';
+    if(t.quotedPostId){
+      const qUrl='/trade.html?id='+encodeURIComponent(t.quotedPostId);
+      html+='<div class="quote-box"><div class="q-author">'+esc(t.quotedAuthor||'Original post')+'</div>';
+      html+='<a href="'+esc(qUrl)+'" style="color:inherit;text-decoration:none;font-weight:600;">'+esc(t.quotedTitle||'View original')+'</a></div>';
+    }
     const me=window.auth&&window.auth.currentUser;
     const showFollow=me&&t.authorId&&me.uid!==t.authorId;
     html+='<div class="menu-right" style="display:flex;align-items:center;gap:.35rem">';
@@ -796,8 +838,10 @@
     html+='<button type="button" class="e-pill'+(booked?' booked':'')+'" id="btnBookmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="'+(booked?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>';
     if(ty==='trade'&&t.machineHash){
       html+='<a class="e-pill" href="'+esc(machineUrl(t))+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Remix</a>';
+      html+='<button type="button" class="e-pill" id="btnQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
     } else {
       html+='<button type="button" class="e-pill" id="btnRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Repost</button>';
+      html+='<button type="button" class="e-pill" id="btnQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
     }
     html+='<button type="button" class="e-pill" id="btnShare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>';
     html+='</div>';
@@ -810,9 +854,69 @@
     document.getElementById('btnDown').onclick=function(){handleVote('down');};
     document.getElementById('btnComment').onclick=function(){const el=document.getElementById('comments');if(el)el.scrollIntoView({behavior:'smooth'});const input=document.getElementById('commentInput');if(input)input.focus();};
     document.getElementById('btnBookmark').onclick=function(){const on=toggleBookmark(t.id);this.classList.toggle('booked',on);this.querySelector('svg').setAttribute('fill',on?'currentColor':'none');};
+    async function createRepost(isQuote){
+      const user=window.auth&&window.auth.currentUser;
+      if(!user){triggerLogin();return;}
+      if(!window.db||!t)return;
+      let quoteText='';
+      if(isQuote){
+        quoteText=prompt('Add your comment for the quote repost (optional):','')||'';
+        quoteText=String(quoteText).slice(0,500);
+      }
+      const authorName=user.displayName||(user.email?user.email.split('@')[0]:'fan');
+      const voters={}; voters[user.uid]='up';
+      const payload={
+        postType: isQuote ? 'quote_repost' : 'repost',
+        title: (isQuote && quoteText) ? String(quoteText).slice(0,120) : ('Repost: '+(t.title||'Trade')).slice(0,120),
+        summary: quoteText || ('Repost of '+(t.title||'a trade')),
+        notes: quoteText || '',
+        author: 'u/'+authorName,
+        authorId: String(user.uid),
+        teamAbbrs: t.teamAbbrs || [],
+        sides: t.sides || [],
+        machineHash: t.machineHash || null,
+        isValid: t.isValid === true ? true : (t.isValid === false ? false : null),
+        quotedPostId: String(t.id),
+        quotedAuthor: t.author || '',
+        quotedAuthorId: t.authorId || '',
+        quotedTitle: t.title || '',
+        votes: 1,
+        voters: voters,
+        comments: [],
+        createdAt: String(new Date().toISOString())
+      };
+      try{
+        const ref=await window.db.collection(COLLECTION).add(JSON.parse(JSON.stringify(payload)));
+        // Notify original author
+        if(t.authorId && t.authorId !== user.uid){
+          try{
+            await window.db.collection('notifications').add(JSON.parse(JSON.stringify({
+              type: isQuote ? 'quote_repost' : 'repost',
+              recipientId: String(t.authorId),
+              fromUserId: String(user.uid),
+              fromName: authorName,
+              tradeId: String(ref.id),
+              tradeTitle: t.title || '',
+              text: isQuote ? 'quote reposted' : 'reposted',
+              message: isQuote ? 'quote reposted' : 'reposted',
+              link: '/trade.html?id='+encodeURIComponent(ref.id),
+              read: false,
+              createdAt: String(new Date().toISOString())
+            })));
+          }catch(_){}
+        }
+        location.href='/trade.html?id='+encodeURIComponent(ref.id);
+      }catch(err){
+        alert((err&&err.message)||'Could not repost.');
+      }
+    }
+    setTimeout(function(){try{hydrateCommentPhotos();}catch(e){} if(location.hash&&location.hash.indexOf('comment-')===1){var el=document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});} }, 50);
     const repost=document.getElementById('btnRepost');
-    if(repost)repost.onclick=function(){const url=location.origin+'/trade.html?id='+encodeURIComponent(t.id);if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){alert('Link copied - share to repost.');});else prompt('Copy to repost:',url);};
-    document.getElementById('btnShare').onclick=function(){
+    if(repost)repost.onclick=function(){createRepost(false);};
+    const quoteBtn=document.getElementById('btnQuoteRepost');
+    if(quoteBtn)quoteBtn.onclick=function(){createRepost(true);};
+    const shareBtn=document.getElementById('btnShare');
+    if(shareBtn)shareBtn.onclick=function(){
       const url=location.origin+'/trade.html?id='+encodeURIComponent(t.id);
       if(navigator.share){navigator.share({title:t.title||'Trade',url:url}).catch(function(){});}
       else if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){alert('Link copied.');});
