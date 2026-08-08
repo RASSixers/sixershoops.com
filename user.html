@@ -123,6 +123,48 @@
         :root.dark-mode .profile-stats-row { color: rgba(255,255,255,0.55); }
         :root.dark-mode .profile-stats-row strong { color: #ffffff; }
         .profile-stats-dot { opacity: 0.35; }
+        .stat-link { cursor: pointer; border: none; background: none; padding: 0; font: inherit; color: inherit; }
+        .stat-link:hover strong { color: var(--sixers-blue); text-decoration: underline; }
+        .followers-modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9999;
+            align-items: center; justify-content: center; padding: 1rem;
+        }
+        .followers-modal-overlay.open { display: flex; }
+        .followers-modal {
+            background: #fff; border-radius: 12px; width: min(420px, 100%); max-height: 70vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,.2);
+        }
+        :root.dark-mode .followers-modal { background: #12141c; color: #e8eaf0; }
+        .followers-modal-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: .9rem 1rem; border-bottom: 1px solid var(--border-light, #e4e8f0);
+            font-weight: 800; font-size: .95rem;
+        }
+        .followers-modal-list { overflow: auto; padding: .5rem 0; }
+        .followers-row {
+            display: flex; align-items: center; gap: .75rem; padding: .65rem 1rem;
+            text-decoration: none; color: inherit; cursor: pointer;
+        }
+        .followers-row:hover { background: rgba(0,107,182,.06); }
+        .followers-row img, .followers-row .fr-av {
+            width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        }
+        .followers-row .fr-av {
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; color: #fff; font-size: .9rem;
+        }
+        .followers-row .fr-name { font-weight: 700; font-size: .88rem; }
+        .followers-empty { padding: 2rem 1rem; text-align: center; color: var(--mid); font-size: .85rem; }
+        .inbox-view-btn {
+            margin-left: auto; flex-shrink: 0; font-size: .72rem; font-weight: 700;
+            color: var(--sixers-blue); background: rgba(0,107,182,.08); border: 1px solid rgba(0,107,182,.2);
+            border-radius: 6px; padding: .3rem .55rem; cursor: pointer; text-decoration: none;
+            white-space: nowrap;
+        }
+        .inbox-view-btn:hover { background: rgba(0,107,182,.15); }
+        .inbox-item { position: relative; }
+
 
         .profile-actions {
             display: flex; align-items: flex-end; gap: 0.6rem;
@@ -734,9 +776,9 @@
                             <div class="profile-displayname">${esc(ud.username || 'Unknown')}</div>
                             <div class="profile-handle">u/${esc(ud.usernameLower || ud.username || '')}</div>
                             <div class="profile-stats-row">
-                                <strong>${ud.followerCount || 0}</strong> Followers
+                                <button type="button" class="stat-link" id="openFollowersBtn"><strong>${ud.followerCount || 0}</strong> Followers</button>
                                 <span class="profile-stats-dot">·</span>
-                                <strong>${ud.followingCount || 0}</strong> Following
+                                <button type="button" class="stat-link" id="openFollowingBtn"><strong>${ud.followingCount || 0}</strong> Following</button>
                             </div>
                         </div>
                         <div class="profile-actions">
@@ -895,6 +937,9 @@
                 else navigator.clipboard?.writeText(url);
             });
 
+            document.getElementById('openFollowersBtn')?.addEventListener('click', () => openFollowList(ud._uid, 'followers'));
+            document.getElementById('openFollowingBtn')?.addEventListener('click', () => openFollowList(ud._uid, 'following'));
+
             // Load notification badges for own profile
             if (isOwn) loadNotifBadges(ud._uid);
         }
@@ -1044,6 +1089,69 @@
             });
         }
 
+
+        async function openFollowList(uid, mode) {
+            let overlay = document.getElementById('followersModalOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'followersModalOverlay';
+                overlay.className = 'followers-modal-overlay';
+                overlay.innerHTML = `<div class="followers-modal">
+                    <div class="followers-modal-head">
+                        <span id="followersModalTitle">Followers</span>
+                        <button type="button" id="followersModalClose" style="border:none;background:none;font-size:1.4rem;cursor:pointer;line-height:1;">&times;</button>
+                    </div>
+                    <div class="followers-modal-list" id="followersModalList"><div class="followers-empty">Loading…</div></div>
+                </div>`;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+                document.getElementById('followersModalClose').onclick = () => overlay.classList.remove('open');
+            }
+            const title = document.getElementById('followersModalTitle');
+            const list = document.getElementById('followersModalList');
+            title.textContent = mode === 'following' ? 'Following' : 'Followers';
+            list.innerHTML = '<div class="followers-empty">Loading…</div>';
+            overlay.classList.add('open');
+
+            const db = getDB();
+            if (!db || !uid) { list.innerHTML = '<div class="followers-empty">Unavailable</div>'; return; }
+            try {
+                const field = mode === 'following' ? 'followerId' : 'followingId';
+                const snap = await db.collection('follows').where(field, '==', uid).limit(100).get();
+                const rows = snap.docs.map(d => d.data());
+                const otherIds = rows.map(r => mode === 'following' ? r.followingId : r.followerId).filter(Boolean);
+                if (!otherIds.length) {
+                    list.innerHTML = `<div class="followers-empty">No ${mode === 'following' ? 'following' : 'followers'} yet</div>`;
+                    return;
+                }
+                // Load user docs
+                const users = {};
+                await Promise.all(otherIds.slice(0, 50).map(async (id) => {
+                    try {
+                        const doc = await db.collection('users').doc(id).get();
+                        if (doc.exists) users[id] = { id, ...doc.data() };
+                        else users[id] = { id, username: id.slice(0, 8), usernameLower: id.slice(0, 8) };
+                    } catch (_) {
+                        users[id] = { id, username: 'user', usernameLower: 'user' };
+                    }
+                }));
+                list.innerHTML = otherIds.map(id => {
+                    const u = users[id] || { username: 'user', usernameLower: 'user' };
+                    const name = u.username || u.usernameLower || 'user';
+                    const slug = (u.usernameLower || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+                    const photo = u.photoURL || '';
+                    const color = u.avatarColor || colorFor(name);
+                    const av = photo
+                        ? `<img src="${esc(photo)}" alt="">`
+                        : `<div class="fr-av" style="background:${color}">${esc((name||'U').charAt(0).toUpperCase())}</div>`;
+                    return `<a class="followers-row" href="/user/${encodeURIComponent(slug)}">${av}<div class="fr-name">${esc(name)}</div></a>`;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<div class="followers-empty">Could not load list</div>';
+            }
+        }
+
         // ── Inbox ─────────────────────────────────────────────────
         function renderInbox(myUid) {
             const fc = document.getElementById('feedContent');
@@ -1067,17 +1175,19 @@
                 return;
             }
 
-            // Inbox uses notifications (likes/comments/replies/follows) — no separate messages collection required
+            // Inbox = comments & replies only (not likes/follows)
             async function fetchInbox() {
               try {
-                return await db.collection('notifications').where('recipientId','==',myUid).orderBy('createdAt','desc').limit(40).get();
+                return await db.collection('notifications').where('recipientId','==',myUid).limit(80).get();
               } catch (e) {
-                return await db.collection('notifications').where('recipientId','==',myUid).limit(40).get();
+                return await db.collection('notifications').where('recipientId','==',myUid).limit(80).get();
               }
             }
             fetchInbox()
               .then(snap => {
                 let msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const commentTypes = new Set(['comment','post_comment','comment_reply','post_reply_thread','reply']);
+                msgs = msgs.filter(m => commentTypes.has(m.type) || (!m.type && m.text && !/follow|liked/i.test(m.text||m.message||'')));
                 msgs.sort((a,b) => {
                   const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
                   const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
@@ -1085,7 +1195,7 @@
                 });
                 const listEl = document.getElementById('inboxList');
                 if (!listEl) return;
-                if (!msgs.length) { listEl.innerHTML = `<div class="empty-state"><p>No messages yet — likes, comments, and follows show up here.</p></div>`; return; }
+                if (!msgs.length) { listEl.innerHTML = `<div class="empty-state"><p>No comments yet</p></div>`; return; }
 
                 const unread = msgs.filter(m => !m.read).length;
                 const countEl = document.getElementById('inbox-panel-count');
@@ -1095,27 +1205,25 @@
                     const from = msg.fromName || msg.senderName || 'User';
                     const initial = from.charAt(0).toUpperCase();
                     const u = !msg.read;
-                    const preview = msg.message || msg.text || (
-                      msg.type === 'like' ? 'liked your post' :
-                      msg.type === 'follow' ? 'started following you' :
-                      msg.type === 'comment_reply' ? 'replied to your comment' :
-                      'sent you a notification'
-                    );
-                    const href = msg.link || (msg.tradeId ? ('/trade.html?id=' + encodeURIComponent(msg.tradeId)) : '');
+                    const isReply = msg.type === 'comment_reply' || msg.type === 'post_reply_thread';
+                    const label = isReply ? 'replied to your comment' : 'commented on your post';
+                    const href = msg.link || (msg.tradeId ? ('/trade.html?id=' + encodeURIComponent(msg.tradeId) + (msg.commentId ? ('#comment-' + encodeURIComponent(msg.commentId)) : '')) : '');
                     return `
-                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}" data-href="${esc(href)}" style="cursor:${href?'pointer':'default'}">
+                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}" data-href="${esc(href)}">
                         ${u ? '<div class="unread-dot"></div>' : ''}
                         <div class="inbox-item-avatar" style="background:${colorFor(from)}">${initial}</div>
                         <div class="inbox-item-body">
                             <div class="inbox-item-from">${esc(from)}</div>
-                            <div class="inbox-item-preview ${u?'unread-preview':''}">${esc(preview)}${msg.tradeTitle ? ' · ' + esc(msg.tradeTitle) : ''}</div>
+                            <div class="inbox-item-preview ${u?'unread-preview':''}">${esc(label)}${msg.tradeTitle ? ' · ' + esc(msg.tradeTitle) : ''}</div>
                         </div>
                         <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
+                        ${href ? `<a class="inbox-view-btn" href="${esc(href)}">View comment</a>` : ''}
                     </div>`;
                 }).join('');
 
                 listEl.querySelectorAll('.inbox-item').forEach(el => {
-                  el.addEventListener('click', async () => {
+                  el.addEventListener('click', async (e) => {
+                    if (e.target.closest('.inbox-view-btn')) return; // let link work
                     const id = el.getAttribute('data-id');
                     const href = el.getAttribute('data-href');
                     if (id) { try { await db.collection('notifications').doc(id).update({ read: true }); } catch(_) {} }
@@ -1130,7 +1238,7 @@
               });
         }
 
-        window.markAllInboxRead = function() {
+                window.markAllInboxRead = function() {
             document.querySelectorAll('.inbox-item.unread').forEach(el => el.classList.remove('unread'));
             document.querySelectorAll('.unread-dot').forEach(el => el.remove());
             document.querySelectorAll('.inbox-item-preview.unread-preview').forEach(el => el.classList.remove('unread-preview'));
@@ -1189,19 +1297,23 @@
                         ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`
                         : n.type === 'follow'
                         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+                        : n.type === 'repost' || n.type === 'quote_repost'
+                        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>`
                         : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
                     const who = n.fromName || n.senderName || 'Someone';
-                    const action = n.message || n.text || (
-                      n.type === 'like' ? 'liked your post' :
-                      n.type === 'follow' ? 'started following you' :
-                      n.type === 'comment_reply' ? 'replied to your comment' :
-                      'commented on your post'
-                    );
+                    // Short labels only — never show comment body
+                    let action = 'interacted with your post';
+                    if (n.type === 'like') action = 'liked post';
+                    else if (n.type === 'follow') action = 'followed you';
+                    else if (n.type === 'comment_reply' || n.type === 'post_reply_thread') action = 'replied to your comment';
+                    else if (n.type === 'repost') action = 'reposted';
+                    else if (n.type === 'quote_repost') action = 'quote reposted';
+                    else if (n.type === 'comment' || n.type === 'post_comment' || n.type === 'reply') action = 'commented on post';
                     const href = n.link || (n.tradeId ? ('/trade.html?id=' + encodeURIComponent(n.tradeId)) : '');
                     return `
                     <div class="notif-item ${n.read?'':'unread'}" data-id="${esc(n.id)}" data-href="${esc(href)}" style="cursor:${href?'pointer':'default'}">
                         <div class="notif-icon">${iconSvg}</div>
-                        <div class="notif-text"><strong>${esc(who)}</strong> ${esc(action)}${n.tradeTitle ? ' · ' + esc(n.tradeTitle) : ''}</div>
+                        <div class="notif-text"><strong>${esc(who)}</strong> ${esc(action)}</div>
                         <div class="notif-time">${timeAgo(n.createdAt)}</div>
                     </div>`;
                 }).join('');
