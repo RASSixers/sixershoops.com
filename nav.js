@@ -576,7 +576,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             const initial = displayName.charAt(0).toUpperCase();
             
-            const photoURL = user.photoURL || localStorage.getItem('photoURL') || '';
+            // Prefer Firestore-backed photo (localStorage) over Auth photoURL (often empty / blocked)
+            const photoURL = localStorage.getItem('photoURL') || user.photoURL || '';
             const avatarColor = localStorage.getItem('avatarColor') || '#001a57';
             // GitHub Pages has NO rewrites — use real file + query/hash
             // /user.html?u=name  |  #inbox  |  #notifications  |  #settings
@@ -731,45 +732,18 @@ document.addEventListener('DOMContentLoaded', function() {
     let notificationUnsubscribe = null;
 
     function setupNotificationListener(user) {
-        if (notificationUnsubscribe) notificationUnsubscribe();
-        if (!user || !window.db) return;
-
+        // Single badge on profile avatar only (handled by listenNotifications / updateNotifBadge)
+        if (notificationUnsubscribe) { try { notificationUnsubscribe(); } catch(_) {} notificationUnsubscribe = null; }
+        if (!user || !window.db) { updateNotifBadge(0); return; }
         notificationUnsubscribe = window.db.collection('notifications')
             .where('recipientId', '==', user.uid)
-            .where('read', '==', false)
             .onSnapshot(snapshot => {
-                const count = snapshot.size;
-                const badges = document.querySelectorAll('#nav-notif-badge');
-                const counts = document.querySelectorAll('#dropdown-notif-count');
-                const titleCounts = document.querySelectorAll('#inbox-title-count');
-                
-                badges.forEach(b => {
-                    if (count > 0) {
-                        b.classList.remove('hidden');
-                        b.textContent = count;
-                    } else {
-                        b.classList.add('hidden');
-                        b.textContent = '';
-                    }
+                let count = 0;
+                snapshot.forEach(doc => {
+                    const d = doc.data() || {};
+                    if (d.read === false || d.read === undefined) count++;
                 });
-
-                counts.forEach(c => {
-                    if (count > 0) {
-                        c.classList.remove('hidden');
-                        c.textContent = count > 9 ? '9+' : count;
-                    } else {
-                        c.classList.add('hidden');
-                    }
-                });
-
-                titleCounts.forEach(tc => {
-                    if (count > 0) {
-                        tc.classList.remove('hidden');
-                        tc.textContent = `(${count})`;
-                    } else {
-                        tc.classList.add('hidden');
-                    }
-                });
+                updateNotifBadge(count);
             }, err => console.error("Notification listener error:", err));
     }
 
