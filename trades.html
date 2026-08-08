@@ -81,6 +81,17 @@
     .poll-opt-row .inp{margin:0;flex:1}
     .hint{font-size:.75rem;color:#94a3b8;margin:-.5rem 0 1rem;line-height:1.4}
     .err{display:none;color:#dc2626;font-size:.8rem;font-weight:600;margin-bottom:.75rem}
+    .feed-bar{display:none;margin-bottom:1rem;padding:.85rem 1rem;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
+    .feed-bar.show{display:block}
+    .feed-bar-row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.65rem}
+    .feed-search{flex:1;min-width:160px;font-family:Lexend,sans-serif;font-size:.85rem;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;outline:none}
+    .feed-search:focus{border-color:var(--sixers-blue)}
+    .follow-list{max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.25rem}
+    .follow-row{display:flex;align-items:center;gap:.55rem;padding:.4rem .5rem;border-radius:8px;font-size:.85rem;font-weight:600}
+    .follow-row:hover{background:#fff}
+    .follow-row input{accent-color:var(--sixers-blue)}
+    .feed-hint{font-size:.75rem;color:var(--mid);margin:0 0 .5rem}
+
   </style>
 </head>
 <body>
@@ -95,6 +106,7 @@
         <button type="button" class="tab active" data-sort="hot">HOT</button>
         <button type="button" class="tab" data-sort="new">NEW</button>
         <button type="button" class="tab" data-sort="top">TOP</button>
+        <button type="button" class="tab" data-sort="feed">MY FEED</button>
       </div>
       <div style="display:flex;gap:.45rem;flex-wrap:wrap">
         <button type="button" class="btn btn-ghost" id="createPostBtn">CREATE POST</button>
@@ -102,6 +114,15 @@
       </div>
     </div>
 
+    <div class="feed-bar" id="feedBar">
+      <p class="feed-hint">My Feed shows posts from people you follow. Check specific people to narrow it, or leave all checked for everyone you follow.</p>
+      <div class="feed-bar-row">
+        <input class="feed-search" id="feedSearch" placeholder="Search people you follow..." />
+        <button type="button" class="btn btn-ghost" id="feedSelectAll" style="font-size:.75rem;padding:.45rem .8rem">Select all</button>
+        <button type="button" class="btn btn-ghost" id="feedClearAll" style="font-size:.75rem;padding:.45rem .8rem">Clear</button>
+      </div>
+      <div class="follow-list" id="followList"><div style="color:var(--mid);font-size:.85rem;padding:.5rem">Sign in to build your feed.</div></div>
+    </div>
     <div id="feed">
       <div class="skel"></div><div class="skel"></div><div class="skel"></div>
     </div>
@@ -146,6 +167,9 @@
   const COLLECTION = 'community_trades';
   let items = [];
   let sortMode = 'hot';
+  let followingMap = {};
+  let feedFilterIds = null;
+  let followingLoaded = false;
   let postType = 'discussion';
   let unsub = null;
 
@@ -160,6 +184,64 @@
     if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';
     return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   }
+
+  async function loadFollowing(){
+    const user = window.auth && window.auth.currentUser;
+    const list = document.getElementById('followList');
+    if(!user || !window.db){
+      if(list) list.innerHTML = '<div style="color:var(--mid);font-size:.85rem;padding:.5rem">Sign in to build your feed.</div>';
+      followingMap = {};
+      return;
+    }
+    try{
+      const snap = await window.db.collection('follows').where('followerId','==',user.uid).limit(200).get();
+      followingMap = {};
+      snap.docs.forEach(function(d){
+        const x = d.data();
+        if(x.followingId) followingMap[x.followingId] = x.followingName || x.followingId;
+      });
+      items.forEach(function(post){
+        if(post.authorId && followingMap[post.authorId] && post.author) followingMap[post.authorId] = post.author;
+      });
+      renderFollowList();
+      followingLoaded = true;
+    }catch(e){
+      console.error(e);
+      if(list) list.innerHTML = '<div style="color:var(--mid);font-size:.85rem;padding:.5rem">Could not load following list.</div>';
+    }
+  }
+  function renderFollowList(){
+    const list = document.getElementById('followList');
+    if(!list) return;
+    const q = ((document.getElementById('feedSearch')||{}).value || '').toLowerCase().trim();
+    const entries = Object.keys(followingMap).map(function(uid){return {uid:uid, name:followingMap[uid]};});
+    const filtered = q ? entries.filter(function(e){ return String(e.name).toLowerCase().indexOf(q)>=0 || e.uid.indexOf(q)>=0; }) : entries;
+    if(!entries.length){
+      list.innerHTML = '<div style="color:var(--mid);font-size:.85rem;padding:.5rem">You are not following anyone yet. Follow users from their posts or profiles.</div>';
+      return;
+    }
+    if(!filtered.length){
+      list.innerHTML = '<div style="color:var(--mid);font-size:.85rem;padding:.5rem">No matches.</div>';
+      return;
+    }
+    const selected = feedFilterIds || new Set(Object.keys(followingMap));
+    list.innerHTML = filtered.map(function(e){
+      const checked = selected.has(e.uid) ? ' checked' : '';
+      return '<label class="follow-row"><input type="checkbox" data-uid="'+e.uid+'"'+checked+' /> '+esc(e.name)+'</label>';
+    }).join('');
+    list.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+      cb.onchange = function(){
+        const all = new Set(Object.keys(followingMap));
+        const picked = new Set();
+        list.querySelectorAll('input[type=checkbox]:checked').forEach(function(c){ picked.add(c.getAttribute('data-uid')); });
+        let allOn = true;
+        all.forEach(function(uid){ if(!picked.has(uid)) allOn = false; });
+        feedFilterIds = allOn ? null : picked;
+        render();
+      };
+    });
+  }
+
   function triggerLogin(){const b=document.getElementById('navSignInBtn');if(b)b.click();else alert('Please sign in.');}
 
   function sortList(list){
@@ -180,7 +262,14 @@
 
   function render(){
     const feed=document.getElementById('feed');
-    const sorted=sortList(items);
+    const bar=document.getElementById('feedBar');
+    if(bar) bar.classList.toggle('show', sortMode==='feed');
+    let source=items;
+    if(sortMode==='feed'){
+      const uids = feedFilterIds || new Set(Object.keys(followingMap));
+      source = items.filter(function(x){ return x.authorId && uids.has(x.authorId); });
+    }
+    const sorted=sortList(source);
     if(!sorted.length){feed.innerHTML='<div class="empty">No posts yet. Create a discussion or build a trade.</div>';return;}
     const user=window.auth&&window.auth.currentUser;
     feed.innerHTML=sorted.map(function(t){
@@ -197,7 +286,7 @@
         '</div>'+
         '<div class="cbody">'+
           '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span></div>'+
-          '<a href="/trade.html?id='+encodeURIComponent(t.id)+'"><h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2></a>'+
+          '<a href="/trade/'+encodeURIComponent(t.id)+'/'+encodeURIComponent(String(t.title||'trade').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'trade')+'"><h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2></a>'+
           '<div class="cmeta">'+esc(t.author||'u/fan')+' · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
           (t.notes||t.summary?'<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>':'')+
           (chips?'<div class="chips">'+chips+'</div>':'')+
@@ -270,10 +359,17 @@
   document.querySelectorAll('.tab').forEach(function(tab){
     tab.onclick=function(){
       sortMode=tab.getAttribute('data-sort');
-      document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t===tab);});
-      render();
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('active',x===tab);});
+      if(sortMode==='feed') loadFollowing().then(function(){ render(); });
+      else render();
     };
   });
+  const feedSearch = document.getElementById('feedSearch');
+  if(feedSearch) feedSearch.oninput = function(){ renderFollowList(); };
+  const selAll = document.getElementById('feedSelectAll');
+  if(selAll) selAll.onclick = function(){ feedFilterIds = null; renderFollowList(); render(); };
+  const clrAll = document.getElementById('feedClearAll');
+  if(clrAll) clrAll.onclick = function(){ feedFilterIds = new Set(); renderFollowList(); render(); };
 
   document.getElementById('submitCreate').onclick=async function(){
     const user=window.auth&&window.auth.currentUser;
