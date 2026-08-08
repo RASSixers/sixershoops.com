@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>COMMUNITY TRADES — Sixers Hoops</title>
-  <meta name="description" content="Browse, vote, and discuss fan-made NBA trades from the SixersHoops Trade Machine." />
+  <meta name="description" content="Browse, vote, and discuss fan-made NBA trades and community posts." />
   <link rel="icon" href="/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,492 +12,327 @@
   <link rel="stylesheet" href="/navbar-styles.css" />
   <style>
     :root {
-      --navy: #001a57;
-      --sixers-blue: #006BB6;
-      --sixers-red: #ED174C;
-      --cream: #ffffff;
-      --ink: #0d0f1a;
-      --mid: #64748b;
-      --border: #e4e8f0;
-      --bg2: #f8fafc;
-      --vote-up: #ea580c;
-      --vote-down: #2563eb;
+      --navy:#001a57; --sixers-blue:#006BB6; --sixers-red:#ED174C;
+      --cream:#fff; --ink:#0d0f1a; --mid:#64748b; --border:#e4e8f0;
+      --bg2:#f8fafc; --vote-up:#ea580c; --vote-down:#2563eb;
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: 'Lexend', system-ui, sans-serif;
-      background: var(--cream);
-      color: var(--ink);
-      padding-top: 64px;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: inherit; text-decoration: none; }
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;font-family:Lexend,system-ui,sans-serif;background:var(--cream);color:var(--ink);padding-top:64px;min-height:100vh;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:820px;margin:0 auto;padding:2rem 1.25rem 4rem}
+    .page-hero{text-align:center;margin-bottom:1.75rem}
+    .hero-title{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0;text-transform:uppercase}
+    .hero-title span{color:var(--sixers-blue)}
+    .hero-sub{color:var(--mid);font-size:.95rem;margin:.65rem 0 0;font-weight:500}
+    .toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+    .tabs{display:flex;gap:.35rem;background:var(--bg2);padding:.3rem;border-radius:999px;border:1px solid var(--border)}
+    .tab{border:none;background:transparent;font-family:Lexend,sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.06em;padding:.5rem .9rem;border-radius:999px;cursor:pointer;color:var(--mid)}
+    .tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;font-family:Lexend,sans-serif;font-weight:700;font-size:.82rem;padding:.65rem 1.15rem;border-radius:999px;border:none;cursor:pointer}
+    .btn-primary{background:var(--sixers-blue);color:#fff}
+    .btn-primary:hover{background:#0057b0}
+    .btn-ghost{background:#fff;border:1px solid var(--border);color:var(--ink)}
+    .btn-ghost:hover{border-color:var(--sixers-blue);color:var(--sixers-blue)}
 
-    .page-hero {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 3.5rem 1.5rem 2rem;
-      text-align: center;
-    }
-    .hero-title {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      line-height: 1.05;
-      margin: 0;
-      text-transform: uppercase;
-    }
-    .hero-title span { color: var(--sixers-blue); }
-    .hero-sub {
-      margin: 1rem auto 0;
-      max-width: 420px;
-      font-size: 0.95rem;
-      color: var(--mid);
-      line-height: 1.6;
-    }
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      justify-content: center;
-      margin-top: 1.5rem;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      font-family: 'Lexend', sans-serif;
-      font-weight: 700;
-      font-size: 0.85rem;
-      padding: 0.7rem 1.35rem;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
-    }
-    .btn-primary {
-      background: var(--sixers-blue);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(0, 102, 204, 0.25);
-    }
-    .btn-primary:hover { background: #0057b0; transform: translateY(-1px); }
-    .btn-ghost {
-      background: #fff;
-      color: var(--ink);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+    .card{display:flex;gap:.75rem;border:1px solid var(--border);border-radius:14px;padding:.9rem 1rem;margin-bottom:.75rem;background:#fff;transition:border-color .15s,box-shadow .15s}
+    .card:hover{border-color:#c7d2e0;box-shadow:0 6px 18px rgba(15,23,42,.05)}
+    .vcol{display:flex;flex-direction:column;align-items:center;gap:2px;width:32px;flex-shrink:0}
+    .vbtn{width:28px;height:28px;border:none;background:transparent;border-radius:6px;color:#94a3b8;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .vbtn:hover{background:var(--bg2);color:var(--ink)}
+    .vbtn.up{color:var(--vote-up);background:rgba(234,88,12,.1)}
+    .vbtn.dn{color:var(--vote-down);background:rgba(37,99,235,.1)}
+    .vcnt{font-size:.75rem;font-weight:800}
+    .cbody{flex:1;min-width:0}
+    .crow{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin-bottom:.35rem}
+    .type-pill{font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--bg2);color:var(--mid);border:1px solid var(--border)}
+    .type-pill.trade{color:var(--sixers-blue);background:rgba(0,107,182,.08);border-color:rgba(0,107,182,.2)}
+    .type-pill.poll{color:#7c3aed;background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.2)}
+    .type-pill.discussion{color:#0f766e;background:rgba(15,118,110,.08);border-color:rgba(15,118,110,.2)}
+    .ctitle{font-size:1.05rem;font-weight:800;margin:0 0 .35rem;line-height:1.25}
+    .cmeta{font-size:.78rem;color:var(--mid)}
+    .cexcerpt{font-size:.88rem;color:#475569;margin:.4rem 0 0;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
+    .chip{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--bg2);color:#334155}
+    .empty,.state{text-align:center;padding:3rem 1rem;color:var(--mid)}
+    .skel{height:88px;border-radius:12px;margin-bottom:.75rem;background:linear-gradient(90deg,#e4e8f0 25%,#f0f3f8 37%,#e4e8f0 63%);background-size:400% 100%;animation:s 1.4s ease infinite}
+    @keyframes s{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
-    .feed-wrap {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 1.25rem 4rem;
+    /* Create modal */
+    .overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(13,15,26,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
+    .overlay.open{display:flex}
+    .mbox{background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+    .mhead{padding:1.1rem 1.35rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#f6f8fc;position:sticky;top:0}
+    .mhead h3{margin:0;font-size:1rem;font-weight:800;letter-spacing:.04em}
+    .mbody{padding:1.25rem 1.35rem}
+    .mfoot{padding:.9rem 1.35rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.55rem;background:#f8fafc;position:sticky;bottom:0}
+    label.fl{display:block;font-size:.62rem;font-weight:800;letter-spacing:.14em;color:var(--mid);margin:0 0 .4rem}
+    .inp, .ta, .sel{
+      width:100%;box-sizing:border-box;font-family:Lexend,sans-serif;font-size:.9rem;
+      padding:.7rem .9rem;border:1.5px solid var(--border);border-radius:10px;outline:none;margin-bottom:1rem;color:var(--ink);background:#fff
     }
-    .feed-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.25rem;
-    }
-    .filter-tabs {
-      display: flex;
-      gap: 0.25rem;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.3rem;
-    }
-    .filter-tab {
-      font-family: 'Lexend', sans-serif;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--mid);
-      background: transparent;
-      border: none;
-      padding: 0.45rem 0.85rem;
-      border-radius: 7px;
-      cursor: pointer;
-    }
-    .filter-tab.active {
-      background: #fff;
-      color: var(--sixers-blue);
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-    }
-
-    .trade-card {
-      display: flex;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      margin-bottom: 0.85rem;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
-    }
-    .trade-card:hover {
-      border-color: #d2dbeb;
-      box-shadow: 0 8px 24px -12px rgba(0, 26, 87, 0.18);
-      transform: translateY(-1px);
-    }
-
-    .vote-col {
-      width: 52px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      padding: 12px 4px;
-      background: transparent;
-    }
-    .vote-btn {
-      width: 30px; height: 30px;
-      border: none; background: transparent;
-      border-radius: 6px;
-      color: #94a3b8;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, color 0.15s;
-    }
-    .vote-btn:hover { background: var(--bg2); color: var(--ink); }
-    .vote-btn.active-up { color: var(--vote-up) !important; background: rgba(234, 88, 12, 0.1); }
-    .vote-btn.active-down { color: var(--vote-down) !important; background: rgba(37, 99, 235, 0.1); }
-    .vote-count {
-      font-size: 0.72rem;
-      font-weight: 800;
-      color: var(--mid);
-      min-width: 18px;
-      text-align: center;
-    }
-
-    .card-body { flex: 1; min-width: 0; padding: 0.9rem 1rem 0.85rem; }
-    .card-meta {
-      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
-      margin-bottom: 0.35rem;
-      font-size: 0.72rem; color: var(--mid);
-    }
-    .card-meta .author { font-weight: 700; color: #334155; }
-    .valid-pill, .invalid-pill {
-      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 2px 8px; border-radius: 999px;
-    }
-    .valid-pill { background: rgba(22, 163, 74, 0.12); color: #15803d; }
-    .invalid-pill { background: rgba(220, 38, 38, 0.1); color: #b91c1c; }
-    .card-title {
-      font-size: 1.05rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-      line-height: 1.3;
-      margin: 0 0 0.4rem;
-      color: var(--ink);
-    }
-    .team-chips {
-      display: flex; flex-wrap: wrap; gap: 0.35rem;
-      margin-bottom: 0.5rem;
-    }
-    .team-chip {
-      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em;
-      padding: 3px 9px; border-radius: 6px;
-      background: var(--bg2); border: 1px solid var(--border); color: #475569;
-    }
-    .card-excerpt {
-      font-size: 0.82rem; color: var(--mid); line-height: 1.5;
-      margin: 0 0 0.55rem;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .card-actions {
-      display: flex; gap: 0.25rem; flex-wrap: wrap;
-    }
-    .action-btn {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      font-family: 'Lexend', sans-serif;
-      font-size: 0.7rem; font-weight: 600;
-      color: var(--mid);
-      background: transparent; border: none;
-      padding: 0.35rem 0.55rem; border-radius: 6px;
-      cursor: pointer;
-    }
-    .action-btn:hover { background: var(--bg2); color: var(--ink); }
-
-    .empty-state {
-      text-align: center;
-      padding: 3.5rem 1.5rem;
-      color: var(--mid);
-    }
-    .empty-state h2 { color: var(--ink); font-size: 1.2rem; margin: 0 0 0.5rem; }
-    .skel {
-      background: linear-gradient(90deg, #e4e8f0 25%, #f0f3f8 37%, #e4e8f0 63%);
-      background-size: 400% 100%;
-      animation: skel 1.4s ease infinite;
-      border-radius: 12px;
-      height: 110px;
-      margin-bottom: 0.85rem;
-    }
-    @keyframes skel { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
-
-    @media (max-width: 520px) {
-      .page-hero { padding: 2.5rem 1.1rem 1.5rem; }
-      .feed-wrap { padding: 0 0.85rem 3rem; }
-    }
+    .ta{min-height:100px;resize:vertical;line-height:1.55}
+    .inp:focus,.ta:focus,.sel:focus{border-color:var(--sixers-blue);box-shadow:0 0 0 4px rgba(0,102,204,.1)}
+    .type-row{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+    .type-opt{flex:1;min-width:120px;border:1.5px solid var(--border);border-radius:12px;padding:.75rem;cursor:pointer;text-align:center;background:#fff}
+    .type-opt.active{border-color:var(--sixers-blue);background:rgba(0,107,182,.06)}
+    .type-opt strong{display:block;font-size:.8rem;font-weight:800;margin-bottom:.2rem}
+    .type-opt span{font-size:.7rem;color:var(--mid)}
+    .poll-opt-row{display:flex;gap:.4rem;margin-bottom:.45rem}
+    .poll-opt-row .inp{margin:0;flex:1}
+    .hint{font-size:.75rem;color:#94a3b8;margin:-.5rem 0 1rem;line-height:1.4}
+    .err{display:none;color:#dc2626;font-size:.8rem;font-weight:600;margin-bottom:.75rem}
   </style>
 </head>
 <body>
-  <header class="page-hero">
-    <h1 class="hero-title">COMMUNITY <span>TRADES</span></h1>
-    <p class="hero-sub">Fan-built deals from the Trade Machine. Upvote the ones you like, open any trade in the machine, or post your own.</p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="/nba-trade-machine.html">BUILD A TRADE</a>
-      <button type="button" class="btn btn-ghost" id="postTradeBtn">POST A TRADE</button>
-    </div>
-  </header>
+  <main class="wrap">
+    <header class="page-hero">
+      <h1 class="hero-title">COMMUNITY <span>TRADES</span></h1>
+      <p class="hero-sub">Fan trades, discussions, and polls — vote and weigh in.</p>
+    </header>
 
-  <main class="feed-wrap">
-    <div class="feed-toolbar">
-      <div class="filter-tabs" role="tablist">
-        <button type="button" class="filter-tab active" data-filter="hot">HOT</button>
-        <button type="button" class="filter-tab" data-filter="new">NEW</button>
-        <button type="button" class="filter-tab" data-filter="top">TOP</button>
+    <div class="toolbar">
+      <div class="tabs">
+        <button type="button" class="tab active" data-sort="hot">HOT</button>
+        <button type="button" class="tab" data-sort="new">NEW</button>
+        <button type="button" class="tab" data-sort="top">TOP</button>
+      </div>
+      <div style="display:flex;gap:.45rem;flex-wrap:wrap">
+        <button type="button" class="btn btn-ghost" id="createPostBtn">CREATE POST</button>
+        <a class="btn btn-primary" href="/nba-trade-machine.html">BUILD A TRADE</a>
       </div>
     </div>
-    <div id="feedRoot">
-      <div class="skel"></div>
-      <div class="skel"></div>
-      <div class="skel"></div>
+
+    <div id="feed">
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
     </div>
   </main>
 
+  <div class="overlay" id="createModal">
+    <div class="mbox" onclick="event.stopPropagation()">
+      <div class="mhead">
+        <h3>CREATE POST</h3>
+        <button type="button" class="btn btn-ghost" id="closeCreate" style="padding:.3rem .6rem;border:none">&times;</button>
+      </div>
+      <div class="mbody">
+        <label class="fl">POST TYPE</label>
+        <div class="type-row">
+          <div class="type-opt active" data-type="discussion"><strong>DISCUSSION</strong><span>Title + description</span></div>
+          <div class="type-opt" data-type="poll"><strong>POLL</strong><span>Options + end time</span></div>
+        </div>
+        <div class="err" id="createErr"></div>
+        <label class="fl">TITLE</label>
+        <input class="inp" id="cTitle" maxlength="120" placeholder="What's on your mind?" />
+        <label class="fl">DESCRIPTION <span style="font-weight:600;letter-spacing:0;text-transform:none;color:#94a3b8">(optional)</span></label>
+        <textarea class="ta" id="cDesc" maxlength="2000" placeholder="Add context…"></textarea>
+        <div id="pollFields" style="display:none">
+          <label class="fl">POLL OPTIONS</label>
+          <div id="pollOpts"></div>
+          <button type="button" class="btn btn-ghost" id="addPollOpt" style="margin-bottom:1rem;font-size:.75rem;padding:.4rem .8rem">+ Add option</button>
+          <label class="fl">POLL ENDS</label>
+          <input class="inp" id="pollEnd" type="datetime-local" />
+          <p class="hint">Set when voting closes. After that, results stay visible but votes lock.</p>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button type="button" class="btn btn-ghost" id="cancelCreate">Cancel</button>
+        <button type="button" class="btn btn-primary" id="submitCreate">Post</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/nav.js"></script>
   <script>
-(function () {
+(function(){
   const COLLECTION = 'community_trades';
-  const MOD_EMAIL = 'rhatus13@gmail.com';
-  let trades = [];
-  let currentFilter = 'hot';
+  let items = [];
+  let sortMode = 'hot';
+  let postType = 'discussion';
   let unsub = null;
 
-  function waitForDb(cb, tries) {
-    tries = tries || 0;
-    if (window.db) { cb(); return; }
-    if (tries > 80) {
-      document.getElementById('feedRoot').innerHTML =
-        '<div class="empty-state"><h2>Could not connect</h2><p>Refresh and try again.</p></div>';
-      return;
-    }
-    setTimeout(function () { waitForDb(cb, tries + 1); }, 250);
+  function waitForDb(cb,n){n=n||0;if(window.db){cb();return;}if(n>80){document.getElementById('feed').innerHTML='<div class="state">Could not connect.</div>';return;}setTimeout(function(){waitForDb(cb,n+1);},250);}
+  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function timeAgo(ts){
+    if(!ts)return '';
+    const d=ts.toDate?ts.toDate():new Date(ts);
+    if(isNaN(d.getTime()))return '';
+    const s=Math.floor((Date.now()-d.getTime())/1000);
+    if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+    if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  }
+  function triggerLogin(){const b=document.getElementById('navSignInBtn');if(b)b.click();else alert('Please sign in.');}
+
+  function sortList(list){
+    const arr=list.slice();
+    if(sortMode==='new') arr.sort(function(a,b){const ta=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;return tb-ta;});
+    else if(sortMode==='top') arr.sort(function(a,b){return (b.votes||0)-(a.votes||0);});
+    else arr.sort(function(a,b){
+      const ta=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():Date.now();
+      const tb=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():Date.now();
+      const ha=(a.votes||0)/Math.pow((Date.now()-ta)/3600000+2,1.5);
+      const hb=(b.votes||0)/Math.pow((Date.now()-tb)/3600000+2,1.5);
+      return hb-ha;
+    });
+    return arr;
   }
 
-  function escapeHtml(s) {
-    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+  function typeOf(t){return t.postType||t.type||(t.sides?'trade':'discussion');}
 
-  function formatVotes(n) {
-    n = n || 0;
-    if (Math.abs(n) >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-    return String(n);
-  }
-
-  function timeAgo(ts) {
-    if (!ts) return '';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
-    if (sec < 60) return 'just now';
-    if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
-    if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
-    if (sec < 604800) return Math.floor(sec / 86400) + 'd ago';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
-  function isMod() {
-    const u = window.auth && window.auth.currentUser;
-    return u && u.email && u.email.toLowerCase() === MOD_EMAIL.toLowerCase();
-  }
-
-  function triggerLogin() {
-    const btn = document.getElementById('navSignInBtn');
-    if (btn) btn.click();
-    else alert('Please sign in to vote or post.');
-  }
-
-  function sortTrades(list) {
-    const copy = list.slice();
-    if (currentFilter === 'new') {
-      copy.sort(function (a, b) {
-        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
-        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
-        return tb - ta;
-      });
-    } else if (currentFilter === 'top') {
-      copy.sort(function (a, b) { return (b.votes || 0) - (a.votes || 0); });
-    } else {
-      // hot: votes with light recency boost
-      copy.sort(function (a, b) {
-        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
-        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
-        const ageA = (Date.now() - ta) / 3600000;
-        const ageB = (Date.now() - tb) / 3600000;
-        const scoreA = (a.votes || 0) / Math.pow(ageA + 2, 1.3);
-        const scoreB = (b.votes || 0) / Math.pow(ageB + 2, 1.3);
-        return scoreB - scoreA;
-      });
-    }
-    return copy;
-  }
-
-  function machineUrl(trade) {
-    if (trade.machineHash) {
-      return '/nba-trade-machine.html#trade=' + encodeURIComponent(trade.machineHash);
-    }
-    return '/nba-trade-machine.html';
-  }
-
-  function detailUrl(trade) {
-    return '/trade.html?id=' + encodeURIComponent(trade.id);
-  }
-
-  function renderFeed() {
-    const root = document.getElementById('feedRoot');
-    const sorted = sortTrades(trades);
-    if (!sorted.length) {
-      root.innerHTML =
-        '<div class="empty-state">' +
-        '<h2>No trades yet</h2>' +
-        '<p>Be the first — build a deal in the Trade Machine and post it here.</p>' +
-        '<p style="margin-top:1.25rem;"><a class="btn btn-primary" href="/nba-trade-machine.html">Open Trade Machine</a></p>' +
-        '</div>';
-      return;
-    }
-
-    const user = window.auth && window.auth.currentUser;
-    root.innerHTML = sorted.map(function (t) {
-      const userVote = user && t.voters ? t.voters[user.uid] : null;
-      const teams = (t.teamAbbrs || []).map(function (a) {
-        return '<span class="team-chip">' + escapeHtml(a) + '</span>';
-      }).join('');
-      const pill = t.isValid
-        ? '<span class="valid-pill">Appears legal</span>'
-        : (t.isValid === false ? '<span class="invalid-pill">Invalid / restricted</span>' : '');
-      return (
-        '<article class="trade-card" data-id="' + escapeHtml(t.id) + '">' +
-          '<div class="vote-col">' +
-            '<button type="button" class="vote-btn vote-up' + (userVote === 'up' ? ' active-up' : '') + '" aria-label="Upvote">' +
-              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>' +
-            '</button>' +
-            '<span class="vote-count">' + formatVotes(t.votes || 0) + '</span>' +
-            '<button type="button" class="vote-btn vote-down' + (userVote === 'down' ? ' active-down' : '') + '" aria-label="Downvote">' +
-              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>' +
-            '</button>' +
-          '</div>' +
-          '<div class="card-body">' +
-            '<div class="card-meta">' +
-              '<span class="author">' + escapeHtml(t.author || 'u/fan') + '</span>' +
-              '<span>·</span>' +
-              '<span>' + escapeHtml(timeAgo(t.createdAt)) + '</span>' +
-              (pill ? '<span>·</span>' + pill : '') +
-            '</div>' +
-            '<h2 class="card-title">' + escapeHtml(t.title || 'Untitled trade') + '</h2>' +
-            (teams ? '<div class="team-chips">' + teams + '</div>' : '') +
-            (t.summary ? '<p class="card-excerpt">' + escapeHtml(t.summary) + '</p>' : '') +
-            '<div class="card-actions">' +
-              '<button type="button" class="action-btn open-detail">View</button>' +
-              '<a class="action-btn" href="' + escapeHtml(machineUrl(t)) + '" onclick="event.stopPropagation()">Open in Machine</a>' +
-            '</div>' +
-          '</div>' +
-        '</article>'
-      );
+  function render(){
+    const feed=document.getElementById('feed');
+    const sorted=sortList(items);
+    if(!sorted.length){feed.innerHTML='<div class="empty">No posts yet. Create a discussion or build a trade.</div>';return;}
+    const user=window.auth&&window.auth.currentUser;
+    feed.innerHTML=sorted.map(function(t){
+      const uv=user&&t.voters?t.voters[user.uid]:null;
+      const ty=typeOf(t);
+      const pill=ty==='poll'?'poll':(ty==='discussion'?'discussion':'trade');
+      const label=ty==='poll'?'POLL':(ty==='discussion'?'DISCUSSION':'TRADE');
+      const chips=(t.teamAbbrs||[]).map(function(a){return '<span class="chip">'+esc(a)+'</span>';}).join('');
+      return '<article class="card" data-id="'+esc(t.id)+'">'+
+        '<div class="vcol">'+
+          '<button type="button" class="vbtn vote-up'+(uv==='up'?' up':'')+'" data-id="'+esc(t.id)+'" aria-label="Upvote"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>'+
+          '<span class="vcnt">'+(t.votes||0)+'</span>'+
+          '<button type="button" class="vbtn vote-dn'+(uv==='down'?' dn':'')+'" data-id="'+esc(t.id)+'" aria-label="Downvote"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>'+
+        '</div>'+
+        '<div class="cbody">'+
+          '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span></div>'+
+          '<a href="/trade.html?id='+encodeURIComponent(t.id)+'"><h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2></a>'+
+          '<div class="cmeta">'+esc(t.author||'u/fan')+' · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
+          (t.notes||t.summary?'<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>':'')+
+          (chips?'<div class="chips">'+chips+'</div>':'')+
+        '</div></article>';
     }).join('');
 
-    root.querySelectorAll('.trade-card').forEach(function (card) {
-      const id = card.dataset.id;
-      card.addEventListener('click', function (e) {
-        if (e.target.closest('.vote-up')) {
-          e.stopPropagation();
-          handleVote(id, 'up');
-          return;
-        }
-        if (e.target.closest('.vote-down')) {
-          e.stopPropagation();
-          handleVote(id, 'down');
-          return;
-        }
-        if (e.target.closest('a')) return;
-        window.location.href = detailUrl({ id: id });
-      });
-    });
+    feed.querySelectorAll('.vote-up').forEach(function(b){b.onclick=function(e){e.preventDefault();vote(b.getAttribute('data-id'),'up');};});
+    feed.querySelectorAll('.vote-dn').forEach(function(b){b.onclick=function(e){e.preventDefault();vote(b.getAttribute('data-id'),'down');};});
   }
 
-  async function handleVote(id, direction) {
-    const user = window.auth && window.auth.currentUser;
-    if (!user) { triggerLogin(); return; }
-    const t = trades.find(function (x) { return x.id === id; });
-    if (!t || !window.db) return;
+  async function vote(id,dir){
+    const user=window.auth&&window.auth.currentUser;
+    if(!user){triggerLogin();return;}
+    const t=items.find(function(x){return x.id===id;});
+    if(!t)return;
+    const voters=Object.assign({},t.voters||{});
+    let votes=t.votes||0;
+    const cur=voters[user.uid];
+    if(cur===dir){votes+=dir==='up'?-1:1;delete voters[user.uid];}
+    else{if(cur==='up')votes-=1;if(cur==='down')votes+=1;votes+=dir==='up'?1:-1;voters[user.uid]=dir;}
+    try{await window.db.collection(COLLECTION).doc(id).update({votes:votes,voters:voters});}
+    catch(e){alert('Could not save vote.');}
+  }
 
-    const voters = Object.assign({}, t.voters || {});
-    let votes = t.votes || 0;
-    const current = voters[user.uid];
+  // Create modal
+  const modal=document.getElementById('createModal');
+  function openCreate(){
+    const user=window.auth&&window.auth.currentUser;
+    if(!user){triggerLogin();return;}
+    postType='discussion';
+    document.querySelectorAll('.type-opt').forEach(function(el){el.classList.toggle('active',el.getAttribute('data-type')==='discussion');});
+    document.getElementById('pollFields').style.display='none';
+    document.getElementById('cTitle').value='';
+    document.getElementById('cDesc').value='';
+    document.getElementById('createErr').style.display='none';
+    resetPollOpts();
+    const end=document.getElementById('pollEnd');
+    const d=new Date(Date.now()+7*864e5);
+    end.value=d.toISOString().slice(0,16);
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeCreate(){modal.classList.remove('open');document.body.style.overflow='';}
+  function resetPollOpts(){
+    const box=document.getElementById('pollOpts');
+    box.innerHTML='';
+    addOpt('Yes');addOpt('No');
+  }
+  function addOpt(val){
+    const box=document.getElementById('pollOpts');
+    const row=document.createElement('div');
+    row.className='poll-opt-row';
+    row.innerHTML='<input class="inp poll-opt" maxlength="80" placeholder="Option" value="'+esc(val||'')+'" /><button type="button" class="btn btn-ghost rm" style="padding:.5rem .7rem">×</button>';
+    box.appendChild(row);
+    row.querySelector('.rm').onclick=function(){if(box.children.length>2)row.remove();};
+  }
 
-    if (current === direction) {
-      votes += direction === 'up' ? -1 : 1;
-      delete voters[user.uid];
-    } else {
-      if (current === 'up') votes -= 1;
-      if (current === 'down') votes += 1;
-      votes += direction === 'up' ? 1 : -1;
-      voters[user.uid] = direction;
+  document.getElementById('createPostBtn').onclick=openCreate;
+  document.getElementById('closeCreate').onclick=closeCreate;
+  document.getElementById('cancelCreate').onclick=closeCreate;
+  modal.onclick=function(e){if(e.target===modal)closeCreate();};
+  document.getElementById('addPollOpt').onclick=function(){addOpt('');};
+  document.querySelectorAll('.type-opt').forEach(function(el){
+    el.onclick=function(){
+      postType=el.getAttribute('data-type');
+      document.querySelectorAll('.type-opt').forEach(function(x){x.classList.toggle('active',x===el);});
+      document.getElementById('pollFields').style.display=postType==='poll'?'block':'none';
+    };
+  });
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.onclick=function(){
+      sortMode=tab.getAttribute('data-sort');
+      document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t===tab);});
+      render();
+    };
+  });
+
+  document.getElementById('submitCreate').onclick=async function(){
+    const user=window.auth&&window.auth.currentUser;
+    if(!user){triggerLogin();return;}
+    const title=document.getElementById('cTitle').value.trim();
+    const notes=document.getElementById('cDesc').value.trim();
+    const err=document.getElementById('createErr');
+    if(!title){err.style.display='block';err.textContent='A title is required.';return;}
+    let poll=null;
+    if(postType==='poll'){
+      const opts=[].map.call(document.querySelectorAll('.poll-opt'),function(i){return i.value.trim();}).filter(Boolean);
+      if(opts.length<2){err.style.display='block';err.textContent='Polls need at least 2 options.';return;}
+      const endVal=document.getElementById('pollEnd').value;
+      if(!endVal){err.style.display='block';err.textContent='Set a poll end time.';return;}
+      const endAt=new Date(endVal);
+      if(isNaN(endAt.getTime())||endAt.getTime()<=Date.now()){err.style.display='block';err.textContent='End time must be in the future.';return;}
+      poll={options:opts.map(function(t){return {text:t,votes:0,voters:{}};}),endsAt:endAt.toISOString(),closed:false};
     }
+    const authorName=user.displayName||(user.email?user.email.split('@')[0]:'fan');
+    const voters={};voters[user.uid]='up';
+    const doc={
+      postType:postType,
+      title:title.slice(0,120),
+      notes:notes.slice(0,2000),
+      summary:notes.slice(0,400),
+      author:'u/'+authorName,
+      authorId:user.uid,
+      votes:1,
+      voters:voters,
+      comments:[],
+      poll:poll,
+      sides:null,
+      teamAbbrs:[],
+      machineHash:null,
+      isValid:null,
+      createdAt:window.firebase.firestore.FieldValue.serverTimestamp()
+    };
+    const btn=document.getElementById('submitCreate');
+    btn.disabled=true;btn.textContent='Posting…';
+    try{
+      const ref=await window.db.collection(COLLECTION).add(doc);
+      closeCreate();
+      window.location.href='/trade.html?id='+encodeURIComponent(ref.id);
+    }catch(e){
+      console.error(e);
+      err.style.display='block';err.textContent=e.message||'Could not post.';
+      btn.disabled=false;btn.textContent='Post';
+    }
+  };
 
-    try {
-      await window.db.collection(COLLECTION).doc(id).update({ votes: votes, voters: voters });
-    } catch (err) {
+  waitForDb(function(){
+    unsub=window.db.collection(COLLECTION).orderBy('createdAt','desc').limit(80).onSnapshot(function(snap){
+      items=snap.docs.map(function(d){const x=d.data();x.id=d.id;return x;});
+      render();
+    },function(err){
       console.error(err);
-      alert('Could not save vote. Try again.');
-    }
-  }
-
-  function setFilter(f) {
-    currentFilter = f;
-    document.querySelectorAll('.filter-tab').forEach(function (btn) {
-      btn.classList.toggle('active', btn.dataset.filter === f);
+      document.getElementById('feed').innerHTML='<div class="state">Could not load feed.</div>';
     });
-    renderFeed();
-  }
-
-  document.querySelectorAll('.filter-tab').forEach(function (btn) {
-    btn.addEventListener('click', function () { setFilter(btn.dataset.filter); });
   });
-
-  document.getElementById('postTradeBtn').addEventListener('click', function () {
-    // Create post flow: send users to the machine; posting happens after Analyze
-    window.location.href = '/nba-trade-machine.html?post=1';
-  });
-
-  function subscribe() {
-    if (!window.db) return;
-    if (unsub) unsub();
-    unsub = window.db.collection(COLLECTION)
-      .orderBy('createdAt', 'desc')
-      .limit(80)
-      .onSnapshot(function (snap) {
-        trades = snap.docs.map(function (doc) {
-          const d = doc.data();
-          d.id = doc.id;
-          return d;
-        });
-        renderFeed();
-      }, function (err) {
-        console.error(err);
-        document.getElementById('feedRoot').innerHTML =
-          '<div class="empty-state"><h2>Could not load trades</h2><p>' + escapeHtml(err.message) + '</p></div>';
-      });
-  }
-
-  waitForDb(subscribe);
 })();
   </script>
 </body>
