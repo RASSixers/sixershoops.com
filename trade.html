@@ -323,7 +323,7 @@
     '</div>';
   }
 
-  function renderPoll  function renderPoll(t){
+  function renderPoll(t){
     const poll=t.poll;if(!poll||!poll.options)return'';
     const user=window.auth&&window.auth.currentUser;
     const ends=poll.endsAt?new Date(poll.endsAt):null;
@@ -633,7 +633,7 @@
       unsub=window.db.collection(COLLECTION).doc(id).onSnapshot(function(doc){
         if(!doc.exists){renderError('Not found');return;}
         const data=doc.data();data.id=doc.id;render(data);
-      },function(err){console.error(err);renderError('Could not load');});
+      },function(err){console.error(err);renderError('Could not load: '+(err&&err.message?err.message:'unknown error'));});
     });
   }
   load();
