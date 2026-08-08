@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!usernameSlug) {
                 usernameSlug = (displayName || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'user';
             }
-            const profileUrl = '/user.html?u=' + encodeURIComponent(usernameSlug);
+            const profileUrl = '/user/' + encodeURIComponent(usernameSlug);
 
             const avatarInner = photoURL
                 ? `<img src="${photoURL}" alt="${displayName}" class="user-avatar-img">`
@@ -662,8 +662,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
                         <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">Profile</a>
-                        <a class="auth-nav-btn" href="${profileUrl}#inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
-                        <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}#settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
+                        <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
+                        <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
                         ${user.email && user.email.toLowerCase() === 'rhatus13@gmail.com' ? `<a class="auth-nav-btn" href="/moderation.html" style="width:100%;text-align:center;text-decoration:none;display:block;background:#001a57;color:#fff;">Moderation</a>` : ''}
                     </div>
                 `;
@@ -686,22 +686,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     userDropdown.classList.toggle('active');
                 };
             }
-            // GitHub Pages: real file paths only
-            // Profile      -> /user.html?u={name}
-            // Inbox        -> /user.html?u={name}#inbox
-            // Notifications-> /user.html?u={name}#notifications
-            // Settings     -> /user.html?u={name}#settings
+            // Pretty URLs (GitHub Pages 404.html routes these to user.html)
+            // Profile      -> /user/{name}
+            // Inbox        -> /user/{name}/inbox
+            // Notifications-> /user/{name}/notifications
+            // Settings     -> /user/{name}/settings
             if (myProfileLink) myProfileLink.onclick = function(e) {
                 e.preventDefault();
                 window.location.href = profileUrl;
             };
             if (inboxLink) inboxLink.onclick = function(e) {
                 e.preventDefault();
-                window.location.href = profileUrl + '#inbox';
+                window.location.href = profileUrl + '/inbox';
             };
             if (notifsLink) notifsLink.onclick = function(e) {
                 e.preventDefault();
-                window.location.href = profileUrl + '#notifications';
+                window.location.href = profileUrl + '/notifications';
             };
             const modLink = document.getElementById('navModerationLink');
             if (modLink) modLink.onclick = function(e) {
@@ -712,29 +712,29 @@ document.addEventListener('DOMContentLoaded', function() {
             if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = function(e) { e.stopPropagation(); window.auth.signOut(); };
             if (editProfileBtn) editProfileBtn.onclick = function(e) {
                 e.preventDefault();
-                window.location.href = profileUrl + '#settings';
+                window.location.href = profileUrl + '/settings';
             };
             if (mobileEditBtn) mobileEditBtn.onclick = function(e) {
                 e.preventDefault();
-                window.location.href = profileUrl + '#settings';
+                window.location.href = profileUrl + '/settings';
             };
             if (mobileLogout)      mobileLogout.onclick      = () => window.auth.signOut();
             listenNotifications(user);
             syncUsernameSlug(user).then(function(){
                 const newSlug = (localStorage.getItem('usernameLower') || '').trim();
                 if (newSlug) {
-                    const expected = '/user.html?u=' + encodeURIComponent(newSlug);
+                    const expected = '/user/' + encodeURIComponent(newSlug);
                     // Re-bind if slug improved after Firestore load
                     const mp = document.getElementById('navMyProfileLink');
                     const ib = document.getElementById('navInboxLink');
                     const nt = document.getElementById('navNotifsLink');
                     const st = document.getElementById('navSettingsBtn');
                     if (mp) mp.onclick = function(e){ e.preventDefault(); window.location.href = expected; };
-                    if (ib) ib.onclick = function(e){ e.preventDefault(); window.location.href = expected + '#inbox'; };
-                    if (nt) nt.onclick = function(e){ e.preventDefault(); window.location.href = expected + '#notifications'; };
-                    if (st) st.onclick = function(e){ e.preventDefault(); window.location.href = expected + '#settings'; };
+                    if (ib) ib.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/inbox'; };
+                    if (nt) nt.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/notifications'; };
+                    if (st) st.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/settings'; };
                     const mst = document.getElementById('mobileProfileBtn');
-                    if (mst) { mst.setAttribute('href', expected + '#settings'); mst.onclick = function(e){ e.preventDefault(); window.location.href = expected + '#settings'; }; }
+                    if (mst) { mst.setAttribute('href', expected + '/settings'); mst.onclick = function(e){ e.preventDefault(); window.location.href = expected + '/settings'; }; }
                 }
             });
 
