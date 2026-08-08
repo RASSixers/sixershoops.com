@@ -831,31 +831,34 @@
                                 ud.followerCount = Math.max(0, (ud.followerCount || 1) - 1);
                             } catch (_) {}
                         } else {
-                            await ref.set({
-                                followerId: me.uid,
-                                followingId: ud._uid,
-                                followerName: me.displayName || (me.email ? me.email.split('@')[0] : 'fan'),
-                                followingName: ud.username || ud.usernameLower || '',
-                                createdAt: new Date().toISOString()
-                            });
+                            // Plain JSON only — never FieldValue/serverTimestamp (causes "custom Cl object" errors)
+                            const followPayload = {
+                                followerId: String(me.uid),
+                                followingId: String(ud._uid),
+                                followerName: String(me.displayName || (me.email ? me.email.split('@')[0] : 'fan')),
+                                followingName: String(ud.username || ud.usernameLower || ''),
+                                createdAt: String(new Date().toISOString())
+                            };
+                            await ref.set(JSON.parse(JSON.stringify(followPayload)));
                             isFollowing = true;
                             try {
-                                await db.collection('users').doc(ud._uid).set({
-                                    followerCount: (ud.followerCount || 0) + 1
+                                await db.collection('users').doc(String(ud._uid)).set({
+                                    followerCount: Number(ud.followerCount || 0) + 1
                                 }, { merge: true });
-                                ud.followerCount = (ud.followerCount || 0) + 1;
+                                ud.followerCount = Number(ud.followerCount || 0) + 1;
                             } catch (_) {}
                             try {
-                                await db.collection('notifications').add({
-                                    recipientId: ud._uid,
+                                const notifPayload = {
+                                    recipientId: String(ud._uid),
                                     type: 'follow',
-                                    fromUserId: me.uid,
-                                    fromName: me.displayName || 'fan',
+                                    fromUserId: String(me.uid),
+                                    fromName: String(me.displayName || 'fan'),
                                     text: 'started following you',
                                     message: 'started following you',
                                     read: false,
-                                    createdAt: new Date().toISOString()
-                                });
+                                    createdAt: String(new Date().toISOString())
+                                };
+                                await db.collection('notifications').add(JSON.parse(JSON.stringify(notifPayload)));
                             } catch (_) {}
                         }
                         refreshFollowBtn();
@@ -906,7 +909,6 @@
         function loadNotifBadges(uid) {
             const db = getDB();
             if (!db || !uid) return;
-            // Unread activity notifications (likes, comments, replies, follows)
             try {
                 db.collection('notifications')
                   .where('recipientId','==',uid)
@@ -916,24 +918,10 @@
                       const d = doc.data() || {};
                       if (d.read === false || d.read === undefined) count++;
                     });
+                    // Profile page tabs only (nav avatar badge is handled in nav.js)
                     setTabPill('#tab-notif-count', count);
-                  }, () => {});
-            } catch (_) {}
-            // Unread inbox messages (separate red number)
-            try {
-                db.collection('messages')
-                  .where('recipientId','==',uid)
-                  .onSnapshot(snap => {
-                    let count = 0;
-                    snap.forEach(doc => {
-                      const d = doc.data() || {};
-                      if (d.read === false || d.read === undefined) count++;
-                    });
                     setTabPill('#tab-inbox-count', count);
-                  }, err => {
-                    // messages collection may not exist yet — keep pill hidden
-                    console.warn('inbox badge', err && err.message);
-                  });
+                  }, () => {});
             } catch (_) {}
         }
 
@@ -1079,38 +1067,64 @@
                 return;
             }
 
-            db.collection('messages')
-              .where('recipientId','==',myUid)
-              .orderBy('createdAt','desc')
-              .limit(30)
-              .get()
+            // Inbox uses notifications (likes/comments/replies/follows) — no separate messages collection required
+            async function fetchInbox() {
+              try {
+                return await db.collection('notifications').where('recipientId','==',myUid).orderBy('createdAt','desc').limit(40).get();
+              } catch (e) {
+                return await db.collection('notifications').where('recipientId','==',myUid).limit(40).get();
+              }
+            }
+            fetchInbox()
               .then(snap => {
-                const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                let msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                msgs.sort((a,b) => {
+                  const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                  const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                  return tb - ta;
+                });
                 const listEl = document.getElementById('inboxList');
                 if (!listEl) return;
-                if (!msgs.length) { listEl.innerHTML = `<div class="empty-state"><p>No messages yet</p></div>`; return; }
+                if (!msgs.length) { listEl.innerHTML = `<div class="empty-state"><p>No messages yet — likes, comments, and follows show up here.</p></div>`; return; }
 
                 const unread = msgs.filter(m => !m.read).length;
                 const countEl = document.getElementById('inbox-panel-count');
                 if (countEl && unread > 0) { countEl.classList.remove('hidden'); countEl.textContent = unread; }
 
                 listEl.innerHTML = msgs.map(msg => {
-                    const from = msg.senderName || 'User';
+                    const from = msg.fromName || msg.senderName || 'User';
                     const initial = from.charAt(0).toUpperCase();
                     const u = !msg.read;
+                    const preview = msg.message || msg.text || (
+                      msg.type === 'like' ? 'liked your post' :
+                      msg.type === 'follow' ? 'started following you' :
+                      msg.type === 'comment_reply' ? 'replied to your comment' :
+                      'sent you a notification'
+                    );
+                    const href = msg.link || (msg.tradeId ? ('/trade.html?id=' + encodeURIComponent(msg.tradeId)) : '');
                     return `
-                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}">
+                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}" data-href="${esc(href)}" style="cursor:${href?'pointer':'default'}">
                         ${u ? '<div class="unread-dot"></div>' : ''}
                         <div class="inbox-item-avatar" style="background:${colorFor(from)}">${initial}</div>
                         <div class="inbox-item-body">
                             <div class="inbox-item-from">${esc(from)}</div>
-                            <div class="inbox-item-preview ${u?'unread-preview':''}">${esc(msg.preview || msg.text || msg.body || '')}</div>
+                            <div class="inbox-item-preview ${u?'unread-preview':''}">${esc(preview)}${msg.tradeTitle ? ' · ' + esc(msg.tradeTitle) : ''}</div>
                         </div>
                         <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
                     </div>`;
                 }).join('');
+
+                listEl.querySelectorAll('.inbox-item').forEach(el => {
+                  el.addEventListener('click', async () => {
+                    const id = el.getAttribute('data-id');
+                    const href = el.getAttribute('data-href');
+                    if (id) { try { await db.collection('notifications').doc(id).update({ read: true }); } catch(_) {} }
+                    if (href) location.href = href;
+                  });
+                });
               })
-              .catch(() => {
+              .catch((err) => {
+                console.error(err);
                 const listEl = document.getElementById('inboxList');
                 if (listEl) listEl.innerHTML = `<div class="empty-state"><p>Could not load inbox</p></div>`;
               });
@@ -1549,12 +1563,85 @@
 
             try {
                 let ud = null;
-                // Look up by usernameLower
-                const userSnap = await db.collection('users').where('usernameLower','==',slug.toLowerCase()).limit(1).get();
-                if (!userSnap.empty) {
-                    ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
-                } else {
-                    showNotFound(); return;
+                const slugLower = (slug || '').toLowerCase().replace(/^u\//, '');
+                const uidParam = new URLSearchParams(location.search).get('uid');
+
+                // 1) Direct doc id if uid query or slug looks like a Firebase uid
+                if (uidParam) {
+                    try {
+                        const byId = await db.collection('users').doc(uidParam).get();
+                        if (byId.exists) ud = { _uid: byId.id, ...byId.data() };
+                    } catch(_) {}
+                }
+
+                // 2) usernameLower match
+                if (!ud) {
+                    try {
+                        const userSnap = await db.collection('users').where('usernameLower','==',slugLower).limit(1).get();
+                        if (!userSnap.empty) ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
+                    } catch(_) {}
+                }
+
+                // 3) exact username field
+                if (!ud) {
+                    try {
+                        const userSnap = await db.collection('users').where('username','==',slug).limit(1).get();
+                        if (!userSnap.empty) ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
+                    } catch(_) {}
+                }
+
+                // 4) Case-insensitive scan of a limited set of user docs (fallback)
+                if (!ud) {
+                    try {
+                        const all = await db.collection('users').limit(200).get();
+                        const hit = all.docs.find(d => {
+                            const x = d.data() || {};
+                            const a = String(x.usernameLower || '').toLowerCase();
+                            const b = String(x.username || '').toLowerCase();
+                            return a === slugLower || b === slugLower || b.replace(/[^a-z0-9_-]+/g,'-') === slugLower;
+                        });
+                        if (hit) ud = { _uid: hit.id, ...hit.data() };
+                    } catch(_) {}
+                }
+
+                // 5) Infer from community_trades author field if user doc missing
+                if (!ud) {
+                    try {
+                        const trades = await db.collection('community_trades').where('authorId','==',slugLower).limit(1).get();
+                        // slug might be username not uid — search recent trades by author string
+                    } catch(_) {}
+                    try {
+                        const recent = await db.collection('community_trades').orderBy('createdAt','desc').limit(80).get();
+                        for (const d of recent.docs) {
+                            const x = d.data() || {};
+                            const handle = String(x.author || '').replace(/^u\//i,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+                            if (handle === slugLower && x.authorId) {
+                                ud = {
+                                    _uid: x.authorId,
+                                    username: String(x.author || '').replace(/^u\//i,''),
+                                    usernameLower: handle,
+                                    followerCount: 0,
+                                    followingCount: 0
+                                };
+                                // Best-effort create a real users doc so next visit is fast
+                                try {
+                                    await db.collection('users').doc(x.authorId).set({
+                                        username: ud.username,
+                                        usernameLower: handle,
+                                        createdAt: new Date().toISOString()
+                                    }, { merge: true });
+                                } catch(_) {}
+                                break;
+                            }
+                        }
+                    } catch(_) {}
+                }
+
+                if (!ud) { showNotFound(); return; }
+
+                // Normalize usernameLower on the profile if missing
+                if (!ud.usernameLower && ud.username) {
+                    ud.usernameLower = String(ud.username).toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
                 }
 
                 let posts = [], comments = [];
