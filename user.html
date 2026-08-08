@@ -646,7 +646,7 @@
             } catch (e) {}
         })();
 
-        const SUBPAGES = ['inbox','notifications','settings'];
+        const SUBPAGES = ['inbox','notifications','settings','bookmarks'];
 
         function parseRoute() {
             const path = location.pathname.replace(/\/+$/, ''); // trim trailing /
@@ -1159,8 +1159,9 @@
         function renderBookmarks(myUid) {
             const fc = document.getElementById('feedContent');
             if (!fc) return;
-            if (!myUid || myUid !== (gUserData && gUserData._uid)) {
-                fc.innerHTML = `<div class="empty-state"><p>Bookmarks are private.</p></div>`;
+            myUid = myUid || gMyUid || (window.auth && window.auth.currentUser && window.auth.currentUser.uid) || null;
+            if (!myUid || !gUserData || myUid !== gUserData._uid) {
+                fc.innerHTML = `<div class="empty-state"><p>Bookmarks are private. Sign in to view yours.</p></div>`;
                 return;
             }
             fc.innerHTML = `
@@ -1653,6 +1654,8 @@
 
             if (currentSubPage === 'inbox') {
                 renderInbox(myUid);
+            } else if (currentSubPage === 'bookmarks') {
+                renderBookmarks(myUid);
             } else if (currentSubPage === 'notifications') {
                 renderNotifications(myUid);
             } else if (currentSubPage === 'settings') {
