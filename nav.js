@@ -327,7 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="auth-form-group">
-                        <label class="auth-label">Avatar Color</label>
                         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;">
                             <div class="nav-avatar-opt" data-color="#001a57" data-label="Navy" style="width:34px;height:34px;border-radius:50%;background:#001a57;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Navy">S</div>
                             <div class="nav-avatar-opt" data-color="#006BB6" data-label="Blue" style="width:34px;height:34px;border-radius:50%;background:#006BB6;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;color:white;flex-shrink:0;transition:border-color 0.15s,transform 0.15s;" title="Blue">S</div>
