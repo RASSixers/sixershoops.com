@@ -2485,11 +2485,14 @@
                     onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'"></textarea>
                 <div id="postTradeError" style="display:none;margin-top:.75rem;font-family:Lexend,sans-serif;font-size:.8rem;color:#dc2626;font-weight:600;"></div>
             </div>
-            <div class="modal-footer" style="justify-content:flex-end;gap:.6rem;">
-                <button type="button" class="btn-ghost" onclick="closePostTradeModal()">Cancel</button>
-                <button type="button" class="btn-analyze" id="confirmPostTradeBtn" onclick="confirmPostTrade()" style="font-size:.85rem;padding:.65rem 1.4rem;">
-                    Post Trade
-                </button>
+            <div class="modal-footer" style="justify-content:space-between;gap:.6rem;flex-wrap:wrap;">
+                <button type="button" class="btn-ghost" id="saveDraftTradeBtn" onclick="saveTradeDraft()" style="margin-right:auto;">Save Draft</button>
+                <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+                    <button type="button" class="btn-ghost" onclick="closePostTradeModal()">Cancel</button>
+                    <button type="button" class="btn-analyze" id="confirmPostTradeBtn" onclick="confirmPostTrade()" style="font-size:.85rem;padding:.65rem 1.4rem;">
+                        Post Trade
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -4112,15 +4115,70 @@
         document.body.style.overflow = '';
     }
 
+    var TM_DRAFT_KEY = 'sixershoops_trade_post_draft_v1';
+
+    function getTradeDraft() {
+        try {
+            var raw = localStorage.getItem(TM_DRAFT_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+    }
+
+    function saveTradeDraft() {
+        var titleEl = document.getElementById('postTradeTitle');
+        var descEl = document.getElementById('postTradeDesc');
+        var title = titleEl ? titleEl.value.trim() : '';
+        var notes = descEl ? descEl.value.trim() : '';
+        var payload = {
+            title: title,
+            notes: notes,
+            machineHash: '',
+            updatedAt: Date.now()
+        };
+        try {
+            payload.machineHash = btoa(unescape(encodeURIComponent(JSON.stringify(serializeTradeState()))));
+        } catch (e) {
+            try { payload.machineHash = btoa(JSON.stringify(serializeTradeState())); } catch (e2) {}
+        }
+        try {
+            localStorage.setItem(TM_DRAFT_KEY, JSON.stringify(payload));
+        } catch (e) {
+            alert('Could not save draft in this browser.');
+            return;
+        }
+        var errEl = document.getElementById('postTradeError');
+        if (errEl) {
+            errEl.style.display = 'block';
+            errEl.style.color = '#15803d';
+            errEl.textContent = 'Draft saved. You can reopen Post to Community anytime to keep editing the title/description.';
+            setTimeout(function () {
+                if (errEl.textContent.indexOf('Draft saved') === 0) errEl.style.display = 'none';
+            }, 2800);
+        } else {
+            alert('Draft saved.');
+        }
+    }
+
+    function clearTradeDraft() {
+        try { localStorage.removeItem(TM_DRAFT_KEY); } catch (e) {}
+    }
+
     function openPostTradeModal(defaultTitle) {
         var m = document.getElementById('postTradeModal');
         if (!m) return;
         var titleEl = document.getElementById('postTradeTitle');
         var descEl = document.getElementById('postTradeDesc');
         var errEl = document.getElementById('postTradeError');
-        if (titleEl) titleEl.value = defaultTitle || '';
-        if (descEl) descEl.value = '';
-        if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+        var draft = getTradeDraft();
+        var titleVal = defaultTitle || '';
+        var notesVal = '';
+        if (draft && (draft.title || draft.notes)) {
+            if (draft.title) titleVal = draft.title;
+            if (draft.notes) notesVal = draft.notes;
+        }
+        if (titleEl) titleEl.value = titleVal;
+        if (descEl) descEl.value = notesVal;
+        if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; errEl.style.color = '#dc2626'; }
         m.style.display = 'flex';
         m.classList.add('open');
         document.body.style.overflow = 'hidden';
