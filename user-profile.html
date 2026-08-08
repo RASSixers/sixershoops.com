@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile - Sixers Hoops</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/navbar-styles.css" />
+  <style>
+    :root{--navy:#001a57;--sixers-blue:#006BB6;--cream:#fff;--ink:#0d0f1a;--mid:#64748b;--border:#e4e8f0;--bg2:#f8fafc}
+    body{margin:0;font-family:Lexend,system-ui,sans-serif;background:var(--cream);color:var(--ink);padding-top:64px}
+    .wrap{max-width:760px;margin:0 auto;padding:2rem 1.2rem 4rem}
+    .hero{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-bottom:1.5rem}
+    .avatar{width:72px;height:72px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.6rem}
+    .name{font-size:1.5rem;font-weight:800;margin:0}
+    .stats{display:flex;gap:1rem;flex-wrap:wrap;font-size:.85rem;color:var(--mid);margin-top:.35rem}
+    .stats button,.stats a{background:none;border:none;font-family:Lexend,sans-serif;font-weight:700;color:var(--ink);cursor:pointer;padding:0;font-size:.85rem}
+    .stats button:hover,.stats a:hover{color:var(--sixers-blue)}
+    .follow-btn{margin-left:auto;font-family:Lexend,sans-serif;font-weight:700;font-size:.82rem;padding:.55rem 1.1rem;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer}
+    .follow-btn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .tabs{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:1rem}
+    .tab{border:1px solid var(--border);background:#fff;font-family:Lexend,sans-serif;font-weight:700;font-size:.75rem;padding:.5rem .9rem;border-radius:999px;cursor:pointer;color:var(--mid)}
+    .tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .card{border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:.65rem;background:#fff}
+    .card a{font-weight:800;color:var(--ink);text-decoration:none}
+    .card a:hover{color:var(--sixers-blue)}
+    .meta{font-size:.78rem;color:var(--mid);margin-top:.25rem}
+    .empty{text-align:center;padding:2rem;color:var(--mid)}
+    .overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:1rem}
+    .overlay.open{display:flex}
+    .mbox{background:#fff;border-radius:14px;width:100%;max-width:400px;max-height:80vh;overflow:auto;padding:1.1rem}
+    .mbox h3{margin:0 0 .75rem;font-size:1rem}
+    .person{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-bottom:1px solid var(--border);font-weight:600;font-size:.9rem}
+    .person a{color:var(--ink);text-decoration:none}
+  </style>
+</head>
+<body>
+  <main class="wrap" id="root"><p class="empty">Loading profile...</p></main>
+  <div class="overlay" id="listModal"><div class="mbox"><h3 id="listTitle">People</h3><div id="listBody"></div></div></div>
+  <script src="/nav.js"></script>
+  <script>
+(function(){
+  const MOD='rhatus13@gmail.com';
+  let profileUid=null, profileName='', tab='posts', items={posts:[],comments:[],likes:[]};
+
+  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function qs(k){return new URLSearchParams(location.search).get(k);}
+  function wait(cb,n){n=n||0;if(window.db&&window.auth){cb();return;}if(n>80)return;setTimeout(function(){wait(cb,n+1);},250);}
+  function slugFromPath(){
+    const m=location.pathname.match(/^\/user\/([^\/]+)/);
+    return m?decodeURIComponent(m[1]):null;
+  }
+  function timeAgo(ts){
+    if(!ts)return '';
+    const d=ts.toDate?ts.toDate():new Date(ts);
+    const s=Math.floor((Date.now()-d.getTime())/1000);
+    if(s<3600)return Math.max(1,Math.floor(s/60))+'m ago';
+    if(s<86400)return Math.floor(s/3600)+'h ago';
+    if(s<604800)return Math.floor(s/86400)+'d ago';
+    return d.toLocaleDateString();
+  }
+  function prettyTrade(id,title){
+    const slug=String(title||'trade').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'trade';
+    return '/trade/'+encodeURIComponent(id)+'/'+encodeURIComponent(slug);
+  }
+
+  async function resolveUser(){
+    profileUid = qs('uid');
+    const nameQ = qs('name');
+    if(nameQ) profileName = nameQ;
+    const slug = slugFromPath() || qs('slug');
+    if(profileUid) return;
+    if(slug && window.db){
+      try{
+        const snap = await window.db.collection('users').where('usernameLower','==',slug.toLowerCase()).limit(1).get();
+        if(!snap.empty){ profileUid = snap.docs[0].id; profileName = snap.docs[0].data().username || slug; return; }
+      }catch(e){}
+      // fallback: match author string from posts
+      profileName = slug;
+    }
+  }
+
+  async function loadData(){
+    if(!window.db)return;
+    const col = window.db.collection('community_trades');
+    const postsSnap = profileUid
+      ? await col.where('authorId','==',profileUid).orderBy('createdAt','desc').limit(40).get().catch(function(){return {docs:[]};})
+      : {docs:[]};
+    items.posts = postsSnap.docs.map(function(d){const x=d.data();x.id=d.id;return x;});
+    if(!profileName && items.posts[0]) profileName = (items.posts[0].author||'').replace(/^u\//,'');
+
+    // comments & likes: scan recent feed (client-side filter) for this author
+    const recent = await col.orderBy('createdAt','desc').limit(80).get().catch(function(){return {docs:[]};});
+    items.comments=[]; items.likes=[];
+    recent.docs.forEach(function(d){
+      const t=d.data(); t.id=d.id;
+      (t.comments||[]).forEach(function(c){
+        if(profileUid && c.authorId===profileUid) items.comments.push({trade:t, comment:c});
+      });
+      if(profileUid && t.voters && t.voters[profileUid]==='up') items.likes.push(t);
+    });
+  }
+
+  async function counts(){
+    if(!window.db||!profileUid) return {followers:0,following:0};
+    const [a,b] = await Promise.all([
+      window.db.collection('follows').where('followingId','==',profileUid).get().catch(function(){return {size:0};}),
+      window.db.collection('follows').where('followerId','==',profileUid).get().catch(function(){return {size:0};})
+    ]);
+    return {followers:a.size||0, following:b.size||0};
+  }
+
+  async function toggleFollow(btn){
+    const me=window.auth.currentUser;
+    if(!me){const s=document.getElementById('navSignInBtn');if(s)s.click();return;}
+    if(!profileUid||me.uid===profileUid)return;
+    const id=me.uid+'_'+profileUid;
+    const ref=window.db.collection('follows').doc(id);
+    const snap=await ref.get();
+    if(snap.exists){ await ref.delete(); btn.textContent='Follow'; btn.classList.remove('on'); }
+    else {
+      await ref.set({followerId:me.uid,followingId:profileUid,followerName:me.displayName||'fan',followingName:profileName||'',createdAt:window.firebase.firestore.FieldValue.serverTimestamp()});
+      btn.textContent='Following'; btn.classList.add('on');
+    }
+  }
+
+  async function showList(kind){
+    if(!profileUid)return;
+    const title=document.getElementById('listTitle');
+    const body=document.getElementById('listBody');
+    title.textContent = kind==='followers'?'Followers':'Following';
+    body.innerHTML='Loading...';
+    document.getElementById('listModal').classList.add('open');
+    const field = kind==='followers'?'followingId':'followerId';
+    const other = kind==='followers'?'followerId':'followingId';
+    const nameField = kind==='followers'?'followerName':'followingName';
+    try{
+      const snap=await window.db.collection('follows').where(field,'==',profileUid).limit(100).get();
+      if(snap.empty){ body.innerHTML='<div class="empty">None yet.</div>'; return; }
+      body.innerHTML = snap.docs.map(function(d){
+        const x=d.data();
+        const uid=x[other];
+        const name=x[nameField]||uid;
+        const slug=String(name).replace(/^u\//,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+        return '<div class="person"><a href="/user/'+encodeURIComponent(slug)+'?uid='+encodeURIComponent(uid)+'">u/'+esc(String(name).replace(/^u\//,''))+'</a></div>';
+      }).join('');
+    }catch(e){ body.innerHTML='Could not load.'; }
+  }
+
+  function renderBookmarks(){
+    const me=window.auth&&window.auth.currentUser;
+    if(!me||me.uid!==profileUid) return '<div class="empty">Bookmarks are private.</div>';
+    let ids=[];
+    try{ ids=JSON.parse(localStorage.getItem('sixershoops_bookmarked_trades')||'[]'); }catch(e){}
+    if(!ids.length) return '<div class="empty">No bookmarks yet.</div>';
+    return ids.map(function(id){
+      return '<div class="card"><a href="/trade/'+encodeURIComponent(id)+'/bookmarked">Saved trade</a><div class="meta">Bookmarked on this device</div></div>';
+    }).join('');
+  }
+
+  function render(){
+    const me=window.auth&&window.auth.currentUser;
+    const isSelf=me&&profileUid&&me.uid===profileUid;
+    const initial=(profileName||'U').charAt(0).toUpperCase();
+    counts().then(function(c){
+      let html='<div class="hero"><div class="avatar">'+esc(initial)+'</div><div style="flex:1;min-width:180px">';
+      html+='<h1 class="name">u/'+esc(profileName||'user')+'</h1>';
+      html+='<div class="stats"><button type="button" id="btnFollowers"><strong>'+c.followers+'</strong> followers</button>';
+      html+='<button type="button" id="btnFollowing"><strong>'+c.following+'</strong> following</button></div></div>';
+      if(me&&profileUid&&!isSelf) html+='<button type="button" class="follow-btn" id="followBtn">Follow</button>';
+      html+='</div>';
+      html+='<div class="tabs">';
+      ['posts','comments','likes'].forEach(function(k){
+        html+='<button type="button" class="tab'+(tab===k?' active':'')+'" data-tab="'+k+'">'+k.toUpperCase()+'</button>';
+      });
+      if(isSelf) html+='<button type="button" class="tab'+(tab==='bookmarks'?' active':'')+'" data-tab="bookmarks">BOOKMARKS</button>';
+      html+='</div><div id="tabBody"></div>';
+      document.getElementById('root').innerHTML=html;
+      document.getElementById('btnFollowers').onclick=function(){showList('followers');};
+      document.getElementById('btnFollowing').onclick=function(){showList('following');};
+      const fb=document.getElementById('followBtn');
+      if(fb){
+        window.db.collection('follows').doc(me.uid+'_'+profileUid).get().then(function(s){
+          if(s.exists){fb.textContent='Following';fb.classList.add('on');}
+        });
+        fb.onclick=function(){toggleFollow(fb);};
+      }
+      document.querySelectorAll('.tab').forEach(function(b){
+        b.onclick=function(){tab=b.getAttribute('data-tab');render();};
+      });
+      let body='';
+      if(tab==='posts'){
+        body = items.posts.length? items.posts.map(function(t){
+          return '<div class="card"><a href="'+prettyTrade(t.id,t.title)+'">'+esc(t.title||'Untitled')+'</a><div class="meta">'+esc(timeAgo(t.createdAt))+' · '+(t.votes||0)+' votes</div></div>';
+        }).join('') : '<div class="empty">No posts yet.</div>';
+      } else if(tab==='comments'){
+        body = items.comments.length? items.comments.map(function(x){
+          return '<div class="card"><div>'+esc(x.comment.text||'')+'</div><div class="meta">on <a href="'+prettyTrade(x.trade.id,x.trade.title)+'">'+esc(x.trade.title||'post')+'</a> · '+esc(timeAgo(x.comment.createdAt))+'</div></div>';
+        }).join('') : '<div class="empty">No comments yet.</div>';
+      } else if(tab==='likes'){
+        body = items.likes.length? items.likes.map(function(t){
+          return '<div class="card"><a href="'+prettyTrade(t.id,t.title)+'">'+esc(t.title||'Untitled')+'</a><div class="meta">Upvoted · '+esc(t.author||'')+'</div></div>';
+        }).join('') : '<div class="empty">No upvotes yet.</div>';
+      } else if(tab==='bookmarks'){
+        body = renderBookmarks();
+      }
+      document.getElementById('tabBody').innerHTML=body;
+    });
+  }
+
+  document.getElementById('listModal').onclick=function(e){if(e.target.id==='listModal')e.target.classList.remove('open');};
+
+  wait(async function(){
+    await resolveUser();
+    if(!profileUid && !profileName){
+      document.getElementById('root').innerHTML='<div class="empty">User not found.</div>';
+      return;
+    }
+    document.title = (profileName||'Profile')+' - Sixers Hoops';
+    await loadData();
+    render();
+    if(window.auth){
+      window.auth.onAuthStateChanged(function(){ render(); });
+    }
+  });
+})();
+  </script>
+</body>
+</html>
