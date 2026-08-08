@@ -2449,7 +2449,7 @@
                     </button>
                     <button class="btn-analyze" id="postToCommunityBtn" onclick="postToCommunity()" style="font-size:.82rem;padding:.6rem 1.3rem;box-shadow:none;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        Post to Trades
+                        Post to Community
                     </button>
                     <button class="btn-ghost" onclick="closeModal()" style="margin-left:auto;">Close</button>
                 </div>
@@ -4078,16 +4078,6 @@
                 return;
             }
 
-            if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
-
-            try {
-                await waitForDbReady(12000);
-            } catch (e) {
-                alert(e.message || 'Database not ready.');
-                if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
-                return;
-            }
-
             var active = teams.filter(function (t) {
                 return t.abbr && TEAM_DATA[t.abbr] && (
                     (t.selectedPlayers && t.selectedPlayers.length) ||
@@ -4099,19 +4089,34 @@
             });
             if (active.length < 2) {
                 alert('Select at least two teams with assets before posting.');
-                if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
                 return;
             }
 
+            // Default title from modal name field or team abbreviations
             var nameInput = document.getElementById('modalTradeName');
-            var title = (nameInput && nameInput.value.trim()) || '';
-            if (!title) title = active.map(function (t) { return t.abbr; }).join(' / ') + ' Trade';
+            var defaultTitle = (nameInput && nameInput.value.trim()) || (active.map(function (t) { return t.abbr; }).join(' / ') + ' Trade');
 
-            var notes = '';
+            var title = window.prompt('Title for this trade:', defaultTitle);
+            if (title === null) return; // cancelled
+            title = String(title).trim();
+            if (!title) {
+                alert('A title is required.');
+                return;
+            }
+
+            var notes = window.prompt('Optional description (leave blank to skip):', '') || '';
+            if (notes === null) notes = '';
+            notes = String(notes).trim();
+
+            if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+
             try {
-                var n = window.prompt('Optional notes for the post (or leave blank):', '');
-                if (n != null) notes = String(n);
-            } catch (e) { notes = ''; }
+                await waitForDbReady(12000);
+            } catch (e) {
+                alert(e.message || 'Database not ready.');
+                if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
+                return;
+            }
 
             var isTwoTeam = active.length === 2;
             var sides = active.map(function (t) {
@@ -4153,13 +4158,12 @@
                 var gets = (s.receiving || []).map(function (a) { return a.name; }).slice(0, 3).join(', ');
                 return s.abbr + (gets ? ' gets ' + gets : ' (no players in)');
             });
-            var summary = summaryParts.join(' · ');
+            var summary = notes || summaryParts.join(' · ');
 
             var machineHash = '';
             try {
                 machineHash = btoa(unescape(encodeURIComponent(JSON.stringify(serializeTradeState()))));
             } catch (e) {
-                console.warn('encode trade state failed', e);
                 try { machineHash = btoa(JSON.stringify(serializeTradeState())); } catch (e2) { machineHash = ''; }
             }
 
@@ -4187,18 +4191,20 @@
 
             var ref = await window.db.collection('community_trades').add(doc);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
-            // Always send user to the feed/detail area
             window.location.href = '/trade.html?id=' + encodeURIComponent(ref.id);
         } catch (err) {
             console.error('postToCommunity error', err);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
             var msg = (err && err.message) ? err.message : String(err);
             if (/permission|insufficient|Missing or insufficient/i.test(msg)) {
-                msg = 'Permission denied writing community_trades. Update Firestore rules to allow authenticated creates.';
+                msg = 'Permission denied writing community_trades. Publish the updated Firestore rules that allow authenticated creates.';
             }
             alert('Could not post trade: ' + msg);
         }
     }
+
+
+
 
 
 
