@@ -22,8 +22,6 @@
       --bg2: #f8fafc;
       --vote-up: #ea580c;
       --vote-down: #2563eb;
-      --green: #16a34a;
-      --red: #dc2626;
     }
     *, *::before, *::after { box-sizing: border-box; }
     body {
@@ -74,7 +72,7 @@
 
     .vote-bar {
       display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-      margin: 1.5rem 0 1.75rem;
+      margin: 1.5rem 0 1.25rem;
       padding: 0.75rem 1rem;
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -82,9 +80,8 @@
     }
     .vote-btn {
       width: 36px; height: 36px;
-      border: none; background: #fff;
+      border: 1px solid var(--border); background: #fff;
       border-radius: 8px;
-      border: 1px solid var(--border);
       color: #94a3b8;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -124,6 +121,11 @@
       background: #fff; color: var(--ink); border: 1px solid var(--border);
     }
     .btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+    .btn-danger {
+      background: #fff; color: var(--sixers-red);
+      border: 1px solid rgba(237, 23, 76, 0.25);
+    }
+    .btn-danger:hover { background: rgba(237, 23, 76, 0.06); }
 
     .section-label {
       font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em;
@@ -154,9 +156,7 @@
       border-bottom: 1px solid var(--border);
       font-weight: 800; font-size: 0.9rem;
     }
-    .team-dot {
-      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-    }
+    .team-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .team-card-body { padding: 0.75rem 1rem 1rem; }
     .asset-group-label {
       font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em;
@@ -178,6 +178,67 @@
       font-size: 1rem; line-height: 1.7; color: var(--ink);
       white-space: pre-wrap;
       margin: 0 0 2rem;
+    }
+
+    .comments-section { margin-top: 2.25rem; }
+    .comment-form {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+    .comment-form textarea {
+      width: 100%; box-sizing: border-box;
+      font-family: 'Lexend', sans-serif;
+      font-size: 0.9rem; line-height: 1.55;
+      padding: 0.75rem 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      resize: vertical; min-height: 88px;
+      outline: none; color: var(--ink); background: #fff;
+    }
+    .comment-form textarea:focus {
+      border-color: var(--sixers-blue);
+      box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+    }
+    .comment-form-actions {
+      display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.65rem;
+    }
+    .comment-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.65rem;
+      background: #fff;
+    }
+    .comment-meta {
+      display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;
+      font-size: 0.75rem; color: var(--mid); margin-bottom: 0.4rem;
+    }
+    .comment-author { font-weight: 700; color: #334155; }
+    .comment-text {
+      font-size: 0.92rem; line-height: 1.55; color: var(--ink);
+      white-space: pre-wrap; margin: 0;
+    }
+    .comment-del {
+      margin-left: auto;
+      background: none; border: none;
+      font-family: 'Lexend', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      color: #94a3b8; cursor: pointer;
+    }
+    .comment-del:hover { color: var(--sixers-red); }
+    .comments-empty {
+      text-align: center; padding: 1.5rem; color: var(--mid); font-size: 0.9rem;
+    }
+    .signin-hint {
+      font-size: 0.85rem; color: var(--mid); text-align: center; padding: 0.75rem;
+    }
+    .signin-hint button {
+      background: none; border: none; color: var(--sixers-blue);
+      font-family: 'Lexend', sans-serif; font-weight: 700; cursor: pointer;
+      text-decoration: underline;
     }
 
     .state { text-align: center; padding: 5rem 1rem; color: var(--mid); }
@@ -202,7 +263,6 @@
       <div class="skel" style="height:28px;width:120px;margin:0 auto 1rem;"></div>
       <div class="skel" style="height:42px;width:85%;margin:0 auto 1.5rem;"></div>
       <div class="skel" style="height:120px;width:100%;margin-bottom:1rem;"></div>
-      <div class="skel" style="height:120px;width:100%;"></div>
     </div>
   </main>
 
@@ -210,15 +270,14 @@
   <script>
 (function () {
   const COLLECTION = 'community_trades';
+  const MOD_EMAIL = 'rhatus13@gmail.com';
   let trade = null;
+  let unsub = null;
 
   function waitForDb(cb, tries) {
     tries = tries || 0;
     if (window.db) { cb(); return; }
-    if (tries > 80) {
-      renderError('Could not connect right now. Please refresh.');
-      return;
-    }
+    if (tries > 80) { renderError('Could not connect right now. Please refresh.'); return; }
     setTimeout(function () { waitForDb(cb, tries + 1); }, 250);
   }
 
@@ -238,7 +297,12 @@
   function timeAgo(ts) {
     if (!ts) return '';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 60) return 'just now';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+    if (sec < 604800) return Math.floor(sec / 86400) + 'd ago';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function getId() {
@@ -252,7 +316,12 @@
   function triggerLogin() {
     const btn = document.getElementById('navSignInBtn');
     if (btn) btn.click();
-    else alert('Please sign in to vote.');
+    else alert('Please sign in.');
+  }
+
+  function isMod() {
+    const u = window.auth && window.auth.currentUser;
+    return u && u.email && u.email.toLowerCase() === MOD_EMAIL.toLowerCase();
   }
 
   function machineUrl(t) {
@@ -297,12 +366,123 @@
     }).join('') + '</div>';
   }
 
+  function renderComments(comments) {
+    const user = window.auth && window.auth.currentUser;
+    let html = '<div class="comments-section">';
+    html += '<div class="section-label">COMMENTS</div>';
+
+    if (user) {
+      html += '<div class="comment-form">' +
+        '<textarea id="commentInput" placeholder="What do you think of this trade?" rows="3"></textarea>' +
+        '<div class="comment-form-actions">' +
+          '<button type="button" class="btn btn-primary" id="submitCommentBtn" style="padding:.55rem 1.2rem;font-size:.8rem;">Post Comment</button>' +
+        '</div></div>';
+    } else {
+      html += '<p class="signin-hint"><button type="button" id="commentSignIn">Sign in</button> to leave a comment.</p>';
+    }
+
+    if (!comments || !comments.length) {
+      html += '<div class="comments-empty">No comments yet. Start the discussion.</div>';
+    } else {
+      comments.forEach(function (c, idx) {
+        const canDel = user && (c.authorId === user.uid || isMod());
+        html += '<div class="comment-card" data-idx="' + idx + '">' +
+          '<div class="comment-meta">' +
+            '<span class="comment-author">' + escapeHtml(c.author || 'u/fan') + '</span>' +
+            '<span>·</span><span>' + escapeHtml(timeAgo(c.createdAt)) + '</span>' +
+            (canDel ? '<button type="button" class="comment-del" data-idx="' + idx + '">Delete</button>' : '') +
+          '</div>' +
+          '<p class="comment-text">' + escapeHtml(c.text || '') + '</p>' +
+        '</div>';
+      });
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function bindCommentHandlers() {
+    const signIn = document.getElementById('commentSignIn');
+    if (signIn) signIn.onclick = triggerLogin;
+
+    const submit = document.getElementById('submitCommentBtn');
+    if (submit) submit.onclick = submitComment;
+
+    document.querySelectorAll('.comment-del').forEach(function (btn) {
+      btn.onclick = function () {
+        deleteComment(Number(btn.getAttribute('data-idx')));
+      };
+    });
+  }
+
+  async function submitComment() {
+    const user = window.auth && window.auth.currentUser;
+    if (!user || !trade || !window.db) { triggerLogin(); return; }
+    const input = document.getElementById('commentInput');
+    const text = input ? input.value.trim() : '';
+    if (!text) return;
+
+    const authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'fan');
+    const newComment = {
+      author: 'u/' + authorName,
+      authorId: user.uid,
+      text: text.slice(0, 2000),
+      createdAt: new Date().toISOString(),
+      votes: 0,
+      voters: {}
+    };
+    const comments = (trade.comments || []).slice();
+    comments.push(newComment);
+
+    try {
+      await window.db.collection(COLLECTION).doc(trade.id).update({ comments: comments });
+      if (input) input.value = '';
+    } catch (err) {
+      console.error(err);
+      alert('Could not post comment: ' + (err.message || err));
+    }
+  }
+
+  async function deleteComment(idx) {
+    const user = window.auth && window.auth.currentUser;
+    if (!user || !trade || !window.db) return;
+    const comments = (trade.comments || []).slice();
+    const c = comments[idx];
+    if (!c) return;
+    if (c.authorId !== user.uid && !isMod()) return;
+    if (!confirm('Delete this comment?')) return;
+    comments.splice(idx, 1);
+    try {
+      await window.db.collection(COLLECTION).doc(trade.id).update({ comments: comments });
+    } catch (err) {
+      console.error(err);
+      alert('Could not delete comment.');
+    }
+  }
+
+  async function deleteTrade() {
+    const user = window.auth && window.auth.currentUser;
+    if (!user || !trade || !window.db) return;
+    if (trade.authorId !== user.uid && !isMod()) {
+      alert('You can only delete your own trades.');
+      return;
+    }
+    if (!confirm('Delete this trade permanently? This cannot be undone.')) return;
+    try {
+      await window.db.collection(COLLECTION).doc(trade.id).delete();
+      window.location.href = '/trades.html';
+    } catch (err) {
+      console.error(err);
+      alert('Could not delete trade: ' + (err.message || err));
+    }
+  }
+
   function render(t) {
     trade = t;
     document.title = (t.title || 'Trade') + ' — Sixers Hoops';
 
     const user = window.auth && window.auth.currentUser;
     const userVote = user && t.voters ? t.voters[user.uid] : null;
+    const canDelete = user && (t.authorId === user.uid || isMod());
     const status = t.isValid === true
       ? '<span class="status-pill ok">Appears legal</span>'
       : (t.isValid === false ? '<span class="status-pill bad">Invalid / restricted</span>' : '');
@@ -314,7 +494,10 @@
     html += '<div class="meta"><span>' + escapeHtml(t.author || 'u/fan') + '</span><span>·</span><span>' + escapeHtml(timeAgo(t.createdAt)) + '</span>';
     if (status) html += '<span>·</span>' + status;
     html += '</div>';
-    if (t.summary) html += '<p class="excerpt">' + escapeHtml(t.summary) + '</p>';
+    if (t.notes || t.summary) {
+      const desc = t.notes || t.summary;
+      html += '<p class="excerpt">' + escapeHtml(desc) + '</p>';
+    }
     html += '</div>';
 
     html += '<div class="vote-bar">' +
@@ -330,15 +513,18 @@
     html += '<div class="actions">' +
       '<a class="btn btn-primary" href="' + escapeHtml(machineUrl(t)) + '">OPEN IN TRADE MACHINE</a>' +
       '<button type="button" class="btn btn-ghost" id="copyLinkBtn">COPY LINK</button>' +
+      (canDelete ? '<button type="button" class="btn btn-danger" id="deleteTradeBtn">DELETE TRADE</button>' : '') +
     '</div>';
 
     html += '<div class="section-label">TRADE BREAKDOWN</div>';
     html += renderTeamCards(t.sides || t.teams);
 
-    if (t.notes) {
+    if (t.notes && t.summary && t.notes !== t.summary) {
       html += '<div class="section-label">NOTES</div>';
       html += '<div class="notes">' + escapeHtml(t.notes) + '</div>';
     }
+
+    html += renderComments(t.comments || []);
 
     document.getElementById('root').innerHTML = html;
 
@@ -347,13 +533,14 @@
     document.getElementById('copyLinkBtn').onclick = function () {
       const url = location.origin + '/trade.html?id=' + encodeURIComponent(t.id);
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function () {
-          alert('Link copied.');
-        }).catch(function () { prompt('Copy this link:', url); });
-      } else {
-        prompt('Copy this link:', url);
-      }
+        navigator.clipboard.writeText(url).then(function () { alert('Link copied.'); })
+          .catch(function () { prompt('Copy this link:', url); });
+      } else prompt('Copy this link:', url);
     };
+    const delBtn = document.getElementById('deleteTradeBtn');
+    if (delBtn) delBtn.onclick = deleteTrade;
+
+    bindCommentHandlers();
   }
 
   async function handleVote(direction) {
@@ -377,14 +564,6 @@
 
     try {
       await window.db.collection(COLLECTION).doc(trade.id).update({ votes: votes, voters: voters });
-      trade.votes = votes;
-      trade.voters = voters;
-      const countEl = document.getElementById('voteCount');
-      if (countEl) countEl.textContent = String(votes);
-      const up = document.getElementById('btnUp');
-      const down = document.getElementById('btnDown');
-      if (up) up.classList.toggle('active-up', voters[user.uid] === 'up');
-      if (down) down.classList.toggle('active-down', voters[user.uid] === 'down');
     } catch (err) {
       console.error(err);
       alert('Could not save vote.');
@@ -395,17 +574,16 @@
     const id = getId();
     if (!id) { renderError('Trade not found'); return; }
     waitForDb(function () {
-      window.db.collection(COLLECTION).doc(id).get()
-        .then(function (doc) {
-          if (!doc.exists) { renderError('Trade not found'); return; }
-          const data = doc.data();
-          data.id = doc.id;
-          render(data);
-        })
-        .catch(function (err) {
-          console.error(err);
-          renderError("Couldn't load this trade right now");
-        });
+      if (unsub) unsub();
+      unsub = window.db.collection(COLLECTION).doc(id).onSnapshot(function (doc) {
+        if (!doc.exists) { renderError('Trade not found'); return; }
+        const data = doc.data();
+        data.id = doc.id;
+        render(data);
+      }, function (err) {
+        console.error(err);
+        renderError("Couldn't load this trade right now");
+      });
     });
   }
 
