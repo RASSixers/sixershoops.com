@@ -225,6 +225,44 @@
     .c-text img,.post-images img{max-width:100%;border-radius:10px;margin-top:.5rem;}
     .post-images{display:grid;gap:.5rem;margin-top:.65rem;}
     .post-images.grid-2{grid-template-columns:1fr 1fr;}
+    
+    .dots-btn{color:#0f172a !important;background:transparent;border:none;cursor:pointer;padding:4px;border-radius:6px;}
+    .dots-btn:hover{background:rgba(15,23,42,.06);}
+    .dots-btn svg{fill:#0f172a;color:#0f172a;}
+    .repost-menu-wrap{position:relative;display:inline-block;}
+    .repost-menu{
+      display:none;position:absolute;bottom:calc(100% + 6px);left:0;min-width:180px;
+      background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 28px rgba(15,23,42,.15);
+      z-index:50;overflow:hidden;padding:0.25rem;
+    }
+    .repost-menu.open{display:block;}
+    .repost-menu button{
+      display:flex;align-items:center;gap:0.55rem;width:100%;text-align:left;border:none;background:transparent;
+      padding:0.65rem 0.75rem;font-size:0.88rem;font-weight:600;color:#0f172a;cursor:pointer;border-radius:8px;
+      font-family:inherit;
+    }
+    .repost-menu button:hover{background:#f1f5f9;}
+    .share-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10000;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+    .share-modal-overlay.open{display:flex;}
+    .share-modal{background:#fff;border-radius:16px;width:min(400px,100%);box-shadow:0 25px 50px rgba(0,0,0,.25);overflow:hidden;font-family:Lexend,system-ui,sans-serif;}
+    .share-modal-body{padding:1.35rem;}
+    .share-modal-body h3{margin:0 0 0.35rem;font-size:1.1rem;font-weight:800;}
+    .share-modal-body p{margin:0 0 0.85rem;font-size:0.85rem;color:#64748b;}
+    .share-link-row{display:flex;gap:0.5rem;align-items:center;}
+    .share-link-row input{flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:0.65rem 0.75rem;font-size:0.82rem;color:#0f172a;background:#f8fafc;}
+    .share-copy-btn{border:none;background:#006BB6;color:#fff;border-radius:10px;padding:0.65rem 1rem;font-weight:700;font-size:0.85rem;cursor:pointer;white-space:nowrap;}
+    .share-copy-btn:hover{background:#005a9a;}
+    .img-attach-row{display:flex;align-items:center;gap:0.5rem;margin-top:0.55rem;flex-wrap:wrap;}
+    .img-attach-btn{
+      display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;font-weight:600;color:#334155;
+      background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.4rem 0.7rem;cursor:pointer;
+    }
+    .img-attach-btn:hover{background:#f1f5f9;border-color:#cbd5e1;}
+    .img-attach-btn svg{width:16px;height:16px;stroke:#64748b;}
+    .img-preview-wrap{display:flex;gap:0.5rem;flex-wrap:wrap;width:100%;}
+    .img-preview-wrap .img-prev-item{position:relative;display:inline-block;}
+    .img-preview-wrap img{max-width:140px;max-height:140px;border-radius:10px;object-fit:cover;border:1px solid #e2e8f0;display:block;}
+    .img-prev-remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(15,23,42,.75);color:#fff;font-size:14px;line-height:22px;cursor:pointer;}
     </style>
 </head>
 <body>
@@ -624,7 +662,7 @@
     const byParent=buildCommentTree(list);
     const user=window.auth&&window.auth.currentUser;
     let html='<div class="comments-section" id="comments"><div class="section-label">COMMENTS</div>';
-    if(user)html+='<div class="comment-form"><textarea id="commentInput" placeholder="What do you think?" rows="3"></textarea><div class="img-attach-row"><label class="img-attach-btn" for="commentImageInput">Add image</label><input type="file" id="commentImageInput" accept="image/*" style="display:none;"><div class="img-preview-wrap" id="commentImagePreview"></div></div><div class="comment-form-actions"><button type="button" class="btn btn-primary" id="submitCommentBtn">Post Comment</button></div></div>';
+    if(user)html+='<div class="comment-form"><textarea id="commentInput" placeholder="What do you think?" rows="3"></textarea><div class="img-attach-row"><label class="img-attach-btn" for="commentImageInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Photo</label><input type="file" id="commentImageInput" accept="image/*" style="display:none;"><div class="img-preview-wrap" id="commentImagePreview"></div></div><div class="comment-form-actions"><button type="button" class="btn btn-primary" id="submitCommentBtn">Post Comment</button></div></div>';
     else html+='<p class="signin-hint"><button type="button" id="commentSignIn">Sign in</button> to leave a comment.</p>';
     const tree=renderCommentBranch(byParent,'root',0);
     html+=tree||'<div class="comments-empty">No comments yet.</div>';
@@ -977,8 +1015,11 @@
       '<button type="button" id="btnDown" class="'+(userVote==='down'?'active-down':'')+'" aria-label="Downvote"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button></div>';
     html+='<button type="button" class="e-pill" id="btnComment"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+commentCount+'</button>';
     html+='<button type="button" class="e-pill'+(booked?' booked':'')+'" id="btnBookmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="'+(booked?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>';
-    html+='<button type="button" class="e-pill" id="btnRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Repost</button>';
-    html+='<button type="button" class="e-pill" id="btnQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
+    html+='<div class="repost-menu-wrap"><button type="button" class="e-pill" id="btnRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> <span id="repostBtnLabel">Repost</span></button>';
+    html+='<div class="repost-menu" id="repostMenu">';
+    html+='<button type="button" id="menuRepostOnly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> <span id="menuRepostText">Repost</span></button>';
+    html+='<button type="button" id="menuQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
+    html+='</div></div>';
     if(ty==='trade'&&t.machineHash){
       html+='<a class="e-pill" href="'+esc(machineUrl(t))+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg> Open in Machine</a>';
     }
@@ -1062,17 +1103,129 @@
       };
     }
 setTimeout(function(){try{hydrateCommentPhotos();}catch(e){} if(location.hash&&location.hash.indexOf('comment-')===1){var el=document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});} }, 50);
+    // Detect if current user already reposted this post (for unrepost)
+    async function findMyRepostOf(originalId){
+      const user=window.auth&&window.auth.currentUser;
+      if(!user||!window.db||!originalId) return null;
+      try{
+        const snap=await window.db.collection(COLLECTION)
+          .where('authorId','==',user.uid)
+          .where('quotedPostId','==',originalId)
+          .where('postType','==','repost')
+          .limit(1).get();
+        if(!snap.empty) return snap.docs[0];
+      }catch(e){
+        try{
+          const snap=await window.db.collection(COLLECTION).where('authorId','==',user.uid).limit(40).get();
+          const hit=snap.docs.find(function(d){ var x=d.data()||{}; return x.quotedPostId===originalId && (x.postType==='repost'||x.type==='repost'); });
+          return hit||null;
+        }catch(_){ return null; }
+      }
+      return null;
+    }
+
+    var myRepostDoc = null;
+    findMyRepostOf(t.id).then(function(doc){
+      myRepostDoc = doc;
+      var label=document.getElementById('repostBtnLabel');
+      var menuTxt=document.getElementById('menuRepostText');
+      if(doc){
+        if(label) label.textContent='Unrepost';
+        if(menuTxt) menuTxt.textContent='Unrepost';
+      }
+    });
+
     const repost=document.getElementById('btnRepost');
-    if(repost)repost.onclick=function(){createRepost(false);};
-    const quoteBtn=document.getElementById('btnQuoteRepost');
-    if(quoteBtn)quoteBtn.onclick=function(){openQuoteModal(t);};
+    const repostMenu=document.getElementById('repostMenu');
+    if(repost){
+      repost.onclick=function(e){
+        e.stopPropagation();
+        if(repostMenu) repostMenu.classList.toggle('open');
+      };
+    }
+    document.addEventListener('click', function(){ if(repostMenu) repostMenu.classList.remove('open'); });
+    var menuRepost=document.getElementById('menuRepostOnly');
+    if(menuRepost) menuRepost.onclick=async function(e){
+      e.stopPropagation();
+      if(repostMenu) repostMenu.classList.remove('open');
+      if(myRepostDoc){
+        // Unrepost
+        openDeleteModal({
+          title:'Remove repost?',
+          message:'This will remove your repost. The original post stays up.',
+          onConfirm: async function(){
+            await window.db.collection(COLLECTION).doc(myRepostDoc.id).delete();
+            myRepostDoc=null;
+            var label=document.getElementById('repostBtnLabel');
+            var menuTxt=document.getElementById('menuRepostText');
+            if(label) label.textContent='Repost';
+            if(menuTxt) menuTxt.textContent='Repost';
+          }
+        });
+        // retitle confirm button
+        setTimeout(function(){ var b=document.getElementById('deleteModalConfirm'); if(b) b.textContent='Remove'; }, 0);
+      } else {
+        createRepost(false);
+      }
+    };
+    var menuQuote=document.getElementById('menuQuoteRepost');
+    if(menuQuote) menuQuote.onclick=function(e){
+      e.stopPropagation();
+      if(repostMenu) repostMenu.classList.remove('open');
+      openQuoteModal(t);
+    };
+
+    function openShareModal(url, title){
+      var ov=document.getElementById('shareModalOverlay');
+      if(!ov){
+        ov=document.createElement('div');
+        ov.id='shareModalOverlay';
+        ov.className='share-modal-overlay';
+        ov.innerHTML='<div class="share-modal" onclick="event.stopPropagation()"><div class="share-modal-body"><h3>Share post</h3><p>Copy the link to share this post.</p><div class="share-link-row"><input type="text" id="shareModalUrl" readonly><button type="button" class="share-copy-btn" id="shareModalCopy">Copy</button></div></div></div>';
+        document.body.appendChild(ov);
+        ov.onclick=function(){ ov.classList.remove('open'); };
+      }
+      document.getElementById('shareModalUrl').value=url;
+      var copyBtn=document.getElementById('shareModalCopy');
+      copyBtn.textContent='Copy';
+      copyBtn.onclick=function(){
+        var input=document.getElementById('shareModalUrl');
+        input.select();
+        if(navigator.clipboard){
+          navigator.clipboard.writeText(url).then(function(){
+            copyBtn.textContent='Copied!';
+            setTimeout(function(){ copyBtn.textContent='Copy'; }, 1500);
+          });
+        } else {
+          try{ document.execCommand('copy'); copyBtn.textContent='Copied!'; }catch(_){}
+        }
+      };
+      ov.classList.add('open');
+    }
     const shareBtn=document.getElementById('btnShare');
     if(shareBtn)shareBtn.onclick=function(){
       const url=location.origin+'/trade.html?id='+encodeURIComponent(t.id);
-      if(navigator.share){navigator.share({title:t.title||'Trade',url:url}).catch(function(){});}
-      else if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){alert('Link copied.');});
-      else prompt('Copy link:',url);
+      openShareModal(url, t.title||'Trade');
     };
+
+    // Image preview remove button support
+    var cImg = document.getElementById('commentImageInput');
+    if(cImg && !cImg._wired){
+      cImg._wired=true;
+      cImg.onchange = async function(ev){
+        var file = ev.target.files && ev.target.files[0];
+        if(!file) return;
+        try{
+          var url = await compressImageFile(file, 900, 0.72);
+          if(url.length > 900000) url = await compressImageFile(file, 640, 0.55);
+          window._pendingCommentImage = url;
+          var prev = document.getElementById('commentImagePreview');
+          if(prev) prev.innerHTML = '<div class="img-prev-item"><img src="'+url+'" alt=""><button type="button" class="img-prev-remove" id="removeCommentImg" aria-label="Remove">&times;</button></div>';
+          var rm=document.getElementById('removeCommentImg');
+          if(rm) rm.onclick=function(){ window._pendingCommentImage=''; prev.innerHTML=''; cImg.value=''; };
+        }catch(e){ alert('Could not process image'); }
+      };
+    }
     document.getElementById('postMenuBtn').onclick=function(e){e.stopPropagation();const m=document.getElementById('postMenu');const open=m.classList.contains('open');closeMenus();if(!open)m.classList.add('open');};
     const rp=document.getElementById('reportPostBtn');if(rp)rp.onclick=function(){openReport({kind:'post'});closeMenus();};
     const ed=document.getElementById('editPostBtn');if(ed)ed.onclick=function(){openEdit();closeMenus();};
