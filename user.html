@@ -123,6 +123,48 @@
         :root.dark-mode .profile-stats-row { color: rgba(255,255,255,0.55); }
         :root.dark-mode .profile-stats-row strong { color: #ffffff; }
         .profile-stats-dot { opacity: 0.35; }
+        .stat-link { cursor: pointer; border: none; background: none; padding: 0; font: inherit; color: inherit; }
+        .stat-link:hover strong { color: var(--sixers-blue); text-decoration: underline; }
+        .followers-modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9999;
+            align-items: center; justify-content: center; padding: 1rem;
+        }
+        .followers-modal-overlay.open { display: flex; }
+        .followers-modal {
+            background: #fff; border-radius: 12px; width: min(420px, 100%); max-height: 70vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,.2);
+        }
+        :root.dark-mode .followers-modal { background: #12141c; color: #e8eaf0; }
+        .followers-modal-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: .9rem 1rem; border-bottom: 1px solid var(--border-light, #e4e8f0);
+            font-weight: 800; font-size: .95rem;
+        }
+        .followers-modal-list { overflow: auto; padding: .5rem 0; }
+        .followers-row {
+            display: flex; align-items: center; gap: .75rem; padding: .65rem 1rem;
+            text-decoration: none; color: inherit; cursor: pointer;
+        }
+        .followers-row:hover { background: rgba(0,107,182,.06); }
+        .followers-row img, .followers-row .fr-av {
+            width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        }
+        .followers-row .fr-av {
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; color: #fff; font-size: .9rem;
+        }
+        .followers-row .fr-name { font-weight: 700; font-size: .88rem; }
+        .followers-empty { padding: 2rem 1rem; text-align: center; color: var(--mid); font-size: .85rem; }
+        .inbox-view-btn {
+            margin-left: auto; flex-shrink: 0; font-size: .72rem; font-weight: 700;
+            color: var(--sixers-blue); background: rgba(0,107,182,.08); border: 1px solid rgba(0,107,182,.2);
+            border-radius: 6px; padding: .3rem .55rem; cursor: pointer; text-decoration: none;
+            white-space: nowrap;
+        }
+        .inbox-view-btn:hover { background: rgba(0,107,182,.15); }
+        .inbox-item { position: relative; }
+
 
         .profile-actions {
             display: flex; align-items: flex-end; gap: 0.6rem;
@@ -543,6 +585,9 @@
     </style>
 </head>
 <body>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="/nav.js"></script>
 
     <div id="pageBanner">
@@ -570,10 +615,6 @@
             <div class="skeleton" style="height:220px;border-radius:12px;"></div>
         </div>
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script>
     (function() {
@@ -605,7 +646,7 @@
             } catch (e) {}
         })();
 
-        const SUBPAGES = ['inbox','notifications','settings','bookmarks'];
+        const SUBPAGES = ['inbox','notifications','settings'];
 
         function parseRoute() {
             const path = location.pathname.replace(/\/+$/, ''); // trim trailing /
@@ -639,8 +680,8 @@
                     <div class="profile-sidebar"><div id="sidebarContent"></div></div>`;
                 renderSidebar(gUserData, gPosts.length, gMyUid);
                 if (currentSubPage === 'inbox') renderInbox(gMyUid);
-                else if (currentSubPage === 'bookmarks') renderBookmarks(gMyUid);
                 else if (currentSubPage === 'notifications') renderNotifications(gMyUid);
+                else if (currentSubPage === 'bookmarks') renderBookmarks(gMyUid);
                 else if (currentSubPage === 'settings') renderSettings(gUserData, gMyUid);
                 else renderFeed();
             }
@@ -736,9 +777,9 @@
                             <div class="profile-displayname">${esc(ud.username || 'Unknown')}</div>
                             <div class="profile-handle">u/${esc(ud.usernameLower || ud.username || '')}</div>
                             <div class="profile-stats-row">
-                                <strong>${ud.followerCount || 0}</strong> Followers
+                                <button type="button" class="stat-link" id="openFollowersBtn"><strong>${ud.followerCount || 0}</strong> Followers</button>
                                 <span class="profile-stats-dot">·</span>
-                                <strong>${ud.followingCount || 0}</strong> Following
+                                <button type="button" class="stat-link" id="openFollowingBtn"><strong>${ud.followingCount || 0}</strong> Following</button>
                             </div>
                         </div>
                         <div class="profile-actions">
@@ -788,7 +829,6 @@
                 tabsEl.innerHTML = `
                     <a class="profile-tab" href="${tabHref(null)}">Posts</a>
                     ${isOwn ? `
-                    <a class="profile-tab ${currentSubPage==='bookmarks'?'active':''}" href="${tabHref('bookmarks')}">Bookmarks</a>
                     <a class="profile-tab ${currentSubPage==='inbox'?'active':''}" href="${tabHref('inbox')}">
                         Inbox <span id="tab-inbox-count" class="tab-notif-pill hidden"></span>
                     </a>
@@ -814,18 +854,20 @@
                         refreshFollowBtn();
                     }).catch(() => {});
                 }
-                followBtn.addEventListener('click', async () => {
+                followBtn.addEventListener('click', async (ev) => {
+                    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
                     if (!db) { alert('Not connected. Try again.'); return; }
-                    const me = firebase.auth().currentUser;
+                    const me = (window.auth && window.auth.currentUser) || firebase.auth().currentUser;
                     if (!me) { document.getElementById('navSignInBtn')?.click(); return; }
+                    if (me.uid === ud._uid) return;
                     followBtn.disabled = true;
+                    const liveFollowId = me.uid + '_' + ud._uid;
                     try {
-                        const ref = db.collection('follows').doc(followId);
+                        const ref = db.collection('follows').doc(liveFollowId);
                         const snap = await ref.get();
                         if (snap.exists) {
                             await ref.delete();
                             isFollowing = false;
-                            // best-effort counts
                             try {
                                 await db.collection('users').doc(ud._uid).set({
                                     followerCount: Math.max(0, (ud.followerCount || 1) - 1)
@@ -833,31 +875,34 @@
                                 ud.followerCount = Math.max(0, (ud.followerCount || 1) - 1);
                             } catch (_) {}
                         } else {
-                            await ref.set({
-                                followerId: me.uid,
-                                followingId: ud._uid,
-                                followerName: me.displayName || (me.email ? me.email.split('@')[0] : 'fan'),
-                                followingName: ud.username || ud.usernameLower || '',
-                                createdAt: new Date().toISOString()
-                            });
+                            // Plain JSON only — never FieldValue/serverTimestamp (causes "custom Cl object" errors)
+                            const followPayload = {
+                                followerId: String(me.uid),
+                                followingId: String(ud._uid),
+                                followerName: String(me.displayName || (me.email ? me.email.split('@')[0] : 'fan')),
+                                followingName: String(ud.username || ud.usernameLower || ''),
+                                createdAt: String(new Date().toISOString())
+                            };
+                            await ref.set(JSON.parse(JSON.stringify(followPayload)));
                             isFollowing = true;
                             try {
-                                await db.collection('users').doc(ud._uid).set({
-                                    followerCount: (ud.followerCount || 0) + 1
+                                await db.collection('users').doc(String(ud._uid)).set({
+                                    followerCount: Number(ud.followerCount || 0) + 1
                                 }, { merge: true });
-                                ud.followerCount = (ud.followerCount || 0) + 1;
+                                ud.followerCount = Number(ud.followerCount || 0) + 1;
                             } catch (_) {}
-                            // notification
                             try {
-                                await db.collection('notifications').add({
-                                    recipientId: ud._uid,
+                                const notifPayload = {
+                                    recipientId: String(ud._uid),
                                     type: 'follow',
-                                    fromUserId: me.uid,
-                                    fromName: me.displayName || 'fan',
+                                    fromUserId: String(me.uid),
+                                    fromName: String(me.displayName || 'fan'),
                                     text: 'started following you',
+                                    message: 'started following you',
                                     read: false,
-                                    createdAt: new Date().toISOString()
-                                });
+                                    createdAt: String(new Date().toISOString())
+                                };
+                                await db.collection('notifications').add(JSON.parse(JSON.stringify(notifPayload)));
                             } catch (_) {}
                         }
                         refreshFollowBtn();
@@ -867,8 +912,13 @@
                             if (strongs[0]) strongs[0].textContent = String(ud.followerCount || 0);
                         }
                     } catch (err) {
-                        console.error(err);
-                        alert(err.message || 'Could not update follow.');
+                        console.error('Follow error:', err);
+                        const msg = (err && err.message) ? err.message : String(err);
+                        if (/permission|insufficient|Missing or insufficient/i.test(msg)) {
+                            alert('Follow blocked by Firestore rules. In Firebase Console → Firestore → Rules, allow authenticated users to create/delete docs in the "follows" collection.');
+                        } else {
+                            alert('Could not update follow: ' + msg);
+                        }
                     } finally {
                         followBtn.disabled = false;
                     }
@@ -889,24 +939,37 @@
                 else navigator.clipboard?.writeText(url);
             });
 
+            document.getElementById('openFollowersBtn')?.addEventListener('click', () => openFollowList(ud._uid, 'followers'));
+            document.getElementById('openFollowingBtn')?.addEventListener('click', () => openFollowList(ud._uid, 'following'));
+
             // Load notification badges for own profile
             if (isOwn) loadNotifBadges(ud._uid);
         }
 
         // ── Notification badges ───────────────────────────────────
+        function setTabPill(sel, count) {
+            document.querySelectorAll(sel).forEach(el => {
+                if (count > 0) { el.classList.remove('hidden'); el.textContent = count > 9 ? '9+' : String(count); }
+                else el.classList.add('hidden');
+            });
+        }
         function loadNotifBadges(uid) {
             const db = getDB();
-            if (!db) return;
-            db.collection('notifications')
-              .where('recipientId','==',uid)
-              .where('read','==',false)
-              .onSnapshot(snap => {
-                const count = snap.size;
-                document.querySelectorAll('#tab-notif-count,#tab-inbox-count').forEach(el => {
-                    if (count > 0) { el.classList.remove('hidden'); el.textContent = count > 9 ? '9+' : count; }
-                    else el.classList.add('hidden');
-                });
-              }, () => {});
+            if (!db || !uid) return;
+            try {
+                db.collection('notifications')
+                  .where('recipientId','==',uid)
+                  .onSnapshot(snap => {
+                    let count = 0;
+                    snap.forEach(doc => {
+                      const d = doc.data() || {};
+                      if (d.read === false || d.read === undefined) count++;
+                    });
+                    // Profile page tabs only (nav avatar badge is handled in nav.js)
+                    setTabPill('#tab-notif-count', count);
+                    setTabPill('#tab-inbox-count', count);
+                  }, () => {});
+            } catch (_) {}
         }
 
         // ── Sidebar ───────────────────────────────────────────────
@@ -975,7 +1038,7 @@
 
             const cardsHTML = items.map(item => {
                 if (currentTab === 'comments') {
-                    const postUrl = item.postUrl || (item.postId ? (`/trade.html?id=` + encodeURIComponent(item.postId)) : '#');
+                    const postUrl = item.postUrl || (item.postId ? `/post/${item.postId}` : '#');
                     return `
                     <div class="feed-card is-comment">
                         <div class="post-context">Commented on ${item.postTitle ? `<a href="${esc(postUrl)}">${esc(item.postTitle)}</a>` : 'a post'}</div>
@@ -994,7 +1057,7 @@
                         </div>
                     </div>`;
                 }
-                const postUrl = item.url || item.link || (item.postId ? `/trade.html?id=${encodeURIComponent(item.postId)}` : '#');
+                const postUrl = item.url || item.link || (item.postId || item.id ? `/trade.html?id=${encodeURIComponent(item.postId || item.id)}` : '#');
                 return `
                 <div class="feed-card">
                     <div class="feed-card-header">
@@ -1007,28 +1070,16 @@
                     <div class="feed-card-footer">
                         <button class="feed-card-action">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                            ${item.upvotes || item.voteCount || 0}
+                            ${item.votes || item.upvotes || item.voteCount || 0}
                         </button>
                         <button class="feed-card-action">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            ${item.commentCount || 0}
+                            ${(item.comments && item.comments.length) || item.commentCount || 0}
                         </button>
                         ${postUrl !== '#' ? `<a class="feed-card-action view-post" href="${esc(postUrl)}">View Post</a>` : ''}
                     </div>
                 </div>`;
             }).join('');
-            // Make cards navigate on click
-            setTimeout(function(){
-              document.querySelectorAll('.feed-card').forEach(function(card){
-                var a = card.querySelector('a.view-post');
-                if(!a) return;
-                card.style.cursor = 'pointer';
-                card.addEventListener('click', function(e){
-                  if(e.target.closest('a,button')) return;
-                  location.href = a.getAttribute('href');
-                });
-              });
-            }, 0);
 
             container.innerHTML = sortBar + `<div class="feed-list">${cardsHTML}</div>`;
             attachSort();
@@ -1040,45 +1091,136 @@
             });
         }
 
+
+        async function openFollowList(uid, mode) {
+            let overlay = document.getElementById('followersModalOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'followersModalOverlay';
+                overlay.className = 'followers-modal-overlay';
+                overlay.innerHTML = `<div class="followers-modal">
+                    <div class="followers-modal-head">
+                        <span id="followersModalTitle">Followers</span>
+                        <button type="button" id="followersModalClose" style="border:none;background:none;font-size:1.4rem;cursor:pointer;line-height:1;">&times;</button>
+                    </div>
+                    <div class="followers-modal-list" id="followersModalList"><div class="followers-empty">Loading…</div></div>
+                </div>`;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+                document.getElementById('followersModalClose').onclick = () => overlay.classList.remove('open');
+            }
+            const title = document.getElementById('followersModalTitle');
+            const list = document.getElementById('followersModalList');
+            title.textContent = mode === 'following' ? 'Following' : 'Followers';
+            list.innerHTML = '<div class="followers-empty">Loading…</div>';
+            overlay.classList.add('open');
+
+            const db = getDB();
+            if (!db || !uid) { list.innerHTML = '<div class="followers-empty">Unavailable</div>'; return; }
+            try {
+                const field = mode === 'following' ? 'followerId' : 'followingId';
+                const snap = await db.collection('follows').where(field, '==', uid).limit(100).get();
+                const rows = snap.docs.map(d => d.data());
+                const otherIds = rows.map(r => mode === 'following' ? r.followingId : r.followerId).filter(Boolean);
+                if (!otherIds.length) {
+                    list.innerHTML = `<div class="followers-empty">No ${mode === 'following' ? 'following' : 'followers'} yet</div>`;
+                    return;
+                }
+                // Load user docs
+                const users = {};
+                await Promise.all(otherIds.slice(0, 50).map(async (id) => {
+                    try {
+                        const doc = await db.collection('users').doc(id).get();
+                        if (doc.exists) users[id] = { id, ...doc.data() };
+                        else users[id] = { id, username: id.slice(0, 8), usernameLower: id.slice(0, 8) };
+                    } catch (_) {
+                        users[id] = { id, username: 'user', usernameLower: 'user' };
+                    }
+                }));
+                list.innerHTML = otherIds.map(id => {
+                    const u = users[id] || { username: 'user', usernameLower: 'user' };
+                    const name = u.username || u.usernameLower || 'user';
+                    const slug = (u.usernameLower || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+                    const photo = u.photoURL || '';
+                    const color = u.avatarColor || colorFor(name);
+                    const av = photo
+                        ? `<img src="${esc(photo)}" alt="">`
+                        : `<div class="fr-av" style="background:${color}">${esc((name||'U').charAt(0).toUpperCase())}</div>`;
+                    return `<a class="followers-row" href="/user/${encodeURIComponent(slug)}">${av}<div class="fr-name">${esc(name)}</div></a>`;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<div class="followers-empty">Could not load list</div>';
+            }
+        }
+
         // ── Inbox ─────────────────────────────────────────────────
 
         function renderBookmarks(myUid) {
             const fc = document.getElementById('feedContent');
             if (!fc) return;
-            if (!myUid || !gUserData || myUid !== gUserData._uid) {
-                fc.innerHTML = '<div class="empty-state"><p>Bookmarks are private.</p></div>';
+            if (!myUid || myUid !== (gUserData && gUserData._uid)) {
+                fc.innerHTML = `<div class="empty-state"><p>Bookmarks are private.</p></div>`;
                 return;
             }
-            fc.innerHTML = '<div class="panel-wrap"><div class="panel-header"><span class="panel-title">Bookmarks</span></div><div id="bookmarksList"><div class="empty-state"><p>Loading…</p></div></div></div>';
+            fc.innerHTML = `
+            <div class="panel-wrap">
+                <div class="panel-header"><span class="panel-title">Bookmarks</span></div>
+                <div id="bookmarksList"><div class="empty-state"><p>Loading…</p></div></div>
+            </div>`;
+
             let ids = [];
-            try { ids = JSON.parse(localStorage.getItem('sixershoops_bookmarked_trades') || '[]'); } catch (e) {}
-            if (!Array.isArray(ids) || !ids.length) {
-                document.getElementById('bookmarksList').innerHTML = '<div class="empty-state"><p>No bookmarks yet. Use the bookmark icon on a post to save it.</p></div>';
-                return;
-            }
+            try { ids = JSON.parse(localStorage.getItem('sixershoops_bookmarked_trades') || '[]'); } catch(_) {}
+            if (!Array.isArray(ids)) ids = [];
+            ids = ids.filter(Boolean);
+
+            const listEl = document.getElementById('bookmarksList');
             const db = getDB();
-            if (!db) {
-                document.getElementById('bookmarksList').innerHTML = '<div class="empty-state"><p>Could not load bookmarks.</p></div>';
+            if (!ids.length) {
+                listEl.innerHTML = `<div class="empty-state"><p>No bookmarks yet. Tap the bookmark icon on any post to save it here.</p></div>`;
                 return;
             }
-            Promise.all(ids.slice(0, 50).map(function(id){ return db.collection('community_trades').doc(id).get().catch(function(){ return null; }); }))
-              .then(function(docs){
+            if (!db) {
+                listEl.innerHTML = `<div class="empty-state"><p>Could not load bookmarks.</p></div>`;
+                return;
+            }
+
+            Promise.all(ids.slice(0, 50).map(id => db.collection('community_trades').doc(id).get().catch(() => null)))
+              .then(docs => {
                 const items = [];
-                docs.forEach(function(doc){ if (doc && doc.exists) items.push(Object.assign({id: doc.id}, doc.data())); });
-                const alive = {};
-                items.forEach(function(x){ alive[x.id] = true; });
-                try { localStorage.setItem('sixershoops_bookmarked_trades', JSON.stringify(ids.filter(function(id){ return alive[id]; }))); } catch(e){}
-                const listEl = document.getElementById('bookmarksList');
-                if (!items.length) { listEl.innerHTML = '<div class="empty-state"><p>No bookmarks yet.</p></div>'; return; }
-                listEl.innerHTML = items.map(function(p){
-                  return '<a class="feed-card" href="/trade.html?id='+encodeURIComponent(p.id)+'" style="display:block;text-decoration:none;color:inherit;padding:1rem;border-bottom:1px solid rgba(0,0,0,.06);">'
-                    + '<div style="font-weight:800;margin-bottom:.25rem;">'+esc(p.title||'Untitled')+'</div>'
-                    + '<div style="font-size:.8rem;color:var(--mid);">'+esc(p.author||'')+' · '+timeAgo(p.createdAt)+'</div>'
-                    + '</a>';
+                docs.forEach((doc, i) => {
+                  if (doc && doc.exists) items.push({ id: doc.id, ...doc.data() });
+                });
+                // prune missing ids from localStorage
+                const alive = new Set(items.map(x => x.id));
+                const pruned = ids.filter(id => alive.has(id));
+                try { localStorage.setItem('sixershoops_bookmarked_trades', JSON.stringify(pruned)); } catch(_){}
+
+                if (!items.length) {
+                  listEl.innerHTML = `<div class="empty-state"><p>No bookmarks yet.</p></div>`;
+                  return;
+                }
+                items.sort((a,b) => {
+                  const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                  const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                  return tb - ta;
+                });
+                listEl.innerHTML = items.map(p => {
+                  const title = p.title || 'Untitled';
+                  const author = String(p.author || 'u/fan');
+                  const href = '/trade.html?id=' + encodeURIComponent(p.id);
+                  const isRepost = p.postType === 'repost' || p.postType === 'quote_repost';
+                  return `<a class="feed-card" href="${esc(href)}" style="display:block;text-decoration:none;color:inherit;padding:1rem;border-bottom:1px solid var(--border-light,#e4e8f0);">
+                    ${isRepost ? `<div style="font-size:.75rem;font-weight:700;color:#657786;margin-bottom:.3rem;">Repost</div>` : ''}
+                    <div style="font-weight:800;font-size:.95rem;margin-bottom:.25rem;">${esc(title)}</div>
+                    <div style="font-size:.8rem;color:var(--mid);">${esc(author)} · ${timeAgo(p.createdAt)}</div>
+                    ${(p.notes||p.summary) ? `<div style="font-size:.84rem;margin-top:.35rem;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${esc(p.notes||p.summary)}</div>` : ''}
+                  </a>`;
                 }).join('');
               })
-              .catch(function(){
-                document.getElementById('bookmarksList').innerHTML = '<div class="empty-state"><p>Could not load bookmarks.</p></div>';
+              .catch(err => {
+                console.error(err);
+                listEl.innerHTML = `<div class="empty-state"><p>Could not load bookmarks.</p></div>`;
               });
         }
 
@@ -1104,44 +1246,75 @@
                 return;
             }
 
-            db.collection('messages')
-              .where('recipientId','==',myUid)
-              .orderBy('createdAt','desc')
-              .limit(30)
-              .get()
+            // Inbox = comments & replies only (not likes/follows)
+            async function fetchInbox() {
+              try {
+                return await db.collection('notifications').where('recipientId','==',myUid).limit(80).get();
+              } catch (e) {
+                return await db.collection('notifications').where('recipientId','==',myUid).limit(80).get();
+              }
+            }
+            fetchInbox()
               .then(snap => {
-                const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                let msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const commentTypes = new Set(['comment','post_comment','comment_reply','post_reply_thread','reply']);
+                msgs = msgs.filter(m => commentTypes.has(m.type) || (!m.type && m.text && !/follow|liked/i.test(m.text||m.message||'')));
+                msgs.sort((a,b) => {
+                  const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                  const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                  return tb - ta;
+                });
                 const listEl = document.getElementById('inboxList');
                 if (!listEl) return;
-                if (!msgs.length) { listEl.innerHTML = `<div class="empty-state"><p>No messages yet</p></div>`; return; }
+                if (!msgs.length) { listEl.innerHTML = `<div class="empty-state"><p>No comments yet</p></div>`; return; }
 
                 const unread = msgs.filter(m => !m.read).length;
                 const countEl = document.getElementById('inbox-panel-count');
                 if (countEl && unread > 0) { countEl.classList.remove('hidden'); countEl.textContent = unread; }
 
                 listEl.innerHTML = msgs.map(msg => {
-                    const from = msg.senderName || 'User';
+                    const from = msg.fromName || msg.senderName || 'User';
                     const initial = from.charAt(0).toUpperCase();
                     const u = !msg.read;
+                    const isReply = msg.type === 'comment_reply' || msg.type === 'post_reply_thread';
+                    const action = isReply ? 'replied' : 'commented';
+                    const body = (msg.commentText || msg.text || msg.message || '').trim();
+                    // Prefer real comment body; fall back to short action if body is a system label
+                    const showBody = body && !/^(commented on post|replied to|liked|followed)/i.test(body) ? body : '';
+                    const href = msg.link || (msg.tradeId ? ('/trade.html?id=' + encodeURIComponent(msg.tradeId) + (msg.commentId ? ('#comment-' + encodeURIComponent(msg.commentId)) : '')) : '');
                     return `
-                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}">
+                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}" data-href="${esc(href)}">
                         ${u ? '<div class="unread-dot"></div>' : ''}
                         <div class="inbox-item-avatar" style="background:${colorFor(from)}">${initial}</div>
-                        <div class="inbox-item-body">
-                            <div class="inbox-item-from">${esc(from)}</div>
-                            <div class="inbox-item-preview ${u?'unread-preview':''}">${esc(msg.preview || msg.text || msg.body || '')}</div>
+                        <div class="inbox-item-body" style="min-width:0;flex:1;">
+                            <div class="inbox-item-from">${esc(from)} <span style="font-weight:500;color:var(--mid);">${esc(action)}</span></div>
+                            <div class="inbox-item-preview ${u?'unread-preview':''}" style="white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${esc(showBody || (isReply ? 'Replied to your comment' : 'Commented on your post'))}</div>
                         </div>
-                        <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">
+                          <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
+                          ${href ? `<a class="inbox-view-btn" href="${esc(href)}">View comment</a>` : ''}
+                        </div>
                     </div>`;
                 }).join('');
+
+                listEl.querySelectorAll('.inbox-item').forEach(el => {
+                  el.addEventListener('click', async (e) => {
+                    if (e.target.closest('.inbox-view-btn')) return; // let link work
+                    const id = el.getAttribute('data-id');
+                    const href = el.getAttribute('data-href');
+                    if (id) { try { await db.collection('notifications').doc(id).update({ read: true }); } catch(_) {} }
+                    if (href) location.href = href;
+                  });
+                });
               })
-              .catch(() => {
+              .catch((err) => {
+                console.error(err);
                 const listEl = document.getElementById('inboxList');
                 if (listEl) listEl.innerHTML = `<div class="empty-state"><p>Could not load inbox</p></div>`;
               });
         }
 
-        window.markAllInboxRead = function() {
+                window.markAllInboxRead = function() {
             document.querySelectorAll('.inbox-item.unread').forEach(el => el.classList.remove('unread'));
             document.querySelectorAll('.unread-dot').forEach(el => el.remove());
             document.querySelectorAll('.inbox-item-preview.unread-preview').forEach(el => el.classList.remove('unread-preview'));
@@ -1171,13 +1344,22 @@
                 return;
             }
 
-            db.collection('notifications')
-              .where('recipientId','==',myUid)
-              .orderBy('createdAt','desc')
-              .limit(40)
-              .get()
+            async function fetchNotifs() {
+              try {
+                return await db.collection('notifications').where('recipientId','==',myUid).orderBy('createdAt','desc').limit(40).get();
+              } catch (e) {
+                // Fallback if composite index missing or mixed timestamp types
+                return await db.collection('notifications').where('recipientId','==',myUid).limit(40).get();
+              }
+            }
+            fetchNotifs()
               .then(snap => {
-                const notifs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                let notifs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                notifs.sort((a,b) => {
+                  const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                  const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                  return tb - ta;
+                });
                 const listEl = document.getElementById('notifList');
                 if (!listEl) return;
                 if (!notifs.length) { listEl.innerHTML = `<div class="empty-state"><p>No notifications yet</p></div>`; return; }
@@ -1191,16 +1373,50 @@
                         ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`
                         : n.type === 'follow'
                         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+                        : n.type === 'repost' || n.type === 'quote_repost'
+                        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>`
                         : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+                    const who = n.fromName || n.senderName || 'Someone';
+                    // Short labels only — never show comment body
+                    let action = 'interacted with your post';
+                    if (n.type === 'like') action = 'liked post';
+                    else if (n.type === 'follow') action = 'followed you';
+                    else if (n.type === 'comment_reply' || n.type === 'post_reply_thread') action = 'replied to your comment';
+                    else if (n.type === 'repost') action = 'reposted';
+                    else if (n.type === 'quote_repost') action = 'quote reposted';
+                    else if (n.type === 'comment' || n.type === 'post_comment' || n.type === 'reply') action = 'commented on post';
+                    const href = n.link || (n.tradeId ? ('/trade.html?id=' + encodeURIComponent(n.tradeId)) : '');
                     return `
-                    <div class="notif-item ${n.read?'':'unread'}" ${n.link?`onclick="location.href='${esc(n.link)}'"`:''}>
+                    <div class="notif-item ${n.read?'':'unread'}" data-id="${esc(n.id)}" data-href="${esc(href)}" style="cursor:${href?'pointer':'default'}">
                         <div class="notif-icon">${iconSvg}</div>
-                        <div class="notif-text">${esc(n.message || n.text || '')}</div>
+                        <div class="notif-text"><strong>${esc(who)}</strong> ${esc(action)}</div>
                         <div class="notif-time">${timeAgo(n.createdAt)}</div>
                     </div>`;
                 }).join('');
+
+                // Mark all as read when notifications tab is opened
+                const unreadIds = notifs.filter(n => !n.read).map(n => n.id);
+                if (unreadIds.length && db) {
+                  Promise.all(unreadIds.map(id => db.collection('notifications').doc(id).update({ read: true }).catch(() => {})))
+                    .then(() => {
+                      if (window.updateNotifBadge) window.updateNotifBadge(0);
+                      setTabPill('#tab-notif-count', 0);
+                      setTabPill('#tab-inbox-count', 0);
+                      listEl.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+                      const countEl = document.getElementById('notif-panel-count');
+                      if (countEl) countEl.classList.add('hidden');
+                    });
+                }
+
+                listEl.querySelectorAll('.notif-item').forEach(el => {
+                  el.addEventListener('click', async () => {
+                    const href = el.getAttribute('data-href');
+                    if (href) location.href = href;
+                  });
+                });
               })
-              .catch(() => {
+              .catch((err) => {
+                console.error(err);
                 const listEl = document.getElementById('notifList');
                 if (listEl) listEl.innerHTML = `<div class="empty-state"><p>Could not load notifications</p></div>`;
               });
@@ -1249,16 +1465,6 @@
                         <textarea class="auth-field" id="settingsBio" rows="3" maxlength="200" style="resize:vertical;font-family:inherit;">${esc(ud.bio||'')}</textarea>
                     </div>
 
-                    <div>
-                        <label class="auth-label">Avatar Color</label>
-                        <div id="settingsColorRow" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.25rem;">
-                            ${colorChoices.map(c => `
-                                <button type="button" data-color="${c}" class="settings-color-opt ${c===color?'is-active':''}" style="width:30px;height:30px;border-radius:50%;background:${c};border:2px solid ${c===color?'#0d0f1a':'transparent'};cursor:pointer;padding:0;"></button>
-                            `).join('')}
-                        </div>
-                        <input type="hidden" id="settingsAvatarColor" value="${color}">
-                    </div>
-
                     <div id="settingsMsg" class="nav-message" style="margin:0;"></div>
 
                     <div style="display:flex;gap:0.6rem;">
@@ -1288,51 +1494,62 @@
                     : (document.getElementById('settingsUsername').value || 'U').charAt(0).toUpperCase();
             }
 
-            // Color picker
-            document.querySelectorAll('.settings-color-opt').forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll('.settings-color-opt').forEach(b => b.style.borderColor = 'transparent');
-                    btn.style.borderColor = '#0d0f1a';
-                    colorHidden.value = btn.dataset.color;
-                    repaintAvatar();
-                };
-            });
 
             // Photo upload
             const picInput = document.getElementById('settingsPicInput');
             const picRemove = document.getElementById('settingsPicRemove');
+            async function fileToCompressedDataUrl(file, maxSide, quality) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onerror = reject;
+                    reader.onload = () => {
+                        const img = new Image();
+                        img.onerror = reject;
+                        img.onload = () => {
+                            let w = img.width, h = img.height;
+                            const scale = Math.min(1, maxSide / Math.max(w, h));
+                            w = Math.round(w * scale); h = Math.round(h * scale);
+                            const canvas = document.createElement('canvas');
+                            canvas.width = w; canvas.height = h;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, w, h);
+                            resolve(canvas.toDataURL('image/jpeg', quality));
+                        };
+                        img.src = reader.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // No Firebase Storage — photo is compressed and saved in Firestore as a data URL
             picInput.onchange = async (ev) => {
                 const file = ev.target.files && ev.target.files[0];
                 if (!file) return;
-                if (file.size > 2 * 1024 * 1024) { picMsg.textContent = 'Image must be under 2 MB.'; picMsg.style.color = '#dc2626'; return; }
-
-                // Ensure firebase storage is loaded
-                if (typeof firebase.storage !== 'function') {
-                    picMsg.textContent = 'Loading uploader…'; picMsg.style.color = 'var(--mid)';
-                    await new Promise((res, rej) => {
-                        const s = document.createElement('script');
-                        s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
-                        s.onload = res; s.onerror = rej;
-                        document.head.appendChild(s);
-                    }).catch(() => {});
+                if (!file.type || !file.type.startsWith('image/')) {
+                    picMsg.textContent = 'Please choose an image file.'; picMsg.style.color = '#dc2626'; return;
                 }
-                if (!window.storage && typeof firebase.storage === 'function') {
-                    try { window.storage = firebase.storage(); } catch(_) {}
+                if (file.size > 8 * 1024 * 1024) {
+                    picMsg.textContent = 'Image must be under 8 MB.'; picMsg.style.color = '#dc2626'; return;
                 }
-                if (!window.storage) { picMsg.textContent = 'Upload service unavailable.'; picMsg.style.color = '#dc2626'; return; }
-
                 try {
-                    picMsg.textContent = 'Uploading…'; picMsg.style.color = 'var(--mid)';
-                    const ref = window.storage.ref().child(`profile-pics/${myUid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
-                    const snap = await ref.put(file);
-                    const url = await snap.ref.getDownloadURL();
-                    photoHidden.value = url;
+                    picMsg.textContent = 'Processing photo…'; picMsg.style.color = 'var(--mid)';
+                    let dataUrl = await fileToCompressedDataUrl(file, 400, 0.7);
+                    if (dataUrl.length > 700000) {
+                        dataUrl = await fileToCompressedDataUrl(file, 280, 0.55);
+                    }
+                    if (dataUrl.length > 900000) {
+                        picMsg.textContent = 'Image is still too large after compression. Try a smaller photo.';
+                        picMsg.style.color = '#dc2626';
+                        return;
+                    }
+                    photoHidden.value = dataUrl;
                     repaintAvatar();
-                    picMsg.textContent = 'Photo uploaded. Save to keep it.'; picMsg.style.color = '#15803d';
+                    picMsg.textContent = 'Photo ready. Click Save Changes to keep it.';
+                    picMsg.style.color = '#15803d';
                 } catch (err) {
                     console.error(err);
-                    picMsg.textContent = 'Upload failed: ' + (err.message || err); picMsg.style.color = '#dc2626';
-                    if (/unauthorized|permission/i.test(String(err.message||''))) picMsg.textContent = 'Upload blocked by Storage rules. Allow authenticated writes to profile-pics/.';
+                    picMsg.textContent = 'Could not process photo: ' + (err.message || err);
+                    picMsg.style.color = '#dc2626';
                 }
             };
             picRemove.onclick = () => {
@@ -1360,19 +1577,27 @@
                 }
                 const bio = document.getElementById('settingsBio').value.trim();
                 const photoURL = photoHidden.value || '';
-                const avatarColor = colorHidden.value || '#001a57';
+                const avatarColor = (colorHidden && colorHidden.value) || ud.avatarColor || '#001a57';
                 const usernameLower = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
 
                 const submitBtn = e.target.querySelector('button[type="submit"]');
                 submitBtn.disabled = true; submitBtn.textContent = 'Saving…';
                 try {
-                    const user = firebase.auth().currentUser;
-                    await user.updateProfile({ displayName: name, photoURL: photoURL || null });
+                    const user = (window.auth && window.auth.currentUser) || (firebase.auth && firebase.auth().currentUser);
+                    if (!user) throw new Error('Please sign in again to save settings.');
+                    // Auth profile only stores displayName — large data-URL photos go to Firestore only
+                    try {
+                        await user.updateProfile({ displayName: name });
+                    } catch (authErr) {
+                        console.warn('Auth displayName update skipped:', authErr);
+                    }
                     localStorage.setItem('avatarColor', avatarColor);
                     if (photoURL) localStorage.setItem('photoURL', photoURL); else localStorage.removeItem('photoURL');
                     localStorage.setItem('usernameLower', usernameLower);
 
-                    await firebase.firestore().collection('users').doc(myUid).set({
+                    const db = getDB() || (window.db) || (firebase.firestore && firebase.firestore());
+                    if (!db) throw new Error('Database not ready. Refresh and try again.');
+                    await db.collection('users').doc(myUid).set({
                         username: name,
                         usernameLower,
                         bio,
@@ -1382,10 +1607,8 @@
                     }, { merge: true });
 
                     msg.className = 'nav-message success'; msg.textContent = 'Settings saved.';
-                    // Update local + refresh the banner
                     gUserData = { ...gUserData, username: name, usernameLower, bio, avatarColor, photoURL: photoURL || null };
                     renderBanner(gUserData, gPosts.length, gMyUid);
-                    // If username changed, update the URL slug
                     if (usernameLower !== slug.toLowerCase()) {
                         slug = usernameLower;
                         history.replaceState(null, '', tabHref('settings'));
@@ -1430,8 +1653,6 @@
 
             if (currentSubPage === 'inbox') {
                 renderInbox(myUid);
-            } else if (currentSubPage === 'bookmarks') {
-                renderBookmarks(myUid);
             } else if (currentSubPage === 'notifications') {
                 renderNotifications(myUid);
             } else if (currentSubPage === 'settings') {
@@ -1489,46 +1710,66 @@
         }
 
         waitForDB(async (db) => {
-            let myUid = null;
-            try {
-                await new Promise(function(resolve) {
-                    var done = false;
-                    var finish = function(u) {
-                        if (done) return; done = true;
-                        myUid = u && u.uid ? u.uid : null;
-                        resolve();
-                    };
+            // Wait for auth so ownership (settings / notifications / follow) is correct
+            function waitForAuth() {
+                return new Promise((resolve) => {
                     try {
-                        if (window.auth && window.auth.currentUser) return finish(window.auth.currentUser);
-                        if (firebase.auth().currentUser) return finish(firebase.auth().currentUser);
-                        var unsub = firebase.auth().onAuthStateChanged(function(u) {
-                            try { unsub(); } catch(_) {}
-                            finish(u);
-                        });
-                        setTimeout(function(){ finish(firebase.auth().currentUser); }, 2500);
-                    } catch(_) { finish(null); }
+                        const existing = (window.auth && window.auth.currentUser) || (firebase.auth && firebase.auth().currentUser) || null;
+                        if (existing) { resolve(existing.uid); return; }
+                        let settled = false;
+                        const finish = (uid) => {
+                            if (settled) return;
+                            settled = true;
+                            try { unsub && unsub(); } catch (_) {}
+                            resolve(uid || null);
+                        };
+                        let unsub = null;
+                        try {
+                            unsub = firebase.auth().onAuthStateChanged((u) => finish(u ? u.uid : null));
+                        } catch (_) {
+                            finish(null);
+                            return;
+                        }
+                        // Don't block forever if auth is slow/offline
+                        setTimeout(() => finish((window.auth && window.auth.currentUser && window.auth.currentUser.uid) || null), 2500);
+                    } catch (_) {
+                        resolve(null);
+                    }
                 });
-            } catch(_) {}
+            }
+
+            const myUid = await waitForAuth();
 
             try {
                 let ud = null;
-                const slugLower = (slug || '').toLowerCase();
-                try {
-                    const userSnap = await db.collection('users').where('usernameLower','==',slugLower).limit(1).get();
-                    if (!userSnap.empty) ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
-                } catch(_) {}
+                const slugLower = (slug || '').toLowerCase().replace(/^u\//, '');
+                const uidParam = new URLSearchParams(location.search).get('uid');
+
+                // 1) Direct doc id if uid query or slug looks like a Firebase uid
+                if (uidParam) {
+                    try {
+                        const byId = await db.collection('users').doc(uidParam).get();
+                        if (byId.exists) ud = { _uid: byId.id, ...byId.data() };
+                    } catch(_) {}
+                }
+
+                // 2) usernameLower match
+                if (!ud) {
+                    try {
+                        const userSnap = await db.collection('users').where('usernameLower','==',slugLower).limit(1).get();
+                        if (!userSnap.empty) ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
+                    } catch(_) {}
+                }
+
+                // 3) exact username field
                 if (!ud) {
                     try {
                         const userSnap = await db.collection('users').where('username','==',slug).limit(1).get();
                         if (!userSnap.empty) ud = { _uid: userSnap.docs[0].id, ...userSnap.docs[0].data() };
                     } catch(_) {}
                 }
-                if (!ud) {
-                    try {
-                        const byId = await db.collection('users').doc(slug).get();
-                        if (byId.exists) ud = { _uid: byId.id, ...byId.data() };
-                    } catch(_) {}
-                }
+
+                // 4) Case-insensitive scan of a limited set of user docs (fallback)
                 if (!ud) {
                     try {
                         const all = await db.collection('users').limit(200).get();
@@ -1536,109 +1777,140 @@
                             const x = d.data() || {};
                             const a = String(x.usernameLower || '').toLowerCase();
                             const b = String(x.username || '').toLowerCase();
-                            return a === slugLower || b === slugLower;
+                            return a === slugLower || b === slugLower || b.replace(/[^a-z0-9_-]+/g,'-') === slugLower;
                         });
                         if (hit) ud = { _uid: hit.id, ...hit.data() };
                     } catch(_) {}
                 }
-                if (!ud) { showNotFound(); return; }
 
-                let posts = [], comments = [];
-                // All community content lives in community_trades (comments embedded)
-                try {
-                    let ps;
+                // 5) Infer from community_trades author field if user doc missing
+                if (!ud) {
                     try {
-                        ps = await db.collection('community_trades').where('authorId','==',ud._uid).orderBy('createdAt','desc').limit(60).get();
-                    } catch(_) {
-                        ps = await db.collection('community_trades').where('authorId','==',ud._uid).limit(60).get();
-                    }
-                    posts = ps.docs.map(d => {
-                        const data = d.data() || {};
-                        return {
-                            postId: d.id,
-                            id: d.id,
-                            title: data.title || 'Untitled',
-                            body: data.notes || data.summary || data.body || '',
-                            notes: data.notes || '',
-                            summary: data.summary || '',
-                            upvotes: data.votes || data.upvotes || 0,
-                            voteCount: data.votes || 0,
-                            createdAt: data.createdAt || null,
-                            postType: data.postType || data.type || 'discussion',
-                            image: data.image || '',
-                            quotedPostId: data.quotedPostId || null,
-                            quotedTitle: data.quotedTitle || '',
-                            quotedAuthor: data.quotedAuthor || ''
-                        };
-                    });
-                    // Extract this user's comments from posts they authored + scan recent trades
-                    posts.forEach(p => {
-                        const raw = (ps.docs.find(d => d.id === p.postId) || {}).data
-                            ? (ps.docs.find(d => d.id === p.postId).data().comments || [])
-                            : [];
-                        // comments pulled below from full scan
-                    });
-                } catch(err) { console.warn('posts load', err); }
-
-                // Comments: scan community_trades for embedded comments by this user
-                try {
-                    let scan;
+                        const trades = await db.collection('community_trades').where('authorId','==',slugLower).limit(1).get();
+                        // slug might be username not uid — search recent trades by author string
+                    } catch(_) {}
                     try {
-                        scan = await db.collection('community_trades').orderBy('createdAt','desc').limit(120).get();
-                    } catch(_) {
-                        scan = await db.collection('community_trades').limit(120).get();
-                    }
-                    scan.docs.forEach(doc => {
-                        const data = doc.data() || {};
-                        const list = Array.isArray(data.comments) ? data.comments : [];
-                        list.forEach(c => {
-                            if (c && c.authorId === ud._uid) {
-                                comments.push({
-                                    commentId: c.id || (doc.id + '_' + (c.createdAt || '')),
-                                    text: c.text || c.body || '',
-                                    createdAt: c.createdAt || null,
-                                    postId: doc.id,
-                                    postTitle: data.title || 'Post',
-                                    postUrl: '/trade.html?id=' + encodeURIComponent(doc.id)
-                                });
+                        const recent = await db.collection('community_trades').orderBy('createdAt','desc').limit(80).get();
+                        for (const d of recent.docs) {
+                            const x = d.data() || {};
+                            const handle = String(x.author || '').replace(/^u\//i,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+                            if (handle === slugLower && x.authorId) {
+                                ud = {
+                                    _uid: x.authorId,
+                                    username: String(x.author || '').replace(/^u\//i,''),
+                                    usernameLower: handle,
+                                    followerCount: 0,
+                                    followingCount: 0
+                                };
+                                // Best-effort create a real users doc so next visit is fast
+                                try {
+                                    await db.collection('users').doc(x.authorId).set({
+                                        username: ud.username,
+                                        usernameLower: handle,
+                                        createdAt: new Date().toISOString()
+                                    }, { merge: true });
+                                } catch(_) {}
+                                break;
                             }
-                        });
-                    });
-                    comments.sort((a,b) => {
-                        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-                        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-                        return tb - ta;
-                    });
-                } catch(err) { console.warn('comments load', err); }
-
-                // Also re-load posts if first query failed empty - include from scan by author
-                if (!posts.length) {
-                    try {
-                        let scan2;
-                        try { scan2 = await db.collection('community_trades').orderBy('createdAt','desc').limit(120).get(); }
-                        catch(_) { scan2 = await db.collection('community_trades').limit(120).get(); }
-                        posts = scan2.docs.filter(d => (d.data()||{}).authorId === ud._uid).map(d => {
-                            const data = d.data() || {};
-                            return {
-                                postId: d.id, id: d.id,
-                                title: data.title || 'Untitled',
-                                body: data.notes || data.summary || '',
-                                notes: data.notes || '',
-                                summary: data.summary || '',
-                                upvotes: data.votes || 0,
-                                voteCount: data.votes || 0,
-                                createdAt: data.createdAt || null,
-                                postType: data.postType || data.type || 'discussion',
-                                image: data.image || '',
-                                quotedPostId: data.quotedPostId || null,
-                                quotedTitle: data.quotedTitle || '',
-                                quotedAuthor: data.quotedAuthor || ''
-                            };
-                        });
+                        }
                     } catch(_) {}
                 }
 
+                if (!ud) { showNotFound(); return; }
+
+                // Normalize usernameLower on the profile if missing
+                if (!ud.usernameLower && ud.username) {
+                    ud.usernameLower = String(ud.username).toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+                }
+
+                let posts = [], comments = [];
+
+                // Primary: community trades authored by this user
+                async function loadByAuthor(col) {
+                    try {
+                        const ps = await db.collection(col).where('authorId','==',ud._uid).orderBy('createdAt','desc').limit(50).get();
+                        return ps.docs.map(d => ({ postId: d.id, id: d.id, ...d.data() }));
+                    } catch(_) {
+                        try {
+                            const ps = await db.collection(col).where('authorId','==',ud._uid).limit(50).get();
+                            return ps.docs.map(d => ({ postId: d.id, id: d.id, ...d.data() }));
+                        } catch(__) { return []; }
+                    }
+                }
+
+                const tradePosts = await loadByAuthor('community_trades');
+                const feedPosts = await loadByAuthor('community_posts');
+                const legacyPosts = await loadByAuthor('posts');
+                posts = [...tradePosts, ...feedPosts, ...legacyPosts];
+                // Drop ghost/empty posts (deleted content leftovers)
+                posts = posts.filter(p => {
+                    if (!p || !p.postId && !p.id) return false;
+                    const hasTitle = !!(p.title && String(p.title).trim());
+                    const hasBody = !!(p.notes || p.summary || p.body || p.content);
+                    const hasTrade = !!(p.sides && p.sides.length) || !!p.machineHash;
+                    const hasQuote = !!p.quotedPostId;
+                    const hasImage = !!p.image;
+                    return hasTitle || hasBody || hasTrade || hasQuote || hasImage;
+                });
+                // De-dupe by id
+                const seenIds = new Set();
+                posts = posts.filter(p => {
+                    const id = p.postId || p.id;
+                    if (!id || seenIds.has(id)) return false;
+                    seenIds.add(id);
+                    return true;
+                });
+                posts.sort((a,b) => {
+                    const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                    const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                    return tb - ta;
+                });
+
+                // Comments live embedded on trade docs — pull this user's comments from their trades + recent trades
+                try {
+                    const extractComments = (list) => {
+                        const out = [];
+                        list.forEach(p => {
+                            (p.comments || []).forEach(c => {
+                                if (c.authorId === ud._uid) {
+                                    out.push({
+                                        ...c,
+                                        postId: p.id || p.postId,
+                                        postTitle: p.title || 'Trade',
+                                        postUrl: '/trade.html?id=' + encodeURIComponent(p.id || p.postId)
+                                    });
+                                }
+                            });
+                        });
+                        return out;
+                    };
+                    comments = extractComments(posts);
+                    // Also scan latest trades for comments by this user on others' posts
+                    try {
+                        const recent = await db.collection('community_trades').orderBy('createdAt','desc').limit(40).get();
+                        const others = recent.docs.map(d => ({ id: d.id, ...d.data() }));
+                        const more = extractComments(others);
+                        const seen = new Set(comments.map(c => c.id));
+                        more.forEach(c => { if (c.id && !seen.has(c.id)) comments.push(c); });
+                    } catch(_) {}
+                    comments.sort((a,b) => {
+                        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                        return tb - ta;
+                    });
+                } catch(_) {}
+
                 renderPage(ud, posts, comments, myUid);
+
+                // If auth arrives late (after timeout), re-render so own settings/notifications/follow state update
+                try {
+                    firebase.auth().onAuthStateChanged((u) => {
+                        const uid = u ? u.uid : null;
+                        if (uid !== gMyUid && gUserData) {
+                            renderPage(gUserData, gPosts, gComments, uid);
+                        }
+                    });
+                } catch (_) {}
             } catch(err) {
                 console.error(err);
                 showNotFound('Something went wrong loading this profile.');
