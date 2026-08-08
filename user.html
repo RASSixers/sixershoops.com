@@ -681,6 +681,7 @@
                 renderSidebar(gUserData, gPosts.length, gMyUid);
                 if (currentSubPage === 'inbox') renderInbox(gMyUid);
                 else if (currentSubPage === 'notifications') renderNotifications(gMyUid);
+                else if (currentSubPage === 'bookmarks') renderBookmarks(gMyUid);
                 else if (currentSubPage === 'settings') renderSettings(gUserData, gMyUid);
                 else renderFeed();
             }
@@ -805,6 +806,7 @@
                     <button class="profile-tab" data-tab="comments">Comments</button>
                     <button class="profile-tab" data-tab="likes">Likes</button>
                     ${isOwn ? `
+                    <a class="profile-tab" href="${tabHref('bookmarks')}">Bookmarks</a>
                     <a class="profile-tab" href="${tabHref('inbox')}">
                         Inbox <span id="tab-inbox-count" class="tab-notif-pill hidden"></span>
                     </a>
@@ -1153,6 +1155,75 @@
         }
 
         // ── Inbox ─────────────────────────────────────────────────
+
+        function renderBookmarks(myUid) {
+            const fc = document.getElementById('feedContent');
+            if (!fc) return;
+            if (!myUid || myUid !== (gUserData && gUserData._uid)) {
+                fc.innerHTML = `<div class="empty-state"><p>Bookmarks are private.</p></div>`;
+                return;
+            }
+            fc.innerHTML = `
+            <div class="panel-wrap">
+                <div class="panel-header"><span class="panel-title">Bookmarks</span></div>
+                <div id="bookmarksList"><div class="empty-state"><p>Loading…</p></div></div>
+            </div>`;
+
+            let ids = [];
+            try { ids = JSON.parse(localStorage.getItem('sixershoops_bookmarked_trades') || '[]'); } catch(_) {}
+            if (!Array.isArray(ids)) ids = [];
+            ids = ids.filter(Boolean);
+
+            const listEl = document.getElementById('bookmarksList');
+            const db = getDB();
+            if (!ids.length) {
+                listEl.innerHTML = `<div class="empty-state"><p>No bookmarks yet. Tap the bookmark icon on any post to save it here.</p></div>`;
+                return;
+            }
+            if (!db) {
+                listEl.innerHTML = `<div class="empty-state"><p>Could not load bookmarks.</p></div>`;
+                return;
+            }
+
+            Promise.all(ids.slice(0, 50).map(id => db.collection('community_trades').doc(id).get().catch(() => null)))
+              .then(docs => {
+                const items = [];
+                docs.forEach((doc, i) => {
+                  if (doc && doc.exists) items.push({ id: doc.id, ...doc.data() });
+                });
+                // prune missing ids from localStorage
+                const alive = new Set(items.map(x => x.id));
+                const pruned = ids.filter(id => alive.has(id));
+                try { localStorage.setItem('sixershoops_bookmarked_trades', JSON.stringify(pruned)); } catch(_){}
+
+                if (!items.length) {
+                  listEl.innerHTML = `<div class="empty-state"><p>No bookmarks yet.</p></div>`;
+                  return;
+                }
+                items.sort((a,b) => {
+                  const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                  const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                  return tb - ta;
+                });
+                listEl.innerHTML = items.map(p => {
+                  const title = p.title || 'Untitled';
+                  const author = String(p.author || 'u/fan');
+                  const href = '/trade.html?id=' + encodeURIComponent(p.id);
+                  const isRepost = p.postType === 'repost' || p.postType === 'quote_repost';
+                  return `<a class="feed-card" href="${esc(href)}" style="display:block;text-decoration:none;color:inherit;padding:1rem;border-bottom:1px solid var(--border-light,#e4e8f0);">
+                    ${isRepost ? `<div style="font-size:.75rem;font-weight:700;color:#657786;margin-bottom:.3rem;">Repost</div>` : ''}
+                    <div style="font-weight:800;font-size:.95rem;margin-bottom:.25rem;">${esc(title)}</div>
+                    <div style="font-size:.8rem;color:var(--mid);">${esc(author)} · ${timeAgo(p.createdAt)}</div>
+                    ${(p.notes||p.summary) ? `<div style="font-size:.84rem;margin-top:.35rem;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${esc(p.notes||p.summary)}</div>` : ''}
+                  </a>`;
+                }).join('');
+              })
+              .catch(err => {
+                console.error(err);
+                listEl.innerHTML = `<div class="empty-state"><p>Could not load bookmarks.</p></div>`;
+              });
+        }
+
         function renderInbox(myUid) {
             const fc = document.getElementById('feedContent');
             if (!fc) return;
