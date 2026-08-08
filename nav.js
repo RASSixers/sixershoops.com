@@ -551,6 +551,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <button class="user-dropdown-item" id="navSettingsBtn">Account Settings</button>
 
+                        ${user.email && user.email.toLowerCase() === 'rhatus13@gmail.com' ? `<div class="user-dropdown-divider"></div>
+                        <button class="user-dropdown-item" id="navModerationLink">Moderation</button>` : ''}
+
                         <div class="user-dropdown-divider"></div>
 
                         <button class="user-dropdown-item logout-action" id="navDropdownLogout">Sign Out</button>
@@ -572,6 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
                         <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
+                        ${user.email && user.email.toLowerCase() === 'rhatus13@gmail.com' ? `<a class="auth-nav-btn" href="/moderation.html" style="width:100%;text-align:center;text-decoration:none;display:block;background:#001a57;color:#fff;">Moderation</a>` : ''}
                     </div>
                 `;
             }
@@ -596,6 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
             if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
             if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
+            const modLink = document.getElementById('navModerationLink');
+            if (modLink)           modLink.onclick           = () => { window.location.href = '/moderation.html'; };
             if (smallLogoutBtn)    smallLogoutBtn.onclick    = (e) => { e.stopPropagation(); window.auth.signOut(); };
             if (dropdownLogoutBtn) dropdownLogoutBtn.onclick = (e) => { e.stopPropagation(); window.auth.signOut(); };
             // Account Settings now lives on the profile page (/user/<name>/settings)
