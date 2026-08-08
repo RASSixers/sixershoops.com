@@ -268,13 +268,14 @@
         await ref.delete();
         if(btn){btn.textContent='Follow';btn.classList.remove('following');}
       } else {
-        await ref.set({
-          followerId:me.uid,
-          followingId:uid,
-          followerName:me.displayName||(me.email?me.email.split('@')[0]:'fan'),
-          followingName:(trade&&trade.author)?String(trade.author).replace(/^u\//,''):'',
-          createdAt: new Date().toISOString()
-        });
+        var followPayload = {
+          followerId: String(me.uid),
+          followingId: String(uid),
+          followerName: String(me.displayName||(me.email?me.email.split('@')[0]:'fan')),
+          followingName: (trade&&trade.author)?String(trade.author).replace(/^u\//,''):'',
+          createdAt: String(new Date().toISOString())
+        };
+        await ref.set(JSON.parse(JSON.stringify(followPayload)));
         if(btn){btn.textContent='Following';btn.classList.add('following');}
       }
     }catch(e){
