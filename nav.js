@@ -929,49 +929,75 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (picUrlHidden) picUrlHidden.value = currentPhoto;
             if (picInput) {
+                const compressPic = (file, maxSide, quality) => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onerror = reject;
+                    reader.onload = () => {
+                        const img = new Image();
+                        img.onerror = reject;
+                        img.onload = () => {
+                            let w = img.width, h = img.height;
+                            const scale = Math.min(1, maxSide / Math.max(w, h));
+                            w = Math.round(w * scale); h = Math.round(h * scale);
+                            const canvas = document.createElement('canvas');
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            resolve(canvas.toDataURL('image/jpeg', quality));
+                        };
+                        img.src = reader.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+
                 picInput.onchange = async (ev) => {
                     const file = ev.target.files && ev.target.files[0];
                     if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                        showNavMessage('Image must be under 2 MB.', 'error');
+                    if (file.size > 5 * 1024 * 1024) {
+                        showNavMessage('Image must be under 5 MB.', 'error');
                         return;
                     }
-                    // Lazy-load firebase-storage SDK if missing
-                    if (typeof firebase.storage !== 'function') {
-                        showNavMessage('Loading uploader…', 'success');
-                        await new Promise((res, rej) => {
-                            const s = document.createElement('script');
-                            s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
-                            s.onload = res; s.onerror = rej;
-                            document.head.appendChild(s);
-                        }).catch(() => {});
-                    }
-                    if (!window.storage && typeof firebase.storage === 'function') {
-                        try { window.storage = firebase.storage(); } catch(_) {}
-                    }
-                    if (!window.storage) {
-                        showNavMessage('Storage not ready, try again in a moment.', 'error');
-                        return;
-                    }
+                    let url = null;
                     try {
-                        showNavMessage('Uploading photo...', 'success');
-                        const ref = window.storage.ref().child(`profile-pics/${user.uid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
-                        const snap = await ref.put(file);
-                        const url  = await snap.ref.getDownloadURL();
-                        if (picUrlHidden) picUrlHidden.value = url;
-                        if (picPreview) {
-                            picPreview.innerHTML = `<img src="${url}" alt="">`;
-                            picPreview.style.background = '#0b0f1a';
+                        if (typeof firebase.storage !== 'function') {
+                            showNavMessage('Loading uploader…', 'success');
+                            await new Promise((res, rej) => {
+                                const s = document.createElement('script');
+                                s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
+                                s.onload = res; s.onerror = rej;
+                                document.head.appendChild(s);
+                            }).catch(() => {});
                         }
-                        // Update preview avatar in the gradient card too
-                        if (avatarPreview) {
-                            avatarPreview.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        if (!window.storage && typeof firebase.storage === 'function') {
+                            try { window.storage = firebase.storage(); } catch(_) {}
                         }
-                        showNavMessage('Photo uploaded. Hit Save Changes to keep it.', 'success');
+                        if (window.storage) {
+                            showNavMessage('Uploading photo...', 'success');
+                            const ref = window.storage.ref().child(`profile-pics/${user.uid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
+                            const snap = await ref.put(file);
+                            url = await snap.ref.getDownloadURL();
+                        }
                     } catch (err) {
-                        console.error(err);
-                        showNavMessage('Upload failed: ' + err.message, 'error');
+                        console.warn('Storage upload failed, using compressed fallback', err);
                     }
+                    if (!url) {
+                        try {
+                            showNavMessage('Compressing photo…', 'success');
+                            url = await compressPic(file, 512, 0.72);
+                            if (url.length > 900000) url = await compressPic(file, 320, 0.6);
+                        } catch (err2) {
+                            showNavMessage('Upload failed: ' + (err2.message || err2), 'error');
+                            return;
+                        }
+                    }
+                    if (picUrlHidden) picUrlHidden.value = url;
+                    if (picPreview) {
+                        picPreview.innerHTML = `<img src="${url}" alt="">`;
+                        picPreview.style.background = '#0b0f1a';
+                    }
+                    if (avatarPreview) {
+                        avatarPreview.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                    }
+                    showNavMessage('Photo ready. Hit Save Changes to keep it.', 'success');
                 };
             }
             if (picClear) {
