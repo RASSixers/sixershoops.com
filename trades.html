@@ -146,6 +146,11 @@
         <input class="inp" id="cTitle" maxlength="120" placeholder="What's on your mind?" />
         <label class="fl">DESCRIPTION <span style="font-weight:600;letter-spacing:0;text-transform:none;color:#94a3b8">(optional)</span></label>
         <textarea class="ta" id="cDesc" maxlength="2000" placeholder="Add context…"></textarea>
+        <div class="img-attach-row" style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+          <label for="postImageInput" style="font-size:.78rem;font-weight:600;color:#006BB6;background:rgba(0,107,182,.08);border:1px solid rgba(0,107,182,.2);border-radius:6px;padding:.35rem .65rem;cursor:pointer;">Add image</label>
+          <input type="file" id="postImageInput" accept="image/*" style="display:none;">
+          <div id="postImagePreview" style="display:flex;gap:.4rem;flex-wrap:wrap;"></div>
+        </div>
         <div id="pollFields" style="display:none">
           <label class="fl">POLL OPTIONS</label>
           <div id="pollOpts"></div>
@@ -332,9 +337,9 @@
         '</div>'+
         '<div class="cbody">'+
           '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span></div>'+
-          '<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>'+
+          ((t.postType==='repost'||t.postType==='quote_repost')?'<div style="font-size:.75rem;font-weight:600;color:#64748b;margin-bottom:.35rem;display:flex;align-items:center;gap:.3rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> '+esc(String(t.author||'').replace(/^u\//,''))+' reposted</div>':'')+'<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>'+
           '<div class="cmeta"><a class="author-link" href="/user/'+encodeURIComponent(String(t.author||'fan').replace(/^u\//,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-'))+'">'+esc(t.author||'u/fan')+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
-          (t.notes||t.summary?'<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>':'')+
+          (t.notes||t.summary?'<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>':'')+(t.image?'<div style="margin-top:.5rem;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;max-height:220px;border-radius:10px;object-fit:cover;"></div>':'')+
           (chips?'<div class="chips">'+chips+'</div>':'')+
         '</div></article>';
     }).join('');
@@ -456,6 +461,8 @@
       summary:notes.slice(0,400),
       author:'u/'+authorName,
       authorId:user.uid,
+      authorPhoto: localStorage.getItem('photoURL')||user.photoURL||'',
+      image: window._pendingPostImage || '',
       votes:1,
       voters:voters,
       comments:[],
@@ -464,8 +471,9 @@
       teamAbbrs:[],
       machineHash:null,
       isValid:null,
-      createdAt:window.firebase.firestore.FieldValue.serverTimestamp()
+      createdAt: new Date().toISOString()
     };
+    window._pendingPostImage='';
     const btn=document.getElementById('submitCreate');
     btn.disabled=true;btn.textContent='Posting…';
     try{
@@ -478,6 +486,44 @@
       btn.disabled=false;btn.textContent='Post';
     }
   };
+
+  
+  function compressPostImage(file, maxSide, quality){
+    return new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onerror=reject;
+      reader.onload=function(){
+        var img=new Image();
+        img.onerror=reject;
+        img.onload=function(){
+          var w=img.width,h=img.height;
+          var scale=Math.min(1, maxSide/Math.max(w,h));
+          w=Math.round(w*scale);h=Math.round(h*scale);
+          var canvas=document.createElement('canvas');
+          canvas.width=w;canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src=reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  window._pendingPostImage = '';
+  document.addEventListener('change', function(ev){
+    if(ev.target && ev.target.id==='postImageInput'){
+      var file=ev.target.files&&ev.target.files[0];
+      if(!file)return;
+      compressPostImage(file, 1000, 0.72).then(function(url){
+        if(url.length>900000) return compressPostImage(file, 700, 0.55);
+        return url;
+      }).then(function(url){
+        window._pendingPostImage = url;
+        var prev=document.getElementById('postImagePreview');
+        if(prev) prev.innerHTML='<img src="'+url+'" style="max-width:140px;max-height:140px;border-radius:8px;object-fit:cover;">';
+      }).catch(function(){ alert('Could not process image'); });
+    }
+  });
 
   waitForDb(function(){
     // Open detail view when ?post= or ?id= is present (from trade machine / card click)
