@@ -146,6 +146,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <li class="nav-item">
                 <a href="/pickem" class="nav-link">Pick'em</a>
             </li>
+            <li class="nav-item">
+                <a href="/trades.html" class="nav-link" data-nav="community">Community</a>
+            </li>
             <li class="nav-item dropdown">
                 <button class="dropdown-toggle">Team Hub</button>
                 <div class="dropdown-menu">
@@ -221,6 +224,9 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="mobile-nav-item">
             <a href="/pickem" class="mobile-nav-link">Pick'em</a>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="/trades.html" class="mobile-nav-link" data-nav="community">Community</a>
         </div>
         <div class="mobile-nav-item">
             <a href="https://sixershoops.com/roster" class="mobile-nav-link">Roster</a>
@@ -421,6 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <ul class="footer-links">
                     <li><a href="/">Home</a></li>
                     <li><a href="/pickem">Pick'em</a></li>
+                    <li><a href="/trades.html">Community</a></li>
                     <li><a href="https://sixershoops.com/standings">NBA Standings</a></li>
                     <li><a href="https://sixershoops.com/schedule">Schedule</a></li>
                     <li><a href="https://sixershoops.com/contact">Contact</a></li>
@@ -539,6 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="user-dropdown-divider"></div>
 
                         <button class="user-dropdown-item" id="navMyProfileLink">My Profile</button>
+                        <button class="user-dropdown-item" id="navCommunityProfileLink">Community Profile</button>
 
                         <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
@@ -573,6 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="logout-btn" id="navLogoutBtn">Logout</button>
                         </div>
                         <a class="auth-nav-btn" href="${profileUrl}" style="width:100%;text-align:center;text-decoration:none;display:block;">My Profile</a>
+                        <a class="auth-nav-btn" href="/user-profile.html?uid=${encodeURIComponent(user.uid)}&name=${encodeURIComponent(displayName)}" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Community Profile</a>
                         <a class="auth-nav-btn" href="${profileUrl}/inbox" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Inbox</a>
                         <a class="auth-nav-btn" id="mobileProfileBtn" href="${profileUrl}/settings" style="width:100%;text-align:center;text-decoration:none;display:block;background:#f3f4f6;color:#374151;">Account Settings</a>
                         ${user.email && user.email.toLowerCase() === 'rhatus13@gmail.com' ? `<a class="auth-nav-btn" href="/moderation.html" style="width:100%;text-align:center;text-decoration:none;display:block;background:#001a57;color:#fff;">Moderation</a>` : ''}
@@ -598,6 +607,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
             if (myProfileLink)     myProfileLink.onclick     = () => { window.location.href = profileUrl; };
+            const communityProfileLink = document.getElementById('navCommunityProfileLink');
+            if (communityProfileLink) communityProfileLink.onclick = () => {
+                const handle = (user.displayName || (user.email ? user.email.split('@')[0] : 'user'));
+                const slug = handle.toLowerCase().replace(/[^a-z0-9_-]+/g, '-') || 'user';
+                window.location.href = '/user-profile.html?uid=' + encodeURIComponent(user.uid) + '&name=' + encodeURIComponent(handle);
+            };
             if (inboxLink)         inboxLink.onclick         = () => { window.location.href = profileUrl + '/inbox'; };
             if (notifsLink)        notifsLink.onclick        = () => { window.location.href = profileUrl + '/notifications'; };
             const modLink = document.getElementById('navModerationLink');
@@ -1252,9 +1267,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
     
     navLinks.forEach(link => {
-        if (link.getAttribute('href') === currentLocation || 
-            (currentLocation === '/' && link.getAttribute('href') === '/')) {
+        const href = link.getAttribute('href') || '';
+        if (href === currentLocation || 
+            (currentLocation === '/' && href === '/')) {
             link.classList.add('active');
+        }
+        // Community section active on trades + trade detail
+        if (link.getAttribute('data-nav') === 'community') {
+            if (currentLocation.indexOf('/trade') === 0 ||
+                currentLocation.indexOf('/trades') === 0 ||
+                currentLocation.indexOf('trade.html') >= 0 ||
+                currentLocation.indexOf('trades.html') >= 0 ||
+                currentLocation.indexOf('user-profile') >= 0 ||
+                currentLocation.indexOf('moderation') >= 0) {
+                link.classList.add('active');
+            }
         }
     });
 
