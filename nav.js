@@ -612,6 +612,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <button class="user-dropdown-item" id="navMyProfileLink">Profile</button>
 
+                        <button class="user-dropdown-item" id="navBookmarksLink">
+                            <span>Bookmarks</span>
+                        </button>
                         <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
                         </button>
@@ -661,7 +664,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const myProfileLink = document.getElementById('navMyProfileLink');
             const inboxLink = document.getElementById('navInboxLink');
             
-            const notifsLink = document.getElementById('navNotifsLink');
+            const bookmarksLink = document.getElementById('navBookmarksLink');
+            if (bookmarksLink) {
+                bookmarksLink.onclick = function() {
+                    const slug = (localStorage.getItem('usernameLower') || '').trim();
+                    if (slug) location.href = '/user/' + encodeURIComponent(slug) + '/bookmarks';
+                    else location.href = '/user.html?sub=bookmarks';
+                };
+            }
+const notifsLink = document.getElementById('navNotifsLink');
 
             if (profileBtn && userDropdown) {
                 profileBtn.onclick = (e) => {
