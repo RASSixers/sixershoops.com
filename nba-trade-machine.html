@@ -2457,6 +2457,43 @@
         </div>
     </div>
 
+
+    <!-- Post to Community modal -->
+    <div id="postTradeModal" class="modal-overlay" onclick="if(event.target===this)closePostTradeModal()" style="display:none;">
+        <div class="modal-box" style="max-width:480px;" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background:#f6f8fc;border-bottom:1px solid #e4e8f0;">
+                <div class="modal-header-left">
+                    <div>
+                        <div class="modal-title" style="font-size:1.05rem;">POST TO COMMUNITY</div>
+                        <div class="modal-sub">Share this trade on the Community Trades feed</div>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closePostTradeModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:1.35rem 1.5rem;">
+                <label style="display:block;font-family:Lexend,sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.14em;color:#64748b;margin-bottom:.4rem;">TITLE</label>
+                <input id="postTradeTitle" type="text" maxlength="120" placeholder="e.g. Embiid for a package around Jalen Brunson"
+                    style="width:100%;box-sizing:border-box;font-family:Lexend,sans-serif;font-size:.95rem;font-weight:600;
+                           padding:.75rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;color:#0f172a;outline:none;margin-bottom:1rem;"
+                    onfocus="this.style.borderColor='#0066cc';this.style.boxShadow='0 0 0 4px rgba(0,102,204,.1)'"
+                    onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">
+                <label style="display:block;font-family:Lexend,sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.14em;color:#64748b;margin-bottom:.4rem;">DESCRIPTION <span style="font-weight:600;letter-spacing:0;text-transform:none;color:#94a3b8;">(optional)</span></label>
+                <textarea id="postTradeDesc" rows="4" maxlength="2000" placeholder="Why this trade works, what each side gains, salary context…"
+                    style="width:100%;box-sizing:border-box;font-family:Lexend,sans-serif;font-size:.88rem;line-height:1.55;
+                           padding:.75rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;color:#0f172a;outline:none;resize:vertical;min-height:110px;"
+                    onfocus="this.style.borderColor='#0066cc';this.style.boxShadow='0 0 0 4px rgba(0,102,204,.1)'"
+                    onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'"></textarea>
+                <div id="postTradeError" style="display:none;margin-top:.75rem;font-family:Lexend,sans-serif;font-size:.8rem;color:#dc2626;font-weight:600;"></div>
+            </div>
+            <div class="modal-footer" style="justify-content:flex-end;gap:.6rem;">
+                <button type="button" class="btn-ghost" onclick="closePostTradeModal()">Cancel</button>
+                <button type="button" class="btn-analyze" id="confirmPostTradeBtn" onclick="confirmPostTrade()" style="font-size:.85rem;padding:.65rem 1.4rem;">
+                    Post Trade
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Find Filler modal -->
     <div id="fillerModal" class="filler-overlay" onclick="if(event.target===this)closeFillerModal()">
         <div class="filler-box">
@@ -4066,15 +4103,79 @@
         return val;
     }
 
-    async function postToCommunity() {
-        var btn = document.getElementById('postToCommunityBtn');
+    function closePostTradeModal() {
+        var m = document.getElementById('postTradeModal');
+        if (m) {
+            m.classList.remove('open');
+            m.style.display = 'none';
+        }
+        document.body.style.overflow = '';
+    }
+
+    function openPostTradeModal(defaultTitle) {
+        var m = document.getElementById('postTradeModal');
+        if (!m) return;
+        var titleEl = document.getElementById('postTradeTitle');
+        var descEl = document.getElementById('postTradeDesc');
+        var errEl = document.getElementById('postTradeError');
+        if (titleEl) titleEl.value = defaultTitle || '';
+        if (descEl) descEl.value = '';
+        if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+        m.style.display = 'flex';
+        m.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        setTimeout(function () {
+            if (titleEl) { titleEl.focus(); titleEl.select(); }
+        }, 50);
+    }
+
+    function postToCommunity() {
+        var user = window.auth ? window.auth.currentUser : null;
+        if (!user) {
+            var signIn = document.getElementById('navSignInBtn');
+            if (signIn) signIn.click();
+            else alert('Please sign in to post a trade.');
+            return;
+        }
+        var active = teams.filter(function (t) {
+            return t.abbr && TEAM_DATA[t.abbr] && (
+                (t.selectedPlayers && t.selectedPlayers.length) ||
+                (t.selectedPicks && t.selectedPicks.length) ||
+                (t.faSignings && t.faSignings.length) ||
+                (t.waivedPlayers && t.waivedPlayers.length) ||
+                (t.cashOut || 0) > 0
+            );
+        });
+        if (active.length < 2) {
+            alert('Select at least two teams with assets before posting.');
+            return;
+        }
+        var nameInput = document.getElementById('modalTradeName');
+        var defaultTitle = (nameInput && nameInput.value.trim()) || (active.map(function (t) { return t.abbr; }).join(' / ') + ' Trade');
+        openPostTradeModal(defaultTitle);
+    }
+
+    async function confirmPostTrade() {
+        var btn = document.getElementById('confirmPostTradeBtn');
         var prevLabel = btn ? btn.innerHTML : '';
+        var errEl = document.getElementById('postTradeError');
+        function showErr(msg) {
+            if (errEl) { errEl.style.display = 'block'; errEl.textContent = msg; }
+            else alert(msg);
+        }
         try {
             var user = window.auth ? window.auth.currentUser : null;
             if (!user) {
-                var signIn = document.getElementById('navSignInBtn');
-                if (signIn) signIn.click();
-                else alert('Please sign in to post a trade.');
+                showErr('Please sign in to post.');
+                return;
+            }
+            var titleEl = document.getElementById('postTradeTitle');
+            var descEl = document.getElementById('postTradeDesc');
+            var title = titleEl ? titleEl.value.trim() : '';
+            var notes = descEl ? descEl.value.trim() : '';
+            if (!title) {
+                showErr('A title is required.');
+                if (titleEl) titleEl.focus();
                 return;
             }
 
@@ -4088,32 +4189,17 @@
                 );
             });
             if (active.length < 2) {
-                alert('Select at least two teams with assets before posting.');
+                showErr('Select at least two teams with assets.');
                 return;
             }
-
-            // Default title from modal name field or team abbreviations
-            var nameInput = document.getElementById('modalTradeName');
-            var defaultTitle = (nameInput && nameInput.value.trim()) || (active.map(function (t) { return t.abbr; }).join(' / ') + ' Trade');
-
-            var title = window.prompt('Title for this trade:', defaultTitle);
-            if (title === null) return; // cancelled
-            title = String(title).trim();
-            if (!title) {
-                alert('A title is required.');
-                return;
-            }
-
-            var notes = window.prompt('Optional description (leave blank to skip):', '') || '';
-            if (notes === null) notes = '';
-            notes = String(notes).trim();
 
             if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+            if (errEl) errEl.style.display = 'none';
 
             try {
                 await waitForDbReady(12000);
             } catch (e) {
-                alert(e.message || 'Database not ready.');
+                showErr(e.message || 'Database not ready.');
                 if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
                 return;
             }
@@ -4169,7 +4255,6 @@
 
             var badge = document.getElementById('modalBadge');
             var isValid = badge ? badge.classList.contains('valid') : null;
-
             var authorName = user.displayName || (user.email ? user.email.split('@')[0] : 'fan');
             var voters = {};
             voters[user.uid] = 'up';
@@ -4186,22 +4271,27 @@
                 isValid: isValid === true ? true : (isValid === false ? false : null),
                 votes: 1,
                 voters: voters,
+                comments: [],
                 createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
             });
 
             var ref = await window.db.collection('community_trades').add(doc);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
+            closePostTradeModal();
             window.location.href = '/trade.html?id=' + encodeURIComponent(ref.id);
         } catch (err) {
-            console.error('postToCommunity error', err);
+            console.error('confirmPostTrade error', err);
             if (btn) { btn.disabled = false; btn.innerHTML = prevLabel; }
             var msg = (err && err.message) ? err.message : String(err);
             if (/permission|insufficient|Missing or insufficient/i.test(msg)) {
-                msg = 'Permission denied writing community_trades. Publish the updated Firestore rules that allow authenticated creates.';
+                msg = 'Permission denied. Publish the updated Firestore rules for community_trades.';
             }
-            alert('Could not post trade: ' + msg);
+            showErr('Could not post trade: ' + msg);
         }
     }
+
+
+
 
 
 
