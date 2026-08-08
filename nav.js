@@ -489,44 +489,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Single notification badge on profile avatar only ---
     let _notifUnsub = null;
-    function updateNotifBadge(count) {
+    window.updateNotifBadge = function updateNotifBadge(count) {
         const n = Math.max(0, Number(count) || 0);
-        // Only badge next to the profile image (not multiple dropdown pills)
+        // ONE badge only — attached to the avatar image inside the profile button
+        // Remove any stray badges elsewhere (brand area, dropdown, duplicates)
+        document.querySelectorAll('#navNotifBadgeTop, #nav-notif-badge, .nav-notif-badge, #dropdown-notif-count, #dropdown-inbox-count').forEach(function(el) {
+            if (el.id === 'navNotifBadgeTop') return; // keep the one we manage
+            el.style.display = 'none';
+            el.classList.add('hidden');
+            el.textContent = '';
+            try { if (el.id !== 'navNotifBadgeTop') el.remove(); } catch(_) {}
+        });
+
         const btn = document.getElementById('userProfileBtn');
-        if (btn) {
-            let badge = document.getElementById('navNotifBadgeTop');
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.id = 'navNotifBadgeTop';
-                badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;display:none;z-index:5;';
-                btn.style.position = 'relative';
-                btn.appendChild(badge);
-            }
-            if (n > 0) {
-                badge.style.display = 'block';
-                badge.textContent = n > 99 ? '99+' : String(n);
-            } else {
-                badge.style.display = 'none';
-                badge.textContent = '';
-            }
+        if (!btn) return;
+        btn.style.position = 'relative';
+
+        // Prefer anchoring to the avatar element
+        let anchor = btn.querySelector('.user-avatar-img, .user-avatar, .relative') || btn;
+        if (anchor && anchor.classList && anchor.classList.contains('relative')) {
+            // ok
+        } else if (btn.querySelector('.relative')) {
+            anchor = btn.querySelector('.relative');
+        } else {
+            anchor = btn;
         }
-        // Keep #nav-notif-badge in sync if present in avatar HTML
-        document.querySelectorAll('#nav-notif-badge').forEach(function(b) {
-            if (n > 0) {
-                b.classList.remove('hidden');
-                b.style.display = 'flex';
-                b.textContent = n > 99 ? '99+' : String(n);
-            } else {
-                b.classList.add('hidden');
-                b.style.display = 'none';
-                b.textContent = '';
-            }
-        });
-        // Hide any leftover dropdown pills
-        ['dropdown-notif-count','dropdown-inbox-count'].forEach(function(id) {
-            const el = document.getElementById(id);
-            if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
-        });
+        if (anchor !== btn) anchor.style.position = 'relative';
+
+        let badge = document.getElementById('navNotifBadgeTop');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'navNotifBadgeTop';
+            anchor.appendChild(badge);
+        } else if (badge.parentElement !== anchor) {
+            anchor.appendChild(badge);
+        }
+        badge.style.cssText = 'position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center;z-index:6;box-shadow:0 0 0 2px #fff;pointer-events:none;';
+        if (n > 0) {
+            badge.style.display = 'block';
+            badge.textContent = n > 99 ? '99+' : String(n);
+        } else {
+            badge.style.display = 'none';
+            badge.textContent = '';
+        }
     }
     function listenNotifications(user) {
         if (_notifUnsub) { try { _notifUnsub(); } catch (e) {} _notifUnsub = null; }
@@ -590,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? `<img src="${photoURL}" alt="${displayName}" class="user-avatar-img">`
                 : `<div class="user-avatar" style="background:${avatarColor}">${initial}</div>`;
 
-            const avatarHTML = `<div class="relative">${avatarInner}<div id="nav-notif-badge" class="hidden absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 bg-red-500 border-2 border-white rounded-full text-[9px] text-white font-bold flex items-center justify-center"></div></div>`;
+            const avatarHTML = `<div class="relative" style="position:relative;display:inline-block;">${avatarInner}</div>`;
 
             const userHTML = `
                 <div class="user-profile-wrapper">
