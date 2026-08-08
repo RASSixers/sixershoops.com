@@ -92,7 +92,16 @@
     .follow-row input{accent-color:var(--sixers-blue)}
     .feed-hint{font-size:.75rem;color:var(--mid);margin:0 0 .5rem}
 
-  </style>
+  
+    .tw-repost-label{display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;color:#657786;margin:0 0 .4rem .1rem}
+    .tw-quote-card{display:block;margin-top:.55rem;border:1px solid #cfd9de;border-radius:16px;padding:.75rem .85rem;text-decoration:none;color:inherit}
+    .tw-quote-card:hover{background:rgba(0,0,0,.03)}
+    .tw-quote-head{display:flex;align-items:center;gap:.4rem;margin-bottom:.25rem}
+    .tw-quote-avatar{width:18px;height:18px;border-radius:50%;background:#001a57;color:#fff;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .tw-quote-name{font-weight:800;font-size:.84rem}
+    .tw-quote-title{font-weight:700;font-size:.9rem;margin:.15rem 0;line-height:1.3}
+    .tw-quote-body{font-size:.84rem;color:#536471;margin:0;line-height:1.35}
+    </style>
 </head>
 <body>
   <main class="wrap">
@@ -311,6 +320,43 @@
 
   function typeOf(t){return t.postType||t.type||(t.sides?'trade':'discussion');}
 
+
+  function buildCardBody(t){
+    var author = String(t.author||'u/fan');
+    var authorClean = author.replace(/^u\//,'');
+    var slug = authorClean.toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+    var isPlain = (t.postType==='repost'||t.type==='repost') && t.quotedPostId && !(t.notes||'').trim();
+    var isQuote = (t.postType==='quote_repost'||t.type==='quote_repost') && t.quotedPostId;
+    var qAuthor = String(t.quotedAuthor||'Original').replace(/^u\//,'');
+    var qTitle = t.quotedTitle || 'Original post';
+    var qUrl = t.quotedPostId ? ('/trade.html?id='+encodeURIComponent(t.quotedPostId)) : '';
+    var qInitial = (qAuthor||'U').charAt(0).toUpperCase();
+    var html = '';
+    if(isPlain || isQuote){
+      html += '<div class="tw-repost-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> '+esc(authorClean)+' '+(isQuote?'quote reposted':'reposted')+'</div>';
+    }
+    html += '<div class="cmeta"><a class="author-link" href="/user/'+encodeURIComponent(slug)+'">'+esc(author)+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>';
+    if(isPlain){
+      html += '<a class="tw-quote-card" href="'+esc(qUrl||('/trade.html?id='+encodeURIComponent(t.id)))+'" onclick="event.stopPropagation()">';
+      html += '<div class="tw-quote-head"><div class="tw-quote-avatar">'+esc(qInitial)+'</div><span class="tw-quote-name">'+esc(qAuthor)+'</span></div>';
+      html += '<div class="tw-quote-title">'+esc(qTitle)+'</div>';
+      if(t.quotedSummary||t.quotedNotes) html += '<p class="tw-quote-body">'+esc(String(t.quotedSummary||t.quotedNotes||'').slice(0,200))+'</p>';
+      html += '</a>';
+    } else {
+      html += '<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>';
+      if(t.notes||t.summary) html += '<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>';
+      if(t.image) html += '<div style="margin-top:.5rem;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;max-height:220px;border-radius:12px;object-fit:cover;"></div>';
+      if(isQuote || t.quotedPostId){
+        html += '<a class="tw-quote-card" href="'+esc(qUrl)+'" onclick="event.stopPropagation()">';
+        html += '<div class="tw-quote-head"><div class="tw-quote-avatar">'+esc(qInitial)+'</div><span class="tw-quote-name">'+esc(qAuthor)+'</span></div>';
+        html += '<div class="tw-quote-title">'+esc(qTitle)+'</div>';
+        if(t.quotedSummary||t.quotedNotes) html += '<p class="tw-quote-body">'+esc(String(t.quotedSummary||t.quotedNotes||'').slice(0,180))+'</p>';
+        html += '</a>';
+      }
+    }
+    return html;
+  }
+
   function render(){
     const feed=document.getElementById('feed');
     const bar=document.getElementById('feedBar');
@@ -337,9 +383,7 @@
         '</div>'+
         '<div class="cbody">'+
           '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span></div>'+
-          ((t.postType==='repost'||t.postType==='quote_repost')?'<div style="font-size:.75rem;font-weight:600;color:#64748b;margin-bottom:.35rem;display:flex;align-items:center;gap:.3rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> '+esc(String(t.author||'').replace(/^u\//,''))+' reposted</div>':'')+'<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>'+
-          '<div class="cmeta"><a class="author-link" href="/user/'+encodeURIComponent(String(t.author||'fan').replace(/^u\//,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-'))+'">'+esc(t.author||'u/fan')+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>'+
-          (t.notes||t.summary?'<p class="cexcerpt">'+esc(t.notes||t.summary)+'</p>':'')+(t.image?'<div style="margin-top:.5rem;"><img src="'+esc(t.image)+'" alt="" style="max-width:100%;max-height:220px;border-radius:10px;object-fit:cover;"></div>':'')+
+          buildCardBody(t)+
           (chips?'<div class="chips">'+chips+'</div>':'')+
         '</div></article>';
     }).join('');
