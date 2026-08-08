@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trade — Sixers Hoops</title>
+  <meta name="description" content="Fan-submitted NBA trade on SixersHoops." />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/navbar-styles.css" />
+  <style>
+    :root {
+      --navy: #001a57;
+      --sixers-blue: #006BB6;
+      --sixers-red: #ED174C;
+      --cream: #ffffff;
+      --ink: #0d0f1a;
+      --mid: #64748b;
+      --border: #e4e8f0;
+      --bg2: #f8fafc;
+      --vote-up: #ea580c;
+      --vote-down: #2563eb;
+      --green: #16a34a;
+      --red: #dc2626;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Lexend', system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      padding-top: 64px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+    .back {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.85rem; font-weight: 600; color: var(--sixers-blue);
+      margin-bottom: 1.75rem;
+    }
+    .back:hover { text-decoration: underline; }
+
+    .header { text-align: center; margin-bottom: 1.75rem; }
+    .tag {
+      display: inline-flex;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 11px; border-radius: 999px; margin-bottom: 1rem;
+      color: var(--sixers-blue);
+      border: 1px solid rgba(0, 107, 182, 0.2);
+      background: rgba(0, 107, 182, 0.08);
+    }
+    .title {
+      font-size: clamp(1.7rem, 4.5vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin: 0 0 0.75rem;
+    }
+    .meta {
+      display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;
+      font-size: 0.85rem; color: var(--mid);
+    }
+    .excerpt {
+      font-size: 1.05rem; line-height: 1.6; color: var(--mid);
+      margin: 1.25rem 0 0; font-weight: 500;
+    }
+
+    .vote-bar {
+      display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+      margin: 1.5rem 0 1.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .vote-btn {
+      width: 36px; height: 36px;
+      border: none; background: #fff;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .vote-btn:hover { border-color: #cbd5e1; color: var(--ink); }
+    .vote-btn.active-up { color: var(--vote-up); border-color: rgba(234, 88, 12, 0.35); background: rgba(234, 88, 12, 0.08); }
+    .vote-btn.active-down { color: var(--vote-down); border-color: rgba(37, 99, 235, 0.35); background: rgba(37, 99, 235, 0.08); }
+    .vote-count { font-size: 1.15rem; font-weight: 800; min-width: 2rem; text-align: center; }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.85rem; border-radius: 6px;
+    }
+    .status-pill.ok { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+    .status-pill.bad { background: rgba(220, 38, 38, 0.1); color: #b91c1c; }
+
+    .actions {
+      display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      font-family: 'Lexend', sans-serif;
+      font-weight: 700; font-size: 0.85rem;
+      padding: 0.7rem 1.35rem; border-radius: 999px;
+      border: none; cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .btn-primary {
+      background: var(--sixers-blue); color: #fff;
+      box-shadow: 0 4px 14px rgba(0, 102, 204, 0.25);
+    }
+    .btn-primary:hover { background: #0057b0; transform: translateY(-1px); }
+    .btn-ghost {
+      background: #fff; color: var(--ink); border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--sixers-blue); color: var(--sixers-blue); }
+
+    .section-label {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em;
+      color: var(--mid); text-transform: uppercase;
+      margin: 0 0 0.85rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .section-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 2rem;
+    }
+    .team-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .team-card-head {
+      display: flex; align-items: center; gap: 0.55rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      font-weight: 800; font-size: 0.9rem;
+    }
+    .team-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .team-card-body { padding: 0.75rem 1rem 1rem; }
+    .asset-group-label {
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em;
+      color: #94a3b8; margin: 0.55rem 0 0.35rem;
+    }
+    .asset-group-label:first-child { margin-top: 0; }
+    .asset-row {
+      display: flex; justify-content: space-between; gap: 0.5rem;
+      padding: 0.35rem 0;
+      font-size: 0.85rem;
+      border-bottom: 1px dashed #f1f5f9;
+    }
+    .asset-row:last-child { border-bottom: none; }
+    .asset-name { font-weight: 600; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .asset-sal { font-weight: 700; color: var(--sixers-blue); flex-shrink: 0; }
+    .empty-assets { font-size: 0.82rem; color: #94a3b8; padding: 0.5rem 0; }
+
+    .notes {
+      font-size: 1rem; line-height: 1.7; color: var(--ink);
+      white-space: pre-wrap;
+      margin: 0 0 2rem;
+    }
+
+    .state { text-align: center; padding: 5rem 1rem; color: var(--mid); }
+    .state h2 { font-size: 1.35rem; color: var(--ink); margin: 0 0 0.5rem; }
+    .skel {
+      background: linear-gradient(90deg, #e4e8f0 25%, #f0f3f8 37%, #e4e8f0 63%);
+      background-size: 400% 100%;
+      animation: skel 1.4s ease infinite;
+      border-radius: 8px;
+    }
+    @keyframes skel { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+    @media (max-width: 600px) {
+      .wrap { padding: 1.75rem 1.1rem 3.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="wrap" id="root">
+      <a href="/trades.html" class="back">← Back to Community Trades</a>
+      <div class="skel" style="height:28px;width:120px;margin:0 auto 1rem;"></div>
+      <div class="skel" style="height:42px;width:85%;margin:0 auto 1.5rem;"></div>
+      <div class="skel" style="height:120px;width:100%;margin-bottom:1rem;"></div>
+      <div class="skel" style="height:120px;width:100%;"></div>
+    </div>
+  </main>
+
+  <script src="/nav.js"></script>
+  <script>
+(function () {
+  const COLLECTION = 'community_trades';
+  let trade = null;
+
+  function waitForDb(cb, tries) {
+    tries = tries || 0;
+    if (window.db) { cb(); return; }
+    if (tries > 80) {
+      renderError('Could not connect right now. Please refresh.');
+      return;
+    }
+    setTimeout(function () { waitForDb(cb, tries + 1); }, 250);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function fmtM(val) {
+    if (val == null || val === '') return '';
+    const n = Number(val);
+    if (!isFinite(n)) return '';
+    if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+    return '$' + n;
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return '';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function getId() {
+    const q = new URLSearchParams(window.location.search).get('id');
+    if (q) return q;
+    const m = window.location.pathname.match(/^\/trade\/([^\/]+)\/?$/);
+    if (m) return decodeURIComponent(m[1]);
+    return null;
+  }
+
+  function triggerLogin() {
+    const btn = document.getElementById('navSignInBtn');
+    if (btn) btn.click();
+    else alert('Please sign in to vote.');
+  }
+
+  function machineUrl(t) {
+    if (t.machineHash) {
+      return '/nba-trade-machine.html#trade=' + encodeURIComponent(t.machineHash);
+    }
+    return '/nba-trade-machine.html';
+  }
+
+  function renderError(msg) {
+    document.getElementById('root').innerHTML =
+      '<a href="/trades.html" class="back">← Back to Community Trades</a>' +
+      '<div class="state"><h2>' + escapeHtml(msg) + '</h2><p>Head back to the feed for more deals.</p></div>';
+  }
+
+  function renderTeamCards(sides) {
+    if (!sides || !sides.length) return '<p class="empty-assets">No team breakdown saved for this post.</p>';
+    return '<div class="team-grid">' + sides.map(function (side) {
+      const color = side.color || '#64748b';
+      function rows(list, label) {
+        if (!list || !list.length) return '';
+        return '<div class="asset-group-label">' + escapeHtml(label) + '</div>' +
+          list.map(function (a) {
+            return '<div class="asset-row"><span class="asset-name">' + escapeHtml(a.name || a) +
+              '</span><span class="asset-sal">' + escapeHtml(a.salary != null ? fmtM(a.salary) : (a.sal || '')) + '</span></div>';
+          }).join('');
+      }
+      const body =
+        rows(side.receiving || side.receives, 'Receives') +
+        rows(side.sending || side.sends, 'Sends') +
+        rows(side.picks, 'Picks') +
+        (!((side.receiving || side.receives || []).length || (side.sending || side.sends || []).length || (side.picks || []).length)
+          ? '<div class="empty-assets">No assets listed</div>' : '');
+      return (
+        '<div class="team-card">' +
+          '<div class="team-card-head"><span class="team-dot" style="background:' + escapeHtml(color) + '"></span>' +
+            escapeHtml(side.name || side.abbr || 'Team') +
+          '</div>' +
+          '<div class="team-card-body">' + body + '</div>' +
+        '</div>'
+      );
+    }).join('') + '</div>';
+  }
+
+  function render(t) {
+    trade = t;
+    document.title = (t.title || 'Trade') + ' — Sixers Hoops';
+
+    const user = window.auth && window.auth.currentUser;
+    const userVote = user && t.voters ? t.voters[user.uid] : null;
+    const status = t.isValid === true
+      ? '<span class="status-pill ok">Appears legal</span>'
+      : (t.isValid === false ? '<span class="status-pill bad">Invalid / restricted</span>' : '');
+
+    let html = '<a href="/trades.html" class="back">← Back to Community Trades</a>';
+    html += '<div class="header">';
+    html += '<span class="tag">Community Trade</span>';
+    html += '<h1 class="title">' + escapeHtml(t.title || 'Untitled trade') + '</h1>';
+    html += '<div class="meta"><span>' + escapeHtml(t.author || 'u/fan') + '</span><span>·</span><span>' + escapeHtml(timeAgo(t.createdAt)) + '</span>';
+    if (status) html += '<span>·</span>' + status;
+    html += '</div>';
+    if (t.summary) html += '<p class="excerpt">' + escapeHtml(t.summary) + '</p>';
+    html += '</div>';
+
+    html += '<div class="vote-bar">' +
+      '<button type="button" class="vote-btn' + (userVote === 'up' ? ' active-up' : '') + '" id="btnUp" aria-label="Upvote">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>' +
+      '</button>' +
+      '<span class="vote-count" id="voteCount">' + (t.votes || 0) + '</span>' +
+      '<button type="button" class="vote-btn' + (userVote === 'down' ? ' active-down' : '') + '" id="btnDown" aria-label="Downvote">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>' +
+      '</button>' +
+    '</div>';
+
+    html += '<div class="actions">' +
+      '<a class="btn btn-primary" href="' + escapeHtml(machineUrl(t)) + '">Open in Trade Machine</a>' +
+      '<button type="button" class="btn btn-ghost" id="copyLinkBtn">Copy Link</button>' +
+    '</div>';
+
+    html += '<div class="section-label">Trade breakdown</div>';
+    html += renderTeamCards(t.sides || t.teams);
+
+    if (t.notes) {
+      html += '<div class="section-label">Notes</div>';
+      html += '<div class="notes">' + escapeHtml(t.notes) + '</div>';
+    }
+
+    document.getElementById('root').innerHTML = html;
+
+    document.getElementById('btnUp').onclick = function () { handleVote('up'); };
+    document.getElementById('btnDown').onclick = function () { handleVote('down'); };
+    document.getElementById('copyLinkBtn').onclick = function () {
+      const url = location.origin + '/trade.html?id=' + encodeURIComponent(t.id);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          alert('Link copied.');
+        }).catch(function () { prompt('Copy this link:', url); });
+      } else {
+        prompt('Copy this link:', url);
+      }
+    };
+  }
+
+  async function handleVote(direction) {
+    const user = window.auth && window.auth.currentUser;
+    if (!user) { triggerLogin(); return; }
+    if (!trade || !window.db) return;
+
+    const voters = Object.assign({}, trade.voters || {});
+    let votes = trade.votes || 0;
+    const current = voters[user.uid];
+
+    if (current === direction) {
+      votes += direction === 'up' ? -1 : 1;
+      delete voters[user.uid];
+    } else {
+      if (current === 'up') votes -= 1;
+      if (current === 'down') votes += 1;
+      votes += direction === 'up' ? 1 : -1;
+      voters[user.uid] = direction;
+    }
+
+    try {
+      await window.db.collection(COLLECTION).doc(trade.id).update({ votes: votes, voters: voters });
+      trade.votes = votes;
+      trade.voters = voters;
+      const countEl = document.getElementById('voteCount');
+      if (countEl) countEl.textContent = String(votes);
+      const up = document.getElementById('btnUp');
+      const down = document.getElementById('btnDown');
+      if (up) up.classList.toggle('active-up', voters[user.uid] === 'up');
+      if (down) down.classList.toggle('active-down', voters[user.uid] === 'down');
+    } catch (err) {
+      console.error(err);
+      alert('Could not save vote.');
+    }
+  }
+
+  function load() {
+    const id = getId();
+    if (!id) { renderError('Trade not found'); return; }
+    waitForDb(function () {
+      window.db.collection(COLLECTION).doc(id).get()
+        .then(function (doc) {
+          if (!doc.exists) { renderError('Trade not found'); return; }
+          const data = doc.data();
+          data.id = doc.id;
+          render(data);
+        })
+        .catch(function (err) {
+          console.error(err);
+          renderError("Couldn't load this trade right now");
+        });
+    });
+  }
+
+  load();
+})();
+  </script>
+</body>
+</html>
