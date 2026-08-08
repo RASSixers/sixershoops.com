@@ -1431,8 +1431,35 @@
         }
 
         waitForDB(async (db) => {
-            let myUid = null;
-            try { myUid = window.auth?.currentUser?.uid || firebase.auth().currentUser?.uid || null; } catch(_) {}
+            // Wait for auth so ownership (settings / notifications / follow) is correct
+            function waitForAuth() {
+                return new Promise((resolve) => {
+                    try {
+                        const existing = (window.auth && window.auth.currentUser) || (firebase.auth && firebase.auth().currentUser) || null;
+                        if (existing) { resolve(existing.uid); return; }
+                        let settled = false;
+                        const finish = (uid) => {
+                            if (settled) return;
+                            settled = true;
+                            try { unsub && unsub(); } catch (_) {}
+                            resolve(uid || null);
+                        };
+                        let unsub = null;
+                        try {
+                            unsub = firebase.auth().onAuthStateChanged((u) => finish(u ? u.uid : null));
+                        } catch (_) {
+                            finish(null);
+                            return;
+                        }
+                        // Don't block forever if auth is slow/offline
+                        setTimeout(() => finish((window.auth && window.auth.currentUser && window.auth.currentUser.uid) || null), 2500);
+                    } catch (_) {
+                        resolve(null);
+                    }
+                });
+            }
+
+            const myUid = await waitForAuth();
 
             try {
                 let ud = null;
@@ -1461,6 +1488,16 @@
                 }
 
                 renderPage(ud, posts, comments, myUid);
+
+                // If auth arrives late (after timeout), re-render so own settings/notifications/follow state update
+                try {
+                    firebase.auth().onAuthStateChanged((u) => {
+                        const uid = u ? u.uid : null;
+                        if (uid !== gMyUid && gUserData) {
+                            renderPage(gUserData, gPosts, gComments, uid);
+                        }
+                    });
+                } catch (_) {}
             } catch(err) {
                 console.error(err);
                 showNotFound('Something went wrong loading this profile.');
