@@ -113,8 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const scripts = [
             { id: 'firebase-app-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js' },
             { id: 'firebase-auth-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js' },
-            { id: 'firebase-firestore-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js' },
-            { id: 'firebase-storage-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js' }
+            { id: 'firebase-firestore-sdk', src: 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js' }
         ];
         
         scripts.forEach(s => {
@@ -468,41 +467,23 @@ document.addEventListener('DOMContentLoaded', function() {
     window.storage = null;
     
     function initFirebase() {
-        if (typeof firebase === 'undefined' || !firebase.apps.length) {
-            if (typeof firebase !== 'undefined') {
-                window.firebase = firebase;
-                firebase.initializeApp(firebaseConfig);
-                window.auth = firebase.auth();
-                window.db = firebase.firestore();
-                // Ensure storage is initialized if the function exists
-                if (typeof firebase.storage === 'function') {
-                    window.storage = firebase.storage();
-                }
-                setupAuthListeners();
-            } else {
-                setTimeout(initFirebase, 200);
-            }
-        } else {
+        if (typeof firebase === 'undefined') {
+            setTimeout(initFirebase, 200);
+            return;
+        }
+        try {
             window.firebase = firebase;
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
             window.auth = firebase.auth();
             window.db = firebase.firestore();
-            if (typeof firebase.storage === 'function') {
-                window.storage = firebase.storage();
-            }
+            // No Firebase Storage — profile photos use compressed data URLs in Firestore
+            window.storage = null;
             setupAuthListeners();
-        }
-
-        // Keep checking for storage if it's not yet available (it might load after the base app)
-        if (!window.storage && typeof firebase !== 'undefined' && firebase.apps.length) {
-            const checkStorage = setInterval(() => {
-                if (typeof firebase.storage === 'function') {
-                    window.storage = firebase.storage();
-                    console.log("Firebase Storage initialized");
-                    clearInterval(checkStorage);
-                }
-            }, 500);
-            // Stop checking after 10 seconds
-            setTimeout(() => clearInterval(checkStorage), 10000);
+        } catch (err) {
+            console.error('Firebase init error:', err);
+            setTimeout(initFirebase, 400);
         }
     }
 
@@ -952,52 +933,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 picInput.onchange = async (ev) => {
                     const file = ev.target.files && ev.target.files[0];
                     if (!file) return;
-                    if (file.size > 5 * 1024 * 1024) {
-                        showNavMessage('Image must be under 5 MB.', 'error');
+                    if (!file.type || !file.type.startsWith('image/')) {
+                        showNavMessage('Please choose an image file.', 'error');
                         return;
                     }
-                    let url = null;
-                    try {
-                        if (typeof firebase.storage !== 'function') {
-                            showNavMessage('Loading uploader…', 'success');
-                            await new Promise((res, rej) => {
-                                const s = document.createElement('script');
-                                s.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js';
-                                s.onload = res; s.onerror = rej;
-                                document.head.appendChild(s);
-                            }).catch(() => {});
-                        }
-                        if (!window.storage && typeof firebase.storage === 'function') {
-                            try { window.storage = firebase.storage(); } catch(_) {}
-                        }
-                        if (window.storage) {
-                            showNavMessage('Uploading photo...', 'success');
-                            const ref = window.storage.ref().child(`profile-pics/${user.uid}/${Date.now()}_${file.name.replace(/[^a-z0-9._-]/gi,'_')}`);
-                            const snap = await ref.put(file);
-                            url = await snap.ref.getDownloadURL();
-                        }
-                    } catch (err) {
-                        console.warn('Storage upload failed, using compressed fallback', err);
+                    if (file.size > 8 * 1024 * 1024) {
+                        showNavMessage('Image must be under 8 MB.', 'error');
+                        return;
                     }
-                    if (!url) {
-                        try {
-                            showNavMessage('Compressing photo…', 'success');
-                            url = await compressPic(file, 512, 0.72);
-                            if (url.length > 900000) url = await compressPic(file, 320, 0.6);
-                        } catch (err2) {
-                            showNavMessage('Upload failed: ' + (err2.message || err2), 'error');
+                    try {
+                        showNavMessage('Processing photo…', 'success');
+                        let url = await compressPic(file, 400, 0.7);
+                        if (url.length > 700000) url = await compressPic(file, 280, 0.55);
+                        if (url.length > 900000) {
+                            showNavMessage('Image still too large after compression. Try a smaller photo.', 'error');
                             return;
                         }
+                        if (picUrlHidden) picUrlHidden.value = url;
+                        if (picPreview) {
+                            picPreview.innerHTML = `<img src="${url}" alt="">`;
+                            picPreview.style.background = '#0b0f1a';
+                        }
+                        if (avatarPreview) {
+                            avatarPreview.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        }
+                        showNavMessage('Photo ready. Hit Save Changes to keep it.', 'success');
+                    } catch (err) {
+                        console.error(err);
+                        showNavMessage('Could not process photo: ' + (err.message || err), 'error');
                     }
-                    if (picUrlHidden) picUrlHidden.value = url;
-                    if (picPreview) {
-                        picPreview.innerHTML = `<img src="${url}" alt="">`;
-                        picPreview.style.background = '#0b0f1a';
-                    }
-                    if (avatarPreview) {
-                        avatarPreview.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                    }
-                    showNavMessage('Photo ready. Hit Save Changes to keep it.', 'success');
                 };
             }
             if (picClear) {
