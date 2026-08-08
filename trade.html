@@ -164,6 +164,7 @@
     .c-meta{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;font-size:.75rem;color:var(--mid);margin-bottom:.35rem}
     .c-author{font-weight:700;color:#334155}
     .c-text{font-size:.92rem;line-height:1.55;margin:0;white-space:pre-wrap}
+    .reply-to-label{font-size:.72rem;font-weight:600;color:var(--sixers-blue);margin:0 0 .3rem}
     .c-actions{display:flex;gap:.65rem;margin-top:.4rem}
     .c-action{background:none;border:none;font-family:Lexend,sans-serif;font-size:.72rem;font-weight:700;color:#94a3b8;cursor:pointer;padding:0}
     .c-action:hover{color:var(--sixers-blue)}
@@ -296,16 +297,21 @@
       .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || 'trade';
   }
   function setPrettyUrl(id, title){
+    // Stay on trade.html so static hosts never 404. Optional pretty path only if already on /trade/...
     try{
-      const path='/trade/'+encodeURIComponent(id)+'/'+encodeURIComponent(slugifyTitle(title));
-      if(location.pathname+location.search !== path){
-        history.replaceState(null,'',path);
+      if(/^\/trade\//.test(location.pathname)){
+        const path='/trade/'+encodeURIComponent(id)+'/'+encodeURIComponent(slugifyTitle(title));
+        if(location.pathname !== path) history.replaceState(null,'',path);
+      } else {
+        const q='/trade.html?id='+encodeURIComponent(id);
+        if(location.pathname+location.search !== q) history.replaceState(null,'',q);
       }
     }catch(e){}
   }
   function profileUrlForAuthor(author, authorId){
     const handle=String(author||'').replace(/^u\//,'');
     const slug=handle.toLowerCase().replace(/[^a-z0-9_-]+/g,'-') || 'user';
+    // Live site format: /user/(name) — uid helps resolve exact account
     return '/user/'+encodeURIComponent(slug)+(authorId?('?uid='+encodeURIComponent(authorId)):'');
   }
   function triggerLogin(){const b=document.getElementById('navSignInBtn');if(b)b.click();else alert('Please sign in.');}
@@ -320,8 +326,7 @@
   function toggleBookmark(id){let list=getBookmarks();const i=list.indexOf(id);if(i>=0)list.splice(i,1);else list.push(id);try{localStorage.setItem(BOOK_KEY,JSON.stringify(list));}catch(e){}return list.indexOf(id)>=0;}
 
   function normalizeComments(list){
-    // Ensure each comment has an id; support flat array with parentId
-    return (list||[]).map(function(c,i){
+    const arr=(list||[]).map(function(c,i){
       const x=Object.assign({},c);
       if(!x.id)x.id=x.cid||('legacy_'+i);
       if(x.parentId==null)x.parentId=null;
@@ -329,6 +334,14 @@
       if(x.votes==null)x.votes=0;
       return x;
     });
+    const byId={};
+    arr.forEach(function(c){byId[c.id]=c;});
+    arr.forEach(function(c){
+      if(c.parentId&&byId[c.parentId]){
+        c.replyToAuthor=byId[c.parentId].author||'u/fan';
+      }
+    });
+    return arr;
   }
 
   function buildCommentTree(list){
@@ -431,6 +444,9 @@
       '<span class="c-vote-count">'+(c.votes||0)+'</span>'+
       '<button type="button" class="c-vote-btn vote-c-down'+(uv==='down'?' active-down':'')+'" data-cid="'+esc(c.id)+'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button></div>';
     html+='<div class="c-body"><div class="c-meta"><span class="c-author">'+esc(c.author||'u/fan')+'</span><span>·</span><span>'+esc(timeAgo(c.createdAt))+'</span></div>';
+    if(c.replyToAuthor){
+      html+='<div class="reply-to-label">Replying to '+esc(c.replyToAuthor)+'</div>';
+    }
     html+='<p class="c-text">'+esc(c.text||'')+'</p>';
     html+='<div class="c-actions"><button type="button" class="c-action c-reply-btn" data-cid="'+esc(c.id)+'" data-author="'+esc(c.author||'')+'">Reply</button></div>';
     html+='<div class="reply-slot" id="reply-slot-'+esc(c.id)+'"></div>';
@@ -567,18 +583,60 @@
     }
     if(!text)return;
     const comments=normalizeComments(trade.comments);
-    comments.push({
+    const parent = parentId ? comments.find(function(x){return x.id===parentId;}) : null;
+    const replyToAuthor = parent ? (parent.author || 'u/fan') : null;
+    const newComment = {
       id:uid(),
       parentId:parentId||null,
+      replyToAuthor:replyToAuthor,
       author:'u/'+(user.displayName||(user.email?user.email.split('@')[0]:'fan')),
       authorId:user.uid,
       text:text.slice(0,2000),
       createdAt:new Date().toISOString(),
       votes:0,
       voters:{}
-    });
+    };
+    comments.push(newComment);
     try{
       await window.db.collection(COLLECTION).doc(trade.id).update({comments:comments});
+      // Notifications: post owner gets notified for any comment/reply under their post
+      // Parent comment author gets notified for a direct reply
+      try {
+        const fromName = newComment.author;
+        const batch = [];
+        if (trade.authorId && trade.authorId !== user.uid) {
+          batch.push(window.db.collection('notifications').add({
+            type: parentId ? 'post_reply_thread' : 'post_comment',
+            recipientId: trade.authorId,
+            toUserId: trade.authorId,
+            fromUserId: user.uid,
+            fromName: fromName,
+            tradeId: trade.id,
+            tradeTitle: trade.title || '',
+            commentId: newComment.id,
+            text: text.slice(0, 180),
+            read: false,
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+          }));
+        }
+        if (parent && parent.authorId && parent.authorId !== user.uid && parent.authorId !== trade.authorId) {
+          batch.push(window.db.collection('notifications').add({
+            type: 'comment_reply',
+            recipientId: parent.authorId,
+            toUserId: parent.authorId,
+            fromUserId: user.uid,
+            fromName: fromName,
+            tradeId: trade.id,
+            tradeTitle: trade.title || '',
+            commentId: newComment.id,
+            parentCommentId: parentId,
+            text: text.slice(0, 180),
+            read: false,
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+          }));
+        }
+        await Promise.all(batch);
+      } catch (ne) { console.warn('notif write', ne); }
       replyToId=null;
       if(!parentId){const input=document.getElementById('commentInput');if(input)input.value='';}
     }catch(e){alert('Could not post comment.');}
@@ -589,7 +647,8 @@
     if(!slot)return;
     const user=window.auth&&window.auth.currentUser;
     if(!user){triggerLogin();return;}
-    slot.innerHTML='<div class="reply-form"><textarea id="reply-input-'+esc(cid)+'" placeholder="Reply to '+esc(author||'')+'..." rows="2"></textarea><div class="reply-form-actions"><button type="button" class="btn btn-ghost cancel-reply" data-cid="'+esc(cid)+'" style="padding:.4rem .85rem;font-size:.75rem">Cancel</button><button type="button" class="btn btn-primary submit-reply" data-cid="'+esc(cid)+'" style="padding:.4rem .85rem;font-size:.75rem">Reply</button></div></div>';
+    const label=author||'user';
+    slot.innerHTML='<div class="reply-form"><div class="reply-to-label">Replying to '+esc(label)+'</div><textarea id="reply-input-'+esc(cid)+'" placeholder="Write your reply..." rows="2"></textarea><div class="reply-form-actions"><button type="button" class="btn btn-ghost cancel-reply" data-cid="'+esc(cid)+'" style="padding:.4rem .85rem;font-size:.75rem">Cancel</button><button type="button" class="btn btn-primary submit-reply" data-cid="'+esc(cid)+'" style="padding:.4rem .85rem;font-size:.75rem">Reply</button></div></div>';
     const ta=document.getElementById('reply-input-'+cid);if(ta)ta.focus();
     slot.querySelector('.cancel-reply').onclick=function(){slot.innerHTML='';};
     slot.querySelector('.submit-reply').onclick=function(){submitComment(cid);};
