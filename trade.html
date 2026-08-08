@@ -533,7 +533,7 @@
     if(reason==='Other'){if(!other){err.style.display='block';err.textContent='Please describe the issue.';return;}reason='Other: '+other;}
     const btn=document.getElementById('submitReport');btn.disabled=true;btn.textContent='Sending...';
     try{
-      const payload={type:reportCtx.kind,tradeId:trade.id,tradeTitle:trade.title||'',reason:reason.slice(0,500),reporterId:user.uid,reporterName:user.displayName||(user.email?user.email.split('@')[0]:'user'),status:'open',createdAt:window.firebase.firestore.FieldValue.serverTimestamp()};
+      const payload={type:reportCtx.kind,tradeId:trade.id,tradeTitle:trade.title||'',reason:reason.slice(0,500),reporterId:user.uid,reporterName:user.displayName||(user.email?user.email.split('@')[0]:'user'),status:'open',createdAt:new Date().toISOString()};
       if(reportCtx.kind==='comment'){
         const list=normalizeComments(trade.comments);
         const c=list.find(function(x){return x.id===reportCtx.cid;});
@@ -551,9 +551,30 @@
     const user=window.auth&&window.auth.currentUser;if(!user){triggerLogin();return;}
     if(!trade)return;
     const voters=Object.assign({},trade.voters||{});let votes=trade.votes||0;const cur=voters[user.uid];
+    const wasUp = cur === 'up';
     if(cur===dir){votes+=dir==='up'?-1:1;delete voters[user.uid];}
     else{if(cur==='up')votes-=1;if(cur==='down')votes+=1;votes+=dir==='up'?1:-1;voters[user.uid]=dir;}
-    try{await window.db.collection(COLLECTION).doc(trade.id).update({votes:votes,voters:voters});}catch(e){alert('Could not save vote.');}
+    try{
+      await window.db.collection(COLLECTION).doc(trade.id).update({votes:votes,voters:voters});
+      // Notify post author on a new upvote (not when removing or downvoting)
+      if (dir === 'up' && !wasUp && trade.authorId && trade.authorId !== user.uid) {
+        try {
+          await window.db.collection('notifications').add({
+            type: 'like',
+            recipientId: trade.authorId,
+            fromUserId: user.uid,
+            fromName: user.displayName || (user.email ? user.email.split('@')[0] : 'fan'),
+            tradeId: trade.id,
+            tradeTitle: trade.title || '',
+            text: 'liked your trade',
+            message: 'liked your trade',
+            link: '/trade.html?id=' + encodeURIComponent(trade.id),
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+        } catch (ne) { console.warn('like notif', ne); }
+      }
+    }catch(e){alert('Could not save vote.');}
   }
   async function voteComment(cid,dir){
     const user=window.auth&&window.auth.currentUser;if(!user){triggerLogin();return;}
@@ -621,7 +642,9 @@
             commentId: newComment.id,
             text: text.slice(0, 180),
             read: false,
-            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: new Date().toISOString(),
+            message: text.slice(0, 180),
+            link: '/trade.html?id=' + encodeURIComponent(trade.id)
           }));
         }
         if (parent && parent.authorId && parent.authorId !== user.uid && parent.authorId !== trade.authorId) {
@@ -637,7 +660,9 @@
             parentCommentId: parentId,
             text: text.slice(0, 180),
             read: false,
-            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: new Date().toISOString(),
+            message: text.slice(0, 180),
+            link: '/trade.html?id=' + encodeURIComponent(trade.id)
           }));
         }
         await Promise.all(batch);
@@ -694,7 +719,7 @@
     if(!title){err.style.display='block';err.textContent='Title required.';return;}
     const btn=document.getElementById('saveEditBtn');btn.disabled=true;btn.textContent='Saving...';
     try{
-      await window.db.collection(COLLECTION).doc(trade.id).update({title:title.slice(0,120),notes:notes.slice(0,2000),summary:notes.slice(0,400),editedAt:window.firebase.firestore.FieldValue.serverTimestamp()});
+      await window.db.collection(COLLECTION).doc(trade.id).update({title:title.slice(0,120),notes:notes.slice(0,2000),summary:notes.slice(0,400),editedAt:new Date().toISOString()});
       closeEdit();
     }catch(e){err.style.display='block';err.textContent=e.message||'Save failed';}
     btn.disabled=false;btn.textContent='Save Changes';
