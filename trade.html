@@ -748,25 +748,29 @@
     }
 
     var cards = rows.map(function(r){
-      var post = r.postSalary != null ? Number(r.postSalary) : (Number(r.currentSalary)||0) - (Number(r.sendingSalary)||0) + (Number(r.receivingSalary)||0);
-      var net = (Number(r.receivingSalary)||0) - (Number(r.sendingSalary)||0);
+      var pre = Number(r.currentSalary) || 0;
+      var send = Number(r.sendingSalary) || 0;
+      var recv = Number(r.receivingSalary) || 0;
+      var post = r.postSalary != null ? Number(r.postSalary) : (pre - send + recv);
+      var hasPayroll = pre > 0;
+      var net = recv - send;
       var netCls = net > 0 ? 'neg' : (net < 0 ? 'pos' : '');
       var netStr = (net >= 0 ? '+' : '') + (fmtM(net) || '$0');
-      var cap = distLabel(salaryCap, post);
-      var tax = distLabel(luxuryTax, post);
-      var a1 = distLabel(firstApron, post);
-      var a2 = distLabel(secondApron, post);
+      var cap = hasPayroll ? distLabel(salaryCap, post) : { cls: '', text: '—' };
+      var tax = hasPayroll ? distLabel(luxuryTax, post) : { cls: '', text: '—' };
+      var a1 = hasPayroll ? distLabel(firstApron, post) : { cls: '', text: '—' };
+      var a2 = hasPayroll ? distLabel(secondApron, post) : { cls: '', text: '—' };
       var logoHtml = r.abbr
         ? '<img class="tb-logo" src="'+esc(teamLogoUrl(r.abbr))+'" alt="'+esc(r.abbr)+'" onerror="this.style.display=\'none\';this.nextElementSibling&&(this.nextElementSibling.style.display=\'flex\')"><span class="tb-logo-fallback" style="background:'+esc(r.color||'#64748b')+';display:none">'+esc((r.abbr||'').slice(0,3))+'</span>'
         : '<span class="tb-logo-fallback" style="background:'+esc(r.color||'#64748b')+'">'+esc((r.name||'T').slice(0,3))+'</span>';
       return '<div class="tb-card">'+
         '<div class="tb-card-head">'+logoHtml+esc(r.name||r.abbr||'Team')+'</div>'+
-        '<div class="tb-row"><span class="tb-row-label">Sending out</span><span class="tb-row-val">'+esc(money(r.sendingSalary))+'</span></div>'+
-        '<div class="tb-row"><span class="tb-row-label">Taking in</span><span class="tb-row-val">'+esc(money(r.receivingSalary))+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Sending out</span><span class="tb-row-val">'+esc(money(send))+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Taking in</span><span class="tb-row-val">'+esc(money(recv))+'</span></div>'+
         '<div class="tb-row"><span class="tb-row-label">Net change</span><span class="tb-row-val '+netCls+'">'+esc(netStr)+'</span></div>'+
         '<div class="tb-divider"></div>'+
-        '<div class="tb-row"><span class="tb-row-label">Pre-trade payroll</span><span class="tb-row-val">'+esc(money(r.currentSalary))+'</span></div>'+
-        '<div class="tb-row"><span class="tb-row-label">Post-trade payroll</span><span class="tb-row-val">'+esc(money(post))+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Pre-trade payroll</span><span class="tb-row-val">'+esc(hasPayroll ? money(pre) : '—')+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Post-trade payroll</span><span class="tb-row-val">'+esc(hasPayroll ? money(post) : '—')+'</span></div>'+
         '<div class="tb-divider"></div>'+
         '<div class="tb-sub">Distance from Thresholds</div>'+
         '<div class="tb-row"><span class="tb-row-label">Salary Cap ('+esc(money(salaryCap))+')</span><span class="tb-row-val '+cap.cls+'">'+esc(cap.text)+'</span></div>'+
