@@ -18,40 +18,55 @@
     .back{display:inline-flex;font-size:.82rem;font-weight:600;color:var(--sixers-blue);margin-bottom:1.35rem}
     .back:hover{text-decoration:underline}
 
-    /* Compact professional post header — one tight row, then title */
-    .post-header{margin:0 0 0.85rem;position:relative}
+    /* Fanspo-inspired post header */
+    .post-header{
+      margin:0 0 1rem;position:relative;
+      padding:0 0 .85rem;
+      border-bottom:1px solid var(--border);
+    }
     .post-head-row{
-      display:flex;align-items:center;justify-content:space-between;gap:.5rem;
-      min-height:28px;margin:0 0 .35rem;
+      display:flex;align-items:flex-start;gap:.75rem;
     }
+    .post-avatar{
+      width:48px;height:48px;border-radius:50%;flex-shrink:0;
+      background:#001a57;color:#fff;font-weight:800;font-size:1.05rem;
+      display:flex;align-items:center;justify-content:center;overflow:hidden;
+      border:2px solid #e8eef5;
+    }
+    .post-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .post-head-main{flex:1;min-width:0}
     .post-head-meta{
-      display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;min-width:0;flex:1;
-      font-size:.88rem;line-height:1.2;color:#0f172a;
+      display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;
+      font-size:.78rem;line-height:1.25;color:#64748b;margin:0 0 .2rem;
     }
-    .post-author-name{
-      font-weight:800;color:#0f172a;text-decoration:none;white-space:nowrap;
+    .post-head-meta .community{
+      font-weight:700;color:#006BB6;
     }
-    .post-author-name:hover{text-decoration:underline}
-    .post-handle{
-      font-weight:500;color:#64748b;white-space:nowrap;
+    .post-head-meta .sep{color:#cbd5e1;font-weight:500}
+    .post-head-meta .posted-by{font-weight:500;color:#64748b}
+    .post-head-meta .post-author-name{
+      font-weight:700;color:#0f172a;text-decoration:none;
     }
-    .post-head-meta .sep{color:#94a3b8;font-weight:500}
-    .post-time{font-weight:500;color:#64748b;white-space:nowrap}
-    .edited{color:#94a3b8;font-weight:500;font-size:.82rem}
+    .post-head-meta .post-author-name:hover{text-decoration:underline;color:#006BB6}
+    .post-head-meta .post-time{font-weight:500;color:#94a3b8}
     .title{
-      font-size:clamp(1.15rem,2.6vw,1.4rem);font-weight:800;letter-spacing:-.02em;
-      line-height:1.3;margin:0;color:#0f172a;text-align:left;
+      font-size:clamp(1.25rem,3vw,1.65rem);font-weight:800;letter-spacing:-.025em;
+      line-height:1.25;margin:0;color:#0f172a;text-align:left;
     }
-    .menu-right{flex-shrink:0;display:flex;align-items:center;gap:.25rem;margin-left:auto}
+    .menu-right{
+      flex-shrink:0;display:flex;align-items:center;gap:.25rem;
+      margin-left:.25rem;align-self:flex-start;padding-top:.15rem;
+    }
     .dots-btn{
-      width:32px;height:32px;border:none;background:transparent;border-radius:8px;
+      width:34px;height:34px;border:none;background:transparent;border-radius:8px;
       color:#0f172a !important;cursor:pointer;display:flex;align-items:center;justify-content:center;
       flex-shrink:0;
     }
     .dots-btn svg{fill:#0f172a !important;color:#0f172a !important}
     .dots-btn:hover{background:rgba(15,23,42,.06)}
-    .tw-repost-label{margin:0 0 .3rem;font-size:.78rem}
+    .tw-repost-label{margin:0 0 .45rem;font-size:.78rem}
     .post-header-top,.post-title-row,.title-center,.meta-left,.meta-line{display:contents}
+    .edited{color:#94a3b8;font-weight:500;font-size:.78rem}
     .excerpt{font-size:.95rem;line-height:1.65;color:#334155;margin:0 0 1.1rem;white-space:pre-wrap}
     .sh-logo{width:44px;height:44px;object-fit:contain;flex-shrink:0;display:block;border-radius:6px;background:transparent}
 
@@ -1042,23 +1057,31 @@
       const verb = isQuoteRepost ? 'quote reposted' : 'reposted';
       html+='<div class="tw-repost-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>'+esc(who)+' '+verb+'</span></div>';
     }
-    // Single compact row: Name · u/handle · time .............. ⋮
     var displayName = String(author||'fan').replace(/^u\//,'');
     var handle = displayName;
+    var avInitial = (displayName||'U').charAt(0).toUpperCase();
+    var photo = t.authorPhoto || t.photoURL || '';
     html+='<div class="post-head-row">';
+    // Avatar
+    html+='<div class="post-avatar">';
+    if(photo) html+='<img src="'+esc(photo)+'" alt="">';
+    else html+=esc(avInitial);
+    html+='</div>';
+    // Main: meta + title
+    html+='<div class="post-head-main">';
     html+='<div class="post-head-meta">';
-    html+='<a class="post-author-name" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">'+esc(displayName)+'</a>';
-    html+='<span class="post-handle">u/'+esc(handle)+'</span>';
+    html+='<span class="posted-by">Posted by </span>';
+    html+='<a class="post-author-name" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">u/'+esc(handle)+'</a>';
     html+='<span class="sep">·</span>';
     html+='<span class="post-time">'+esc(timeAgo(t.createdAt))+'</span>';
     if(t.editedAt&&!isTradePost) html+='<span class="edited">· edited</span>';
     html+='</div>';
-    html+='__MENU_RIGHT__';
-    html+='</div>';
-    // Title directly under (tight)
     if(!isPlainRepost){
       html+='<h1 class="title">'+esc(t.title||'Untitled')+'</h1>';
     }
+    html+='</div>'; // post-head-main
+    html+='__MENU_RIGHT__';
+    html+='</div>'; // post-head-row
     const meEarly=window.auth&&window.auth.currentUser;
     const showFollowEarly=meEarly&&t.authorId&&meEarly.uid!==t.authorId;
     var menuHtml='<div class="menu-right">';
