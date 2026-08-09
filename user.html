@@ -171,8 +171,11 @@
             font-size: 0.78rem; font-weight: 700;
         }
         .feed-vote:hover { background: rgba(0,107,182,.06); color: var(--ink); }
-        .feed-vote.active-up { color: #ea580c; }
-        .feed-vote.active-down { color: #2563eb; }
+        .feed-vote.active-up { color: #ea580c; background: transparent !important; }
+        .feed-vote.active-up svg { stroke: #ea580c; }
+        .feed-vote.active-down { color: #2563eb; background: transparent !important; }
+        .feed-vote.active-down svg { stroke: #2563eb; }
+        .feed-vote:hover { background: transparent; }
         .feed-vote svg { width: 14px; height: 14px; }
         .inbox-actions {
             display: flex; align-items: center; gap: 0.35rem; margin-top: 0.55rem; flex-wrap: wrap;
@@ -193,6 +196,15 @@
         }
         .inbox-reply-cancel { background: #f1f5f9; color: #334155; }
         .inbox-reply-send { background: #006BB6; color: #fff; }
+        .sh-toast {
+          position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(120%);
+          background: #0f172a; color: #fff; padding: 0.75rem 1.25rem; border-radius: 999px;
+          font-size: 0.88rem; font-weight: 600; z-index: 10050;
+          box-shadow: 0 12px 30px rgba(0,0,0,.25);
+          transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s; opacity: 0;
+          display: flex; align-items: center; gap: 0.5rem; max-width: min(90vw, 360px);
+        }
+        .sh-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
 
 
@@ -1039,6 +1051,20 @@
         // ── Feed ──────────────────────────────────────────────────
 
         // ── Vote / reply helpers (works from profile feed + inbox) ──
+        function showToast(msg) {
+            var el = document.getElementById('shToast');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'shToast';
+                el.className = 'sh-toast';
+                el.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span></span>';
+                document.body.appendChild(el);
+            }
+            el.querySelector('span').textContent = msg || 'Done';
+            el.classList.add('show');
+            clearTimeout(el._t);
+            el._t = setTimeout(function(){ el.classList.remove('show'); }, 2400);
+        }
         function ensureAuthUser() {
             try {
                 return (window.auth && window.auth.currentUser) || (firebase.auth && firebase.auth().currentUser) || null;
@@ -1257,7 +1283,7 @@
                         const res = await replyToComment(tradeId, cid, text);
                         if (res) {
                             box.classList.remove('open'); box.innerHTML = '';
-                            alert('Reply posted');
+                            showToast('Reply posted');
                         } else {
                             btnSend.disabled = false; btnSend.textContent = 'Reply';
                         }
