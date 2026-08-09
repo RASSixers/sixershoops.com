@@ -1411,7 +1411,6 @@
       if(!window.db||!t)return;
       quoteText = isQuote ? String(quoteText||'').slice(0,500) : '';
       const authorName=user.displayName||(user.email?user.email.split('@')[0]:'fan');
-      const voters={}; voters[user.uid]='up';
       const payload={
         postType: isQuote ? 'quote_repost' : 'repost',
         title: (isQuote && quoteText) ? String(quoteText).slice(0,120) : ('Repost: '+(t.title||'Trade')).slice(0,120),
@@ -1429,8 +1428,8 @@
         quotedTitle: t.title || '',
         quotedSummary: (t.notes || t.summary || '').slice(0, 400),
         quotedNotes: (t.notes || t.summary || '').slice(0, 400),
-        votes: 1,
-        voters: voters,
+        votes: 0,
+        voters: {},
         comments: [],
         createdAt: String(new Date().toISOString())
       };
