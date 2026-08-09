@@ -4312,13 +4312,20 @@
                         if (p) receiving.push({ name: String(p.name || ''), salary: Number(p.salary) || 0, id: String(p.id || ''), from: String(other.abbr) });
                     });
                 });
+                var sendingSalary = sending.reduce(function (s, p) { return s + (Number(p.salary) || 0); }, 0);
+                var receivingSalary = receiving.reduce(function (s, p) { return s + (Number(p.salary) || 0); }, 0);
+                var currentSalary = Number(data.teamSalary) || 0;
                 return {
                     abbr: String(t.abbr),
                     name: String(meta.name || t.abbr),
                     color: String(meta.color || '#64748b'),
                     sending: sending,
                     receiving: receiving,
-                    picks: picksOut
+                    picks: picksOut,
+                    sendingSalary: sendingSalary,
+                    receivingSalary: receivingSalary,
+                    currentSalary: currentSalary,
+                    postSalary: currentSalary - sendingSalary + receivingSalary
                 };
             });
 
@@ -4349,6 +4356,23 @@
             var voters = {};
             voters[user.uid] = 'up';
 
+            var cbaSnap = (typeof CBA !== 'undefined') ? {
+                salaryCap: CBA.salaryCap,
+                luxuryTax: CBA.luxuryTax,
+                firstApron: CBA.firstApron,
+                secondApron: CBA.secondApron
+            } : { salaryCap: 165000000, luxuryTax: 200428000, firstApron: 209015000, secondApron: 221686000 };
+            var teamBreakdown = sides.map(function (s) {
+                return {
+                    abbr: s.abbr,
+                    name: s.name,
+                    color: s.color,
+                    sendingSalary: s.sendingSalary || 0,
+                    receivingSalary: s.receivingSalary || 0,
+                    currentSalary: s.currentSalary || 0,
+                    postSalary: s.postSalary != null ? s.postSalary : ((s.currentSalary || 0) - (s.sendingSalary || 0) + (s.receivingSalary || 0))
+                };
+            });
             var doc = sanitizeForFirestore({
                 postType: 'trade',
                 title: String(title).slice(0, 120),
@@ -4358,6 +4382,8 @@
                 authorId: String(user.uid),
                 teamAbbrs: active.map(function (t) { return String(t.abbr); }),
                 sides: sides,
+                teamBreakdown: teamBreakdown,
+                cba: cbaSnap,
                 machineHash: machineHash || null,
                 isValid: isValid === true ? true : (isValid === false ? false : null),
                 votes: 1,
