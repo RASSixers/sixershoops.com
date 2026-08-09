@@ -48,7 +48,7 @@
       font-weight:700;color:#0f172a;text-decoration:none;
     }
     .post-head-meta .post-author-name:hover{text-decoration:underline;color:#006BB6}
-    .post-head-meta .post-time{font-weight:600;color:#0f172a}
+    .post-head-meta .post-time{font-weight:600;color:#0f172a !important}
     .title{
       font-size:clamp(1.25rem,3vw,1.65rem);font-weight:800;letter-spacing:-.025em;
       line-height:1.25;margin:.55rem 0 0;color:#0f172a;text-align:center;
@@ -68,7 +68,7 @@
     .dots-btn:hover{background:rgba(15,23,42,.06)}
     .tw-repost-label{margin:0 0 .45rem;font-size:.78rem}
     .post-header-top,.post-title-row,.title-center,.meta-left,.meta-line{display:contents}
-    .edited{color:#94a3b8;font-weight:500;font-size:.78rem;font-style:normal}
+    .edited{color:#0f172a !important;font-weight:600;font-size:.78rem;font-style:normal}
     .excerpt{font-size:.95rem;line-height:1.65;color:#334155;margin:0 0 1.1rem;white-space:pre-wrap}
     .sh-logo{width:44px;height:44px;object-fit:contain;flex-shrink:0;display:block;border-radius:6px;background:transparent}
 
@@ -1090,11 +1090,19 @@
     const btn=document.getElementById('saveEditBtn');btn.disabled=true;btn.textContent='Saving...';
     try{
       var patch = {title:title.slice(0,120),notes:notes.slice(0,2000),summary:notes.slice(0,400),editedAt:new Date().toISOString()};
+      // Backfill createdAt if it was stripped by old sanitizer (empty object / missing)
+      var ca = trade.createdAt;
+      var badCa = (ca==null||ca==='');
+      if(!badCa && typeof ca==='object' && typeof ca.toDate!=='function' && typeof ca.toMillis!=='function' && ca.seconds==null){
+        try { badCa = Object.keys(ca).length===0; } catch(_){ badCa = true; }
+      }
+      if(badCa) patch.createdAt = new Date().toISOString();
       await window.db.collection(COLLECTION).doc(trade.id).update(patch);
       trade.title = patch.title;
       trade.notes = patch.notes;
       trade.summary = patch.summary;
       trade.editedAt = patch.editedAt;
+      if(patch.createdAt) trade.createdAt = patch.createdAt;
       closeEdit();
       render(trade);
       if (typeof showToast === 'function') showToast('Post updated');
@@ -1173,14 +1181,19 @@
     html+='<div class="post-head-meta">';
     html+='<span class="posted-by">Posted by </span>';
     html+='<a class="post-author-name" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">u/'+esc(handle)+'</a>';
-    var when = timeAgo(t.createdAt) || timeAgo(t.created_at) || timeAgo(t.timestamp) || timeAgo(t.postedAt) || timeAgo(t.date) || timeAgo(t.updatedAt) || '';
-    if(!when){
-      var raw = parseDate(t.createdAt) || parseDate(t.created_at) || parseDate(t.timestamp);
-      if(raw) when = raw.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    // createdAt may be {} if an old sanitize stripped serverTimestamp — treat empty objects as missing
+    function isEmptyTime(v){
+      if(v==null||v==='') return true;
+      if(typeof v==='object' && !Array.isArray(v) && typeof v.toDate!=='function' && typeof v.toMillis!=='function' && v.seconds==null && v._seconds==null){
+        try { return Object.keys(v).length===0; } catch(_){ return true; }
+      }
+      return false;
     }
-    // Debug aid in console when date is missing (helps diagnose field shape)
-    if(!when && t.createdAt != null){
-      try { console.warn('Unparseable createdAt', t.createdAt, typeof t.createdAt); } catch(_){}
+    var createdRaw = !isEmptyTime(t.createdAt) ? t.createdAt : (!isEmptyTime(t.created_at) ? t.created_at : null);
+    var when = timeAgo(createdRaw) || timeAgo(t.timestamp) || timeAgo(t.postedAt) || timeAgo(t.date) || '';
+    if(!when){
+      var raw = parseDate(createdRaw) || parseDate(t.timestamp);
+      if(raw) when = raw.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     }
     if(when){
       html+='<span class="sep">·</span>';
