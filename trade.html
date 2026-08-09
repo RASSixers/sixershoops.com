@@ -42,13 +42,13 @@
     .post-head-meta .community{
       font-weight:700;color:#006BB6;
     }
-    .post-head-meta .sep{color:#94a3b8;font-weight:700;font-size:.9em}
+    .post-head-meta .sep{color:#0f172a !important;font-weight:800;font-size:1em}
     .post-head-meta .posted-by{font-weight:500;color:#64748b}
     .post-head-meta .post-author-name{
       font-weight:700;color:#0f172a;text-decoration:none;
     }
     .post-head-meta .post-author-name:hover{text-decoration:underline;color:#006BB6}
-    .post-head-meta .post-time{font-weight:500;color:#94a3b8}
+    .post-head-meta .post-time{font-weight:600;color:#0f172a}
     .title{
       font-size:clamp(1.25rem,3vw,1.65rem);font-weight:800;letter-spacing:-.025em;
       line-height:1.25;margin:.55rem 0 0;color:#0f172a;text-align:center;
@@ -514,7 +514,40 @@
   }
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function fmtM(v){if(v==null||v==='')return'';const n=Number(v);if(!isFinite(n))return'';if(Math.abs(n)>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(Math.abs(n)>=1e3)return'$'+Math.round(n/1e3)+'K';return'$'+n;}
-  function timeAgo(ts){if(!ts)return'';const d=ts.toDate?ts.toDate():new Date(ts);if(isNaN(d.getTime()))return'';const s=Math.floor((Date.now()-d.getTime())/1000);if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+  function parseDate(ts){
+    if(!ts && ts!==0) return null;
+    try {
+      if (ts && typeof ts.toDate === 'function') return ts.toDate();
+      if (typeof ts === 'object') {
+        if (typeof ts.seconds === 'number') return new Date(ts.seconds * 1000);
+        if (typeof ts._seconds === 'number') return new Date(ts._seconds * 1000);
+        if (typeof ts.seconds === 'string') return new Date(Number(ts.seconds) * 1000);
+      }
+      if (typeof ts === 'number') {
+        // seconds vs ms
+        return new Date(ts < 1e12 ? ts * 1000 : ts);
+      }
+      if (typeof ts === 'string') {
+        var d = new Date(ts);
+        if (!isNaN(d.getTime())) return d;
+        var n = Number(ts);
+        if (isFinite(n)) return new Date(n < 1e12 ? n * 1000 : n);
+      }
+    } catch(_) {}
+    return null;
+  }
+  function timeAgo(ts){
+    var d = parseDate(ts);
+    if(!d || isNaN(d.getTime())) return '';
+    var s = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (s < 0) s = 0;
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    if (s < 604800) return Math.floor(s/86400) + 'd ago';
+    if (s < 2592000) return Math.floor(s/604800) + 'w ago';
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
   function getId(){
     const q=new URLSearchParams(location.search).get('id');
     if(q)return q;
@@ -1103,7 +1136,9 @@
     html+='<span class="posted-by">Posted by </span>';
     html+='<a class="post-author-name" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">u/'+esc(handle)+'</a>';
     html+='<span class="sep">·</span>';
-    html+='<span class="post-time">'+esc(timeAgo(t.createdAt))+'</span>';
+    var when = timeAgo(t.createdAt) || timeAgo(t.created_at) || timeAgo(t.timestamp) || timeAgo(t.postedAt) || timeAgo(t.date) || '';
+    if(!when && t.createdAt) when = 'recently';
+    html+='<span class="post-time">'+esc(when)+'</span>';
     if(t.editedAt && !isTradePost){
       html+='<span class="sep">·</span>';
       html+='<span class="edited">(edited '+esc(timeAgo(t.editedAt))+')</span>';
