@@ -4323,28 +4323,55 @@
                 };
             });
 
-            // Use the same salary flows as Analyze Trade so breakdown matches the machine
+            // Payroll + flows — match Analyze Trade breakdown exactly
+            function getTeamPayroll(abbr) {
+                var data = (typeof TEAM_DATA !== 'undefined' && TEAM_DATA[abbr]) ? TEAM_DATA[abbr] : null;
+                if (!data) return 0;
+                var base = Number(data.teamSalary);
+                if (isFinite(base) && base > 0) return base;
+                // Fallback: sum roster salaries
+                var sum = 0;
+                (data.players || []).forEach(function (p) {
+                    var n = Number(p.salary);
+                    if (isFinite(n)) sum += n;
+                });
+                return sum;
+            }
             var flows = {};
-            try { flows = computeTradeFlows() || {}; } catch (e) { flows = {}; }
+            try { flows = computeTradeFlows() || {}; } catch (e) { console.warn('computeTradeFlows', e); flows = {}; }
             sides = sides.map(function (s) {
-                var teamObj = active.find(function (x) { return x.abbr === s.abbr; });
+                var teamObj = active.find(function (x) { return String(x.abbr) === String(s.abbr); });
                 var f = (teamObj && flows[teamObj.id]) ? flows[teamObj.id] : null;
-                var data2 = TEAM_DATA[s.abbr] || {};
-                var sendingSalary = f ? (Number(f.sendingSalary) || 0) : (s.sending || []).reduce(function (sum, p) { return sum + (Number(p.salary) || 0); }, 0);
-                var receivingSalary = f ? (Number(f.receivingSalary) || 0) : (s.receiving || []).reduce(function (sum, p) { return sum + (Number(p.salary) || 0); }, 0);
-                // FA signings incoming salary count toward receiving / post payroll
-                var faIn = 0;
-                if (teamObj && teamObj.faSignings) {
-                    teamObj.faSignings.forEach(function (sg) { faIn += Number(sg.salary) || 0; });
+                var sendingSalary = 0;
+                var receivingSalary = 0;
+                if (f) {
+                    sendingSalary = Number(f.sendingSalary) || 0;
+                    receivingSalary = Number(f.receivingSalary) || 0;
+                } else {
+                    (s.sending || []).forEach(function (p) { sendingSalary += Number(p.salary) || 0; });
+                    (s.receiving || []).forEach(function (p) { receivingSalary += Number(p.salary) || 0; });
                 }
-                receivingSalary += faIn;
-                var currentSalary = Number(data2.teamSalary) || 0;
-                s.sendingSalary = sendingSalary;
-                s.receivingSalary = receivingSalary;
-                s.currentSalary = currentSalary;
-                s.postSalary = currentSalary - sendingSalary + receivingSalary;
+                // FA signings this team is absorbing
+                if (teamObj && Array.isArray(teamObj.faSignings)) {
+                    teamObj.faSignings.forEach(function (sg) { receivingSalary += Number(sg.salary) || 0; });
+                }
+                // Cash out reduces sending / increases receiving on the other side — approximate as net
+                var cashOut = (teamObj && Number(teamObj.cashOut)) || 0;
+                if (cashOut > 0) sendingSalary += cashOut;
+
+                var currentSalary = getTeamPayroll(s.abbr);
+                // Waived players still count on payroll (dead money) — already in teamSalary usually
+                s.sendingSalary = Math.round(sendingSalary);
+                s.receivingSalary = Math.round(receivingSalary);
+                s.currentSalary = Math.round(currentSalary);
+                s.postSalary = Math.round(currentSalary - sendingSalary + receivingSalary);
                 return s;
             });
+            try {
+                console.log('Post trade breakdown', sides.map(function (s) {
+                    return { abbr: s.abbr, send: s.sendingSalary, recv: s.receivingSalary, pre: s.currentSalary, post: s.postSalary };
+                }));
+            } catch (_) {}
 
             var summaryParts = sides.map(function (s) {
                 var gets = (s.receiving || []).map(function (a) { return a.name; }).slice(0, 3).join(', ');
@@ -4380,14 +4407,19 @@
                 secondApron: CBA.secondApron
             } : { salaryCap: 165000000, luxuryTax: 200428000, firstApron: 209015000, secondApron: 221686000 };
             var teamBreakdown = sides.map(function (s) {
+                var send = Math.round(Number(s.sendingSalary) || 0);
+                var recv = Math.round(Number(s.receivingSalary) || 0);
+                var pre = Math.round(Number(s.currentSalary) || 0);
+                if (pre <= 0) pre = getTeamPayroll(s.abbr);
+                var post = Math.round(pre - send + recv);
                 return {
-                    abbr: s.abbr,
-                    name: s.name,
-                    color: s.color,
-                    sendingSalary: s.sendingSalary || 0,
-                    receivingSalary: s.receivingSalary || 0,
-                    currentSalary: s.currentSalary || 0,
-                    postSalary: s.postSalary != null ? s.postSalary : ((s.currentSalary || 0) - (s.sendingSalary || 0) + (s.receivingSalary || 0))
+                    abbr: String(s.abbr || ''),
+                    name: String(s.name || s.abbr || ''),
+                    color: String(s.color || '#64748b'),
+                    sendingSalary: send,
+                    receivingSalary: recv,
+                    currentSalary: pre,
+                    postSalary: post
                 };
             });
             var doc = sanitizeForFirestore({
