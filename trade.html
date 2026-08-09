@@ -70,6 +70,36 @@
     .post-header-top,.post-title-row,.title-center,.meta-left,.meta-line{display:contents}
     .edited{color:#0f172a !important;font-weight:600;font-size:.78rem;font-style:normal}
     .excerpt{font-size:.95rem;line-height:1.65;color:#334155;margin:0 0 1.1rem;white-space:pre-wrap}
+    .tb-wrap{margin:1.25rem 0 1.5rem}
+    .tb-label{
+      font-size:.65rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+      color:#94a3b8;margin:0 0 .75rem;
+    }
+    .tb-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;
+    }
+    .tb-card{
+      background:#f8fafc;border:1px solid #e8eef5;border-radius:16px;padding:1.1rem 1.15rem;
+    }
+    .tb-card-head{
+      display:flex;align-items:center;gap:.55rem;margin:0 0 .85rem;
+      font-weight:800;font-size:1rem;color:#0f172a;
+    }
+    .tb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .tb-row{
+      display:flex;justify-content:space-between;align-items:center;gap:.75rem;
+      padding:.32rem 0;font-size:.88rem;
+    }
+    .tb-row-label{color:#64748b;font-weight:500}
+    .tb-row-val{color:#0f172a;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+    .tb-row-val.pos{color:#059669}
+    .tb-row-val.neg{color:#dc2626}
+    .tb-divider{height:1px;background:#e2e8f0;margin:.55rem 0}
+    .tb-sub{
+      font-size:.65rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+      color:#94a3b8;margin:.15rem 0 .4rem;
+    }
+
     .sh-logo{width:44px;height:44px;object-fit:contain;flex-shrink:0;display:block;border-radius:6px;background:transparent}
 
     .menu-wrap{position:relative;flex-shrink:0}
@@ -659,6 +689,86 @@
   function teamLogoUrl(abbr) {
     const code = ESPN_TEAM_CODE[abbr] || String(abbr || '').toLowerCase();
     return 'https://a.espncdn.com/i/teamlogos/nba/500/' + code + '.png';
+  }
+
+  function renderTeamBreakdown(t){
+    var rows = t.teamBreakdown;
+    if(!rows || !rows.length){
+      // Derive from sides if possible
+      var sides = t.sides || t.teams || [];
+      if(!sides.length) return '';
+      rows = sides.map(function(s){
+        var send = Number(s.sendingSalary);
+        var recv = Number(s.receivingSalary);
+        if(!isFinite(send)){
+          send = 0;
+          (s.sending||[]).forEach(function(p){ var n=Number(p.salary); if(isFinite(n)) send+=n; });
+        }
+        if(!isFinite(recv)){
+          recv = 0;
+          (s.receiving||s.receives||[]).forEach(function(p){ var n=Number(p.salary); if(isFinite(n)) recv+=n; });
+        }
+        var cur = Number(s.currentSalary) || 0;
+        return {
+          abbr: s.abbr || '',
+          name: s.name || s.abbr || 'Team',
+          color: s.color || '#64748b',
+          sendingSalary: send,
+          receivingSalary: recv,
+          currentSalary: cur,
+          postSalary: s.postSalary != null ? Number(s.postSalary) : (cur - send + recv)
+        };
+      });
+    }
+    // Need at least one team with salary data
+    var hasData = rows.some(function(r){ return (r.sendingSalary||0) > 0 || (r.receivingSalary||0) > 0 || (r.currentSalary||0) > 0; });
+    if(!hasData) return '';
+
+    var cba = t.cba || {};
+    var salaryCap = Number(cba.salaryCap) || 165000000;
+    var luxuryTax = Number(cba.luxuryTax) || 200428000;
+    var firstApron = Number(cba.firstApron) || 209015000;
+    var secondApron = Number(cba.secondApron) || 221686000;
+
+    function distLabel(threshold, salary){
+      var dist = threshold - salary;
+      var over = dist < 0;
+      var cls = over ? 'neg' : 'pos';
+      var text = (over ? 'OVER by ' : 'Under by ') + (fmtM(Math.abs(dist)) || '$0');
+      return { cls: cls, text: text };
+    }
+    function money(n){
+      if(n==null || !isFinite(Number(n))) return '—';
+      return fmtM(Number(n)) || '$0';
+    }
+
+    var cards = rows.map(function(r){
+      var post = r.postSalary != null ? Number(r.postSalary) : (Number(r.currentSalary)||0) - (Number(r.sendingSalary)||0) + (Number(r.receivingSalary)||0);
+      var net = (Number(r.receivingSalary)||0) - (Number(r.sendingSalary)||0);
+      var netCls = net > 0 ? 'neg' : (net < 0 ? 'pos' : '');
+      var netStr = (net >= 0 ? '+' : '') + (fmtM(net) || '$0');
+      var cap = distLabel(salaryCap, post);
+      var tax = distLabel(luxuryTax, post);
+      var a1 = distLabel(firstApron, post);
+      var a2 = distLabel(secondApron, post);
+      return '<div class="tb-card">'+
+        '<div class="tb-card-head"><span class="tb-dot" style="background:'+esc(r.color||'#64748b')+'"></span>'+esc(r.name||r.abbr||'Team')+'</div>'+
+        '<div class="tb-row"><span class="tb-row-label">Sending out</span><span class="tb-row-val">'+esc(money(r.sendingSalary))+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Taking in</span><span class="tb-row-val">'+esc(money(r.receivingSalary))+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Net change</span><span class="tb-row-val '+netCls+'">'+esc(netStr)+'</span></div>'+
+        '<div class="tb-divider"></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Pre-trade payroll</span><span class="tb-row-val">'+esc(money(r.currentSalary))+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Post-trade payroll</span><span class="tb-row-val">'+esc(money(post))+'</span></div>'+
+        '<div class="tb-divider"></div>'+
+        '<div class="tb-sub">Distance from Thresholds</div>'+
+        '<div class="tb-row"><span class="tb-row-label">Salary Cap ('+esc(money(salaryCap))+')</span><span class="tb-row-val '+cap.cls+'">'+esc(cap.text)+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">Luxury Tax ('+esc(money(luxuryTax))+')</span><span class="tb-row-val '+tax.cls+'">'+esc(tax.text)+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">1st Apron ('+esc(money(firstApron))+')</span><span class="tb-row-val '+a1.cls+'">'+esc(a1.text)+'</span></div>'+
+        '<div class="tb-row"><span class="tb-row-label">2nd Apron ('+esc(money(secondApron))+')</span><span class="tb-row-val '+a2.cls+'">'+esc(a2.text)+'</span></div>'+
+      '</div>';
+    }).join('');
+
+    return '<div class="tb-wrap"><div class="tb-label">Team Breakdown</div><div class="tb-grid">'+cards+'</div></div>';
   }
 
   function renderTradeGraphic(t){
@@ -1257,7 +1367,7 @@
         html+='</a>';
       }
     }
-    if(ty==='trade')html+=renderTradeGraphic(t);
+    if(ty==='trade'){html+=renderTradeGraphic(t);html+=renderTeamBreakdown(t);}
     if(t.notes||t.summary)html+='<p class="excerpt">'+esc(t.notes||t.summary)+'</p>';
 
     html+='<div class="engage">';
