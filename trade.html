@@ -51,8 +51,10 @@
     .post-head-meta .post-time{font-weight:500;color:#94a3b8}
     .title{
       font-size:clamp(1.25rem,3vw,1.65rem);font-weight:800;letter-spacing:-.025em;
-      line-height:1.25;margin:0;color:#0f172a;text-align:left;
+      line-height:1.25;margin:.55rem 0 0;color:#0f172a;text-align:center;
     }
+    .post-title-wrap{width:100%;text-align:center;margin-top:.55rem}
+    .post-title-wrap .title{margin:0}
     .menu-right{
       flex-shrink:0;display:flex;align-items:center;gap:.25rem;
       margin-left:.25rem;align-self:flex-start;padding-top:.15rem;
@@ -663,6 +665,32 @@
   }
 
   var _photoCache = {};
+  async function hydratePostAuthorPhoto(authorId) {
+    if (!window.db || !authorId) return;
+    try {
+      if (!_photoCache[authorId]) {
+        const doc = await window.db.collection('users').doc(authorId).get();
+        if (doc.exists) {
+          const d = doc.data() || {};
+          _photoCache[authorId] = { photoURL: d.photoURL || '', color: d.avatarColor || '#001a57', name: d.username || '' };
+        } else {
+          _photoCache[authorId] = { photoURL: '', color: '#001a57', name: '' };
+        }
+      }
+      const p = _photoCache[authorId];
+      const av = document.getElementById('postAuthorAvatar');
+      if (av && p && p.photoURL) {
+        av.style.background = '#0b0f1a';
+        av.innerHTML = '<img src="'+esc(p.photoURL)+'" alt="">';
+      }
+      // Update display name if we have a better username
+      if (p && p.name) {
+        const nameEl = document.querySelector('.post-head-meta .post-author-name');
+        if (nameEl) nameEl.textContent = 'u/' + p.name;
+      }
+    } catch (e) { console.warn('hydratePostAuthorPhoto', e); }
+  }
+
   async function hydrateCommentPhotos() {
     if (!window.db) return;
     const cards = document.querySelectorAll('.comment-card[data-author-id]');
@@ -1060,10 +1088,12 @@
     var displayName = String(author||'fan').replace(/^u\//,'');
     var handle = displayName;
     var avInitial = (displayName||'U').charAt(0).toUpperCase();
-    var photo = t.authorPhoto || t.photoURL || '';
+    var cachedAuthor = (t.authorId && _photoCache[t.authorId]) ? _photoCache[t.authorId] : null;
+    var photo = (cachedAuthor && cachedAuthor.photoURL) || t.authorPhoto || t.photoURL || '';
+    if (cachedAuthor && cachedAuthor.name) { displayName = cachedAuthor.name; handle = cachedAuthor.name; }
     html+='<div class="post-head-row">';
-    // Avatar
-    html+='<div class="post-avatar">';
+    // Avatar — real profile pic from users/{authorId}
+    html+='<div class="post-avatar" id="postAuthorAvatar"'+(t.authorId?(' data-author-id="'+esc(t.authorId)+'"'):'')+'>';
     if(photo) html+='<img src="'+esc(photo)+'" alt="">';
     else html+=esc(avInitial);
     html+='</div>';
@@ -1076,12 +1106,12 @@
     html+='<span class="post-time">'+esc(timeAgo(t.createdAt))+'</span>';
     if(t.editedAt&&!isTradePost) html+='<span class="edited">· edited</span>';
     html+='</div>';
-    if(!isPlainRepost){
-      html+='<h1 class="title">'+esc(t.title||'Untitled')+'</h1>';
-    }
     html+='</div>'; // post-head-main
     html+='__MENU_RIGHT__';
     html+='</div>'; // post-head-row
+    if(!isPlainRepost){
+      html+='<div class="post-title-wrap"><h1 class="title">'+esc(t.title||'Untitled')+'</h1></div>';
+    }
     const meEarly=window.auth&&window.auth.currentUser;
     const showFollowEarly=meEarly&&t.authorId&&meEarly.uid!==t.authorId;
     var menuHtml='<div class="menu-right">';
@@ -1149,7 +1179,7 @@
 
     if(ty==='poll')html+=renderPoll(t);
     html+=renderComments(t.comments||[]);
-    document.getElementById('root').innerHTML=html;
+    document.getElementById('root').innerHTML=html; if(t&&t.authorId){ setTimeout(function(){ hydratePostAuthorPhoto(t.authorId); }, 0); }
 
     document.getElementById('btnUp').onclick=function(){handleVote('up');};
     document.getElementById('btnDown').onclick=function(){handleVote('down');};
@@ -1225,7 +1255,7 @@
         }catch(e){ alert('Could not process image'); }
       };
     }
-setTimeout(function(){try{hydrateCommentPhotos();}catch(e){} if(location.hash&&location.hash.indexOf('comment-')===1){var el=document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});} }, 50);
+setTimeout(function(){try{hydrateCommentPhotos(); if(trade&&trade.authorId) hydratePostAuthorPhoto(trade.authorId);}catch(e){} if(location.hash&&location.hash.indexOf('comment-')===1){var el=document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});} }, 50);
     // Detect if current user already reposted this post (for unrepost)
     async function findMyRepostOf(originalId){
       const user=window.auth&&window.auth.currentUser;
