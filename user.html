@@ -797,46 +797,52 @@
                 </div>
             </div>`;
 
-            // Build tabs
+            // Build tabs — always the full set so switching never shrinks the bar
             const tabsEl = document.getElementById('profileTabs');
-            if (!currentSubPage) {
-                // Main profile → in-page post/comments/likes tabs + link tabs
-                tabsEl.innerHTML = `
-                    <button class="profile-tab active" data-tab="posts">Posts</button>
-                    <button class="profile-tab" data-tab="comments">Comments</button>
-                    <button class="profile-tab" data-tab="likes">Likes</button>
-                    ${isOwn ? `
-                    <a class="profile-tab" href="${tabHref('bookmarks')}">Bookmarks</a>
-                    <a class="profile-tab" href="${tabHref('inbox')}">
-                        Inbox <span id="tab-inbox-count" class="tab-notif-pill hidden"></span>
-                    </a>
-                    <a class="profile-tab" href="${tabHref('notifications')}">
-                        Notifications <span id="tab-notif-count" class="tab-notif-pill hidden"></span>
-                    </a>
-                    <a class="profile-tab" href="${tabHref('settings')}">Settings</a>` : ''}`;
+            const onFeed = !currentSubPage; // posts / comments / likes (in-page)
+            const activeFeed = onFeed ? (currentTab || 'posts') : '';
+            tabsEl.innerHTML = `
+                <a class="profile-tab ${activeFeed==='posts'?'active':''}" href="${tabHref(null)}" data-tab="posts">Posts</a>
+                <a class="profile-tab ${activeFeed==='comments'?'active':''}" href="${tabHref(null)}" data-tab="comments">Comments</a>
+                <a class="profile-tab ${activeFeed==='likes'?'active':''}" href="${tabHref(null)}" data-tab="likes">Likes</a>
+                ${isOwn ? `
+                <a class="profile-tab ${currentSubPage==='bookmarks'?'active':''}" href="${tabHref('bookmarks')}">Bookmarks</a>
+                <a class="profile-tab ${currentSubPage==='inbox'?'active':''}" href="${tabHref('inbox')}">
+                    Inbox <span id="tab-inbox-count" class="tab-notif-pill hidden"></span>
+                </a>
+                <a class="profile-tab ${currentSubPage==='notifications'?'active':''}" href="${tabHref('notifications')}">
+                    Notifications <span id="tab-notif-count" class="tab-notif-pill hidden"></span>
+                </a>
+                <a class="profile-tab ${currentSubPage==='settings'?'active':''}" href="${tabHref('settings')}">Settings</a>` : ''}`;
 
-                tabsEl.querySelectorAll('.profile-tab[data-tab]').forEach(tab => {
-                    tab.addEventListener('click', () => {
-                        tabsEl.querySelectorAll('.profile-tab[data-tab]').forEach(t => t.classList.remove('active'));
-                        tab.classList.add('active');
-                        currentTab = tab.dataset.tab;
-                        renderFeed();
-                    });
+            // Posts / Comments / Likes stay on the main profile and switch in-page
+            tabsEl.querySelectorAll('.profile-tab[data-tab]').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const which = tab.getAttribute('data-tab');
+                    if (!which) return;
+                    // If we're on a sub-page, go back to main profile feed first
+                    if (currentSubPage) {
+                        e.preventDefault();
+                        currentTab = which;
+                        currentSubPage = null;
+                        history.pushState(null, '', tabHref(null));
+                        if (gUserData) {
+                            renderBanner(gUserData, gPosts.length, gMyUid);
+                            document.getElementById('pageContent').innerHTML = `
+                                <div id="feedContent"></div>
+                                <div class="profile-sidebar"><div id="sidebarContent"></div></div>`;
+                            renderSidebar(gUserData, gPosts.length, gMyUid);
+                            renderFeed();
+                        }
+                        return;
+                    }
+                    e.preventDefault();
+                    tabsEl.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTab = which;
+                    renderFeed();
                 });
-
-            } else {
-                // Sub-page → show all as links, mark current active
-                tabsEl.innerHTML = `
-                    <a class="profile-tab" href="${tabHref(null)}">Posts</a>
-                    ${isOwn ? `
-                    <a class="profile-tab ${currentSubPage==='inbox'?'active':''}" href="${tabHref('inbox')}">
-                        Inbox <span id="tab-inbox-count" class="tab-notif-pill hidden"></span>
-                    </a>
-                    <a class="profile-tab ${currentSubPage==='notifications'?'active':''}" href="${tabHref('notifications')}">
-                        Notifications <span id="tab-notif-count" class="tab-notif-pill hidden"></span>
-                    </a>
-                    <a class="profile-tab ${currentSubPage==='settings'?'active':''}" href="${tabHref('settings')}">Settings</a>` : ''}`;
-            }
+            });
 
             // Wire up action buttons
             const followBtn = document.getElementById('bannerFollowBtn');
