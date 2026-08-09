@@ -515,29 +515,60 @@
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function fmtM(v){if(v==null||v==='')return'';const n=Number(v);if(!isFinite(n))return'';if(Math.abs(n)>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(Math.abs(n)>=1e3)return'$'+Math.round(n/1e3)+'K';return'$'+n;}
   function parseDate(ts){
-    if(!ts && ts!==0) return null;
+    if (ts === null || ts === undefined || ts === '') return null;
     try {
-      if (ts && typeof ts.toDate === 'function') return ts.toDate();
-      if (typeof ts === 'object') {
-        if (typeof ts.seconds === 'number') return new Date(ts.seconds * 1000);
-        if (typeof ts._seconds === 'number') return new Date(ts._seconds * 1000);
-        if (typeof ts.seconds === 'string') return new Date(Number(ts.seconds) * 1000);
+      if (ts instanceof Date) return isNaN(ts.getTime()) ? null : ts;
+      if (typeof ts.toDate === 'function') {
+        var td = ts.toDate();
+        return td && !isNaN(td.getTime()) ? td : null;
       }
-      if (typeof ts === 'number') {
-        // seconds vs ms
+      if (typeof ts === 'object') {
+        var sec = ts.seconds != null ? ts.seconds : (ts._seconds != null ? ts._seconds : null);
+        var nano = ts.nanoseconds != null ? ts.nanoseconds : (ts._nanoseconds || 0);
+        if (sec != null && sec !== '') {
+          var ms = Number(sec) * 1000 + Math.floor(Number(nano) / 1e6);
+          var od = new Date(ms);
+          if (!isNaN(od.getTime())) return od;
+        }
+        if (ts.$date) return parseDate(ts.$date);
+        if (ts.value) return parseDate(ts.value);
+      }
+      if (typeof ts === 'number' && isFinite(ts)) {
         return new Date(ts < 1e12 ? ts * 1000 : ts);
       }
       if (typeof ts === 'string') {
-        var d = new Date(ts);
-        if (!isNaN(d.getTime())) return d;
-        var n = Number(ts);
-        if (isFinite(n)) return new Date(n < 1e12 ? n * 1000 : n);
+        var s = ts.trim();
+        if (!s) return null;
+        // numeric string
+        if (/^\d+(\.\d+)?$/.test(s)) {
+          var num = Number(s);
+          return new Date(num < 1e12 ? num * 1000 : num);
+        }
+        // "August 9, 2026 at 2:00:00 PM UTC+0" style or ISO
+        var d1 = new Date(s);
+        if (!isNaN(d1.getTime())) return d1;
+        // Firestore string sometimes has " at "
+        var d2 = new Date(s.replace(' at ', ' '));
+        if (!isNaN(d2.getTime())) return d2;
       }
-    } catch(_) {}
+    } catch (_) {}
     return null;
   }
   function timeAgo(ts){
     var d = parseDate(ts);
+    // Firestore Timestamp sometimes only exposes toMillis
+    if ((!d || isNaN(d.getTime())) && ts && typeof ts.toMillis === 'function') {
+      try { d = new Date(ts.toMillis()); } catch(_) {}
+    }
+    if ((!d || isNaN(d.getTime())) && ts != null) {
+      try {
+        // last resort: Object that stringifies with seconds
+        var j = (typeof ts === 'object') ? JSON.parse(JSON.stringify(ts)) : null;
+        if (j && (j.seconds != null || j._seconds != null)) {
+          d = new Date(Number(j.seconds != null ? j.seconds : j._seconds) * 1000);
+        }
+      } catch(_) {}
+    }
     if(!d || isNaN(d.getTime())) return '';
     var s = Math.floor((Date.now() - d.getTime()) / 1000);
     if (s < 0) s = 0;
@@ -1058,8 +1089,15 @@
     if(!title){err.style.display='block';err.textContent='Title required.';return;}
     const btn=document.getElementById('saveEditBtn');btn.disabled=true;btn.textContent='Saving...';
     try{
-      await window.db.collection(COLLECTION).doc(trade.id).update({title:title.slice(0,120),notes:notes.slice(0,2000),summary:notes.slice(0,400),editedAt:new Date().toISOString()});
+      var patch = {title:title.slice(0,120),notes:notes.slice(0,2000),summary:notes.slice(0,400),editedAt:new Date().toISOString()};
+      await window.db.collection(COLLECTION).doc(trade.id).update(patch);
+      trade.title = patch.title;
+      trade.notes = patch.notes;
+      trade.summary = patch.summary;
+      trade.editedAt = patch.editedAt;
       closeEdit();
+      render(trade);
+      if (typeof showToast === 'function') showToast('Post updated');
     }catch(e){err.style.display='block';err.textContent=e.message||'Save failed';}
     btn.disabled=false;btn.textContent='Save Changes';
   };
@@ -1098,7 +1136,7 @@
     const userVote=user&&t.voters?t.voters[user.uid]:null;
     const ty=postType(t);
     const isTradePost=(ty==='trade')||!!(t.sides&&t.sides.length)||!!t.machineHash;
-    const canManage=user&&(t.authorId===user.uid||isMod())&&!isTradePost;
+    const canManage=user&&(t.authorId===user.uid||isMod()); // title/description editable; trade sides stay locked
     const canDelete=user&&(t.authorId===user.uid||isMod());
     const tagClass=ty==='poll'?'poll':(ty==='discussion'?'discussion':'');
     const tagLabel=ty==='poll'?'POLL':(ty==='discussion'?'DISCUSSION':'TRADE');
@@ -1135,11 +1173,20 @@
     html+='<div class="post-head-meta">';
     html+='<span class="posted-by">Posted by </span>';
     html+='<a class="post-author-name" href="'+esc(profileUrlForAuthor(author,t.authorId))+'">u/'+esc(handle)+'</a>';
-    html+='<span class="sep">·</span>';
-    var when = timeAgo(t.createdAt) || timeAgo(t.created_at) || timeAgo(t.timestamp) || timeAgo(t.postedAt) || timeAgo(t.date) || '';
-    if(!when && t.createdAt) when = 'recently';
-    html+='<span class="post-time">'+esc(when)+'</span>';
-    if(t.editedAt && !isTradePost){
+    var when = timeAgo(t.createdAt) || timeAgo(t.created_at) || timeAgo(t.timestamp) || timeAgo(t.postedAt) || timeAgo(t.date) || timeAgo(t.updatedAt) || '';
+    if(!when){
+      var raw = parseDate(t.createdAt) || parseDate(t.created_at) || parseDate(t.timestamp);
+      if(raw) when = raw.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    }
+    // Debug aid in console when date is missing (helps diagnose field shape)
+    if(!when && t.createdAt != null){
+      try { console.warn('Unparseable createdAt', t.createdAt, typeof t.createdAt); } catch(_){}
+    }
+    if(when){
+      html+='<span class="sep">·</span>';
+      html+='<span class="post-time">'+esc(when)+'</span>';
+    }
+    if(t.editedAt){
       html+='<span class="sep">·</span>';
       html+='<span class="edited">(edited '+esc(timeAgo(t.editedAt))+')</span>';
     }
@@ -1156,7 +1203,7 @@
     if(showFollowEarly)menuHtml+='<button type="button" class="follow-btn" id="followAuthorBtn" data-uid="'+esc(t.authorId)+'">Follow</button>';
     menuHtml+='<div class="menu-wrap"><button type="button" class="dots-btn" id="postMenuBtn" aria-label="More"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>';
     menuHtml+='<div class="dots-menu" id="postMenu">';
-    if(canManage)menuHtml+='<button type="button" id="editPostBtn">Edit post</button>';
+    if(canManage)menuHtml+='<button type="button" id="editPostBtn">Edit title & description</button>';
     menuHtml+='<button type="button" id="reportPostBtn">Report</button>';
     if(canDelete||canManage)menuHtml+='<button type="button" class="danger" id="deleteTradeBtn">Delete</button>';
     menuHtml+='</div></div></div>';
