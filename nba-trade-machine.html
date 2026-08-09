@@ -4312,9 +4312,6 @@
                         if (p) receiving.push({ name: String(p.name || ''), salary: Number(p.salary) || 0, id: String(p.id || ''), from: String(other.abbr) });
                     });
                 });
-                var sendingSalary = sending.reduce(function (s, p) { return s + (Number(p.salary) || 0); }, 0);
-                var receivingSalary = receiving.reduce(function (s, p) { return s + (Number(p.salary) || 0); }, 0);
-                var currentSalary = Number(data.teamSalary) || 0;
                 return {
                     abbr: String(t.abbr),
                     name: String(meta.name || t.abbr),
@@ -4322,11 +4319,31 @@
                     sending: sending,
                     receiving: receiving,
                     picks: picksOut,
-                    sendingSalary: sendingSalary,
-                    receivingSalary: receivingSalary,
-                    currentSalary: currentSalary,
-                    postSalary: currentSalary - sendingSalary + receivingSalary
+                    teamId: t.id
                 };
+            });
+
+            // Use the same salary flows as Analyze Trade so breakdown matches the machine
+            var flows = {};
+            try { flows = computeTradeFlows() || {}; } catch (e) { flows = {}; }
+            sides = sides.map(function (s) {
+                var teamObj = active.find(function (x) { return x.abbr === s.abbr; });
+                var f = (teamObj && flows[teamObj.id]) ? flows[teamObj.id] : null;
+                var data2 = TEAM_DATA[s.abbr] || {};
+                var sendingSalary = f ? (Number(f.sendingSalary) || 0) : (s.sending || []).reduce(function (sum, p) { return sum + (Number(p.salary) || 0); }, 0);
+                var receivingSalary = f ? (Number(f.receivingSalary) || 0) : (s.receiving || []).reduce(function (sum, p) { return sum + (Number(p.salary) || 0); }, 0);
+                // FA signings incoming salary count toward receiving / post payroll
+                var faIn = 0;
+                if (teamObj && teamObj.faSignings) {
+                    teamObj.faSignings.forEach(function (sg) { faIn += Number(sg.salary) || 0; });
+                }
+                receivingSalary += faIn;
+                var currentSalary = Number(data2.teamSalary) || 0;
+                s.sendingSalary = sendingSalary;
+                s.receivingSalary = receivingSalary;
+                s.currentSalary = currentSalary;
+                s.postSalary = currentSalary - sendingSalary + receivingSalary;
+                return s;
             });
 
             var summaryParts = sides.map(function (s) {
