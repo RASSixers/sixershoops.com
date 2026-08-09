@@ -164,6 +164,36 @@
         }
         .inbox-view-btn:hover { background: rgba(0,107,182,.15); }
         .inbox-item { position: relative; }
+        .feed-vote {
+            display: inline-flex; align-items: center; gap: 0.15rem;
+            border: none; background: transparent; cursor: pointer;
+            color: var(--mid); padding: 0.2rem 0.35rem; border-radius: 6px;
+            font-size: 0.78rem; font-weight: 700;
+        }
+        .feed-vote:hover { background: rgba(0,107,182,.06); color: var(--ink); }
+        .feed-vote.active-up { color: #ea580c; }
+        .feed-vote.active-down { color: #2563eb; }
+        .feed-vote svg { width: 14px; height: 14px; }
+        .inbox-actions {
+            display: flex; align-items: center; gap: 0.35rem; margin-top: 0.55rem; flex-wrap: wrap;
+        }
+        .inbox-reply-box {
+            margin-top: 0.55rem; display: none; width: 100%;
+        }
+        .inbox-reply-box.open { display: block; }
+        .inbox-reply-box textarea {
+            width: 100%; min-height: 64px; border: 1px solid rgba(0,0,0,.12);
+            border-radius: 8px; padding: 0.55rem 0.65rem; font: inherit; font-size: 0.85rem;
+            box-sizing: border-box; resize: vertical;
+        }
+        .inbox-reply-actions { display: flex; gap: 0.4rem; margin-top: 0.4rem; justify-content: flex-end; }
+        .inbox-reply-actions button {
+            border: none; border-radius: 6px; padding: 0.4rem 0.75rem; font-weight: 700;
+            font-size: 0.8rem; cursor: pointer;
+        }
+        .inbox-reply-cancel { background: #f1f5f9; color: #334155; }
+        .inbox-reply-send { background: #006BB6; color: #fff; }
+
 
 
         .profile-actions {
@@ -1007,6 +1037,235 @@
         }
 
         // ── Feed ──────────────────────────────────────────────────
+
+        // ── Vote / reply helpers (works from profile feed + inbox) ──
+        function ensureAuthUser() {
+            try {
+                return (window.auth && window.auth.currentUser) || (firebase.auth && firebase.auth().currentUser) || null;
+            } catch (_) { return null; }
+        }
+        function normalizeCommentList(raw) {
+            if (!raw) return [];
+            if (Array.isArray(raw)) return raw.map(c => ({ voters: {}, votes: 0, ...c, voters: Object.assign({}, (c && c.voters) || {}) }));
+            if (typeof raw === 'object') return Object.keys(raw).map(k => ({ id: k, voters: {}, votes: 0, ...raw[k], voters: Object.assign({}, (raw[k] && raw[k].voters) || {}) }));
+            return [];
+        }
+        async function voteOnComment(tradeId, commentId, dir) {
+            const user = ensureAuthUser();
+            if (!user) { document.getElementById('navSignInBtn')?.click(); return; }
+            const db = getDB();
+            if (!db || !tradeId || !commentId) return;
+            try {
+                const ref = db.collection('community_trades').doc(tradeId);
+                const snap = await ref.get();
+                if (!snap.exists) { alert('Post not found'); return; }
+                const data = snap.data() || {};
+                const comments = normalizeCommentList(data.comments);
+                const c = comments.find(x => x.id === commentId);
+                if (!c) { alert('Comment not found'); return; }
+                if (!c.voters) c.voters = {};
+                const cur = c.voters[user.uid];
+                let votes = Number(c.votes) || 0;
+                if (cur === dir) {
+                    votes += dir === 'up' ? -1 : 1;
+                    delete c.voters[user.uid];
+                } else {
+                    if (cur === 'up') votes -= 1;
+                    if (cur === 'down') votes += 1;
+                    votes += dir === 'up' ? 1 : -1;
+                    c.voters[user.uid] = dir;
+                }
+                c.votes = votes;
+                await ref.update({ comments });
+                return { votes, dir: c.voters[user.uid] || null };
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Could not save vote');
+            }
+        }
+        async function voteOnPost(tradeId, dir) {
+            const user = ensureAuthUser();
+            if (!user) { document.getElementById('navSignInBtn')?.click(); return; }
+            const db = getDB();
+            if (!db || !tradeId) return;
+            try {
+                const ref = db.collection('community_trades').doc(tradeId);
+                const snap = await ref.get();
+                if (!snap.exists) return;
+                const data = snap.data() || {};
+                const voters = Object.assign({}, data.voters || {});
+                let votes = Number(data.votes) || 0;
+                const cur = voters[user.uid];
+                if (cur === dir) {
+                    votes += dir === 'up' ? -1 : 1;
+                    delete voters[user.uid];
+                } else {
+                    if (cur === 'up') votes -= 1;
+                    if (cur === 'down') votes += 1;
+                    votes += dir === 'up' ? 1 : -1;
+                    voters[user.uid] = dir;
+                }
+                await ref.update({ votes, voters });
+                return { votes, dir: voters[user.uid] || null };
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Could not save vote');
+            }
+        }
+        async function replyToComment(tradeId, parentId, text) {
+            const user = ensureAuthUser();
+            if (!user) { document.getElementById('navSignInBtn')?.click(); return; }
+            const db = getDB();
+            if (!db || !tradeId || !text) return;
+            text = String(text).trim().slice(0, 2000);
+            if (!text) return;
+            try {
+                const ref = db.collection('community_trades').doc(tradeId);
+                const snap = await ref.get();
+                if (!snap.exists) { alert('Post not found'); return; }
+                const data = snap.data() || {};
+                const comments = normalizeCommentList(data.comments);
+                const parent = comments.find(x => x.id === parentId);
+                const newComment = {
+                    id: 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+                    parentId: parentId || null,
+                    replyToAuthor: parent ? (parent.author || '') : null,
+                    author: 'u/' + (user.displayName || (user.email ? user.email.split('@')[0] : 'fan')),
+                    authorId: user.uid,
+                    authorPhoto: localStorage.getItem('photoURL') || user.photoURL || '',
+                    text: text,
+                    votes: 0,
+                    voters: {},
+                    createdAt: new Date().toISOString()
+                };
+                comments.push(newComment);
+                await ref.update({ comments });
+                // Notify parent author
+                if (parent && parent.authorId && parent.authorId !== user.uid) {
+                    try {
+                        await db.collection('notifications').add({
+                            type: 'comment_reply',
+                            recipientId: parent.authorId,
+                            fromUserId: user.uid,
+                            fromName: user.displayName || 'fan',
+                            tradeId: tradeId,
+                            tradeTitle: data.title || '',
+                            commentId: newComment.id,
+                            commentText: text.slice(0, 300),
+                            text: 'replied to your comment',
+                            message: 'replied to your comment',
+                            read: false,
+                            createdAt: new Date().toISOString(),
+                            link: '/trade.html?id=' + encodeURIComponent(tradeId) + '#comment-' + encodeURIComponent(newComment.id)
+                        });
+                    } catch (_) {}
+                }
+                return newComment;
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Could not post reply');
+            }
+        }
+        function wireVoteReplyButtons(root) {
+            const scope = root || document;
+            scope.querySelectorAll('.vote-up').forEach(btn => {
+                if (btn._wired) return; btn._wired = true;
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    const tradeId = btn.getAttribute('data-trade');
+                    const cid = btn.getAttribute('data-cid');
+                    const res = await voteOnComment(tradeId, cid, 'up');
+                    if (!res) return;
+                    const countEl = btn.parentElement && btn.parentElement.querySelector('.c-vote-count');
+                    if (countEl) countEl.textContent = String(res.votes);
+                    btn.classList.toggle('active-up', res.dir === 'up');
+                    const down = btn.parentElement && btn.parentElement.querySelector('.vote-down');
+                    if (down) down.classList.toggle('active-down', res.dir === 'down');
+                });
+            });
+            scope.querySelectorAll('.vote-down').forEach(btn => {
+                if (btn._wired) return; btn._wired = true;
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    const tradeId = btn.getAttribute('data-trade');
+                    const cid = btn.getAttribute('data-cid');
+                    const res = await voteOnComment(tradeId, cid, 'down');
+                    if (!res) return;
+                    const countEl = btn.parentElement && btn.parentElement.querySelector('.c-vote-count');
+                    if (countEl) countEl.textContent = String(res.votes);
+                    btn.classList.toggle('active-down', res.dir === 'down');
+                    const up = btn.parentElement && btn.parentElement.querySelector('.vote-up');
+                    if (up) up.classList.toggle('active-up', res.dir === 'up');
+                });
+            });
+            scope.querySelectorAll('.vote-post-up').forEach(btn => {
+                if (btn._wired) return; btn._wired = true;
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    const res = await voteOnPost(btn.getAttribute('data-trade'), 'up');
+                    if (!res) return;
+                    const countEl = btn.parentElement && btn.parentElement.querySelector('.c-vote-count');
+                    if (countEl) countEl.textContent = String(res.votes);
+                    btn.classList.toggle('active-up', res.dir === 'up');
+                    const down = btn.parentElement && btn.parentElement.querySelector('.vote-post-down');
+                    if (down) down.classList.toggle('active-down', res.dir === 'down');
+                });
+            });
+            scope.querySelectorAll('.vote-post-down').forEach(btn => {
+                if (btn._wired) return; btn._wired = true;
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    const res = await voteOnPost(btn.getAttribute('data-trade'), 'down');
+                    if (!res) return;
+                    const countEl = btn.parentElement && btn.parentElement.querySelector('.c-vote-count');
+                    if (countEl) countEl.textContent = String(res.votes);
+                    btn.classList.toggle('active-down', res.dir === 'down');
+                    const up = btn.parentElement && btn.parentElement.querySelector('.vote-post-up');
+                    if (up) up.classList.toggle('active-up', res.dir === 'up');
+                });
+            });
+            scope.querySelectorAll('.reply-btn').forEach(btn => {
+                if (btn._wired) return; btn._wired = true;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    const tradeId = btn.getAttribute('data-trade');
+                    const cid = btn.getAttribute('data-cid');
+                    const boxId = 'reply-box-' + cid;
+                    let box = document.getElementById(boxId);
+                    if (!box) {
+                        // create under the card
+                        box = document.createElement('div');
+                        box.className = 'inbox-reply-box';
+                        box.id = boxId;
+                        const card = btn.closest('.feed-card, .inbox-item');
+                        if (card) card.appendChild(box);
+                    }
+                    box.classList.add('open');
+                    box.innerHTML = `<textarea placeholder="Write a reply…"></textarea>
+                        <div class="inbox-reply-actions">
+                          <button type="button" class="inbox-reply-cancel">Cancel</button>
+                          <button type="button" class="inbox-reply-send">Reply</button>
+                        </div>`;
+                    const ta = box.querySelector('textarea');
+                    ta.focus();
+                    box.querySelector('.inbox-reply-cancel').onclick = () => { box.classList.remove('open'); box.innerHTML = ''; };
+                    box.querySelector('.inbox-reply-send').onclick = async () => {
+                        const text = ta.value.trim();
+                        if (!text) return;
+                        const btnSend = box.querySelector('.inbox-reply-send');
+                        btnSend.disabled = true; btnSend.textContent = 'Posting…';
+                        const res = await replyToComment(tradeId, cid, text);
+                        if (res) {
+                            box.classList.remove('open'); box.innerHTML = '';
+                            alert('Reply posted');
+                        } else {
+                            btnSend.disabled = false; btnSend.textContent = 'Reply';
+                        }
+                    };
+                });
+            });
+        }
+
         function renderFeed() {
             const container = document.getElementById('feedContent');
             if (!container) return;
@@ -1044,7 +1303,7 @@
 
             const cardsHTML = items.map(item => {
                 if (currentTab === 'comments') {
-                    const postUrl = item.postUrl || (item.postId ? `/post/${item.postId}` : '#');
+                    const postUrl = item.postUrl || (item.postId ? (`/trade.html?id=` + encodeURIComponent(item.postId)) : '#');
                     return `
                     <div class="feed-card is-comment">
                         <div class="post-context">Commented on ${item.postTitle ? `<a href="${esc(postUrl)}">${esc(item.postTitle)}</a>` : 'a post'}</div>
@@ -1054,13 +1313,14 @@
                             <span class="feed-card-time">${timeAgo(item.createdAt)}</span>
                         </div>
                         <div class="feed-card-snippet">${esc(item.body || item.text || item.content || '')}</div>
-                        <div class="feed-card-footer" style="margin-top:.65rem;">
-                            <button class="feed-card-action">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                                ${item.likes || item.upvotes || 0}
-                            </button>
+                        <div class="feed-card-footer" style="margin-top:.65rem;display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;">
+                            <button type="button" class="feed-vote vote-up" data-trade="${esc(item.postId||'')}" data-cid="${esc(item.commentId||item.id||'')}" title="Like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                            <span class="c-vote-count" style="font-size:0.78rem;font-weight:800;min-width:1.2em;text-align:center;">${item.votes || item.likes || item.upvotes || 0}</span>
+                            <button type="button" class="feed-vote vote-down" data-trade="${esc(item.postId||'')}" data-cid="${esc(item.commentId||item.id||'')}" title="Dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+                            <button type="button" class="feed-vote reply-btn" data-trade="${esc(item.postId||'')}" data-cid="${esc(item.commentId||item.id||'')}" data-author="${esc(item.author||name)}">Reply</button>
                             ${postUrl !== '#' ? `<a class="feed-card-action view-post" href="${esc(postUrl)}">View Post</a>` : ''}
                         </div>
+                        <div class="inbox-reply-box" id="reply-box-${esc(item.commentId||item.id||'x')}"></div>
                     </div>`;
                 }
                 const postUrl = item.url || item.link || (item.postId || item.id ? `/trade.html?id=${encodeURIComponent(item.postId || item.id)}` : '#');
@@ -1073,12 +1333,11 @@
                     </div>
                     ${item.title || item.headline ? `<div class="feed-card-title">${esc(item.title || item.headline)}</div>` : ''}
                     ${item.body || item.content ? `<div class="feed-card-body">${esc(item.body || item.content)}</div>` : ''}
-                    <div class="feed-card-footer">
-                        <button class="feed-card-action">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                            ${item.votes || item.upvotes || item.voteCount || 0}
-                        </button>
-                        <button class="feed-card-action">
+                    <div class="feed-card-footer" style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;">
+                        <button type="button" class="feed-vote vote-post-up" data-trade="${esc(item.postId||item.id||'')}" title="Like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                        <span class="c-vote-count" style="font-size:0.78rem;font-weight:800;">${item.votes || item.upvotes || item.voteCount || 0}</span>
+                        <button type="button" class="feed-vote vote-post-down" data-trade="${esc(item.postId||item.id||'')}" title="Dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+                        <button class="feed-card-action" style="pointer-events:none;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                             ${(item.comments && item.comments.length) || item.commentCount || 0}
                         </button>
@@ -1089,6 +1348,7 @@
 
             container.innerHTML = sortBar + `<div class="feed-list">${cardsHTML}</div>`;
             attachSort();
+            wireVoteReplyButtons(container);
         }
 
         function attachSort() {
@@ -1289,24 +1549,33 @@
                     // Prefer real comment body; fall back to short action if body is a system label
                     const showBody = body && !/^(commented on post|replied to|liked|followed)/i.test(body) ? body : '';
                     const href = msg.link || (msg.tradeId ? ('/trade.html?id=' + encodeURIComponent(msg.tradeId) + (msg.commentId ? ('#comment-' + encodeURIComponent(msg.commentId)) : '')) : '');
+                    const tradeId = msg.tradeId || '';
+                    const cid = msg.commentId || '';
                     return `
-                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}" data-href="${esc(href)}">
+                    <div class="inbox-item ${u?'unread':''}" data-id="${esc(msg.id)}" data-href="${esc(href)}" style="flex-wrap:wrap;">
                         ${u ? '<div class="unread-dot"></div>' : ''}
                         <div class="inbox-item-avatar" style="background:${colorFor(from)}">${initial}</div>
                         <div class="inbox-item-body" style="min-width:0;flex:1;">
                             <div class="inbox-item-from">${esc(from)} <span style="font-weight:500;color:var(--mid);">${esc(action)}</span></div>
-                            <div class="inbox-item-preview ${u?'unread-preview':''}" style="white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${esc(showBody || (isReply ? 'Replied to your comment' : 'Commented on your post'))}</div>
+                            <div class="inbox-item-preview ${u?'unread-preview':''}" style="white-space:normal;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">${esc(showBody || (isReply ? 'Replied to your comment' : 'Commented on your post'))}</div>
+                            <div class="inbox-actions">
+                              ${tradeId && cid ? `
+                              <button type="button" class="feed-vote vote-up" data-trade="${esc(tradeId)}" data-cid="${esc(cid)}" title="Like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                              <button type="button" class="feed-vote vote-down" data-trade="${esc(tradeId)}" data-cid="${esc(cid)}" title="Dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+                              <button type="button" class="feed-vote reply-btn" data-trade="${esc(tradeId)}" data-cid="${esc(cid)}">Reply</button>
+                              ` : ''}
+                              ${href ? `<a class="inbox-view-btn" href="${esc(href)}">View comment</a>` : ''}
+                            </div>
+                            <div class="inbox-reply-box" id="reply-box-${esc(cid||msg.id)}"></div>
                         </div>
-                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">
-                          <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
-                          ${href ? `<a class="inbox-view-btn" href="${esc(href)}">View comment</a>` : ''}
-                        </div>
+                        <div class="inbox-item-meta">${timeAgo(msg.createdAt)}</div>
                     </div>`;
                 }).join('');
 
+                wireVoteReplyButtons(listEl);
                 listEl.querySelectorAll('.inbox-item').forEach(el => {
                   el.addEventListener('click', async (e) => {
-                    if (e.target.closest('.inbox-view-btn')) return; // let link work
+                    if (e.target.closest('.inbox-view-btn, .feed-vote, .inbox-reply-box, button, a, textarea')) return;
                     const id = el.getAttribute('data-id');
                     const href = el.getAttribute('data-href');
                     if (id) { try { await db.collection('notifications').doc(id).update({ read: true }); } catch(_) {} }
