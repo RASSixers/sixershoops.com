@@ -85,7 +85,12 @@
       display:flex;align-items:center;gap:.55rem;margin:0 0 .85rem;
       font-weight:800;font-size:1rem;color:#0f172a;
     }
-    .tb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .tb-logo{width:28px;height:28px;object-fit:contain;flex-shrink:0;border-radius:6px;background:#fff}
+    .tb-logo-fallback{
+      width:28px;height:28px;border-radius:6px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:.6rem;font-weight:800;color:#fff;
+    }
     .tb-row{
       display:flex;justify-content:space-between;align-items:center;gap:.75rem;
       padding:.32rem 0;font-size:.88rem;
@@ -114,7 +119,7 @@
 
     /* Share-card style trade graphic (matches machine share card, no footer link) */
     .sh-hero{
-      background:#ffffff;border:1px solid #e8ecf2;border-radius:20px;
+      background:#f8fafc;border:1px solid #e8eef5;border-radius:20px;
       padding:1.6rem 1.35rem 1.5rem;margin:0 0 1.25rem;text-align:center;
       box-shadow:0 10px 32px rgba(15,23,42,.07);
     }
@@ -133,7 +138,7 @@
     .sh-status.bad{color:#dc2626}
     .sh-grid{display:flex;align-items:center;justify-content:center;gap:0;text-align:left;flex-wrap:wrap}
     .sh-col{
-      flex:0 1 300px;width:300px;max-width:340px;min-width:240px;background:#f7f8fb;
+      flex:0 1 300px;width:300px;max-width:340px;min-width:240px;background:#ffffff;
       border-radius:12px;overflow:hidden;display:flex;flex-direction:column;border:1px solid #eef1f6;align-self:center;
     }
     .sh-col-bar{height:4px;width:100%;flex-shrink:0}
@@ -751,8 +756,11 @@
       var tax = distLabel(luxuryTax, post);
       var a1 = distLabel(firstApron, post);
       var a2 = distLabel(secondApron, post);
+      var logoHtml = r.abbr
+        ? '<img class="tb-logo" src="'+esc(teamLogoUrl(r.abbr))+'" alt="'+esc(r.abbr)+'" onerror="this.style.display=\'none\';this.nextElementSibling&&(this.nextElementSibling.style.display=\'flex\')"><span class="tb-logo-fallback" style="background:'+esc(r.color||'#64748b')+';display:none">'+esc((r.abbr||'').slice(0,3))+'</span>'
+        : '<span class="tb-logo-fallback" style="background:'+esc(r.color||'#64748b')+'">'+esc((r.name||'T').slice(0,3))+'</span>';
       return '<div class="tb-card">'+
-        '<div class="tb-card-head"><span class="tb-dot" style="background:'+esc(r.color||'#64748b')+'"></span>'+esc(r.name||r.abbr||'Team')+'</div>'+
+        '<div class="tb-card-head">'+logoHtml+esc(r.name||r.abbr||'Team')+'</div>'+
         '<div class="tb-row"><span class="tb-row-label">Sending out</span><span class="tb-row-val">'+esc(money(r.sendingSalary))+'</span></div>'+
         '<div class="tb-row"><span class="tb-row-label">Taking in</span><span class="tb-row-val">'+esc(money(r.receivingSalary))+'</span></div>'+
         '<div class="tb-row"><span class="tb-row-label">Net change</span><span class="tb-row-val '+netCls+'">'+esc(netStr)+'</span></div>'+
