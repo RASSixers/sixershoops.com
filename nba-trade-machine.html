@@ -4139,13 +4139,47 @@
         document.body.style.overflow = '';
     }
 
-    var TM_DRAFT_KEY = 'sixershoops_trade_post_draft_v1';
+    var TM_DRAFT_KEY = 'sixershoops_trade_post_draft_v1'; // legacy single
+    var TM_DRAFTS_KEY = 'sixershoops_trade_drafts_v1';
 
-    function getTradeDraft() {
+    function getTradeDrafts() {
         try {
-            var raw = localStorage.getItem(TM_DRAFT_KEY);
-            return raw ? JSON.parse(raw) : null;
-        } catch (e) { return null; }
+            var raw = localStorage.getItem(TM_DRAFTS_KEY);
+            var list = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(list)) list = [];
+            // migrate legacy single draft once
+            try {
+                var legacy = localStorage.getItem(TM_DRAFT_KEY);
+                if (legacy) {
+                    var one = JSON.parse(legacy);
+                    if (one && (one.machineHash || one.title)) {
+                        list.unshift({
+                            id: 'd' + Date.now().toString(36),
+                            title: one.title || 'Untitled draft',
+                            notes: one.notes || '',
+                            machineHash: one.machineHash || '',
+                            teamAbbrs: one.teamAbbrs || [],
+                            updatedAt: one.updatedAt || Date.now()
+                        });
+                        localStorage.setItem(TM_DRAFTS_KEY, JSON.stringify(list));
+                        localStorage.removeItem(TM_DRAFT_KEY);
+                    }
+                }
+            } catch (_) {}
+            return list;
+        } catch (e) { return []; }
+    }
+    function setTradeDrafts(list) {
+        try {
+            localStorage.setItem(TM_DRAFTS_KEY, JSON.stringify(list.slice(0, 25)));
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    function getTradeDraft() {
+        var list = getTradeDrafts();
+        return list.length ? list[0] : null;
     }
 
     function saveTradeDraft() {
@@ -4153,39 +4187,161 @@
         var descEl = document.getElementById('postTradeDesc');
         var title = titleEl ? titleEl.value.trim() : '';
         var notes = descEl ? descEl.value.trim() : '';
+        if (!title) {
+            // fallback title from active teams
+            var active = (teams || []).filter(function (x) { return x.abbr; });
+            title = active.length ? (active.map(function (x) { return x.abbr; }).join('-') + ' Trade') : 'Untitled draft';
+            if (titleEl) titleEl.value = title;
+        }
+        var teamAbbrs = (teams || []).filter(function (x) { return x.abbr; }).map(function (x) { return x.abbr; });
+        var machineHash = '';
+        try {
+            machineHash = btoa(unescape(encodeURIComponent(JSON.stringify(serializeTradeState()))));
+        } catch (e) {
+            try { machineHash = btoa(JSON.stringify(serializeTradeState())); } catch (e2) {}
+        }
+        if (machineHash && machineHash.length > 400000) {
+            alert('This trade is too large to save as a draft in the browser. Try fewer assets.');
+            return;
+        }
+        var list = getTradeDrafts();
         var payload = {
+            id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
             title: title,
-            notes: notes,
-            machineHash: '',
+            notes: notes || '',
+            machineHash: machineHash,
+            teamAbbrs: teamAbbrs,
             updatedAt: Date.now()
         };
-        try {
-            payload.machineHash = btoa(unescape(encodeURIComponent(JSON.stringify(serializeTradeState()))));
-        } catch (e) {
-            try { payload.machineHash = btoa(JSON.stringify(serializeTradeState())); } catch (e2) {}
-        }
-        try {
-            localStorage.setItem(TM_DRAFT_KEY, JSON.stringify(payload));
-        } catch (e) {
-            alert('Could not save draft in this browser.');
+        list.unshift(payload);
+        if (!setTradeDrafts(list)) {
+            alert('Could not save draft in this browser (storage full or blocked).');
             return;
         }
         var errEl = document.getElementById('postTradeError');
         if (errEl) {
             errEl.style.display = 'block';
             errEl.style.color = '#15803d';
-            errEl.textContent = 'Draft saved. You can reopen Post to Community anytime to keep editing the title/description.';
+            errEl.textContent = 'Draft saved! Open Post Drafts from your profile menu anytime.';
             setTimeout(function () {
-                if (errEl.textContent.indexOf('Draft saved') === 0) errEl.style.display = 'none';
-            }, 2800);
+                if (errEl && errEl.textContent.indexOf('Draft saved') === 0) errEl.style.display = 'none';
+            }, 3200);
         } else {
-            alert('Draft saved.');
+            alert('Draft saved! Find it under Post Drafts in the account menu.');
         }
+        try { closePostTradeModal(); } catch (_) {}
     }
 
     function clearTradeDraft() {
         try { localStorage.removeItem(TM_DRAFT_KEY); } catch (e) {}
     }
+
+    function deleteTradeDraft(id) {
+        var list = getTradeDrafts().filter(function (d) { return d.id !== id; });
+        setTradeDrafts(list);
+        renderDraftsPanel();
+    }
+
+    function loadTradeDraftById(id) {
+        var list = getTradeDrafts();
+        var d = list.find(function (x) { return x.id === id; });
+        if (!d) { alert('Draft not found.'); return; }
+        var ok = false;
+        if (d.machineHash) {
+            try {
+                var raw = d.machineHash;
+                try { raw = decodeURIComponent(raw); } catch (_) {}
+                var state = null;
+                try { state = JSON.parse(atob(raw)); } catch (_) {
+                    try { state = JSON.parse(raw); } catch (_2) {}
+                }
+                if (state) ok = applyTradeState(state);
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+        if (!ok) {
+            alert('Could not restore this draft\'s trade setup.');
+            return;
+        }
+        renderAll();
+        try {
+            if (teams.some(function (tm) { return tm.abbr && ((tm.selectedPlayers || []).length || (tm.selectedPicks || []).length); })) {
+                setTimeout(function () { try { analyzeTrade(); } catch (e) {} }, 80);
+            }
+        } catch (_) {}
+        // Open post modal with saved title; description stays optional/empty unless they saved notes
+        openPostTradeModal(d.title || (d.teamAbbrs || []).join('-') + ' Trade');
+        var descEl = document.getElementById('postTradeDesc');
+        if (descEl && d.notes) descEl.value = d.notes;
+        try {
+            history.replaceState(null, '', location.pathname + location.search);
+        } catch (_) {}
+        closeDraftsPanel();
+    }
+
+    function openDraftsPanel() {
+        var ov = document.getElementById('draftsPanelOverlay');
+        if (!ov) {
+            ov = document.createElement('div');
+            ov.id = 'draftsPanelOverlay';
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:10040;display:flex;align-items:center;justify-content:center;padding:1rem;';
+            ov.innerHTML = '<div id="draftsPanelCard" style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:min(80vh,640px);overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25);">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.15rem;border-bottom:1px solid #e2e8f0;">' +
+                '<div style="font-family:Lexend,sans-serif;font-weight:800;font-size:1.05rem;color:#0f172a;">Post Drafts</div>' +
+                '<button type="button" id="draftsPanelClose" style="border:none;background:transparent;font-size:1.25rem;cursor:pointer;color:#64748b;line-height:1;">×</button></div>' +
+                '<div id="draftsPanelList" style="padding:.75rem 1rem 1.15rem;"></div></div>';
+            document.body.appendChild(ov);
+            ov.addEventListener('click', function (e) { if (e.target === ov) closeDraftsPanel(); });
+            document.getElementById('draftsPanelClose').onclick = closeDraftsPanel;
+        }
+        ov.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        renderDraftsPanel();
+    }
+    function closeDraftsPanel() {
+        var ov = document.getElementById('draftsPanelOverlay');
+        if (ov) ov.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    function renderDraftsPanel() {
+        var listEl = document.getElementById('draftsPanelList');
+        if (!listEl) return;
+        var list = getTradeDrafts();
+        if (!list.length) {
+            listEl.innerHTML = '<div style="text-align:center;padding:2rem 1rem;color:#64748b;font-family:Lexend,sans-serif;font-size:.9rem;">No drafts yet.<br><span style="font-size:.8rem;">Save a draft from Post to Community on the trade machine.</span></div>';
+            return;
+        }
+        listEl.innerHTML = list.map(function (d) {
+            var when = '';
+            try {
+                var dt = new Date(d.updatedAt || Date.now());
+                when = dt.toLocaleString();
+            } catch (_) { when = ''; }
+            var teams = (d.teamAbbrs && d.teamAbbrs.length) ? d.teamAbbrs.join(' · ') : '';
+            return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:.85rem 1rem;margin-bottom:.65rem;background:#f8fafc;">' +
+                '<div style="font-family:Lexend,sans-serif;font-weight:800;font-size:.95rem;color:#0f172a;margin-bottom:.25rem;">' + escDraft(d.title || 'Untitled') + '</div>' +
+                (teams ? '<div style="font-size:.78rem;color:#64748b;margin-bottom:.2rem;">' + escDraft(teams) + '</div>' : '') +
+                (when ? '<div style="font-size:.72rem;color:#94a3b8;margin-bottom:.65rem;">' + escDraft(when) + '</div>' : '') +
+                '<div style="display:flex;gap:.5rem;flex-wrap:wrap;">' +
+                '<button type="button" data-load="' + escDraft(d.id) + '" style="border:none;background:#006BB6;color:#fff;font-weight:700;font-size:.8rem;padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-family:Lexend,sans-serif;">Open</button>' +
+                '<button type="button" data-del="' + escDraft(d.id) + '" style="border:1px solid #e2e8f0;background:#fff;color:#b91c1c;font-weight:700;font-size:.8rem;padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-family:Lexend,sans-serif;">Delete</button>' +
+                '</div></div>';
+        }).join('');
+        listEl.querySelectorAll('[data-load]').forEach(function (btn) {
+            btn.onclick = function () { loadTradeDraftById(btn.getAttribute('data-load')); };
+        });
+        listEl.querySelectorAll('[data-del]').forEach(function (btn) {
+            btn.onclick = function () {
+                if (confirm('Delete this draft?')) deleteTradeDraft(btn.getAttribute('data-del'));
+            };
+        });
+    }
+    function escDraft(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    window.openTradeDrafts = openDraftsPanel;
+
 
     function openPostTradeModal(defaultTitle) {
         var m = document.getElementById('postTradeModal');
@@ -4483,7 +4639,6 @@
         const fromHash = loadTradeFromHash();
         // Only restore from explicit share link (#trade=...). Do NOT autofill last session.
         let restored = fromHash;
-        // Drafts remain available via explicit "Load draft" UI if present — not auto on open.
         if (!restored || !teams.length) {
             teams = [];
             nextId = 0;
@@ -7949,6 +8104,11 @@
 
     // ─── BOOTSTRAP ───────────────────────────────────────────────────────────
     init();
+    try {
+        if ((location.hash || '') === '#drafts') {
+            setTimeout(function () { openDraftsPanel(); }, 300);
+        }
+    } catch (_) {}
 
     /* ───────────────────────────────────────────────────────────────────────
        DATA IMPORT INTERFACE
