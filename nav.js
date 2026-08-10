@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="user-dropdown-item" id="navMyProfileLink">Profile</button>
 
                         <button class="user-dropdown-item" id="navDraftsLink">
-                            <span>Post Drafts</span>
+                            <span>View Drafts</span>
                         </button>
                         <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
@@ -666,7 +666,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const draftsLink = document.getElementById('navDraftsLink');
             if (draftsLink) {
-                draftsLink.onclick = function() {
+                draftsLink.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    // Close account dropdown
+                    try {
+                        var dd = document.getElementById('userDropdown');
+                        if (dd) dd.classList.remove('active');
+                    } catch (_) {}
+                    // On trade machine page: open panel immediately (hash nav alone does not reload)
+                    if (typeof window.openTradeDrafts === 'function') {
+                        window.openTradeDrafts();
+                        return;
+                    }
+                    // Other pages: go to trade machine drafts
                     location.href = '/nba-trade-machine.html#drafts';
                 };
             }
