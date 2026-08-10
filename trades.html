@@ -115,18 +115,25 @@
     .status-pill.valid{background:rgba(5,150,105,.1);color:#059669}
     .status-pill.invalid{background:rgba(220,38,38,.08);color:#dc2626}
     .status-pill.unknown{background:rgba(100,116,139,.08);color:#64748b}
-    .feed-status{
-      display:inline-flex;align-items:center;gap:.35rem;
-      font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    .feed-status-block{
+      display:flex;flex-direction:column;align-items:center;gap:.35rem;
+      margin:.55rem 0 .65rem;text-align:center;
     }
-    .feed-status.ok{color:#059669}
-    .feed-status.bad{color:#dc2626}
-    .feed-status-icon{
-      width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    .feed-status-block .feed-status-icon{
+      width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     }
-    .feed-status.ok .feed-status-icon{background:rgba(5,150,105,.12);color:#059669}
-    .feed-status.bad .feed-status-icon{background:rgba(220,38,38,.1);color:#dc2626}
-    .feed-status-icon svg{width:12px;height:12px;display:block}
+    .feed-status-block.ok .feed-status-icon{
+      color:#059669;background:rgba(5,150,105,.1);box-shadow:0 0 0 3px rgba(5,150,105,.15);
+    }
+    .feed-status-block.bad .feed-status-icon{
+      color:#dc2626;background:rgba(220,38,38,.1);box-shadow:0 0 0 3px rgba(220,38,38,.15);
+    }
+    .feed-status-block .feed-status-icon svg{width:28px;height:28px;display:block}
+    .feed-status-block .feed-status-label{
+      font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    }
+    .feed-status-block.ok .feed-status-label{color:#059669}
+    .feed-status-block.bad .feed-status-label{color:#dc2626}
 
     .cmeta{font-size:.78rem;color:var(--mid);margin-bottom:.35rem;font-weight:500}
     .cmeta a{font-weight:700;color:var(--ink)}
@@ -557,6 +564,7 @@
       html += '<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>';
       var isTrade = (typeOf(t)==='trade') || (t.sides&&t.sides.length) || !!t.machineHash;
       if(isTrade){
+        html += statusBadge(t);
         html += renderFeedTradePreview(t);
         // short description under the visual (strip status lines)
         var note = String(t.notes||'').trim();
@@ -648,16 +656,18 @@
     var ty = typeOf(t);
     if(ty !== 'trade' && !(t.sides && t.sides.length) && !t.machineHash) return '';
     if(t.isValid === true){
-      return '<span class="feed-status ok"><span class="feed-status-icon" aria-hidden="true">'+
+      return '<div class="feed-status-block ok">'+
+        '<div class="feed-status-icon" aria-hidden="true">'+
         '<svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2.5"/>'+
         '<path d="M10.5 18.5l5 5 10-11" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
-        '</span>Successful</span>';
+        '</div><div class="feed-status-label">Successful</div></div>';
     }
     if(t.isValid === false){
-      return '<span class="feed-status bad"><span class="feed-status-icon" aria-hidden="true">'+
+      return '<div class="feed-status-block bad">'+
+        '<div class="feed-status-icon" aria-hidden="true">'+
         '<svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2.5"/>'+
         '<path d="M12 12l12 12M24 12L12 24" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>'+
-        '</span>Invalid</span>';
+        '</div><div class="feed-status-label">Invalid</div></div>';
     }
     return '';
   }
@@ -701,8 +711,9 @@
       const ty=typeOf(t);
       const pill=ty==='poll'?'poll':(ty==='discussion'?'discussion':'trade');
       const label=ty==='poll'?'POLL':(ty==='discussion'?'DISCUSSION':'TRADE');
-      const chips=(t.teamAbbrs||[]).map(function(a){return '<span class="chip">'+esc(a)+'</span>';}).join('');
-      const status = statusBadge(t);
+      const isTradeCard = ty==='trade' || (t.sides&&t.sides.length) || !!t.machineHash;
+      // Team chips only for non-trade posts (trade visual already shows teams)
+      const chips = isTradeCard ? '' : (t.teamAbbrs||[]).map(function(a){return '<span class="chip">'+esc(a)+'</span>';}).join('');
       return '<article class="card" data-id="'+esc(t.id)+'" style="cursor:pointer" role="link" tabindex="0">'+
         '<div class="vcol">'+
           '<button type="button" class="vbtn vote-up'+(uv==='up'?' up':'')+'" data-id="'+esc(t.id)+'" aria-label="Upvote"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>'+
@@ -710,7 +721,7 @@
           '<button type="button" class="vbtn vote-dn'+(uv==='down'?' dn':'')+'" data-id="'+esc(t.id)+'" aria-label="Downvote"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>'+
         '</div>'+
         '<div class="cbody">'+
-          '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span>'+(status?' '+status:'')+'</div>'+
+          '<div class="crow"><span class="type-pill '+pill+'">'+label+'</span></div>'+
           buildCardBody(t)+
           (chips?'<div class="chips">'+chips+'</div>':'')+
         '</div></article>';
