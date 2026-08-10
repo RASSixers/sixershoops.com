@@ -115,6 +115,19 @@
     .status-pill.valid{background:rgba(5,150,105,.1);color:#059669}
     .status-pill.invalid{background:rgba(220,38,38,.08);color:#dc2626}
     .status-pill.unknown{background:rgba(100,116,139,.08);color:#64748b}
+    .feed-status{
+      display:inline-flex;align-items:center;gap:.35rem;
+      font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    }
+    .feed-status.ok{color:#059669}
+    .feed-status.bad{color:#dc2626}
+    .feed-status-icon{
+      width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .feed-status.ok .feed-status-icon{background:rgba(5,150,105,.12);color:#059669}
+    .feed-status.bad .feed-status-icon{background:rgba(220,38,38,.1);color:#dc2626}
+    .feed-status-icon svg{width:12px;height:12px;display:block}
+
     .cmeta{font-size:.78rem;color:var(--mid);margin-bottom:.35rem;font-weight:500}
     .cmeta a{font-weight:700;color:var(--ink)}
     .cmeta a:hover{color:var(--sixers-blue)}
@@ -460,9 +473,17 @@
 
 
 
+  const ESPN_TEAM_CODE = {
+    ATL:'atl', BOS:'bos', BKN:'bkn', CHA:'cha', CHI:'chi', CLE:'cle',
+    DAL:'dal', DEN:'den', DET:'det', GSW:'gs',  HOU:'hou', IND:'ind',
+    LAC:'lac', LAL:'lal', MEM:'mem', MIA:'mia', MIL:'mil', MIN:'min',
+    NOP:'no',  NYK:'ny',  OKC:'okc', ORL:'orl', PHI:'phi', PHX:'phx',
+    POR:'por', SAC:'sac', SAS:'sa',  TOR:'tor', UTA:'utah', WAS:'wsh'
+  };
   function teamLogoUrl(abbr){
     if(!abbr) return '';
-    return 'https://a.espncdn.com/i/teamlogos/nba/500/'+String(abbr).toLowerCase()+'.png';
+    var code = ESPN_TEAM_CODE[String(abbr).toUpperCase()] || String(abbr).toLowerCase();
+    return 'https://a.espncdn.com/i/teamlogos/nba/500/'+code+'.png';
   }
   function fmtSal(v){
     var n=Number(v);
@@ -606,8 +627,8 @@
       return '<span class="totd-chip">'+esc(a)+'</span>';
     }).join('');
     var status = '';
-    if(top.isValid===true) status = '<span class="totd-chip">Valid</span>';
-    else if(top.isValid===false) status = '<span class="totd-chip">Invalid</span>';
+    if(top.isValid===true) status = '<span class="totd-chip">✓ Successful</span>';
+    else if(top.isValid===false) status = '<span class="totd-chip">✗ Invalid</span>';
     el.innerHTML =
       '<div class="totd-label">Trade of the Day</div>'+
       '<h2 class="totd-title">'+esc(top.title||'Untitled trade')+'</h2>'+
@@ -626,9 +647,19 @@
   function statusBadge(t){
     var ty = typeOf(t);
     if(ty !== 'trade' && !(t.sides && t.sides.length) && !t.machineHash) return '';
-    if(t.isValid === true) return '<span class="status-pill valid">Valid</span>';
-    if(t.isValid === false) return '<span class="status-pill invalid">Invalid</span>';
-    return '<span class="status-pill unknown">Unchecked</span>';
+    if(t.isValid === true){
+      return '<span class="feed-status ok"><span class="feed-status-icon" aria-hidden="true">'+
+        '<svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2.5"/>'+
+        '<path d="M10.5 18.5l5 5 10-11" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+        '</span>Successful</span>';
+    }
+    if(t.isValid === false){
+      return '<span class="feed-status bad"><span class="feed-status-icon" aria-hidden="true">'+
+        '<svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2.5"/>'+
+        '<path d="M12 12l12 12M24 12L12 24" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>'+
+        '</span>Invalid</span>';
+    }
+    return '';
   }
 
   function renderPager(totalPages){
