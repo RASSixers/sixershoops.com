@@ -414,6 +414,8 @@
   <script src="/nav.js"></script>
   <script>
 (function(){
+  const TEAM_PAYROLL = {"ATL": 196086129, "BOS": 198722406, "BKN": 160422358, "CHA": 175306598, "CHI": 163000867, "CLE": 186150056, "DAL": 197866095, "DEN": 215011091, "DET": 154337535, "GSW": 185224598, "MIA": 170738244, "MIL": 188183677, "MIN": 215954846, "NOP": 192207320, "NYK": 218412232, "SAC": 201497283, "SAS": 198279967, "TOR": 199831126, "UTA": 178017268, "HOU": 202998462, "IND": 206299932, "LAC": 160126270, "LAL": 200897322, "MEM": 175000000, "OKC": 214279492, "ORL": 217865321, "PHI": 209337389, "PHX": 216794242, "POR": 192093473, "WAS": 189471414};
+  const CBA_DEFAULTS = {"salaryCap": 165000000, "luxuryTax": 200428000, "firstApron": 209015000, "secondApron": 221686000};
   const COLLECTION='community_trades', REPORTS='community_reports', MOD_EMAIL='rhatus13@gmail.com';
   const BOOK_KEY='sixershoops_bookmarked_trades';
   let trade=null, unsub=null, reportCtx=null, replyToId=null;
@@ -714,6 +716,9 @@
           (s.receiving||s.receives||[]).forEach(function(p){ var n=Number(p.salary); if(isFinite(n)) recv+=n; });
         }
         var cur = Number(s.currentSalary) || 0;
+        if (cur <= 0 && s.abbr && typeof TEAM_PAYROLL !== 'undefined' && TEAM_PAYROLL[s.abbr]) {
+          cur = Number(TEAM_PAYROLL[s.abbr]) || 0;
+        }
         return {
           abbr: s.abbr || '',
           name: s.name || s.abbr || 'Team',
@@ -721,15 +726,18 @@
           sendingSalary: send,
           receivingSalary: recv,
           currentSalary: cur,
-          postSalary: s.postSalary != null ? Number(s.postSalary) : (cur - send + recv)
+          postSalary: cur > 0 ? (cur - send + recv) : (s.postSalary != null ? Number(s.postSalary) : 0)
         };
       });
     }
     // Need at least one team with salary data
-    var hasData = rows.some(function(r){ return (r.sendingSalary||0) > 0 || (r.receivingSalary||0) > 0 || (r.currentSalary||0) > 0; });
+    rows.forEach(function(r){
+      if (!(r.currentSalary > 0) && r.abbr && TEAM_PAYROLL[r.abbr]) r.currentSalary = TEAM_PAYROLL[r.abbr];
+    });
+    var hasData = rows.some(function(r){ return (r.sendingSalary||0) > 0 || (r.receivingSalary||0) > 0 || (r.currentSalary||0) > 0 || (r.abbr && TEAM_PAYROLL[r.abbr]); });
     if(!hasData) return '';
 
-    var cba = t.cba || {};
+    var cba = t.cba || (typeof CBA_DEFAULTS !== 'undefined' ? CBA_DEFAULTS : {});
     var salaryCap = Number(cba.salaryCap) || 165000000;
     var luxuryTax = Number(cba.luxuryTax) || 200428000;
     var firstApron = Number(cba.firstApron) || 209015000;
@@ -748,10 +756,15 @@
     }
 
     var cards = rows.map(function(r){
-      var pre = Number(r.currentSalary) || 0;
       var send = Number(r.sendingSalary) || 0;
       var recv = Number(r.receivingSalary) || 0;
-      var post = r.postSalary != null ? Number(r.postSalary) : (pre - send + recv);
+      // Resolve pre-trade payroll: saved value → TEAM_PAYROLL lookup by abbr
+      var pre = Number(r.currentSalary) || 0;
+      if (pre <= 0 && r.abbr && typeof TEAM_PAYROLL !== 'undefined' && TEAM_PAYROLL[r.abbr]) {
+        pre = Number(TEAM_PAYROLL[r.abbr]) || 0;
+      }
+      var post = pre > 0 ? (pre - send + recv) : (r.postSalary != null ? Number(r.postSalary) : 0);
+      if (pre > 0) post = pre - send + recv;
       var hasPayroll = pre > 0;
       var net = recv - send;
       var netCls = net > 0 ? 'neg' : (net < 0 ? 'pos' : '');
