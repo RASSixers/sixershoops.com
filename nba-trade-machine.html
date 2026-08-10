@@ -2472,7 +2472,7 @@
             </div>
             <div class="modal-body" style="padding:1.35rem 1.5rem;">
                 <label style="display:block;font-family:Lexend,sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.14em;color:#64748b;margin-bottom:.4rem;">TITLE</label>
-                <input id="postTradeTitle" type="text" maxlength="120" placeholder="e.g. Embiid for a package around Jalen Brunson"
+                <input id="postTradeTitle" type="text" maxlength="120" placeholder="e.g. PHI-DEN Trade"
                     style="width:100%;box-sizing:border-box;font-family:Lexend,sans-serif;font-size:.95rem;font-weight:600;
                            padding:.75rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;color:#0f172a;outline:none;margin-bottom:1rem;"
                     onfocus="this.style.borderColor='#0066cc';this.style.boxShadow='0 0 0 4px rgba(0,102,204,.1)'"
@@ -4193,15 +4193,11 @@
         var titleEl = document.getElementById('postTradeTitle');
         var descEl = document.getElementById('postTradeDesc');
         var errEl = document.getElementById('postTradeError');
-        var draft = getTradeDraft();
+        // Temporary autofill: TEAM1-TEAM2 Trade (e.g. PHI-DEN Trade)
         var titleVal = defaultTitle || '';
-        var notesVal = '';
-        if (draft && (draft.title || draft.notes)) {
-            if (draft.title) titleVal = draft.title;
-            if (draft.notes) notesVal = draft.notes;
-        }
+        // Description is always optional and never autofilled
         if (titleEl) titleEl.value = titleVal;
-        if (descEl) descEl.value = notesVal;
+        if (descEl) descEl.value = '';
         if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; errEl.style.color = '#dc2626'; }
         m.style.display = 'flex';
         m.classList.add('open');
@@ -4233,7 +4229,7 @@
             return;
         }
         var nameInput = document.getElementById('modalTradeName');
-        var defaultTitle = (nameInput && nameInput.value.trim()) || (active.map(function (t) { return t.abbr; }).join(' / ') + ' Trade');
+        var defaultTitle = (nameInput && nameInput.value.trim()) || (active.map(function (t) { return t.abbr; }).join('-') + ' Trade');
         openPostTradeModal(defaultTitle);
     }
 
