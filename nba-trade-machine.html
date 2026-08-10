@@ -4222,14 +4222,13 @@
         if (errEl) {
             errEl.style.display = 'block';
             errEl.style.color = '#15803d';
-            errEl.textContent = 'Draft saved! Open Post Drafts from your profile menu anytime.';
+            errEl.textContent = 'Draft saved successfully';
             setTimeout(function () {
-                if (errEl && errEl.textContent.indexOf('Draft saved') === 0) errEl.style.display = 'none';
-            }, 3200);
+                if (errEl && errEl.textContent === 'Draft saved successfully') errEl.style.display = 'none';
+            }, 2800);
         } else {
-            alert('Draft saved! Find it under Post Drafts in the account menu.');
+            alert('Draft saved successfully');
         }
-        try { closePostTradeModal(); } catch (_) {}
     }
 
     function clearTradeDraft() {
@@ -4333,13 +4332,55 @@
         });
         listEl.querySelectorAll('[data-del]').forEach(function (btn) {
             btn.onclick = function () {
-                if (confirm('Delete this draft?')) deleteTradeDraft(btn.getAttribute('data-del'));
+                openDeleteDraftModal(btn.getAttribute('data-del'));
             };
         });
     }
     function escDraft(s) {
         return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    function openDeleteDraftModal(id) {
+        var list = getTradeDrafts();
+        var d = list.find(function (x) { return x.id === id; });
+        var title = (d && d.title) ? d.title : 'this draft';
+        var ov = document.getElementById('deleteDraftOverlay');
+        if (!ov) {
+            ov = document.createElement('div');
+            ov.id = 'deleteDraftOverlay';
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10050;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(2px);';
+            ov.innerHTML =
+                '<div role="dialog" aria-modal="true" style="background:#fff;border-radius:16px;max-width:400px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.2);overflow:hidden;font-family:Lexend,system-ui,sans-serif;">' +
+                '<div style="padding:1.35rem 1.35rem 0.5rem;">' +
+                '<div style="width:44px;height:44px;border-radius:12px;background:rgba(220,38,38,.08);display:flex;align-items:center;justify-content:center;margin-bottom:.9rem;">' +
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                '</div>' +
+                '<div style="font-weight:800;font-size:1.1rem;color:#0f172a;margin-bottom:.35rem;">Delete draft?</div>' +
+                '<div id="deleteDraftMsg" style="font-size:.88rem;color:#64748b;line-height:1.5;margin-bottom:1.15rem;"></div>' +
+                '</div>' +
+                '<div style="display:flex;gap:.6rem;justify-content:flex-end;padding:0 1.35rem 1.25rem;">' +
+                '<button type="button" id="deleteDraftCancel" style="border:1px solid #e2e8f0;background:#fff;color:#334155;font-weight:700;font-size:.85rem;padding:.55rem 1rem;border-radius:10px;cursor:pointer;font-family:inherit;">Cancel</button>' +
+                '<button type="button" id="deleteDraftConfirm" style="border:none;background:#dc2626;color:#fff;font-weight:700;font-size:.85rem;padding:.55rem 1rem;border-radius:10px;cursor:pointer;font-family:inherit;">Delete</button>' +
+                '</div></div>';
+            document.body.appendChild(ov);
+            ov.addEventListener('click', function (e) {
+                if (e.target === ov) closeDeleteDraftModal();
+            });
+            document.getElementById('deleteDraftCancel').onclick = closeDeleteDraftModal;
+        }
+        document.getElementById('deleteDraftMsg').textContent =
+            '“' + title + '” will be permanently removed. This cannot be undone.';
+        ov.style.display = 'flex';
+        document.getElementById('deleteDraftConfirm').onclick = function () {
+            deleteTradeDraft(id);
+            closeDeleteDraftModal();
+        };
+    }
+    function closeDeleteDraftModal() {
+        var ov = document.getElementById('deleteDraftOverlay');
+        if (ov) ov.style.display = 'none';
+    }
+
     window.openTradeDrafts = openDraftsPanel;
 
 
