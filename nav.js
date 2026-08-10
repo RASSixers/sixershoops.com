@@ -612,8 +612,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <button class="user-dropdown-item" id="navMyProfileLink">Profile</button>
 
-                        <button class="user-dropdown-item" id="navBookmarksLink">
-                            <span>Bookmarks</span>
+                        <button class="user-dropdown-item" id="navDraftsLink">
+                            <span>Post Drafts</span>
                         </button>
                         <button class="user-dropdown-item" id="navInboxLink">
                             <span>Inbox</span>
@@ -664,12 +664,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const myProfileLink = document.getElementById('navMyProfileLink');
             const inboxLink = document.getElementById('navInboxLink');
             
-            const bookmarksLink = document.getElementById('navBookmarksLink');
-            if (bookmarksLink) {
-                bookmarksLink.onclick = function() {
-                    const slug = (localStorage.getItem('usernameLower') || '').trim();
-                    if (slug) location.href = '/user/' + encodeURIComponent(slug) + '/bookmarks';
-                    else location.href = '/user.html?sub=bookmarks';
+            const draftsLink = document.getElementById('navDraftsLink');
+            if (draftsLink) {
+                draftsLink.onclick = function() {
+                    location.href = '/nba-trade-machine.html#drafts';
                 };
             }
 const notifsLink = document.getElementById('navNotifsLink');
