@@ -186,6 +186,26 @@
     .e-split button:hover{background:transparent}
     .e-split button.active-up:hover,.e-split button.active-down:hover{background:transparent}
     .e-split .e-count{padding:0 .55rem 0 0;font-weight:800;font-size:.82rem;color:#334155;min-width:1.1rem}
+    .eng-list-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10060;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(2px)}
+    .eng-list-overlay.open{display:flex}
+    .eng-list-modal{background:#fff;border-radius:16px;width:min(400px,100%);max-height:min(70vh,520px);overflow:hidden;box-shadow:0 24px 48px rgba(0,0,0,.22);font-family:Lexend,system-ui,sans-serif;display:flex;flex-direction:column}
+    .eng-list-head{display:flex;align-items:center;justify-content:space-between;padding:.95rem 1.1rem;border-bottom:1px solid #e2e8f0}
+    .eng-list-head h3{margin:0;font-size:1rem;font-weight:800}
+    .eng-list-close{border:none;background:transparent;font-size:1.25rem;cursor:pointer;color:#64748b;line-height:1}
+    .eng-list-tabs{display:flex;gap:.25rem;padding:.55rem .75rem;border-bottom:1px solid #e2e8f0;background:#f8fafc}
+    .eng-list-tabs button{border:none;background:transparent;font-family:inherit;font-weight:700;font-size:.75rem;padding:.4rem .75rem;border-radius:8px;cursor:pointer;color:#64748b}
+    .eng-list-tabs button.active{background:#fff;color:#0f172a;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .eng-list-body{overflow:auto;padding:.5rem 0;flex:1}
+    .eng-user{display:flex;align-items:center;gap:.65rem;padding:.65rem 1.1rem;text-decoration:none;color:inherit}
+    .eng-user:hover{background:#f8fafc}
+    .eng-user-av{width:36px;height:36px;border-radius:50%;background:#001a57;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;overflow:hidden}
+    .eng-user-av img{width:100%;height:100%;object-fit:cover}
+    .eng-user-name{font-weight:700;font-size:.9rem}
+    .eng-user-sub{font-size:.75rem;color:#64748b;font-weight:500}
+    .eng-empty{text-align:center;padding:2rem 1rem;color:#64748b;font-size:.88rem}
+    .e-count{cursor:pointer}
+    .e-count:hover{color:var(--sixers-blue,#006BB6);text-decoration:underline}
+
 
     .section-label{font-size:.65rem;font-weight:800;letter-spacing:.16em;color:var(--mid);text-transform:uppercase;margin:0 0 .85rem;display:flex;align-items:center;gap:.6rem}
     .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
@@ -806,7 +826,7 @@
       : (isFail
         ? '<div class="sh-status-icon bad" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="2.5"/><path d="M12 12l12 12M24 12L12 24" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></div>'
         : '');
-    const statusText=isValid?'Successful':(isFail?'Invalid':'');
+    const statusText=isValid?'Trade Successful':(isFail?'Trade Failed':'');
     const statusHtml=statusText?('<div class="sh-status-wrap">'+statusIcon+'<div class="sh-status '+(isValid?'ok':'bad')+'">'+statusText+'</div></div>'):'';
 
     const cols=sides.map(function(side){
@@ -1273,6 +1293,111 @@
     document.querySelectorAll('.poll-opt:not(.disabled)').forEach(function(b){b.onclick=function(){votePoll(+b.getAttribute('data-pi'));};});
   }
 
+
+  function openEngListModal(tab){
+    var ov = document.getElementById('engListOverlay');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'engListOverlay';
+      ov.className = 'eng-list-overlay';
+      ov.innerHTML =
+        '<div class="eng-list-modal" role="dialog" aria-modal="true">'+
+        '<div class="eng-list-head"><h3 id="engListTitle">Activity</h3><button type="button" class="eng-list-close" id="engListClose">×</button></div>'+
+        '<div class="eng-list-tabs">'+
+        '<button type="button" data-tab="likes" class="active">Likes</button>'+
+        '<button type="button" data-tab="reposts">Reposts</button>'+
+        '<button type="button" data-tab="quotes">Quotes</button>'+
+        '</div>'+
+        '<div class="eng-list-body" id="engListBody"><div class="eng-empty">Loading…</div></div>'+
+        '</div>';
+      document.body.appendChild(ov);
+      ov.addEventListener('click', function(e){ if(e.target===ov) closeEngListModal(); });
+      document.getElementById('engListClose').onclick = closeEngListModal;
+      ov.querySelectorAll('.eng-list-tabs button').forEach(function(btn){
+        btn.onclick = function(){
+          ov.querySelectorAll('.eng-list-tabs button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+          loadEngListTab(btn.getAttribute('data-tab'));
+        };
+      });
+    }
+    ov.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    var first = ov.querySelector('.eng-list-tabs button[data-tab="'+(tab||'likes')+'"]');
+    ov.querySelectorAll('.eng-list-tabs button').forEach(function(b){ b.classList.toggle('active', b===first); });
+    loadEngListTab(tab||'likes');
+  }
+  function closeEngListModal(){
+    var ov = document.getElementById('engListOverlay');
+    if(ov) ov.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  async function resolveUserLabel(uid){
+    if(!uid || !window.db) return { name: 'u/fan', photo: '', slug: '' };
+    try{
+      var doc = await window.db.collection('users').doc(uid).get();
+      if(doc.exists){
+        var d = doc.data()||{};
+        var name = d.username || d.displayName || d.name || ('user');
+        name = String(name).replace(/^u\//,'');
+        return { name: name, photo: d.photoURL || d.photo || '', slug: (d.usernameLower || name).toLowerCase().replace(/[^a-z0-9_-]+/g,'-') };
+      }
+    }catch(_){}
+    return { name: 'user', photo: '', slug: '' };
+  }
+  async function loadEngListTab(tab){
+    var body = document.getElementById('engListBody');
+    var title = document.getElementById('engListTitle');
+    if(!body || !trade) return;
+    body.innerHTML = '<div class="eng-empty">Loading…</div>';
+    if(title){
+      title.textContent = tab==='likes' ? 'Liked by' : (tab==='reposts' ? 'Reposted by' : 'Quote posts');
+    }
+    try{
+      if(tab==='likes'){
+        var voters = trade.voters || {};
+        var upIds = Object.keys(voters).filter(function(uid){ return voters[uid]==='up'; });
+        if(!upIds.length){ body.innerHTML = '<div class="eng-empty">No likes yet</div>'; return; }
+        var rows = await Promise.all(upIds.map(async function(uid){
+          var u = await resolveUserLabel(uid);
+          var href = u.slug ? ('/user/'+encodeURIComponent(u.slug)) : '#';
+          var av = u.photo
+            ? '<img src="'+esc(u.photo)+'" alt="">'
+            : esc((u.name||'U').charAt(0).toUpperCase());
+          return '<a class="eng-user" href="'+esc(href)+'">'+
+            '<div class="eng-user-av">'+av+'</div>'+
+            '<div><div class="eng-user-name">u/'+esc(u.name)+'</div><div class="eng-user-sub">Liked</div></div></a>';
+        }));
+        body.innerHTML = rows.join('');
+        return;
+      }
+      // Reposts / quotes from community_trades
+      if(!window.db){ body.innerHTML = '<div class="eng-empty">Could not load</div>'; return; }
+      var snap = await window.db.collection(COLLECTION).where('quotedPostId','==',String(trade.id)).limit(40).get();
+      var docs = snap.docs.map(function(d){ var x=d.data()||{}; x.id=d.id; return x; });
+      if(tab==='reposts'){
+        docs = docs.filter(function(x){ return (x.postType==='repost'||x.type==='repost') && !(x.notes||'').trim(); });
+      } else {
+        docs = docs.filter(function(x){ return x.postType==='quote_repost'||x.type==='quote_repost' || ((x.notes||'').trim() && x.quotedPostId); });
+      }
+      if(!docs.length){
+        body.innerHTML = '<div class="eng-empty">'+(tab==='reposts'?'No reposts yet':'No quote posts yet')+'</div>';
+        return;
+      }
+      var html = docs.map(function(x){
+        var author = String(x.author||'u/fan').replace(/^u\//,'');
+        var slug = author.toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
+        var sub = tab==='quotes' ? (String(x.notes||x.title||'').slice(0,80) || 'Quote post') : 'Reposted';
+        return '<a class="eng-user" href="/trade.html?id='+encodeURIComponent(x.id)+'">'+
+          '<div class="eng-user-av">'+esc(author.charAt(0).toUpperCase())+'</div>'+
+          '<div><div class="eng-user-name">u/'+esc(author)+'</div><div class="eng-user-sub">'+esc(sub)+'</div></div></a>';
+      }).join('');
+      body.innerHTML = html;
+    }catch(e){
+      console.error(e);
+      body.innerHTML = '<div class="eng-empty">Could not load activity</div>';
+    }
+  }
+
   function render(t){
     trade=t;document.title=(t.title||'Post')+' - Sixers Hoops';
     const user=window.auth&&window.auth.currentUser;
@@ -1398,7 +1523,7 @@
     html+='<div class="engage">';
     html+='<div class="e-split">'+
       '<button type="button" id="btnUp" class="'+(userVote==='up'?'active-up':'')+'" aria-label="Upvote"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>'+
-      '<span class="e-count">'+(t.votes||0)+'</span>'+
+      '<span class="e-count" id="btnVotesList" title="See who voted">'+(t.votes||0)+'</span>'+
       '<button type="button" id="btnDown" class="'+(userVote==='down'?'active-down':'')+'" aria-label="Downvote"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button></div>';
     html+='<button type="button" class="e-pill" id="btnComment"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+commentCount+'</button>';
     html+='<button type="button" class="e-pill'+(booked?' booked':'')+'" id="btnBookmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="'+(booked?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>';
@@ -1407,6 +1532,7 @@
     html+='<button type="button" id="menuRepostOnly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> <span id="menuRepostText">Repost</span></button>';
     html+='<button type="button" id="menuQuoteRepost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Quote</button>';
     html+='</div></div>';
+    html+='<button type="button" class="e-pill" id="btnActivity" title="Likes and reposts">Activity</button>';
     html+='<button type="button" class="e-pill" id="btnShare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>';
     html+='</div>';
 
@@ -1418,6 +1544,11 @@
     document.getElementById('btnDown').onclick=function(){handleVote('down');};
     document.getElementById('btnComment').onclick=function(){const el=document.getElementById('comments');if(el)el.scrollIntoView({behavior:'smooth'});const input=document.getElementById('commentInput');if(input)input.focus();};
     document.getElementById('btnBookmark').onclick=function(){const on=toggleBookmark(t.id);this.classList.toggle('booked',on);this.querySelector('svg').setAttribute('fill',on?'currentColor':'none');};
+    const votesList=document.getElementById('btnVotesList');
+    if(votesList) votesList.onclick=function(e){e.stopPropagation();openEngListModal('likes');};
+    const actBtn=document.getElementById('btnActivity');
+    if(actBtn) actBtn.onclick=function(e){e.stopPropagation();openEngListModal('likes');};
+
     window.createRepost = async function createRepost(isQuote, quoteText){
       const user=window.auth&&window.auth.currentUser;
       if(!user){triggerLogin();return;}
