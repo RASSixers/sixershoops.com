@@ -668,18 +668,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (draftsLink) {
                 draftsLink.onclick = function(e) {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
-                    // Close account dropdown
                     try {
                         var dd = document.getElementById('userDropdown');
                         if (dd) dd.classList.remove('active');
                     } catch (_) {}
-                    // On trade machine page: open panel immediately (hash nav alone does not reload)
+                    // Always open drafts overlay on the current page (do not jump to trade machine)
                     if (typeof window.openTradeDrafts === 'function') {
                         window.openTradeDrafts();
-                        return;
+                    } else if (typeof window.openGlobalDraftsPanel === 'function') {
+                        window.openGlobalDraftsPanel();
                     }
-                    // Other pages: go to trade machine drafts
-                    location.href = '/nba-trade-machine.html#drafts';
                 };
             }
 const notifsLink = document.getElementById('navNotifsLink');
@@ -1484,3 +1482,149 @@ document.addEventListener('click', function(e) {
         if (tabBtn) tabBtn.click();
     }
 });
+
+
+/* ── Global View Drafts panel (stays on current page; Open loads trade machine) ── */
+(function () {
+  var TM_DRAFTS_KEY = 'sixershoops_trade_drafts_v1';
+  var TM_DRAFT_KEY = 'sixershoops_trade_post_draft_v1';
+
+  function getDrafts() {
+    try {
+      var list = JSON.parse(localStorage.getItem(TM_DRAFTS_KEY) || '[]');
+      if (!Array.isArray(list)) list = [];
+      try {
+        var legacy = localStorage.getItem(TM_DRAFT_KEY);
+        if (legacy) {
+          var one = JSON.parse(legacy);
+          if (one && (one.machineHash || one.title)) {
+            list.unshift({
+              id: 'd' + Date.now().toString(36),
+              title: one.title || 'Untitled draft',
+              notes: one.notes || '',
+              machineHash: one.machineHash || '',
+              teamAbbrs: one.teamAbbrs || [],
+              updatedAt: one.updatedAt || Date.now()
+            });
+            localStorage.setItem(TM_DRAFTS_KEY, JSON.stringify(list));
+            localStorage.removeItem(TM_DRAFT_KEY);
+          }
+        }
+      } catch (_) {}
+      return list;
+    } catch (e) { return []; }
+  }
+  function setDrafts(list) {
+    try { localStorage.setItem(TM_DRAFTS_KEY, JSON.stringify((list || []).slice(0, 25))); } catch (_) {}
+  }
+  function timeLabel(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return '';
+    var sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 60) return 'just now';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+    if (sec < 604800) return Math.floor(sec / 86400) + 'd ago';
+    return d.toLocaleDateString();
+  }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function closeGlobalDraftsPanel() {
+    var ov = document.getElementById('globalDraftsOverlay');
+    if (ov) ov.style.display = 'none';
+    try { document.body.style.overflow = ''; } catch (_) {}
+  }
+
+  function renderGlobalDraftsList() {
+    var body = document.getElementById('globalDraftsBody');
+    if (!body) return;
+    var list = getDrafts();
+    if (!list.length) {
+      body.innerHTML = '<div style="padding:2rem 1.25rem;text-align:center;color:#64748b;font-size:.9rem;font-weight:500;">No saved drafts yet. Build a trade and hit Save Draft.</div>';
+      return;
+    }
+    body.innerHTML = list.map(function (d) {
+      var teams = (d.teamAbbrs || []).join(' · ');
+      return '<div style="display:flex;gap:.75rem;align-items:flex-start;padding:.9rem 1.15rem;border-bottom:1px solid #f1f5f9;">' +
+        '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:800;font-size:.95rem;color:#0f172a;margin-bottom:.2rem;">' + esc(d.title || 'Untitled draft') + '</div>' +
+        '<div style="font-size:.75rem;color:#64748b;font-weight:500;">' + esc(teams || 'No teams') +
+        (d.updatedAt ? ' · ' + esc(timeLabel(d.updatedAt)) : '') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:.4rem;flex-shrink:0;">' +
+        '<button type="button" class="g-draft-open" data-id="' + esc(d.id) + '" style="border:none;background:#006BB6;color:#fff;font-weight:700;font-size:.75rem;padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-family:inherit;">Open</button>' +
+        '<button type="button" class="g-draft-del" data-id="' + esc(d.id) + '" style="border:1px solid #fecaca;background:#fff;color:#dc2626;font-weight:700;font-size:.75rem;padding:.4rem .65rem;border-radius:8px;cursor:pointer;font-family:inherit;">Delete</button>' +
+        '</div></div>';
+    }).join('');
+
+    body.querySelectorAll('.g-draft-open').forEach(function (btn) {
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        location.href = '/nba-trade-machine.html#draft=' + encodeURIComponent(id);
+      };
+    });
+    body.querySelectorAll('.g-draft-del').forEach(function (btn) {
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        var list = getDrafts();
+        var d = list.find(function (x) { return x.id === id; });
+        var title = d ? (d.title || 'this draft') : 'this draft';
+        if (!confirm('Delete "' + title + '"? This cannot be undone.')) return;
+        setDrafts(list.filter(function (x) { return x.id !== id; }));
+        renderGlobalDraftsList();
+      };
+    });
+  }
+
+  window.openGlobalDraftsPanel = function () {
+    if (typeof window.__tmOpenTradeDrafts === 'function' && /nba-trade-machine\.html/i.test(location.pathname || '')) {
+      window.__tmOpenTradeDrafts();
+      return;
+    }
+    // If trade machine defined openTradeDrafts as its own panel, prefer that only on machine page
+    if (/nba-trade-machine\.html/i.test(location.pathname || '') && window.__onTradeMachineDrafts) {
+      window.__onTradeMachineDrafts();
+      return;
+    }
+    var ov = document.getElementById('globalDraftsOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'globalDraftsOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:10050;display:none;align-items:center;justify-content:center;padding:1rem;';
+      ov.innerHTML =
+        '<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:min(80vh,640px);overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;font-family:Lexend,system-ui,sans-serif;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.15rem;border-bottom:1px solid #e2e8f0;">' +
+        '<div style="font-weight:800;font-size:1.05rem;color:#0f172a;">View Drafts</div>' +
+        '<button type="button" id="globalDraftsClose" style="border:none;background:transparent;font-size:1.35rem;cursor:pointer;color:#64748b;line-height:1;">×</button>' +
+        '</div>' +
+        '<div id="globalDraftsBody" style="overflow:auto;flex:1;"></div>' +
+        '<div style="padding:.75rem 1.15rem;border-top:1px solid #e2e8f0;font-size:.75rem;color:#94a3b8;font-weight:500;">Open loads a draft in the Trade Machine. This list stays on the current page.</div>' +
+        '</div>';
+      document.body.appendChild(ov);
+      ov.addEventListener('click', function (e) { if (e.target === ov) closeGlobalDraftsPanel(); });
+      document.getElementById('globalDraftsClose').onclick = closeGlobalDraftsPanel;
+    }
+    ov.style.display = 'flex';
+    try { document.body.style.overflow = 'hidden'; } catch (_) {}
+    renderGlobalDraftsList();
+  };
+
+  // Pages without trade machine: openTradeDrafts -> global panel
+  if (typeof window.openTradeDrafts !== 'function') {
+    window.openTradeDrafts = window.openGlobalDraftsPanel;
+  } else {
+    // Trade machine may load after nav.js - wrap later via property if needed
+    var _existing = window.openTradeDrafts;
+    window.openTradeDrafts = function () {
+      if (/nba-trade-machine\.html/i.test(location.pathname || '')) return _existing();
+      return window.openGlobalDraftsPanel();
+    };
+  }
+})();
