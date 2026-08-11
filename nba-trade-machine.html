@@ -4431,6 +4431,7 @@
     }
 
     window.openTradeDrafts = openDraftsPanel;
+    window.__tmOpenTradeDrafts = openDraftsPanel;
 
 
     function openPostTradeModal(defaultTitle) {
@@ -8452,13 +8453,23 @@
     // ─── BOOTSTRAP ───────────────────────────────────────────────────────────
     init();
     window.openTradeDrafts = openDraftsPanel;
+    window.__tmOpenTradeDrafts = openDraftsPanel;
     try {
-        if ((location.hash || '') === '#drafts') {
+        var hash = location.hash || '';
+        if (hash === '#drafts') {
             setTimeout(function () { openDraftsPanel(); }, 200);
+        } else if (hash.indexOf('#draft=') === 0) {
+            var draftId = decodeURIComponent(hash.slice('#draft='.length));
+            setTimeout(function () {
+                try { loadTradeDraftById(draftId); } catch (e) { console.warn(e); }
+            }, 250);
         }
         window.addEventListener('hashchange', function () {
-            if ((location.hash || '') === '#drafts') {
-                openDraftsPanel();
+            var h = location.hash || '';
+            if (h === '#drafts') openDraftsPanel();
+            else if (h.indexOf('#draft=') === 0) {
+                var id = decodeURIComponent(h.slice('#draft='.length));
+                try { loadTradeDraftById(id); } catch (e) { console.warn(e); }
             }
         });
     } catch (_) {}
