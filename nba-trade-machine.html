@@ -2104,6 +2104,21 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
         }
+
+        .mode-toggle {
+            display: inline-flex; align-items: center; gap: 0;
+            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; padding: 3px;
+        }
+        .mode-btn {
+            font-family: Lexend, sans-serif; font-weight: 700; font-size: .72rem;
+            letter-spacing: .04em; border: none; background: transparent; color: #64748b;
+            padding: .4rem .75rem; border-radius: 999px; cursor: pointer;
+        }
+        .mode-btn.mode-active {
+            background: #001a57; color: #fff;
+        }
+        .mode-btn:hover:not(.mode-active) { color: #0f172a; }
+
         .board-btn-primary {
             background: #0066cc;
             color: #fff;
@@ -2431,6 +2446,10 @@
             <div class="board-toolbar">
                 <div class="board-toolbar-label">Teams in this trade</div>
                 <div class="board-toolbar-actions">
+                    <div class="mode-toggle" title="Simulate trades as of today or as of the trade deadline">
+                        <button type="button" class="mode-btn mode-active" id="modeNowBtn" onclick="setTradeMode('now')">Now</button>
+                        <button type="button" class="mode-btn" id="modeDeadlineBtn" onclick="setTradeMode('deadline')">Deadline</button>
+                    </div>
                     <button class="board-btn board-btn-ghost" onclick="clearAll()" title="Clear all teams and players">
                         Reset
                     </button>
@@ -2447,6 +2466,9 @@
             </div>
 
             <!-- Team Cards Grid -->
+            <div id="deadlineModeBanner" style="display:none;margin:0 0 .85rem;padding:.65rem .9rem;border-radius:10px;background:rgba(0,26,87,.08);border:1px solid rgba(0,26,87,.2);font-family:Lexend,sans-serif;font-size:.8rem;font-weight:600;color:#001a57;">
+                <strong>Trade Deadline mode</strong> · Holds and restrictions are evaluated as of 2027-02-04. Use this to mock deadline deals.
+            </div>
             <div class="trade-grid" id="tradeGrid"></div>
         </div>
 
@@ -2643,16 +2665,114 @@
         'no-trade':         'No-Trade Hold',
     };
 
+    // Trade timeline mode: 'now' uses today's date; 'deadline' uses the NBA trade deadline
+    var tradeMode = 'now';
+    var TRADE_DEADLINE_DATE = '2027-02-04'; // 2026-27 season trade deadline (estimate)
+
+    function getAsOfDate() {
+        if (tradeMode === 'deadline') {
+            return new Date(TRADE_DEADLINE_DATE + 'T12:00:00');
+        }
+        return new Date();
+    }
+
     function isRestrictionActive(p) {
         if (!p) return false;
         const key = (p.restriction || '').toLowerCase().trim();
         if (!key || key === 'none') return false;
         if (p.restrictionUntil) {
             const until = new Date(p.restrictionUntil + 'T23:59:59');
-            if (!isNaN(until.getTime()) && until < new Date()) return false; // expired
+            if (!isNaN(until.getTime()) && until < getAsOfDate()) return false; // expired as of mode date
         }
         return true;
     }
+
+    /** Contract label: "1+1 (PO)", "2+1 (TO)", "NG · 1yr", "4yr Guaranteed", etc. */
+    function formatContractLabel(p) {
+        if (!p) return '';
+        const ct = String(p.contractType || '').trim();
+        const fo = String(p.futureOption || '').trim();
+        const years = Number(p.contractYears) || 0;
+        const optYearsExplicit = p.optionYears != null ? Number(p.optionYears) : null;
+        const gExplicit = p.guaranteedYears != null ? Number(p.guaranteedYears) : null;
+
+        function optTag(kind) {
+            if (/player/i.test(kind)) return 'PO';
+            if (/team/i.test(kind)) return 'TO';
+            if (/early.?termin/i.test(kind)) return 'ETO';
+            return 'OPT';
+        }
+
+        // Non-guaranteed / partial
+        if (/non-?guaranteed|partial/i.test(ct)) {
+            if (years > 0) return 'NG · ' + years + 'yr';
+            return 'Non-Guaranteed';
+        }
+
+        // Current year is already an option year
+        if (/^player option$/i.test(ct) && !fo) {
+            if (years > 1) return (years - 1) + '+1 (PO)';
+            return '1 (PO)';
+        }
+        if (/^team option$/i.test(ct) && !fo) {
+            if (years > 1) return (years - 1) + '+1 (TO)';
+            return '1 (TO)';
+        }
+
+        // Guaranteed years + future option (Spotrac-style 1+1 (PO))
+        if (fo) {
+            const tag = optTag(fo);
+            const oY = (optYearsExplicit != null && !isNaN(optYearsExplicit)) ? optYearsExplicit : 1;
+            let gY = gExplicit;
+            if (gY == null || isNaN(gY)) {
+                gY = years > 0 ? Math.max(0, years - oY) : 0;
+            }
+            return gY + '+' + oY + ' (' + tag + ')';
+        }
+
+        if (gExplicit != null && !isNaN(gExplicit) && gExplicit > 0) {
+            return gExplicit + 'yr Guaranteed';
+        }
+        if (/guaranteed|supermax/i.test(ct)) {
+            return years > 0 ? (years + 'yr Guaranteed') : 'Guaranteed';
+        }
+        if (/rookie/i.test(ct)) {
+            return (ct || 'Rookie') + (years ? ' · ' + years + 'yr' : '');
+        }
+        // Fallback
+        return (ct || '—') + (years ? ' · ' + years + 'yr' : '');
+    }
+
+    function contractBadgeColor(p) {
+        const ct = String(p && p.contractType || '');
+        const fo = String(p && p.futureOption || '');
+        if (/non-?guaranteed|partial/i.test(ct)) return '#dc2626';
+        if (/player option/i.test(ct) || /player option/i.test(fo)) return '#7c3aed';
+        if (/team option/i.test(ct) || /team option/i.test(fo)) return '#2563eb';
+        if (/estimated/i.test(ct)) return '#ea580c';
+        if (/rookie/i.test(ct)) return '#0891b2';
+        if (/guaranteed|supermax/i.test(ct)) return '#16a34a';
+        return '#6b7280';
+    }
+
+    function setTradeMode(mode) {
+        tradeMode = (mode === 'deadline') ? 'deadline' : 'now';
+        try {
+            var btnNow = document.getElementById('modeNowBtn');
+            var btnDl = document.getElementById('modeDeadlineBtn');
+            if (btnNow) {
+                btnNow.classList.toggle('mode-active', tradeMode === 'now');
+            }
+            if (btnDl) {
+                btnDl.classList.toggle('mode-active', tradeMode === 'deadline');
+            }
+            var banner = document.getElementById('deadlineModeBanner');
+            if (banner) banner.style.display = tradeMode === 'deadline' ? 'block' : 'none';
+        } catch (_) {}
+        try { renderAll(); } catch (_) {}
+        try { updateStats(); } catch (_) {}
+    }
+    window.setTradeMode = setTradeMode;
 
     function getPlayerTradeHold(p) {
         if (!p) return null;
@@ -5045,25 +5165,214 @@
         renderAll();
     }
 
+    // ─── WAIVE + STRETCH (CBA-aligned) ─────────────────────────────────────
+    // Stretch length = 2 × remaining seasons + 1.
+    // Jul 1–Aug 31: current season included in stretch.
+    // Sep 1–Jun 30: current season full dead cap; future years only stretch.
+    // Expiring deals after Sep 1: no stretch.
+    // Non-guaranteed $ is not stretched (falls off on waive).
+
+    function normalizeWaivedEntry(entry) {
+        if (entry == null) return null;
+        if (typeof entry === 'string') return { id: entry, stretch: false };
+        if (typeof entry === 'object' && entry.id) return entry;
+        return null;
+    }
+    function getWaivedList(team) {
+        return (team && team.waivedPlayers || []).map(normalizeWaivedEntry).filter(Boolean);
+    }
+
+    function remainingContractSeasons(p) {
+        var y = Number(p && p.contractYears);
+        if (isFinite(y) && y > 0) return Math.floor(y);
+        return 1;
+    }
+
+    function estimatedGuaranteedRemaining(p) {
+        var sal = Number(p.salary) || 0;
+        var years = remainingContractSeasons(p);
+        var ct = String(p.contractType || '');
+        if (/non-?guaranteed|partial/i.test(ct)) return sal;
+        if (/player option|team option/i.test(ct) && !p.futureOption) return sal;
+        var gY = years;
+        if (p.guaranteedYears != null && isFinite(Number(p.guaranteedYears))) {
+            gY = Math.max(0, Number(p.guaranteedYears));
+        } else if (p.futureOption) {
+            gY = Math.max(1, years - 1);
+        }
+        return sal * Math.max(1, gY);
+    }
+
+    function isInFullStretchWindow(asOf) {
+        var m = asOf.getMonth();
+        return m === 6 || m === 7; // July or August
+    }
+
+    function computeStretchOptions(p, asOfDate) {
+        asOfDate = asOfDate || (typeof getAsOfDate === 'function' ? getAsOfDate() : new Date());
+        var seasons = remainingContractSeasons(p);
+        var currentSal = Number(p.salary) || 0;
+        var totalG = estimatedGuaranteedRemaining(p);
+        var fullWindow = isInFullStretchWindow(asOfDate);
+        var minStretch = 250000;
+        var info = {
+            seasons: seasons,
+            currentSalary: currentSal,
+            totalGuaranteed: totalG,
+            fullWindow: fullWindow,
+            canStretch: false,
+            stretchSeasons: 0,
+            annualStretchHit: 0,
+            deadThisYearIfStretch: 0,
+            deadThisYearIfNoStretch: currentSal,
+            reasonBlocked: '',
+            note: ''
+        };
+        if (totalG <= 0) {
+            info.reasonBlocked = 'No guaranteed money to stretch (non-guaranteed salary falls off when waived).';
+            info.deadThisYearIfNoStretch = 0;
+            return info;
+        }
+        if (totalG < minStretch) {
+            info.reasonBlocked = 'Under $250K guaranteed remaining — stretch does not apply.';
+            return info;
+        }
+        if (fullWindow) {
+            var n = seasons * 2 + 1;
+            var annual = totalG / n;
+            info.canStretch = true;
+            info.stretchSeasons = n;
+            info.annualStretchHit = annual;
+            info.deadThisYearIfStretch = annual;
+            info.deadThisYearIfNoStretch = currentSal;
+            info.note = 'Jul 1–Aug 31 window: stretch spreads remaining guaranteed $ over ' + n + ' seasons (2×' + seasons + '+1).';
+            return info;
+        }
+        if (seasons <= 1) {
+            info.reasonBlocked = 'After September 1, expiring deals cannot be stretched. Full current-year dead cap applies.';
+            return info;
+        }
+        var futureSeasons = seasons - 1;
+        var futureMoney = Math.max(0, totalG - currentSal);
+        if (futureMoney <= 0) {
+            info.reasonBlocked = 'No future guaranteed money to stretch after this season.';
+            return info;
+        }
+        var n2 = futureSeasons * 2 + 1;
+        var annual2 = futureMoney / n2;
+        info.canStretch = true;
+        info.stretchSeasons = n2;
+        info.annualStretchHit = annual2;
+        info.deadThisYearIfStretch = currentSal;
+        info.deadThisYearIfNoStretch = currentSal;
+        info.note = 'After Sep 1: this season stays full dead cap. Future $ stretches over ' + n2 + ' seasons (2×' + futureSeasons + '+1).';
+        return info;
+    }
+
+    function moneyShort(n) {
+        n = Math.round(Number(n) || 0);
+        if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+        if (Math.abs(n) >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+        return '$' + n;
+    }
+
+    function closeWaiveModal() {
+        var ov = document.getElementById('waiveModalOverlay');
+        if (ov) ov.style.display = 'none';
+        try { document.body.style.overflow = ''; } catch (_) {}
+    }
+
+    function openWaiveModal(teamId, playerId) {
+        var tm = teams.find(function (x) { return x.id === teamId; });
+        if (!tm || !tm.abbr || !TEAM_DATA[tm.abbr]) return;
+        var p = TEAM_DATA[tm.abbr].players.find(function (pp) { return pp.id === playerId; });
+        if (!p) return;
+        var info = computeStretchOptions(p);
+        var asOf = typeof getAsOfDate === 'function' ? getAsOfDate() : new Date();
+        var asOfLabel = asOf.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        var windowLabel = info.fullWindow ? 'Jul 1 – Aug 31 (full stretch window)' : 'Sep 1 – Jun 30 (current year not stretchable)';
+
+        var ov = document.getElementById('waiveModalOverlay');
+        if (!ov) {
+            ov = document.createElement('div');
+            ov.id = 'waiveModalOverlay';
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:12020;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(3px);';
+            ov.innerHTML = '<div id="waiveModalCard" style="background:#fff;border-radius:16px;max-width:440px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.22);overflow:hidden;font-family:Lexend,system-ui,sans-serif;"></div>';
+            document.body.appendChild(ov);
+            ov.addEventListener('click', function (e) { if (e.target === ov) closeWaiveModal(); });
+        }
+        var card = document.getElementById('waiveModalCard');
+        var stretchBtn = info.canStretch
+            ? ('<button type="button" id="waiveStretchBtn" style="width:100%;border:none;background:#001a57;color:#fff;font-weight:800;font-size:.88rem;padding:.75rem 1rem;border-radius:12px;cursor:pointer;font-family:inherit;margin-bottom:.5rem;">Waive &amp; Stretch · ' + moneyShort(info.deadThisYearIfStretch) + ' this year</button>')
+            : ('<button type="button" disabled style="width:100%;border:none;background:#e2e8f0;color:#94a3b8;font-weight:800;font-size:.88rem;padding:.75rem 1rem;border-radius:12px;cursor:not-allowed;font-family:inherit;margin-bottom:.5rem;">Stretch not available</button>');
+
+        card.innerHTML =
+            '<div style="padding:1.25rem 1.25rem .5rem;text-align:center;">' +
+            '<div style="font-weight:900;font-size:1.1rem;color:#0f172a;margin-bottom:.25rem;">Waive ' + (p.name || 'Player') + '</div>' +
+            '<div style="font-size:.78rem;color:#64748b;font-weight:500;">As of ' + asOfLabel + ' · ' + windowLabel + '</div></div>' +
+            '<div style="padding:.5rem 1.25rem 1rem;font-size:.82rem;color:#334155;line-height:1.5;">' +
+            '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.75rem .9rem;margin-bottom:.75rem;">' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:.35rem;"><span style="color:#64748b;font-weight:600;">Listed salary</span><strong>' + moneyShort(info.currentSalary) + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:.35rem;"><span style="color:#64748b;font-weight:600;">Est. guaranteed left</span><strong>' + moneyShort(info.totalGuaranteed) + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;"><span style="color:#64748b;font-weight:600;">Seasons left</span><strong>' + info.seasons + '</strong></div></div>' +
+            (info.canStretch
+                ? ('<div style="margin-bottom:.75rem;"><strong style="color:#001a57;">Stretch available</strong> — ' + info.stretchSeasons + ' seasons at ~' + moneyShort(info.annualStretchHit) + '/yr. ' + (info.note || '') + '</div>')
+                : ('<div style="margin-bottom:.75rem;color:#b45309;font-weight:600;">' + (info.reasonBlocked || 'Stretch not available.') + '</div>')) +
+            '<div style="font-size:.72rem;color:#94a3b8;margin-bottom:.85rem;">Estimates only. Real stretch uses exact remaining guarantees, set-off, and the 15% of cap limit on cumulative stretched dead money.</div>' +
+            stretchBtn +
+            '<button type="button" id="waiveOnlyBtn" style="width:100%;border:1.5px solid #e2e8f0;background:#fff;color:#0f172a;font-weight:800;font-size:.88rem;padding:.75rem 1rem;border-radius:12px;cursor:pointer;font-family:inherit;margin-bottom:.5rem;">Waive (no stretch) · ' + moneyShort(info.deadThisYearIfNoStretch) + ' this year</button>' +
+            '<button type="button" id="waiveCancelBtn" style="width:100%;border:none;background:transparent;color:#64748b;font-weight:700;font-size:.85rem;padding:.65rem;cursor:pointer;font-family:inherit;">Cancel</button></div>';
+
+        ov.style.display = 'flex';
+        try { document.body.style.overflow = 'hidden'; } catch (_) {}
+        document.getElementById('waiveCancelBtn').onclick = closeWaiveModal;
+        document.getElementById('waiveOnlyBtn').onclick = function () { confirmWaive(teamId, playerId, false); };
+        var sb = document.getElementById('waiveStretchBtn');
+        if (sb) sb.onclick = function () { confirmWaive(teamId, playerId, true); };
+    }
+
+    function confirmWaive(teamId, playerId, stretch) {
+        var tm = teams.find(function (x) { return x.id === teamId; });
+        if (!tm || !tm.abbr || !TEAM_DATA[tm.abbr]) return;
+        var p = TEAM_DATA[tm.abbr].players.find(function (pp) { return pp.id === playerId; });
+        if (!p) return;
+        var info = computeStretchOptions(p);
+        if (stretch && !info.canStretch) {
+            alert(info.reasonBlocked || 'Stretch is not available for this player right now.');
+            return;
+        }
+        if (!tm.waivedPlayers) tm.waivedPlayers = [];
+        tm.waivedPlayers = getWaivedList(tm).filter(function (w) { return w.id !== playerId; });
+        tm.waivedPlayers.push({
+            id: playerId,
+            stretch: !!stretch && info.canStretch,
+            deadThisYear: stretch ? info.deadThisYearIfStretch : info.deadThisYearIfNoStretch,
+            stretchSeasons: stretch ? info.stretchSeasons : 0,
+            annualStretchHit: stretch ? info.annualStretchHit : 0,
+            totalGuaranteed: info.totalGuaranteed,
+            waivedAtMode: typeof tradeMode !== 'undefined' ? tradeMode : 'now',
+            asOf: (typeof getAsOfDate === 'function' ? getAsOfDate() : new Date()).toISOString().slice(0, 10)
+        });
+        var si = tm.selectedPlayers.indexOf(playerId);
+        if (si >= 0) tm.selectedPlayers.splice(si, 1);
+        if (tm.playerDestinations) delete tm.playerDestinations[playerId];
+        closeWaiveModal();
+        renderAll();
+        updateStats();
+    }
+
     function waivePlayer(teamId, playerId) {
-        const t = teams.find(x => x.id === teamId);
-        if (!t) return;
-        if (!t.waivedPlayers) t.waivedPlayers = [];
-        if (!t.waivedPlayers.includes(playerId)) t.waivedPlayers.push(playerId);
-        // Deselect from trade if selected
-        const si = t.selectedPlayers.indexOf(playerId);
-        if (si >= 0) t.selectedPlayers.splice(si, 1);
-        if (t.playerDestinations) delete t.playerDestinations[playerId];
-        renderAll();
-        updateStats();
+        openWaiveModal(teamId, playerId);
     }
+
     function unwaivePlayer(teamId, playerId) {
-        const t = teams.find(x => x.id === teamId);
-        if (!t || !t.waivedPlayers) return;
-        t.waivedPlayers = t.waivedPlayers.filter(id => id !== playerId);
+        var tm = teams.find(function (x) { return x.id === teamId; });
+        if (!tm || !tm.waivedPlayers) return;
+        tm.waivedPlayers = getWaivedList(tm).filter(function (w) { return w.id !== playerId; });
         renderAll();
         updateStats();
     }
+
     function setPickProtection(teamId, pickId, value) {
         const t = teams.find(x => x.id === teamId);
         if (!t) return;
@@ -5392,7 +5701,7 @@
                                 <div class="player-name">${p.name}</div>
                                 <span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;background:rgba(5,150,105,.12);color:#047857;border:1px solid rgba(5,150,105,.25);">from ${fromAbbr}</span>
                             </div>
-                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">${p.contractType || ''}${p.futureOption ? '→' + (p.futureOption==='Player Option'?'PO':'TO') : ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</div>
+                            <div style="font-family:'Lexend',sans-serif;font-size:.6rem;color:#64748b;margin-top:2px;">${formatContractLabel(p)}</div>
                             ${destBtns}
                         </div>
                         <div class="player-salary" style="color:#059669;">${fmtM(p.salary)}</div>
@@ -5416,18 +5725,14 @@
                 rosterContent += `</div>`;
             }
 
-            const waivedSet = new Set(t.waivedPlayers || []);
+            const waivedSet = new Set(getWaivedList(t).map(function(w){ return w.id; }));
             const selectedSet = new Set(t.selectedPlayers || []);
 
             // Helper to build contract/hold bits for a player row
             function playerMetaBits(p) {
                 const hold = getPlayerTradeHold(p);
                 const holdHard = hold && hold.hard;
-                const contractBadgeColor = p.contractType === 'Guaranteed' ? '#16a34a' :
-                    p.contractType === 'Non-Guaranteed' ? '#dc2626' :
-                    p.contractType === 'Team Option' ? '#2563eb' :
-                    p.contractType === 'Player Option' ? '#7c3aed' :
-                    p.contractType === 'Estimated' ? '#ea580c' : '#6b7280';
+                const cColor = contractBadgeColor(p);
                 const holdBadge = hold ? `<span title="${(hold.note || hold.label)}${hold.until ? ' · until ' + hold.until : ''}"
                     style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.04em;border-radius:3px;padding:1px 5px;white-space:nowrap;
                     ${holdHard
@@ -5436,7 +5741,8 @@
                 const pos = (p.position && p.position !== '—' && p.position !== '-')
                     ? `<span style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.08em;background:#f1f5f9;color:#64748b;border-radius:3px;padding:1px 4px;">${p.position}</span>`
                     : '';
-                const contract = `<span style="font-family:'Lexend',sans-serif;font-size:.6rem;font-weight:600;color:${contractBadgeColor};background:${contractBadgeColor}18;border-radius:3px;padding:1px 5px;">${p.contractType || ''}${p.futureOption ? '→' + (p.futureOption==='Player Option'?'PO':'TO') : ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</span>`;
+                const label = formatContractLabel(p);
+                const contract = `<span title="${(p.contractType || '')}${p.futureOption ? ' + ' + p.futureOption : ''}" style="font-family:'Lexend',sans-serif;font-size:.6rem;font-weight:700;color:${cColor};background:${cColor}18;border-radius:3px;padding:1px 5px;">${label}</span>`;
                 return { hold, holdHard, holdBadge, pos, contract };
             }
 
@@ -5477,14 +5783,18 @@
                     : `<div class="empty-state" style="padding:.75rem;"><div class="empty-state-text">No players on roster</div></div>`;
             }
             // Show waived players (can un-waive)
-            (t.waivedPlayers || []).forEach(pid => {
-                const p = data.players.find(pp => pp.id === pid);
+            getWaivedList(t).forEach(w => {
+                const p = data.players.find(pp => pp.id === w.id);
                 if (!p) return;
-                rosterContent += `<div class="player-item" style="opacity:.55;background:#f8fafc;">
+                const dead = (w.deadThisYear != null) ? Number(w.deadThisYear) : (Number(p.salary) || 0);
+                const stretchNote = w.stretch
+                    ? ('Stretched' + (w.stretchSeasons ? (' · ' + w.stretchSeasons + ' yrs') : '') + ' · ' + fmtM(dead) + ' this year')
+                    : ('Waived · ' + fmtM(dead) + ' dead cap this year');
+                rosterContent += `<div class="player-item" style="opacity:.9;background:rgba(220,38,38,.04);border-color:rgba(220,38,38,.15);">
                     ${playerHeadshotHtml(p.name, t.abbr)}
                     <div class="player-info" style="flex:1;">
                         <div class="player-name" style="text-decoration:line-through;color:#94a3b8;">${p.name}</div>
-                        <div style="font-size:.55rem;color:#94a3b8;font-family:Lexend,sans-serif;">Waived · ${fmtM(p.salary)} dead cap this year</div>
+                        <div style="font-size:.55rem;color:#b91c1c;font-family:Lexend,sans-serif;font-weight:600;">${stretchNote}</div>
                     </div>
                     <button type="button" onclick="unwaivePlayer(${t.id},'${p.id}')"
                         style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;padding:4px 8px;border-radius:5px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">UNDO</button>
@@ -7080,7 +7390,7 @@
             const nameStyle = leaving ? 'text-decoration:line-through;color:#94a3b8;' : 'color:#0f172a;font-weight:600;';
             table += `<tr style="border-bottom:1px solid #f1f5f9;${bg}">
                 <td style="padding:.45rem .4rem;${nameStyle}">${p.name}${leaving ? ' <span style="font-size:.55rem;font-weight:800;color:#dc2626;letter-spacing:.04em;">OUT</span>' : ''}</td>
-                <td style="padding:.45rem .4rem;color:#64748b;font-size:.65rem;">${p.contractType || '—'}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</td>
+                <td style="padding:.45rem .4rem;color:#64748b;font-size:.65rem;">${formatContractLabel(p)}</td>
                 ${cells.map(c => `<td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:#0f172a;">${fmtCell(c)}</td>`).join('')}
             </tr>`;
         });
@@ -7358,11 +7668,13 @@
             });
             // Waivers as part of this team's side of the deal
             let waiveRows = '';
-            (t.waivedPlayers || []).forEach(pid => {
+            getWaivedList(t).forEach(w => {
                 const data = t.data || (t.abbr && TEAM_DATA[t.abbr]);
-                const p = data && (data.players || []).find(pp => pp.id === pid);
+                const p = data && (data.players || []).find(pp => pp.id === w.id);
                 if (!p) return;
-                waiveRows += `<div class="sh-row" style="opacity:.85;"><span class="sh-name">Waive: ${p.name}</span><span class="sh-sal">${fmtM(p.salary)}</span></div>`;
+                const dead = w.deadThisYear != null ? w.deadThisYear : p.salary;
+                const tag = w.stretch ? 'Stretch' : 'Waive';
+                waiveRows += `<div class="sh-row" style="opacity:.85;"><span class="sh-name">${tag}: ${p.name}</span><span class="sh-sal">${fmtM(dead)}</span></div>`;
             });
             const body = (inPlayers + inPicks + waiveRows) || `<div class="sh-empty-col">No assets in</div>`;
 
@@ -7848,11 +8160,12 @@
                 });
             });
             // Team's own waivers as part of the transaction graphic
-            (t.waivedPlayers || []).forEach(id => {
+            getWaivedList(t).forEach(w => {
                 const d = TEAM_DATA[t.abbr];
-                const p = d && (d.players || []).find(pp => pp.id === id);
+                const p = d && (d.players || []).find(pp => pp.id === w.id);
                 if (!p) return;
-                items.push({ kind: 'waive', name: 'Waive: ' + p.name, sal: money(p.salary) });
+                const dead = w.deadThisYear != null ? w.deadThisYear : p.salary;
+                items.push({ kind: 'waive', name: (w.stretch ? 'Stretch: ' : 'Waive: ') + p.name, sal: money(dead) });
             });
             return {
                 abbr: t.abbr,
