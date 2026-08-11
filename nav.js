@@ -20,6 +20,13 @@ document.addEventListener('DOMContentLoaded', function() {
         link.href = '/navbar-styles.css';
         document.head.appendChild(link);
     }
+    if (!document.getElementById('site-theme-css')) {
+        const tlink = document.createElement('link');
+        tlink.id = 'site-theme-css';
+        tlink.rel = 'stylesheet';
+        tlink.href = '/theme.css';
+        document.head.appendChild(tlink);
+    }
 
     // Add Google Fonts if not present (Lexend matches homepage)
     if (!document.getElementById('nav-google-fonts')) {
@@ -167,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div id="authNavContainer">
                 <button class="auth-nav-btn" id="navSignInBtn">Sign In</button>
             </div>
-            <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Cycle theme: light, dark, navy" title="Theme">
                 <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="5"></circle>
                     <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -181,6 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </svg>
                 <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <svg class="navy-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display: none;">
+                    <path d="M12 2L3 7v4c0 5.25 3.4 10.15 9 11.35C17.6 21.15 21 16.25 21 11V7l-9-5z"/>
                 </svg>
             </button>
         </div>
@@ -1427,36 +1437,57 @@ const notifsLink = document.getElementById('navNotifsLink');
         });
     }
 
-    // Theme Toggle query icons AFTER navbar is injected so elements exist
+    // Theme cycle: light → dark → navy → light
     const themeToggle = document.getElementById('themeToggle');
     const htmlElement = document.documentElement;
 
-    // Helper to sync icon visibility with current theme
+    function getTheme() {
+        if (htmlElement.classList.contains('navy-mode')) return 'navy';
+        if (htmlElement.classList.contains('dark-mode')) return 'dark';
+        return 'light';
+    }
+
+    function applyTheme(theme) {
+        htmlElement.classList.remove('dark-mode', 'navy-mode');
+        if (theme === 'dark') {
+            htmlElement.classList.add('dark-mode');
+            htmlElement.style.colorScheme = 'dark';
+        } else if (theme === 'navy') {
+            htmlElement.classList.add('navy-mode');
+            htmlElement.style.colorScheme = 'dark';
+        } else {
+            htmlElement.style.colorScheme = 'light';
+            theme = 'light';
+        }
+        try { localStorage.setItem('theme', theme); } catch (_) {}
+        syncThemeIcons();
+    }
+
     function syncThemeIcons() {
         const sunIcon = document.querySelector('.sun-icon');
         const moonIcon = document.querySelector('.moon-icon');
-        const isDark = htmlElement.classList.contains('dark-mode');
-        if (sunIcon && moonIcon) {
-            sunIcon.style.display = isDark ? 'none' : 'block';
-            moonIcon.style.display = isDark ? 'block' : 'none';
+        const navyIcon = document.querySelector('.navy-icon');
+        const theme = getTheme();
+        if (sunIcon) sunIcon.style.display = theme === 'light' ? 'block' : 'none';
+        if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
+        if (navyIcon) navyIcon.style.display = theme === 'navy' ? 'block' : 'none';
+        if (themeToggle) {
+            themeToggle.setAttribute('title',
+                theme === 'light' ? 'Theme: Light (click for Dark)' :
+                theme === 'dark' ? 'Theme: Dark (click for Navy)' :
+                'Theme: Navy (click for Light)');
         }
     }
 
-    // Load saved theme preference - default to light mode
-    const savedTheme = localStorage.getItem('theme') || 'light';
-
-    // Apply theme immediately to prevent flash
-    if (savedTheme === 'dark') {
-        htmlElement.classList.add('dark-mode');
-    }
-
-    // Sync icons now that navbar HTML is in the DOM
-    syncThemeIcons();
+    // Re-apply saved theme after navbar inject (anti-flash already ran)
+    var savedTheme = 'light';
+    try { savedTheme = localStorage.getItem('theme') || 'light'; } catch (_) {}
+    applyTheme(savedTheme);
 
     if (themeToggle) themeToggle.addEventListener('click', function() {
-        const isDark = htmlElement.classList.toggle('dark-mode');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        syncThemeIcons();
+        var cur = getTheme();
+        var next = cur === 'light' ? 'dark' : (cur === 'dark' ? 'navy' : 'light');
+        applyTheme(next);
     });
 });
 
