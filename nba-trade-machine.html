@@ -4070,6 +4070,7 @@
                 waivedPlayers: t.waivedPlayers || [],
                 activeTab: t.activeTab || 'roster',
                 playerDestinations: t.playerDestinations || {},
+                pickDestinations: t.pickDestinations || {},
                 pickMods: t.pickMods || {},
                 hardCappedAt: t.hardCappedAt || null,
             })),
@@ -4088,6 +4089,7 @@
             waivedPlayers: t.waivedPlayers || [],
             activeTab: t.activeTab || 'roster',
             playerDestinations: t.playerDestinations || {},
+            pickDestinations: t.pickDestinations || {},
             pickMods: t.pickMods || {},
             cashOut: 0,
             hardCappedAt: t.hardCappedAt || null,
@@ -4764,6 +4766,7 @@
             waivedPlayers: [],
             activeTab: 'roster',
             playerDestinations: {},
+            pickDestinations: {},
             pickMods: {},
             cashOut: 0,
             hardCappedAt: null
@@ -4822,14 +4825,16 @@
         renderAll();
     }
 
-    function defaultDestForPlayer(fromTeam) {
-        // Prefer other teams that already have a club selected
-        const others = teams.filter(function (x) {
-            return x.id !== fromTeam.id && x.abbr;
+    function otherTeamsWithAbbr(fromTeamId) {
+        return teams.filter(function (x) {
+            return x.id !== fromTeamId && x.abbr;
         });
+    }
+
+    function defaultDestForPlayer(fromTeam) {
+        const others = otherTeamsWithAbbr(fromTeam.id);
         if (!others.length) return null;
         if (others.length === 1) return others[0].id;
-        // Prefer a team that is "active" in the trade (has assets), else first other
         const active = others.filter(function (x) {
             return (x.selectedPlayers && x.selectedPlayers.length) ||
                 (x.selectedPicks && x.selectedPicks.length) ||
@@ -4839,26 +4844,98 @@
     }
 
     function ensurePlayerDestinations() {
-        const teamsWithAbbr = teams.filter(function (x) { return x.abbr; });
-        const multi = teamsWithAbbr.length >= 3;
+        const multi = teams.filter(function (x) { return x.abbr; }).length >= 3;
         teams.forEach(function (tm) {
             if (!tm.playerDestinations) tm.playerDestinations = {};
+            if (!tm.pickDestinations) tm.pickDestinations = {};
             (tm.selectedPlayers || []).forEach(function (pid) {
                 const dest = tm.playerDestinations[pid];
                 const destValid = dest != null && teams.some(function (x) {
                     return x.id === Number(dest) && x.id !== tm.id && x.abbr;
                 });
                 if (!multi) {
-                    // 2-team trades: clear explicit destinations (routing is automatic)
                     delete tm.playerDestinations[pid];
                     return;
                 }
-                if (!destValid) {
-                    const d = defaultDestForPlayer(tm);
-                    if (d != null) tm.playerDestinations[pid] = d;
+                // Do NOT auto-assign missing destinations here — user is prompted on select
+                if (!destValid) delete tm.playerDestinations[pid];
+            });
+            (tm.selectedPicks || []).forEach(function (pkid) {
+                const dest = tm.pickDestinations[pkid];
+                const destValid = dest != null && teams.some(function (x) {
+                    return x.id === Number(dest) && x.id !== tm.id && x.abbr;
+                });
+                if (!multi) {
+                    delete tm.pickDestinations[pkid];
+                    return;
                 }
+                if (!destValid) delete tm.pickDestinations[pkid];
             });
         });
+    }
+
+    function closeDestModal() {
+        var ov = document.getElementById('destModalOverlay');
+        if (ov) ov.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function openDestModal(opts) {
+        // opts: { title, subtitle, fromTeamId, choices, onPick, onCancel }
+        var ov = document.getElementById('destModalOverlay');
+        if (!ov) {
+            ov = document.createElement('div');
+            ov.id = 'destModalOverlay';
+            ov.className = 'dest-modal-overlay';
+            ov.innerHTML =
+                '<div class="dest-modal" role="dialog" aria-modal="true">' +
+                '<div class="dest-modal-head"><h3 id="destModalTitle">Send to which team?</h3>' +
+                '<p id="destModalSub"></p></div>' +
+                '<div class="dest-modal-list" id="destModalList"></div>' +
+                '<button type="button" class="dest-modal-cancel" id="destModalCancel">Cancel</button>' +
+                '</div>';
+            document.body.appendChild(ov);
+            ov.addEventListener('click', function (e) {
+                if (e.target === ov) {
+                    if (ov._onCancel) ov._onCancel();
+                    closeDestModal();
+                }
+            });
+            document.getElementById('destModalCancel').onclick = function () {
+                if (ov._onCancel) ov._onCancel();
+                closeDestModal();
+            };
+        }
+        ov._onCancel = opts.onCancel || null;
+        document.getElementById('destModalTitle').textContent = opts.title || 'Send to which team?';
+        document.getElementById('destModalSub').textContent = opts.subtitle || '';
+        var list = document.getElementById('destModalList');
+        list.innerHTML = '';
+        (opts.choices || []).forEach(function (c) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            var info = NBA_TEAMS[c.abbr] || {};
+            var color = info.color || '#64748b';
+            var logoUrl = (typeof teamLogoUrl === 'function')
+                ? teamLogoUrl(c.abbr)
+                : ('https://a.espncdn.com/i/teamlogos/nba/500/' + String(c.abbr || '').toLowerCase() + '.png');
+            btn.innerHTML =
+                '<img class="dest-modal-logo" src="' + logoUrl + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+                '<span class="dest-modal-logo-fb" style="background:' + color + ';display:none">' + String(c.abbr || '').slice(0, 3) + '</span>' +
+                '<span><div class="dest-modal-name">' + (info.name || c.abbr) + '</div>' +
+                '<div class="dest-modal-abbr">' + c.abbr + '</div></span>';
+            btn.onclick = function () {
+                closeDestModal();
+                if (opts.onPick) opts.onPick(c.id);
+            };
+            list.appendChild(btn);
+        });
+        ov.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function needsDestPrompt(fromTeamId) {
+        return otherTeamsWithAbbr(fromTeamId).length >= 2;
     }
 
     function togglePlayer(teamId, playerId) {
@@ -4868,30 +4945,77 @@
         if (idx >= 0) {
             t.selectedPlayers.splice(idx, 1);
             if (t.playerDestinations) delete t.playerDestinations[playerId];
-        } else {
-            t.selectedPlayers.push(playerId);
-            if (!t.playerDestinations) t.playerDestinations = {};
-            // Auto-route so multi-team Incoming/salary works without a separate Outgoing UI
-            const teamsWithAbbr = teams.filter(function (x) { return x.abbr; }).length;
-            if (teamsWithAbbr >= 3) {
-                const d = defaultDestForPlayer(t);
-                if (d != null) t.playerDestinations[playerId] = d;
-            }
+            updateStats();
+            renderAll();
+            return;
         }
-        ensurePlayerDestinations();
+        // Selecting: in 3+ team trades, ask where the player goes first
+        if (needsDestPrompt(teamId)) {
+            const others = otherTeamsWithAbbr(teamId);
+            var pname = playerId;
+            try {
+                var data = t.abbr && TEAM_DATA[t.abbr];
+                var p = data && data.players && data.players.find(function (pp) { return pp.id === playerId; });
+                if (p) pname = p.name;
+            } catch (_) {}
+            openDestModal({
+                title: 'Send to which team?',
+                subtitle: pname + ' will leave ' + (t.abbr || 'this team') + ' and appear under Incoming on the team you choose.',
+                fromTeamId: teamId,
+                choices: others.map(function (o) { return { id: o.id, abbr: o.abbr }; }),
+                onPick: function (destId) {
+                    if (t.selectedPlayers.indexOf(playerId) < 0) t.selectedPlayers.push(playerId);
+                    if (!t.playerDestinations) t.playerDestinations = {};
+                    t.playerDestinations[playerId] = Number(destId);
+                    updateStats();
+                    renderAll();
+                },
+                onCancel: function () { /* do not add player */ }
+            });
+            return;
+        }
+        // 2-team (or only one other club): no prompt needed
+        t.selectedPlayers.push(playerId);
+        if (t.playerDestinations) delete t.playerDestinations[playerId];
         updateStats();
         renderAll();
     }
 
     function togglePick(teamId, pickId) {
-        const t = teams.find(t => t.id === teamId);
+        const t = teams.find(function (x) { return x.id === teamId; });
         if (!t || !t.abbr) return;
         const data = TEAM_DATA[t.abbr];
-        const pk = data && data.picks ? data.picks.find(p => p.id === pickId) : null;
+        const pk = data && data.picks ? data.picks.find(function (p) { return p.id === pickId; }) : null;
         if (pk && isPickIneligible(pk)) return;
         const idx = t.selectedPicks.indexOf(pickId);
-        if (idx >= 0) t.selectedPicks.splice(idx, 1);
-        else t.selectedPicks.push(pickId);
+        if (idx >= 0) {
+            t.selectedPicks.splice(idx, 1);
+            if (t.pickDestinations) delete t.pickDestinations[pickId];
+            updateStats();
+            renderAll();
+            return;
+        }
+        if (needsDestPrompt(teamId)) {
+            const others = otherTeamsWithAbbr(teamId);
+            var label = pk ? ((typeof formatPickName === 'function') ? formatPickName(pk) : (pk.name || 'Pick')) : 'Pick';
+            openDestModal({
+                title: 'Send pick to which team?',
+                subtitle: label + ' will appear under Incoming on the team you choose.',
+                fromTeamId: teamId,
+                choices: others.map(function (o) { return { id: o.id, abbr: o.abbr }; }),
+                onPick: function (destId) {
+                    if (t.selectedPicks.indexOf(pickId) < 0) t.selectedPicks.push(pickId);
+                    if (!t.pickDestinations) t.pickDestinations = {};
+                    t.pickDestinations[pickId] = Number(destId);
+                    updateStats();
+                    renderAll();
+                },
+                onCancel: function () {}
+            });
+            return;
+        }
+        t.selectedPicks.push(pickId);
+        if (t.pickDestinations) delete t.pickDestinations[pickId];
         updateStats();
         renderAll();
     }
@@ -5104,29 +5228,7 @@
             card.innerHTML = buildTeamCard(t);
         });
         updateStats();
-        // Add-team slot card (does not reset existing teams)
-        var addSlot = grid.querySelector('.team-card-add-slot');
-        if (teams.length < MAX_TEAMS) {
-            if (!addSlot) {
-                addSlot = document.createElement('div');
-                addSlot.className = 'team-card-add-slot';
-                addSlot.setAttribute('role', 'button');
-                addSlot.setAttribute('tabindex', '0');
-                addSlot.innerHTML =
-                    '<div class="add-plus" aria-hidden="true">+</div>' +
-                    '<div class="add-title">Add another team</div>' +
-                    '<div class="add-sub">Keeps your current players and picks. Up to ' + MAX_TEAMS + ' teams.</div>';
-                addSlot.onclick = function () { addTeam(); };
-                addSlot.onkeydown = function (e) {
-                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addTeam(); }
-                };
-                grid.appendChild(addSlot);
-            } else {
-                grid.appendChild(addSlot); // keep at end
-            }
-        } else if (addSlot) {
-            addSlot.remove();
-        }
+        grid.querySelectorAll('.team-card-add-slot').forEach(function (el) { el.remove(); });
 
         var addBtn = document.getElementById('addTeamBtn');
         if (addBtn) {
@@ -5229,15 +5331,19 @@
                 });
                 (other.selectedPicks || []).forEach(pkid => {
                     let comesHere = false;
-                    if (isTwoTeamTrade) comesHere = true;
-                    else {
-                        // 3+: if only one other counterparty, route there; else show if this is the only other team with assets
-                        const others = teamsWithAssetsNow.filter(x => x.id !== other.id);
-                        comesHere = others.length === 1 && others[0].id === t.id;
+                    if (isTwoTeamTrade) {
+                        comesHere = true;
+                    } else {
+                        const destId = (other.pickDestinations || {})[pkid];
+                        if (destId != null && Number(destId) === t.id) comesHere = true;
+                        else if (destId == null || destId === '') {
+                            const def = typeof defaultDestForPlayer === 'function' ? defaultDestForPlayer(other) : null;
+                            comesHere = def != null && Number(def) === t.id;
+                        }
                     }
                     if (!comesHere) return;
                     const pk = (odata.picks || []).find(pp => pp.id === pkid);
-                    if (pk) incomingPickRows.push({ pk, fromAbbr: other.abbr });
+                    if (pk) incomingPickRows.push({ pk, fromAbbr: other.abbr, fromTeamId: other.id, pickId: pkid });
                 });
             });
 
