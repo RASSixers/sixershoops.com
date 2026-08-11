@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Trade Machine — Sixers Hoops</title>
+    <title>NBA Trade Machine - Sixers Hoops</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2004,6 +2004,53 @@
             line-height: 1.4;
         }
 
+
+        .team-card-add-slot {
+            border: 2px dashed #c7d2e0;
+            border-radius: 16px;
+            background: #f8fafc;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .65rem;
+            cursor: pointer;
+            transition: border-color .15s, background .15s, transform .15s;
+            padding: 1.5rem 1rem;
+            text-align: center;
+        }
+        .team-card-add-slot:hover {
+            border-color: #006BB6;
+            background: rgba(0,107,182,.04);
+            transform: translateY(-1px);
+        }
+        .team-card-add-slot:focus-visible {
+            outline: 2px solid #006BB6;
+            outline-offset: 2px;
+        }
+        .team-card-add-slot .add-plus {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: #fff; border: 1.5px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: center;
+            color: #006BB6; font-size: 1.75rem; font-weight: 300; line-height: 1;
+        }
+        .team-card-add-slot:hover .add-plus {
+            border-color: #006BB6;
+            background: rgba(0,107,182,.08);
+        }
+        .team-card-add-slot .add-title {
+            font-family: Lexend, sans-serif; font-weight: 800; font-size: .95rem; color: #0f172a;
+        }
+        .team-card-add-slot .add-sub {
+            font-family: Lexend, sans-serif; font-size: .78rem; color: #64748b; font-weight: 500;
+            max-width: 200px; line-height: 1.4;
+        }
+        .team-card-add-slot.disabled {
+            opacity: .45; cursor: not-allowed; pointer-events: none;
+        }
+        .board-toolbar-label strong { color: #0f172a; font-weight: 800; }
+
         /* ── Board toolbar (replaces hero Reset/Add Team) ── */
         .board-toolbar {
             display: flex; align-items: center; justify-content: space-between;
@@ -2336,7 +2383,7 @@
         <div class="hero-inner">
             <p class="hero-title-top">NBA TRADE</p>
             <p class="hero-title-bottom">MACHINE</p>
-            <p style="font-family:Lexend,sans-serif;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.55);margin:.35rem 0 0;letter-spacing:.04em;">SixersHoops · 2026–27 · Fan tool — not affiliated with the NBA</p>
+            <p style="font-family:Lexend,sans-serif;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.55);margin:.35rem 0 0;letter-spacing:.04em;">SixersHoops · 2026-27 · Fan tool - not affiliated with the NBA</p>
         </div>
     </header>
 
@@ -2346,7 +2393,7 @@
         <div class="tm-board">
             <!-- CBA Numbers Bar -->
             <div class="cba-bar">
-                <span class="cba-bar-title">2026–27</span>
+                <span class="cba-bar-title">2026-27</span>
                 <div class="cba-stat"><span class="cba-stat-val" id="cba-cap">$165.0M</span><span class="cba-stat-key">Salary Cap</span></div>
                 <div class="cba-divider"></div>
                 <div class="cba-stat"><span class="cba-stat-val" id="cba-tax">$201.0M</span><span class="cba-stat-key">Luxury Tax</span></div>
@@ -2357,7 +2404,7 @@
             </div>
 
             <div style="padding:.55rem 1rem;background:#fffbeb;border-bottom:1px solid #fde68a;font-family:Lexend,sans-serif;font-size:.68rem;line-height:1.45;color:#92400e;">
-                <strong>Estimates only.</strong> Matching, aprons, TPEs, holds, and Stepien are modeled from the CBA — but salaries near apron lines, non-guaranteed deals, incentives, and BYC can differ from league books. Always verify before treating a result as official.
+                <strong>Estimates only.</strong> Matching, aprons, TPEs, holds, and Stepien are modeled from the CBA, but salaries near apron lines, non-guaranteed deals, incentives, and BYC can differ from league books. Always verify before treating a result as official.
             </div>
 
             <!-- hidden stat holders for JS references that still exist -->
@@ -2377,7 +2424,7 @@
                     <button class="board-btn board-btn-ghost" onclick="copyShareLink()" title="Copy a link to this trade">
                         Copy Link
                     </button>
-                    <button class="board-btn board-btn-primary" id="addTeamBtn" onclick="addTeam()" title="Add another team to the trade">
+                    <button class="board-btn board-btn-primary" id="addTeamBtn" onclick="addTeam()" title="Add another team without clearing this trade">
                         Add Team
                     </button>
                     <button class="board-btn board-btn-analyze" onclick="analyzeTrade()" title="Run CBA analysis on this trade">
@@ -4696,16 +4743,47 @@
         }
     }
 
+    var MAX_TEAMS = 5;
+
     function addTeam() {
-        if (teams.length >= 5) return;
+        if (teams.length >= MAX_TEAMS) {
+            try {
+                alert('This trade already has ' + MAX_TEAMS + ' teams (the maximum). Remove a team first if you need a different club.');
+            } catch (_) {}
+            return;
+        }
+        // Preserve existing selections — only append an empty team slot
         const id = nextId++;
-        teams.push({ id, abbr: null, selectedPlayers: [], selectedPicks: [], selectedTPEs: [], faSignings: [], waivedPlayers: [], activeTab: 'roster', playerDestinations: {}, pickMods: {}, cashOut: 0, hardCappedAt: null });
+        teams.push({
+            id: id,
+            abbr: null,
+            selectedPlayers: [],
+            selectedPicks: [],
+            selectedTPEs: [],
+            faSignings: [],
+            waivedPlayers: [],
+            activeTab: 'roster',
+            playerDestinations: {},
+            pickMods: {},
+            cashOut: 0,
+            hardCappedAt: null
+        });
         renderAll();
+        try {
+            var card = document.querySelector('[data-team-id="' + id + '"]');
+            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (_) {}
     }
 
     function removeTeam(id) {
         if (teams.length <= 2) return;
-        teams = teams.filter(t => t.id !== id);
+        teams = teams.filter(function (tm) { return tm.id !== id; });
+        teams.forEach(function (tm) {
+            if (!tm.playerDestinations) return;
+            Object.keys(tm.playerDestinations).forEach(function (pid) {
+                if (Number(tm.playerDestinations[pid]) === Number(id)) delete tm.playerDestinations[pid];
+            });
+        });
         renderAll();
     }
 
@@ -4978,8 +5056,46 @@
             card.innerHTML = buildTeamCard(t);
         });
         updateStats();
-        document.getElementById('addTeamBtn').disabled = teams.length >= 5;
-        ['teamCountLabel','totalTeams'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = teams.length; });
+        // Add-team slot card (does not reset existing teams)
+        var addSlot = grid.querySelector('.team-card-add-slot');
+        if (teams.length < MAX_TEAMS) {
+            if (!addSlot) {
+                addSlot = document.createElement('div');
+                addSlot.className = 'team-card-add-slot';
+                addSlot.setAttribute('role', 'button');
+                addSlot.setAttribute('tabindex', '0');
+                addSlot.innerHTML =
+                    '<div class="add-plus" aria-hidden="true">+</div>' +
+                    '<div class="add-title">Add another team</div>' +
+                    '<div class="add-sub">Keeps your current players and picks. Up to ' + MAX_TEAMS + ' teams.</div>';
+                addSlot.onclick = function () { addTeam(); };
+                addSlot.onkeydown = function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addTeam(); }
+                };
+                grid.appendChild(addSlot);
+            } else {
+                grid.appendChild(addSlot); // keep at end
+            }
+        } else if (addSlot) {
+            addSlot.remove();
+        }
+
+        var addBtn = document.getElementById('addTeamBtn');
+        if (addBtn) {
+            addBtn.disabled = teams.length >= MAX_TEAMS;
+            addBtn.textContent = teams.length >= MAX_TEAMS ? 'Max teams' : 'Add Team';
+            addBtn.title = teams.length >= MAX_TEAMS
+                ? 'Maximum of ' + MAX_TEAMS + ' teams reached'
+                : 'Add another team without clearing this trade';
+        }
+        ['teamCountLabel','totalTeams'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = teams.length;
+        });
+        var label = document.querySelector('.board-toolbar-label');
+        if (label) {
+            label.innerHTML = 'Teams in this trade: <strong>' + teams.length + '</strong> / ' + MAX_TEAMS;
+        }
         schedulePersist();
     }
 
