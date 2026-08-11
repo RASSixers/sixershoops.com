@@ -1605,7 +1605,6 @@ document.addEventListener('click', function(e) {
         '<button type="button" id="globalDraftsClose" style="border:none;background:transparent;font-size:1.35rem;cursor:pointer;color:#64748b;line-height:1;">×</button>' +
         '</div>' +
         '<div id="globalDraftsBody" style="overflow:auto;flex:1;"></div>' +
-        '<div style="padding:.75rem 1.15rem;border-top:1px solid #e2e8f0;font-size:.75rem;color:#94a3b8;font-weight:500;">Open loads a draft in the Trade Machine. This list stays on the current page.</div>' +
         '</div>';
       document.body.appendChild(ov);
       ov.addEventListener('click', function (e) { if (e.target === ov) closeGlobalDraftsPanel(); });
