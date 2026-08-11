@@ -5223,11 +5223,10 @@
             }
 
             const waivedSet = new Set(t.waivedPlayers || []);
-            rosterContent += `<div class="roster-section-label" style="color:#64748b;">ROSTER</div>`;
-            rosterContent += `<div class="player-list" style="padding-top:0;">`;
-            data.players.forEach(p => {
-                if (waivedSet.has(p.id)) return;
-                const isSel = t.selectedPlayers.includes(p.id);
+            const selectedSet = new Set(t.selectedPlayers || []);
+
+            // Helper to build contract/hold bits for a player row
+            function playerMetaBits(p) {
                 const hold = getPlayerTradeHold(p);
                 const holdHard = hold && hold.hard;
                 const contractBadgeColor = p.contractType === 'Guaranteed' ? '#16a34a' :
@@ -5240,34 +5239,79 @@
                     ${holdHard
                         ? 'background:rgba(220,38,38,.12);color:#b91c1c;border:1px solid rgba(220,38,38,.25);'
                         : 'background:rgba(234,88,12,.12);color:#c2410c;border:1px solid rgba(234,88,12,.25);'}">${hold.label}</span>` : '';
-                let destLabel = '';
-                if (isSel && isMultiTeamTrade) {
-                    const destVal = (t.playerDestinations || {})[p.id];
-                    destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
-                        ${otherTeamsForDest.map(ot => {
-                            const on = destVal == ot.id;
-                            const col = (NBA_TEAMS[ot.abbr] && NBA_TEAMS[ot.abbr].color) || '#0066cc';
-                            return `<button type="button" onclick="setPlayerDestination(${t.id},'${p.id}',${ot.id})"
-                                style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;padding:5px 10px;border-radius:7px;cursor:pointer;
-                                border:2px solid ${on ? col : '#cbd5e1'};background:${on ? col : '#fff'};color:${on ? '#fff' : '#334155'};">${ot.abbr}</button>`;
-                        }).join('')}
+                const pos = (p.position && p.position !== '—' && p.position !== '-')
+                    ? `<span style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.08em;background:#f1f5f9;color:#64748b;border-radius:3px;padding:1px 4px;">${p.position}</span>`
+                    : '';
+                const contract = `<span style="font-family:'Lexend',sans-serif;font-size:.6rem;font-weight:600;color:${contractBadgeColor};background:${contractBadgeColor}18;border-radius:3px;padding:1px 5px;">${p.contractType || ''}${p.futureOption ? '→' + (p.futureOption==='Player Option'?'PO':'TO') : ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</span>`;
+                return { hold, holdHard, holdBadge, pos, contract };
+            }
+
+            // OUTGOING: selected players leave the roster list and show here (click to undo)
+            const outgoingPlayers = data.players.filter(p => selectedSet.has(p.id) && !waivedSet.has(p.id));
+            if (outgoingPlayers.length) {
+                rosterContent += `<div class="roster-section-label" style="color:#dc2626;">OUTGOING</div>`;
+                rosterContent += `<div class="player-list" style="padding-top:0;">`;
+                outgoingPlayers.forEach(p => {
+                    const meta = playerMetaBits(p);
+                    let destLabel = '';
+                    if (isMultiTeamTrade) {
+                        const destVal = (t.playerDestinations || {})[p.id];
+                        destLabel = `<div onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                            ${otherTeamsForDest.map(ot => {
+                                const on = destVal == ot.id;
+                                const col = (NBA_TEAMS[ot.abbr] && NBA_TEAMS[ot.abbr].color) || '#0066cc';
+                                return `<button type="button" onclick="setPlayerDestination(${t.id},'${p.id}',${ot.id})"
+                                    style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;padding:5px 10px;border-radius:7px;cursor:pointer;
+                                    border:2px solid ${on ? col : '#cbd5e1'};background:${on ? col : '#fff'};color:${on ? '#fff' : '#334155'};">${ot.abbr}</button>`;
+                            }).join('')}
+                        </div>`;
+                    } else if (isTwoTeamTrade && otherTeamsForDest.length === 1) {
+                        destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;color:#b91c1c;margin-left:4px;">to ${otherTeamsForDest[0].abbr}</span>`;
+                    }
+                    rosterContent += `<div class="player-item selected" style="background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.28);" onclick="togglePlayer(${t.id},'${p.id}')" title="Click to remove from trade">
+                        ${playerHeadshotHtml(p.name, t.abbr)}
+                        <div class="player-checkbox" style="background:#dc2626;border-color:#dc2626;"><svg class="player-checkbox-check" style="display:block;color:#fff;" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div class="player-info" style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+                                <div class="player-name">${p.name}</div>
+                                ${meta.pos}
+                                ${meta.holdBadge}
+                                ${destLabel}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:.35rem;margin-top:2px;flex-wrap:wrap;">
+                                ${meta.contract}
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                            <div class="player-salary" style="color:#dc2626;">${fmtM(p.salary)}</div>
+                            <span style="font-family:'Lexend',sans-serif;font-size:.5rem;font-weight:800;letter-spacing:.04em;color:#dc2626;">REMOVE</span>
+                        </div>
                     </div>`;
-                } else if (isSel && isTwoTeamTrade && otherTeamsForDest.length === 1) {
-                    destLabel = `<span style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;color:#b91c1c;margin-left:4px;">→ ${otherTeamsForDest[0].abbr}</span>`;
-                }
-                const itemStyle = (holdHard ? 'opacity:.72;' : '') + (isSel ? 'background:rgba(0,107,182,.08);border-color:rgba(0,107,182,.3);' : '');
-                rosterContent += `<div class="player-item ${isSel ? 'selected' : ''}" style="${itemStyle}" onclick="togglePlayer(${t.id},'${p.id}')">
+                });
+                rosterContent += `</div>`;
+            }
+
+            // ROSTER: only players still available (not selected, not waived)
+            rosterContent += `<div class="roster-section-label" style="color:#64748b;">ROSTER</div>`;
+            rosterContent += `<div class="player-list" style="padding-top:0;">`;
+            let rosterAvailable = 0;
+            data.players.forEach(p => {
+                if (waivedSet.has(p.id)) return;
+                if (selectedSet.has(p.id)) return; // moved to OUTGOING / other team's INCOMING
+                rosterAvailable++;
+                const meta = playerMetaBits(p);
+                const itemStyle = meta.holdHard ? 'opacity:.72;' : '';
+                rosterContent += `<div class="player-item" style="${itemStyle}" onclick="togglePlayer(${t.id},'${p.id}')">
                     ${playerHeadshotHtml(p.name, t.abbr)}
                     <div class="player-checkbox"><svg class="player-checkbox-check" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
                     <div class="player-info" style="flex:1;min-width:0;">
                         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
                             <div class="player-name">${p.name}</div>
-                            ${p.position && p.position !== '—' ? `<span style="font-family:'Lexend',sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.08em;background:#f1f5f9;color:#64748b;border-radius:3px;padding:1px 4px;">${p.position}</span>` : ''}
-                            ${holdBadge}
-                            ${destLabel}
+                            ${meta.pos}
+                            ${meta.holdBadge}
                         </div>
                         <div style="display:flex;align-items:center;gap:.35rem;margin-top:2px;flex-wrap:wrap;">
-                            <span style="font-family:'Lexend',sans-serif;font-size:.6rem;font-weight:600;color:${contractBadgeColor};background:${contractBadgeColor}18;border-radius:3px;padding:1px 5px;">${p.contractType || ''}${p.futureOption ? '→' + (p.futureOption==='Player Option'?'PO':'TO') : ''}${p.contractYears ? ' · ' + p.contractYears + 'yr' : ''}</span>
+                            ${meta.contract}
                         </div>
                     </div>
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
@@ -5277,6 +5321,11 @@
                     </div>
                 </div>`;
             });
+            if (!rosterAvailable && !outgoingPlayers.length) {
+                rosterContent += `<div class="empty-state" style="padding:.75rem;"><div class="empty-state-text">No players on roster</div></div>`;
+            } else if (!rosterAvailable) {
+                rosterContent += `<div style="padding:.5rem .75rem;font-family:Lexend,sans-serif;font-size:.72rem;color:#94a3b8;font-weight:500;">All remaining players are in Outgoing or waived.</div>`;
+            }
             // Show waived players (can un-waive)
             (t.waivedPlayers || []).forEach(pid => {
                 const p = data.players.find(pp => pp.id === pid);
@@ -5291,6 +5340,7 @@
                         style="font-family:'Lexend',sans-serif;font-size:.55rem;font-weight:800;padding:4px 8px;border-radius:5px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">UNDO</button>
                 </div>`;
             });
+            rosterContent += `</div>`;
             rosterContent += `</div>`;
         }
         panels += `<div class="team-tab-panel ${rosterActive}">${rosterContent}</div>`;
