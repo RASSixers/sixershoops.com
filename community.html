@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COMMUNITY TRADES - Sixers Hoops</title>
-  <meta name="description" content="Browse, vote, and discuss fan-made NBA trades and community posts." />
+  <title>Community - Sixers Hoops</title>
+  <meta name="description" content="Trades, discussions, and fan posts from the Sixers Hoops community." />
   <link rel="icon" href="/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -293,7 +293,7 @@
         <div class="page-top">
       <div class="page-top-left">
         <p class="hero-kicker">Sixers Hoops Community</p>
-        <h1 class="hero-title">Community <span>Trades</span></h1>
+        <h1 class="hero-title">The <span>Community</span></h1>
       </div>
       <div class="top-actions"><a class="btn btn-ghost" href="/nba-trade-machine.html">Trade Machine</a></div>
     </div>
@@ -458,7 +458,7 @@
     const id = new URLSearchParams(location.search).get('post') || new URLSearchParams(location.search).get('id');
     if(!id) return;
     // Full detail lives on trade.html - redirect so past + new posts open correctly
-    window.location.replace('/trade.html?id=' + encodeURIComponent(id));
+    window.location.replace('/community/p/' + encodeURIComponent(id));
   }
 
 
@@ -470,7 +470,7 @@
     try{
       const doc = await window.db.collection(COLLECTION).doc(id).get();
       if(!doc.exists){
-        box.innerHTML = '<div class="empty"><strong>Post not found in database.</strong><br/>It may have failed to save (check Firestore rules) or the id is wrong.<br/><a href="/trades.html">Back to feed</a></div>';
+        box.innerHTML = '<div class="empty"><strong>Post not found in database.</strong><br/>It may have failed to save (check Firestore rules) or the id is wrong.<br/><a href="/community">Back to Community</a></div>';
         return;
       }
       const t = doc.data(); t.id = doc.id;
@@ -484,7 +484,7 @@
       }
       box.innerHTML =
         '<div class="card" style="border-color:#006BB6">' +
-        '<div style="font-size:.75rem;margin-bottom:.5rem"><a href="/trades.html" style="color:var(--sixers-blue);font-weight:700">← All trades</a></div>' +
+        '<div style="font-size:.75rem;margin-bottom:.5rem"><a href="/community" style="color:var(--sixers-blue);font-weight:700">← Community</a></div>' +
         '<h2 class="ctitle">'+esc(t.title||'Untitled')+'</h2>' +
         '<div class="cmeta">'+esc(t.author||'u/fan')+' · '+(t.isValid===true?'Appears legal':(t.isValid===false?'Invalid / restricted':''))+'</div>' +
         (t.notes ? '<p class="cexcerpt" style="-webkit-line-clamp:unset">'+esc(t.notes)+'</p>' : '') +
@@ -494,7 +494,7 @@
         '</div>';
     }catch(e){
       console.error(e);
-      box.innerHTML = '<div class="empty">Could not load post: '+esc(e.message||e)+'<br/><a href="/trades.html">Back to feed</a></div>';
+      box.innerHTML = '<div class="empty">Could not load post: '+esc(e.message||e)+'<br/><a href="/community">Back to Community</a></div>';
     }
   }
 
@@ -592,7 +592,7 @@
     var isQuote = (t.postType==='quote_repost'||t.type==='quote_repost') && t.quotedPostId;
     var qAuthor = String(t.quotedAuthor||'Original').replace(/^u\//,'');
     var qTitle = t.quotedTitle || 'Original post';
-    var qUrl = t.quotedPostId ? ('/trade.html?id='+encodeURIComponent(t.quotedPostId)) : '';
+    var qUrl = t.quotedPostId ? ('/community/p/'+encodeURIComponent(t.quotedPostId)) : '';
     var qInitial = (qAuthor||'U').charAt(0).toUpperCase();
     var html = '';
     if(isPlain || isQuote){
@@ -600,7 +600,7 @@
     }
     html += '<div class="cmeta"><a class="author-link" href="/user/'+encodeURIComponent(slug)+'">'+esc(author)+'</a> · '+esc(timeAgo(t.createdAt))+(t.editedAt?' · edited '+esc(timeAgo(t.editedAt)):'')+'</div>';
     if(isPlain){
-      html += '<a class="tw-quote-card" href="'+esc(qUrl||('/trade.html?id='+encodeURIComponent(t.id)))+'" onclick="event.stopPropagation()">';
+      html += '<a class="tw-quote-card" href="'+esc(qUrl||('/community/p/'+encodeURIComponent(t.id)))+'" onclick="event.stopPropagation()">';
       html += '<div class="tw-quote-head"><div class="tw-quote-avatar">'+esc(qInitial)+'</div><span class="tw-quote-name">'+esc(qAuthor)+'</span></div>';
       html += '<div class="tw-quote-title">'+esc(qTitle)+'</div>';
       if(t.quotedSummary||t.quotedNotes) html += '<p class="tw-quote-body">'+esc(String(t.quotedSummary||t.quotedNotes||'').slice(0,200))+'</p>';
@@ -698,7 +698,7 @@
     if(card){
       card.onclick = function(e){
         if(e.target.closest('button, a, .vcol')) return;
-        location.href = '/trade.html?id=' + encodeURIComponent(top.id);
+        location.href = '/community/p/' + encodeURIComponent(top.id);
       };
     }
   }
@@ -783,7 +783,7 @@
     feed.querySelectorAll('article.card').forEach(function(card){
       var id = card.getAttribute('data-id');
       if(!id) return;
-      var go = function(){ window.location.href = '/trade.html?id=' + encodeURIComponent(id); };
+      var go = function(){ window.location.href = '/community/p/' + encodeURIComponent(id); };
       card.onclick = function(e){
         if(e.target.closest('button, a, .vcol, .pager')) return;
         go();
@@ -950,7 +950,7 @@
     try{
       const ref=await window.db.collection(COLLECTION).add(doc);
       closeCreate();
-      window.location.href='/trade.html?id='+encodeURIComponent(ref.id);
+      window.location.href='/community/p/'+encodeURIComponent(ref.id);
     }catch(e){
       console.error(e);
       err.style.display='block';err.textContent=e.message||'Could not post.';
