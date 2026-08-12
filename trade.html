@@ -667,15 +667,22 @@
     return String(s||'trade').toLowerCase()
       .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || 'trade';
   }
+  function postUrl(id, title){
+    var slug = title ? slugifyTitle(title) : '';
+    return '/community/p/' + encodeURIComponent(id) + (slug ? ('/' + encodeURIComponent(slug)) : '');
+  }
   function setPrettyUrl(id, title){
-    // Stay on trade.html so static hosts never 404. Optional pretty path only if already on /trade/...
+    // Canonical long-term URL: /community/p/{id}/{slug}
     try{
-      if(/^\/trade\//.test(location.pathname)){
-        const path='/trade/'+encodeURIComponent(id)+'/'+encodeURIComponent(slugifyTitle(title));
-        if(location.pathname !== path) history.replaceState(null,'',path);
+      var slug = slugifyTitle(title);
+      var path = '/community/p/' + encodeURIComponent(id) + (slug ? ('/' + encodeURIComponent(slug)) : '');
+      var onPretty = /^\/community\/p\//i.test(location.pathname) || /^\/trade\//i.test(location.pathname);
+      if (onPretty || !/trade\.html$/i.test(location.pathname)) {
+        if (location.pathname !== path) history.replaceState(null, '', path);
       } else {
-        const q='/trade.html?id='+encodeURIComponent(id);
-        if(location.pathname+location.search !== q) history.replaceState(null,'',q);
+        // Fallback file path for local/static without SPA 404
+        var q = postUrl(id);
+        if (location.pathname + location.search !== q) history.replaceState(null, '', q);
       }
     }catch(e){}
   }
@@ -1120,7 +1127,7 @@
             tradeTitle: trade.title || '',
             text: 'liked your trade',
             message: 'liked your trade',
-            link: '/trade.html?id=' + encodeURIComponent(trade.id),
+            link: postUrl(trade.id),
             read: false,
             createdAt: new Date().toISOString()
           });
@@ -1206,7 +1213,7 @@
             commentText: String(text).slice(0, 300),
             read: false,
             createdAt: new Date().toISOString(),
-            link: '/trade.html?id=' + encodeURIComponent(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
+            link: postUrl(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
           }));
         }
         if (parent && parent.authorId && parent.authorId !== user.uid && parent.authorId !== trade.authorId) {
@@ -1225,7 +1232,7 @@
             commentText: String(text).slice(0, 300),
             read: false,
             createdAt: new Date().toISOString(),
-            link: '/trade.html?id=' + encodeURIComponent(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
+            link: postUrl(trade.id) + '#comment-' + encodeURIComponent(newComment.id)
           }));
         }
         await Promise.all(batch);
@@ -1253,7 +1260,7 @@
       message:'This post will be permanently deleted. This cannot be undone.',
       onConfirm: async function(){
         await window.db.collection(COLLECTION).doc(trade.id).delete();
-        location.href='/trades.html';
+        location.href='/community';
       }
     });
   }
@@ -1431,7 +1438,7 @@
         var author = String(x.author||'u/fan').replace(/^u\//,'');
         var slug = author.toLowerCase().replace(/[^a-z0-9_-]+/g,'-');
         var sub = tab==='quotes' ? (String(x.notes||x.title||'').slice(0,80) || 'Quote post') : 'Reposted';
-        return '<a class="eng-user" href="/trade.html?id='+encodeURIComponent(x.id)+'">'+
+        return '<a class="eng-user" href="'+postUrl(x.id)+'">'+
           '<div class="eng-user-av">'+esc(author.charAt(0).toUpperCase())+'</div>'+
           '<div><div class="eng-user-name">u/'+esc(author)+'</div><div class="eng-user-sub">'+esc(sub)+'</div></div></a>';
       }).join('');
@@ -1527,7 +1534,7 @@
     html=html.replace('__MENU_RIGHT__', menuHtml);
     html+='</div>'; // close post-header
     // Build body: Twitter-style for plain repost vs quote vs normal
-    var qUrl = t.quotedPostId ? ('/trade.html?id='+encodeURIComponent(t.quotedPostId)) : '';
+    var qUrl = t.quotedPostId ? postUrl(t.quotedPostId) : '';
     var qAuthor = String(t.quotedAuthor||'Original').replace(/^u\//,'');
     var qTitle = t.quotedTitle || 'Original post';
     var qInitial = (qAuthor||'U').charAt(0).toUpperCase();
@@ -1637,13 +1644,13 @@
               tradeTitle: t.title || '',
               text: isQuote ? 'quote reposted' : 'reposted',
               message: isQuote ? 'quote reposted' : 'reposted',
-              link: '/trade.html?id='+encodeURIComponent(ref.id),
+              link: postUrl(ref.id),
               read: false,
               createdAt: String(new Date().toISOString())
             })));
           }catch(_){}
         }
-        location.href='/trade.html?id='+encodeURIComponent(ref.id);
+        location.href=postUrl(ref.id);
       }catch(err){
         alert((err&&err.message)||'Could not repost.');
       }
@@ -1766,7 +1773,7 @@ setTimeout(function(){try{hydrateCommentPhotos(); if(trade&&trade.authorId) hydr
     }
     const shareBtn=document.getElementById('btnShare');
     if(shareBtn)shareBtn.onclick=function(){
-      const url=location.origin+'/trade.html?id='+encodeURIComponent(t.id);
+      const url=location.origin+postUrl(t.id, t.title);
       openShareModal(url, t.title||'Trade');
     };
 
