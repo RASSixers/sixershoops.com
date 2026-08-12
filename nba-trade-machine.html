@@ -1672,25 +1672,18 @@
         .footer-value { font-size: 1.05rem; color: var(--ink); margin-top: 2px; }
         .footer-sending { color: var(--sixers-blue); font-weight: 700; font-size: .78rem; letter-spacing: .04em; }
 
-        /* ═══ TEAM DROPDOWN → FULLSCREEN COMMAND PALETTE MODAL ═══ */
-        body:has(.team-dropdown.open) { overflow: hidden; }
-        body:has(.team-dropdown.open)::before {
-            content: '';
-            position: fixed; inset: 0;
-            background: rgba(13,15,26,.55);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            z-index: 9000;
-            animation: tmFadeIn .18s ease-out;
+        /* ═══ TEAM PICKER MODAL (stable, no flash) ═══ */
+        #teamPickerBackdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(13,15,26,.5);
+            z-index: 12000;
         }
-        @keyframes tmFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes tmModalIn {
-            from { opacity: 0; transform: translate(-50%, -48%) scale(.96); }
-            to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
+        #teamPickerBackdrop.show { display: block; }
+        body.tm-picker-open { overflow: hidden; }
 
         .team-dropdown {
-            /* Override absolute positioning */
             position: fixed !important;
             top: 50% !important;
             left: 50% !important;
@@ -1699,18 +1692,18 @@
             width: min(960px, calc(100vw - 32px));
             max-width: 960px;
             max-height: min(720px, calc(100vh - 64px)) !important;
-            z-index: 9999;
+            z-index: 12010;
             background: #ffffff;
             border: 1px solid var(--border-light);
-            border-top: 1px solid var(--border-light);
             border-radius: 18px;
-            box-shadow: 0 32px 80px rgba(15,23,42,.3);
+            box-shadow: 0 24px 64px rgba(15,23,42,.28);
             padding-bottom: .5rem;
+            display: none;
+            flex-direction: column;
         }
         .team-dropdown.open {
             display: flex !important;
             flex-direction: column !important;
-            animation: tmModalIn .22s cubic-bezier(.2,.9,.3,1.1);
         }
 
         .team-dropdown-search {
@@ -8919,107 +8912,145 @@
         return { label: 'Under Cap', cls: 'under' };
     }
 
-    // ─── CUSTOM DROPDOWN ─────────────────────────────────────────────────────
+    // ─── CUSTOM DROPDOWN (stable open/close, no flash) ─────────────────────
     let openDropdownId = null;
-    // Remembers the original team-card-header parent for each portaled dropdown,
-    // so we can re-attach instead of removing (removing it makes getElementById
-    // return null on the next toggle and the dropdown stops opening).
+    let pickerIgnoreUntil = 0;
     const dropdownOrigin = new Map();
 
+    function ensurePickerBackdrop() {
+        var bd = document.getElementById('teamPickerBackdrop');
+        if (!bd) {
+            bd = document.createElement('div');
+            bd.id = 'teamPickerBackdrop';
+            bd.addEventListener('click', function () { closeAllDropdowns(); });
+            document.body.appendChild(bd);
+        }
+        return bd;
+    }
+
+    function showPickerBackdrop(show) {
+        var bd = ensurePickerBackdrop();
+        if (show) {
+            bd.classList.add('show');
+            document.body.classList.add('tm-picker-open');
+        } else {
+            bd.classList.remove('show');
+            document.body.classList.remove('tm-picker-open');
+        }
+    }
+
     function toggleDropdown(teamId, e) {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        }
         var dd = document.getElementById('dd-' + teamId);
         var hdr = document.getElementById('hdr-' + teamId);
-        if (!dd) {
-            console.warn('team dropdown missing for', teamId);
+        if (!dd) return;
+
+        // If already open for this team, close
+        if (openDropdownId === teamId && dd.classList.contains('open')) {
+            closeAllDropdowns();
             return;
         }
-        var isOpen = dd.classList.contains('open');
+
         closeAllDropdowns();
-        if (isOpen) return;
-        // Portal to body so fixed positioning is not clipped by .team-card overflow
+
         try {
             if (dd.parentElement !== document.body) {
                 dropdownOrigin.set(String(teamId), dd.parentElement);
                 dd.dataset.portalForTeam = String(teamId);
                 document.body.appendChild(dd);
             }
-        } catch (err) { console.warn(err); }
+        } catch (_) {}
+
         dd.classList.add('open');
         dd.style.display = 'flex';
         dd.style.flexDirection = 'column';
         if (hdr) hdr.classList.add('open');
         openDropdownId = teamId;
+        showPickerBackdrop(true);
+        // Ignore outside-close for a short window so the opening click cannot dismiss it
+        pickerIgnoreUntil = Date.now() + 300;
+
         setTimeout(function () {
             var inp = document.getElementById('ddsearch-' + teamId);
             if (inp) try { inp.focus(); } catch (_) {}
-        }, 40);
+        }, 30);
     }
 
     function closeDropdown(teamId) {
-        const dd = document.getElementById('dd-' + teamId);
-        const hdr = document.getElementById('hdr-' + teamId);
+        var dd = document.getElementById('dd-' + teamId);
+        var hdr = document.getElementById('hdr-' + teamId);
         if (dd) {
             dd.classList.remove('open');
+            dd.style.display = 'none';
             if (dd.parentElement === document.body) {
-                const origin = dropdownOrigin.get(String(teamId));
+                var origin = dropdownOrigin.get(String(teamId));
                 if (origin && document.body.contains(origin)) {
                     origin.appendChild(dd);
                 } else {
-                    // Origin gone (re-render)  -  safe to drop the detached node
-                    dd.remove();
+                    // keep on body until next render; avoid destroy/flash
                 }
                 dropdownOrigin.delete(String(teamId));
             }
         }
         if (hdr) hdr.classList.remove('open');
         if (openDropdownId === teamId) openDropdownId = null;
+        showPickerBackdrop(false);
     }
 
     function closeAllDropdowns() {
-        document.querySelectorAll('.team-dropdown.open').forEach(el => {
+        document.querySelectorAll('.team-dropdown.open').forEach(function (el) {
             el.classList.remove('open');
+            el.style.display = 'none';
             if (el.parentElement === document.body) {
-                const tid = el.dataset.portalForTeam;
-                const origin = tid != null ? dropdownOrigin.get(String(tid)) : null;
+                var tid = el.dataset.portalForTeam;
+                var origin = tid != null ? dropdownOrigin.get(String(tid)) : null;
                 if (origin && document.body.contains(origin)) {
                     origin.appendChild(el);
-                } else {
-                    el.remove();
                 }
                 if (tid != null) dropdownOrigin.delete(String(tid));
             }
         });
-        document.querySelectorAll('.team-card-header.open').forEach(el => el.classList.remove('open'));
+        document.querySelectorAll('.team-card-header.open').forEach(function (el) {
+            el.classList.remove('open');
+        });
         openDropdownId = null;
+        showPickerBackdrop(false);
     }
 
     function filterDropdown(teamId, query) {
-        const list = document.getElementById('ddlist-' + teamId);
+        var list = document.getElementById('ddlist-' + teamId);
         if (!list) return;
-        const q = query.toLowerCase().trim();
-        list.querySelectorAll('.team-tile').forEach(opt => {
-            const name = opt.dataset.name || '';
-            const abbr = opt.dataset.abbr || '';
-            opt.style.display = (!q || name.includes(q) || abbr.includes(q)) ? '' : 'none';
+        var q = (query || '').toLowerCase().trim();
+        list.querySelectorAll('.team-tile').forEach(function (opt) {
+            var name = opt.dataset.name || '';
+            var abbr = opt.dataset.abbr || '';
+            opt.style.display = (!q || name.indexOf(q) >= 0 || abbr.indexOf(q) >= 0) ? '' : 'none';
         });
-        list.querySelectorAll('.team-grid-picker').forEach(sec => {
-            const hasVisible = [...sec.querySelectorAll('.team-tile')].some(o => o.style.display !== 'none');
-            const label = sec.querySelector('.team-grid-section-label');
+        list.querySelectorAll('.team-grid-picker').forEach(function (sec) {
+            var hasVisible = Array.prototype.some.call(sec.querySelectorAll('.team-tile'), function (o) {
+                return o.style.display !== 'none';
+            });
+            var label = sec.querySelector('.team-grid-section-label');
             if (label) label.style.display = hasVisible ? '' : 'none';
         });
     }
 
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        if (openDropdownId !== null) {
-            const hdr = document.getElementById('hdr-' + openDropdownId);
-            const dd  = document.getElementById('dd-' + openDropdownId);
-            const insideHdr = hdr && hdr.contains(e.target);
-            const insideDd  = dd  && dd.contains(e.target);
-            if (!insideHdr && !insideDd) {
-                closeAllDropdowns();
-            }
+    // Outside close on mousedown (not the same click that opens)
+    document.addEventListener('mousedown', function (e) {
+        if (openDropdownId == null) return;
+        if (Date.now() < pickerIgnoreUntil) return;
+        var hdr = document.getElementById('hdr-' + openDropdownId);
+        var dd = document.getElementById('dd-' + openDropdownId);
+        var insideHdr = hdr && hdr.contains(e.target);
+        var insideDd = dd && dd.contains(e.target);
+        var bd = document.getElementById('teamPickerBackdrop');
+        var onBackdrop = bd && e.target === bd;
+        if (onBackdrop || (!insideHdr && !insideDd)) {
+            closeAllDropdowns();
         }
     });
 
