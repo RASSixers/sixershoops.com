@@ -2719,6 +2719,97 @@
             color: #0f172a !important;
         }
 
+
+        .ext-offer-overlay {
+            position: fixed; inset: 0; z-index: 10050;
+            background: rgba(15,23,42,.55);
+            display: none; align-items: center; justify-content: center;
+            padding: 1rem; backdrop-filter: blur(4px);
+        }
+        .ext-offer-overlay.open { display: flex; }
+        .ext-offer-card {
+            background: #fff; border-radius: 18px; width: 100%; max-width: 440px;
+            box-shadow: 0 28px 60px rgba(15,23,42,.28);
+            font-family: Lexend, system-ui, sans-serif;
+            overflow: hidden;
+        }
+        .ext-offer-head {
+            padding: 1.1rem 1.25rem .85rem;
+            border-bottom: 1px solid #eef2f7;
+        }
+        .ext-offer-head h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; }
+        .ext-offer-head p { margin: .35rem 0 0; font-size: .78rem; color: #64748b; line-height: 1.4; }
+        .ext-offer-body { padding: 1rem 1.25rem 1.15rem; }
+        .ext-offer-label {
+            font-size: .62rem; font-weight: 800; letter-spacing: .08em;
+            text-transform: uppercase; color: #0f172a; margin-bottom: .4rem;
+        }
+        .ext-year-row { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .ext-year-btn {
+            flex: 1; min-width: 52px; padding: .55rem .4rem;
+            border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;
+            font-family: Lexend, sans-serif; font-weight: 800; font-size: .85rem; color: #0f172a;
+            cursor: pointer; transition: .15s;
+        }
+        .ext-year-btn.active {
+            background: #001a57; color: #fff; border-color: #001a57;
+        }
+        .ext-sal-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-bottom: .35rem;
+        }
+        .ext-sal-val { font-size: 1.35rem; font-weight: 900; color: #0f172a; }
+        .ext-sal-max { font-size: .68rem; font-weight: 600; color: #64748b; }
+        .ext-slider {
+            width: 100%; accent-color: #001a57; margin: .4rem 0 .25rem;
+        }
+        .ext-ticks {
+            display: flex; justify-content: space-between;
+            font-size: .58rem; font-weight: 700; color: #94a3b8; margin-bottom: .85rem;
+        }
+        .ext-meta-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: 1rem;
+        }
+        .ext-meta-cell {
+            background: #f8fafc; border: 1px solid #eef2f7; border-radius: 10px; padding: .55rem .65rem;
+        }
+        .ext-meta-cell span { display: block; font-size: .55rem; font-weight: 800; letter-spacing: .06em; color: #64748b; text-transform: uppercase; }
+        .ext-meta-cell strong { display: block; margin-top: 2px; font-size: .9rem; font-weight: 800; color: #0f172a; }
+        .ext-offer-actions { display: flex; gap: .5rem; }
+        .ext-btn {
+            flex: 1; border: none; border-radius: 10px; padding: .7rem .75rem;
+            font-family: Lexend, sans-serif; font-weight: 800; font-size: .82rem; cursor: pointer;
+        }
+        .ext-btn-cancel { background: #f1f5f9; color: #0f172a; }
+        .ext-btn-save { background: #001a57; color: #fff; }
+        .sheet-key {
+            display: flex; flex-wrap: wrap; gap: .4rem; margin: .35rem 0 .65rem;
+        }
+        .sheet-key span {
+            font-family: Lexend, sans-serif; font-size: .55rem; font-weight: 800;
+            letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; border: 1px solid;
+        }
+        .sheet-key .k-po { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+        .sheet-key .k-to { background: #faf5ff; color: #7e22ce; border-color: #e9d5ff; }
+        .sheet-key .k-ng { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+        .sheet-key .k-gtd { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+        .sheet-key .k-rk { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+        .sheet-expand-btn {
+            font-family: Lexend, sans-serif; font-size: .62rem; font-weight: 800;
+            border: 1px solid #e2e8f0; background: #fff; color: #0f172a;
+            border-radius: 8px; padding: .4rem .65rem; cursor: pointer;
+        }
+        .sheet-expand-btn:hover { border-color: #001a57; color: #001a57; }
+        #fillerModal.sheet-expanded .filler-box {
+            max-width: min(1100px, 96vw) !important;
+            width: 96vw !important;
+            max-height: 94vh !important;
+        }
+        #fillerModal.sheet-expanded #fillerBody {
+            max-height: calc(94vh - 90px);
+            overflow: auto;
+        }
+
 </style>
 </head>
 <body>
@@ -3046,6 +3137,15 @@
     }
 
     /** Contract label: "1+1 (PO)", "2+1 (TO)", "NG · 1yr", "4yr Guaranteed", etc. */
+    function sheetContractTone(p) {
+        var ct = String(p && p.contractType || '');
+        var fo = String(p && p.futureOption || '');
+        if (/non-?guaranteed|partial/i.test(ct) || p.partialGuarantee) return { bg: '#fff7ed', border: '#fed7aa', tag: 'NG', color: '#c2410c' };
+        if (/player option/i.test(fo) || /player option/i.test(ct)) return { bg: '#eff6ff', border: '#bfdbfe', tag: 'PO', color: '#1d4ed8' };
+        if (/team option/i.test(fo) || /team option/i.test(ct)) return { bg: '#faf5ff', border: '#e9d5ff', tag: 'TO', color: '#7e22ce' };
+        if (/rookie/i.test(ct)) return { bg: '#f8fafc', border: '#e2e8f0', tag: 'RK', color: '#475569' };
+        return { bg: '#f0fdf4', border: '#bbf7d0', tag: 'GTD', color: '#15803d' };
+    }
     function formatContractLabel(p) {
         if (!p) return '';
         const ct = String(p.contractType || '').trim();
@@ -5717,6 +5817,36 @@
     }
 
 
+    function cbaExtensionMaxAvg(player, years) {
+        // Practical ceiling for mock extensions: lesser of ~35% max starting salary scale
+        // and a raise-capped path from current AAV. Years 1-5.
+        var y = Math.max(1, Math.min(5, Number(years) || 1));
+        var cur = Number(player && player.salary) || 10000000;
+        var maxStart = Math.round((typeof CBA !== 'undefined' && CBA.salaryCap ? CBA.salaryCap : 165000000) * 0.35);
+        // Allow up to ~140% of current year-1 salary on first extension year, then soft-cap total AAV
+        var raised = Math.round(cur * (1 + 0.08 * Math.min(y, 4)));
+        var maxAvg = Math.min(maxStart, Math.max(cur, raised));
+        // Floor at min salary * 2
+        var minAvg = Math.max(2000000, (typeof CBA !== 'undefined' && CBA.minSalary) ? CBA.minSalary : 1200000);
+        return { minAvg: minAvg, maxAvg: maxAvg, maxStart: maxStart, current: cur };
+    }
+
+    function ensureExtOfferModal() {
+        var ov = document.getElementById('extOfferOverlay');
+        if (ov) return ov;
+        ov = document.createElement('div');
+        ov.id = 'extOfferOverlay';
+        ov.className = 'ext-offer-overlay';
+        ov.innerHTML = '<div class="ext-offer-card" id="extOfferCard"></div>';
+        ov.addEventListener('click', function (e) { if (e.target === ov) closeExtOfferModal(); });
+        document.body.appendChild(ov);
+        return ov;
+    }
+    function closeExtOfferModal() {
+        var ov = document.getElementById('extOfferOverlay');
+        if (ov) ov.classList.remove('open');
+        window.__extOfferCtx = null;
+    }
     function openExtensionOffer(teamId, playerId) {
         var tm = teams.find(function (x) { return x.id === teamId; });
         if (!tm || !tm.abbr || !TEAM_DATA[tm.abbr]) return;
@@ -5724,27 +5854,83 @@
         if (!p) return;
         if (!tm.extensionOffers) tm.extensionOffers = {};
         var existing = tm.extensionOffers[playerId] || {};
-        var years = parseInt(prompt('Extension length (years, 1-5):', existing.years || 3), 10);
-        if (!isFinite(years) || years < 1 || years > 5) {
-            alert('Enter a length between 1 and 5 years.');
-            return;
-        }
-        var avgStr = prompt('Average annual value ($):', existing.avgSalary || Math.round((p.salary || 10000000) * 1.1));
-        var avg = parseInt(String(avgStr || '').replace(/[$,]/g, ''), 10);
-        if (!isFinite(avg) || avg < 1000000) {
-            alert('Enter a valid average salary.');
-            return;
-        }
-        tm.extensionOffers[playerId] = {
-            playerId: playerId,
-            name: p.name,
-            years: years,
-            avgSalary: avg,
-            total: avg * years,
-            window: (p.extEligibleYears || []).join(', ')
+        var years = existing.years || 3;
+        var caps = cbaExtensionMaxAvg(p, years);
+        var avg = existing.avgSalary || Math.min(caps.maxAvg, Math.round(caps.current * 1.08));
+        avg = Math.max(caps.minAvg, Math.min(caps.maxAvg, avg));
+        window.__extOfferCtx = { teamId: teamId, playerId: playerId, years: years, avg: avg, name: p.name, window: (p.extEligibleYears || []).join(', ') };
+        renderExtOfferModal();
+        ensureExtOfferModal().classList.add('open');
+    }
+    function renderExtOfferModal() {
+        var ctx = window.__extOfferCtx;
+        if (!ctx) return;
+        var tm = teams.find(function (x) { return x.id === ctx.teamId; });
+        var p = tm && tm.abbr && TEAM_DATA[tm.abbr] ? TEAM_DATA[tm.abbr].players.find(function (pp) { return pp.id === ctx.playerId; }) : null;
+        if (!p) return;
+        var caps = cbaExtensionMaxAvg(p, ctx.years);
+        ctx.avg = Math.max(caps.minAvg, Math.min(caps.maxAvg, Number(ctx.avg) || caps.minAvg));
+        var total = ctx.avg * ctx.years;
+        var yearBtns = [1,2,3,4,5].map(function (y) {
+            return '<button type="button" class="ext-year-btn' + (ctx.years === y ? ' active' : '') + '" onclick="setExtOfferYears(' + y + ')">' + y + 'Y</button>';
+        }).join('');
+        var card = document.getElementById('extOfferCard');
+        if (!card) { ensureExtOfferModal(); card = document.getElementById('extOfferCard'); }
+        card.innerHTML =
+            '<div class="ext-offer-head">' +
+            '<h3>Offer Extension</h3>' +
+            '<p><strong style="color:#0f172a;">' + String(ctx.name).replace(/</g,'') + '</strong> · Eligible: ' + (ctx.window || 'see roster') +
+            '<br>CBA-modeled max AAV for this length: <strong style="color:#0f172a;">' + fmtM(caps.maxAvg) + '</strong></p>' +
+            '</div>' +
+            '<div class="ext-offer-body">' +
+            '<div class="ext-offer-label">Contract length</div>' +
+            '<div class="ext-year-row">' + yearBtns + '</div>' +
+            '<div class="ext-sal-row">' +
+            '<div><div class="ext-offer-label" style="margin:0;">Average annual value</div>' +
+            '<div class="ext-sal-val" id="extSalVal">' + fmtM(ctx.avg) + '</div></div>' +
+            '<div class="ext-sal-max">Max ' + fmtM(caps.maxAvg) + '</div>' +
+            '</div>' +
+            '<input type="range" class="ext-slider" id="extSalSlider" min="' + caps.minAvg + '" max="' + caps.maxAvg + '" step="100000" value="' + ctx.avg + '" oninput="setExtOfferAvg(this.value)">' +
+            '<div class="ext-ticks"><span>' + fmtM(caps.minAvg) + '</span><span>Current ' + fmtM(caps.current) + '</span><span>' + fmtM(caps.maxAvg) + '</span></div>' +
+            '<div class="ext-meta-grid">' +
+            '<div class="ext-meta-cell"><span>Total value</span><strong id="extTotalVal">' + fmtM(total) + '</strong></div>' +
+            '<div class="ext-meta-cell"><span>Years</span><strong>' + ctx.years + '</strong></div>' +
+            '</div>' +
+            '<div class="ext-offer-actions">' +
+            '<button type="button" class="ext-btn ext-btn-cancel" onclick="closeExtOfferModal()">Cancel</button>' +
+            '<button type="button" class="ext-btn ext-btn-save" onclick="saveExtOffer()">Save offer</button>' +
+            '</div></div>';
+    }
+    function setExtOfferYears(y) {
+        if (!window.__extOfferCtx) return;
+        window.__extOfferCtx.years = y;
+        renderExtOfferModal();
+    }
+    function setExtOfferAvg(v) {
+        if (!window.__extOfferCtx) return;
+        window.__extOfferCtx.avg = parseInt(v, 10) || 0;
+        var el = document.getElementById('extSalVal');
+        if (el) el.textContent = fmtM(window.__extOfferCtx.avg);
+        var tot = document.getElementById('extTotalVal');
+        if (tot) tot.textContent = fmtM(window.__extOfferCtx.avg * window.__extOfferCtx.years);
+    }
+    function saveExtOffer() {
+        var ctx = window.__extOfferCtx;
+        if (!ctx) return;
+        var tm = teams.find(function (x) { return x.id === ctx.teamId; });
+        if (!tm) return;
+        if (!tm.extensionOffers) tm.extensionOffers = {};
+        tm.extensionOffers[ctx.playerId] = {
+            playerId: ctx.playerId,
+            name: ctx.name,
+            years: ctx.years,
+            avgSalary: ctx.avg,
+            total: ctx.avg * ctx.years,
+            window: ctx.window || ''
         };
+        closeExtOfferModal();
         try { clearAnalysisPreview(); } catch (_) {}
-        renderTeamCard(teamId);
+        renderTeamCard(ctx.teamId);
         try { updateStats(); } catch (_) {}
     }
     function clearExtensionOffer(teamId, playerId) {
@@ -6669,13 +6855,24 @@
                     });
                 }
                 const nameStyle = leaving ? 'text-decoration:line-through;color:#94a3b8;' : '';
-                rowsHtml += `<tr style="border-bottom:1px solid #f1f5f9;${leaving ? 'background:rgba(220,38,38,.03);' : ''}">
+                const tone = (!leaving && typeof sheetContractTone === 'function') ? sheetContractTone(p) : null;
+                const rowBg = leaving ? 'background:rgba(220,38,38,.03);' : (tone ? ('background:' + tone.bg + ';') : '');
+                const typeHtml = tone
+                    ? `<span style="display:inline-block;font-size:.5rem;font-weight:800;padding:1px 5px;border-radius:999px;border:1px solid ${tone.border};color:${tone.color};background:#fff;margin-right:3px;">${tone.tag}</span><span style="color:${tone.color};">${typeShort(p)}${p.contractYears ? ' ·' + p.contractYears + 'y' : ''}</span>`
+                    : `${typeShort(p)}${p.contractYears ? ' ·' + p.contractYears + 'y' : ''}`;
+                rowsHtml += `<tr style="border-bottom:1px solid #f1f5f9;${rowBg}">
                     <td style="padding:5px 4px;font-weight:600;font-size:.68rem;${nameStyle}">${p.name}${leaving ? ' <span style="color:#dc2626;font-size:.5rem;font-weight:800;">OUT</span>' : ''}</td>
-                    <td style="padding:5px 4px;font-size:.58rem;color:#64748b;white-space:nowrap;">${typeShort(p)}${p.contractYears ? ' ·' + p.contractYears + 'y' : ''}</td>
+                    <td style="padding:5px 4px;font-size:.58rem;white-space:nowrap;">${typeHtml}</td>
                     ${yearCellsHtml(p, leaving, '')}
                 </tr>`;
             });
             sheetContent = `<div style="padding:.5rem .55rem .75rem;overflow:visible;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:.4rem;margin-bottom:.35rem;flex-wrap:wrap;">
+                    <div class="sheet-key" style="margin:0;">
+                        <span class="k-gtd">GTD</span><span class="k-po">PO</span><span class="k-to">TO</span><span class="k-ng">NG</span><span class="k-rk">RK</span>
+                    </div>
+                    <button type="button" class="sheet-expand-btn" onclick="showSalarySheet(${t.id})">Expand sheet</button>
+                </div>
                 <table style="width:100%;border-collapse:collapse;font-family:Lexend,sans-serif;">
                     <thead><tr style="border-bottom:2px solid #e2e8f0;position:sticky;top:0;background:#fff;">
                         <th style="text-align:left;padding:4px;font-size:.55rem;font-weight:800;letter-spacing:.06em;color:#94a3b8;">PLAYER</th>
@@ -7767,7 +7964,8 @@
         document.body.style.overflow = 'hidden';
     }
     function closeFillerModal() {
-        document.getElementById('fillerModal').classList.remove('open');
+        var fm = document.getElementById('fillerModal');
+        if (fm) { fm.classList.remove('open'); fm.classList.remove('sheet-expanded'); }
         document.body.style.overflow = '';
     }
     function applyFiller(teamId, playerIds) {
@@ -7996,6 +8194,14 @@
             `${teamInfo?.name || t.abbr}  -  multi-year payroll vs CBA lines`, 0, 0, html);
     }
 
+    function toggleSalarySheetExpand() {
+        var m = document.getElementById('fillerModal');
+        if (!m) return;
+        m.classList.toggle('sheet-expanded');
+        var btn = m.querySelector('.sheet-expand-btn');
+        if (btn) btn.textContent = m.classList.contains('sheet-expanded') ? 'Compact view' : 'Expand view';
+    }
+
     function showSalarySheet(teamId) {
         const t = teams.find(x => x.id === teamId);
         if (!t || !t.abbr) return;
@@ -8049,11 +8255,13 @@
             <tbody>`;
 
         rows.forEach(({ p, leaving, cells }) => {
-            const bg = leaving ? 'background:rgba(220,38,38,.04);' : '';
+            const tone = (typeof sheetContractTone === 'function') ? sheetContractTone(p) : { bg: '#fff', border: '#e2e8f0', tag: '', color: '#64748b' };
+            const bg = leaving ? 'background:rgba(220,38,38,.04);' : ('background:' + tone.bg + ';');
             const nameStyle = leaving ? 'text-decoration:line-through;color:#94a3b8;' : 'color:#0f172a;font-weight:600;';
+            const typeBadge = `<span style="display:inline-block;font-size:.58rem;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:999px;background:#fff;border:1px solid ${tone.border};color:${tone.color};">${tone.tag || 'GTD'}</span> <span style="color:${tone.color};font-size:.62rem;font-weight:700;">${formatContractLabel(p)}</span>`;
             table += `<tr style="border-bottom:1px solid #f1f5f9;${bg}">
                 <td style="padding:.45rem .4rem;${nameStyle}">${p.name}${leaving ? ' <span style="font-size:.55rem;font-weight:800;color:#dc2626;letter-spacing:.04em;">OUT</span>' : ''}</td>
-                <td style="padding:.45rem .4rem;color:#64748b;font-size:.65rem;">${formatContractLabel(p)}</td>
+                <td style="padding:.45rem .4rem;">${typeBadge}</td>
                 ${cells.map(c => `<td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:#0f172a;">${fmtCell(c)}</td>`).join('')}
             </tr>`;
         });
@@ -8093,20 +8301,37 @@
             }).join('')}
         </div>`;
 
-        const html = `<div>
-            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;">
-                <span style="width:10px;height:10px;border-radius:50%;background:${teamInfo?.color||'#4a4a5a'};"></span>
-                <span style="font-family:Lexend,sans-serif;font-weight:800;font-size:.95rem;color:#0f172a;">${teamInfo?.name || t.abbr} Salary Sheet</span>
+        const key = `<div class="sheet-key">
+            <span class="k-gtd">GTD Guaranteed</span>
+            <span class="k-po">PO Player Option</span>
+            <span class="k-to">TO Team Option</span>
+            <span class="k-ng">NG Non / Partial</span>
+            <span class="k-rk">RK Rookie Scale</span>
+        </div>`;
+        // Color rows by contract type
+        let colored = table;
+        try {
+            // rebuild simple colored name column if table is string - inject legend + expand
+        } catch (_) {}
+        const html = `<div id="salarySheetRoot">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.35rem;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <span style="width:10px;height:10px;border-radius:50%;background:${teamInfo?.color||'#4a4a5a'};"></span>
+                    <span style="font-family:Lexend,sans-serif;font-weight:800;font-size:.95rem;color:#0f172a;">${teamInfo?.name || t.abbr} Salary Sheet</span>
+                </div>
+                <button type="button" class="sheet-expand-btn" onclick="toggleSalarySheetExpand()">Expand view</button>
             </div>
+            ${key}
             ${table}
             ${capRow}
-            <div style="margin-top:.85rem;font-family:Lexend,sans-serif;font-size:.65rem;color:#94a3b8;line-height:1.45;">
-                Future years estimated from contractYears (when known) with ~5% annual raises. Non-guaranteed / team-option seasons may not fully guarantee. Incoming trade salary is rolled at 5%/10% when individual contract years are unknown. Source: Basketball-Reference / roster import.
+            <div style="margin-top:.85rem;font-family:Lexend,sans-serif;font-size:.65rem;color:#64748b;line-height:1.45;">
+                Colors mark PO, TO, non-guaranteed / partial, rookie scale, and fully guaranteed deals. Future years are estimates when year-by-year dollars are not imported.
             </div>
         </div>`;
 
         openFiller('Salary Sheet',
             `${teamInfo?.name || t.abbr}  -  current & projected payroll`, 0, 0, html);
+
     }
 
     function buildOutlookSvg(projection) {
