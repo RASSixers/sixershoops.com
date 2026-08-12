@@ -2945,6 +2945,47 @@
         minExceptionCap: 3_700_000,
     };
 
+    // Season hard-cap status (2026-27, as of 2026-08-12). Session trades can still hard-cap a team further.
+    const HARD_CAP_STATUS = {
+        ATL: 'first', BOS: 'first', CHA: 'first', CHI: 'first', DAL: 'first', DET: 'first',
+        IND: 'first', LAC: 'first', MEM: 'first', MIA: 'first', MIL: 'first', PHI: 'first',
+        POR: 'first', SAC: 'first', SAS: 'first', UTA: 'first', WAS: 'first',
+        GSW: 'second', HOU: 'second', MIN: 'second', PHX: 'second',
+        BKN: null, CLE: null, DEN: null, LAL: null, NOP: null, NYK: null,
+        OKC: null, ORL: null, TOR: null
+    };
+    function getHardCapStatus(abbr) {
+        if (!abbr) return null;
+        var base = HARD_CAP_STATUS[String(abbr).toUpperCase()];
+        // Live session hard-cap from this machine (e.g. expanded matching) can raise status
+        var live = null;
+        try {
+            var tm = (teams || []).find(function (x) { return x.abbr === abbr; });
+            if (tm && tm.hardCappedAt === 'firstApron') live = 'first';
+            if (tm && tm.hardCappedAt === 'secondApron') live = 'second';
+        } catch (_) {}
+        if (live === 'second' || base === 'second') return 'second';
+        if (live === 'first' || base === 'first') return 'first';
+        return null;
+    }
+    function hardCapBadgeHtml(abbr) {
+        var status = getHardCapStatus(abbr);
+        if (status === 'second') {
+            return '<div style="margin-top:.4rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">' +
+                '<span style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;">HARD-CAPPED · 2ND APRON</span>' +
+                '<span style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:600;color:#0f172a;">Cannot exceed Second Apron · aggregation / cash limits apply</span></div>';
+        }
+        if (status === 'first') {
+            return '<div style="margin-top:.4rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">' +
+                '<span style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;">HARD-CAPPED · 1ST APRON</span>' +
+                '<span style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:600;color:#0f172a;">Cannot exceed First Apron for 2026-27</span></div>';
+        }
+        return '<div style="margin-top:.4rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">' +
+            '<span style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">NOT HARD-CAPPED</span>' +
+            '<span style="font-family:Lexend,sans-serif;font-size:.55rem;font-weight:600;color:#0f172a;">No active hard-cap restriction (as of Aug 12, 2026)</span></div>';
+    }
+
+
     // ─── SALARY MATCHING HELPERS (Art. VII §6(j)) ───────────────────────────
     // Below the First Apron: three-band formula. At/above the First Apron
     // (post-2023-24 transition year): flat 100% match, no buffer, no 110% rule.
@@ -3365,12 +3406,9 @@
                 { id:'atl-pk12', name:'2033 SAC 2nd',                  round:2, protections:'Unprotected',        owner:'ATL' },
             ],
             tpes: [
-                { id:'atl-tpe01', amount:944000, expires:'4/11/27', source:'Non-taxpayer Mid-Level', type:'exception' },
-                { id:'atl-tpe02', amount:5477000, expires:'4/11/27', source:'Bi-Annual', type:'exception' },
-                { id:'atl-tpe03', amount:4503720, expires:'9/16/26', source:'Kobe Bufkin', type:'tpe' },
-                { id:'atl-tpe04', amount:2349578, expires:'2/1/27', source:'Vit Krejci', type:'tpe' },
-                { id:'atl-tpe05', amount:2168224, expires:'2/5/27', source:'Luke Kennard', type:'tpe' },
-                { id:'atl-tpe06', amount:1357993, expires:'1/9/27', source:'Trae Young', type:'tpe' }
+                { id:'was-tpe01', amount:6000000, expires:'7/7/27', source:"Jaden Hardy", type:'tpe' },
+                { id:'was-tpe02', amount:5969250, expires:'7/8/27', source:"D'Angelo Russell", type:'tpe' },
+                { id:'was-exc03', amount:15044000, expires:'6/30/27', source:"Non-Tax MLE", type:'exception' }
             ],
         },
         'BOS': {
@@ -4566,6 +4604,7 @@
                 pickDestinations: t.pickDestinations || {},
                 pickMods: t.pickMods || {},
                 hardCappedAt: t.hardCappedAt || null,
+                extensionOffers: t.extensionOffers || {},
             })),
         };
     }
@@ -4586,6 +4625,7 @@
             pickMods: t.pickMods || {},
             cashOut: 0,
             hardCappedAt: t.hardCappedAt || null,
+            extensionOffers: t.extensionOffers || {},
         }));
         nextId = Math.max(state.nextId || 0, ...teams.map(t => t.id + 1));
         _restoring = false;
@@ -5679,6 +5719,44 @@
         try { document.body.style.overflow = ''; } catch (_) {}
     }
 
+
+    function openExtensionOffer(teamId, playerId) {
+        var tm = teams.find(function (x) { return x.id === teamId; });
+        if (!tm || !tm.abbr || !TEAM_DATA[tm.abbr]) return;
+        var p = TEAM_DATA[tm.abbr].players.find(function (pp) { return pp.id === playerId; });
+        if (!p) return;
+        if (!tm.extensionOffers) tm.extensionOffers = {};
+        var existing = tm.extensionOffers[playerId] || {};
+        var years = parseInt(prompt('Extension length (years, 1-5):', existing.years || 3), 10);
+        if (!isFinite(years) || years < 1 || years > 5) {
+            alert('Enter a length between 1 and 5 years.');
+            return;
+        }
+        var avgStr = prompt('Average annual value ($):', existing.avgSalary || Math.round((p.salary || 10000000) * 1.1));
+        var avg = parseInt(String(avgStr || '').replace(/[$,]/g, ''), 10);
+        if (!isFinite(avg) || avg < 1000000) {
+            alert('Enter a valid average salary.');
+            return;
+        }
+        tm.extensionOffers[playerId] = {
+            playerId: playerId,
+            name: p.name,
+            years: years,
+            avgSalary: avg,
+            total: avg * years,
+            window: (p.extEligibleYears || []).join(', ')
+        };
+        try { clearAnalysisPreview(); } catch (_) {}
+        renderTeamCard(teamId);
+        try { updateStats(); } catch (_) {}
+    }
+    function clearExtensionOffer(teamId, playerId) {
+        var tm = teams.find(function (x) { return x.id === teamId; });
+        if (!tm || !tm.extensionOffers) return;
+        delete tm.extensionOffers[playerId];
+        renderTeamCard(teamId);
+    }
+
     function waivePlayer(teamId, playerId) {
         openWaiveModal(teamId, playerId);
     }
@@ -6371,7 +6449,7 @@
         }
         panels += `<div class="team-tab-panel ${tpeActive}">${tpeContent}</div>`;
 
-        // EXTENSIONS panel
+                // EXTENSIONS panel
         const extActive = t.activeTab === 'extensions' ? 'active' : '';
         let extContent = '';
         if (!t.abbr) {
@@ -6379,17 +6457,23 @@
         } else if (!data || !data.players) {
             extContent = `<div class="empty-state"><div class="empty-state-text" style="color:#0f172a;">No roster data</div></div>`;
         } else {
+            const offered = (t.extensionOffers || {});
             const extPlayers = data.players.filter(function (p) {
                 return p && Array.isArray(p.extEligibleYears) && p.extEligibleYears.length > 0;
             });
             if (!extPlayers.length) {
                 extContent = `<div class="empty-state"><div class="empty-state-text" style="color:#0f172a;">No players currently marked extension-eligible</div></div>`;
             } else {
-                extContent = `<div class="player-list" style="padding-top:.35rem;">`;
+                extContent = `<div style="padding:.65rem .85rem .35rem;font-family:Lexend,sans-serif;font-size:.72rem;color:#0f172a;line-height:1.45;">Offer a mock extension for planning. Offers are session-only and do not change current matching salary until applied in a future CBA layer.</div>`;
+                extContent += `<div class="player-list" style="padding-top:.35rem;">`;
                 extPlayers.forEach(function (p) {
                     const years = (p.extEligibleYears || []).join(', ');
                     const cLabel = (typeof formatContractLabel === 'function') ? formatContractLabel(p) : '';
-                    extContent += `<div class="player-item" style="cursor:default;">
+                    const offer = offered[p.id];
+                    const offerNote = offer
+                        ? (`Offered: ${offer.years} yr · ${fmtM(offer.avgSalary)}/yr avg`)
+                        : '';
+                    extContent += `<div class="player-item" style="cursor:default;flex-wrap:wrap;">
                         ${playerHeadshotHtml(p.name, t.abbr, p)}
                         <div class="player-info" style="flex:1;min-width:0;">
                             <div class="player-name" style="color:#0f172a;">${p.name}</div>
@@ -6398,14 +6482,19 @@
                                 <span style="font-family:Lexend,sans-serif;font-size:.68rem;font-weight:600;color:#0f172a;">${years}</span>
                                 ${cLabel ? `<span style="font-family:Lexend,sans-serif;font-size:.6rem;font-weight:700;color:#0f172a;opacity:.75;">${cLabel}</span>` : ''}
                             </div>
+                            ${offerNote ? `<div style="margin-top:4px;font-family:Lexend,sans-serif;font-size:.68rem;font-weight:700;color:#001a57;">${offerNote}</div>` : ''}
                         </div>
-                        <div class="player-salary" style="color:#0f172a;">${fmtM(p.salary)}</div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                            <div class="player-salary" style="color:#0f172a;">${fmtM(p.salary)}</div>
+                            <button type="button" onclick="event.stopPropagation();openExtensionOffer(${t.id},'${p.id}')"
+                                style="font-family:Lexend,sans-serif;font-size:.58rem;font-weight:800;letter-spacing:.03em;padding:4px 8px;border-radius:6px;border:1px solid #001a57;background:#001a57;color:#fff;cursor:pointer;">
+                                ${offer ? 'Edit Offer' : 'Offer Extension'}
+                            </button>
+                            ${offer ? `<button type="button" onclick="event.stopPropagation();clearExtensionOffer(${t.id},'${p.id}')" style="font-family:Lexend,sans-serif;font-size:.52rem;font-weight:700;border:none;background:transparent;color:#b91c1c;cursor:pointer;">Clear</button>` : ''}
+                        </div>
                     </div>`;
                 });
-                extContent += `</div>
-                <div style="padding:.65rem .85rem 1rem;font-family:Lexend,sans-serif;font-size:.72rem;color:#0f172a;line-height:1.45;opacity:.8;">
-                    Extension-eligible seasons are taken from the imported contract schedule. Always confirm with league / team sources before treating a window as official.
-                </div>`;
+                extContent += `</div>`;
             }
         }
         panels += `<div class="team-tab-panel ${extActive}">${extContent}</div>`;
@@ -6685,6 +6774,7 @@
                     ${distChip('1ST', CBA.firstApron, '#ea580c')}
                     ${distChip('2ND', CBA.secondApron, '#dc2626')}
                 </div>
+                ${typeof hardCapBadgeHtml === 'function' ? hardCapBadgeHtml(t.abbr) : ''}
             </div>`;
         }
 
@@ -7482,6 +7572,55 @@
 
         window.__lastTradeMessages = allMessages.slice();
         window.__lastTradeValid = isValid;
+        // If illegal only on matching, suggest applying a TPE that would cover the gap
+        if (!isValid) {
+            try {
+                tradeSummary.forEach(function (ts) {
+                    if (!ts.abbr || !ts.data) return;
+                    var gap = Math.max(0, (ts.matchableReceivingSalary || 0) - (ts.legalMax || 0));
+                    // recompute a simple gap if legalMax not stored
+                    if (!gap && ts.matchableReceivingSalary > 0 && (ts.sendingSalary || 0) >= 0) {
+                        // leave gap 0; detailed suggestion uses TPE list vs matchable
+                    }
+                    var room = (typeof getSelectedTPERoom === 'function') ? getSelectedTPERoom(ts) : [];
+                    // Prefer true TPEs from data not already fully used
+                    var candidates = (ts.data.tpes || []).filter(function (tp) {
+                        if (!tp || tp.type === 'exception') return false;
+                        var isExc = /mid-level|bi-annual|room mid|taxpayer mid|non-taxpayer|BAE|MLE/i.test(tp.source || '');
+                        return !isExc && Number(tp.amount) > 0;
+                    }).sort(function (a, b) { return Number(b.amount) - Number(a.amount); });
+                    if (!candidates.length) return;
+                    var need = Number(ts.matchableReceivingSalary || 0) - Number(ts.sendingSalary || 0);
+                    if (need <= 0) return;
+                    // Only prompt if matching error present for this team
+                    var hasMatchErr = (allMessages || []).some(function (m) {
+                        return m && m.type === 'error' && String(m.msg || '').indexOf((ts.teamInfo && ts.teamInfo.name) || ts.abbr) >= 0 && /match|Incoming salary/i.test(m.msg || '');
+                    });
+                    if (!hasMatchErr) return;
+                    var best = candidates.find(function (c) { return Number(c.amount) >= need * 0.5; }) || candidates[0];
+                    if (!best) return;
+                    var teamName = (ts.teamInfo && ts.teamInfo.name) || ts.abbr;
+                    var already = (ts.selectedTPEs || []).indexOf(best.id) >= 0;
+                    if (already) return;
+                    var ok = window.confirm(
+                        'Trade is invalid for ' + teamName + '.\n\n' +
+                        'A trade exception may help:\n' +
+                        fmtM(best.amount) + ' TPE from ' + (best.source || 'prior trade') +
+                        (best.expires ? (' (expires ' + best.expires + ')') : '') + '.\n\n' +
+                        'Would you like to apply this TPE and re-check the trade?'
+                    );
+                    if (ok) {
+                        var live = teams.find(function (x) { return x.id === ts.id; });
+                        if (live) {
+                            if (!live.selectedTPEs) live.selectedTPEs = [];
+                            if (live.selectedTPEs.indexOf(best.id) < 0) live.selectedTPEs.push(best.id);
+                            try { renderAll(); } catch (_) {}
+                            setTimeout(function () { try { analyzeTrade(); } catch (e) { console.warn(e); } }, 50);
+                        }
+                    }
+                });
+            } catch (e) { console.warn(e); }
+        }
         showResult(isValid, title, sub, allMessages, tradeSummary, allTimedOnly ? earliestUntil : null);
     }
 
