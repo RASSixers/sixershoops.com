@@ -1707,7 +1707,11 @@
             box-shadow: 0 32px 80px rgba(15,23,42,.3);
             padding-bottom: .5rem;
         }
-        .team-dropdown.open { animation: tmModalIn .22s cubic-bezier(.2,.9,.3,1.1); }
+        .team-dropdown.open {
+            display: flex !important;
+            flex-direction: column !important;
+            animation: tmModalIn .22s cubic-bezier(.2,.9,.3,1.1);
+        }
 
         .team-dropdown-search {
             padding: 1.1rem 1.25rem .9rem;
@@ -2189,12 +2193,14 @@
         /* Empty-team Choose Team label */
         .team-header-name.placeholder {
             display: block !important;
+            width: 100%;
+            text-align: center !important;
             color: #0f172a !important;
             font-family: 'Lexend', sans-serif !important;
             font-style: normal !important;
             font-weight: 800 !important;
-            font-size: 1.25rem !important;
-            letter-spacing: .01em !important;
+            font-size: 1.2rem !important;
+            letter-spacing: .02em !important;
             background: transparent !important;
             border: none !important;
             border-radius: 0 !important;
@@ -2208,6 +2214,23 @@
         .team-header-name.placeholder::before {
             content: none !important;
             display: none !important;
+        }
+        /* Center empty-team header content */
+        .team-card-header:has(.team-header-name.placeholder) .team-header-inner {
+            justify-content: center;
+            text-align: center;
+        }
+        .team-card-header:has(.team-header-name.placeholder) .team-header-text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .team-card-header:has(.team-header-name.placeholder) .team-header-chevron {
+            position: absolute;
+            right: 1rem;
         }
 
         /* ── Modernized Free Agent panel ── */
@@ -5111,8 +5134,8 @@
 
     function setTeam(id, abbr) {
         try { clearAnalysisPreview(); } catch (_) {}
-
-        const t = teams.find(t => t.id === id);
+        try { closeAllDropdowns(); } catch (_) {}
+        var t = teams.find(function (tm) { return tm.id === id; });
         if (!t) return;
         t.abbr = abbr || null;
         t.selectedPlayers = [];
@@ -5121,10 +5144,13 @@
         t.faSignings = [];
         t.waivedPlayers = [];
         t.playerDestinations = {};
+        t.pickDestinations = {};
         t.pickMods = {};
         t.cashOut = 0;
         t.hardCappedAt = null;
+        t.activeTab = 'roster';
         renderAll();
+        try { updateStats(); } catch (_) {}
     }
 
     function setTab(id, tab) {
@@ -6294,7 +6320,7 @@
                 if (isSelected) cls.push('selected');
                 const fallback = `this.outerHTML='<div class=\\'team-tile-logo\\' style=\\'background:${info.color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Lexend,sans-serif;font-weight:900;font-size:.65rem;color:#fff;\\'>${abbr}</div>'`;
                 return `<div class="${cls.join(' ')}"
-                    ${(!isUsed || isSelected) ? `onclick="closeDropdown(${t.id});setTeam(${t.id},'${abbr}')"` : ''}
+                    ${(!isUsed || isSelected) ? `onclick="event.stopPropagation();window.setTeam && window.setTeam(${t.id},'${abbr}'); setTeam(${t.id},'${abbr}')"` : ''}
                     data-name="${info.name.toLowerCase()}" data-abbr="${abbr.toLowerCase()}"
                     title="${info.name}">
                     <img class="team-tile-logo" src="${teamLogoUrl(abbr)}" alt="${abbr}" onerror="${fallback}">
@@ -8901,27 +8927,33 @@
     const dropdownOrigin = new Map();
 
     function toggleDropdown(teamId, e) {
-        if (e) e.stopPropagation();
-        const dd = document.getElementById('dd-' + teamId);
-        const hdr = document.getElementById('hdr-' + teamId);
-        if (!dd) return;
-        const isOpen = dd.classList.contains('open');
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        var dd = document.getElementById('dd-' + teamId);
+        var hdr = document.getElementById('hdr-' + teamId);
+        if (!dd) {
+            console.warn('team dropdown missing for', teamId);
+            return;
+        }
+        var isOpen = dd.classList.contains('open');
         closeAllDropdowns();
-        if (!isOpen) {
-            // Portal to body so position:fixed escapes any transformed/overflow ancestor
+        if (isOpen) return;
+        // Portal to body so fixed positioning is not clipped by .team-card overflow
+        try {
             if (dd.parentElement !== document.body) {
                 dropdownOrigin.set(String(teamId), dd.parentElement);
-                dd.dataset.portalForTeam = teamId;
+                dd.dataset.portalForTeam = String(teamId);
                 document.body.appendChild(dd);
             }
-            dd.classList.add('open');
-            hdr.classList.add('open');
-            openDropdownId = teamId;
-            setTimeout(() => {
-                const inp = document.getElementById('ddsearch-' + teamId);
-                if (inp) inp.focus();
-            }, 50);
-        }
+        } catch (err) { console.warn(err); }
+        dd.classList.add('open');
+        dd.style.display = 'flex';
+        dd.style.flexDirection = 'column';
+        if (hdr) hdr.classList.add('open');
+        openDropdownId = teamId;
+        setTimeout(function () {
+            var inp = document.getElementById('ddsearch-' + teamId);
+            if (inp) try { inp.focus(); } catch (_) {}
+        }, 40);
     }
 
     function closeDropdown(teamId) {
@@ -8993,6 +9025,9 @@
 
     // ─── BOOTSTRAP ───────────────────────────────────────────────────────────
     init();
+    window.setTeam = setTeam;
+    window.toggleDropdown = toggleDropdown;
+    window.closeDropdown = closeDropdown;
     window.openTradeDrafts = openDraftsPanel;
     window.__tmOpenTradeDrafts = openDraftsPanel;
     try {
