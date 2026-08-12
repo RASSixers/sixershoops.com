@@ -1183,7 +1183,7 @@
                             message: 'replied to your comment',
                             read: false,
                             createdAt: new Date().toISOString(),
-                            link: '/trade.html?id=' + encodeURIComponent(tradeId) + '#comment-' + encodeURIComponent(newComment.id)
+                            link: '/community/p/' + encodeURIComponent(tradeId) + '#comment-' + encodeURIComponent(newComment.id)
                         });
                     } catch (_) {}
                 }
@@ -1330,7 +1330,7 @@
 
             const cardsHTML = items.map(item => {
                 if (currentTab === 'comments') {
-                    const postUrl = item.postUrl || (item.postId ? (`/trade.html?id=` + encodeURIComponent(item.postId)) : '#');
+                    const postUrl = item.postUrl || (item.postId ? (`/community/p/` + encodeURIComponent(item.postId)) : '#');
                     return `
                     <div class="feed-card is-comment">
                         <div class="post-context">Commented on ${item.postTitle ? `<a href="${esc(postUrl)}">${esc(item.postTitle)}</a>` : 'a post'}</div>
@@ -1350,7 +1350,7 @@
                         <div class="inbox-reply-box" id="reply-box-${esc(item.commentId||item.id||'x')}"></div>
                     </div>`;
                 }
-                const postUrl = item.url || item.link || (item.postId || item.id ? `/trade.html?id=${encodeURIComponent(item.postId || item.id)}` : '#');
+                const postUrl = item.url || item.link || (item.postId || item.id ? `/community/p/${encodeURIComponent(item.postId || item.id)}` : '#');
                 return `
                 <div class="feed-card">
                     <div class="feed-card-header">
@@ -1502,7 +1502,7 @@
                 listEl.innerHTML = items.map(p => {
                   const title = p.title || 'Untitled';
                   const author = String(p.author || 'u/fan');
-                  const href = '/trade.html?id=' + encodeURIComponent(p.id);
+                  const href = '/community/p/' + encodeURIComponent(p.id);
                   const isRepost = p.postType === 'repost' || p.postType === 'quote_repost';
                   return `<a class="feed-card" href="${esc(href)}" style="display:block;text-decoration:none;color:inherit;padding:1rem;border-bottom:1px solid var(--border-light,#e4e8f0);">
                     ${isRepost ? `<div style="font-size:.75rem;font-weight:700;color:#657786;margin-bottom:.3rem;">Repost</div>` : ''}
@@ -1575,7 +1575,7 @@
                     const body = (msg.commentText || msg.text || msg.message || '').trim();
                     // Prefer real comment body; fall back to short action if body is a system label
                     const showBody = body && !/^(commented on post|replied to|liked|followed)/i.test(body) ? body : '';
-                    const href = msg.link || (msg.tradeId ? ('/trade.html?id=' + encodeURIComponent(msg.tradeId) + (msg.commentId ? ('#comment-' + encodeURIComponent(msg.commentId)) : '')) : '');
+                    const href = msg.link || (msg.tradeId ? ('/community/p/' + encodeURIComponent(msg.tradeId) + (msg.commentId ? ('#comment-' + encodeURIComponent(msg.commentId)) : '')) : '');
                     const tradeId = msg.tradeId || '';
                     const cid = msg.commentId || '';
                     return `
@@ -1688,7 +1688,7 @@
                     else if (n.type === 'repost') action = 'reposted';
                     else if (n.type === 'quote_repost') action = 'quote reposted';
                     else if (n.type === 'comment' || n.type === 'post_comment' || n.type === 'reply') action = 'commented on post';
-                    const href = n.link || (n.tradeId ? ('/trade.html?id=' + encodeURIComponent(n.tradeId)) : '');
+                    const href = n.link || (n.tradeId ? ('/community/p/' + encodeURIComponent(n.tradeId)) : '');
                     return `
                     <div class="notif-item ${n.read?'':'unread'}" data-id="${esc(n.id)}" data-href="${esc(href)}" style="cursor:${href?'pointer':'default'}">
                         <div class="notif-icon">${iconSvg}</div>
@@ -2182,7 +2182,7 @@
                                         ...c,
                                         postId: p.id || p.postId,
                                         postTitle: p.title || 'Trade',
-                                        postUrl: '/trade.html?id=' + encodeURIComponent(p.id || p.postId)
+                                        postUrl: '/community/p/' + encodeURIComponent(p.id || p.postId)
                                     });
                                 }
                             });
