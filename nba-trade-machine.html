@@ -4359,6 +4359,8 @@
     // ─── STATE ──────────────────────────────────────────────────────────────
     let teams = []; // array of { id, abbr, selectedPlayers: [], selectedPicks: [], selectedTPEs: [], faSignings: [], activeTab: 'roster' }
     let nextId = 0;
+    let nextFAId = 1;
+    const faSearchState = {}; // { [teamId]: { selectedFa, resultsOpen } }
     const TM_STORAGE_KEY = 'sixershoops_trade_machine_v1';
     let _persistTimer = null;
     let _restoring = false;
@@ -5126,11 +5128,20 @@
     }
 
     function setTeam(id, abbr) {
+        id = Number(id);
+        abbr = String(abbr || '').toUpperCase();
+        if (!abbr || !NBA_TEAMS[abbr]) {
+            console.warn('setTeam: invalid team', id, abbr);
+            return;
+        }
+        var t = teams.find(function (tm) { return Number(tm.id) === id; });
+        if (!t) {
+            console.warn('setTeam: slot not found', id, teams.map(function (x) { return x.id; }));
+            return;
+        }
         try { clearAnalysisPreview(); } catch (_) {}
         try { closeAllDropdowns(); } catch (_) {}
-        var t = teams.find(function (tm) { return tm.id === id; });
-        if (!t) return;
-        t.abbr = abbr || null;
+        t.abbr = abbr;
         t.selectedPlayers = [];
         t.selectedPicks = [];
         t.selectedTPEs = [];
@@ -5142,7 +5153,7 @@
         t.cashOut = 0;
         t.hardCappedAt = null;
         t.activeTab = 'roster';
-        renderAll();
+        try { renderAll(); } catch (e) { console.error(e); }
         try { updateStats(); } catch (_) {}
     }
 
@@ -5586,6 +5597,112 @@
         try { clearAnalysisPreview(); } catch (_) {}
         updateStats();
         renderAll();
+    }
+
+
+    function getFreeAgentPool() {
+        // Build searchable pool from all rostered players (simulate FA market / S&T targets)
+        var pool = [];
+        var seen = new Set();
+        try {
+            Object.keys(TEAM_DATA || {}).forEach(function (abbr) {
+                var data = TEAM_DATA[abbr];
+                if (!data || !data.players) return;
+                data.players.forEach(function (p) {
+                    if (!p || !p.name) return;
+                    var key = String(p.name).toLowerCase();
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    pool.push({
+                        id: p.id || (abbr + '-' + key),
+                        name: p.name,
+                        position: p.position || 'F',
+                        salary: Number(p.salary) || 10000000,
+                        fromTeam: abbr
+                    });
+                });
+            });
+        } catch (_) {}
+        // A few common free-agent-style placeholders if pool is thin
+        if (pool.length < 5) {
+            pool.push(
+                { id: 'fa-generic-1', name: 'Veteran Wing', position: 'SF', salary: 8000000 },
+                { id: 'fa-generic-2', name: 'Backup Guard', position: 'PG', salary: 3500000 },
+                { id: 'fa-generic-3', name: 'Stretch Big', position: 'C', salary: 6000000 }
+            );
+        }
+        return pool;
+    }
+
+    function faSearch(teamId) {
+        if (!faSearchState[teamId]) faSearchState[teamId] = {};
+        var input = document.getElementById('fa-search-' + teamId);
+        var box = document.getElementById('fa-results-' + teamId);
+        if (!input || !box) return;
+        var q = (input.value || '').trim().toLowerCase();
+        var pool = getFreeAgentPool();
+        var matches = !q
+            ? pool.slice(0, 12)
+            : pool.filter(function (p) {
+                return String(p.name).toLowerCase().indexOf(q) >= 0 ||
+                    String(p.position).toLowerCase().indexOf(q) >= 0;
+              }).slice(0, 20);
+        if (!matches.length) {
+            box.innerHTML = '<div style="padding:.75rem 1rem;font-size:.85rem;color:#64748b;">No matches</div>';
+            box.style.display = 'block';
+            return;
+        }
+        box.innerHTML = matches.map(function (p) {
+            var sal = (typeof fmtM === 'function') ? fmtM(p.salary) : ('$' + Math.round(p.salary / 1e6) + 'M');
+            var safeName = String(p.name).replace(/'/g, "\\'");
+            return '<div class="fa-result-row" style="display:flex;justify-content:space-between;gap:.75rem;padding:.65rem .9rem;cursor:pointer;border-bottom:1px solid #f1f5f9;" ' +
+                'onmousedown="event.preventDefault();selectFAPlayer(' + teamId + ', \'' + safeName + '\', \'' + String(p.position || 'F') + '\', ' + Number(p.salary || 0) + ')">' +
+                '<span style="font-weight:700;color:#0f172a;">' + String(p.name).replace(/</g, '') +
+                ' <span style="color:#94a3b8;font-weight:600;">' + String(p.position || '') + '</span></span>' +
+                '<span style="color:#64748b;font-weight:600;">' + sal + '</span></div>';
+        }).join('');
+        box.style.display = 'block';
+        faSearchState[teamId].resultsOpen = true;
+    }
+
+    function faSearchFocus(teamId) {
+        faSearch(teamId);
+    }
+
+    function faSearchBlur(teamId) {
+        setTimeout(function () {
+            var box = document.getElementById('fa-results-' + teamId);
+            if (box) box.style.display = 'none';
+            if (faSearchState[teamId]) faSearchState[teamId].resultsOpen = false;
+        }, 180);
+    }
+
+    function selectFAPlayer(teamId, name, position, salary) {
+        if (!faSearchState[teamId]) faSearchState[teamId] = {};
+        faSearchState[teamId].selectedFa = {
+            name: name,
+            position: position || 'F',
+            salary: Number(salary) || 10000000
+        };
+        var input = document.getElementById('fa-search-' + teamId);
+        if (input) input.value = name;
+        var box = document.getElementById('fa-results-' + teamId);
+        if (box) box.style.display = 'none';
+        var slider = document.getElementById('fa-salary-' + teamId);
+        if (slider) {
+            slider.value = String(Math.min(62000000, Math.max(1121040, Number(salary) || 10000000)));
+            try { updateSalLabel(teamId); } catch (_) {}
+        }
+        try { renderTeamCard(teamId); } catch (_) {}
+    }
+
+    function clearFASelection(teamId) {
+        if (!faSearchState[teamId]) faSearchState[teamId] = {};
+        faSearchState[teamId].selectedFa = null;
+        var input = document.getElementById('fa-search-' + teamId);
+        if (input) input.value = '';
+        var chip = document.getElementById('fa-selected-chip-' + teamId);
+        if (chip) chip.style.display = 'none';
     }
 
     function updateSalLabel(teamId) {
@@ -6311,10 +6428,16 @@
                 const cls = ['team-tile'];
                 if (isUsed && !isSelected) cls.push('disabled');
                 if (isSelected) cls.push('selected');
-                const fallback = `this.outerHTML='<div class=\\'team-tile-logo\\' style=\\'background:${info.color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Lexend,sans-serif;font-weight:900;font-size:.65rem;color:#fff;\\'>${abbr}</div>'`;
+                const fallback = `this.outerHTML='<div class=\'team-tile-logo\' style=\'background:${info.color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Lexend,sans-serif;font-weight:900;font-size:.65rem;color:#fff;\'>${abbr}</div>'`;
+                const canPick = !isUsed || isSelected;
                 return `<div class="${cls.join(' ')}"
-                    ${(!isUsed || isSelected) ? `onclick="event.stopPropagation();window.setTeam && window.setTeam(${t.id},'${abbr}'); setTeam(${t.id},'${abbr}')"` : ''}
-                    data-name="${info.name.toLowerCase()}" data-abbr="${abbr.toLowerCase()}"
+                    role="button"
+                    tabindex="${canPick ? '0' : '-1'}"
+                    data-team-pick="${canPick ? '1' : '0'}"
+                    data-team-id="${t.id}"
+                    data-team-abbr="${abbr}"
+                    data-name="${info.name.toLowerCase()}"
+                    data-abbr="${abbr.toLowerCase()}"
                     title="${info.name}">
                     <img class="team-tile-logo" src="${teamLogoUrl(abbr)}" alt="${abbr}" onerror="${fallback}">
                     <span class="team-tile-abbr">${abbr}</span>
@@ -9039,10 +9162,27 @@
         });
     }
 
+    // Team tile selection via delegation (works after portal to body)
+    if (!window.__tmTeamPickBound) {
+        window.__tmTeamPickBound = true;
+        document.addEventListener('click', function (e) {
+            var tile = e.target && e.target.closest ? e.target.closest('.team-tile[data-team-pick="1"]') : null;
+            if (!tile) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var slotId = tile.getAttribute('data-team-id');
+            var abbr = tile.getAttribute('data-team-abbr');
+            if (!slotId || !abbr) return;
+            setTeam(slotId, abbr);
+        }, true);
+    }
+
     // Outside close on mousedown (not the same click that opens)
     document.addEventListener('mousedown', function (e) {
         if (openDropdownId == null) return;
         if (Date.now() < pickerIgnoreUntil) return;
+        // Never treat a team tile press as outside
+        if (e.target && e.target.closest && e.target.closest('.team-tile')) return;
         var hdr = document.getElementById('hdr-' + openDropdownId);
         var dd = document.getElementById('dd-' + openDropdownId);
         var insideHdr = hdr && hdr.contains(e.target);
