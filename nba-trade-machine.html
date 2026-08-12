@@ -2183,6 +2183,52 @@
             .board-toolbar-actions { width: 100%; justify-content: flex-end; }
         }
 
+        
+        .team-header-inner.has-team {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+        .team-header-inner.has-team .team-header-text {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: .55rem;
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+        }
+        .team-header-logo {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            flex-shrink: 0;
+            display: block;
+        }
+        .team-header-inner.has-team .team-header-name {
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+        }
+        .team-header-inner.has-team .team-header-chevron {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .team-card-header.open .team-header-inner.has-team .team-header-chevron {
+            transform: translateY(-50%) rotate(180deg);
+        }
+        .team-header-label { display: none !important; }
+
         /* Empty-team Choose Team label */
         .team-header-name.placeholder {
             display: block !important;
@@ -6448,9 +6494,9 @@
         return `
         <div class="team-card-header" id="hdr-${t.id}" onclick="toggleDropdown(${t.id},event)">
             <div class="team-color-bar" style="background:${color};"></div>
-            <div class="team-header-inner">
+            <div class="team-header-inner${teamInfo ? ' has-team' : ' no-team'}">
                 <div class="team-header-text">
-                    ${teamInfo ? `<div class="team-header-label">${t.abbr} · tap to change</div>` : ''}
+                    ${teamInfo ? `<img class="team-header-logo" src="${teamLogoUrl(t.abbr)}" alt="" onerror="this.style.display='none'">` : ''}
                     <div class="team-header-name ${teamInfo ? '' : 'placeholder'}">${displayName || 'Choose Team'}</div>
                 </div>
                 <div class="team-header-chevron">
