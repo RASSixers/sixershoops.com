@@ -2432,7 +2432,7 @@
             </div>
 
             <div style="padding:.55rem 1rem;background:#fffbeb;border-bottom:1px solid #fde68a;font-family:Lexend,sans-serif;font-size:.68rem;line-height:1.45;color:#92400e;">
-                <strong>Estimates only.</strong> Matching, aprons, TPEs, holds, and Stepien are modeled from the CBA, but salaries near apron lines, non-guaranteed deals, incentives, and BYC can differ from league books. Always verify before treating a result as official.
+                <strong>CBA engine v2.</strong> Matching bands, apron 100% rules, post-trade apron status, TPE expiry, prior-TPE bans over the First Apron, Second Apron aggregation/cash bans, hard-cap triggers, holds, and Stepien are enforced. Remaining gaps vs league books: BYC, trade kickers, unlikely bonuses, and exact Apron Team Salary vs Cap Team Salary. Always verify near apron lines.
             </div>
 
             <!-- hidden stat holders for JS references that still exist -->
@@ -2835,16 +2835,42 @@
         if (!t) return false;
         return !((t.type === 'exception') || /mid-level|bi-annual|room mid|taxpayer mid|non-taxpayer/i.test(t.source || ''));
     }
-    // Auto-apply available TPEs (no manual selection required). Explicitly selected ones are preferred first.
+
+    function parseTpeExpiry(expires) {
+        if (!expires) return null;
+        var s = String(expires).trim();
+        var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+        if (m) {
+            var year = parseInt(m[3], 10);
+            if (year < 100) year += 2000;
+            return new Date(year, parseInt(m[1], 10) - 1, parseInt(m[2], 10), 23, 59, 59);
+        }
+        var d = new Date(s);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    function isTpeExpired(tpe, asOf) {
+        asOf = asOf || (typeof getAsOfDate === 'function' ? getAsOfDate() : new Date());
+        var exp = parseTpeExpiry(tpe && tpe.expires);
+        if (!exp) return false;
+        return exp < asOf;
+    }
+
     function getSelectedTPERoom(team) {
-        if (!team || !team.abbr || !TEAM_DATA[team.abbr]) return { room: 0, tpes: [], exceptions: [] };
-        const data = TEAM_DATA[team.abbr];
-        const all = (data.tpes || []).filter(isTrueTPE);
-        const preferred = (team.selectedTPEs || []).map(id => all.find(x => x.id === id)).filter(Boolean);
-        const rest = all.filter(t => !preferred.includes(t)).sort((a, b) => (b.amount || 0) - (a.amount || 0));
-        const tpes = preferred.concat(rest);
-        const room = tpes.reduce((s, t) => s + (t.amount || 0), 0);
-        return { room, tpes, exceptions: [] };
+        if (!team || !team.abbr || !TEAM_DATA[team.abbr]) return { room: 0, tpes: [], exceptions: [], expired: [] };
+        var data = TEAM_DATA[team.abbr];
+        var asOf = typeof getAsOfDate === 'function' ? getAsOfDate() : new Date();
+        var expired = [];
+        var all = (data.tpes || []).filter(function (x) {
+            if (!isTrueTPE(x)) return false;
+            if (isTpeExpired(x, asOf)) { expired.push(x); return false; }
+            return true;
+        });
+        var preferred = (team.selectedTPEs || []).map(function (id) { return all.find(function (x) { return x.id === id; }); }).filter(Boolean);
+        var rest = all.filter(function (x) { return preferred.indexOf(x) < 0; }).sort(function (a, b) { return (b.amount || 0) - (a.amount || 0); });
+        var tpes = preferred.concat(rest);
+        var room = tpes.reduce(function (s, x) { return s + (x.amount || 0); }, 0);
+        return { room: room, tpes: tpes, exceptions: [], expired: expired };
     }
 
     // ─── ESPN TEAM LOGO MAPPING ─────────────────────────────────────────────
@@ -6552,18 +6578,40 @@
             t.postSalary = postSalary;
             t.isAboveFirstApron = isAboveFirstApron;
             t.isAboveSecondApron = isAboveSecondApron;
-            t.usedExpandedMatching = !isAboveFirstApron && t.matchableReceivingSalary > t.sendingSalary + CBA.matchBuffer;
+            // Expanded matching only available if POST-TRADE team stays under First Apron
+            const postUnderFirst = postSalary <= CBA.firstApron;
+            t.usedExpandedMatching = postUnderFirst && t.matchableReceivingSalary > t.sendingSalary + CBA.matchBuffer;
 
-            // ── Hard-cap persistence (Fix #2) ──────────────────────────────
-            // If an earlier trade/signing analyzed THIS session already hard-capped this team
-            // at the First Apron, that constraint carries forward into every later analysis —
-            // not just the transaction that triggered it.
+            // Using expanded (below-apron) matching hard-caps at First Apron for the session
+            if (t.usedExpandedMatching) {
+                t.hardCappedAt = 'firstApron';
+                const live = teams.find(x => x.id === t.id);
+                if (live) live.hardCappedAt = 'firstApron';
+                infos.push({ type: 'info', msg: `${name}: Using below-apron salary matching (incoming > outgoing + $250k). Team is hard-capped at the First Apron (${fmtM(CBA.firstApron)}) for the rest of this session.` });
+            }
+
+            // ── Hard-cap persistence ─────────────────────────────────────
             const persistedTeam = teams.find(x => x.id === t.id);
             if (persistedTeam && persistedTeam.hardCappedAt === 'firstApron') {
                 if (postSalary > CBA.firstApron) {
-                    violations.push({ type: 'error', msg: `${name}: This team is hard-capped at the First Apron (${fmtM(CBA.firstApron)}) from an earlier move analyzed this session, and this trade's resulting payroll ($${fmtFull(postSalary)}) would exceed that line.` });
-                } else {
-                    infos.push({ type: 'info', msg: `${name}: Still hard-capped at the First Apron from an earlier move this session — this trade stays under that line.` });
+                    violations.push({ type: 'error', msg: `${name}: Hard-capped at the First Apron (${fmtM(CBA.firstApron)}) — this trade's projected payroll ($${fmtFull(postSalary)}) would exceed that line.` });
+                }
+            }
+            if (persistedTeam && persistedTeam.hardCappedAt === 'secondApron') {
+                if (postSalary > CBA.secondApron) {
+                    violations.push({ type: 'error', msg: `${name}: Hard-capped at the Second Apron (${fmtM(CBA.secondApron)}) — this trade's projected payroll ($${fmtFull(postSalary)}) would exceed that line.` });
+                }
+            }
+
+            // ── Cash rules ───────────────────────────────────────────────
+            const cashOut = Number(t.cashOut) || 0;
+            if (cashOut > 0) {
+                if (cashOut > CBA.cashLimit) {
+                    violations.push({ type: 'error', msg: `${name}: Cash sent ($${fmtFull(cashOut)}) exceeds the annual team cash limit ($${fmtFull(CBA.cashLimit)}).` });
+                }
+                // Second Apron teams cannot send cash (post-trade or already over)
+                if (postSalary > CBA.secondApron || currentSalary > CBA.secondApron) {
+                    violations.push({ type: 'error', msg: `${name}: Second Apron teams cannot send cash in trades.` });
                 }
             }
 
@@ -6588,17 +6636,31 @@
             // Under-cap teams can take free agents / trades into cap space without matching.
             if (isAboveCap && t.matchableReceivingSalary > 0) {
                 const outgoing = t.sendingSalary;
-                // TPE-only absorption with zero outgoing is legal if remaining matchable is 0.
-                // If matchable remains and outgoing is 0, fail.
+                // Matching band depends on POST-TRADE apron status (crossing first apron mid-deal loses expanded matching)
+                const useExpandedBands = postUnderFirst && !(persistedTeam && persistedTeam.hardCappedAt === 'firstApron' && postSalary > CBA.firstApron);
                 if (outgoing <= 0) {
-                    violations.push({ type: 'error', msg: `${name}: Incoming salary still requiring a match ($${fmtFull(t.matchableReceivingSalary)}) after TPE/min-exception absorption, but the team is sending $0 in salary. Send matching salary or select a larger TPE.` });
+                    violations.push({ type: 'error', msg: `${name}: Incoming salary still requiring a match ($${fmtFull(t.matchableReceivingSalary)}) after TPE/min-exception absorption, but the team is sending $0 in salary. Send matching salary or use available TPE room under the First Apron.` });
                 } else {
-                    const apronMax = isAboveFirstApron ? apronMatchMax(outgoing) : standardMatchMax(outgoing);
-                    if (t.matchableReceivingSalary > apronMax) {
-                        violations.push({ type: 'error', msg: `${name}: Incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) exceeds the max allowed ($${fmtFull(apronMax)}) under CBA salary matching rules${isAboveFirstApron ? ' (Apron teams are limited to a 100% match, with no $250k buffer)' : ''}${t.tpeUsed ? ' after TPE absorption' : ''}.` });
-                    } else if (!isAboveFirstApron && t.matchableReceivingSalary > outgoing + CBA.matchBuffer) {
-                        infos.push({ type: 'info', msg: `${name}: Using expanded salary-matching rules (up to ${fmtPct(apronMax/outgoing)}% of outgoing salary at this level).` });
+                    const legalMax = useExpandedBands ? standardMatchMax(outgoing) : apronMatchMax(outgoing);
+                    if (t.matchableReceivingSalary > legalMax + 1) {
+                        violations.push({ type: 'error', msg: `${name}: Incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) exceeds the max allowed ($${fmtFull(legalMax)}) under CBA salary matching${useExpandedBands ? ' (below First Apron bands)' : ' (First/Second Apron teams: 100% of outgoing only, no $250k buffer)'}${t.tpeUsed ? ' after TPE absorption' : ''}.` });
+                    } else if (useExpandedBands && t.matchableReceivingSalary > outgoing + CBA.matchBuffer) {
+                        infos.push({ type: 'info', msg: `${name}: Legal under below-apron matching (max $${fmtFull(legalMax)} on $${fmtFull(outgoing)} out). Hard-capped at First Apron.` });
                     }
+                }
+            }
+
+            // Aggregation under Second Apron is checked below; also block 2+ outgoing when post-trade is 2nd apron
+            // even if pre-trade was under (crossing into second apron on the deal)
+            if (postSalary > CBA.secondApron && (t.selectedPlayers || []).length > 1 && t.matchableReceivingSalary > 0) {
+                const data = t.data;
+                let maxSingle = 0;
+                (t.selectedPlayers || []).forEach(pid => {
+                    const p = data && data.players.find(pp => pp.id === pid);
+                    if (p && p.salary > maxSingle) maxSingle = p.salary;
+                });
+                if (t.matchableReceivingSalary > maxSingle + 1) {
+                    violations.push({ type: 'error', msg: `${name}: Post-trade Second Apron status blocks salary aggregation — cannot combine multiple outgoing salaries to match $${fmtFull(t.matchableReceivingSalary)} incoming (largest single out $${fmtFull(maxSingle)}).` });
                 }
             }
 
@@ -6621,7 +6683,10 @@
                 }
                 // Cannot use TPE from prior trade (auto-use is already suppressed above)
                 if (t.blockedTPEByApron) {
-                    infos.push({ type: 'info', msg: `${name}: Second Apron teams cannot use prior Traded Player Exceptions — existing TPE room was not applied to this trade.` });
+                    const why = t.blockedTPEReason === 'first-apron'
+                        ? 'Teams at or above the First Apron after this deal cannot use prior Traded Player Exceptions'
+                        : 'Second Apron teams cannot use prior Traded Player Exceptions';
+                    warnings.push({ type: 'warning', msg: `${name}: ${why} — existing TPE room was not applied. Remaining matchable incoming: $${fmtFull(t.matchableReceivingSalary)}.` });
                 }
             }
 
@@ -6644,7 +6709,8 @@
         tradeSummary.forEach(t => {
             if (!t.abbr || !t.data) return;
             const name = t.teamInfo ? t.teamInfo.name : t.abbr;
-            const isAboveSecondApron = t.currentSalary > CBA.secondApron;
+            const isAboveSecondApron = (t.postSalary != null ? t.postSalary : t.currentSalary) > CBA.secondApron
+                || t.currentSalary > CBA.secondApron;
 
             const picksBeingSent = t.selectedPicks
                 .map(pid => t.data.picks.find(p => p.id === pid))
