@@ -658,7 +658,10 @@
   function getId(){
     const q=new URLSearchParams(location.search).get('id');
     if(q)return q;
-    // /trade/{id}/{optional-slug}
+    // /community/p/{id}/{optional-slug}
+    var cm=location.pathname.match(/^\/community\/p\/([^\/]+)(?:\/[^\/]*)?\/?$/i);
+    if(cm)return decodeURIComponent(cm[1]);
+    // Legacy /trade/{id}/{optional-slug}
     const m=location.pathname.match(/^\/trade\/([^\/]+)(?:\/[^\/]*)?\/?$/);
     if(m)return decodeURIComponent(m[1]);
     return null;
@@ -672,18 +675,12 @@
     return '/community/p/' + encodeURIComponent(id) + (slug ? ('/' + encodeURIComponent(slug)) : '');
   }
   function setPrettyUrl(id, title){
-    // Canonical long-term URL: /community/p/{id}/{slug}
+    // Always prefer canonical /community/p/{id}/{slug} in the address bar
     try{
-      var slug = slugifyTitle(title);
-      var path = '/community/p/' + encodeURIComponent(id) + (slug ? ('/' + encodeURIComponent(slug)) : '');
-      var onPretty = /^\/community\/p\//i.test(location.pathname) || /^\/trade\//i.test(location.pathname);
-      if (onPretty || !/trade\.html$/i.test(location.pathname)) {
-        if (location.pathname !== path) history.replaceState(null, '', path);
-      } else {
-        // Fallback file path for local/static without SPA 404
-        var q = postUrl(id);
-        if (location.pathname + location.search !== q) history.replaceState(null, '', q);
-      }
+      if(!id) return;
+      var path = postUrl(id, title);
+      var cur = location.pathname + location.search;
+      if(cur !== path) history.replaceState(null, '', path + (location.hash || ''));
     }catch(e){}
   }
   function profileUrlForAuthor(author, authorId){
@@ -1808,7 +1805,9 @@ setTimeout(function(){try{hydrateCommentPhotos(); if(trade&&trade.authorId) hydr
       if(unsub)unsub();
       unsub=window.db.collection(COLLECTION).doc(id).onSnapshot(function(doc){
         if(!doc.exists){renderError('Not found');return;}
-        const data=doc.data();data.id=doc.id;render(data);
+        const data=doc.data();data.id=doc.id;
+        try{ setPrettyUrl(data.id, data.title || data.name || ''); }catch(_){}
+        render(data);
       },function(err){console.error(err);renderError('Could not load: '+(err&&err.message?err.message:'unknown error'));});
     });
   }
