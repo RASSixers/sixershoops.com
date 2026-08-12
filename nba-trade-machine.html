@@ -709,6 +709,36 @@
         .apron-pill.tax { background: #fefce8; color: #a16207; border: 1px solid #fde68a; }
         .apron-pill.first { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
         .apron-pill.second { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .confidence-row {
+            display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+            margin: 0 0 1rem; padding: .75rem .9rem; border-radius: 12px;
+            background: #f8fafc; border: 1px solid #e2e8f0;
+        }
+        .confidence-pill {
+            font-family: Lexend, sans-serif; font-size: .68rem; font-weight: 800;
+            letter-spacing: .08em; text-transform: uppercase;
+            padding: .3rem .65rem; border-radius: 999px;
+        }
+        .confidence-pill.high { background: #dcfce7; color: #166534; }
+        .confidence-pill.mid { background: #fef9c3; color: #854d0e; }
+        .confidence-pill.low { background: #fee2e2; color: #991b1b; }
+        .confidence-pill.edge { background: #ffedd5; color: #9a3412; }
+        .english-summary {
+            font-family: Lexend, sans-serif; font-size: .88rem; line-height: 1.55;
+            color: #0f172a; margin: 0 0 1rem; padding: 1rem 1.1rem;
+            border-radius: 12px; background: #fff; border: 1px solid #e2e8f0;
+        }
+        .english-summary strong { color: #001a57; }
+        .tax-estimate {
+            font-size: .8rem; color: #475569; margin: .35rem 0 0;
+        }
+        @media (max-width: 720px) {
+            .board-toolbar-actions { flex-wrap: wrap; }
+            .board-btn { font-size: .72rem; padding: .45rem .65rem; }
+            .sh-hero { padding: .85rem; }
+            .trade-grid { gap: .75rem; }
+        }
+
 
         /* Cash section */
         .cash-row {
@@ -2432,7 +2462,7 @@
             </div>
 
             <div style="padding:.55rem 1rem;background:#fffbeb;border-bottom:1px solid #fde68a;font-family:Lexend,sans-serif;font-size:.68rem;line-height:1.45;color:#92400e;">
-                <strong>CBA engine v2.</strong> Matching bands, apron 100% rules, post-trade apron status, TPE expiry, prior-TPE bans over the First Apron, Second Apron aggregation/cash bans, hard-cap triggers, holds, and Stepien are enforced. Remaining gaps vs league books: BYC, trade kickers, unlikely bonuses, and exact Apron Team Salary vs Cap Team Salary. Always verify near apron lines.
+                <strong>Estimates only.</strong> Matching, aprons, TPEs, holds, and Stepien are modeled from the CBA, but salaries near apron lines, non-guaranteed deals, incentives, and BYC can differ from league books. Always verify before treating a result as official.
             </div>
 
             <!-- hidden stat holders for JS references that still exist -->
@@ -2449,6 +2479,9 @@
                         <button type="button" class="mode-btn mode-active" id="modeNowBtn" onclick="setTradeMode('now')">Now</button>
                         <button type="button" class="mode-btn" id="modeDeadlineBtn" onclick="setTradeMode('deadline')">Deadline</button>
                     </div>
+                    <button class="board-btn board-btn-ghost" onclick="undoLastChange()" title="Undo last change">
+                        Undo
+                    </button>
                     <button class="board-btn board-btn-ghost" onclick="clearAll()" title="Clear all teams and players">
                         Reset
                     </button>
@@ -2483,6 +2516,8 @@
                 </div>
             </div>
             <div class="result-body">
+                <div id="confidenceRow" class="confidence-row" style="display:none;"></div>
+                <div id="englishSummary" class="english-summary" style="display:none;"></div>
                 <div id="violationsList" class="violations-list"></div>
                 <div class="section-label" style="margin-top:1.5rem;">Team Breakdown</div>
                 <div class="breakdown-grid" id="breakdownGrid"></div>
@@ -2491,7 +2526,7 @@
         </div>
 
         <footer style="margin:1.75rem 0 2.5rem;padding:1rem 1.1rem;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;font-family:Lexend,sans-serif;font-size:.65rem;line-height:1.55;color:#64748b;">
-            <div style="font-weight:800;color:#0f172a;margin-bottom:.35rem;">SixersHoops Trade Machine · v2026.07 · Public release</div>
+            <div style="font-weight:800;color:#0f172a;margin-bottom:.35rem;">SixersHoops Trade Machine · v1.0</div>
             Independent fan tool. Not affiliated with, endorsed by, or connected to the NBA, NBPA, or any NBA team. Salary and roster data are estimates compiled for simulation; verify critical numbers independently. Trades are saved in this browser and can be shared via Copy Link.
         </footer>
     </div>
@@ -5932,7 +5967,7 @@
             tpeContent = `<div class="tpe-list">`;
             if (trueTPEs.length) {
                 tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:#64748b;padding:.35rem .7rem .2rem;">TRADED PLAYER EXCEPTIONS</div>`;
-                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;color:#94a3b8;padding:0 .7rem .45rem;line-height:1.35;">TPEs apply automatically on Analyze when needed. Optional: pin a preferred TPE (click) — otherwise the largest available room is used first.</div>`;
+                tpeContent += `<div style="font-family:'Lexend',sans-serif;font-size:.62rem;color:#94a3b8;padding:0 .7rem .45rem;line-height:1.35;">TPEs auto-apply on Analyze. Expired TPEs are ignored. Optional: pin a preferred TPE (click) — otherwise the largest available room is used first.</div>`;
                 trueTPEs.forEach(tpe => {
                     const sel = t.selectedTPEs.includes(tpe.id) ? 'selected' : '';
                     tpeContent += `<div class="tpe-item ${sel}" onclick="toggleTPE(${t.id},'${tpe.id}')">
@@ -7594,7 +7629,135 @@
         }
     });
 
+    // ─── UNDO STACK ──────────────────────────────────────────────────────────
+    var __tradeHistory = [];
+    var __historyLock = false;
+    function pushTradeHistory() {
+        if (__historyLock) return;
+        try {
+            var snap = JSON.stringify(typeof serializeTradeState === 'function' ? serializeTradeState() : null);
+            if (!snap || snap === 'null') return;
+            if (__tradeHistory.length && __tradeHistory[__tradeHistory.length - 1] === snap) return;
+            __tradeHistory.push(snap);
+            if (__tradeHistory.length > 40) __tradeHistory.shift();
+        } catch (_) {}
+    }
+    function undoLastChange() {
+        if (__tradeHistory.length < 2) {
+            try { if (window.showToast) showToast('Nothing to undo'); } catch(_) {}
+            return;
+        }
+        __tradeHistory.pop(); // current
+        var prev = __tradeHistory[__tradeHistory.length - 1];
+        if (!prev) return;
+        try {
+            __historyLock = true;
+            var state = JSON.parse(prev);
+            if (typeof applyTradeState === 'function') applyTradeState(state);
+            else if (typeof loadTradeState === 'function') loadTradeState(state);
+            else if (typeof restoreTradeState === 'function') restoreTradeState(state);
+            else {
+                // Fallback: rehydrate teams from serialized shape if present
+                if (state && Array.isArray(state.teams)) {
+                    teams = state.teams;
+                    if (typeof renderAll === 'function') renderAll();
+                    if (typeof updateStats === 'function') updateStats();
+                }
+            }
+        } catch (e) {
+            console.warn('undo failed', e);
+        } finally {
+            __historyLock = false;
+        }
+    }
+    // Hook history on common mutations
+    (function wireHistoryHooks() {
+        var names = ['togglePlayer', 'togglePick', 'setTeam', 'addTeam', 'removeTeam', 'setCashOut', 'confirmWaive', 'setPlayerDestination', 'setTradeMode'];
+        names.forEach(function (n) {
+            // deferred wrap after functions exist — call from renderAll
+        });
+    })();
+    var __historyWired = false;
+    function ensureHistoryHooks() {
+        if (__historyWired) return;
+        __historyWired = true;
+        ['togglePlayer', 'togglePick', 'setTeam', 'addTeam', 'clearAll', 'setCashOut', 'confirmWaive', 'setPlayerDestination'].forEach(function (n) {
+            if (typeof window[n] !== 'function' && typeof eval('typeof ' + n) === 'undefined') return;
+            try {
+                // functions are global in script scope, not always on window
+            } catch (_) {}
+        });
+        // Capture snapshots after each renderAll
+        var _ra = renderAll;
+        if (typeof _ra === 'function') {
+            renderAll = function () {
+                var r = _ra.apply(this, arguments);
+                pushTradeHistory();
+                return r;
+            };
+        }
+    }
+    try { setTimeout(ensureHistoryHooks, 0); } catch (_) {}
+
+    function tradeConfidence(isValid, messages, tradeSummary) {
+        var errs = (messages || []).filter(function (m) { return m && m.type === 'error'; }).length;
+        var warns = (messages || []).filter(function (m) { return m && m.type === 'warning'; }).length;
+        var nearApron = false;
+        var usesTpe = false;
+        var hasNg = false;
+        (tradeSummary || []).forEach(function (t) {
+            var post = t.postSalary != null ? t.postSalary : t.currentSalary;
+            if (post == null) return;
+            var d1 = Math.abs(post - CBA.firstApron);
+            var d2 = Math.abs(post - CBA.secondApron);
+            if (d1 < 5000000 || d2 < 5000000) nearApron = true;
+            if (t.usedTPE || t.tpeUsed > 0) usesTpe = true;
+        });
+        if (!isValid || errs > 0) return { level: 'low', label: 'Fails checks', detail: errs + ' hard rule' + (errs === 1 ? '' : 's') };
+        if (nearApron || warns >= 2) return { level: 'edge', label: 'Edge case', detail: 'Near apron / multiple warnings — verify in league books' };
+        if (usesTpe || warns === 1) return { level: 'mid', label: 'Likely legal', detail: 'Passes model checks; confirm TPEs and holds' };
+        return { level: 'high', label: 'High confidence', detail: 'Clean under current CBA model' };
+    }
+
+    function plainEnglishResult(isValid, messages, tradeSummary) {
+        var lines = [];
+        if (isValid) {
+            lines.push('<strong>This trade passes</strong> the salary-matching, apron, hold, and Stepien checks in this model.');
+        } else {
+            lines.push('<strong>This trade does not pass</strong> under the current CBA model.');
+        }
+        var errs = (messages || []).filter(function (m) { return m && m.type === 'error'; });
+        if (errs.length) {
+            lines.push('Main issues: ' + errs.slice(0, 3).map(function (m) {
+                return String(m.msg || '').replace(/</g, '&lt;');
+            }).join(' · '));
+        }
+        (tradeSummary || []).forEach(function (t) {
+            if (!t.abbr) return;
+            var name = (t.teamInfo && t.teamInfo.name) || t.abbr;
+            var pre = t.currentSalary || 0;
+            var post = t.postSalary != null ? t.postSalary : pre;
+            var band = 'under the cap';
+            if (post > CBA.secondApron) band = 'over the Second Apron';
+            else if (post > CBA.firstApron) band = 'over the First Apron';
+            else if (post > CBA.luxuryTax) band = 'in the tax';
+            else if (post > CBA.salaryCap) band = 'over the cap (below tax)';
+            var taxEst = '';
+            if (post > CBA.luxuryTax) {
+                var over = post - CBA.luxuryTax;
+                // Rough first-year tax: $1.50–$3.25 progressive is complex; show overage only
+                taxEst = ' About <strong>' + fmtM(over) + '</strong> over the tax line (exact tax bill depends on repeater status).';
+            }
+            lines.push(name + ' projects <strong>' + fmtM(post) + '</strong> post-trade — ' + band + '.' + taxEst);
+            if (t.usedTPE && t.tpeUsed) lines.push(name + ' uses about <strong>' + fmtM(t.tpeUsed) + '</strong> of TPE room.');
+            if (t.createdTPE > 0) lines.push(name + ' would create a roughly <strong>' + fmtM(t.createdTPE) + '</strong> TPE.');
+            if (t.hardCappedAt) lines.push(name + ' is hard-capped at the ' + (t.hardCappedAt === 'secondApron' ? 'Second' : 'First') + ' Apron after this structure.');
+        });
+        return lines.join('<br>');
+    }
+
     function showResult(isValid, title, sub, messages, tradeSummary, pendingUntil) {
+
         // ── Populate modal ───────────────────────────────────────────────
         const modal      = document.getElementById('tradeModal');
         const header     = document.getElementById('modalHeader');
@@ -7663,7 +7826,31 @@
         rSub.textContent   = sub;
         rViol.innerHTML    = violList.innerHTML;
         buildBreakdown(rBreak, rRestr, tradeSummary);
-        // Pin results directly under the trade board so failures are obvious
+
+        // Confidence + plain-English (modal + inline)
+        try {
+            var conf = tradeConfidence(isValid, messages, tradeSummary);
+            var eng = plainEnglishResult(isValid, messages, tradeSummary);
+            var confHtml = '<span class="confidence-pill ' + conf.level + '">' + conf.label + '</span>' +
+                '<span style="font-size:.82rem;color:#475569;font-weight:600;">' + conf.detail + '</span>';
+            var confEl = document.getElementById('confidenceRow');
+            var engEl = document.getElementById('englishSummary');
+            if (confEl) { confEl.style.display = 'flex'; confEl.innerHTML = confHtml; }
+            if (engEl) { engEl.style.display = 'block'; engEl.innerHTML = eng; }
+            // Mirror into modal if present
+            var modalBody = document.querySelector('#tradeModal .modal-body');
+            if (modalBody) {
+                var existing = document.getElementById('modalConfidence');
+                if (!existing) {
+                    existing = document.createElement('div');
+                    existing.id = 'modalConfidence';
+                    modalBody.insertBefore(existing, modalBody.firstChild);
+                }
+                existing.innerHTML = '<div class="confidence-row" style="display:flex;margin-bottom:.75rem;">' + confHtml + '</div>' +
+                    '<div class="english-summary">' + eng + '</div>';
+            }
+        } catch (e) { console.warn(e); }
+
         try {
             panel.style.display = 'block';
             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
