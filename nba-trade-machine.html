@@ -7420,9 +7420,14 @@
                 t.selectedTPEs = (t.selectedTPEs || []).filter(id => tpeInfo.tpes.some(x => x.id === id));
             }
             t.tpesConsumed = [];
-            // Second Apron teams cannot use prior TPEs (Art. VII)
-            const atSecondApron = (t.currentSalary || 0) > CBA.secondApron;
-            if (!atSecondApron && tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
+            // Prior TPEs cannot be used by teams at/above the First Apron after the deal,
+            // or at/above the Second Apron before the deal (Art. VII).
+            const preSecondApron = (t.currentSalary || 0) > CBA.secondApron;
+            const postProj = (t.currentSalary || 0) - (t.sendingSalary || 0) + (t.receivingSalary || 0);
+            const postFirstApron = postProj > CBA.firstApron;
+            const postSecondApron = postProj > CBA.secondApron;
+            const tpeBlocked = preSecondApron || postSecondApron || postFirstApron;
+            if (!tpeBlocked && tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
                 let remaining = t.matchableReceivingSalary;
                 for (const tpe of tpeInfo.tpes) {
                     if (remaining <= 0) break;
@@ -7435,9 +7440,10 @@
                 }
                 t.matchableReceivingSalary = remaining;
                 t.usedTPE = t.tpeUsed > 0;
-            } else if (atSecondApron && tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
-                // Leave matchable intact; violation flagged in Second Apron checks if they tried to lean on TPE
+            } else if (tpeBlocked && tpeInfo.room > 0 && t.matchableReceivingSalary > 0) {
+                // Leave matchable intact; surface why TPE room was not applied
                 t.blockedTPEByApron = true;
+                t.blockedTPEReason = (preSecondApron || postSecondApron) ? 'second-apron' : 'first-apron';
             }
             // TPE creation: over-cap team sends more salary than it takes back → residual becomes a new TPE
             t.createdTPE = 0;
@@ -7502,14 +7508,22 @@
             const currentSalary = t.currentSalary;
             const postSalary = currentSalary - t.sendingSalary + t.receivingSalary;
             const isAboveCap = currentSalary > CBA.salaryCap;
+            // Season hard-cap (TMLE / prior moves) + any session hard-cap from this machine
+            const seasonHardCap = (typeof getHardCapStatus === 'function') ? getHardCapStatus(t.abbr) : null;
             const isAboveFirstApron = postSalary > CBA.firstApron || currentSalary > CBA.firstApron;
             const isAboveSecondApron = postSalary > CBA.secondApron || currentSalary > CBA.secondApron;
             t.postSalary = postSalary;
             t.isAboveFirstApron = isAboveFirstApron;
             t.isAboveSecondApron = isAboveSecondApron;
-            // Expanded matching only available if POST-TRADE team stays under First Apron
+            t.seasonHardCap = seasonHardCap;
+            // Expanded (below-apron) matching requires the team to be UNDER the First Apron both
+            // before and after the deal. Teams already at/above the First Apron, or hard-capped at
+            // the First/Second Apron for the season, are limited to 100% matching.
             const postUnderFirst = postSalary <= CBA.firstApron;
-            t.usedExpandedMatching = postUnderFirst && t.matchableReceivingSalary > t.sendingSalary + CBA.matchBuffer;
+            const currentUnderFirst = currentSalary <= CBA.firstApron;
+            const hardCappedFirst = seasonHardCap === 'first' || seasonHardCap === 'second';
+            const canUseExpandedMatching = currentUnderFirst && postUnderFirst && seasonHardCap !== 'second';
+            t.usedExpandedMatching = canUseExpandedMatching && t.matchableReceivingSalary > t.sendingSalary + CBA.matchBuffer;
 
             // Using expanded (below-apron) matching hard-caps at First Apron for the session
             if (t.usedExpandedMatching) {
@@ -7519,17 +7533,25 @@
                 infos.push({ type: 'info', msg: `${name}: Using below-apron salary matching (incoming > outgoing + $250k). Team is hard-capped at the First Apron (${fmtM(CBA.firstApron)}) for the rest of this session.` });
             }
 
-            // ── Hard-cap persistence ─────────────────────────────────────
+            // ── Hard-cap ceilings (season status + session) ───────────────
+            // HARD_CAP_STATUS marks teams already hard-capped for 2026-27 (e.g. used TMLE).
+            // Those ceilings MUST block illegal post-trade payroll, not just show a badge.
             const persistedTeam = teams.find(x => x.id === t.id);
-            if (persistedTeam && persistedTeam.hardCappedAt === 'firstApron') {
-                if (postSalary > CBA.firstApron) {
-                    violations.push({ type: 'error', msg: `${name}: Hard-capped at the First Apron (${fmtM(CBA.firstApron)})  -  this trade's projected payroll ($${fmtFull(postSalary)}) would exceed that line.` });
-                }
+            const effectiveFirstCap = (seasonHardCap === 'first' || seasonHardCap === 'second' ||
+                (persistedTeam && persistedTeam.hardCappedAt === 'firstApron') ||
+                (persistedTeam && persistedTeam.hardCappedAt === 'secondApron'));
+            const effectiveSecondCap = (seasonHardCap === 'second' ||
+                (persistedTeam && persistedTeam.hardCappedAt === 'secondApron'));
+            if (effectiveFirstCap && !effectiveSecondCap && postSalary > CBA.firstApron) {
+                violations.push({ type: 'error', msg: `${name}: Hard-capped at the First Apron (${fmtM(CBA.firstApron)})  -  this trade's projected payroll ($${fmtFull(postSalary)}) would exceed that line. How to fix: send out more salary, take less back, or restructure so post-trade payroll stays at or under the First Apron.` });
             }
-            if (persistedTeam && persistedTeam.hardCappedAt === 'secondApron') {
-                if (postSalary > CBA.secondApron) {
-                    violations.push({ type: 'error', msg: `${name}: Hard-capped at the Second Apron (${fmtM(CBA.secondApron)})  -  this trade's projected payroll ($${fmtFull(postSalary)}) would exceed that line.` });
-                }
+            if (effectiveSecondCap && postSalary > CBA.secondApron) {
+                violations.push({ type: 'error', msg: `${name}: Hard-capped at the Second Apron (${fmtM(CBA.secondApron)})  -  this trade's projected payroll ($${fmtFull(postSalary)}) would exceed that line. How to fix: send out more salary, take less back, or restructure so post-trade payroll stays at or under the Second Apron.` });
+            }
+            // Also hard-block crossing the Second Apron when already above the First (apron "punishments")
+            if (isAboveFirstApron && postSalary > CBA.secondApron && !effectiveSecondCap) {
+                // Not already hard-capped at 2nd, but finishing above 2nd triggers 2nd-apron regime
+                // (aggregation / cash / TPE rules applied below via isAboveSecondApron / postSalary checks)
             }
 
             // ── Cash rules ───────────────────────────────────────────────
@@ -7565,16 +7587,24 @@
             // Under-cap teams can take free agents / trades into cap space without matching.
             if (isAboveCap && t.matchableReceivingSalary > 0) {
                 const outgoing = t.sendingSalary;
-                // Matching band depends on POST-TRADE apron status (crossing first apron mid-deal loses expanded matching)
-                const useExpandedBands = postUnderFirst && !(persistedTeam && persistedTeam.hardCappedAt === 'firstApron' && postSalary > CBA.firstApron);
+                // 100% matching when currently above First Apron, finishing above First Apron,
+                // or season-hard-capped at Second Apron. Expanded bands only when fully under First Apron.
+                const useExpandedBands = canUseExpandedMatching;
                 if (outgoing <= 0) {
                     violations.push({ type: 'error', msg: `${name}: Incoming salary still requiring a match ($${fmtFull(t.matchableReceivingSalary)}) but this team is sending $0 in salary. How to fix: select outgoing player(s) whose salary covers the match, absorb with a valid TPE under the First Apron, or remove incoming salary.` });
                 } else {
                     const legalMax = useExpandedBands ? standardMatchMax(outgoing) : apronMatchMax(outgoing);
                     if (t.matchableReceivingSalary > legalMax + 1) {
-                        violations.push({ type: 'error', msg: `${name}: Incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) exceeds the max allowed ($${fmtFull(legalMax)}) under CBA salary matching${useExpandedBands ? ' (below First Apron bands)' : ' (Apron teams: 100% of outgoing only)'}${t.tpeUsed ? ' after TPE absorption' : ''}. How to fix: send out more salary (add another player or a larger contract), lower incoming salary, or use usable TPE room while staying under the First Apron.` });
+                        const regime = useExpandedBands
+                            ? ' (below First Apron bands)'
+                            : (isAboveSecondApron || postSalary > CBA.secondApron
+                                ? ' (Second Apron: 100% of outgoing only, no aggregation)'
+                                : ' (First Apron / hard-capped: 100% of outgoing only)');
+                        violations.push({ type: 'error', msg: `${name}: Incoming salary requiring a match ($${fmtFull(t.matchableReceivingSalary)}) exceeds the max allowed ($${fmtFull(legalMax)}) under CBA salary matching${regime}${t.tpeUsed ? ' after TPE absorption' : ''}. How to fix: send out more salary (add another player or a larger contract), lower incoming salary, or use usable TPE room while staying under the First Apron.` });
                     } else if (useExpandedBands && t.matchableReceivingSalary > outgoing + CBA.matchBuffer) {
                         infos.push({ type: 'info', msg: `${name}: Legal under below-apron matching (max $${fmtFull(legalMax)} on $${fmtFull(outgoing)} out). Hard-capped at First Apron.` });
+                    } else if (!useExpandedBands && isAboveFirstApron) {
+                        infos.push({ type: 'info', msg: `${name}: First/Second Apron matching applies  -  can take back at most 100% of outgoing salary ($${fmtFull(outgoing)}).` });
                     }
                 }
             }
@@ -7622,11 +7652,15 @@
             // ── First Apron restrictions ───────────────────────────────────
             if (isAboveFirstApron && !isAboveSecondApron) {
                 warnings.push({ type: 'warning', msg: `${name} is above the First Apron  -  sign-and-trade acquisitions are prohibited, and salary matching is limited to a flat 100% of outgoing salary (no $250k buffer).` });
+            } else if (seasonHardCap === 'first' && !isAboveFirstApron) {
+                infos.push({ type: 'info', msg: `${name} is hard-capped at the First Apron for 2026-27  -  post-trade payroll cannot exceed ${fmtM(CBA.firstApron)}.` });
+            } else if (seasonHardCap === 'second' && !isAboveSecondApron) {
+                infos.push({ type: 'info', msg: `${name} is hard-capped at the Second Apron for 2026-27  -  post-trade payroll cannot exceed ${fmtM(CBA.secondApron)}; aggregation and cash limits apply if above the Second Apron.` });
             }
 
             // ── Post-trade Second Apron check ─────────────────────────────
             if (!isAboveSecondApron && postSalary > CBA.secondApron) {
-                warnings.push({ type: 'warning', msg: `${name}: This trade would push the team above the Second Apron ($${fmtFull(postSalary)} projected salary). Severe restrictions apply.` });
+                violations.push({ type: 'error', msg: `${name}: This trade would push the team above the Second Apron (projected $${fmtFull(postSalary)}; line ${fmtM(CBA.secondApron)}). Second Apron teams cannot aggregate salaries, cannot send cash, and cannot use prior TPEs.` });
             }
         });
 
